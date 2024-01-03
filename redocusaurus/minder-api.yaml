@@ -46,7 +46,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -88,7 +88,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -125,7 +125,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -180,7 +180,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -225,7 +225,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -275,7 +275,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -320,7 +320,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -440,7 +440,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -501,7 +501,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -534,7 +534,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -563,7 +563,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -592,7 +592,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -639,7 +639,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -676,7 +676,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -709,7 +709,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -741,7 +741,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -782,7 +782,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -822,7 +822,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -928,7 +928,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -962,7 +962,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -995,7 +995,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -1024,7 +1024,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -1053,7 +1053,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -1081,7 +1081,7 @@ paths:
           required: false
           type: string
         - name: context.project
-          description: name of the project
+          description: ID of the project
           in: query
           required: false
           type: string
@@ -1715,7 +1715,7 @@ definitions:
         title: name of the provider
       project:
         type: string
-        title: name of the project
+        title: ID of the project
       retiredOrganization:
         type: string
     description: >-
