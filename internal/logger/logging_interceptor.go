@@ -87,9 +87,10 @@ func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.U
 		if info.FullMethod == "/minder.v1.HealthService/CheckHealth" {
 			return handler(ctx, req)
 		}
+		ts := TelemetryStore{}
 		// Attach the resource to all logging events in the context
 		logger := zerolog.Ctx(ctx).With().Dict("Resource", resource(info.FullMethod)).Logger()
-		ctx = logger.WithContext(ctx)
+		ctx = ts.WithTelemetry(logger.WithContext(ctx))
 		now := time.Now()
 
 		resp, err := handler(ctx, req)
@@ -101,11 +102,12 @@ func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.U
 			logMsg = logger.Error()
 
 			attrs = attrs.Err(err)
-			// Log the body of errors (TODO: do need to scrub requests?)
+			// Log the body of errors (TODO: do we need to scrub requests?)
 			if jsonText, err := json.Marshal(req); err != nil {
 				logMsg = logMsg.RawJSON("Body", jsonText)
 			}
 		}
+		ts.Record(logMsg)
 
 		// Note: Zerolog makes it hard to add attributes in multiple calls.
 		logMsg.Dict("Attributes", attrs).Send()
