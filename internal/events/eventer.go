@@ -204,7 +204,7 @@ func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) 
 				}
 			}
 
-			// Defer the DLQ tracking logic to after the instruments has been processed by other middlewares,
+			// Defer the DLQ tracking logic to after the message has been processed by other middlewares,
 			// including the deferred PoisonQueue middleware functionality,
 			// so that we can check if it has been poisoned or not.
 			defer func() {
