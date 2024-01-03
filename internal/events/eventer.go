@@ -112,8 +112,6 @@ type Eventer struct {
 type messageInstruments struct {
 	// message processing time duration histogram
 	messageProcessingTimeHistogram metric.Int64Histogram
-	// message counter
-	messageCounter metric.Int64Counter
 }
 
 var _ Registrar = (*Eventer)(nil)
@@ -196,32 +194,29 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}, nil
 }
 
-func recordMetrics(m *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
-		return func(message *message.Message) ([]*message.Message, error) {
-			producedMessages, err := h(message)
-
-			for _, msg := range producedMessages {
-				if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
-					if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
-						processingTime := time.Since(parsedTime)
-						m.messageProcessingTimeHistogram.Record(msg.Context(), processingTime.Milliseconds())
-					}
+		return func(msg *message.Message) ([]*message.Message, error) {
+			var processingTime time.Duration
+			if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
+				if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
+					processingTime = time.Since(parsedTime)
 				}
 			}
 
-			// Defer the DLQ tracking logic to after the message has been processed by other middlewares,
+			// Defer the DLQ tracking logic to after the instruments has been processed by other middlewares,
 			// including the deferred PoisonQueue middleware functionality,
 			// so that we can check if it has been poisoned or not.
 			defer func() {
-				if poisoned := message.Metadata.Get(middleware.ReasonForPoisonedKey); poisoned != "" {
-					m.messagesCount(message.Context(), true)
-				} else {
-					m.messagesCount(message.Context(), false)
-				}
+				isPoisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey) != ""
+				instruments.messageProcessingTimeHistogram.Record(
+					msg.Context(),
+					processingTime.Milliseconds(),
+					metric.WithAttributes(attribute.Bool("is_poisoned", isPoisoned)),
+				)
 			}()
 
-			return producedMessages, err
+			return h(msg)
 		}
 	}
 	return metricsFunc
@@ -381,14 +376,9 @@ func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
 	if err != nil {
 		return nil, err
 	}
-	messageCounter, err := createMessageCounter(meter)
-	if err != nil {
-		return nil, err
-	}
 
 	return &messageInstruments{
 		messageProcessingTimeHistogram: histogram,
-		messageCounter:                 messageCounter,
 	}, nil
 }
 
@@ -401,26 +391,4 @@ func createProcessingLatencyHistogram(meter metric.Meter) (metric.Int64Histogram
 		return nil, fmt.Errorf("failed to create message processing processingLatencyHistogram: %w", err)
 	}
 	return processingLatencyHistogram, nil
-}
-
-func createMessageCounter(meter metric.Meter) (metric.Int64Counter, error) {
-	messageCounter, err := meter.Int64Counter("messages.queue",
-		metric.WithDescription("Number of messages that have been sent"),
-		metric.WithUnit("messages"),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create messages counter: %w", err)
-	}
-	return messageCounter, nil
-}
-
-func (m *messageInstruments) messagesCount(ctx context.Context, isPoisoned bool) {
-	if m.messageCounter == nil {
-		return
-	}
-
-	labels := []attribute.KeyValue{
-		attribute.Bool("is_poisoned", isPoisoned),
-	}
-	m.messageCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 }
