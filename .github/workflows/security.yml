@@ -8,7 +8,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Security Scan
-        uses: aquasecurity/trivy-action@91713af97dc80187565512baba96e4364e983601 # master
+        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # master
         with:
           scan-type: 'fs'
           scanners: vuln,secret
@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Security Scan
-        uses: aquasecurity/trivy-action@91713af97dc80187565512baba96e4364e983601 # master
+        uses: aquasecurity/trivy-action@d43c1f16c00cfd3978dde6c07f4bbcf9eb6993ca # master
         with:
           scan-type: 'config'
           trivy-config: .trivy.yml
