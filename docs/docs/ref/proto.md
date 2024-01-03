@@ -196,7 +196,7 @@ buf compatibility checks.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) | optional | name of the provider |
-| project | [string](#string) | optional | name of the project |
+| project | [string](#string) | optional | ID of the project |
 | retired_organization | [string](#string) | optional |  |
 
 
