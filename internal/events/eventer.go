@@ -36,6 +36,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -103,7 +104,7 @@ type Eventer struct {
 	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
 	webhookSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
-	metrics *messageInstruments
+	msgInstruments *messageInstruments
 
 	closer driverCloser
 }
@@ -140,16 +141,9 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 
 	meter := otel.Meter("eventer")
-	histogram, err := meter.Int64Histogram("messages.processing_delay",
-		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
-		metric.WithUnit("ms"),
-	)
+	metricInstruments, err := initMetricsInstruments(meter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create message processing histogram: %w", err)
-	}
-
-	metricInstruments := messageInstruments{
-		messageProcessingTimeHistogram: histogram,
+		return nil, err
 	}
 
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
@@ -157,14 +151,14 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
-	pq, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
+	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
 	}
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
 		recordMetrics(metricInstruments),
-		pq,
+		poisonQueueMiddleware,
 		middleware.Retry{
 			MaxRetries:      3,
 			InitialInterval: time.Millisecond * 100,
@@ -196,25 +190,33 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 			// driver close
 			cl()
 		},
-		metrics: &metricInstruments,
+		msgInstruments: metricInstruments,
 	}, nil
 }
 
-func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
-		return func(message *message.Message) ([]*message.Message, error) {
-			producedMessages, err := h(message)
-
-			for _, msg := range producedMessages {
-				if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
-					if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
-						processingTime := time.Since(parsedTime)
-						m.messageProcessingTimeHistogram.Record(msg.Context(), processingTime.Milliseconds())
-					}
+		return func(msg *message.Message) ([]*message.Message, error) {
+			var processingTime time.Duration
+			if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
+				if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
+					processingTime = time.Since(parsedTime)
 				}
 			}
 
-			return producedMessages, err
+			// Defer the DLQ tracking logic to after the message has been processed by other middlewares,
+			// including the deferred PoisonQueue middleware functionality,
+			// so that we can check if it has been poisoned or not.
+			defer func() {
+				isPoisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey) != ""
+				instruments.messageProcessingTimeHistogram.Record(
+					msg.Context(),
+					processingTime.Milliseconds(),
+					metric.WithAttributes(attribute.Bool("poison", isPoisoned)),
+				)
+			}()
+
+			return h(msg)
 		}
 	}
 	return metricsFunc
@@ -367,4 +369,26 @@ func (e *Eventer) ConsumeEvents(consumers ...Consumer) {
 	for _, c := range consumers {
 		c.Register(e)
 	}
+}
+
+func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
+	histogram, err := createProcessingLatencyHistogram(meter)
+	if err != nil {
+		return nil, err
+	}
+
+	return &messageInstruments{
+		messageProcessingTimeHistogram: histogram,
+	}, nil
+}
+
+func createProcessingLatencyHistogram(meter metric.Meter) (metric.Int64Histogram, error) {
+	processingLatencyHistogram, err := meter.Int64Histogram("messages.processing_delay",
+		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
+		metric.WithUnit("ms"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create message processing processingLatencyHistogram: %w", err)
+	}
+	return processingLatencyHistogram, nil
 }
