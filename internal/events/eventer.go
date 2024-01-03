@@ -385,7 +385,7 @@ func (e *Eventer) ConsumeEvents(consumers ...Consumer) {
 }
 
 func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
-	histogram, err := createHistogram(meter)
+	histogram, err := createProcessingLatencyHistogram(meter)
 	if err != nil {
 		return nil, err
 	}
@@ -400,15 +400,15 @@ func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
 	}, nil
 }
 
-func createHistogram(meter metric.Meter) (metric.Int64Histogram, error) {
-	histogram, err := meter.Int64Histogram("messages.processing_delay",
+func createProcessingLatencyHistogram(meter metric.Meter) (metric.Int64Histogram, error) {
+	processingLatencyHistogram, err := meter.Int64Histogram("messages.processing_delay",
 		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
 		metric.WithUnit("ms"),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create message processing histogram: %w", err)
+		return nil, fmt.Errorf("failed to create message processing processingLatencyHistogram: %w", err)
 	}
-	return histogram, nil
+	return processingLatencyHistogram, nil
 }
 
 func createPoisonQueueCounter(meter metric.Meter) (metric.Int64Counter, error) {
