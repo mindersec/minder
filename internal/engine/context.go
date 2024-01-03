@@ -19,8 +19,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -95,7 +97,12 @@ func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*En
 		return nil, fmt.Errorf("invalid context: missing project")
 	}
 
-	project, err := q.GetProjectByName(ctx, *in.Project)
+	parsedProjectId, err := uuid.Parse(*in.Project)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid context: invalid project ID")
+	}
+
+	project, err := q.GetProjectByID(ctx, parsedProjectId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get context: %w", err)
 	}
