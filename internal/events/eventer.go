@@ -159,8 +159,8 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
 		recordMetrics(metricInstruments),
-		poisonQueueMiddleware,
 		poisonQueueTracking(ctx, metricInstruments),
+		poisonQueueMiddleware,
 		middleware.Retry{
 			MaxRetries:      3,
 			InitialInterval: time.Millisecond * 100,
