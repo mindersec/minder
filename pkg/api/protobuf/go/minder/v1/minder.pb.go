@@ -5653,7 +5653,7 @@ type Context struct {
 
 	// name of the provider
 	Provider *string `protobuf:"bytes,1,opt,name=provider,proto3,oneof" json:"provider,omitempty"`
-	// name of the project
+	// ID of the project
 	Project             *string `protobuf:"bytes,3,opt,name=project,proto3,oneof" json:"project,omitempty"`
 	RetiredOrganization *string `protobuf:"bytes,2,opt,name=retired_organization,json=retiredOrganization,proto3,oneof" json:"retired_organization,omitempty"`
 }
