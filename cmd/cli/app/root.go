@@ -18,6 +18,7 @@ package app
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,8 +29,6 @@ import (
 )
 
 var (
-	cfgFile string // config file (default is $PWD/config.yaml)
-
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "minder",
@@ -42,6 +41,7 @@ https://docs.stacklok.com/minder`,
 	// This is a "help topic", which is represented as a command with no "Run" function.
 	// See https://github.com/spf13/cobra/issues/393#issuecomment-282741924 and
 	// https://pkg.go.dev/github.com/spf13/cobra#Command.IsAdditionalHelpTopicCommand
+	//nolint:lll
 	configHelpCmd = &cobra.Command{
 		Use:   "config",
 		Short: "How to manage minder CLI configuration",
@@ -88,15 +88,21 @@ func init() {
 	}
 
 	RootCmd.AddCommand(configHelpCmd)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
+	RootCmd.PersistentFlags().String("config", "", "Config file (default is $PWD/config.yaml)")
+	if err := viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config")); err != nil {
+		RootCmd.Printf("error: %s", err)
+		os.Exit(1)
+	}
+	viper.AutomaticEnv()
 }
 
 func initConfig() {
 	viper.SetEnvPrefix("minder")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	cfgFile := viper.GetString("config")
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
-	} else if os.Getenv("MINDER_CONFIG") != "" {
-		viper.SetConfigFile(os.Getenv("MINDER_CONFIG"))
 	} else {
 		// use defaults
 		viper.SetConfigName("config")
