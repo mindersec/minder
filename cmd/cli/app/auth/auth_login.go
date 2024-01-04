@@ -32,6 +32,7 @@ import (
 	httphelper "github.com/zitadel/oidc/v2/pkg/http"
 	"github.com/zitadel/oidc/v2/pkg/oidc"
 
+	clientconfig "github.com/stacklok/minder/internal/config/client"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -55,8 +56,13 @@ $XDG_CONFIG_HOME/minder/credentials.json`,
 func loginCommand(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
-	issuerUrlStr := viper.GetString("identity.cli.issuer_url")
-	clientID := viper.GetString("identity.cli.client_id")
+	clientConfig, err := clientconfig.ReadConfigFromViper(viper.GetViper())
+	if err != nil {
+		return cli.MessageAndError("Unable to read config", err)
+	}
+
+	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
+	clientID := clientConfig.Identity.CLI.ClientId
 
 	parsedURL, err := url.Parse(issuerUrlStr)
 	if err != nil {

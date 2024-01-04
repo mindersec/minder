@@ -26,7 +26,7 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/itchyny/gojq v0.12.14
 	github.com/lib/pq v1.10.9
@@ -35,7 +35,7 @@ require (
 	github.com/open-policy-agent/opa v0.60.0
 	github.com/openfga/cli v0.2.1
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
-	github.com/prometheus/client_golang v1.17.0
+	github.com/prometheus/client_golang v1.18.0
 	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
@@ -64,9 +64,9 @@ require (
 	golang.org/x/oauth2 v0.15.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/term v0.15.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0
+	google.golang.org/genproto/googleapis/api v0.0.0-20240102182953-50ed04b92917
 	google.golang.org/grpc v1.60.1
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.29.0
@@ -264,7 +264,7 @@ require (
 	golang.org/x/tools v0.16.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20231212172506-995d672761c0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231212172506-995d672761c0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

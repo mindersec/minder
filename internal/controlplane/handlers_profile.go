@@ -81,12 +81,13 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
 
-	g, err := s.store.GetProjectByID(ctx, gid)
+	_, err = s.store.GetProjectByID(ctx, gid)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
 
-	inout.Project = &g.Name
+	project := gid.String()
+	inout.Project = &project
 	return nil
 }
 

@@ -6,8 +6,8 @@ toolchain go1.21.3
 
 require (
 	github.com/bufbuild/buf v1.28.1
-	github.com/daixiang0/gci v0.12.0
-	github.com/go-critic/go-critic v0.10.0
+	github.com/daixiang0/gci v0.12.1
+	github.com/go-critic/go-critic v0.11.0
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
@@ -17,7 +17,7 @@ require (
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.16.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
-	google.golang.org/protobuf v1.31.1-0.20231027082548-f4a6c1f6e5c1
+	google.golang.org/protobuf v1.32.0
 	mvdan.cc/gofumpt v0.5.0
 )
 

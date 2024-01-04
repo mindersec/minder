@@ -23,7 +23,7 @@ If you think you have found a security vulnerability in Minder please DO NOT dis
 ## How to Contribute
 
 ### Using GitHub Issues
-We use GitHub issues to track bugs and enhancements. If you have a general usage question, please ask in [Minder's discussion forum](https://github.com/stacklok/minder/discussions). 
+We use GitHub issues to track bugs and enhancements. If you have a general usage question, please ask in [Minder's discussion forum](https://discord.com/invite/RkzVuTp3WK). 
 
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible. Ideally, that would include a small sample project that reproduces the problem.
 

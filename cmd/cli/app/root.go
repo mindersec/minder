@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/constants"
+	clientconfig "github.com/stacklok/minder/internal/config/client"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
@@ -80,40 +80,19 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	// Global flags
-	RootCmd.PersistentFlags().String("grpc-host", constants.MinderGRPCHost, "Server host")
-	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
-	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
-	RootCmd.PersistentFlags().String("identity-url", constants.IdentitySeverURL, "Identity server issuer URL")
-	RootCmd.PersistentFlags().String("identity-client", "minder-cli", "Identity server client ID")
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 
-	// Bind viper config to cobra flags
-	if err := viper.BindPFlag("grpc_server.host", RootCmd.PersistentFlags().Lookup("grpc-host")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("grpc_server.port", RootCmd.PersistentFlags().Lookup("grpc-port")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("grpc_server.insecure", RootCmd.PersistentFlags().Lookup("grpc-insecure")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("identity.cli.issuer_url", RootCmd.PersistentFlags().Lookup("identity-url")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("identity.cli.client_id", RootCmd.PersistentFlags().Lookup("identity-client")); err != nil {
+	// Register minder cli flags - gRPC client config and identity config
+	if err := clientconfig.RegisterMinderClientFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		RootCmd.Printf("error: %s", err)
 		os.Exit(1)
 	}
 
 	RootCmd.AddCommand(configHelpCmd)
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
 
 func initConfig() {
+	viper.SetEnvPrefix("minder")
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else if os.Getenv("MINDER_CONFIG") != "" {

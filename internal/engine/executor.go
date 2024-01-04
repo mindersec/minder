@@ -24,7 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -84,7 +84,7 @@ func WithAggregatorMiddleware(mdw events.AggregatorMiddleware) ExecutorOption {
 func NewExecutor(
 	ctx context.Context,
 	querier db.Store,
-	authCfg *config.AuthConfig,
+	authCfg *serverconfig.AuthConfig,
 	evt *events.Eventer,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
