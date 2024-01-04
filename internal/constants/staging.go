@@ -18,6 +18,8 @@
 package constants
 
 const (
+	// TargetEnv is the environment the build will point to
+	TargetEnv = "staging"
 	// IdentitySeverURL is the URL of the identity server
 	IdentitySeverURL = "https://auth.staging.stacklok.dev"
 	// MinderGRPCHost is the host of the minder gRPC server

@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/viper"
 
 	clientconfig "github.com/stacklok/minder/internal/config/client"
+	"github.com/stacklok/minder/internal/constants"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
@@ -37,6 +38,12 @@ var (
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			if constants.TargetEnv == "staging" {
+				cmd.Print("WARNING: This build uses a test environment and may not be stable \n")
+			}
+			return nil
+		},
 	}
 )
 
