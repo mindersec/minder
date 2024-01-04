@@ -57,30 +57,42 @@ func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *pro
 }
 
 // Eval implements the Evaluator interface.
-//
-//nolint:gocyclo
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
+	if err != nil {
+		return err
+	}
+
+	if len(vulnerablePackages) > 0 {
+		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")))
+	}
+
+	return nil
+}
+
+// getVulnerableDependencies returns a slice containing vulnerable dependencies.
+func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
 	var vulnerablePackages []string
 
 	// TODO(jhrozek): Fix this!
 	//nolint:govet
 	prdeps, ok := res.Object.(pb.PrDependencies)
 	if !ok {
-		return fmt.Errorf("invalid object type for vulncheck evaluator")
+		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")
 	}
 
 	if len(prdeps.Deps) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	ruleConfig, err := parseConfig(pol)
 	if err != nil {
-		return fmt.Errorf("failed to parse config: %w", err)
+		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	prReplyHandler, err := newPrStatusHandler(ctx, ruleConfig.Action, prdeps.Pr, e.cli)
 	if err != nil {
-		return fmt.Errorf("failed to create pr action: %w", err)
+		return nil, fmt.Errorf("failed to create pr action: %w", err)
 	}
 
 	pkgRepoCache := newRepoCache()
@@ -90,58 +102,21 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			continue
 		}
 
-		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
-		if ecoConfig == nil {
-			fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
-			continue
-		}
-
-		vdb, err := e.getVulnDb(ecoConfig.DbType, ecoConfig.DbEndpoint)
+		vulnerable, err := e.checkVulnerabilities(ctx, dep, ruleConfig, pkgRepoCache, prReplyHandler)
 		if err != nil {
-			return fmt.Errorf("failed to get vulncheck db: %w", err)
+			return nil, fmt.Errorf("failed to check vulnerabilities: %w", err)
 		}
 
-		response, err := e.queryVulnDb(ctx, vdb, dep.Dep, dep.Dep.Ecosystem)
-		if err != nil {
-			return fmt.Errorf("failed to query vulncheck db: %w", err)
-		}
-
-		if len(response.Vulns) == 0 {
-			continue
-		}
-
-		vulnerablePackages = append(vulnerablePackages, dep.Dep.Name)
-
-		pkgRepo, err := pkgRepoCache.newRepository(ecoConfig)
-		if err != nil {
-			return fmt.Errorf("failed to create package repository: %w", err)
-		}
-
-		patched, latest, noFix := getPatchedVersion(response.Vulns)
-
-		var patchFormatter patchLocatorFormatter
-		if noFix {
-			patchFormatter = pkgRepo.NoPatchAvailableFormatter(dep.Dep)
-		} else {
-			patchFormatter, err = pkgRepo.SendRecvRequest(ctx, dep.Dep, patched, latest)
-			if err != nil {
-				return fmt.Errorf("failed to send package request: %w", err)
-			}
-		}
-
-		if err := prReplyHandler.trackVulnerableDep(ctx, dep, response, patchFormatter); err != nil {
-			return fmt.Errorf("failed to add package patch for further processing: %w", err)
+		if vulnerable {
+			vulnerablePackages = append(vulnerablePackages, dep.Dep.Name)
 		}
 	}
 
 	if err := prReplyHandler.submit(ctx); err != nil {
-		return fmt.Errorf("failed to submit pr action: %w", err)
+		return nil, fmt.Errorf("failed to submit pr action: %w", err)
 	}
 
-	if len(vulnerablePackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")))
-	}
-	return nil
+	return vulnerablePackages, nil
 }
 
 // getPatchedVersion returns a version that patches all known vulnerabilities. If no such version exists, it returns
@@ -198,4 +173,51 @@ func (_ *Evaluator) queryVulnDb(
 	}
 
 	return response, nil
+}
+
+// checkVulnerabilities checks whether a PR dependency contains any vulnerabilities.
+func (e *Evaluator) checkVulnerabilities(
+	ctx context.Context,
+	dep *pb.PrDependencies_ContextualDependency,
+	cfg *config,
+	cache *repoCache,
+	prHandler prStatusHandler,
+) (bool, error) {
+	ecoConfig := cfg.getEcosystemConfig(dep.Dep.Ecosystem)
+	if ecoConfig == nil {
+		fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
+		return false, nil
+	}
+
+	vdb, err := e.getVulnDb(ecoConfig.DbType, ecoConfig.DbEndpoint)
+	if err != nil {
+		return false, fmt.Errorf("failed to get vulncheck db: %w", err)
+	}
+
+	response, err := e.queryVulnDb(ctx, vdb, dep.Dep, dep.Dep.Ecosystem)
+	if err != nil {
+		return false, fmt.Errorf("failed to query vulncheck db: %w", err)
+	}
+
+	if len(response.Vulns) == 0 {
+		return false, nil
+	}
+
+	pkgRepo, err := cache.newRepository(ecoConfig)
+	if err != nil {
+		return false, fmt.Errorf("failed to create package repository: %w", err)
+	}
+
+	var patchFormatter patchLocatorFormatter
+	if patched, latest, noFix := getPatchedVersion(response.Vulns); noFix {
+		patchFormatter = pkgRepo.NoPatchAvailableFormatter(dep.Dep)
+	} else if patchFormatter, err = pkgRepo.SendRecvRequest(ctx, dep.Dep, patched, latest); err != nil {
+		return false, fmt.Errorf("failed to send package request: %w", err)
+	}
+
+	if err := prHandler.trackVulnerableDep(ctx, dep, response, patchFormatter); err != nil {
+		return false, fmt.Errorf("failed to add package patch for further processing: %w", err)
+	}
+
+	return true, nil
 }
