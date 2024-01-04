@@ -17,15 +17,13 @@
 package app
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/config"
+	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/constants"
-	"github.com/stacklok/minder/internal/logger"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
@@ -41,15 +39,8 @@ var (
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
-			cfg, err := config.ReadConfigFromViper(viper.GetViper())
-			if err != nil {
-				return fmt.Errorf("unable to read config: %w", err)
-			}
-
-			l := logger.FromFlags(cfg.LoggingConfig)
 			if constants.TargetEnv == "staging" {
-				l.Warn().Msgf("This build uses a test environment and may not be stable")
+				cmd.Print("WARNING: This build uses a test environment and may not be stable \n")
 			}
 			return nil
 		},
@@ -75,35 +66,14 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	// Global flags
-	RootCmd.PersistentFlags().String("grpc-host", constants.MinderGRPCHost, "Server host")
-	RootCmd.PersistentFlags().Int("grpc-port", 443, "Server port")
-	RootCmd.PersistentFlags().Bool("grpc-insecure", false, "Allow establishing insecure connections")
-	RootCmd.PersistentFlags().String("identity-url", constants.IdentitySeverURL, "Identity server issuer URL")
-	RootCmd.PersistentFlags().String("identity-client", "minder-cli", "Identity server client ID")
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 
-	// Bind viper config to cobra flags
-	if err := viper.BindPFlag("grpc_server.host", RootCmd.PersistentFlags().Lookup("grpc-host")); err != nil {
+	// Register minder cli flags - gRPC client config and identity config
+	if err := clientconfig.RegisterMinderClientFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		RootCmd.Printf("error: %s", err)
 		os.Exit(1)
 	}
-	if err := viper.BindPFlag("grpc_server.port", RootCmd.PersistentFlags().Lookup("grpc-port")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("grpc_server.insecure", RootCmd.PersistentFlags().Lookup("grpc-insecure")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("identity.cli.issuer_url", RootCmd.PersistentFlags().Lookup("identity-url")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
-	if err := viper.BindPFlag("identity.cli.client_id", RootCmd.PersistentFlags().Lookup("identity-client")); err != nil {
-		RootCmd.Printf("error: %s", err)
-		os.Exit(1)
-	}
+
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
 }
 
 func initConfig() {

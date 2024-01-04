@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
@@ -50,9 +50,9 @@ func TestAggregator(t *testing.T) {
 
 	projectID, repoID := createNeededEntities(ctx, t)
 
-	evt, err := events.Setup(ctx, &config.EventConfig{
+	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
 		Driver: "go-channel",
-		GoChannel: config.GoChannelEventConfig{
+		GoChannel: serverconfig.GoChannelEventConfig{
 			BufferSize:                     concurrentEvents,
 			BlockPublishUntilSubscriberAck: true,
 		},
@@ -62,7 +62,7 @@ func TestAggregator(t *testing.T) {
 	// we'll wait 2 seconds for the lock to be available
 	var eventThreshold int64 = 2
 
-	aggr := eea.NewEEA(testQueries, evt, &config.AggregatorConfig{
+	aggr := eea.NewEEA(testQueries, evt, &serverconfig.AggregatorConfig{
 		LockInterval: eventThreshold,
 	})
 

@@ -38,7 +38,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
 // Metadata added to Messages
@@ -118,7 +118,7 @@ var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
 // TODO: pass in logger
-func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
+func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
@@ -152,13 +152,6 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 		messageProcessingTimeHistogram: histogram,
 	}
 
-	// Router level middleware are executed for every message sent to the router
-	router.AddMiddleware(
-		recordMetrics(metricInstruments),
-		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
-		middleware.CorrelationID,
-	)
-
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
@@ -170,6 +163,7 @@ func Setup(ctx context.Context, cfg *config.EventConfig) (*Eventer, error) {
 	}
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
+		recordMetrics(metricInstruments),
 		pq,
 		middleware.Retry{
 			MaxRetries:      3,
@@ -229,7 +223,7 @@ func recordMetrics(m messageInstruments) func(h message.HandlerFunc) message.Han
 func instantiateDriver(
 	ctx context.Context,
 	driver string,
-	cfg *config.EventConfig,
+	cfg *serverconfig.EventConfig,
 ) (message.Publisher, message.Subscriber, driverCloser, error) {
 	switch driver {
 	case GoChannelDriver:
@@ -241,7 +235,7 @@ func instantiateDriver(
 	}
 }
 
-func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.Subscriber, driverCloser, error) {
+func buildGoChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, message.Subscriber, driverCloser, error) {
 	pubsub := gochannel.NewGoChannel(gochannel.Config{
 		OutputChannelBuffer: cfg.GoChannel.BufferSize,
 		Persistent:          cfg.GoChannel.PersistEvents,
@@ -252,7 +246,7 @@ func buildGoChannelDriver(cfg *config.EventConfig) (message.Publisher, message.S
 
 func buildPostgreSQLDriver(
 	ctx context.Context,
-	cfg *config.EventConfig,
+	cfg *serverconfig.EventConfig,
 ) (message.Publisher, message.Subscriber, driverCloser, error) {
 	db, _, err := cfg.SQLPubSub.Connection.GetDBConnection(ctx)
 	if err != nil {

@@ -836,8 +836,8 @@ github.com/ghostiam/protogetter v0.2.3 h1:qdv2pzo3BpLqezwqfGDLZ+nHEYmc5bUpIdsMbB
 github.com/ghostiam/protogetter v0.2.3/go.mod h1:KmNLOsy1v04hKbvZs8EfGI1fk39AgTdRDxWNYPfXVc4=
 github.com/go-chi/chi/v5 v5.0.10 h1:rLz5avzKpjqxrYwXNfmjkrYYXOyLJd37pz53UFHC6vk=
 github.com/go-chi/chi/v5 v5.0.10/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
-github.com/go-critic/go-critic v0.10.0 h1:tOkke48KSKC4tSS5Dc22ICdChMy0maRj1uDgdV5vXfc=
-github.com/go-critic/go-critic v0.10.0/go.mod h1:gW4noMWDewS/WQdqiuJdA0pXbRxito860jj1ucPzy7g=
+github.com/go-critic/go-critic v0.11.0 h1:mARtIFX7jPtJ3SzxO9Isa5T2jd2dZxFmQHK3yNf0wrE=
+github.com/go-critic/go-critic v0.11.0/go.mod h1:Cz6lr1PlkIu/0Y0U9KqJgcIJJECAF8mEwmzVjKnhbfI=
 github.com/go-fonts/dejavu v0.1.0/go.mod h1:4Wt4I4OU2Nq9asgDCteaAaWZOV24E+0/Pwo0gppep4g=
 github.com/go-fonts/latin-modern v0.2.0/go.mod h1:rQVLdDMK+mK1xscDwsqM5J8U2jrRa3T0ecnM9pNujks=
 github.com/go-fonts/liberation v0.1.1/go.mod h1:K6qoJYypsmfVjWg8KOVDQhLc8UDgIK2HYqyqAO9z7GY=

@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/auth"
+	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -41,12 +42,17 @@ var deleteCmd = &cobra.Command{
 func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
 
-	issuerUrl := viper.GetString("identity.cli.issuer_url")
-	clientId := viper.GetString("identity.cli.client_id")
+	clientConfig, err := clientconfig.ReadConfigFromViper(viper.GetViper())
+	if err != nil {
+		return cli.MessageAndError("Unable to read config", err)
+	}
+
+	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
+	clientId := clientConfig.Identity.CLI.ClientId
 	yesFlag := viper.GetBool("yes-delete-my-account")
 
 	// Ensure the user already exists in the local database
-	_, _, err := userRegistered(ctx, client)
+	_, _, err = userRegistered(ctx, client)
 	if err != nil {
 		return cli.MessageAndError("Error checking if user exists", err)
 	}

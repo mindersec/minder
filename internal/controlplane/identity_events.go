@@ -30,7 +30,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 )
 
@@ -49,7 +49,7 @@ type AccountEvent struct {
 }
 
 // SubscribeToIdentityEvents starts a cron job that periodically fetches events from the identity provider
-func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *config.Config) error {
+func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *serverconfig.Config) error {
 	c := cron.New()
 	_, err := c.AddFunc(eventFetchInterval, func() {
 		HandleEvents(ctx, store, cfg)
@@ -62,7 +62,7 @@ func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *config.
 }
 
 // HandleEvents fetches events from the identity provider and performs any related changes to the minder database
-func HandleEvents(ctx context.Context, store db.Store, cfg *config.Config) {
+func HandleEvents(ctx context.Context, store db.Store, cfg *serverconfig.Config) {
 	d := time.Now().Add(time.Duration(10) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
