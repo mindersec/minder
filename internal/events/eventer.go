@@ -204,19 +204,19 @@ func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) 
 				}
 			}
 
+			res, err := h(msg)
+
 			// Defer the DLQ tracking logic to after the message has been processed by other middlewares,
 			// including the deferred PoisonQueue middleware functionality,
 			// so that we can check if it has been poisoned or not.
-			defer func() {
-				isPoisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey) != ""
-				instruments.messageProcessingTimeHistogram.Record(
-					msg.Context(),
-					processingTime.Milliseconds(),
-					metric.WithAttributes(attribute.Bool("poison", isPoisoned)),
-				)
-			}()
+			isPoisoned := msg.Metadata.Get(middleware.ReasonForPoisonedKey) != ""
+			instruments.messageProcessingTimeHistogram.Record(
+				msg.Context(),
+				processingTime.Milliseconds(),
+				metric.WithAttributes(attribute.Bool("poison", isPoisoned)),
+			)
 
-			return h(msg)
+			return res, err
 		}
 	}
 	return metricsFunc
