@@ -50,6 +50,10 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	if deleteAll && !yesFlag {
 		// Ask for confirmation if deleteAll is set on purpose
 		yes := cli.PrintYesNoPrompt(cmd,

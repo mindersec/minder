@@ -63,6 +63,10 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		return cli.MessageAndError("Error fetching user details", err)
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	// Confirm user wants to delete their account
 	if !yesFlag {
 		yes := cli.PrintYesNoPrompt(cmd,

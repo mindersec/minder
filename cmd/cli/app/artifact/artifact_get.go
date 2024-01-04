@@ -64,6 +64,10 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	pbArt, art, versions, err := artifactGet(ctx, client, provider, project, artifactID, artifactName, latestVersions, tag)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact", err)

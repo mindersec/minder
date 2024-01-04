@@ -69,6 +69,10 @@ func loginCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error parsing issuer URL", err)
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	issuerUrl := parsedURL.JoinPath("realms/stacklok")
 	scopes := []string{"openid"}
 	callbackPath := "/auth/callback"

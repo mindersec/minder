@@ -64,6 +64,10 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError("Error expanding file args", err)
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	table := initializeTableForList()
 
 	createFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {

@@ -47,6 +47,10 @@ var logoutCmd = &cobra.Command{
 			return cli.MessageAndError("Error parsing issuer URL", err)
 		}
 
+		// No longer print usage on returned error, since we've parsed our inputs
+		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+		cmd.SilenceUsage = true
+
 		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
 		cmd.Println(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
 		cmd.Printf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())

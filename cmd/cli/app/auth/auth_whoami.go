@@ -37,6 +37,10 @@ var whoamiCmd = &cobra.Command{
 func whoamiCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	userInfo, err := client.GetUser(ctx, &minderv1.GetUserRequest{})
 	if err != nil {
 		return cli.MessageAndError("Error getting information for user", err)

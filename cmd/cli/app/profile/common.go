@@ -46,6 +46,10 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 		return fmt.Errorf("error parsing profile: %w", err)
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	// create a rule
 	profile, err := exec(ctx, f, p)
 	if err != nil {
