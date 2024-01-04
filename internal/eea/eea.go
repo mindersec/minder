@@ -29,7 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/entities"
@@ -41,11 +41,11 @@ import (
 type EEA struct {
 	querier db.Store
 	evt     *events.Eventer
-	cfg     *config.AggregatorConfig
+	cfg     *serverconfig.AggregatorConfig
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt *events.Eventer, cfg *config.AggregatorConfig) *EEA {
+func NewEEA(querier db.Store, evt *events.Eventer, cfg *serverconfig.AggregatorConfig) *EEA {
 	return &EEA{
 		querier: querier,
 		evt:     evt,

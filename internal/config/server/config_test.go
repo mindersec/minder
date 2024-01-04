@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config_test
+package server_test
 
 import (
 	"bytes"
@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
 func TestReadValidConfig(t *testing.T) {
@@ -51,7 +52,7 @@ metric_server:
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := config.ReadConfigFromViper(v)
+	cfg, err := serverconfig.ReadConfigFromViper(v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "myhost", cfg.HTTPServer.Host)
@@ -76,12 +77,12 @@ metric_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, config.RegisterServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, serverconfig.RegisterServerFlags(v, flags), "Unexpected error")
 
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := config.ReadConfigFromViper(v)
+	cfg, err := serverconfig.ReadConfigFromViper(v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "", cfg.HTTPServer.Host)
@@ -112,14 +113,14 @@ metric_server:
 	v := viper.New()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	require.NoError(t, config.RegisterServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, serverconfig.RegisterServerFlags(v, flags), "Unexpected error")
 
 	require.NoError(t, flags.Parse([]string{"--http-host=foo", "--http-port=1234", "--grpc-host=bar", "--grpc-port=5678", "--metric-host=var", "--metric-port=6679"}))
 
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := config.ReadConfigFromViper(v)
+	cfg, err := serverconfig.ReadConfigFromViper(v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "foo", cfg.HTTPServer.Host)
@@ -133,7 +134,7 @@ metric_server:
 func TestReadDefaultConfig(t *testing.T) {
 	t.Parallel()
 
-	cfg := config.DefaultConfigForTest()
+	cfg := serverconfig.DefaultConfigForTest()
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
@@ -144,7 +145,7 @@ func TestReadAuthConfig(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		mutate   func(*testing.T, *config.AuthConfig)
+		mutate   func(*testing.T, *serverconfig.AuthConfig)
 		keyError string
 	}{
 		{
@@ -152,7 +153,7 @@ func TestReadAuthConfig(t *testing.T) {
 		},
 		{
 			name: "missing keys",
-			mutate: func(t *testing.T, cfg *config.AuthConfig) {
+			mutate: func(t *testing.T, cfg *serverconfig.AuthConfig) {
 				t.Helper()
 				require.NoError(t, os.Remove(cfg.TokenKey))
 			},
@@ -165,7 +166,7 @@ func TestReadAuthConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			tmpdir := t.TempDir()
-			cfg := config.AuthConfig{
+			cfg := serverconfig.AuthConfig{
 				TokenKey: filepath.Join(tmpdir, "token_key"),
 			}
 			if err := os.WriteFile(cfg.TokenKey, []byte("test"), 0600); err != nil {

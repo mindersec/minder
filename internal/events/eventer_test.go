@@ -22,7 +22,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events"
 )
 
@@ -39,10 +39,10 @@ type eventPair struct {
 	msg   *message.Message
 }
 
-func driverConfig() *config.EventConfig {
-	return &config.EventConfig{
+func driverConfig() *serverconfig.EventConfig {
+	return &serverconfig.EventConfig{
 		Driver:    "go-channel",
-		GoChannel: config.GoChannelEventConfig{},
+		GoChannel: serverconfig.GoChannelEventConfig{},
 	}
 }
 

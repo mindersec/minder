@@ -13,15 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package server
 
-// WebhookConfig is the configuration for our webhook capabilities
-type WebhookConfig struct {
-	// ExternalWebhookURL is the URL that we will send our webhook to
-	ExternalWebhookURL string `mapstructure:"external_webhook_url"`
-	// ExternalPingURL is the URL that we will send our ping to
-	ExternalPingURL string `mapstructure:"external_ping_url"`
-	// WebhookSecret is the secret that we will use to sign our webhook
-	// TODO: Check if this is actually used and needed
-	WebhookSecret string `mapstructure:"webhook_secret"`
+// LoggingConfig is the configuration for the logging package
+type LoggingConfig struct {
+	Level   string `mapstructure:"level" default:"debug"`
+	Format  string `mapstructure:"format" default:"json"`
+	LogFile string `mapstructure:"logFile" default:""`
 }

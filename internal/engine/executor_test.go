@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -260,9 +260,9 @@ default allow = true`,
 	err = os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
 	require.NoError(t, err, "expected no error")
 
-	evt, err := events.Setup(context.Background(), &config.EventConfig{
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
 		Driver: "go-channel",
-		GoChannel: config.GoChannelEventConfig{
+		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,
 		},
 	})
@@ -282,7 +282,7 @@ default allow = true`,
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	e, err := engine.NewExecutor(ctx, mockStore, &config.AuthConfig{
+	e, err := engine.NewExecutor(ctx, mockStore, &serverconfig.AuthConfig{
 		TokenKey: tokenKeyPath,
 	}, evt)
 	require.NoError(t, err, "expected no error")

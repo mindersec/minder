@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package config
+package server
 
 import (
 	"fmt"
@@ -22,15 +22,17 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/stacklok/minder/internal/config"
 )
 
-// IdentityConfig is the configuration for the identity provider
-type IdentityConfig struct {
-	Server ServerIdentityConfig `mapstructure:"server"`
+// IdentityConfigWrapper is the configuration for the identity provider
+type IdentityConfigWrapper struct {
+	Server IdentityConfig `mapstructure:"server"`
 }
 
-// ServerIdentityConfig is the configuration for the identity provider in minder server
-type ServerIdentityConfig struct {
+// IdentityConfig is the configuration for the identity provider in minder server
+type IdentityConfig struct {
 	// IssuerUrl is the base URL where the identity server is running
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
 	// ClientId is the client ID that identifies the minder server
@@ -42,7 +44,7 @@ type ServerIdentityConfig struct {
 }
 
 // GetClientSecret returns the minder-server client secret
-func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
+func (sic *IdentityConfig) GetClientSecret() (string, error) {
 	if sic.ClientSecretFile != "" {
 		data, err := os.ReadFile(filepath.Clean(sic.ClientSecretFile))
 		if err != nil {
@@ -55,6 +57,6 @@ func (sic *ServerIdentityConfig) GetClientSecret() (string, error) {
 
 // RegisterIdentityFlags registers the flags for the identity server
 func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	return BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
+	return config.BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
 		"The base URL where the identity server is running", flags.String)
 }

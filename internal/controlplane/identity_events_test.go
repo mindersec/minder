@@ -27,7 +27,7 @@ import (
 	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 )
 
@@ -74,9 +74,9 @@ func TestHandleEvents(t *testing.T) {
 		Return(db.User{}, sql.ErrNoRows)
 	mockStore.EXPECT().Rollback(gomock.Any())
 
-	c := config.Config{
-		Identity: config.IdentityConfig{
-			Server: config.ServerIdentityConfig{
+	c := serverconfig.Config{
+		Identity: serverconfig.IdentityConfigWrapper{
+			Server: serverconfig.IdentityConfig{
 				IssuerUrl:    server.URL,
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",

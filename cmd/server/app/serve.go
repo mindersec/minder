@@ -29,7 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
@@ -49,7 +49,7 @@ var serveCmd = &cobra.Command{
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()
 
-		cfg, err := config.ReadConfigFromViper(viper.GetViper())
+		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}
@@ -164,7 +164,7 @@ func init() {
 	v := viper.GetViper()
 
 	// Register flags for the server - http, grpc, metrics
-	if err := config.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
+	if err := serverconfig.RegisterServerFlags(v, serveCmd.Flags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering server flags")
 	}
 
