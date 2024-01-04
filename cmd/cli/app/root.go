@@ -38,13 +38,14 @@ https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 	}
 
-	// This is a "help topic", which is represented as a command with no "Run" function.
+	// ConfigHelpCmd is a "help topic", which is represented as a command with no "Run" function.
 	// See https://github.com/spf13/cobra/issues/393#issuecomment-282741924 and
 	// https://pkg.go.dev/github.com/spf13/cobra#Command.IsAdditionalHelpTopicCommand
 	//nolint:lll
-	configHelpCmd = &cobra.Command{
-		Use:   "config",
-		Short: "How to manage minder CLI configuration",
+	ConfigHelpCmd = &cobra.Command{
+		Use:    "config",
+		Short:  "How to manage minder CLI configuration",
+		Hidden: true,
 		Long: `In addition to the command-line flags, many minder options can be set via a configuration file in the YAML format.
 
 Configuration options include:
@@ -87,7 +88,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	RootCmd.AddCommand(configHelpCmd)
+	RootCmd.AddCommand(ConfigHelpCmd)
 	RootCmd.PersistentFlags().String("config", "", "Config file (default is $PWD/config.yaml)")
 	if err := viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config")); err != nil {
 		RootCmd.Printf("error: %s", err)
