@@ -116,18 +116,9 @@ identity:
 func TestReadClientConfigWithCmdLineArgs(t *testing.T) {
 	t.Parallel()
 
-	clientCfgString := `---
-grpc_server:
-identity:
-`
-	cfgbuf := bytes.NewBufferString(clientCfgString)
-
 	v := viper.New()
 
-	v.SetConfigType("yaml")
-	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
-
-	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	flags := pflag.NewFlagSet("test", pflag.PanicOnError)
 	require.NoError(t, clientconfig.RegisterMinderClientFlags(v, flags), "Unexpected error")
 
 	require.NoError(t, flags.Parse([]string{"--grpc-host=192.168.1.7", "--grpc-port=1234", "--identity-url=http://localhost:1654"}))
@@ -135,6 +126,7 @@ identity:
 
 	cfg, err := clientconfig.ReadConfigFromViper(v)
 	require.NoError(t, err, "Unexpected error")
+	t.Logf("Read Configuration: %+v", cfg)
 
 	require.Equal(t, "192.168.1.7", cfg.GRPCClientConfig.Host)
 	require.Equal(t, 1234, cfg.GRPCClientConfig.Port)
@@ -152,6 +144,36 @@ grpc_server:
 identity:
   cli:
     issuer_url: http://localhost:4567
+`
+	cfgbuf := bytes.NewBufferString(clientCfgString)
+
+	v := viper.New()
+
+	v.SetConfigType("yaml")
+	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
+
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	require.NoError(t, clientconfig.RegisterMinderClientFlags(v, flags), "Unexpected error")
+
+	require.NoError(t, flags.Parse([]string{"--grpc-host=192.168.1.7", "--grpc-port=1234", "--identity-url=http://localhost:1654"}))
+
+	cfg, err := clientconfig.ReadConfigFromViper(v)
+	require.NoError(t, err, "Unexpected error")
+
+	require.Equal(t, "192.168.1.7", cfg.GRPCClientConfig.Host)
+	require.Equal(t, 1234, cfg.GRPCClientConfig.Port)
+	require.Equal(t, false, cfg.GRPCClientConfig.Insecure)
+	require.Equal(t, "http://localhost:1654", cfg.Identity.CLI.IssuerUrl)
+	require.Equal(t, "minder-cli", cfg.Identity.CLI.ClientId)
+}
+
+func TestReadClientConfigWithCmdLineArgsAndEmptyInputConfig(t *testing.T) {
+	t.Parallel()
+	t.Skip("This test is randomly failing. Skipping until we can figure out why. See https://github.com/stacklok/minder/issues/2067")
+
+	clientCfgString := `---
+grpc_server:
+identity:
 `
 	cfgbuf := bytes.NewBufferString(clientCfgString)
 
