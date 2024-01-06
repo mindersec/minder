@@ -18,6 +18,7 @@ package app
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,8 +30,6 @@ import (
 )
 
 var (
-	cfgFile string // config file (default is $PWD/config.yaml)
-
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "minder",
@@ -44,6 +43,29 @@ https://docs.stacklok.com/minder`,
 			}
 			return nil
 		},
+	}
+
+	// ConfigHelpCmd is a "help topic", which is represented as a command with no "Run" function.
+	// See https://github.com/spf13/cobra/issues/393#issuecomment-282741924 and
+	// https://pkg.go.dev/github.com/spf13/cobra#Command.IsAdditionalHelpTopicCommand
+	//nolint:lll
+	ConfigHelpCmd = &cobra.Command{
+		Use:    "config",
+		Short:  "How to manage minder CLI configuration",
+		Hidden: true,
+		Long: `In addition to the command-line flags, many minder options can be set via a configuration file in the YAML format.
+
+Configuration options include:
+- provider
+- project
+- output
+- grpc_server.host
+- grpc_server.port
+- grpc_server.insecure
+- identity.cli.issuer_url
+- identity.cli.client_id
+
+By default, we look for the file as $PWD/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.`,
 	}
 )
 
@@ -73,10 +95,20 @@ func init() {
 		os.Exit(1)
 	}
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file (default is $PWD/config.yaml)")
+	RootCmd.AddCommand(ConfigHelpCmd)
+	RootCmd.PersistentFlags().String("config", "", "Config file (default is $PWD/config.yaml)")
+	if err := viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config")); err != nil {
+		RootCmd.Printf("error: %s", err)
+		os.Exit(1)
+	}
+	viper.AutomaticEnv()
 }
 
 func initConfig() {
+	viper.SetEnvPrefix("minder")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	cfgFile := viper.GetString("config")
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {

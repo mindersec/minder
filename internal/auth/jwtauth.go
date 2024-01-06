@@ -124,6 +124,7 @@ func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) 
 }
 
 var tokenContextKey struct{}
+var userSubjectContextKey struct{}
 
 // GetPermissionsFromContext returns the claims from the context, or an empty default
 func GetPermissionsFromContext(ctx context.Context) UserPermissions {
@@ -137,6 +138,20 @@ func GetPermissionsFromContext(ctx context.Context) UserPermissions {
 // WithPermissionsContext stores the specified UserClaim in the context.
 func WithPermissionsContext(ctx context.Context, claims UserPermissions) context.Context {
 	return context.WithValue(ctx, tokenContextKey, claims)
+}
+
+// GetUserSubjectFromContext returns the user subject from the context, or nil
+func GetUserSubjectFromContext(ctx context.Context) string {
+	subject, ok := ctx.Value(userSubjectContextKey).(string)
+	if !ok {
+		return ""
+	}
+	return subject
+}
+
+// WithUserSubjectContext stores the specified user subject in the context.
+func WithUserSubjectContext(ctx context.Context, subject string) context.Context {
+	return context.WithValue(ctx, userSubjectContextKey, subject)
 }
 
 // GetDefaultProject returns the default project id for the user
