@@ -16,11 +16,9 @@ package logger
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/stacklok/minder/internal/engine/interfaces"
 )
 
 type key int
@@ -30,9 +28,48 @@ const (
 	telemetryContextKey key = iota
 )
 
+// RuleEvalData reports
+type RuleEvalData struct {
+	RuleName string `json:"name"`
+	// Action is an ActionOpt string
+	Action interfaces.ActionOpt `json:"action"`
+
+	// TODO: how to store results of evaluation?  We probably want to cover:
+	// - rule skipped
+	// - rule eval failed
+	// - rule eval passed, no action needed
+	// - rule eval passed, took <store, GHSA, PR, remediate, etc> action
+
+	// TODO: do we want to store params?
+}
+
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
 type TelemetryStore struct {
-	data map[string]any
+	// Project records the project that the request was associated with.
+	Project string `json:"project"`
+
+	// The resource processed by the request, for example, a repository or a profile.
+	Resource string `json:"resource"`
+
+	// Data from RPCs
+
+	// Hashed (SHA256) `sub` from the JWT.  This should be hard to reverse (pseudonymized),
+	// but allows correlation between requests.
+	LoginHash string `json:"login_sha"`
+
+	// Data from event processing; may be empty (for example, for RPCs)
+
+	// Rules evaluated during processing
+	Evals []RuleEvalData `json:"rules"`
+}
+
+func (ts *TelemetryStore) AddRuleEval(ruleName string, action interfaces.ActionOpt) {
+	if ts == nil {
+		return
+	}
+	ts.Evals = append(ts.Evals, RuleEvalData{
+		RuleName: ruleName, Action: action,
+	})
 }
 
 // BusinessRecord provides the ability to store an observation about the current
@@ -41,52 +78,15 @@ type TelemetryStore struct {
 // to the logging system.
 //
 // When called outside a logged context, it will collect and discard the data.
-func BusinessRecord(ctx context.Context) map[string]any {
+func BusinessRecord(ctx context.Context) *TelemetryStore {
 	ts, ok := ctx.Value(telemetryContextKey).(*TelemetryStore)
 	if !ok {
-		// return a dummy value
-		return make(map[string]any)
+		// return a dummy value, to make it easy to chain this call.
+		return &TelemetryStore{}
 	}
 	// Intentionally allowing aliasing here, we want to collect all data for one
 	// from different execution points, then write it out at completion.
-	return ts.data
-}
-
-// ================== ALTERNATE IMPLEMENTATION OPTION ==================
-
-// Recordable represents a simple type that we can record for telemetry.
-type Recordable interface {
-	int | int32 | int64 | float32 | float64 | ~string | bool | time.Time | time.Duration
-}
-
-// BusinessRecord2 provides the ability to store simple values.
-// We can't add json.Marshaller to the Recordable type, so there's
-// also BusinessRecord3 for complex types.
-func BusinessRecord2[T Recordable](ctx context.Context, key string, data T) error {
-	ts, ok := ctx.Value(telemetryContextKey).(*TelemetryStore)
-	if !ok {
-		// No telemetry in context -- allow to pass through
-		return nil
-	}
-	if ts.data[key] != nil {
-		return fmt.Errorf("key %q already recorded", key)
-	}
-	ts.data[key] = data
-	return nil
-}
-
-// BusinessRecord3 provides the ability to store complex data that can be marshalled as JSON.
-func BusinessRecord3(ctx context.Context, key string, data json.Marshaler) error {
-	ts, ok := ctx.Value(telemetryContextKey).(*TelemetryStore)
-	if !ok {
-		// No telemetry in context -- allow to pass through
-		return nil
-	}
-	if ts.data[key] != nil {
-		return fmt.Errorf("key %q already recorded", key)
-	}
-	ts.data[key] = data
-	return nil
+	return ts
 }
 
 // WithTelemetry enriches the current context with a TelemetryStore which will
@@ -95,20 +95,21 @@ func (ts *TelemetryStore) WithTelemetry(ctx context.Context) context.Context {
 	if ts == nil {
 		return ctx
 	}
-	// Initialize the map if it doesn't exist
-	if ts.data == nil {
-		ts.data = make(map[string]any)
-	}
 	return context.WithValue(ctx, telemetryContextKey, ts)
 }
 
 // Record adds the collected data to the supplied event record.
 func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
-	if ts == nil || ts.data == nil {
+	if ts == nil {
 		return e
 	}
-	e.Fields(ts.data)
-	e.Bool("telemetry", true)
+	// We could use reflection here like json.Marshal, but given
+	// the small number of fields, we'll just add them explicitly.
+	e.Str("project", ts.Project).
+		Str("resource", ts.Resource).
+		Str("login_sha", ts.LoginHash).
+		Any("rules", ts.Evals).
+		Bool("telemetry", true)
 	// Note: we explicitly don't call e.Send() here so that Send() occurs in the
 	// same scope as the event is created.
 	return e

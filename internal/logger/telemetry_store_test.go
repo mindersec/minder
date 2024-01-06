@@ -20,10 +20,10 @@ import (
 	"encoding/json"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
 )
 
@@ -51,11 +51,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 	}, {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
-		expected:  `{"foo":"bar","foo2":{"foo":"bar"}}`,
-	}, {
-		name:      "typed recording telemetry",
-		telemetry: &logger.TelemetryStore{},
-		expected:  `{"duration": 3000, "count": 200, "complex": {"data": "test", "number": 1}}`,
+		expected:  `{"project":"bar","resource":"foo/repo","rules":[{"name":"artifact_signature","action":2}]}`,
 	}}
 
 	count := len(cases)
@@ -72,20 +68,10 @@ func TestTelemetryStore_Record(t *testing.T) {
 			ctx := tc.telemetry.WithTelemetry(context.Background())
 
 			// This would normally be inside a function
-			logger.BusinessRecord(ctx)["foo"] = "bar"
-			data := struct {
-				Foo string `json:"foo"`
-			}{"bar"}
-			logger.BusinessRecord(ctx)["foo2"] = data
-			if err := logger.BusinessRecord2(ctx, "duration", time.Second*3); err != nil {
-				t.Fatal("Unable to record duration:", err)
-			}
-			if err := logger.BusinessRecord2(ctx, "count", 200); err != nil {
-				t.Fatal("Unable to record count:", err)
-			}
-			if err := logger.BusinessRecord3(ctx, "complex", &testData{Data: "test", Number: 1}); err != nil {
-				t.Fatal("Unable to record complex data:", err)
-			}
+			logger.BusinessRecord(ctx).Project = "bar"
+			
+			logger.BusinessRecord(ctx).Resource = "foo/repo"
+			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
 
 			tc.telemetry.Record(zlog.Info()).Send()
 
