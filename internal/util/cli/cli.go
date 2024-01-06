@@ -156,3 +156,11 @@ func ExitNicelyOnError(err error, message string) {
 		}
 	}
 }
+
+// GetRepositoryName returns the repository name in the format owner/name
+func GetRepositoryName(owner, name string) string {
+	if owner == "" {
+		return name
+	}
+	return fmt.Sprintf("%s/%s", owner, name)
+}
