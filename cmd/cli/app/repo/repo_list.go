@@ -57,6 +57,10 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	resp, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
 		// keep this until we decide to delete them from the payload and rely only on the context

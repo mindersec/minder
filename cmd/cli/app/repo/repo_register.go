@@ -54,6 +54,10 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
 	alreadyRegisteredRepos, err := fetchAlreadyRegisteredRepos(ctx, provider, project, client)
 	if err != nil {
 		return cli.MessageAndError("Error getting list of registered repos", err)
