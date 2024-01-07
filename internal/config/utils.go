@@ -18,9 +18,12 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 // FlagInst is a function that creates a flag and returns a pointer to the value
@@ -90,4 +93,84 @@ func doViperBind[V any](
 	}
 
 	return nil
+}
+
+// GetConfigFileData returns the data from the given configuration file.
+func GetConfigFileData(cfgFile, defaultCfgPath string) (interface{}, error) {
+	var cfgFilePath string
+	var err error
+	if cfgFile != "" {
+		cfgFilePath, err = filepath.Abs(cfgFile)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		cfgFilePath, err = filepath.Abs(defaultCfgPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cleanCfgFilePath := filepath.Clean(cfgFilePath)
+	if info, err := os.Stat(cleanCfgFilePath); err == nil && info.IsDir() || err != nil && os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	cfgFileBytes, err := os.ReadFile(cleanCfgFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var cfgFileData interface{}
+	err = yaml.Unmarshal(cfgFileBytes, &cfgFileData)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfgFileData, nil
+}
+
+// GetKeysWithNullValueFromYAML returns a list of paths to null values in the given configuration data.
+func GetKeysWithNullValueFromYAML(data interface{}, currentPath string) []string {
+	var keysWithNullValue []string
+	switch v := data.(type) {
+	// gopkg yaml.v2 unmarshals YAML maps into map[interface{}]interface{}.
+	// gopkg yaml.v3 unmarshals YAML maps into map[string]interface{} or map[interface{}]interface{}.
+	case map[interface{}]interface{}:
+		for key, value := range v {
+			var newPath string
+			if key == nil {
+				newPath = fmt.Sprintf("%s.null", currentPath) // X.<nil> is not a valid path
+			} else {
+				newPath = fmt.Sprintf("%s.%v", currentPath, key)
+			}
+			if value == nil {
+				keysWithNullValue = append(keysWithNullValue, newPath)
+			} else {
+				keysWithNullValue = append(keysWithNullValue, GetKeysWithNullValueFromYAML(value, newPath)...)
+			}
+		}
+
+	case map[string]interface{}:
+		for key, value := range v {
+			newPath := fmt.Sprintf("%s.%v", currentPath, key)
+			if value == nil {
+				keysWithNullValue = append(keysWithNullValue, newPath)
+			} else {
+				keysWithNullValue = append(keysWithNullValue, GetKeysWithNullValueFromYAML(value, newPath)...)
+			}
+		}
+
+	case []interface{}:
+		for i, item := range v {
+			newPath := fmt.Sprintf("%s[%d]", currentPath, i)
+			if item == nil {
+				keysWithNullValue = append(keysWithNullValue, newPath)
+			} else {
+				keysWithNullValue = append(keysWithNullValue, GetKeysWithNullValueFromYAML(item, newPath)...)
+			}
+		}
+	}
+
+	return keysWithNullValue
 }
