@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/rs/zerolog"
+
 	"github.com/stacklok/minder/internal/engine/interfaces"
 )
 
@@ -63,6 +64,7 @@ type TelemetryStore struct {
 	Evals []RuleEvalData `json:"rules"`
 }
 
+// AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
 func (ts *TelemetryStore) AddRuleEval(ruleName string, action interfaces.ActionOpt) {
 	if ts == nil {
 		return
@@ -105,11 +107,19 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	// We could use reflection here like json.Marshal, but given
 	// the small number of fields, we'll just add them explicitly.
-	e.Str("project", ts.Project).
-		Str("resource", ts.Resource).
-		Str("login_sha", ts.LoginHash).
-		Any("rules", ts.Evals).
-		Bool("telemetry", true)
+	if ts.Project != "" {
+		e.Str("project", ts.Project)
+	}
+	if ts.Resource != "" {
+		e.Str("resource", ts.Resource)
+	}
+	if ts.LoginHash != "" {
+		e.Str("login_sha", ts.LoginHash)
+	}
+	if len(ts.Evals) > 0 {
+		e.Any("rules", ts.Evals)
+	}
+	e.Bool("telemetry", true)
 	// Note: we explicitly don't call e.Send() here so that Send() occurs in the
 	// same scope as the event is created.
 	return e

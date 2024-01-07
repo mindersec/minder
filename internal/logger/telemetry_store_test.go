@@ -27,31 +27,39 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 )
 
-type testData struct {
-	Data   string `json:"data"`
-	Number int    `json:"number"`
-}
-
-func (t *testData) MarshalJSON() ([]byte, error) {
-	// N.B. you can't use json.Marshal(t), because that will recurse infinitely
-	return json.Marshal(map[string]any{
-		"data":   t.Data,
-		"number": t.Number,
-	})
-}
-
 func TestTelemetryStore_Record(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		name      string
-		telemetry *logger.TelemetryStore
-		expected  string
+		name       string
+		telemetry  *logger.TelemetryStore
+		recordFunc func(context.Context)
+		expected   string
+		notPresent []string
 	}{{
 		name: "nil telemetry",
+		recordFunc: func(ctx context.Context) {
+			logger.BusinessRecord(ctx).Project = "bar"
+
+			logger.BusinessRecord(ctx).Resource = "foo/repo"
+			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
+		},
 	}, {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
-		expected:  `{"project":"bar","resource":"foo/repo","rules":[{"name":"artifact_signature","action":2}]}`,
+		recordFunc: func(ctx context.Context) {
+			logger.BusinessRecord(ctx).Project = "bar"
+
+			logger.BusinessRecord(ctx).Resource = "foo/repo"
+			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
+		},
+		expected: `{"project":"bar","resource":"foo/repo","rules":[{"name":"artifact_signature","action":2}]}`,
+	}, {
+		name:      "empty telemetry",
+		telemetry: &logger.TelemetryStore{},
+		recordFunc: func(ctx context.Context) {
+		},
+		expected:   `{"telemetry": true}`,
+		notPresent: []string{"project", "resource", "rules", "login_sha"},
 	}}
 
 	count := len(cases)
@@ -67,11 +75,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 			// Create a new TelemetryStore instance
 			ctx := tc.telemetry.WithTelemetry(context.Background())
 
-			// This would normally be inside a function
-			logger.BusinessRecord(ctx).Project = "bar"
-			
-			logger.BusinessRecord(ctx).Resource = "foo/repo"
-			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
+			tc.recordFunc(ctx)
 
 			tc.telemetry.Record(zlog.Info()).Send()
 
@@ -92,6 +96,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 			for key, value := range expected {
 				if !reflect.DeepEqual(value, got[key]) {
 					t.Errorf("Expected %s for %q, got %s", value, key, got[key])
+				}
+			}
+
+			for _, key := range tc.notPresent {
+				if _, ok := got[key]; ok {
+					t.Errorf("Expected %q to not be present in %s, but it was", key, got)
 				}
 			}
 		})
