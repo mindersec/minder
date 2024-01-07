@@ -18,11 +18,13 @@ package app
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/constants"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
@@ -109,6 +111,21 @@ func initConfig() {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	cfgFile := viper.GetString("config")
+	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "config.yaml"))
+	if err != nil {
+		RootCmd.PrintErrln(err)
+		os.Exit(1)
+	}
+
+	keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
+	if len(keysWithNullValue) > 0 {
+		RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
+		for _, key := range keysWithNullValue {
+			RootCmd.PrintErrln("Null Value at: " + key)
+		}
+		os.Exit(1)
+	}
+
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
@@ -119,7 +136,7 @@ func initConfig() {
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err = viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; use default values
 			RootCmd.PrintErrln("No config file present, using default values.")

@@ -19,18 +19,19 @@ package app
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
 var (
-	cfgFile string // config file (default is $PWD/server-config.yaml)
 	// RootCmd represents the base command when called without any subcommands
 	RootCmd = &cobra.Command{
 		Use:   "minder-server",
@@ -50,7 +51,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $PWD/server-config.yaml)")
+	RootCmd.PersistentFlags().String("config", "", "config file (default is $PWD/server-config.yaml)")
 	if err := serverconfig.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering database flags")
 	}
@@ -60,10 +61,30 @@ func init() {
 	if err := serverconfig.RegisterIdentityFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering identity flags")
 	}
+	if err := viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config")); err != nil {
+		RootCmd.Printf("error: %s", err)
+		os.Exit(1)
+	}
 }
 
 func initConfig() {
 	serverconfig.SetViperDefaults(viper.GetViper())
+
+	cfgFile := viper.GetString("config")
+	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "server-config.yaml"))
+	if err != nil {
+		RootCmd.PrintErrln(err)
+		os.Exit(1)
+	}
+
+	keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
+	if len(keysWithNullValue) > 0 {
+		RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
+		for _, key := range keysWithNullValue {
+			RootCmd.PrintErrln("Null Value at: " + key)
+		}
+		os.Exit(1)
+	}
 
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
@@ -75,7 +96,7 @@ func initConfig() {
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err != nil {
+	if err = viper.ReadInConfig(); err != nil {
 		fmt.Println("Error reading config file:", err)
 	}
 }
