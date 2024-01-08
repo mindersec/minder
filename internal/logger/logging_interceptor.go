@@ -103,7 +103,7 @@ func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 			logMsg = logger.Error()
 
 			attrs = attrs.Err(err)
-			if globalConfig.LogPayloads {
+			if cfg.LogPayloads {
 				if jsonText, err := json.Marshal(req); err == nil {
 					logMsg = logMsg.RawJSON("Request", jsonText)
 				}
