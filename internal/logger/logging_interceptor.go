@@ -79,7 +79,7 @@ func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 //
 //	server := grpc.NewServer(
 //	  ...
-//	  grpc.UnaryInterceptor(logger.Interceptior),
+//	  grpc.UnaryServerInterceptor(logger.Interceptor(loggingConfig)),
 //	  ...
 //	)
 func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {

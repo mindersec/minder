@@ -27,8 +27,7 @@ import (
 
 // FromFlags configures logging and returns a logger with settings matching
 // the supplied cfg.  It also performs some global initialization, because
-// that's how zerolog works, and we've piggybacked that pattern for payload
-// management.
+// that's how zerolog works.
 func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
 	zlevel := viperLogLevelToZerologLevel(cfg.Level)
 	zerolog.SetGlobalLevel(zlevel)
