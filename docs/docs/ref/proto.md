@@ -200,30 +200,6 @@ buf compatibility checks.
 | retired_organization | [string](#string) | optional |  |
 
 
-<a name="minder-v1-CreateKeyPairRequest"></a>
-
-#### CreateKeyPairRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| passphrase | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
-
-
-<a name="minder-v1-CreateKeyPairResponse"></a>
-
-#### CreateKeyPairResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key_identifier | [string](#string) |  |  |
-| public_key | [string](#string) |  |  |
-
-
 <a name="minder-v1-CreateProfileRequest"></a>
 
 #### CreateProfileRequest
@@ -556,23 +532,6 @@ DiffType defines the diff data ingester.
 | url | [string](#string) |  |  |
 
 
-<a name="minder-v1-GetBranchProtectionRequest"></a>
-
-#### GetBranchProtectionRequest
-
-
-
-<a name="minder-v1-GetBranchProtectionResponse"></a>
-
-#### GetBranchProtectionResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| branch_protections | [BranchProtection](#minder-v1-BranchProtection) | repeated |  |
-
-
 <a name="minder-v1-GetProfileByIdRequest"></a>
 
 #### GetProfileByIdRequest
@@ -657,28 +616,6 @@ if the struct is reused in other messages, it should be moved to a top-level def
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
-
-
-<a name="minder-v1-GetPublicKeyRequest"></a>
-
-#### GetPublicKeyRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key_identifier | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetPublicKeyResponse"></a>
-
-#### GetPublicKeyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| public_key | [string](#string) |  |  |
 
 
 <a name="minder-v1-GetRepositoryByIdRequest"></a>
@@ -775,47 +712,6 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
 
 
-<a name="minder-v1-GetSecretByIdRequest"></a>
-
-#### GetSecretByIdRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetSecretByIdResponse"></a>
-
-#### GetSecretByIdResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| description | [string](#string) |  | Add other relevant fields |
-
-
-<a name="minder-v1-GetSecretsRequest"></a>
-
-#### GetSecretsRequest
-
-
-
-<a name="minder-v1-GetSecretsResponse"></a>
-
-#### GetSecretsResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| secrets | [GetSecretByIdResponse](#minder-v1-GetSecretByIdResponse) | repeated |  |
-
-
 <a name="minder-v1-GetUserRequest"></a>
 
 #### GetUserRequest
@@ -838,56 +734,6 @@ get user
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#minder-v1-UserRecord) | optional |  |
 | projects | [Project](#minder-v1-Project) | repeated |  |
-
-
-<a name="minder-v1-GetVulnerabilitiesRequest"></a>
-
-#### GetVulnerabilitiesRequest
-
-
-
-<a name="minder-v1-GetVulnerabilitiesResponse"></a>
-
-#### GetVulnerabilitiesResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| vulns | [GetVulnerabilityByIdResponse](#minder-v1-GetVulnerabilityByIdResponse) | repeated |  |
-
-
-<a name="minder-v1-GetVulnerabilityByIdRequest"></a>
-
-#### GetVulnerabilityByIdRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetVulnerabilityByIdResponse"></a>
-
-#### GetVulnerabilityByIdResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | May require adjustment, currently set up for GitHub Security Advisories only |
-| github_id | [int64](#int64) |  |  |
-| repo_id | [int64](#int64) |  |  |
-| repo_name | [string](#string) |  |  |
-| package_name | [string](#string) |  |  |
-| severity | [string](#string) |  |  |
-| version_affected | [string](#string) |  |  |
-| upgrade_version | [string](#string) |  |  |
-| ghsaid | [string](#string) |  |  |
-| advisroy_url | [string](#string) |  |  |
-| scanned_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
 <a name="minder-v1-GitHubProviderConfig"></a>
@@ -1179,24 +1025,6 @@ RESTProviderConfig contains the configuration for the REST provider.
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
-<a name="minder-v1-RefreshTokenRequest"></a>
-
-#### RefreshTokenRequest
-
-
-
-<a name="minder-v1-RefreshTokenResponse"></a>
-
-#### RefreshTokenResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| access_token | [string](#string) |  |  |
-| access_token_expires_in | [int64](#int64) |  |  |
-
-
 <a name="minder-v1-RegisterRepoResult"></a>
 
 #### RegisterRepoResult
@@ -1301,41 +1129,6 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | http_code | [int32](#int32) |  |  |
 | body | [string](#string) |  |  |
-
-
-<a name="minder-v1-RevokeOauthProjectTokenRequest"></a>
-
-#### RevokeOauthProjectTokenRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
-
-
-<a name="minder-v1-RevokeOauthProjectTokenResponse"></a>
-
-#### RevokeOauthProjectTokenResponse
-
-
-
-<a name="minder-v1-RevokeOauthTokensRequest"></a>
-
-#### RevokeOauthTokensRequest
-
-
-
-<a name="minder-v1-RevokeOauthTokensResponse"></a>
-
-#### RevokeOauthTokensResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| revoked_tokens | [int32](#int32) |  |  |
 
 
 <a name="minder-v1-RpcOptions"></a>
