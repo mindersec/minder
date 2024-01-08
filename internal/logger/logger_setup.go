@@ -30,7 +30,6 @@ import (
 // that's how zerolog works, and we've piggybacked that pattern for payload
 // management.
 func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
-	globalConfig = cfg
 	zlevel := viperLogLevelToZerologLevel(cfg.Level)
 	zerolog.SetGlobalLevel(zlevel)
 

@@ -31,8 +31,6 @@ import (
 // Text is the constant for the text format
 const Text = "text"
 
-var globalConfig config.LoggingConfig
-
 // Returns a resource log description for the given RPC method
 func resource(method string) *zerolog.Event {
 	return zerolog.Dict().Str("service", path.Dir(method)[1:]).Str("method", path.Base(method))
@@ -84,7 +82,7 @@ func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 //	  grpc.UnaryInterceptor(logger.Interceptior),
 //	  ...
 //	)
-func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.UnaryServerInterceptor {
+func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// Don't log health checks, they spam the logs
 		if info.FullMethod == "/minder.v1.HealthService/CheckHealth" {
