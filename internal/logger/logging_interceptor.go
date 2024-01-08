@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	config "github.com/stacklok/minder/internal/config/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -29,6 +30,8 @@ import (
 
 // Text is the constant for the text format
 const Text = "text"
+
+var globalConfig config.LoggingConfig
 
 // Returns a resource log description for the given RPC method
 func resource(method string) *zerolog.Event {
@@ -102,9 +105,10 @@ func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.U
 			logMsg = logger.Error()
 
 			attrs = attrs.Err(err)
-			// Log the body of errors (TODO: do we need to scrub requests?)
-			if jsonText, err := json.Marshal(req); err != nil {
-				logMsg = logMsg.RawJSON("Body", jsonText)
+			if globalConfig.LogPayloads {
+				if jsonText, err := json.Marshal(req); err == nil {
+					logMsg = logMsg.RawJSON("Request", jsonText)
+				}
 			}
 		}
 		ts.Record(logMsg)
