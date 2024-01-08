@@ -579,29 +579,6 @@ message ExchangeCodeForTokenWEBResponse {
     string status = 4;
 }
 
-message RevokeOauthTokensRequest {
-}
-
-message RevokeOauthTokensResponse {
-    int32 revoked_tokens = 1;
-}
-
-message RevokeOauthProjectTokenRequest {
-    string provider = 1;
-    string project_id = 2;
-}
-
-message RevokeOauthProjectTokenResponse {
-}
-
-message RefreshTokenRequest {    
-}
-
-message RefreshTokenResponse {
-    string access_token = 2;
-    int64  access_token_expires_in = 3;
-}
-
 // Project API Objects
 message Project {
     string project_id = 1;
@@ -734,61 +711,10 @@ message VerifyProviderTokenFromResponse {
     string status = 1;
 }
 
-message GetVulnerabilitiesRequest {
-}
-
-message GetVulnerabilityByIdRequest {
-  string id = 1;
-}
-
-message GetVulnerabilityByIdResponse {
-  // May require adjustment, currently set up for GitHub Security Advisories only
-  string id = 1;
-  int64 github_id = 2;
-  int64 repo_id = 3;
-  string repo_name = 4;
-  string package_name = 5;
-  string severity = 6;
-  string version_affected = 7;
-  string upgrade_version = 8;
-  string ghsaid = 9;
-  string advisroy_url = 10;
-  google.protobuf.Timestamp  scanned_at = 11;
-  google.protobuf.Timestamp  created_at = 12;
-}
-
-message GetVulnerabilitiesResponse {
-  repeated GetVulnerabilityByIdResponse vulns = 1;
-}
-
-message GetSecretsRequest {
-}
-
-message GetSecretsResponse {
-  repeated GetSecretByIdResponse secrets = 1;
-}
-
-message GetSecretByIdRequest {
-  string id = 1;
-}
-
-message GetSecretByIdResponse {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  // Add other relevant fields
-}
-message GetBranchProtectionRequest {
-}
-
 message BranchProtection {
   string branch = 1;
   bool is_protected = 2;
   // Add other relevant fields
-}
-
-message GetBranchProtectionResponse {
-  repeated BranchProtection branch_protections = 1;
 }
 
 // User service
@@ -960,24 +886,6 @@ message GetProfileStatusByProjectRequest {
 message GetProfileStatusByProjectResponse {
     // profile_status is the status of the profile
     repeated ProfileStatus profile_status = 1;
-}
-
-message GetPublicKeyRequest {
-    string key_identifier = 1;
-}
-
-message GetPublicKeyResponse {
-    string public_key = 1;
-}
-
-message CreateKeyPairRequest {
-    string passphrase = 1;
-    string project_id = 2;
-}
-
-message CreateKeyPairResponse {
-    string key_identifier = 1;
-    string public_key = 2;
 }
 
 // Entity defines the entity that is supported by the provider.
