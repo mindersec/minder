@@ -17,6 +17,7 @@
 package app
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,7 +42,7 @@ https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if constants.TargetEnv == "staging" {
-				cmd.Print("WARNING: This build uses a test environment and may not be stable \n")
+				fmt.Fprintf(cmd.ErrOrStderr(), "WARNING: This build uses a test environment and may not be stable \n")
 			}
 			return nil
 		},
