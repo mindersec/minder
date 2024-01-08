@@ -360,11 +360,6 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
 <a name="minder-v1-DeleteUserResponse"></a>
 
 #### DeleteUserResponse
@@ -717,11 +712,6 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 #### GetUserRequest
 list users
 get user
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-GetUserResponse"></a>

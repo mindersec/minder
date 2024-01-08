@@ -732,7 +732,7 @@ message CreateUserResponse {
 }
 
 message DeleteUserRequest {
-    Context context = 1;
+    reserved 1; // deprecated context
 }
 
 message DeleteUserResponse {
@@ -750,7 +750,7 @@ message UserRecord {
 // list users
 // get user
 message GetUserRequest {
-    Context context = 1;
+    reserved 1; // deprecated context
 }
 
 message GetUserResponse {
