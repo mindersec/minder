@@ -64,8 +64,6 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
-#      migrate:
-#        condition: service_completed_successfully
   migrate:
     build: .
     image: minder:latest
@@ -134,6 +132,23 @@ services:
     networks:
       - app_net
     entrypoint: ["/opt/keycloak/scripts/kc-setup.sh"]
+
+  openfga:
+    container_name: openfga
+    image: openfga/openfga:v1.4.1
+    command:
+      - "run"
+    healthcheck:
+      test:
+        - CMD
+        - grpc_health_probe
+        - "-addr=:8081"
+    ports:
+      - 3000:3000
+      - 8082:8080
+      - 8083:8081
+    networks:
+      - app_net
 networks:
   app_net:
     driver: bridge
