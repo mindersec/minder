@@ -18,9 +18,14 @@ package events_test
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events"
@@ -89,8 +94,12 @@ func TestEventer(t *testing.T) {
 			},
 		},
 		{
-			name:    "two subscribers",
-			publish: []eventPair{{"a", &message.Message{Metadata: map[string]string{}}}, {"b", &message.Message{Metadata: map[string]string{}}}, {"a", &message.Message{Metadata: map[string]string{}}}},
+			name: "two subscribers",
+			publish: []eventPair{
+				{"a", &message.Message{Metadata: map[string]string{"one": "1"}}},
+				{"b", &message.Message{Metadata: map[string]string{"two": "2"}}},
+				{"a", &message.Message{Metadata: map[string]string{"three": "3"}}},
+			},
 			want: map[string][]message.Message{
 				"a": {{}, {}},
 				"b": {{}},
@@ -101,8 +110,11 @@ func TestEventer(t *testing.T) {
 			},
 		},
 		{
-			name:    "two subscribers to topic",
-			publish: []eventPair{{"a", &message.Message{Metadata: map[string]string{}}}, {"b", &message.Message{Metadata: map[string]string{}}}},
+			name: "two subscribers to topic",
+			publish: []eventPair{
+				{"a", &message.Message{Metadata: map[string]string{"one": "1"}}},
+				{"b", &message.Message{Metadata: map[string]string{"two": "2"}}},
+			},
 			want: map[string][]message.Message{
 				"a":     {{}},
 				"b":     {{}},
@@ -148,14 +160,13 @@ func TestEventer(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
 			out := make(chan eventPair, len(tt.want))
 			defer close(out)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			eventer, err := events.Setup(ctx, driverConfig())
+			eventer, metricReader, err := setupEventerWithMetricReader(ctx)
 			if err != nil {
 				t.Errorf("Setup() error = %v", err)
 				return
@@ -165,7 +176,8 @@ func TestEventer(t *testing.T) {
 			for i, c := range tt.consumers {
 				localConsumer := c
 				localIdx := i
-				setupConsumer(&localConsumer, out, failureCounters, localIdx, *eventer)
+				setupConsumer(&localConsumer, out, &failureCounters[localIdx])
+				eventer.ConsumeEvents(&localConsumer)
 			}
 
 			go eventer.Run(ctx)
@@ -191,12 +203,8 @@ func TestEventer(t *testing.T) {
 				received[got.topic] = append(received[got.topic], got.msg.Copy())
 			}
 
-			if err := eventer.Close(); err != nil {
-				t.Errorf("Close() error = %v", err)
-			}
-
-			t.Log("Explicitly cancel context")
-			cancel()
+			// Metrics collection happens in another goroutine, so make sure it has a chance to run.
+			time.Sleep(2 * time.Millisecond)
 
 			for topic, msgs := range tt.want {
 				if len(msgs) != len(received[topic]) {
@@ -209,24 +217,98 @@ func TestEventer(t *testing.T) {
 					t.Errorf("expected %d calls to failure handler, got %d", tt.wantsCalls, failureCounters[i])
 				}
 			}
+
+			// Sending messages to the DLQ also counts for processing, so add those in:
+			expectedFailures := 0
+			for _, c := range failureCounters {
+				if c > 0 {
+					expectedFailures++
+				}
+			}
+			checkEventCounts(t, metricReader, uint64(expected), uint64(expectedFailures))
 		})
 	}
 }
 
-func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounters []int, i int, eventer events.Eventer) {
+var setupMu sync.Mutex
+
+// We currently use the global meter provider, so reset it for each test.
+// Since this is global, we use a global mutex to ensure we don't enter setup
+// concurrently.
+func setupEventerWithMetricReader(ctx context.Context) (*events.Eventer, *metric.ManualReader, error) {
+	setupMu.Lock()
+	defer setupMu.Unlock()
+	oldMeter := otel.GetMeterProvider()
+	defer otel.SetMeterProvider(oldMeter)
+	metricReader := metric.NewManualReader()
+	otel.SetMeterProvider(metric.NewMeterProvider(metric.WithReader(metricReader)))
+	eventer, err := events.Setup(ctx, driverConfig())
+	return eventer, metricReader, err
+}
+
+func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounter *int) {
 	c.out = out
 	if c.makeHandler == nil {
 		if c.shouldFailHandler {
-			c.makeHandler = makeFailingHandler(&failureCounters[i])
+			c.makeHandler = makeFailingHandler(failureCounter)
 		} else {
 			c.makeHandler = fakeHandler
 		}
 	}
-	eventer.ConsumeEvents(c)
 }
 
 func makeFailingHandler(counter *int) func(_ string, out chan eventPair) events.Handler {
 	return func(_ string, out chan eventPair) events.Handler {
 		return countFailuresHandler(counter)
+	}
+}
+
+func checkEventCounts(t *testing.T, reader *metric.ManualReader, expectedOk uint64, expectedFail uint64) {
+	t.Helper()
+	rm := metricdata.ResourceMetrics{}
+	if err := reader.Collect(context.Background(), &rm); err != nil {
+		t.Fatalf("Unable to read metrics: %v", err)
+	}
+	if expectedOk == 0 && expectedFail == 0 {
+		return
+	}
+
+	if len(rm.ScopeMetrics) != 1 {
+		t.Fatalf("Expected 1 scope metric, got %d", len(rm.ScopeMetrics))
+	}
+	if len(rm.ScopeMetrics[0].Metrics) != 1 {
+		t.Fatalf("Expected 1 metric, got %d", len(rm.ScopeMetrics[0].Metrics))
+	}
+	if rm.ScopeMetrics[0].Metrics[0].Name != "messages.processing_delay" {
+		t.Errorf("Expected 'messages.processing_delay' metric, got %q", rm.ScopeMetrics[0].Metrics[0].Name)
+	}
+	h, ok := rm.ScopeMetrics[0].Metrics[0].Data.(metricdata.Histogram[int64])
+	if !ok {
+		t.Fatalf("Expected histogram data, got %T", rm.ScopeMetrics[0].Metrics[0].Data)
+	}
+	if len(h.DataPoints) != 1 {
+		t.Fatalf("Expected only one data point, got %v", h)
+	}
+
+	if poisonVal, ok := h.DataPoints[0].Attributes.Value("poison"); !ok {
+		t.Errorf("Doesn't have 'poison' attribute")
+	} else {
+		// In our simple test cases, if we have failures, we expect all messages to be poison.
+		if poisonVal.AsBool() != (expectedFail > 0) {
+			t.Errorf("Expected poison attribute to be %v, got %v", expectedFail > 0, poisonVal.AsBool())
+		}
+	}
+
+	allCounts := uint64(0)
+	for _, c := range h.DataPoints[0].BucketCounts {
+		allCounts += c
+	}
+	if allCounts != expectedOk+expectedFail {
+		t.Errorf("Expected %d messages, got %d", expectedOk+expectedFail, allCounts)
+	}
+
+	largestBucket := h.DataPoints[0].Bounds[len(h.DataPoints[0].Bounds)-1]
+	if largestBucket < 5*60*1000 {
+		t.Errorf("Expected largest bucket to be at least 5 minutes, was %f", largestBucket)
 	}
 }

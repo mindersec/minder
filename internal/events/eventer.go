@@ -118,7 +118,6 @@ var _ Registrar = (*Eventer)(nil)
 var _ message.Publisher = (*Eventer)(nil)
 
 // Setup creates an Eventer object which isolates the watermill setup code
-// TODO: pass in logger
 func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
@@ -126,7 +125,7 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 
 	l := zerowater.NewZerologLoggerAdapter(
 		zerolog.Ctx(ctx).With().Str("component", "watermill").Logger())
-	// TODO: parameterize CloseTimeout for testing
+
 	router, err := message.NewRouter(message.RouterConfig{
 		CloseTimeout: time.Duration(cfg.RouterCloseTimeout) * time.Second,
 	}, l)
@@ -386,6 +385,8 @@ func createProcessingLatencyHistogram(meter metric.Meter) (metric.Int64Histogram
 	processingLatencyHistogram, err := meter.Int64Histogram("messages.processing_delay",
 		metric.WithDescription("Duration between a message being enqueued and dequeued for processing"),
 		metric.WithUnit("ms"),
+		// Pick a set of bucket boundaries that span out to 10 minutes
+		metric.WithExplicitBucketBoundaries(0, 500, 1000, 2000, 5000, 10000, 30000, 60000, 120000, 300000, 600000),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create message processing processingLatencyHistogram: %w", err)
