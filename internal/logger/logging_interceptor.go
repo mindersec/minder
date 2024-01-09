@@ -22,10 +22,11 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	config "github.com/stacklok/minder/internal/config/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	config "github.com/stacklok/minder/internal/config/server"
 )
 
 // Text is the constant for the text format
