@@ -418,35 +418,6 @@ DiffType defines the diff data ingester.
 | context | [Context](#minder-v1-Context) |  |  |
 
 
-<a name="minder-v1-ExchangeCodeForTokenWEBRequest"></a>
-
-#### ExchangeCodeForTokenWEBRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
-| code | [string](#string) |  |  |
-| redirect_uri | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
-<a name="minder-v1-ExchangeCodeForTokenWEBResponse"></a>
-
-#### ExchangeCodeForTokenWEBResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| access_token | [string](#string) |  |  |
-| token_type | [string](#string) |  |  |
-| expires_in | [int64](#int64) |  |  |
-| status | [string](#string) |  |  |
-
-
 <a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest

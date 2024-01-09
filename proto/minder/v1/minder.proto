@@ -555,21 +555,6 @@ message StoreProviderTokenRequest {
 message StoreProviderTokenResponse {    
 }
 
-message ExchangeCodeForTokenWEBRequest{
-    string provider = 1;
-    string project_id = 2;
-    string code = 3;
-    string redirect_uri = 4;
-    Context context = 5;
-}
-
-message ExchangeCodeForTokenWEBResponse {
-    string access_token = 1;
-    string token_type = 2;
-    int64  expires_in = 3;
-    string status = 4;
-}
-
 // Project API Objects
 message Project {
     string project_id = 1;

@@ -1649,156 +1649,6 @@ func (*StoreProviderTokenResponse) Descriptor() ([]byte, []int) {
 	return file_minder_v1_minder_proto_rawDescGZIP(), []int{20}
 }
 
-type ExchangeCodeForTokenWEBRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Provider    string   `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
-	ProjectId   string   `protobuf:"bytes,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
-	Code        string   `protobuf:"bytes,3,opt,name=code,proto3" json:"code,omitempty"`
-	RedirectUri string   `protobuf:"bytes,4,opt,name=redirect_uri,json=redirectUri,proto3" json:"redirect_uri,omitempty"`
-	Context     *Context `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"`
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) Reset() {
-	*x = ExchangeCodeForTokenWEBRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExchangeCodeForTokenWEBRequest) ProtoMessage() {}
-
-func (x *ExchangeCodeForTokenWEBRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExchangeCodeForTokenWEBRequest.ProtoReflect.Descriptor instead.
-func (*ExchangeCodeForTokenWEBRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) GetProvider() string {
-	if x != nil {
-		return x.Provider
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) GetProjectId() string {
-	if x != nil {
-		return x.ProjectId
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) GetRedirectUri() string {
-	if x != nil {
-		return x.RedirectUri
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBRequest) GetContext() *Context {
-	if x != nil {
-		return x.Context
-	}
-	return nil
-}
-
-type ExchangeCodeForTokenWEBResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	AccessToken string `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	TokenType   string `protobuf:"bytes,2,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
-	ExpiresIn   int64  `protobuf:"varint,3,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
-	Status      string `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) Reset() {
-	*x = ExchangeCodeForTokenWEBResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ExchangeCodeForTokenWEBResponse) ProtoMessage() {}
-
-func (x *ExchangeCodeForTokenWEBResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ExchangeCodeForTokenWEBResponse.ProtoReflect.Descriptor instead.
-func (*ExchangeCodeForTokenWEBResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) GetTokenType() string {
-	if x != nil {
-		return x.TokenType
-	}
-	return ""
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) GetExpiresIn() int64 {
-	if x != nil {
-		return x.ExpiresIn
-	}
-	return 0
-}
-
-func (x *ExchangeCodeForTokenWEBResponse) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
 // Project API Objects
 type Project struct {
 	state         protoimpl.MessageState
@@ -1815,7 +1665,7 @@ type Project struct {
 func (x *Project) Reset() {
 	*x = Project{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[23]
+		mi := &file_minder_v1_minder_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1828,7 +1678,7 @@ func (x *Project) String() string {
 func (*Project) ProtoMessage() {}
 
 func (x *Project) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[23]
+	mi := &file_minder_v1_minder_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1841,7 +1691,7 @@ func (x *Project) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Project.ProtoReflect.Descriptor instead.
 func (*Project) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{23}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Project) GetProjectId() string {
@@ -1892,7 +1742,7 @@ type ListRemoteRepositoriesFromProviderRequest struct {
 func (x *ListRemoteRepositoriesFromProviderRequest) Reset() {
 	*x = ListRemoteRepositoriesFromProviderRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[24]
+		mi := &file_minder_v1_minder_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1905,7 +1755,7 @@ func (x *ListRemoteRepositoriesFromProviderRequest) String() string {
 func (*ListRemoteRepositoriesFromProviderRequest) ProtoMessage() {}
 
 func (x *ListRemoteRepositoriesFromProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[24]
+	mi := &file_minder_v1_minder_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1918,7 +1768,7 @@ func (x *ListRemoteRepositoriesFromProviderRequest) ProtoReflect() protoreflect.
 
 // Deprecated: Use ListRemoteRepositoriesFromProviderRequest.ProtoReflect.Descriptor instead.
 func (*ListRemoteRepositoriesFromProviderRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{24}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ListRemoteRepositoriesFromProviderRequest) GetProvider() string {
@@ -1953,7 +1803,7 @@ type ListRemoteRepositoriesFromProviderResponse struct {
 func (x *ListRemoteRepositoriesFromProviderResponse) Reset() {
 	*x = ListRemoteRepositoriesFromProviderResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[25]
+		mi := &file_minder_v1_minder_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1966,7 +1816,7 @@ func (x *ListRemoteRepositoriesFromProviderResponse) String() string {
 func (*ListRemoteRepositoriesFromProviderResponse) ProtoMessage() {}
 
 func (x *ListRemoteRepositoriesFromProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[25]
+	mi := &file_minder_v1_minder_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1979,7 +1829,7 @@ func (x *ListRemoteRepositoriesFromProviderResponse) ProtoReflect() protoreflect
 
 // Deprecated: Use ListRemoteRepositoriesFromProviderResponse.ProtoReflect.Descriptor instead.
 func (*ListRemoteRepositoriesFromProviderResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{25}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListRemoteRepositoriesFromProviderResponse) GetResults() []*UpstreamRepositoryRef {
@@ -2002,7 +1852,7 @@ type UpstreamRepositoryRef struct {
 func (x *UpstreamRepositoryRef) Reset() {
 	*x = UpstreamRepositoryRef{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[26]
+		mi := &file_minder_v1_minder_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2015,7 +1865,7 @@ func (x *UpstreamRepositoryRef) String() string {
 func (*UpstreamRepositoryRef) ProtoMessage() {}
 
 func (x *UpstreamRepositoryRef) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[26]
+	mi := &file_minder_v1_minder_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2028,7 +1878,7 @@ func (x *UpstreamRepositoryRef) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpstreamRepositoryRef.ProtoReflect.Descriptor instead.
 func (*UpstreamRepositoryRef) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{26}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpstreamRepositoryRef) GetOwner() string {
@@ -2080,7 +1930,7 @@ type Repository struct {
 func (x *Repository) Reset() {
 	*x = Repository{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[27]
+		mi := &file_minder_v1_minder_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2093,7 +1943,7 @@ func (x *Repository) String() string {
 func (*Repository) ProtoMessage() {}
 
 func (x *Repository) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[27]
+	mi := &file_minder_v1_minder_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2106,7 +1956,7 @@ func (x *Repository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Repository.ProtoReflect.Descriptor instead.
 func (*Repository) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{27}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *Repository) GetId() string {
@@ -2249,7 +2099,7 @@ type RegisterRepositoryRequest struct {
 func (x *RegisterRepositoryRequest) Reset() {
 	*x = RegisterRepositoryRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[28]
+		mi := &file_minder_v1_minder_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2262,7 +2112,7 @@ func (x *RegisterRepositoryRequest) String() string {
 func (*RegisterRepositoryRequest) ProtoMessage() {}
 
 func (x *RegisterRepositoryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[28]
+	mi := &file_minder_v1_minder_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2275,7 +2125,7 @@ func (x *RegisterRepositoryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRepositoryRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRepositoryRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{28}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RegisterRepositoryRequest) GetProvider() string {
@@ -2318,7 +2168,7 @@ type RegisterRepoResult struct {
 func (x *RegisterRepoResult) Reset() {
 	*x = RegisterRepoResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[29]
+		mi := &file_minder_v1_minder_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2331,7 +2181,7 @@ func (x *RegisterRepoResult) String() string {
 func (*RegisterRepoResult) ProtoMessage() {}
 
 func (x *RegisterRepoResult) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[29]
+	mi := &file_minder_v1_minder_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2344,7 +2194,7 @@ func (x *RegisterRepoResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRepoResult.ProtoReflect.Descriptor instead.
 func (*RegisterRepoResult) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{29}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *RegisterRepoResult) GetRepository() *Repository {
@@ -2372,7 +2222,7 @@ type RegisterRepositoryResponse struct {
 func (x *RegisterRepositoryResponse) Reset() {
 	*x = RegisterRepositoryResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[30]
+		mi := &file_minder_v1_minder_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2385,7 +2235,7 @@ func (x *RegisterRepositoryResponse) String() string {
 func (*RegisterRepositoryResponse) ProtoMessage() {}
 
 func (x *RegisterRepositoryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[30]
+	mi := &file_minder_v1_minder_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2398,7 +2248,7 @@ func (x *RegisterRepositoryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRepositoryResponse.ProtoReflect.Descriptor instead.
 func (*RegisterRepositoryResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{30}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *RegisterRepositoryResponse) GetResult() *RegisterRepoResult {
@@ -2420,7 +2270,7 @@ type GetRepositoryByIdRequest struct {
 func (x *GetRepositoryByIdRequest) Reset() {
 	*x = GetRepositoryByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[31]
+		mi := &file_minder_v1_minder_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2433,7 +2283,7 @@ func (x *GetRepositoryByIdRequest) String() string {
 func (*GetRepositoryByIdRequest) ProtoMessage() {}
 
 func (x *GetRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[31]
+	mi := &file_minder_v1_minder_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2446,7 +2296,7 @@ func (x *GetRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepositoryByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetRepositoryByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{31}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *GetRepositoryByIdRequest) GetRepositoryId() string {
@@ -2474,7 +2324,7 @@ type GetRepositoryByIdResponse struct {
 func (x *GetRepositoryByIdResponse) Reset() {
 	*x = GetRepositoryByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[32]
+		mi := &file_minder_v1_minder_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2487,7 +2337,7 @@ func (x *GetRepositoryByIdResponse) String() string {
 func (*GetRepositoryByIdResponse) ProtoMessage() {}
 
 func (x *GetRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[32]
+	mi := &file_minder_v1_minder_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2500,7 +2350,7 @@ func (x *GetRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepositoryByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetRepositoryByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{32}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *GetRepositoryByIdResponse) GetRepository() *Repository {
@@ -2522,7 +2372,7 @@ type DeleteRepositoryByIdRequest struct {
 func (x *DeleteRepositoryByIdRequest) Reset() {
 	*x = DeleteRepositoryByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[33]
+		mi := &file_minder_v1_minder_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2535,7 +2385,7 @@ func (x *DeleteRepositoryByIdRequest) String() string {
 func (*DeleteRepositoryByIdRequest) ProtoMessage() {}
 
 func (x *DeleteRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[33]
+	mi := &file_minder_v1_minder_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2548,7 +2398,7 @@ func (x *DeleteRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRepositoryByIdRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRepositoryByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{33}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *DeleteRepositoryByIdRequest) GetRepositoryId() string {
@@ -2576,7 +2426,7 @@ type DeleteRepositoryByIdResponse struct {
 func (x *DeleteRepositoryByIdResponse) Reset() {
 	*x = DeleteRepositoryByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[34]
+		mi := &file_minder_v1_minder_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2589,7 +2439,7 @@ func (x *DeleteRepositoryByIdResponse) String() string {
 func (*DeleteRepositoryByIdResponse) ProtoMessage() {}
 
 func (x *DeleteRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[34]
+	mi := &file_minder_v1_minder_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2602,7 +2452,7 @@ func (x *DeleteRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRepositoryByIdResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRepositoryByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{34}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *DeleteRepositoryByIdResponse) GetRepositoryId() string {
@@ -2626,7 +2476,7 @@ type GetRepositoryByNameRequest struct {
 func (x *GetRepositoryByNameRequest) Reset() {
 	*x = GetRepositoryByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[35]
+		mi := &file_minder_v1_minder_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2639,7 +2489,7 @@ func (x *GetRepositoryByNameRequest) String() string {
 func (*GetRepositoryByNameRequest) ProtoMessage() {}
 
 func (x *GetRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[35]
+	mi := &file_minder_v1_minder_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2652,7 +2502,7 @@ func (x *GetRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepositoryByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetRepositoryByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{35}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *GetRepositoryByNameRequest) GetProvider() string {
@@ -2694,7 +2544,7 @@ type GetRepositoryByNameResponse struct {
 func (x *GetRepositoryByNameResponse) Reset() {
 	*x = GetRepositoryByNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[36]
+		mi := &file_minder_v1_minder_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2707,7 +2557,7 @@ func (x *GetRepositoryByNameResponse) String() string {
 func (*GetRepositoryByNameResponse) ProtoMessage() {}
 
 func (x *GetRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[36]
+	mi := &file_minder_v1_minder_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2720,7 +2570,7 @@ func (x *GetRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRepositoryByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetRepositoryByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{36}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetRepositoryByNameResponse) GetRepository() *Repository {
@@ -2744,7 +2594,7 @@ type DeleteRepositoryByNameRequest struct {
 func (x *DeleteRepositoryByNameRequest) Reset() {
 	*x = DeleteRepositoryByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[37]
+		mi := &file_minder_v1_minder_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2757,7 +2607,7 @@ func (x *DeleteRepositoryByNameRequest) String() string {
 func (*DeleteRepositoryByNameRequest) ProtoMessage() {}
 
 func (x *DeleteRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[37]
+	mi := &file_minder_v1_minder_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2770,7 +2620,7 @@ func (x *DeleteRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRepositoryByNameRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRepositoryByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{37}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *DeleteRepositoryByNameRequest) GetProvider() string {
@@ -2812,7 +2662,7 @@ type DeleteRepositoryByNameResponse struct {
 func (x *DeleteRepositoryByNameResponse) Reset() {
 	*x = DeleteRepositoryByNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[38]
+		mi := &file_minder_v1_minder_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2825,7 +2675,7 @@ func (x *DeleteRepositoryByNameResponse) String() string {
 func (*DeleteRepositoryByNameResponse) ProtoMessage() {}
 
 func (x *DeleteRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[38]
+	mi := &file_minder_v1_minder_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2838,7 +2688,7 @@ func (x *DeleteRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRepositoryByNameResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRepositoryByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{38}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *DeleteRepositoryByNameResponse) GetName() string {
@@ -2863,7 +2713,7 @@ type ListRepositoriesRequest struct {
 func (x *ListRepositoriesRequest) Reset() {
 	*x = ListRepositoriesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[39]
+		mi := &file_minder_v1_minder_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2876,7 +2726,7 @@ func (x *ListRepositoriesRequest) String() string {
 func (*ListRepositoriesRequest) ProtoMessage() {}
 
 func (x *ListRepositoriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[39]
+	mi := &file_minder_v1_minder_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2889,7 +2739,7 @@ func (x *ListRepositoriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRepositoriesRequest.ProtoReflect.Descriptor instead.
 func (*ListRepositoriesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{39}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListRepositoriesRequest) GetProvider() string {
@@ -2938,7 +2788,7 @@ type ListRepositoriesResponse struct {
 func (x *ListRepositoriesResponse) Reset() {
 	*x = ListRepositoriesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[40]
+		mi := &file_minder_v1_minder_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2951,7 +2801,7 @@ func (x *ListRepositoriesResponse) String() string {
 func (*ListRepositoriesResponse) ProtoMessage() {}
 
 func (x *ListRepositoriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[40]
+	mi := &file_minder_v1_minder_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2964,7 +2814,7 @@ func (x *ListRepositoriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRepositoriesResponse.ProtoReflect.Descriptor instead.
 func (*ListRepositoriesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{40}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListRepositoriesResponse) GetResults() []*Repository {
@@ -2988,7 +2838,7 @@ type VerifyProviderTokenFromRequest struct {
 func (x *VerifyProviderTokenFromRequest) Reset() {
 	*x = VerifyProviderTokenFromRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[41]
+		mi := &file_minder_v1_minder_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3001,7 +2851,7 @@ func (x *VerifyProviderTokenFromRequest) String() string {
 func (*VerifyProviderTokenFromRequest) ProtoMessage() {}
 
 func (x *VerifyProviderTokenFromRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[41]
+	mi := &file_minder_v1_minder_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3014,7 +2864,7 @@ func (x *VerifyProviderTokenFromRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyProviderTokenFromRequest.ProtoReflect.Descriptor instead.
 func (*VerifyProviderTokenFromRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{41}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *VerifyProviderTokenFromRequest) GetProvider() string {
@@ -3056,7 +2906,7 @@ type VerifyProviderTokenFromResponse struct {
 func (x *VerifyProviderTokenFromResponse) Reset() {
 	*x = VerifyProviderTokenFromResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[42]
+		mi := &file_minder_v1_minder_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3069,7 +2919,7 @@ func (x *VerifyProviderTokenFromResponse) String() string {
 func (*VerifyProviderTokenFromResponse) ProtoMessage() {}
 
 func (x *VerifyProviderTokenFromResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[42]
+	mi := &file_minder_v1_minder_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3082,7 +2932,7 @@ func (x *VerifyProviderTokenFromResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyProviderTokenFromResponse.ProtoReflect.Descriptor instead.
 func (*VerifyProviderTokenFromResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{42}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *VerifyProviderTokenFromResponse) GetStatus() string {
@@ -3104,7 +2954,7 @@ type BranchProtection struct {
 func (x *BranchProtection) Reset() {
 	*x = BranchProtection{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[43]
+		mi := &file_minder_v1_minder_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3117,7 +2967,7 @@ func (x *BranchProtection) String() string {
 func (*BranchProtection) ProtoMessage() {}
 
 func (x *BranchProtection) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[43]
+	mi := &file_minder_v1_minder_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3130,7 +2980,7 @@ func (x *BranchProtection) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BranchProtection.ProtoReflect.Descriptor instead.
 func (*BranchProtection) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{43}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *BranchProtection) GetBranch() string {
@@ -3157,7 +3007,7 @@ type CreateUserRequest struct {
 func (x *CreateUserRequest) Reset() {
 	*x = CreateUserRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[44]
+		mi := &file_minder_v1_minder_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3170,7 +3020,7 @@ func (x *CreateUserRequest) String() string {
 func (*CreateUserRequest) ProtoMessage() {}
 
 func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[44]
+	mi := &file_minder_v1_minder_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3183,7 +3033,7 @@ func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserRequest.ProtoReflect.Descriptor instead.
 func (*CreateUserRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{44}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{42}
 }
 
 type CreateUserResponse struct {
@@ -3204,7 +3054,7 @@ type CreateUserResponse struct {
 func (x *CreateUserResponse) Reset() {
 	*x = CreateUserResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[45]
+		mi := &file_minder_v1_minder_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3217,7 +3067,7 @@ func (x *CreateUserResponse) String() string {
 func (*CreateUserResponse) ProtoMessage() {}
 
 func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[45]
+	mi := &file_minder_v1_minder_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3230,7 +3080,7 @@ func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUserResponse.ProtoReflect.Descriptor instead.
 func (*CreateUserResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{45}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *CreateUserResponse) GetId() int32 {
@@ -3298,7 +3148,7 @@ type DeleteUserRequest struct {
 func (x *DeleteUserRequest) Reset() {
 	*x = DeleteUserRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[46]
+		mi := &file_minder_v1_minder_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3311,7 +3161,7 @@ func (x *DeleteUserRequest) String() string {
 func (*DeleteUserRequest) ProtoMessage() {}
 
 func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[46]
+	mi := &file_minder_v1_minder_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3324,7 +3174,7 @@ func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserRequest.ProtoReflect.Descriptor instead.
 func (*DeleteUserRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{46}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{44}
 }
 
 type DeleteUserResponse struct {
@@ -3336,7 +3186,7 @@ type DeleteUserResponse struct {
 func (x *DeleteUserResponse) Reset() {
 	*x = DeleteUserResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[47]
+		mi := &file_minder_v1_minder_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3349,7 +3199,7 @@ func (x *DeleteUserResponse) String() string {
 func (*DeleteUserResponse) ProtoMessage() {}
 
 func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[47]
+	mi := &file_minder_v1_minder_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3362,7 +3212,7 @@ func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteUserResponse.ProtoReflect.Descriptor instead.
 func (*DeleteUserResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{47}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{45}
 }
 
 // user record to be returned
@@ -3381,7 +3231,7 @@ type UserRecord struct {
 func (x *UserRecord) Reset() {
 	*x = UserRecord{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[48]
+		mi := &file_minder_v1_minder_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3394,7 +3244,7 @@ func (x *UserRecord) String() string {
 func (*UserRecord) ProtoMessage() {}
 
 func (x *UserRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[48]
+	mi := &file_minder_v1_minder_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3407,7 +3257,7 @@ func (x *UserRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserRecord.ProtoReflect.Descriptor instead.
 func (*UserRecord) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{48}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *UserRecord) GetId() int32 {
@@ -3456,7 +3306,7 @@ type GetUserRequest struct {
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[49]
+		mi := &file_minder_v1_minder_proto_msgTypes[47]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3469,7 +3319,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[49]
+	mi := &file_minder_v1_minder_proto_msgTypes[47]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3482,7 +3332,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{49}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{47}
 }
 
 type GetUserResponse struct {
@@ -3497,7 +3347,7 @@ type GetUserResponse struct {
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[50]
+		mi := &file_minder_v1_minder_proto_msgTypes[48]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3510,7 +3360,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[50]
+	mi := &file_minder_v1_minder_proto_msgTypes[48]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3523,7 +3373,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{50}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *GetUserResponse) GetUser() *UserRecord {
@@ -3553,7 +3403,7 @@ type CreateProfileRequest struct {
 func (x *CreateProfileRequest) Reset() {
 	*x = CreateProfileRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[51]
+		mi := &file_minder_v1_minder_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3566,7 +3416,7 @@ func (x *CreateProfileRequest) String() string {
 func (*CreateProfileRequest) ProtoMessage() {}
 
 func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[51]
+	mi := &file_minder_v1_minder_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3579,7 +3429,7 @@ func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProfileRequest.ProtoReflect.Descriptor instead.
 func (*CreateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{51}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *CreateProfileRequest) GetProfile() *Profile {
@@ -3607,7 +3457,7 @@ type CreateProfileResponse struct {
 func (x *CreateProfileResponse) Reset() {
 	*x = CreateProfileResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[52]
+		mi := &file_minder_v1_minder_proto_msgTypes[50]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3620,7 +3470,7 @@ func (x *CreateProfileResponse) String() string {
 func (*CreateProfileResponse) ProtoMessage() {}
 
 func (x *CreateProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[52]
+	mi := &file_minder_v1_minder_proto_msgTypes[50]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3633,7 +3483,7 @@ func (x *CreateProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProfileResponse.ProtoReflect.Descriptor instead.
 func (*CreateProfileResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{52}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *CreateProfileResponse) GetProfile() *Profile {
@@ -3655,7 +3505,7 @@ type UpdateProfileRequest struct {
 func (x *UpdateProfileRequest) Reset() {
 	*x = UpdateProfileRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[53]
+		mi := &file_minder_v1_minder_proto_msgTypes[51]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3668,7 +3518,7 @@ func (x *UpdateProfileRequest) String() string {
 func (*UpdateProfileRequest) ProtoMessage() {}
 
 func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[53]
+	mi := &file_minder_v1_minder_proto_msgTypes[51]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3681,7 +3531,7 @@ func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProfileRequest.ProtoReflect.Descriptor instead.
 func (*UpdateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{53}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *UpdateProfileRequest) GetProfile() *Profile {
@@ -3709,7 +3559,7 @@ type UpdateProfileResponse struct {
 func (x *UpdateProfileResponse) Reset() {
 	*x = UpdateProfileResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[54]
+		mi := &file_minder_v1_minder_proto_msgTypes[52]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3722,7 +3572,7 @@ func (x *UpdateProfileResponse) String() string {
 func (*UpdateProfileResponse) ProtoMessage() {}
 
 func (x *UpdateProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[54]
+	mi := &file_minder_v1_minder_proto_msgTypes[52]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3735,7 +3585,7 @@ func (x *UpdateProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateProfileResponse.ProtoReflect.Descriptor instead.
 func (*UpdateProfileResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{54}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *UpdateProfileResponse) GetProfile() *Profile {
@@ -3759,7 +3609,7 @@ type DeleteProfileRequest struct {
 func (x *DeleteProfileRequest) Reset() {
 	*x = DeleteProfileRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[55]
+		mi := &file_minder_v1_minder_proto_msgTypes[53]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3772,7 +3622,7 @@ func (x *DeleteProfileRequest) String() string {
 func (*DeleteProfileRequest) ProtoMessage() {}
 
 func (x *DeleteProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[55]
+	mi := &file_minder_v1_minder_proto_msgTypes[53]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3785,7 +3635,7 @@ func (x *DeleteProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProfileRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProfileRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{55}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *DeleteProfileRequest) GetContext() *Context {
@@ -3811,7 +3661,7 @@ type DeleteProfileResponse struct {
 func (x *DeleteProfileResponse) Reset() {
 	*x = DeleteProfileResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[56]
+		mi := &file_minder_v1_minder_proto_msgTypes[54]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3824,7 +3674,7 @@ func (x *DeleteProfileResponse) String() string {
 func (*DeleteProfileResponse) ProtoMessage() {}
 
 func (x *DeleteProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[56]
+	mi := &file_minder_v1_minder_proto_msgTypes[54]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3837,7 +3687,7 @@ func (x *DeleteProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProfileResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProfileResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{56}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{54}
 }
 
 // list profiles
@@ -3853,7 +3703,7 @@ type ListProfilesRequest struct {
 func (x *ListProfilesRequest) Reset() {
 	*x = ListProfilesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[57]
+		mi := &file_minder_v1_minder_proto_msgTypes[55]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3866,7 +3716,7 @@ func (x *ListProfilesRequest) String() string {
 func (*ListProfilesRequest) ProtoMessage() {}
 
 func (x *ListProfilesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[57]
+	mi := &file_minder_v1_minder_proto_msgTypes[55]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3879,7 +3729,7 @@ func (x *ListProfilesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProfilesRequest.ProtoReflect.Descriptor instead.
 func (*ListProfilesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{57}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ListProfilesRequest) GetContext() *Context {
@@ -3900,7 +3750,7 @@ type ListProfilesResponse struct {
 func (x *ListProfilesResponse) Reset() {
 	*x = ListProfilesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[58]
+		mi := &file_minder_v1_minder_proto_msgTypes[56]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3913,7 +3763,7 @@ func (x *ListProfilesResponse) String() string {
 func (*ListProfilesResponse) ProtoMessage() {}
 
 func (x *ListProfilesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[58]
+	mi := &file_minder_v1_minder_proto_msgTypes[56]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3926,7 +3776,7 @@ func (x *ListProfilesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProfilesResponse.ProtoReflect.Descriptor instead.
 func (*ListProfilesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{58}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ListProfilesResponse) GetProfiles() []*Profile {
@@ -3951,7 +3801,7 @@ type GetProfileByIdRequest struct {
 func (x *GetProfileByIdRequest) Reset() {
 	*x = GetProfileByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[59]
+		mi := &file_minder_v1_minder_proto_msgTypes[57]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3964,7 +3814,7 @@ func (x *GetProfileByIdRequest) String() string {
 func (*GetProfileByIdRequest) ProtoMessage() {}
 
 func (x *GetProfileByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[59]
+	mi := &file_minder_v1_minder_proto_msgTypes[57]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3977,7 +3827,7 @@ func (x *GetProfileByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetProfileByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{59}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *GetProfileByIdRequest) GetContext() *Context {
@@ -4005,7 +3855,7 @@ type GetProfileByIdResponse struct {
 func (x *GetProfileByIdResponse) Reset() {
 	*x = GetProfileByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[60]
+		mi := &file_minder_v1_minder_proto_msgTypes[58]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4018,7 +3868,7 @@ func (x *GetProfileByIdResponse) String() string {
 func (*GetProfileByIdResponse) ProtoMessage() {}
 
 func (x *GetProfileByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[60]
+	mi := &file_minder_v1_minder_proto_msgTypes[58]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4031,7 +3881,7 @@ func (x *GetProfileByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetProfileByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{60}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *GetProfileByIdResponse) GetProfile() *Profile {
@@ -4060,7 +3910,7 @@ type ProfileStatus struct {
 func (x *ProfileStatus) Reset() {
 	*x = ProfileStatus{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[61]
+		mi := &file_minder_v1_minder_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4073,7 +3923,7 @@ func (x *ProfileStatus) String() string {
 func (*ProfileStatus) ProtoMessage() {}
 
 func (x *ProfileStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[61]
+	mi := &file_minder_v1_minder_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4086,7 +3936,7 @@ func (x *ProfileStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProfileStatus.ProtoReflect.Descriptor instead.
 func (*ProfileStatus) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{61}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *ProfileStatus) GetProfileId() string {
@@ -4152,7 +4002,7 @@ type RuleEvaluationStatus struct {
 func (x *RuleEvaluationStatus) Reset() {
 	*x = RuleEvaluationStatus{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[62]
+		mi := &file_minder_v1_minder_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4165,7 +4015,7 @@ func (x *RuleEvaluationStatus) String() string {
 func (*RuleEvaluationStatus) ProtoMessage() {}
 
 func (x *RuleEvaluationStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[62]
+	mi := &file_minder_v1_minder_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4178,7 +4028,7 @@ func (x *RuleEvaluationStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleEvaluationStatus.ProtoReflect.Descriptor instead.
 func (*RuleEvaluationStatus) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{62}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *RuleEvaluationStatus) GetProfileId() string {
@@ -4282,7 +4132,7 @@ type GetProfileStatusByNameRequest struct {
 func (x *GetProfileStatusByNameRequest) Reset() {
 	*x = GetProfileStatusByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[63]
+		mi := &file_minder_v1_minder_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4295,7 +4145,7 @@ func (x *GetProfileStatusByNameRequest) String() string {
 func (*GetProfileStatusByNameRequest) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[63]
+	mi := &file_minder_v1_minder_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4308,7 +4158,7 @@ func (x *GetProfileStatusByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileStatusByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetProfileStatusByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{63}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *GetProfileStatusByNameRequest) GetContext() *Context {
@@ -4360,7 +4210,7 @@ type GetProfileStatusByNameResponse struct {
 func (x *GetProfileStatusByNameResponse) Reset() {
 	*x = GetProfileStatusByNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[64]
+		mi := &file_minder_v1_minder_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4373,7 +4223,7 @@ func (x *GetProfileStatusByNameResponse) String() string {
 func (*GetProfileStatusByNameResponse) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[64]
+	mi := &file_minder_v1_minder_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4386,7 +4236,7 @@ func (x *GetProfileStatusByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileStatusByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetProfileStatusByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{64}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *GetProfileStatusByNameResponse) GetProfileStatus() *ProfileStatus {
@@ -4415,7 +4265,7 @@ type GetProfileStatusByProjectRequest struct {
 func (x *GetProfileStatusByProjectRequest) Reset() {
 	*x = GetProfileStatusByProjectRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[65]
+		mi := &file_minder_v1_minder_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4428,7 +4278,7 @@ func (x *GetProfileStatusByProjectRequest) String() string {
 func (*GetProfileStatusByProjectRequest) ProtoMessage() {}
 
 func (x *GetProfileStatusByProjectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[65]
+	mi := &file_minder_v1_minder_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4441,7 +4291,7 @@ func (x *GetProfileStatusByProjectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProfileStatusByProjectRequest.ProtoReflect.Descriptor instead.
 func (*GetProfileStatusByProjectRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{65}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *GetProfileStatusByProjectRequest) GetContext() *Context {
@@ -4463,7 +4313,7 @@ type GetProfileStatusByProjectResponse struct {
 func (x *GetProfileStatusByProjectResponse) Reset() {
 	*x = GetProfileStatusByProjectResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[66]
+		mi := &file_minder_v1_minder_proto_msgTypes[64]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4476,7 +4326,7 @@ func (x *GetProfileStatusByProjectResponse) String() string {
 func (*GetProfileStatusByProjectResponse) ProtoMessage() {}
 
 func (x *GetProfileStatusByProjectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[66]
+	mi := &file_minder_v1_minder_proto_msgTypes[64]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4489,7 +4339,7 @@ func (x *GetProfileStatusByProjectResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetProfileStatusByProjectResponse.ProtoReflect.Descriptor instead.
 func (*GetProfileStatusByProjectResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{66}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetProfileStatusByProjectResponse) GetProfileStatus() []*ProfileStatus {
@@ -4512,7 +4362,7 @@ type RESTProviderConfig struct {
 func (x *RESTProviderConfig) Reset() {
 	*x = RESTProviderConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[67]
+		mi := &file_minder_v1_minder_proto_msgTypes[65]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4525,7 +4375,7 @@ func (x *RESTProviderConfig) String() string {
 func (*RESTProviderConfig) ProtoMessage() {}
 
 func (x *RESTProviderConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[67]
+	mi := &file_minder_v1_minder_proto_msgTypes[65]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4538,7 +4388,7 @@ func (x *RESTProviderConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RESTProviderConfig.ProtoReflect.Descriptor instead.
 func (*RESTProviderConfig) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{67}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *RESTProviderConfig) GetBaseUrl() string {
@@ -4567,7 +4417,7 @@ type GitHubProviderConfig struct {
 func (x *GitHubProviderConfig) Reset() {
 	*x = GitHubProviderConfig{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[68]
+		mi := &file_minder_v1_minder_proto_msgTypes[66]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4580,7 +4430,7 @@ func (x *GitHubProviderConfig) String() string {
 func (*GitHubProviderConfig) ProtoMessage() {}
 
 func (x *GitHubProviderConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[68]
+	mi := &file_minder_v1_minder_proto_msgTypes[66]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4593,7 +4443,7 @@ func (x *GitHubProviderConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitHubProviderConfig.ProtoReflect.Descriptor instead.
 func (*GitHubProviderConfig) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{68}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GitHubProviderConfig) GetEndpoint() string {
@@ -4620,7 +4470,7 @@ type Context struct {
 func (x *Context) Reset() {
 	*x = Context{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[69]
+		mi := &file_minder_v1_minder_proto_msgTypes[67]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4633,7 +4483,7 @@ func (x *Context) String() string {
 func (*Context) ProtoMessage() {}
 
 func (x *Context) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[69]
+	mi := &file_minder_v1_minder_proto_msgTypes[67]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4646,7 +4496,7 @@ func (x *Context) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Context.ProtoReflect.Descriptor instead.
 func (*Context) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{69}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *Context) GetProvider() string {
@@ -4683,7 +4533,7 @@ type ListRuleTypesRequest struct {
 func (x *ListRuleTypesRequest) Reset() {
 	*x = ListRuleTypesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[70]
+		mi := &file_minder_v1_minder_proto_msgTypes[68]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4696,7 +4546,7 @@ func (x *ListRuleTypesRequest) String() string {
 func (*ListRuleTypesRequest) ProtoMessage() {}
 
 func (x *ListRuleTypesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[70]
+	mi := &file_minder_v1_minder_proto_msgTypes[68]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4709,7 +4559,7 @@ func (x *ListRuleTypesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRuleTypesRequest.ProtoReflect.Descriptor instead.
 func (*ListRuleTypesRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{70}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *ListRuleTypesRequest) GetContext() *Context {
@@ -4732,7 +4582,7 @@ type ListRuleTypesResponse struct {
 func (x *ListRuleTypesResponse) Reset() {
 	*x = ListRuleTypesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[71]
+		mi := &file_minder_v1_minder_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4745,7 +4595,7 @@ func (x *ListRuleTypesResponse) String() string {
 func (*ListRuleTypesResponse) ProtoMessage() {}
 
 func (x *ListRuleTypesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[71]
+	mi := &file_minder_v1_minder_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4758,7 +4608,7 @@ func (x *ListRuleTypesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRuleTypesResponse.ProtoReflect.Descriptor instead.
 func (*ListRuleTypesResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{71}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *ListRuleTypesResponse) GetRuleTypes() []*RuleType {
@@ -4783,7 +4633,7 @@ type GetRuleTypeByNameRequest struct {
 func (x *GetRuleTypeByNameRequest) Reset() {
 	*x = GetRuleTypeByNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[72]
+		mi := &file_minder_v1_minder_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4796,7 +4646,7 @@ func (x *GetRuleTypeByNameRequest) String() string {
 func (*GetRuleTypeByNameRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[72]
+	mi := &file_minder_v1_minder_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4809,7 +4659,7 @@ func (x *GetRuleTypeByNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByNameRequest.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByNameRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{72}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *GetRuleTypeByNameRequest) GetContext() *Context {
@@ -4839,7 +4689,7 @@ type GetRuleTypeByNameResponse struct {
 func (x *GetRuleTypeByNameResponse) Reset() {
 	*x = GetRuleTypeByNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[73]
+		mi := &file_minder_v1_minder_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4852,7 +4702,7 @@ func (x *GetRuleTypeByNameResponse) String() string {
 func (*GetRuleTypeByNameResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[73]
+	mi := &file_minder_v1_minder_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4865,7 +4715,7 @@ func (x *GetRuleTypeByNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByNameResponse.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByNameResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{73}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *GetRuleTypeByNameResponse) GetRuleType() *RuleType {
@@ -4890,7 +4740,7 @@ type GetRuleTypeByIdRequest struct {
 func (x *GetRuleTypeByIdRequest) Reset() {
 	*x = GetRuleTypeByIdRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[74]
+		mi := &file_minder_v1_minder_proto_msgTypes[72]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4903,7 +4753,7 @@ func (x *GetRuleTypeByIdRequest) String() string {
 func (*GetRuleTypeByIdRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[74]
+	mi := &file_minder_v1_minder_proto_msgTypes[72]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4916,7 +4766,7 @@ func (x *GetRuleTypeByIdRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByIdRequest.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByIdRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{74}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *GetRuleTypeByIdRequest) GetContext() *Context {
@@ -4946,7 +4796,7 @@ type GetRuleTypeByIdResponse struct {
 func (x *GetRuleTypeByIdResponse) Reset() {
 	*x = GetRuleTypeByIdResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[75]
+		mi := &file_minder_v1_minder_proto_msgTypes[73]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4959,7 +4809,7 @@ func (x *GetRuleTypeByIdResponse) String() string {
 func (*GetRuleTypeByIdResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[75]
+	mi := &file_minder_v1_minder_proto_msgTypes[73]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4972,7 +4822,7 @@ func (x *GetRuleTypeByIdResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRuleTypeByIdResponse.ProtoReflect.Descriptor instead.
 func (*GetRuleTypeByIdResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{75}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *GetRuleTypeByIdResponse) GetRuleType() *RuleType {
@@ -4996,7 +4846,7 @@ type CreateRuleTypeRequest struct {
 func (x *CreateRuleTypeRequest) Reset() {
 	*x = CreateRuleTypeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[76]
+		mi := &file_minder_v1_minder_proto_msgTypes[74]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5009,7 +4859,7 @@ func (x *CreateRuleTypeRequest) String() string {
 func (*CreateRuleTypeRequest) ProtoMessage() {}
 
 func (x *CreateRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[76]
+	mi := &file_minder_v1_minder_proto_msgTypes[74]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5022,7 +4872,7 @@ func (x *CreateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*CreateRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{76}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *CreateRuleTypeRequest) GetRuleType() *RuleType {
@@ -5052,7 +4902,7 @@ type CreateRuleTypeResponse struct {
 func (x *CreateRuleTypeResponse) Reset() {
 	*x = CreateRuleTypeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[77]
+		mi := &file_minder_v1_minder_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5065,7 +4915,7 @@ func (x *CreateRuleTypeResponse) String() string {
 func (*CreateRuleTypeResponse) ProtoMessage() {}
 
 func (x *CreateRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[77]
+	mi := &file_minder_v1_minder_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5078,7 +4928,7 @@ func (x *CreateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*CreateRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{77}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *CreateRuleTypeResponse) GetRuleType() *RuleType {
@@ -5102,7 +4952,7 @@ type UpdateRuleTypeRequest struct {
 func (x *UpdateRuleTypeRequest) Reset() {
 	*x = UpdateRuleTypeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[78]
+		mi := &file_minder_v1_minder_proto_msgTypes[76]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5115,7 +4965,7 @@ func (x *UpdateRuleTypeRequest) String() string {
 func (*UpdateRuleTypeRequest) ProtoMessage() {}
 
 func (x *UpdateRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[78]
+	mi := &file_minder_v1_minder_proto_msgTypes[76]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5128,7 +4978,7 @@ func (x *UpdateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{78}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *UpdateRuleTypeRequest) GetRuleType() *RuleType {
@@ -5158,7 +5008,7 @@ type UpdateRuleTypeResponse struct {
 func (x *UpdateRuleTypeResponse) Reset() {
 	*x = UpdateRuleTypeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[79]
+		mi := &file_minder_v1_minder_proto_msgTypes[77]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5171,7 +5021,7 @@ func (x *UpdateRuleTypeResponse) String() string {
 func (*UpdateRuleTypeResponse) ProtoMessage() {}
 
 func (x *UpdateRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[79]
+	mi := &file_minder_v1_minder_proto_msgTypes[77]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5184,7 +5034,7 @@ func (x *UpdateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{79}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{77}
 }
 
 func (x *UpdateRuleTypeResponse) GetRuleType() *RuleType {
@@ -5209,7 +5059,7 @@ type DeleteRuleTypeRequest struct {
 func (x *DeleteRuleTypeRequest) Reset() {
 	*x = DeleteRuleTypeRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[80]
+		mi := &file_minder_v1_minder_proto_msgTypes[78]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5222,7 +5072,7 @@ func (x *DeleteRuleTypeRequest) String() string {
 func (*DeleteRuleTypeRequest) ProtoMessage() {}
 
 func (x *DeleteRuleTypeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[80]
+	mi := &file_minder_v1_minder_proto_msgTypes[78]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5235,7 +5085,7 @@ func (x *DeleteRuleTypeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRuleTypeRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRuleTypeRequest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{80}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{78}
 }
 
 func (x *DeleteRuleTypeRequest) GetContext() *Context {
@@ -5262,7 +5112,7 @@ type DeleteRuleTypeResponse struct {
 func (x *DeleteRuleTypeResponse) Reset() {
 	*x = DeleteRuleTypeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[81]
+		mi := &file_minder_v1_minder_proto_msgTypes[79]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5275,7 +5125,7 @@ func (x *DeleteRuleTypeResponse) String() string {
 func (*DeleteRuleTypeResponse) ProtoMessage() {}
 
 func (x *DeleteRuleTypeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[81]
+	mi := &file_minder_v1_minder_proto_msgTypes[79]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5288,7 +5138,7 @@ func (x *DeleteRuleTypeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRuleTypeResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRuleTypeResponse) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{81}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{79}
 }
 
 // RestType defines the rest data evaluation.
@@ -5320,7 +5170,7 @@ type RestType struct {
 func (x *RestType) Reset() {
 	*x = RestType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[82]
+		mi := &file_minder_v1_minder_proto_msgTypes[80]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5333,7 +5183,7 @@ func (x *RestType) String() string {
 func (*RestType) ProtoMessage() {}
 
 func (x *RestType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[82]
+	mi := &file_minder_v1_minder_proto_msgTypes[80]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5346,7 +5196,7 @@ func (x *RestType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestType.ProtoReflect.Descriptor instead.
 func (*RestType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{82}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{80}
 }
 
 func (x *RestType) GetEndpoint() string {
@@ -5403,7 +5253,7 @@ type BuiltinType struct {
 func (x *BuiltinType) Reset() {
 	*x = BuiltinType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[83]
+		mi := &file_minder_v1_minder_proto_msgTypes[81]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5416,7 +5266,7 @@ func (x *BuiltinType) String() string {
 func (*BuiltinType) ProtoMessage() {}
 
 func (x *BuiltinType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[83]
+	mi := &file_minder_v1_minder_proto_msgTypes[81]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5429,7 +5279,7 @@ func (x *BuiltinType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BuiltinType.ProtoReflect.Descriptor instead.
 func (*BuiltinType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{83}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{81}
 }
 
 func (x *BuiltinType) GetMethod() string {
@@ -5449,7 +5299,7 @@ type ArtifactType struct {
 func (x *ArtifactType) Reset() {
 	*x = ArtifactType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[84]
+		mi := &file_minder_v1_minder_proto_msgTypes[82]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5462,7 +5312,7 @@ func (x *ArtifactType) String() string {
 func (*ArtifactType) ProtoMessage() {}
 
 func (x *ArtifactType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[84]
+	mi := &file_minder_v1_minder_proto_msgTypes[82]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5475,7 +5325,7 @@ func (x *ArtifactType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArtifactType.ProtoReflect.Descriptor instead.
 func (*ArtifactType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{84}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{82}
 }
 
 // GitType defines the git data ingester.
@@ -5493,7 +5343,7 @@ type GitType struct {
 func (x *GitType) Reset() {
 	*x = GitType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[85]
+		mi := &file_minder_v1_minder_proto_msgTypes[83]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5506,7 +5356,7 @@ func (x *GitType) String() string {
 func (*GitType) ProtoMessage() {}
 
 func (x *GitType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[85]
+	mi := &file_minder_v1_minder_proto_msgTypes[83]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5519,7 +5369,7 @@ func (x *GitType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GitType.ProtoReflect.Descriptor instead.
 func (*GitType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{83}
 }
 
 func (x *GitType) GetCloneUrl() string {
@@ -5554,7 +5404,7 @@ type DiffType struct {
 func (x *DiffType) Reset() {
 	*x = DiffType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[86]
+		mi := &file_minder_v1_minder_proto_msgTypes[84]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5567,7 +5417,7 @@ func (x *DiffType) String() string {
 func (*DiffType) ProtoMessage() {}
 
 func (x *DiffType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[86]
+	mi := &file_minder_v1_minder_proto_msgTypes[84]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5580,7 +5430,7 @@ func (x *DiffType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffType.ProtoReflect.Descriptor instead.
 func (*DiffType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{86}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{84}
 }
 
 func (x *DiffType) GetEcosystems() []*DiffType_Ecosystem {
@@ -5622,7 +5472,7 @@ type RuleType struct {
 func (x *RuleType) Reset() {
 	*x = RuleType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[87]
+		mi := &file_minder_v1_minder_proto_msgTypes[85]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5635,7 +5485,7 @@ func (x *RuleType) String() string {
 func (*RuleType) ProtoMessage() {}
 
 func (x *RuleType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[87]
+	mi := &file_minder_v1_minder_proto_msgTypes[85]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5648,7 +5498,7 @@ func (x *RuleType) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType.ProtoReflect.Descriptor instead.
 func (*RuleType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85}
 }
 
 func (x *RuleType) GetId() string {
@@ -5726,7 +5576,7 @@ type Profile struct {
 func (x *Profile) Reset() {
 	*x = Profile{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[88]
+		mi := &file_minder_v1_minder_proto_msgTypes[86]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5739,7 +5589,7 @@ func (x *Profile) String() string {
 func (*Profile) ProtoMessage() {}
 
 func (x *Profile) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[88]
+	mi := &file_minder_v1_minder_proto_msgTypes[86]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5752,7 +5602,7 @@ func (x *Profile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile.ProtoReflect.Descriptor instead.
 func (*Profile) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{88}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{86}
 }
 
 func (x *Profile) GetContext() *Context {
@@ -5844,7 +5694,7 @@ type PrDependencies_ContextualDependency struct {
 func (x *PrDependencies_ContextualDependency) Reset() {
 	*x = PrDependencies_ContextualDependency{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[89]
+		mi := &file_minder_v1_minder_proto_msgTypes[87]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5857,7 +5707,7 @@ func (x *PrDependencies_ContextualDependency) String() string {
 func (*PrDependencies_ContextualDependency) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[89]
+	mi := &file_minder_v1_minder_proto_msgTypes[87]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5899,7 +5749,7 @@ type PrDependencies_ContextualDependency_FilePatch struct {
 func (x *PrDependencies_ContextualDependency_FilePatch) Reset() {
 	*x = PrDependencies_ContextualDependency_FilePatch{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[90]
+		mi := &file_minder_v1_minder_proto_msgTypes[88]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5912,7 +5762,7 @@ func (x *PrDependencies_ContextualDependency_FilePatch) String() string {
 func (*PrDependencies_ContextualDependency_FilePatch) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency_FilePatch) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[90]
+	mi := &file_minder_v1_minder_proto_msgTypes[88]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5954,7 +5804,7 @@ type RegisterRepoResult_Status struct {
 func (x *RegisterRepoResult_Status) Reset() {
 	*x = RegisterRepoResult_Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[91]
+		mi := &file_minder_v1_minder_proto_msgTypes[89]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5967,7 +5817,7 @@ func (x *RegisterRepoResult_Status) String() string {
 func (*RegisterRepoResult_Status) ProtoMessage() {}
 
 func (x *RegisterRepoResult_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[91]
+	mi := &file_minder_v1_minder_proto_msgTypes[89]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5980,7 +5830,7 @@ func (x *RegisterRepoResult_Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRepoResult_Status.ProtoReflect.Descriptor instead.
 func (*RegisterRepoResult_Status) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{29, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{27, 0}
 }
 
 func (x *RegisterRepoResult_Status) GetSuccess() bool {
@@ -6014,7 +5864,7 @@ type GetProfileStatusByNameRequest_EntityTypedId struct {
 func (x *GetProfileStatusByNameRequest_EntityTypedId) Reset() {
 	*x = GetProfileStatusByNameRequest_EntityTypedId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[93]
+		mi := &file_minder_v1_minder_proto_msgTypes[91]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6027,7 +5877,7 @@ func (x *GetProfileStatusByNameRequest_EntityTypedId) String() string {
 func (*GetProfileStatusByNameRequest_EntityTypedId) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameRequest_EntityTypedId) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[93]
+	mi := &file_minder_v1_minder_proto_msgTypes[91]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6040,7 +5890,7 @@ func (x *GetProfileStatusByNameRequest_EntityTypedId) ProtoReflect() protoreflec
 
 // Deprecated: Use GetProfileStatusByNameRequest_EntityTypedId.ProtoReflect.Descriptor instead.
 func (*GetProfileStatusByNameRequest_EntityTypedId) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{63, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{61, 0}
 }
 
 func (x *GetProfileStatusByNameRequest_EntityTypedId) GetType() Entity {
@@ -6069,7 +5919,7 @@ type RestType_Fallback struct {
 func (x *RestType_Fallback) Reset() {
 	*x = RestType_Fallback{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[94]
+		mi := &file_minder_v1_minder_proto_msgTypes[92]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6082,7 +5932,7 @@ func (x *RestType_Fallback) String() string {
 func (*RestType_Fallback) ProtoMessage() {}
 
 func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[94]
+	mi := &file_minder_v1_minder_proto_msgTypes[92]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6095,7 +5945,7 @@ func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestType_Fallback.ProtoReflect.Descriptor instead.
 func (*RestType_Fallback) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{82, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{80, 0}
 }
 
 func (x *RestType_Fallback) GetHttpCode() int32 {
@@ -6126,7 +5976,7 @@ type DiffType_Ecosystem struct {
 func (x *DiffType_Ecosystem) Reset() {
 	*x = DiffType_Ecosystem{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[95]
+		mi := &file_minder_v1_minder_proto_msgTypes[93]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6139,7 +5989,7 @@ func (x *DiffType_Ecosystem) String() string {
 func (*DiffType_Ecosystem) ProtoMessage() {}
 
 func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[95]
+	mi := &file_minder_v1_minder_proto_msgTypes[93]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6152,7 +6002,7 @@ func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiffType_Ecosystem.ProtoReflect.Descriptor instead.
 func (*DiffType_Ecosystem) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{86, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{84, 0}
 }
 
 func (x *DiffType_Ecosystem) GetName() string {
@@ -6192,7 +6042,7 @@ type RuleType_Definition struct {
 func (x *RuleType_Definition) Reset() {
 	*x = RuleType_Definition{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[96]
+		mi := &file_minder_v1_minder_proto_msgTypes[94]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6205,7 +6055,7 @@ func (x *RuleType_Definition) String() string {
 func (*RuleType_Definition) ProtoMessage() {}
 
 func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[96]
+	mi := &file_minder_v1_minder_proto_msgTypes[94]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6218,7 +6068,7 @@ func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0}
 }
 
 func (x *RuleType_Definition) GetInEntity() string {
@@ -6295,7 +6145,7 @@ type RuleType_Definition_Ingest struct {
 func (x *RuleType_Definition_Ingest) Reset() {
 	*x = RuleType_Definition_Ingest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[97]
+		mi := &file_minder_v1_minder_proto_msgTypes[95]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6308,7 +6158,7 @@ func (x *RuleType_Definition_Ingest) String() string {
 func (*RuleType_Definition_Ingest) ProtoMessage() {}
 
 func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[97]
+	mi := &file_minder_v1_minder_proto_msgTypes[95]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6321,7 +6171,7 @@ func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Ingest.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Ingest) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 0}
 }
 
 func (x *RuleType_Definition_Ingest) GetType() string {
@@ -6392,7 +6242,7 @@ type RuleType_Definition_Eval struct {
 func (x *RuleType_Definition_Eval) Reset() {
 	*x = RuleType_Definition_Eval{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[98]
+		mi := &file_minder_v1_minder_proto_msgTypes[96]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6405,7 +6255,7 @@ func (x *RuleType_Definition_Eval) String() string {
 func (*RuleType_Definition_Eval) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[98]
+	mi := &file_minder_v1_minder_proto_msgTypes[96]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6418,7 +6268,7 @@ func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1}
 }
 
 func (x *RuleType_Definition_Eval) GetType() string {
@@ -6470,7 +6320,7 @@ type RuleType_Definition_Remediate struct {
 func (x *RuleType_Definition_Remediate) Reset() {
 	*x = RuleType_Definition_Remediate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[99]
+		mi := &file_minder_v1_minder_proto_msgTypes[97]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6483,7 +6333,7 @@ func (x *RuleType_Definition_Remediate) String() string {
 func (*RuleType_Definition_Remediate) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[99]
+	mi := &file_minder_v1_minder_proto_msgTypes[97]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6496,7 +6346,7 @@ func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Remediate.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 2}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 2}
 }
 
 func (x *RuleType_Definition_Remediate) GetType() string {
@@ -6539,7 +6389,7 @@ type RuleType_Definition_Alert struct {
 func (x *RuleType_Definition_Alert) Reset() {
 	*x = RuleType_Definition_Alert{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[100]
+		mi := &file_minder_v1_minder_proto_msgTypes[98]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6552,7 +6402,7 @@ func (x *RuleType_Definition_Alert) String() string {
 func (*RuleType_Definition_Alert) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[100]
+	mi := &file_minder_v1_minder_proto_msgTypes[98]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6565,7 +6415,7 @@ func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Alert.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Alert) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 3}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 3}
 }
 
 func (x *RuleType_Definition_Alert) GetType() string {
@@ -6596,7 +6446,7 @@ type RuleType_Definition_Eval_JQComparison struct {
 func (x *RuleType_Definition_Eval_JQComparison) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[101]
+		mi := &file_minder_v1_minder_proto_msgTypes[99]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6609,7 +6459,7 @@ func (x *RuleType_Definition_Eval_JQComparison) String() string {
 func (*RuleType_Definition_Eval_JQComparison) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[101]
+	mi := &file_minder_v1_minder_proto_msgTypes[99]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6622,7 +6472,7 @@ func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use RuleType_Definition_Eval_JQComparison.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_JQComparison) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1, 0}
 }
 
 func (x *RuleType_Definition_Eval_JQComparison) GetIngested() *RuleType_Definition_Eval_JQComparison_Operator {
@@ -6667,7 +6517,7 @@ type RuleType_Definition_Eval_Rego struct {
 func (x *RuleType_Definition_Eval_Rego) Reset() {
 	*x = RuleType_Definition_Eval_Rego{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[102]
+		mi := &file_minder_v1_minder_proto_msgTypes[100]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6680,7 +6530,7 @@ func (x *RuleType_Definition_Eval_Rego) String() string {
 func (*RuleType_Definition_Eval_Rego) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[102]
+	mi := &file_minder_v1_minder_proto_msgTypes[100]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6693,7 +6543,7 @@ func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval_Rego.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Rego) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1, 1}
 }
 
 func (x *RuleType_Definition_Eval_Rego) GetType() string {
@@ -6726,7 +6576,7 @@ type RuleType_Definition_Eval_Vulncheck struct {
 func (x *RuleType_Definition_Eval_Vulncheck) Reset() {
 	*x = RuleType_Definition_Eval_Vulncheck{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[103]
+		mi := &file_minder_v1_minder_proto_msgTypes[101]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6739,7 +6589,7 @@ func (x *RuleType_Definition_Eval_Vulncheck) String() string {
 func (*RuleType_Definition_Eval_Vulncheck) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[103]
+	mi := &file_minder_v1_minder_proto_msgTypes[101]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6752,7 +6602,7 @@ func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use RuleType_Definition_Eval_Vulncheck.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Vulncheck) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1, 2}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1, 2}
 }
 
 type RuleType_Definition_Eval_Trusty struct {
@@ -6767,7 +6617,7 @@ type RuleType_Definition_Eval_Trusty struct {
 func (x *RuleType_Definition_Eval_Trusty) Reset() {
 	*x = RuleType_Definition_Eval_Trusty{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[104]
+		mi := &file_minder_v1_minder_proto_msgTypes[102]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6780,7 +6630,7 @@ func (x *RuleType_Definition_Eval_Trusty) String() string {
 func (*RuleType_Definition_Eval_Trusty) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[104]
+	mi := &file_minder_v1_minder_proto_msgTypes[102]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6793,7 +6643,7 @@ func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RuleType_Definition_Eval_Trusty.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_Trusty) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1, 3}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1, 3}
 }
 
 func (x *RuleType_Definition_Eval_Trusty) GetEndpoint() string {
@@ -6814,7 +6664,7 @@ type RuleType_Definition_Eval_JQComparison_Operator struct {
 func (x *RuleType_Definition_Eval_JQComparison_Operator) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison_Operator{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[105]
+		mi := &file_minder_v1_minder_proto_msgTypes[103]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6827,7 +6677,7 @@ func (x *RuleType_Definition_Eval_JQComparison_Operator) String() string {
 func (*RuleType_Definition_Eval_JQComparison_Operator) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	mi := &file_minder_v1_minder_proto_msgTypes[103]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6840,7 +6690,7 @@ func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoref
 
 // Deprecated: Use RuleType_Definition_Eval_JQComparison_Operator.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Eval_JQComparison_Operator) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 1, 0, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 1, 0, 0}
 }
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) GetDef() string {
@@ -6861,7 +6711,7 @@ type RuleType_Definition_Remediate_GhBranchProtectionType struct {
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) Reset() {
 	*x = RuleType_Definition_Remediate_GhBranchProtectionType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[106]
+		mi := &file_minder_v1_minder_proto_msgTypes[104]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6874,7 +6724,7 @@ func (x *RuleType_Definition_Remediate_GhBranchProtectionType) String() string {
 func (*RuleType_Definition_Remediate_GhBranchProtectionType) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[106]
+	mi := &file_minder_v1_minder_proto_msgTypes[104]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6887,7 +6737,7 @@ func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() pr
 
 // Deprecated: Use RuleType_Definition_Remediate_GhBranchProtectionType.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_GhBranchProtectionType) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 2, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 2, 0}
 }
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) GetPatch() string {
@@ -6925,7 +6775,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[107]
+		mi := &file_minder_v1_minder_proto_msgTypes[105]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6938,7 +6788,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) String() string {
 func (*RuleType_Definition_Remediate_PullRequestRemediation) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[107]
+	mi := &file_minder_v1_minder_proto_msgTypes[105]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6951,7 +6801,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() pr
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 2, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 2, 1}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) GetTitle() string {
@@ -7010,7 +6860,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_Content{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[108]
+		mi := &file_minder_v1_minder_proto_msgTypes[106]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7023,7 +6873,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) String() 
 func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[108]
+	mi := &file_minder_v1_minder_proto_msgTypes[106]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7036,7 +6886,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoRefl
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation_Content.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 2, 1, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 2, 1, 0}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) GetPath() string {
@@ -7079,7 +6929,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWith
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[109]
+		mi := &file_minder_v1_minder_proto_msgTypes[107]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7093,7 +6943,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWi
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[109]
+	mi := &file_minder_v1_minder_proto_msgTypes[107]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7106,7 +6956,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTags
 
 // Deprecated: Use RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 2, 1, 1}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 2, 1, 1}
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) GetExclude() []string {
@@ -7127,7 +6977,7 @@ type RuleType_Definition_Alert_AlertTypeSA struct {
 func (x *RuleType_Definition_Alert_AlertTypeSA) Reset() {
 	*x = RuleType_Definition_Alert_AlertTypeSA{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[110]
+		mi := &file_minder_v1_minder_proto_msgTypes[108]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7140,7 +6990,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) String() string {
 func (*RuleType_Definition_Alert_AlertTypeSA) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[110]
+	mi := &file_minder_v1_minder_proto_msgTypes[108]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7153,7 +7003,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use RuleType_Definition_Alert_AlertTypeSA.ProtoReflect.Descriptor instead.
 func (*RuleType_Definition_Alert_AlertTypeSA) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87, 0, 3, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{85, 0, 3, 0}
 }
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) GetSeverity() string {
@@ -7182,7 +7032,7 @@ type Profile_Rule struct {
 func (x *Profile_Rule) Reset() {
 	*x = Profile_Rule{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[111]
+		mi := &file_minder_v1_minder_proto_msgTypes[109]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -7195,7 +7045,7 @@ func (x *Profile_Rule) String() string {
 func (*Profile_Rule) ProtoMessage() {}
 
 func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[111]
+	mi := &file_minder_v1_minder_proto_msgTypes[109]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7208,7 +7058,7 @@ func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile_Rule.ProtoReflect.Descriptor instead.
 func (*Profile_Rule) Descriptor() ([]byte, []int) {
-	return file_minder_v1_minder_proto_rawDescGZIP(), []int{88, 0}
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{86, 0}
 }
 
 func (x *Profile_Rule) GetType() string {
@@ -7490,29 +7340,7 @@ var file_minder_v1_minder_proto_rawDesc = []byte{
 	0x65, 0x78, 0x74, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x42, 0x08, 0x0a, 0x06,
 	0x5f, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x22, 0x1c, 0x0a, 0x1a, 0x53, 0x74, 0x6f, 0x72, 0x65, 0x50,
 	0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xc0, 0x01, 0x0a, 0x1e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67,
-	0x65, 0x43, 0x6f, 0x64, 0x65, 0x46, 0x6f, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x57, 0x45, 0x42,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69,
-	0x64, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69,
-	0x64, 0x65, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69,
-	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74,
-	0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65,
-	0x63, 0x74, 0x5f, 0x75, 0x72, 0x69, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65,
-	0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x55, 0x72, 0x69, 0x12, 0x2c, 0x0a, 0x07, 0x63, 0x6f, 0x6e,
-	0x74, 0x65, 0x78, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x69, 0x6e,
-	0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52, 0x07,
-	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x22, 0x9a, 0x01, 0x0a, 0x1f, 0x45, 0x78, 0x63, 0x68,
-	0x61, 0x6e, 0x67, 0x65, 0x43, 0x6f, 0x64, 0x65, 0x46, 0x6f, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x57, 0x45, 0x42, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x61,
-	0x63, 0x63, 0x65, 0x73, 0x73, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x0b, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x1d,
-	0x0a, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1d, 0x0a,
-	0x0a, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x5f, 0x69, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x03, 0x52, 0x09, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x73, 0x49, 0x6e, 0x12, 0x16, 0x0a, 0x06,
-	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x74,
-	0x61, 0x74, 0x75, 0x73, 0x22, 0xd4, 0x01, 0x0a, 0x07, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0xd4, 0x01, 0x0a, 0x07, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74,
 	0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49, 0x64, 0x12,
 	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
@@ -8552,7 +8380,7 @@ func file_minder_v1_minder_proto_rawDescGZIP() []byte {
 }
 
 var file_minder_v1_minder_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 112)
+var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 110)
 var file_minder_v1_minder_proto_goTypes = []interface{}{
 	(ObjectOwner)(0),                                                     // 0: minder.v1.ObjectOwner
 	(DepEcosystem)(0),                                                    // 1: minder.v1.DepEcosystem
@@ -8578,293 +8406,290 @@ var file_minder_v1_minder_proto_goTypes = []interface{}{
 	(*ExchangeCodeForTokenCLIRequest)(nil),                               // 21: minder.v1.ExchangeCodeForTokenCLIRequest
 	(*StoreProviderTokenRequest)(nil),                                    // 22: minder.v1.StoreProviderTokenRequest
 	(*StoreProviderTokenResponse)(nil),                                   // 23: minder.v1.StoreProviderTokenResponse
-	(*ExchangeCodeForTokenWEBRequest)(nil),                               // 24: minder.v1.ExchangeCodeForTokenWEBRequest
-	(*ExchangeCodeForTokenWEBResponse)(nil),                              // 25: minder.v1.ExchangeCodeForTokenWEBResponse
-	(*Project)(nil),                                                      // 26: minder.v1.Project
-	(*ListRemoteRepositoriesFromProviderRequest)(nil),                    // 27: minder.v1.ListRemoteRepositoriesFromProviderRequest
-	(*ListRemoteRepositoriesFromProviderResponse)(nil),                   // 28: minder.v1.ListRemoteRepositoriesFromProviderResponse
-	(*UpstreamRepositoryRef)(nil),                                        // 29: minder.v1.UpstreamRepositoryRef
-	(*Repository)(nil),                                                   // 30: minder.v1.Repository
-	(*RegisterRepositoryRequest)(nil),                                    // 31: minder.v1.RegisterRepositoryRequest
-	(*RegisterRepoResult)(nil),                                           // 32: minder.v1.RegisterRepoResult
-	(*RegisterRepositoryResponse)(nil),                                   // 33: minder.v1.RegisterRepositoryResponse
-	(*GetRepositoryByIdRequest)(nil),                                     // 34: minder.v1.GetRepositoryByIdRequest
-	(*GetRepositoryByIdResponse)(nil),                                    // 35: minder.v1.GetRepositoryByIdResponse
-	(*DeleteRepositoryByIdRequest)(nil),                                  // 36: minder.v1.DeleteRepositoryByIdRequest
-	(*DeleteRepositoryByIdResponse)(nil),                                 // 37: minder.v1.DeleteRepositoryByIdResponse
-	(*GetRepositoryByNameRequest)(nil),                                   // 38: minder.v1.GetRepositoryByNameRequest
-	(*GetRepositoryByNameResponse)(nil),                                  // 39: minder.v1.GetRepositoryByNameResponse
-	(*DeleteRepositoryByNameRequest)(nil),                                // 40: minder.v1.DeleteRepositoryByNameRequest
-	(*DeleteRepositoryByNameResponse)(nil),                               // 41: minder.v1.DeleteRepositoryByNameResponse
-	(*ListRepositoriesRequest)(nil),                                      // 42: minder.v1.ListRepositoriesRequest
-	(*ListRepositoriesResponse)(nil),                                     // 43: minder.v1.ListRepositoriesResponse
-	(*VerifyProviderTokenFromRequest)(nil),                               // 44: minder.v1.VerifyProviderTokenFromRequest
-	(*VerifyProviderTokenFromResponse)(nil),                              // 45: minder.v1.VerifyProviderTokenFromResponse
-	(*BranchProtection)(nil),                                             // 46: minder.v1.BranchProtection
-	(*CreateUserRequest)(nil),                                            // 47: minder.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),                                           // 48: minder.v1.CreateUserResponse
-	(*DeleteUserRequest)(nil),                                            // 49: minder.v1.DeleteUserRequest
-	(*DeleteUserResponse)(nil),                                           // 50: minder.v1.DeleteUserResponse
-	(*UserRecord)(nil),                                                   // 51: minder.v1.UserRecord
-	(*GetUserRequest)(nil),                                               // 52: minder.v1.GetUserRequest
-	(*GetUserResponse)(nil),                                              // 53: minder.v1.GetUserResponse
-	(*CreateProfileRequest)(nil),                                         // 54: minder.v1.CreateProfileRequest
-	(*CreateProfileResponse)(nil),                                        // 55: minder.v1.CreateProfileResponse
-	(*UpdateProfileRequest)(nil),                                         // 56: minder.v1.UpdateProfileRequest
-	(*UpdateProfileResponse)(nil),                                        // 57: minder.v1.UpdateProfileResponse
-	(*DeleteProfileRequest)(nil),                                         // 58: minder.v1.DeleteProfileRequest
-	(*DeleteProfileResponse)(nil),                                        // 59: minder.v1.DeleteProfileResponse
-	(*ListProfilesRequest)(nil),                                          // 60: minder.v1.ListProfilesRequest
-	(*ListProfilesResponse)(nil),                                         // 61: minder.v1.ListProfilesResponse
-	(*GetProfileByIdRequest)(nil),                                        // 62: minder.v1.GetProfileByIdRequest
-	(*GetProfileByIdResponse)(nil),                                       // 63: minder.v1.GetProfileByIdResponse
-	(*ProfileStatus)(nil),                                                // 64: minder.v1.ProfileStatus
-	(*RuleEvaluationStatus)(nil),                                         // 65: minder.v1.RuleEvaluationStatus
-	(*GetProfileStatusByNameRequest)(nil),                                // 66: minder.v1.GetProfileStatusByNameRequest
-	(*GetProfileStatusByNameResponse)(nil),                               // 67: minder.v1.GetProfileStatusByNameResponse
-	(*GetProfileStatusByProjectRequest)(nil),                             // 68: minder.v1.GetProfileStatusByProjectRequest
-	(*GetProfileStatusByProjectResponse)(nil),                            // 69: minder.v1.GetProfileStatusByProjectResponse
-	(*RESTProviderConfig)(nil),                                           // 70: minder.v1.RESTProviderConfig
-	(*GitHubProviderConfig)(nil),                                         // 71: minder.v1.GitHubProviderConfig
-	(*Context)(nil),                                                      // 72: minder.v1.Context
-	(*ListRuleTypesRequest)(nil),                                         // 73: minder.v1.ListRuleTypesRequest
-	(*ListRuleTypesResponse)(nil),                                        // 74: minder.v1.ListRuleTypesResponse
-	(*GetRuleTypeByNameRequest)(nil),                                     // 75: minder.v1.GetRuleTypeByNameRequest
-	(*GetRuleTypeByNameResponse)(nil),                                    // 76: minder.v1.GetRuleTypeByNameResponse
-	(*GetRuleTypeByIdRequest)(nil),                                       // 77: minder.v1.GetRuleTypeByIdRequest
-	(*GetRuleTypeByIdResponse)(nil),                                      // 78: minder.v1.GetRuleTypeByIdResponse
-	(*CreateRuleTypeRequest)(nil),                                        // 79: minder.v1.CreateRuleTypeRequest
-	(*CreateRuleTypeResponse)(nil),                                       // 80: minder.v1.CreateRuleTypeResponse
-	(*UpdateRuleTypeRequest)(nil),                                        // 81: minder.v1.UpdateRuleTypeRequest
-	(*UpdateRuleTypeResponse)(nil),                                       // 82: minder.v1.UpdateRuleTypeResponse
-	(*DeleteRuleTypeRequest)(nil),                                        // 83: minder.v1.DeleteRuleTypeRequest
-	(*DeleteRuleTypeResponse)(nil),                                       // 84: minder.v1.DeleteRuleTypeResponse
-	(*RestType)(nil),                                                     // 85: minder.v1.RestType
-	(*BuiltinType)(nil),                                                  // 86: minder.v1.BuiltinType
-	(*ArtifactType)(nil),                                                 // 87: minder.v1.ArtifactType
-	(*GitType)(nil),                                                      // 88: minder.v1.GitType
-	(*DiffType)(nil),                                                     // 89: minder.v1.DiffType
-	(*RuleType)(nil),                                                     // 90: minder.v1.RuleType
-	(*Profile)(nil),                                                      // 91: minder.v1.Profile
-	(*PrDependencies_ContextualDependency)(nil),                          // 92: minder.v1.PrDependencies.ContextualDependency
-	(*PrDependencies_ContextualDependency_FilePatch)(nil),                // 93: minder.v1.PrDependencies.ContextualDependency.FilePatch
-	(*RegisterRepoResult_Status)(nil),                                    // 94: minder.v1.RegisterRepoResult.Status
-	nil,                                                                  // 95: minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	(*GetProfileStatusByNameRequest_EntityTypedId)(nil),                  // 96: minder.v1.GetProfileStatusByNameRequest.EntityTypedId
-	(*RestType_Fallback)(nil),                                            // 97: minder.v1.RestType.Fallback
-	(*DiffType_Ecosystem)(nil),                                           // 98: minder.v1.DiffType.Ecosystem
-	(*RuleType_Definition)(nil),                                          // 99: minder.v1.RuleType.Definition
-	(*RuleType_Definition_Ingest)(nil),                                   // 100: minder.v1.RuleType.Definition.Ingest
-	(*RuleType_Definition_Eval)(nil),                                     // 101: minder.v1.RuleType.Definition.Eval
-	(*RuleType_Definition_Remediate)(nil),                                // 102: minder.v1.RuleType.Definition.Remediate
-	(*RuleType_Definition_Alert)(nil),                                    // 103: minder.v1.RuleType.Definition.Alert
-	(*RuleType_Definition_Eval_JQComparison)(nil),                        // 104: minder.v1.RuleType.Definition.Eval.JQComparison
-	(*RuleType_Definition_Eval_Rego)(nil),                                // 105: minder.v1.RuleType.Definition.Eval.Rego
-	(*RuleType_Definition_Eval_Vulncheck)(nil),                           // 106: minder.v1.RuleType.Definition.Eval.Vulncheck
-	(*RuleType_Definition_Eval_Trusty)(nil),                              // 107: minder.v1.RuleType.Definition.Eval.Trusty
-	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),               // 108: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),         // 109: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),         // 110: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil), // 111: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 112: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 113: minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	(*Profile_Rule)(nil),               // 114: minder.v1.Profile.Rule
-	(*timestamppb.Timestamp)(nil),      // 115: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),            // 116: google.protobuf.Struct
-	(*descriptorpb.MethodOptions)(nil), // 117: google.protobuf.MethodOptions
-	(*httpbody.HttpBody)(nil),          // 118: google.api.HttpBody
+	(*Project)(nil),                                                      // 24: minder.v1.Project
+	(*ListRemoteRepositoriesFromProviderRequest)(nil),                    // 25: minder.v1.ListRemoteRepositoriesFromProviderRequest
+	(*ListRemoteRepositoriesFromProviderResponse)(nil),                   // 26: minder.v1.ListRemoteRepositoriesFromProviderResponse
+	(*UpstreamRepositoryRef)(nil),                                        // 27: minder.v1.UpstreamRepositoryRef
+	(*Repository)(nil),                                                   // 28: minder.v1.Repository
+	(*RegisterRepositoryRequest)(nil),                                    // 29: minder.v1.RegisterRepositoryRequest
+	(*RegisterRepoResult)(nil),                                           // 30: minder.v1.RegisterRepoResult
+	(*RegisterRepositoryResponse)(nil),                                   // 31: minder.v1.RegisterRepositoryResponse
+	(*GetRepositoryByIdRequest)(nil),                                     // 32: minder.v1.GetRepositoryByIdRequest
+	(*GetRepositoryByIdResponse)(nil),                                    // 33: minder.v1.GetRepositoryByIdResponse
+	(*DeleteRepositoryByIdRequest)(nil),                                  // 34: minder.v1.DeleteRepositoryByIdRequest
+	(*DeleteRepositoryByIdResponse)(nil),                                 // 35: minder.v1.DeleteRepositoryByIdResponse
+	(*GetRepositoryByNameRequest)(nil),                                   // 36: minder.v1.GetRepositoryByNameRequest
+	(*GetRepositoryByNameResponse)(nil),                                  // 37: minder.v1.GetRepositoryByNameResponse
+	(*DeleteRepositoryByNameRequest)(nil),                                // 38: minder.v1.DeleteRepositoryByNameRequest
+	(*DeleteRepositoryByNameResponse)(nil),                               // 39: minder.v1.DeleteRepositoryByNameResponse
+	(*ListRepositoriesRequest)(nil),                                      // 40: minder.v1.ListRepositoriesRequest
+	(*ListRepositoriesResponse)(nil),                                     // 41: minder.v1.ListRepositoriesResponse
+	(*VerifyProviderTokenFromRequest)(nil),                               // 42: minder.v1.VerifyProviderTokenFromRequest
+	(*VerifyProviderTokenFromResponse)(nil),                              // 43: minder.v1.VerifyProviderTokenFromResponse
+	(*BranchProtection)(nil),                                             // 44: minder.v1.BranchProtection
+	(*CreateUserRequest)(nil),                                            // 45: minder.v1.CreateUserRequest
+	(*CreateUserResponse)(nil),                                           // 46: minder.v1.CreateUserResponse
+	(*DeleteUserRequest)(nil),                                            // 47: minder.v1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),                                           // 48: minder.v1.DeleteUserResponse
+	(*UserRecord)(nil),                                                   // 49: minder.v1.UserRecord
+	(*GetUserRequest)(nil),                                               // 50: minder.v1.GetUserRequest
+	(*GetUserResponse)(nil),                                              // 51: minder.v1.GetUserResponse
+	(*CreateProfileRequest)(nil),                                         // 52: minder.v1.CreateProfileRequest
+	(*CreateProfileResponse)(nil),                                        // 53: minder.v1.CreateProfileResponse
+	(*UpdateProfileRequest)(nil),                                         // 54: minder.v1.UpdateProfileRequest
+	(*UpdateProfileResponse)(nil),                                        // 55: minder.v1.UpdateProfileResponse
+	(*DeleteProfileRequest)(nil),                                         // 56: minder.v1.DeleteProfileRequest
+	(*DeleteProfileResponse)(nil),                                        // 57: minder.v1.DeleteProfileResponse
+	(*ListProfilesRequest)(nil),                                          // 58: minder.v1.ListProfilesRequest
+	(*ListProfilesResponse)(nil),                                         // 59: minder.v1.ListProfilesResponse
+	(*GetProfileByIdRequest)(nil),                                        // 60: minder.v1.GetProfileByIdRequest
+	(*GetProfileByIdResponse)(nil),                                       // 61: minder.v1.GetProfileByIdResponse
+	(*ProfileStatus)(nil),                                                // 62: minder.v1.ProfileStatus
+	(*RuleEvaluationStatus)(nil),                                         // 63: minder.v1.RuleEvaluationStatus
+	(*GetProfileStatusByNameRequest)(nil),                                // 64: minder.v1.GetProfileStatusByNameRequest
+	(*GetProfileStatusByNameResponse)(nil),                               // 65: minder.v1.GetProfileStatusByNameResponse
+	(*GetProfileStatusByProjectRequest)(nil),                             // 66: minder.v1.GetProfileStatusByProjectRequest
+	(*GetProfileStatusByProjectResponse)(nil),                            // 67: minder.v1.GetProfileStatusByProjectResponse
+	(*RESTProviderConfig)(nil),                                           // 68: minder.v1.RESTProviderConfig
+	(*GitHubProviderConfig)(nil),                                         // 69: minder.v1.GitHubProviderConfig
+	(*Context)(nil),                                                      // 70: minder.v1.Context
+	(*ListRuleTypesRequest)(nil),                                         // 71: minder.v1.ListRuleTypesRequest
+	(*ListRuleTypesResponse)(nil),                                        // 72: minder.v1.ListRuleTypesResponse
+	(*GetRuleTypeByNameRequest)(nil),                                     // 73: minder.v1.GetRuleTypeByNameRequest
+	(*GetRuleTypeByNameResponse)(nil),                                    // 74: minder.v1.GetRuleTypeByNameResponse
+	(*GetRuleTypeByIdRequest)(nil),                                       // 75: minder.v1.GetRuleTypeByIdRequest
+	(*GetRuleTypeByIdResponse)(nil),                                      // 76: minder.v1.GetRuleTypeByIdResponse
+	(*CreateRuleTypeRequest)(nil),                                        // 77: minder.v1.CreateRuleTypeRequest
+	(*CreateRuleTypeResponse)(nil),                                       // 78: minder.v1.CreateRuleTypeResponse
+	(*UpdateRuleTypeRequest)(nil),                                        // 79: minder.v1.UpdateRuleTypeRequest
+	(*UpdateRuleTypeResponse)(nil),                                       // 80: minder.v1.UpdateRuleTypeResponse
+	(*DeleteRuleTypeRequest)(nil),                                        // 81: minder.v1.DeleteRuleTypeRequest
+	(*DeleteRuleTypeResponse)(nil),                                       // 82: minder.v1.DeleteRuleTypeResponse
+	(*RestType)(nil),                                                     // 83: minder.v1.RestType
+	(*BuiltinType)(nil),                                                  // 84: minder.v1.BuiltinType
+	(*ArtifactType)(nil),                                                 // 85: minder.v1.ArtifactType
+	(*GitType)(nil),                                                      // 86: minder.v1.GitType
+	(*DiffType)(nil),                                                     // 87: minder.v1.DiffType
+	(*RuleType)(nil),                                                     // 88: minder.v1.RuleType
+	(*Profile)(nil),                                                      // 89: minder.v1.Profile
+	(*PrDependencies_ContextualDependency)(nil),                          // 90: minder.v1.PrDependencies.ContextualDependency
+	(*PrDependencies_ContextualDependency_FilePatch)(nil),                // 91: minder.v1.PrDependencies.ContextualDependency.FilePatch
+	(*RegisterRepoResult_Status)(nil),                                    // 92: minder.v1.RegisterRepoResult.Status
+	nil,                                                                  // 93: minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	(*GetProfileStatusByNameRequest_EntityTypedId)(nil),                  // 94: minder.v1.GetProfileStatusByNameRequest.EntityTypedId
+	(*RestType_Fallback)(nil),                                            // 95: minder.v1.RestType.Fallback
+	(*DiffType_Ecosystem)(nil),                                           // 96: minder.v1.DiffType.Ecosystem
+	(*RuleType_Definition)(nil),                                          // 97: minder.v1.RuleType.Definition
+	(*RuleType_Definition_Ingest)(nil),                                   // 98: minder.v1.RuleType.Definition.Ingest
+	(*RuleType_Definition_Eval)(nil),                                     // 99: minder.v1.RuleType.Definition.Eval
+	(*RuleType_Definition_Remediate)(nil),                                // 100: minder.v1.RuleType.Definition.Remediate
+	(*RuleType_Definition_Alert)(nil),                                    // 101: minder.v1.RuleType.Definition.Alert
+	(*RuleType_Definition_Eval_JQComparison)(nil),                        // 102: minder.v1.RuleType.Definition.Eval.JQComparison
+	(*RuleType_Definition_Eval_Rego)(nil),                                // 103: minder.v1.RuleType.Definition.Eval.Rego
+	(*RuleType_Definition_Eval_Vulncheck)(nil),                           // 104: minder.v1.RuleType.Definition.Eval.Vulncheck
+	(*RuleType_Definition_Eval_Trusty)(nil),                              // 105: minder.v1.RuleType.Definition.Eval.Trusty
+	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),               // 106: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),         // 107: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),         // 108: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil), // 109: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 110: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 111: minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	(*Profile_Rule)(nil),               // 112: minder.v1.Profile.Rule
+	(*timestamppb.Timestamp)(nil),      // 113: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),            // 114: google.protobuf.Struct
+	(*descriptorpb.MethodOptions)(nil), // 115: google.protobuf.MethodOptions
+	(*httpbody.HttpBody)(nil),          // 116: google.api.HttpBody
 }
 var file_minder_v1_minder_proto_depIdxs = []int32{
 	0,   // 0: minder.v1.RpcOptions.auth_scope:type_name -> minder.v1.ObjectOwner
-	72,  // 1: minder.v1.ListArtifactsRequest.context:type_name -> minder.v1.Context
+	70,  // 1: minder.v1.ListArtifactsRequest.context:type_name -> minder.v1.Context
 	6,   // 2: minder.v1.ListArtifactsResponse.results:type_name -> minder.v1.Artifact
 	9,   // 3: minder.v1.Artifact.versions:type_name -> minder.v1.ArtifactVersion
-	115, // 4: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
-	115, // 5: minder.v1.SignatureVerification.signature_time:type_name -> google.protobuf.Timestamp
+	113, // 4: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	113, // 5: minder.v1.SignatureVerification.signature_time:type_name -> google.protobuf.Timestamp
 	8,   // 6: minder.v1.ArtifactVersion.signature_verification:type_name -> minder.v1.SignatureVerification
 	7,   // 7: minder.v1.ArtifactVersion.github_workflow:type_name -> minder.v1.GithubWorkflow
-	115, // 8: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
-	72,  // 9: minder.v1.GetArtifactByIdRequest.context:type_name -> minder.v1.Context
+	113, // 8: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
+	70,  // 9: minder.v1.GetArtifactByIdRequest.context:type_name -> minder.v1.Context
 	6,   // 10: minder.v1.GetArtifactByIdResponse.artifact:type_name -> minder.v1.Artifact
 	9,   // 11: minder.v1.GetArtifactByIdResponse.versions:type_name -> minder.v1.ArtifactVersion
-	72,  // 12: minder.v1.GetArtifactByNameRequest.context:type_name -> minder.v1.Context
+	70,  // 12: minder.v1.GetArtifactByNameRequest.context:type_name -> minder.v1.Context
 	6,   // 13: minder.v1.GetArtifactByNameResponse.artifact:type_name -> minder.v1.Artifact
 	9,   // 14: minder.v1.GetArtifactByNameResponse.versions:type_name -> minder.v1.ArtifactVersion
 	1,   // 15: minder.v1.Dependency.ecosystem:type_name -> minder.v1.DepEcosystem
 	14,  // 16: minder.v1.PrDependencies.pr:type_name -> minder.v1.PullRequest
-	92,  // 17: minder.v1.PrDependencies.deps:type_name -> minder.v1.PrDependencies.ContextualDependency
-	72,  // 18: minder.v1.GetAuthorizationURLRequest.context:type_name -> minder.v1.Context
-	72,  // 19: minder.v1.ExchangeCodeForTokenCLIRequest.context:type_name -> minder.v1.Context
-	72,  // 20: minder.v1.StoreProviderTokenRequest.context:type_name -> minder.v1.Context
-	72,  // 21: minder.v1.ExchangeCodeForTokenWEBRequest.context:type_name -> minder.v1.Context
-	115, // 22: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
-	115, // 23: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
-	72,  // 24: minder.v1.ListRemoteRepositoriesFromProviderRequest.context:type_name -> minder.v1.Context
-	29,  // 25: minder.v1.ListRemoteRepositoriesFromProviderResponse.results:type_name -> minder.v1.UpstreamRepositoryRef
-	72,  // 26: minder.v1.Repository.context:type_name -> minder.v1.Context
-	115, // 27: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
-	115, // 28: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
-	29,  // 29: minder.v1.RegisterRepositoryRequest.repository:type_name -> minder.v1.UpstreamRepositoryRef
-	72,  // 30: minder.v1.RegisterRepositoryRequest.context:type_name -> minder.v1.Context
-	30,  // 31: minder.v1.RegisterRepoResult.repository:type_name -> minder.v1.Repository
-	94,  // 32: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
-	32,  // 33: minder.v1.RegisterRepositoryResponse.result:type_name -> minder.v1.RegisterRepoResult
-	72,  // 34: minder.v1.GetRepositoryByIdRequest.context:type_name -> minder.v1.Context
-	30,  // 35: minder.v1.GetRepositoryByIdResponse.repository:type_name -> minder.v1.Repository
-	72,  // 36: minder.v1.DeleteRepositoryByIdRequest.context:type_name -> minder.v1.Context
-	72,  // 37: minder.v1.GetRepositoryByNameRequest.context:type_name -> minder.v1.Context
-	30,  // 38: minder.v1.GetRepositoryByNameResponse.repository:type_name -> minder.v1.Repository
-	72,  // 39: minder.v1.DeleteRepositoryByNameRequest.context:type_name -> minder.v1.Context
-	72,  // 40: minder.v1.ListRepositoriesRequest.context:type_name -> minder.v1.Context
-	30,  // 41: minder.v1.ListRepositoriesResponse.results:type_name -> minder.v1.Repository
-	115, // 42: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
-	72,  // 43: minder.v1.VerifyProviderTokenFromRequest.context:type_name -> minder.v1.Context
-	115, // 44: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	72,  // 45: minder.v1.CreateUserResponse.context:type_name -> minder.v1.Context
-	115, // 46: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
-	115, // 47: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
-	51,  // 48: minder.v1.GetUserResponse.user:type_name -> minder.v1.UserRecord
-	26,  // 49: minder.v1.GetUserResponse.projects:type_name -> minder.v1.Project
-	91,  // 50: minder.v1.CreateProfileRequest.profile:type_name -> minder.v1.Profile
-	72,  // 51: minder.v1.CreateProfileRequest.context:type_name -> minder.v1.Context
-	91,  // 52: minder.v1.CreateProfileResponse.profile:type_name -> minder.v1.Profile
-	91,  // 53: minder.v1.UpdateProfileRequest.profile:type_name -> minder.v1.Profile
-	72,  // 54: minder.v1.UpdateProfileRequest.context:type_name -> minder.v1.Context
-	91,  // 55: minder.v1.UpdateProfileResponse.profile:type_name -> minder.v1.Profile
-	72,  // 56: minder.v1.DeleteProfileRequest.context:type_name -> minder.v1.Context
-	72,  // 57: minder.v1.ListProfilesRequest.context:type_name -> minder.v1.Context
-	91,  // 58: minder.v1.ListProfilesResponse.profiles:type_name -> minder.v1.Profile
-	72,  // 59: minder.v1.GetProfileByIdRequest.context:type_name -> minder.v1.Context
-	91,  // 60: minder.v1.GetProfileByIdResponse.profile:type_name -> minder.v1.Profile
-	115, // 61: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
-	115, // 62: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
-	95,  // 63: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	115, // 64: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
-	72,  // 65: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
-	96,  // 66: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.GetProfileStatusByNameRequest.EntityTypedId
-	64,  // 67: minder.v1.GetProfileStatusByNameResponse.profile_status:type_name -> minder.v1.ProfileStatus
-	65,  // 68: minder.v1.GetProfileStatusByNameResponse.rule_evaluation_status:type_name -> minder.v1.RuleEvaluationStatus
-	72,  // 69: minder.v1.GetProfileStatusByProjectRequest.context:type_name -> minder.v1.Context
-	64,  // 70: minder.v1.GetProfileStatusByProjectResponse.profile_status:type_name -> minder.v1.ProfileStatus
-	72,  // 71: minder.v1.ListRuleTypesRequest.context:type_name -> minder.v1.Context
-	90,  // 72: minder.v1.ListRuleTypesResponse.rule_types:type_name -> minder.v1.RuleType
-	72,  // 73: minder.v1.GetRuleTypeByNameRequest.context:type_name -> minder.v1.Context
-	90,  // 74: minder.v1.GetRuleTypeByNameResponse.rule_type:type_name -> minder.v1.RuleType
-	72,  // 75: minder.v1.GetRuleTypeByIdRequest.context:type_name -> minder.v1.Context
-	90,  // 76: minder.v1.GetRuleTypeByIdResponse.rule_type:type_name -> minder.v1.RuleType
-	90,  // 77: minder.v1.CreateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
-	72,  // 78: minder.v1.CreateRuleTypeRequest.context:type_name -> minder.v1.Context
-	90,  // 79: minder.v1.CreateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
-	90,  // 80: minder.v1.UpdateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
-	72,  // 81: minder.v1.UpdateRuleTypeRequest.context:type_name -> minder.v1.Context
-	90,  // 82: minder.v1.UpdateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
-	72,  // 83: minder.v1.DeleteRuleTypeRequest.context:type_name -> minder.v1.Context
-	97,  // 84: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
-	98,  // 85: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
-	72,  // 86: minder.v1.RuleType.context:type_name -> minder.v1.Context
-	99,  // 87: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
-	72,  // 88: minder.v1.Profile.context:type_name -> minder.v1.Context
-	114, // 89: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
-	114, // 90: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
-	114, // 91: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
-	114, // 92: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
-	15,  // 93: minder.v1.PrDependencies.ContextualDependency.dep:type_name -> minder.v1.Dependency
-	93,  // 94: minder.v1.PrDependencies.ContextualDependency.file:type_name -> minder.v1.PrDependencies.ContextualDependency.FilePatch
-	2,   // 95: minder.v1.GetProfileStatusByNameRequest.EntityTypedId.type:type_name -> minder.v1.Entity
-	116, // 96: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
-	116, // 97: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
-	100, // 98: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
-	101, // 99: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
-	102, // 100: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
-	103, // 101: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
-	85,  // 102: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
-	86,  // 103: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
-	87,  // 104: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
-	88,  // 105: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
-	89,  // 106: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
-	104, // 107: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
-	105, // 108: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
-	106, // 109: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
-	107, // 110: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
-	85,  // 111: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
-	109, // 112: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	110, // 113: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	113, // 114: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	108, // 115: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	108, // 116: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	111, // 117: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	112, // 118: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	116, // 119: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
-	116, // 120: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
-	117, // 121: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
-	3,   // 122: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
-	17,  // 123: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
-	4,   // 124: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
-	10,  // 125: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
-	12,  // 126: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
-	19,  // 127: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
-	21,  // 128: minder.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> minder.v1.ExchangeCodeForTokenCLIRequest
-	22,  // 129: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
-	44,  // 130: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
-	31,  // 131: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
-	27,  // 132: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
-	42,  // 133: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
-	34,  // 134: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
-	38,  // 135: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
-	36,  // 136: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
-	40,  // 137: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
-	47,  // 138: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
-	49,  // 139: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
-	52,  // 140: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
-	54,  // 141: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
-	56,  // 142: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
-	58,  // 143: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
-	60,  // 144: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
-	62,  // 145: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
-	66,  // 146: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
-	68,  // 147: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
-	73,  // 148: minder.v1.ProfileService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
-	75,  // 149: minder.v1.ProfileService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
-	77,  // 150: minder.v1.ProfileService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
-	79,  // 151: minder.v1.ProfileService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
-	81,  // 152: minder.v1.ProfileService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
-	83,  // 153: minder.v1.ProfileService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
-	18,  // 154: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
-	5,   // 155: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
-	11,  // 156: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
-	13,  // 157: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
-	20,  // 158: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
-	118, // 159: minder.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> google.api.HttpBody
-	23,  // 160: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
-	45,  // 161: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
-	33,  // 162: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
-	28,  // 163: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
-	43,  // 164: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
-	35,  // 165: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
-	39,  // 166: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
-	37,  // 167: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
-	41,  // 168: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
-	48,  // 169: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
-	50,  // 170: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
-	53,  // 171: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
-	55,  // 172: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
-	57,  // 173: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
-	59,  // 174: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
-	61,  // 175: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
-	63,  // 176: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
-	67,  // 177: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
-	69,  // 178: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
-	74,  // 179: minder.v1.ProfileService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
-	76,  // 180: minder.v1.ProfileService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
-	78,  // 181: minder.v1.ProfileService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
-	80,  // 182: minder.v1.ProfileService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
-	82,  // 183: minder.v1.ProfileService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
-	84,  // 184: minder.v1.ProfileService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
-	154, // [154:185] is the sub-list for method output_type
-	123, // [123:154] is the sub-list for method input_type
-	122, // [122:123] is the sub-list for extension type_name
-	121, // [121:122] is the sub-list for extension extendee
-	0,   // [0:121] is the sub-list for field type_name
+	90,  // 17: minder.v1.PrDependencies.deps:type_name -> minder.v1.PrDependencies.ContextualDependency
+	70,  // 18: minder.v1.GetAuthorizationURLRequest.context:type_name -> minder.v1.Context
+	70,  // 19: minder.v1.ExchangeCodeForTokenCLIRequest.context:type_name -> minder.v1.Context
+	70,  // 20: minder.v1.StoreProviderTokenRequest.context:type_name -> minder.v1.Context
+	113, // 21: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
+	113, // 22: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
+	70,  // 23: minder.v1.ListRemoteRepositoriesFromProviderRequest.context:type_name -> minder.v1.Context
+	27,  // 24: minder.v1.ListRemoteRepositoriesFromProviderResponse.results:type_name -> minder.v1.UpstreamRepositoryRef
+	70,  // 25: minder.v1.Repository.context:type_name -> minder.v1.Context
+	113, // 26: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
+	113, // 27: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
+	27,  // 28: minder.v1.RegisterRepositoryRequest.repository:type_name -> minder.v1.UpstreamRepositoryRef
+	70,  // 29: minder.v1.RegisterRepositoryRequest.context:type_name -> minder.v1.Context
+	28,  // 30: minder.v1.RegisterRepoResult.repository:type_name -> minder.v1.Repository
+	92,  // 31: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
+	30,  // 32: minder.v1.RegisterRepositoryResponse.result:type_name -> minder.v1.RegisterRepoResult
+	70,  // 33: minder.v1.GetRepositoryByIdRequest.context:type_name -> minder.v1.Context
+	28,  // 34: minder.v1.GetRepositoryByIdResponse.repository:type_name -> minder.v1.Repository
+	70,  // 35: minder.v1.DeleteRepositoryByIdRequest.context:type_name -> minder.v1.Context
+	70,  // 36: minder.v1.GetRepositoryByNameRequest.context:type_name -> minder.v1.Context
+	28,  // 37: minder.v1.GetRepositoryByNameResponse.repository:type_name -> minder.v1.Repository
+	70,  // 38: minder.v1.DeleteRepositoryByNameRequest.context:type_name -> minder.v1.Context
+	70,  // 39: minder.v1.ListRepositoriesRequest.context:type_name -> minder.v1.Context
+	28,  // 40: minder.v1.ListRepositoriesResponse.results:type_name -> minder.v1.Repository
+	113, // 41: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
+	70,  // 42: minder.v1.VerifyProviderTokenFromRequest.context:type_name -> minder.v1.Context
+	113, // 43: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	70,  // 44: minder.v1.CreateUserResponse.context:type_name -> minder.v1.Context
+	113, // 45: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
+	113, // 46: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
+	49,  // 47: minder.v1.GetUserResponse.user:type_name -> minder.v1.UserRecord
+	24,  // 48: minder.v1.GetUserResponse.projects:type_name -> minder.v1.Project
+	89,  // 49: minder.v1.CreateProfileRequest.profile:type_name -> minder.v1.Profile
+	70,  // 50: minder.v1.CreateProfileRequest.context:type_name -> minder.v1.Context
+	89,  // 51: minder.v1.CreateProfileResponse.profile:type_name -> minder.v1.Profile
+	89,  // 52: minder.v1.UpdateProfileRequest.profile:type_name -> minder.v1.Profile
+	70,  // 53: minder.v1.UpdateProfileRequest.context:type_name -> minder.v1.Context
+	89,  // 54: minder.v1.UpdateProfileResponse.profile:type_name -> minder.v1.Profile
+	70,  // 55: minder.v1.DeleteProfileRequest.context:type_name -> minder.v1.Context
+	70,  // 56: minder.v1.ListProfilesRequest.context:type_name -> minder.v1.Context
+	89,  // 57: minder.v1.ListProfilesResponse.profiles:type_name -> minder.v1.Profile
+	70,  // 58: minder.v1.GetProfileByIdRequest.context:type_name -> minder.v1.Context
+	89,  // 59: minder.v1.GetProfileByIdResponse.profile:type_name -> minder.v1.Profile
+	113, // 60: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
+	113, // 61: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
+	93,  // 62: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	113, // 63: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
+	70,  // 64: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
+	94,  // 65: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.GetProfileStatusByNameRequest.EntityTypedId
+	62,  // 66: minder.v1.GetProfileStatusByNameResponse.profile_status:type_name -> minder.v1.ProfileStatus
+	63,  // 67: minder.v1.GetProfileStatusByNameResponse.rule_evaluation_status:type_name -> minder.v1.RuleEvaluationStatus
+	70,  // 68: minder.v1.GetProfileStatusByProjectRequest.context:type_name -> minder.v1.Context
+	62,  // 69: minder.v1.GetProfileStatusByProjectResponse.profile_status:type_name -> minder.v1.ProfileStatus
+	70,  // 70: minder.v1.ListRuleTypesRequest.context:type_name -> minder.v1.Context
+	88,  // 71: minder.v1.ListRuleTypesResponse.rule_types:type_name -> minder.v1.RuleType
+	70,  // 72: minder.v1.GetRuleTypeByNameRequest.context:type_name -> minder.v1.Context
+	88,  // 73: minder.v1.GetRuleTypeByNameResponse.rule_type:type_name -> minder.v1.RuleType
+	70,  // 74: minder.v1.GetRuleTypeByIdRequest.context:type_name -> minder.v1.Context
+	88,  // 75: minder.v1.GetRuleTypeByIdResponse.rule_type:type_name -> minder.v1.RuleType
+	88,  // 76: minder.v1.CreateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
+	70,  // 77: minder.v1.CreateRuleTypeRequest.context:type_name -> minder.v1.Context
+	88,  // 78: minder.v1.CreateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
+	88,  // 79: minder.v1.UpdateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
+	70,  // 80: minder.v1.UpdateRuleTypeRequest.context:type_name -> minder.v1.Context
+	88,  // 81: minder.v1.UpdateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
+	70,  // 82: minder.v1.DeleteRuleTypeRequest.context:type_name -> minder.v1.Context
+	95,  // 83: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
+	96,  // 84: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
+	70,  // 85: minder.v1.RuleType.context:type_name -> minder.v1.Context
+	97,  // 86: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
+	70,  // 87: minder.v1.Profile.context:type_name -> minder.v1.Context
+	112, // 88: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
+	112, // 89: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
+	112, // 90: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
+	112, // 91: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
+	15,  // 92: minder.v1.PrDependencies.ContextualDependency.dep:type_name -> minder.v1.Dependency
+	91,  // 93: minder.v1.PrDependencies.ContextualDependency.file:type_name -> minder.v1.PrDependencies.ContextualDependency.FilePatch
+	2,   // 94: minder.v1.GetProfileStatusByNameRequest.EntityTypedId.type:type_name -> minder.v1.Entity
+	114, // 95: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
+	114, // 96: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
+	98,  // 97: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
+	99,  // 98: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
+	100, // 99: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
+	101, // 100: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
+	83,  // 101: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
+	84,  // 102: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
+	85,  // 103: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
+	86,  // 104: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
+	87,  // 105: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
+	102, // 106: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
+	103, // 107: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
+	104, // 108: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
+	105, // 109: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
+	83,  // 110: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
+	107, // 111: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	108, // 112: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	111, // 113: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	106, // 114: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	106, // 115: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	109, // 116: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	110, // 117: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	114, // 118: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
+	114, // 119: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
+	115, // 120: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
+	3,   // 121: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
+	17,  // 122: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
+	4,   // 123: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
+	10,  // 124: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
+	12,  // 125: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
+	19,  // 126: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
+	21,  // 127: minder.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> minder.v1.ExchangeCodeForTokenCLIRequest
+	22,  // 128: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
+	42,  // 129: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
+	29,  // 130: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
+	25,  // 131: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
+	40,  // 132: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
+	32,  // 133: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
+	36,  // 134: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
+	34,  // 135: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
+	38,  // 136: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
+	45,  // 137: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
+	47,  // 138: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
+	50,  // 139: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
+	52,  // 140: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
+	54,  // 141: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
+	56,  // 142: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
+	58,  // 143: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
+	60,  // 144: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
+	64,  // 145: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
+	66,  // 146: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
+	71,  // 147: minder.v1.ProfileService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
+	73,  // 148: minder.v1.ProfileService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
+	75,  // 149: minder.v1.ProfileService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
+	77,  // 150: minder.v1.ProfileService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
+	79,  // 151: minder.v1.ProfileService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
+	81,  // 152: minder.v1.ProfileService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
+	18,  // 153: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
+	5,   // 154: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
+	11,  // 155: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
+	13,  // 156: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
+	20,  // 157: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
+	116, // 158: minder.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> google.api.HttpBody
+	23,  // 159: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
+	43,  // 160: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
+	31,  // 161: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
+	26,  // 162: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
+	41,  // 163: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
+	33,  // 164: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
+	37,  // 165: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
+	35,  // 166: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
+	39,  // 167: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
+	46,  // 168: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
+	48,  // 169: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
+	51,  // 170: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
+	53,  // 171: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
+	55,  // 172: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
+	57,  // 173: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
+	59,  // 174: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
+	61,  // 175: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
+	65,  // 176: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
+	67,  // 177: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
+	72,  // 178: minder.v1.ProfileService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
+	74,  // 179: minder.v1.ProfileService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
+	76,  // 180: minder.v1.ProfileService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
+	78,  // 181: minder.v1.ProfileService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
+	80,  // 182: minder.v1.ProfileService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
+	82,  // 183: minder.v1.ProfileService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
+	153, // [153:184] is the sub-list for method output_type
+	122, // [122:153] is the sub-list for method input_type
+	121, // [121:122] is the sub-list for extension type_name
+	120, // [120:121] is the sub-list for extension extendee
+	0,   // [0:120] is the sub-list for field type_name
 }
 
 func init() { file_minder_v1_minder_proto_init() }
@@ -9126,30 +8951,6 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExchangeCodeForTokenWEBRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExchangeCodeForTokenWEBResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Project); i {
 			case 0:
 				return &v.state
@@ -9161,7 +8962,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRemoteRepositoriesFromProviderRequest); i {
 			case 0:
 				return &v.state
@@ -9173,7 +8974,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRemoteRepositoriesFromProviderResponse); i {
 			case 0:
 				return &v.state
@@ -9185,7 +8986,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpstreamRepositoryRef); i {
 			case 0:
 				return &v.state
@@ -9197,7 +8998,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Repository); i {
 			case 0:
 				return &v.state
@@ -9209,7 +9010,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RegisterRepositoryRequest); i {
 			case 0:
 				return &v.state
@@ -9221,7 +9022,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RegisterRepoResult); i {
 			case 0:
 				return &v.state
@@ -9233,7 +9034,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RegisterRepositoryResponse); i {
 			case 0:
 				return &v.state
@@ -9245,7 +9046,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRepositoryByIdRequest); i {
 			case 0:
 				return &v.state
@@ -9257,7 +9058,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRepositoryByIdResponse); i {
 			case 0:
 				return &v.state
@@ -9269,7 +9070,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRepositoryByIdRequest); i {
 			case 0:
 				return &v.state
@@ -9281,7 +9082,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRepositoryByIdResponse); i {
 			case 0:
 				return &v.state
@@ -9293,7 +9094,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRepositoryByNameRequest); i {
 			case 0:
 				return &v.state
@@ -9305,7 +9106,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRepositoryByNameResponse); i {
 			case 0:
 				return &v.state
@@ -9317,7 +9118,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRepositoryByNameRequest); i {
 			case 0:
 				return &v.state
@@ -9329,7 +9130,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRepositoryByNameResponse); i {
 			case 0:
 				return &v.state
@@ -9341,7 +9142,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRepositoriesRequest); i {
 			case 0:
 				return &v.state
@@ -9353,7 +9154,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRepositoriesResponse); i {
 			case 0:
 				return &v.state
@@ -9365,7 +9166,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VerifyProviderTokenFromRequest); i {
 			case 0:
 				return &v.state
@@ -9377,7 +9178,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*VerifyProviderTokenFromResponse); i {
 			case 0:
 				return &v.state
@@ -9389,7 +9190,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BranchProtection); i {
 			case 0:
 				return &v.state
@@ -9401,7 +9202,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateUserRequest); i {
 			case 0:
 				return &v.state
@@ -9413,7 +9214,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateUserResponse); i {
 			case 0:
 				return &v.state
@@ -9425,7 +9226,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteUserRequest); i {
 			case 0:
 				return &v.state
@@ -9437,7 +9238,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteUserResponse); i {
 			case 0:
 				return &v.state
@@ -9449,7 +9250,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UserRecord); i {
 			case 0:
 				return &v.state
@@ -9461,7 +9262,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetUserRequest); i {
 			case 0:
 				return &v.state
@@ -9473,7 +9274,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetUserResponse); i {
 			case 0:
 				return &v.state
@@ -9485,7 +9286,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateProfileRequest); i {
 			case 0:
 				return &v.state
@@ -9497,7 +9298,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateProfileResponse); i {
 			case 0:
 				return &v.state
@@ -9509,7 +9310,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateProfileRequest); i {
 			case 0:
 				return &v.state
@@ -9521,7 +9322,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateProfileResponse); i {
 			case 0:
 				return &v.state
@@ -9533,7 +9334,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteProfileRequest); i {
 			case 0:
 				return &v.state
@@ -9545,7 +9346,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteProfileResponse); i {
 			case 0:
 				return &v.state
@@ -9557,7 +9358,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListProfilesRequest); i {
 			case 0:
 				return &v.state
@@ -9569,7 +9370,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListProfilesResponse); i {
 			case 0:
 				return &v.state
@@ -9581,7 +9382,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileByIdRequest); i {
 			case 0:
 				return &v.state
@@ -9593,7 +9394,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileByIdResponse); i {
 			case 0:
 				return &v.state
@@ -9605,7 +9406,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ProfileStatus); i {
 			case 0:
 				return &v.state
@@ -9617,7 +9418,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleEvaluationStatus); i {
 			case 0:
 				return &v.state
@@ -9629,7 +9430,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileStatusByNameRequest); i {
 			case 0:
 				return &v.state
@@ -9641,7 +9442,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileStatusByNameResponse); i {
 			case 0:
 				return &v.state
@@ -9653,7 +9454,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileStatusByProjectRequest); i {
 			case 0:
 				return &v.state
@@ -9665,7 +9466,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileStatusByProjectResponse); i {
 			case 0:
 				return &v.state
@@ -9677,7 +9478,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RESTProviderConfig); i {
 			case 0:
 				return &v.state
@@ -9689,7 +9490,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GitHubProviderConfig); i {
 			case 0:
 				return &v.state
@@ -9701,7 +9502,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Context); i {
 			case 0:
 				return &v.state
@@ -9713,7 +9514,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRuleTypesRequest); i {
 			case 0:
 				return &v.state
@@ -9725,7 +9526,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRuleTypesResponse); i {
 			case 0:
 				return &v.state
@@ -9737,7 +9538,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRuleTypeByNameRequest); i {
 			case 0:
 				return &v.state
@@ -9749,7 +9550,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRuleTypeByNameResponse); i {
 			case 0:
 				return &v.state
@@ -9761,7 +9562,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRuleTypeByIdRequest); i {
 			case 0:
 				return &v.state
@@ -9773,7 +9574,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRuleTypeByIdResponse); i {
 			case 0:
 				return &v.state
@@ -9785,7 +9586,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateRuleTypeRequest); i {
 			case 0:
 				return &v.state
@@ -9797,7 +9598,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CreateRuleTypeResponse); i {
 			case 0:
 				return &v.state
@@ -9809,7 +9610,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateRuleTypeRequest); i {
 			case 0:
 				return &v.state
@@ -9821,7 +9622,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[77].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdateRuleTypeResponse); i {
 			case 0:
 				return &v.state
@@ -9833,7 +9634,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[78].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRuleTypeRequest); i {
 			case 0:
 				return &v.state
@@ -9845,7 +9646,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[81].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[79].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteRuleTypeResponse); i {
 			case 0:
 				return &v.state
@@ -9857,7 +9658,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[82].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[80].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RestType); i {
 			case 0:
 				return &v.state
@@ -9869,7 +9670,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[83].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[81].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BuiltinType); i {
 			case 0:
 				return &v.state
@@ -9881,7 +9682,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[84].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[82].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ArtifactType); i {
 			case 0:
 				return &v.state
@@ -9893,7 +9694,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[85].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[83].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GitType); i {
 			case 0:
 				return &v.state
@@ -9905,7 +9706,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[86].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[84].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DiffType); i {
 			case 0:
 				return &v.state
@@ -9917,7 +9718,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[85].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType); i {
 			case 0:
 				return &v.state
@@ -9929,7 +9730,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[88].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[86].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Profile); i {
 			case 0:
 				return &v.state
@@ -9941,7 +9742,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[89].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PrDependencies_ContextualDependency); i {
 			case 0:
 				return &v.state
@@ -9953,7 +9754,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[90].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[88].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
 			case 0:
 				return &v.state
@@ -9965,7 +9766,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[91].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[89].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RegisterRepoResult_Status); i {
 			case 0:
 				return &v.state
@@ -9977,7 +9778,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[93].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[91].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetProfileStatusByNameRequest_EntityTypedId); i {
 			case 0:
 				return &v.state
@@ -9989,7 +9790,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[94].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[92].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RestType_Fallback); i {
 			case 0:
 				return &v.state
@@ -10001,7 +9802,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[95].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[93].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DiffType_Ecosystem); i {
 			case 0:
 				return &v.state
@@ -10013,7 +9814,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[96].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[94].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition); i {
 			case 0:
 				return &v.state
@@ -10025,7 +9826,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[97].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[95].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Ingest); i {
 			case 0:
 				return &v.state
@@ -10037,7 +9838,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[98].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[96].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval); i {
 			case 0:
 				return &v.state
@@ -10049,7 +9850,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[99].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[97].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Remediate); i {
 			case 0:
 				return &v.state
@@ -10061,7 +9862,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[100].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[98].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Alert); i {
 			case 0:
 				return &v.state
@@ -10073,7 +9874,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[101].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[99].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval_JQComparison); i {
 			case 0:
 				return &v.state
@@ -10085,7 +9886,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[102].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[100].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval_Rego); i {
 			case 0:
 				return &v.state
@@ -10097,7 +9898,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[103].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[101].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval_Vulncheck); i {
 			case 0:
 				return &v.state
@@ -10109,7 +9910,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[104].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[102].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval_Trusty); i {
 			case 0:
 				return &v.state
@@ -10121,7 +9922,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[105].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[103].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Eval_JQComparison_Operator); i {
 			case 0:
 				return &v.state
@@ -10133,7 +9934,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[106].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[104].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Remediate_GhBranchProtectionType); i {
 			case 0:
 				return &v.state
@@ -10145,7 +9946,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[107].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[105].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation); i {
 			case 0:
 				return &v.state
@@ -10157,7 +9958,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[108].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[106].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_Content); i {
 			case 0:
 				return &v.state
@@ -10169,7 +9970,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[109].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[107].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha); i {
 			case 0:
 				return &v.state
@@ -10181,7 +9982,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[110].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[108].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RuleType_Definition_Alert_AlertTypeSA); i {
 			case 0:
 				return &v.state
@@ -10193,7 +9994,7 @@ func file_minder_v1_minder_proto_init() {
 				return nil
 			}
 		}
-		file_minder_v1_minder_proto_msgTypes[111].Exporter = func(v interface{}, i int) interface{} {
+		file_minder_v1_minder_proto_msgTypes[109].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Profile_Rule); i {
 			case 0:
 				return &v.state
@@ -10210,29 +10011,29 @@ func file_minder_v1_minder_proto_init() {
 	file_minder_v1_minder_proto_msgTypes[6].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[16].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[19].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[27].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[50].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[62].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[69].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[82].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[87].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[88].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[91].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[25].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[48].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[60].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[67].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[80].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[85].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[86].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[89].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[94].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[95].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[96].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[97].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[98].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[99].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[100].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[102].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[107].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[108].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[105].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[106].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_minder_v1_minder_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   112,
+			NumMessages:   110,
 			NumExtensions: 1,
 			NumServices:   6,
 		},
