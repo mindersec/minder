@@ -25,6 +25,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+
+	config "github.com/stacklok/minder/internal/config/server"
 )
 
 // Text is the constant for the text format
@@ -78,10 +80,10 @@ func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
 //
 //	server := grpc.NewServer(
 //	  ...
-//	  grpc.UnaryInterceptor(logger.Interceptior),
+//	  grpc.UnaryServerInterceptor(logger.Interceptor(loggingConfig)),
 //	  ...
 //	)
-func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.UnaryServerInterceptor {
+func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// Don't log health checks, they spam the logs
 		if info.FullMethod == "/minder.v1.HealthService/CheckHealth" {
@@ -102,9 +104,10 @@ func Interceptor( /*logLevel string, logFormat string, logFile string*/ ) grpc.U
 			logMsg = logger.Error()
 
 			attrs = attrs.Err(err)
-			// Log the body of errors (TODO: do we need to scrub requests?)
-			if jsonText, err := json.Marshal(req); err != nil {
-				logMsg = logMsg.RawJSON("Body", jsonText)
+			if cfg.LogPayloads {
+				if jsonText, err := json.Marshal(req); err == nil {
+					logMsg = logMsg.RawJSON("Request", jsonText)
+				}
 			}
 		}
 		ts.Record(logMsg)
