@@ -1582,28 +1582,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "UserService"
         ]
@@ -1624,28 +1602,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
         "tags": [
           "UserService"
         ]
