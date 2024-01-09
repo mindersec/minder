@@ -295,74 +295,6 @@
         ]
       }
     },
-    "/api/v1/auth/callback/{provider}/web": {
-      "get": {
-        "operationId": "OAuthService_ExchangeCodeForTokenWEB",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ExchangeCodeForTokenWEBResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "projectId",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "redirectUri",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "OAuthService"
-        ]
-      }
-    },
     "/api/v1/auth/url": {
       "get": {
         "operationId": "OAuthService_GetAuthorizationURL",
@@ -2237,24 +2169,6 @@
       ],
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
-    },
-    "v1ExchangeCodeForTokenWEBResponse": {
-      "type": "object",
-      "properties": {
-        "accessToken": {
-          "type": "string"
-        },
-        "tokenType": {
-          "type": "string"
-        },
-        "expiresIn": {
-          "type": "string",
-          "format": "int64"
-        },
-        "status": {
-          "type": "string"
-        }
-      }
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",

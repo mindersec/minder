@@ -219,36 +219,6 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}, nil
 }
 
-// ExchangeCodeForTokenWEB exchanges an OAuth2 code for a token and returns
-// a JWT token as a session cookie. This handler is specific for web clients.
-// The lint check for this function is disabled because it's a false positive.
-// It will complain about am unsused receiver (s *Server), however this receiver
-// will be used later when we implement the database store.
-//
-//revive:disable:unused-receiver
-func (s *Server) ExchangeCodeForTokenWEB(ctx context.Context,
-	in *pb.ExchangeCodeForTokenWEBRequest) (*pb.ExchangeCodeForTokenWEBResponse, error) {
-	oauthConfig, err := auth.NewOAuthConfig(in.Provider, false)
-	if err != nil {
-		return nil, err
-	}
-
-	if oauthConfig == nil {
-		return nil, status.Error(codes.Unknown, "oauth2.Config is nil")
-	}
-
-	// get the token
-	_, err = oauthConfig.Exchange(ctx, in.Code)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: The below response needs to return as a session cookie
-	return &pb.ExchangeCodeForTokenWEBResponse{
-		AccessToken: "access_token",
-	}, nil
-}
-
 // getProviderAccessToken returns the access token for providers
 func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 	projectID uuid.UUID, checkAuthz bool) (oauth2.Token, string, error) {

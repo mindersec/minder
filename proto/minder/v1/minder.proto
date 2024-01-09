@@ -226,15 +226,6 @@ service OAuthService {
             anonymous: true  // Don't need token auth for code exchange
         };
     }
-    rpc ExchangeCodeForTokenWEB (ExchangeCodeForTokenWEBRequest) returns (ExchangeCodeForTokenWEBResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/auth/callback/{provider}/web"
-        };
-
-        option (rpc_options) = {
-            anonymous: true  // Don't need token auth for code exchange
-        };
-    }
 
     rpc StoreProviderToken (StoreProviderTokenRequest) returns (StoreProviderTokenResponse) {
         option (google.api.http) = {

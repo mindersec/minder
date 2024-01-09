@@ -291,7 +291,6 @@ var ArtifactService_ServiceDesc = grpc.ServiceDesc{
 const (
 	OAuthService_GetAuthorizationURL_FullMethodName     = "/minder.v1.OAuthService/GetAuthorizationURL"
 	OAuthService_ExchangeCodeForTokenCLI_FullMethodName = "/minder.v1.OAuthService/ExchangeCodeForTokenCLI"
-	OAuthService_ExchangeCodeForTokenWEB_FullMethodName = "/minder.v1.OAuthService/ExchangeCodeForTokenWEB"
 	OAuthService_StoreProviderToken_FullMethodName      = "/minder.v1.OAuthService/StoreProviderToken"
 	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/minder.v1.OAuthService/VerifyProviderTokenFrom"
 )
@@ -303,7 +302,6 @@ type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
 	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
 	ExchangeCodeForTokenCLI(ctx context.Context, in *ExchangeCodeForTokenCLIRequest, opts ...grpc.CallOption) (*httpbody.HttpBody, error)
-	ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
@@ -335,15 +333,6 @@ func (c *oAuthServiceClient) ExchangeCodeForTokenCLI(ctx context.Context, in *Ex
 	return out, nil
 }
 
-func (c *oAuthServiceClient) ExchangeCodeForTokenWEB(ctx context.Context, in *ExchangeCodeForTokenWEBRequest, opts ...grpc.CallOption) (*ExchangeCodeForTokenWEBResponse, error) {
-	out := new(ExchangeCodeForTokenWEBResponse)
-	err := c.cc.Invoke(ctx, OAuthService_ExchangeCodeForTokenWEB_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error) {
 	out := new(StoreProviderTokenResponse)
 	err := c.cc.Invoke(ctx, OAuthService_StoreProviderToken_FullMethodName, in, out, opts...)
@@ -369,7 +358,6 @@ type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
 	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
 	ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error)
-	ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error)
 	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
@@ -385,9 +373,6 @@ func (UnimplementedOAuthServiceServer) GetAuthorizationURL(context.Context, *Get
 }
 func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenCLI(context.Context, *ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenCLI not implemented")
-}
-func (UnimplementedOAuthServiceServer) ExchangeCodeForTokenWEB(context.Context, *ExchangeCodeForTokenWEBRequest) (*ExchangeCodeForTokenWEBResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ExchangeCodeForTokenWEB not implemented")
 }
 func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StoreProviderToken not implemented")
@@ -444,24 +429,6 @@ func _OAuthService_ExchangeCodeForTokenCLI_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OAuthService_ExchangeCodeForTokenWEB_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExchangeCodeForTokenWEBRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: OAuthService_ExchangeCodeForTokenWEB_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OAuthServiceServer).ExchangeCodeForTokenWEB(ctx, req.(*ExchangeCodeForTokenWEBRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _OAuthService_StoreProviderToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StoreProviderTokenRequest)
 	if err := dec(in); err != nil {
@@ -512,10 +479,6 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ExchangeCodeForTokenCLI",
 			Handler:    _OAuthService_ExchangeCodeForTokenCLI_Handler,
-		},
-		{
-			MethodName: "ExchangeCodeForTokenWEB",
-			Handler:    _OAuthService_ExchangeCodeForTokenWEB_Handler,
 		},
 		{
 			MethodName: "StoreProviderToken",
