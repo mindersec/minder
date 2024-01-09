@@ -67,9 +67,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		// delete repo by name
 		resp, err := client.DeleteRepositoryByName(ctx, &minderv1.DeleteRepositoryByNameRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
-			// keep this until we decide to remove it from the proto and rely on the context instead
-			Provider: provider,
-			Name:     name,
+			Name:    name,
 		})
 		if err != nil {
 			return cli.MessageAndError("Error deleting repo by name", err)

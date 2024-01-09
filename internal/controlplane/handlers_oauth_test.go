@@ -88,6 +88,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 	projectID := uuid.New()
 	port := sql.NullInt32{Int32: 8080, Valid: true}
 	providerID := uuid.New()
+	providerName := "github"
+	projectIdStr := projectID.String()
 
 	testCases := []struct {
 		name               string
@@ -99,9 +101,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 		{
 			name: "Success",
 			req: &pb.GetAuthorizationURLRequest{
-				Provider: "github",
-				Port:     8080,
-				Cli:      true,
+				Context: &pb.Context{
+					Provider: &providerName,
+					Project:  &projectIdStr,
+				},
+				Port: 8080,
+				Cli:  true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().

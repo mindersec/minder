@@ -62,6 +62,9 @@ service ArtifactService {
     rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse) {
         option (google.api.http) = {
             get: "/api/v1/artifacts/{provider}"
+            additional_bindings {
+                get: "/api/v1/artifacts"
+            }
         };
 
         option (rpc_options) = {
@@ -92,9 +95,10 @@ service ArtifactService {
 
 message ListArtifactsRequest {
     string provider = 1;
-    string project_id = 2;
     Context context = 3;
     string from = 4;
+
+    reserved 2; // deprecated project_id
 }
 
 message ListArtifactsResponse {
@@ -220,6 +224,9 @@ service OAuthService {
     rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
         option (google.api.http) = {
             get: "/api/v1/auth/callback/{provider}/cli"
+            additional_bindings {
+                get: "/api/v1/auth/callback/cli"
+            }
         };
 
         option (rpc_options) = {
@@ -230,6 +237,9 @@ service OAuthService {
     rpc StoreProviderToken (StoreProviderTokenRequest) returns (StoreProviderTokenResponse) {
         option (google.api.http) = {
             post: "/api/v1/auth/{provider}/token"
+            additional_bindings {
+                post: "/api/v1/auth/token"
+            }
             body: "*"
         };
 
@@ -242,6 +252,9 @@ service OAuthService {
     rpc VerifyProviderTokenFrom (VerifyProviderTokenFromRequest) returns (VerifyProviderTokenFromResponse) {
         option (google.api.http) = {
             get: "/api/v1/auth/verify/{provider}/{timestamp}"
+            additional_bindings {
+                get: "/api/v1/auth/verify/{timestamp}"
+            }
         };
 
         option (rpc_options) = {
@@ -255,6 +268,9 @@ service RepositoryService {
     rpc RegisterRepository (RegisterRepositoryRequest) returns (RegisterRepositoryResponse) {
         option (google.api.http) = {
             post: "/api/v1/repository/provider/{provider}/register"
+            additional_bindings {
+                post: "/api/v1/repository/register"
+            }
             body: "*"
         };
 
@@ -266,6 +282,9 @@ service RepositoryService {
     rpc ListRemoteRepositoriesFromProvider(ListRemoteRepositoriesFromProviderRequest) returns (ListRemoteRepositoriesFromProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}/remote"
+            additional_bindings {
+                get: "/api/v1/repositories/remote"
+            }
         };
 
         option (rpc_options) = {
@@ -276,6 +295,9 @@ service RepositoryService {
     rpc ListRepositories (ListRepositoriesRequest) returns (ListRepositoriesResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}"
+            additional_bindings {
+                get: "/api/v1/repositories"
+            }
         };
 
         option (rpc_options) = {
@@ -297,6 +319,9 @@ service RepositoryService {
     rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/repository/provider/{provider}/name/{name}"
+            additional_bindings {
+                get: "/api/v1/repository/name/{name}"
+            }
         };
 
         option (rpc_options) = {
@@ -319,6 +344,9 @@ service RepositoryService {
     rpc DeleteRepositoryByName (DeleteRepositoryByNameRequest) returns (DeleteRepositoryByNameResponse) {
         option (google.api.http) = {
             delete: "/api/v1/repository/provider/{provider}/name/{name}"
+            additional_bindings {
+                delete: "/api/v1/repository/name/{name}"
+            }
         };
 
         option (minder.v1.rpc_options) = {
@@ -523,12 +551,12 @@ message CheckHealthResponse {
 }
 
 message GetAuthorizationURLRequest {
-    string provider = 1;
-    string project_id = 2;
     bool  cli = 3;
     int32  port = 4;
     optional string owner = 5;
     Context context = 6;
+
+    reserved 1, 2; // deprecated provider and project_id
 }
 
 message GetAuthorizationURLResponse {
@@ -536,20 +564,22 @@ message GetAuthorizationURLResponse {
 }
 
 message ExchangeCodeForTokenCLIRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     string code = 3;
     string state = 4;
     string redirect_uri = 5;
     Context context = 6;
+
+    reserved 2; // deprecated project_id
 }
 
 message StoreProviderTokenRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     string access_token = 3;
     optional string owner = 4;
     Context context = 5;
+
+    reserved 2; // deprecated project_id
 }
 
 message StoreProviderTokenResponse {    
@@ -567,9 +597,10 @@ message Project {
 // Repositories API objects
 
 message ListRemoteRepositoriesFromProviderRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     Context context = 3;
+
+    reserved 2; // deprecated project_id
 }
 
 message ListRemoteRepositoriesFromProviderResponse {
@@ -604,10 +635,11 @@ message Repository {
 }
 
 message RegisterRepositoryRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     UpstreamRepositoryRef repository = 3;
     Context context = 4;
+
+    reserved 2; // deprecated project_id
 }
 
 message RegisterRepoResult {
@@ -643,10 +675,11 @@ message DeleteRepositoryByIdResponse {
 }
 
 message GetRepositoryByNameRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     string name = 3;
     Context context = 4;
+
+    reserved 2; // deprecated project_id
 }
 
 message GetRepositoryByNameResponse {
@@ -654,10 +687,11 @@ message GetRepositoryByNameResponse {
 }
 
 message DeleteRepositoryByNameRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     string name = 3;
     Context context = 4;
+
+    reserved 2; // deprecated project_id
 }
 
 message DeleteRepositoryByNameResponse {
@@ -665,11 +699,12 @@ message DeleteRepositoryByNameResponse {
 }
 
 message ListRepositoriesRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     int32 limit = 3;
     int32 offset = 4;
     Context context = 5;
+
+    reserved 2; // deprecated project_id
 }
 
 message ListRepositoriesResponse {
@@ -677,10 +712,11 @@ message ListRepositoriesResponse {
 }
 
 message VerifyProviderTokenFromRequest {
-    string provider = 1;
-    string project_id = 2;
+    string provider = 1 [deprecated=true];
     google.protobuf.Timestamp timestamp = 3;
     Context context = 4;
+
+    reserved 2; // deprecated project_id
 }
 
 message VerifyProviderTokenFromResponse {

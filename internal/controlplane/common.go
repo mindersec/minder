@@ -32,18 +32,6 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// ProjectIDGetter is an interface that can be implemented by a request
-type ProjectIDGetter interface {
-	// GetProjectId returns the project ID
-	GetProjectId() string
-}
-
-// ProviderNameGetter is an interface that can be implemented by a request
-type ProviderNameGetter interface {
-	// GetProvider returns the provider name
-	GetProvider() string
-}
-
 // HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
 	GetContext() *pb.Context
@@ -56,18 +44,13 @@ func providerError(err error) error {
 	return fmt.Errorf("provider error: %w", err)
 }
 
-func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uuid.UUID, error) {
+func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uuid.UUID, error) {
 	var requestedProject string
 
 	// Prefer the context message from the protobuf
-	pbContext, ok := in.(HasProtoContext)
-	if ok && pbContext.GetContext().GetProject() != "" {
-		requestedProject = pbContext.GetContext().GetProject()
-	} else if in.GetProjectId() != "" {
-		requestedProject = in.GetProjectId()
-	}
-
-	if requestedProject == "" {
+	if in.GetContext().GetProject() != "" {
+		requestedProject = in.GetContext().GetProject()
+	} else {
 		proj, err := auth.GetDefaultProject(ctx)
 		if err != nil {
 			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
@@ -86,7 +69,7 @@ func getProjectFromRequestOrDefault(ctx context.Context, in ProjectIDGetter) (uu
 func getProviderFromRequestOrDefault(
 	ctx context.Context,
 	store db.Store,
-	in ProviderNameGetter,
+	in HasProtoContext,
 	projectId uuid.UUID,
 ) (db.Provider, error) {
 	providers, err := store.ListProvidersByProjectID(ctx, projectId)
@@ -94,7 +77,7 @@ func getProviderFromRequestOrDefault(
 		return db.Provider{}, status.Errorf(codes.InvalidArgument, "cannot retrieve providers: %s", err)
 	}
 	// if we do not have a provider name, check if we can infer it
-	if in.GetProvider() == "" {
+	if in.GetContext().GetProvider() == "" {
 		if len(providers) == 1 {
 			return providers[0], nil
 		}
@@ -103,12 +86,12 @@ func getProviderFromRequestOrDefault(
 	}
 
 	matchesName := func(provider db.Provider) bool {
-		return provider.Name == in.GetProvider()
+		return provider.Name == in.GetContext().GetProvider()
 	}
 
 	i := slices.IndexFunc(providers, matchesName)
 	if i == -1 {
-		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", in.GetProvider())
+		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", in.GetContext().GetProvider())
 	}
 	return providers[i], nil
 }

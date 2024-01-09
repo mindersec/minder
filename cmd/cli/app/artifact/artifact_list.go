@@ -65,10 +65,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep those until we decide to delete them from the payload and leave the context only
-		Provider:  provider,
-		ProjectId: project,
-		From:      fromFilter,
+		From:    fromFilter,
 	},
 	)
 

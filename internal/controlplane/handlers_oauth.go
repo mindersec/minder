@@ -51,18 +51,18 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, err
 	}
 
-	// Configure tracing
-	// trace call to AuthCodeURL
-	span := trace.SpanFromContext(ctx)
-	span.SetName("server.GetAuthorizationURL")
-	span.SetAttributes(attribute.Key("provider").String(req.Provider))
-	defer span.End()
-
 	// get provider info
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
+
+	// Configure tracing
+	// trace call to AuthCodeURL
+	span := trace.SpanFromContext(ctx)
+	span.SetName("server.GetAuthorizationURL")
+	span.SetAttributes(attribute.Key("provider").String(provider.Name))
+	defer span.End()
 
 	// Create a new OAuth2 config for the given provider
 	oauthConfig, err := auth.NewOAuthConfig(provider.Name, req.Cli)
@@ -156,7 +156,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	}
 
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(in.Provider, true)
+	oauthConfig, err := auth.NewOAuthConfig(provider.Name, true)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// validate token
-	err = auth.ValidateProviderToken(ctx, in.Provider, in.AccessToken)
+	err = auth.ValidateProviderToken(ctx, provider.Name, in.AccessToken)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
 	}

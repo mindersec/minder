@@ -126,7 +126,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	// publish a reconcile event for the registered repositories
 	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(in.Provider, r.RepoId, projectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(provider.Name, r.RepoId, projectID)
 	if err != nil {
 		log.Printf("error creating reconciler event: %v", err)
 		return response, nil
@@ -364,15 +364,15 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, err
 	}
 
-	zerolog.Ctx(ctx).Debug().
-		Str("provider", in.Provider).
-		Str("projectID", projectID.String()).
-		Msgf("listing repositories for provider: %s", in.Provider)
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(fmt.Errorf("provider error: %w", err))
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Str("provider", provider.Name).
+		Str("projectID", projectID.String()).
+		Msg("listing repositories")
 
 	// FIXME: this is a hack to get the owner filter from the request
 	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID, true)

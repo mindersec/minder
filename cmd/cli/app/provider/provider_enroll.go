@@ -94,10 +94,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	if token != "" {
 		// use pat for enrollment
 		_, err := client.StoreProviderToken(context.Background(), &minderv1.StoreProviderTokenRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
-			// keep those until we decide to delete them from the payload and leave the context only
-			Provider:    provider,
-			ProjectId:   project,
+			Context:     &minderv1.Context{Provider: &provider, Project: &project},
 			AccessToken: token,
 			Owner:       &owner,
 		})
@@ -117,12 +114,9 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 
 	resp, err := client.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep those until we decide to delete them from the payload and leave the context only
-		Provider:  provider,
-		ProjectId: project,
-		Cli:       true,
-		Port:      int32(port),
-		Owner:     &owner,
+		Cli:     true,
+		Port:    int32(port),
+		Owner:   &owner,
 	})
 	if err != nil {
 		return cli.MessageAndError("error getting authorization URL", err)
@@ -196,10 +190,7 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, pr
 
 			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
 			res, err := client.VerifyProviderTokenFrom(clientCtx, &minderv1.VerifyProviderTokenFromRequest{
-				Context: &minderv1.Context{Provider: &provider, Project: &project},
-				// keep those until we decide to delete them from the payload and leave the context only
-				Provider:  provider,
-				ProjectId: project,
+				Context:   &minderv1.Context{Provider: &provider, Project: &project},
 				Timestamp: timestamppb.New(t),
 			})
 			if err == nil && res.Status == "OK" {
