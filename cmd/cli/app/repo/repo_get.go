@@ -76,9 +76,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		// check repo by name
 		resp, err := client.GetRepositoryByName(ctx, &minderv1.GetRepositoryByNameRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
-			// keep this until we decide to remove it from the proto and rely on the context instead
-			Provider: provider,
-			Name:     name,
+			Name:    name,
 		})
 		if err != nil {
 			return cli.MessageAndError("Error getting repo by name", err)

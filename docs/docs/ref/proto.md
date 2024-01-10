@@ -318,8 +318,7 @@ User service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | name | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
@@ -410,8 +409,7 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | code | [string](#string) |  |  |
 | state | [string](#string) |  |  |
 | redirect_uri | [string](#string) |  |  |
@@ -478,8 +476,6 @@ DiffType defines the diff data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
 | cli | [bool](#bool) |  |  |
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
@@ -614,8 +610,7 @@ if the struct is reused in other messages, it should be moved to a top-level def
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | name | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
@@ -748,7 +743,6 @@ GitType defines the git data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | from | [string](#string) |  |  |
 
@@ -794,8 +788,7 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | context | [Context](#minder-v1-Context) |  |  |
 
 
@@ -818,8 +811,7 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | limit | [int32](#int32) |  |  |
 | offset | [int32](#int32) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
@@ -1017,8 +1009,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | repository | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
@@ -1374,8 +1365,7 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | access_token | [string](#string) |  |  |
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
@@ -1469,8 +1459,7 @@ user record to be returned
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| project_id | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
 | timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 

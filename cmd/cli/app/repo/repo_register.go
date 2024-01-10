@@ -98,9 +98,6 @@ func fetchAlreadyRegisteredRepos(ctx context.Context, provider, project string, 
 	sets.Set[string], error) {
 	alreadyRegisteredRepos, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
 	})
 	if err != nil {
 		return nil, err
@@ -135,9 +132,6 @@ func fetchRemoteRepositoriesFromProvider(ctx context.Context, provider, project 
 	[]*minderv1.UpstreamRepositoryRef, error) {
 	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &minderv1.ListRemoteRepositoriesFromProviderRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
 	})
 	if err != nil {
 		return nil, err
@@ -232,10 +226,7 @@ func registerSelectedRepos(
 		repo := selectedRepos[idx]
 
 		result, err := client.RegisterRepository(context.Background(), &minderv1.RegisterRepositoryRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
-			// keep this until we decide to delete them from the payload and rely only on the context
-			Provider:   provider,
-			ProjectId:  project,
+			Context:    &minderv1.Context{Provider: &provider, Project: &project},
 			Repository: repo,
 		})
 		if err != nil {

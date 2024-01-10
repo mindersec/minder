@@ -210,9 +210,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	// Get the list of all registered repositories
 	listResp, err := repoClient.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		// keep this until we decide to delete them from the payload and rely only on the context
-		Provider:  provider,
-		ProjectId: project,
 	})
 	if err != nil {
 		return cli.MessageAndError("Error getting list of repos", err)
