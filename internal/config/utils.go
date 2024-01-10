@@ -112,6 +112,9 @@ func GetConfigFileData(cfgFile, defaultCfgPath string) (interface{}, error) {
 	}
 
 	cleanCfgFilePath := filepath.Clean(cfgFilePath)
+
+	// If no local config file is present during mounting, Docker will create an empty directory in the container.
+	// If no config file is present, system will revert to default values.
 	if info, err := os.Stat(cleanCfgFilePath); err == nil && info.IsDir() || err != nil && os.IsNotExist(err) {
 		return nil, nil
 	}
