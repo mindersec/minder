@@ -72,6 +72,11 @@ func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *provider
 	}, nil
 }
 
+// GetOnOffState returns the on/off state of the actions
+func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]engif.ActionOpt {
+	return rae.actionsOnOff
+}
+
 // DoActions processes all actions i.e., remediation and alerts
 func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,

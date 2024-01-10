@@ -244,7 +244,7 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParams) error {
+func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParamsReadWriter) error {
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
@@ -275,6 +275,11 @@ func (r *RuleTypeEngine) Actions(
 ) enginerr.ActionsError {
 	// Process actions
 	return r.rae.DoActions(ctx, inf.Entity, params)
+}
+
+// GetActionsOnOff returns the on/off state of the actions
+func (r *RuleTypeEngine) GetActionsOnOff() map[engif.ActionType]engif.ActionOpt {
+	return r.rae.GetOnOffState()
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

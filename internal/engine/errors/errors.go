@@ -207,3 +207,21 @@ func HTTPErrorCodeToErr(httpCode int) error {
 
 	return err
 }
+
+// EvalErrorAsString returns the evaluation error as a string
+func EvalErrorAsString(err error) string {
+	dbEvalStatus := ErrorAsEvalStatus(err)
+	return string(dbEvalStatus)
+}
+
+// RemediationErrorAsString returns the remediation error as a string
+func RemediationErrorAsString(err error) string {
+	dbRemediationStatus := ErrorAsRemediationStatus(err)
+	return string(dbRemediationStatus)
+}
+
+// AlertErrorAsString returns the alert error as a string
+func AlertErrorAsString(err error) string {
+	dbAlertStatus := ErrorAsAlertStatus(err)
+	return string(dbAlertStatus)
+}

@@ -76,6 +76,10 @@ const (
 	ActionOptUnknown
 )
 
+func (a ActionOpt) String() string {
+	return [...]string{"on", "off", "dry_run", "unknown"}[a]
+}
+
 // ActionOptFromString returns the ActionOpt from a string representation
 func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
 	var actionOptMap = map[string]ActionOpt{
@@ -136,12 +140,14 @@ type EvalStatusParams struct {
 	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
+	actionsOnOff     map[ActionType]ActionOpt
 	actionsErr       evalerrors.ActionsError
 }
 
 // Ensure EvalStatusParams implements the necessary interfaces
 var _ ActionsParams = (*EvalStatusParams)(nil)
-var _ EvalParams = (*EvalStatusParams)(nil)
+var _ EvalParamsReader = (*EvalStatusParams)(nil)
+var _ EvalParamsReadWriter = (*EvalStatusParams)(nil)
 
 // GetEvalErr returns the evaluation error
 func (e *EvalStatusParams) GetEvalErr() error {
@@ -151,6 +157,16 @@ func (e *EvalStatusParams) GetEvalErr() error {
 // SetEvalErr sets the evaluation error
 func (e *EvalStatusParams) SetEvalErr(err error) {
 	e.evalErr = err
+}
+
+// GetActionsOnOff returns the actions' on/off state
+func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]ActionOpt {
+	return e.actionsOnOff
+}
+
+// SetActionsOnOff sets the actions' on/off state
+func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]ActionOpt) {
+	e.actionsOnOff = actionsOnOff
 }
 
 // SetActionsErr sets the actions' error
@@ -216,16 +232,23 @@ func (e *EvalStatusParams) GetIngestResult() *Result {
 	return e.Result
 }
 
-// EvalParams is the interface used for a rule type evaluator
-type EvalParams interface {
+// EvalParamsReader is the interface used for a rule type evaluator
+type EvalParamsReader interface {
 	GetRule() *pb.Profile_Rule
-	SetIngestResult(*Result)
 	GetIngestResult() *Result
+}
+
+// EvalParamsReadWriter is the interface used for a rule type engine, allows setting the ingestion result
+type EvalParamsReadWriter interface {
+	EvalParamsReader
+	SetIngestResult(*Result)
 }
 
 // ActionsParams is the interface used for processing a rule type action
 type ActionsParams interface {
-	EvalParams
+	EvalParamsReader
+	GetActionsOnOff() map[ActionType]ActionOpt
+	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
 	GetRuleType() *pb.RuleType

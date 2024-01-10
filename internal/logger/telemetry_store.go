@@ -19,6 +19,9 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
+	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 )
 
@@ -29,17 +32,21 @@ const (
 	telemetryContextKey key = iota
 )
 
+// ActionEvalData reports
+type ActionEvalData struct {
+	// how was the action configured - on, off, ...
+	State string `json:"state"`
+	// what was the result of the action - success, failure, ...
+	Result string `json:"result"`
+}
+
 // RuleEvalData reports
 type RuleEvalData struct {
-	RuleName string `json:"name"`
-	// Action is an ActionOpt string
-	Action interfaces.ActionOpt `json:"action"`
+	RuleName    string `json:"rule_name"`
+	ProfileName string `json:"profile_name"`
 
-	// TODO: how to store results of evaluation?  We probably want to cover:
-	// - rule skipped
-	// - rule eval failed
-	// - rule eval passed, no action needed
-	// - rule eval passed, took <store, GHSA, PR, remediate, etc> action
+	EvalResult string                                   `json:"eval_result"`
+	Actions    map[interfaces.ActionType]ActionEvalData `json:"actions"`
 
 	// TODO: do we want to store params?
 }
@@ -68,13 +75,32 @@ type TelemetryStore struct {
 }
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
-func (ts *TelemetryStore) AddRuleEval(ruleName string, action interfaces.ActionOpt) {
+func (ts *TelemetryStore) AddRuleEval(
+	ruleName string,
+	profileName string,
+	evalInfo interfaces.ActionsParams,
+) {
 	if ts == nil {
 		return
 	}
-	ts.Evals = append(ts.Evals, RuleEvalData{
-		RuleName: ruleName, Action: action,
-	})
+
+	red := RuleEvalData{
+		RuleName:    ruleName,
+		ProfileName: profileName,
+		EvalResult:  errors.EvalErrorAsString(evalInfo.GetEvalErr()),
+		Actions: map[interfaces.ActionType]ActionEvalData{
+			remediate.ActionType: {
+				State:  evalInfo.GetActionsOnOff()[remediate.ActionType].String(),
+				Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
+			},
+			alert.ActionType: {
+				State:  evalInfo.GetActionsOnOff()[alert.ActionType].String(),
+				Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
+			},
+		},
+	}
+
+	ts.Evals = append(ts.Evals, red)
 }
 
 // BusinessRecord provides the ability to store an observation about the current
