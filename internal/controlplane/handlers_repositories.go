@@ -34,6 +34,9 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// maxFetchLimit is the maximum number of repositories that can be fetched from the database in one call
+const maxFetchLimit = 100
+
 // RegisterRepository adds repositories to the database and registers a webhook
 // Once a user had enrolled in a project (they have a valid token), they can register
 // repositories to be monitored by the minder by provisioning a webhook on the
@@ -142,7 +145,6 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // ListRepositories returns a list of repositories for a given project
 // This function will typically be called by the client to get a list of
 // repositories that are registered present in the minder database
-// The API is called with a project id, limit and offset
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
 	projectID, err := getProjectFromRequestOrDefault(ctx, in)
@@ -160,9 +162,30 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, providerError(err)
 	}
 
+	reqRepoCursor, err := NewRepoCursor(in.GetCursor())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
+	repoId := sql.NullInt32{Valid: false, Int32: 0}
+	if reqRepoCursor.ProjectId == projectID.String() && reqRepoCursor.Provider == provider.Name {
+		repoId = sql.NullInt32{Valid: true, Int32: reqRepoCursor.RepoId}
+	}
+
+	limit := sql.NullInt32{Valid: false, Int32: 0}
+	reqLimit := in.GetLimit()
+	if reqLimit > 0 {
+		if reqLimit > maxFetchLimit {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "limit too high, max is %d", maxFetchLimit)
+		}
+		limit = sql.NullInt32{Valid: true, Int32: reqLimit + 1}
+	}
+
 	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
 		Provider:  provider.Name,
 		ProjectID: projectID,
+		RepoID:    repoId,
+		Limit:     limit,
 	})
 
 	if err != nil {
@@ -184,7 +207,21 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, r)
 	}
 
+	var respRepoCursor *RepoCursor
+	if limit.Valid && len(repos) == int(limit.Int32) {
+		lastRepo := repos[len(repos)-1]
+		respRepoCursor = &RepoCursor{
+			ProjectId: projectID.String(),
+			Provider:  provider.Name,
+			RepoId:    lastRepo.RepoID,
+		}
+
+		// remove the (limit + 1)th element from the results
+		results = results[:len(results)-1]
+	}
+
 	resp.Results = results
+	resp.Cursor = respRepoCursor.String()
 
 	return &resp, nil
 }

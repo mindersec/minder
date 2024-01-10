@@ -376,16 +376,25 @@ func (q *Queries) ListRepositoriesByOwner(ctx context.Context, arg ListRepositor
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories
 WHERE provider = $1 AND project_id = $2
-ORDER BY repo_name
+  AND (repo_id >= $3 OR $3 IS NULL)
+ORDER BY project_id, provider, repo_id
+LIMIT $4
 `
 
 type ListRepositoriesByProjectIDParams struct {
-	Provider  string    `json:"provider"`
-	ProjectID uuid.UUID `json:"project_id"`
+	Provider  string        `json:"provider"`
+	ProjectID uuid.UUID     `json:"project_id"`
+	RepoID    sql.NullInt32 `json:"repo_id"`
+	Limit     sql.NullInt32 `json:"limit"`
 }
 
 func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error) {
-	rows, err := q.db.QueryContext(ctx, listRepositoriesByProjectID, arg.Provider, arg.ProjectID)
+	rows, err := q.db.QueryContext(ctx, listRepositoriesByProjectID,
+		arg.Provider,
+		arg.ProjectID,
+		arg.RepoID,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}

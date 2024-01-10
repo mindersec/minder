@@ -811,8 +811,8 @@ list profiles
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  | **Deprecated.**  |
 | limit | [int32](#int32) |  |  |
-| offset | [int32](#int32) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
+| cursor | [string](#string) |  |  |
 
 
 <a name="minder-v1-ListRepositoriesResponse"></a>
@@ -824,6 +824,7 @@ list profiles
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | results | [Repository](#minder-v1-Repository) | repeated |  |
+| cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
 
 
 <a name="minder-v1-ListRuleTypesRequest"></a>

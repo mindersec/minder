@@ -28,7 +28,9 @@ SELECT * FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id =
 -- name: ListRepositoriesByProjectID :many
 SELECT * FROM repositories
 WHERE provider = $1 AND project_id = $2
-ORDER BY repo_name;
+  AND (repo_id >= sqlc.narg('repo_id') OR sqlc.narg('repo_id') IS NULL)
+ORDER BY project_id, provider, repo_id
+LIMIT sqlc.narg('limit');
 
 -- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories
