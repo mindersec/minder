@@ -59,7 +59,8 @@ var serveCmd = &cobra.Command{
 		}
 
 		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
-		zerolog.Ctx(ctx).Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
+		l := zerolog.Ctx(ctx)
+		l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 
 		// Database configuration
 		dbConn, _, err := cfg.Database.GetDBConnection(ctx)
@@ -120,9 +121,13 @@ var serveCmd = &cobra.Command{
 
 		s.ConsumeEvents(aggr)
 
+		tsmdw := logger.NewTelemetryStoreWMMiddleware(l)
+
 		exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, evt,
 			engine.WithProviderMetrics(providerMetrics),
-			engine.WithAggregatorMiddleware(aggr))
+			engine.WithMiddleware(aggr.AggregateMiddleware),
+			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
+		)
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
 		}

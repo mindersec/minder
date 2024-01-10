@@ -56,7 +56,7 @@ type Executor struct {
 	evt        *events.Eventer
 	crypteng   *crypto.Engine
 	provMt     providertelemetry.ProviderMetrics
-	aggrMdw    events.AggregatorMiddleware
+	mdws       []message.HandlerMiddleware
 	executions *sync.WaitGroup
 	// terminationcontext is used to terminate the executor
 	// when the server is shutting down.
@@ -73,10 +73,10 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
 	}
 }
 
-// WithAggregatorMiddleware sets the aggregator middleware for the executor
-func WithAggregatorMiddleware(mdw events.AggregatorMiddleware) ExecutorOption {
+// WithMiddleware sets the aggregator middleware for the executor
+func WithMiddleware(mdw message.HandlerMiddleware) ExecutorOption {
 	return func(e *Executor) {
-		e.aggrMdw = mdw
+		e.mdws = append(e.mdws, mdw)
 	}
 }
 
@@ -100,6 +100,7 @@ func NewExecutor(
 		evt:                evt,
 		executions:         &sync.WaitGroup{},
 		terminationcontext: ctx,
+		mdws:               []message.HandlerMiddleware{},
 	}
 
 	for _, opt := range opts {
@@ -111,12 +112,7 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	if e.aggrMdw == nil {
-		r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent)
-	} else {
-		r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent,
-			e.aggrMdw.AggregateMiddleware)
-	}
+	r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
 }
 
 // Wait waits for all the executions to finish.
