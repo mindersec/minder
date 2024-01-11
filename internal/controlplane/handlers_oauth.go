@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
@@ -54,7 +53,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// get provider info
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	// Configure tracing
@@ -152,7 +151,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	// get provider
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, stateData.ProjectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	// generate a new OAuth2 config for the given provider
@@ -260,7 +259,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	// validate token
@@ -321,7 +320,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	// check if a token has been created since timestamp
