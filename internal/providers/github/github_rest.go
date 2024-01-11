@@ -504,9 +504,9 @@ func (c *RestClient) ListHooks(ctx context.Context, owner, repo string) ([]*gith
 }
 
 // DeleteHook deletes a specified Hook.
-func (c *RestClient) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
-	_, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
-	return err
+func (c *RestClient) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
+	resp, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
+	return resp, err
 }
 
 // CreateHook creates a new Hook.

@@ -35,6 +35,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -319,7 +321,7 @@ func (s *Server) registerWebhookForRepository(
 			}
 			if parsedURL.Host == parsedOriginalURL.Host {
 				// it is our hook, we can remove it
-				err = client.DeleteHook(ctx, repo.Owner, repo.Name, h.GetID())
+				_, err = client.DeleteHook(ctx, repo.Owner, repo.Name, h.GetID())
 				if err != nil {
 					errorStr := err.Error()
 					regResult.Status.Error = &errorStr
@@ -352,6 +354,40 @@ func (s *Server) registerWebhookForRepository(
 	regResult.Repository.DefaultBranch = repoGet.GetDefaultBranch()
 
 	return regResult, nil
+}
+
+func (s *Server) deleteWebhookFromRepository(
+	ctx context.Context,
+	provider db.Provider,
+	projectID uuid.UUID,
+	dbrepo db.Repository,
+) error {
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+	}
+	providerBuilder, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	client, err := providerBuilder.GetGitHub(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot create github client: %v", err)
+	}
+
+	webhookId := dbrepo.WebhookID
+	if webhookId.Valid {
+		resp, err := client.DeleteHook(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int64(webhookId.Int32))
+		if err != nil {
+			if resp != nil && resp.StatusCode == http.StatusNotFound {
+				// if the hook is not found, we can ignore the error, user might have deleted it manually
+				return nil
+			}
+			return status.Errorf(codes.Internal, "cannot delete webhook: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) parseGithubEventForProcessing(
