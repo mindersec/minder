@@ -72,7 +72,6 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	createFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-			Context:  &minderv1.Context{Provider: &provider, Project: &project},
 			RuleType: rt,
 		})
 		if err != nil {
@@ -88,7 +87,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, createFunc); err != nil {
+		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, provider, createFunc); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("Error creating rule type from %s", f), err)
 		}
 	}

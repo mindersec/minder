@@ -73,7 +73,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 	applyFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-			Context:  &minderv1.Context{Provider: &provider, Project: &project},
 			RuleType: rt,
 		})
 
@@ -92,7 +91,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 
 		updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
-			Context:  &minderv1.Context{Provider: &provider, Project: &project},
 			RuleType: rt,
 		})
 
@@ -109,7 +107,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, applyFunc); err != nil {
+		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, provider, applyFunc); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f), err)
 		}
 	}

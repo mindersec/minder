@@ -122,7 +122,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 	cpr *minderv1.CreateProfileRequest) (*minderv1.CreateProfileResponse, error) {
 	in := cpr.GetProfile()
 
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, cpr.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
@@ -315,7 +315,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 
 	var resp minderv1.ListProfilesResponse
 	resp.Profiles = make([]*minderv1.Profile, 0, len(profiles))
-	for _, profile := range engine.MergeDatabaseListIntoProfiles(profiles, entityCtx) {
+	for _, profile := range engine.MergeDatabaseListIntoProfiles(profiles) {
 		resp.Profiles = append(resp.Profiles, profile)
 	}
 
@@ -365,7 +365,7 @@ func getProfilePBFromDB(
 		return nil, err
 	}
 
-	pols := engine.MergeDatabaseGetIntoProfiles(profiles, entityCtx)
+	pols := engine.MergeDatabaseGetIntoProfiles(profiles)
 	if len(pols) == 0 {
 		return nil, fmt.Errorf("profile not found")
 	} else if len(pols) > 1 {
@@ -575,7 +575,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	cpr *minderv1.UpdateProfileRequest) (*minderv1.UpdateProfileResponse, error) {
 	in := cpr.GetProfile()
 
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, cpr.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
@@ -725,7 +725,7 @@ func (s *Server) getAndValidateRulesFromProfile(
 			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
 		}
 
-		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+		rtyppb, err := engine.RuleTypePBFromDB(&rtdb)
 		if err != nil {
 			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}
@@ -779,7 +779,7 @@ func (s *Server) getRulesFromProfile(
 			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
 		}
 
-		rtyppb, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+		rtyppb, err := engine.RuleTypePBFromDB(&rtdb)
 		if err != nil {
 			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}

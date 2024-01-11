@@ -221,7 +221,7 @@ func (e *Executor) evalEntityEvent(
 		return fmt.Errorf("error getting profiles: %w", err)
 	}
 
-	for _, profile := range MergeDatabaseListIntoProfiles(dbpols, ectx) {
+	for _, profile := range MergeDatabaseListIntoProfiles(dbpols) {
 		// Get only these rules that are relevant for this entity type
 		relevant, err := GetRulesForEntity(profile, inf.Type)
 		if err != nil {
@@ -292,7 +292,7 @@ func (e *Executor) getEvaluator(
 	}
 
 	// Parse the rule type
-	rt, err := RuleTypePBFromDB(&dbrt, ectx)
+	rt, err := RuleTypePBFromDB(&dbrt)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
 	}

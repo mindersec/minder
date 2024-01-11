@@ -208,7 +208,6 @@ Profile service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-CreateProfileResponse"></a>
@@ -231,7 +230,6 @@ CreateRuleTypeRequest is the request to create a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be created. |
-| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-CreateRuleTypeResponse"></a>
@@ -1386,7 +1384,6 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UpdateProfileResponse"></a>
@@ -1409,7 +1406,6 @@ UpdateRuleTypeRequest is the request to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be updated. |
-| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UpdateRuleTypeResponse"></a>

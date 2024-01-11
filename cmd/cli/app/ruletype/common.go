@@ -37,6 +37,8 @@ func execOnOneRuleType(
 	t table.Table,
 	f string,
 	dashOpen io.Reader,
+	proj string,
+	provider string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
@@ -51,6 +53,24 @@ func execOnOneRuleType(
 	r, err := minderv1.ParseRuleType(reader)
 	if err != nil {
 		return fmt.Errorf("error parsing rule type: %w", err)
+	}
+
+	// Override the YAML specified project with the command line argument
+	if proj != "" {
+		if r.Context == nil {
+			r.Context = &minderv1.Context{}
+		}
+
+		r.Context.Project = &proj
+	}
+
+	// Override the YAML specified provider with the command line argument
+	if provider != "" {
+		if r.Context == nil {
+			r.Context = &minderv1.Context{}
+		}
+
+		r.Context.Provider = &provider
 	}
 
 	// create a rule
