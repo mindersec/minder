@@ -134,7 +134,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		Name:      entityCtx.GetProvider().Name,
 		ProjectID: entityCtx.GetProject().ID})
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	if err := in.Validate(); err != nil {

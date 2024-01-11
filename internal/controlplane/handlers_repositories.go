@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -53,7 +52,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	pbOpts := []providers.ProviderBuilderOption{
@@ -158,7 +157,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
@@ -244,7 +243,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	repo, err := s.store.GetRepositoryByRepoName(ctx,
@@ -322,7 +321,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	repo, err := s.store.GetRepositoryByRepoName(ctx,
@@ -366,7 +365,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
-		return nil, providerError(fmt.Errorf("provider error: %w", err))
+		return nil, providerError(err)
 	}
 
 	zerolog.Ctx(ctx).Debug().
