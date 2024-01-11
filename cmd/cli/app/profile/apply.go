@@ -61,7 +61,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	applyFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Profile: p,
 		})
 		if err == nil {
@@ -79,7 +78,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		// The profile already exists, so update it
 		updateResp, err := client.UpdateProfile(ctx, &minderv1.UpdateProfileRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Profile: p,
 		})
 		if err != nil {
@@ -90,7 +88,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	}
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, applyFunc); err != nil {
+	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, applyFunc); err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error applying profile from %s", f), err)
 	}
 

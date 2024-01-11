@@ -59,7 +59,6 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	createFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Profile: p,
 		})
 		if err != nil {
@@ -69,7 +68,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, createFunc); err != nil {
+	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, createFunc); err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error creating profile from %s", f), err)
 	}
 

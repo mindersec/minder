@@ -260,7 +260,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 
 	// Create the rule type in minder
 	_, err = client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
-		Context:  &minderv1.Context{Provider: &provider, Project: &project},
 		RuleType: rt,
 	})
 	if err != nil {
@@ -313,7 +312,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	alreadyExists := ""
 	// Create the profile in minder
 	resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
 		Profile: p,
 	})
 	if err != nil {

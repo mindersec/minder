@@ -289,23 +289,21 @@ func RuleDefFromDB(r *db.RuleType) (*minderv1.RuleType_Definition, error) {
 
 // RuleTypePBFromDB converts a rule type from the database to a protobuf
 // rule type
-func RuleTypePBFromDB(rt *db.RuleType, ectx *EntityContext) (*minderv1.RuleType, error) {
-	gname := ectx.GetProject().GetName()
-
+func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	def, err := RuleDefFromDB(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get rule type definition: %w", err)
 	}
 
 	id := rt.ID.String()
-	name := ectx.GetProvider().Name
+	project := rt.ProjectID.String()
 
 	return &minderv1.RuleType{
 		Id:   &id,
 		Name: rt.Name,
 		Context: &minderv1.Context{
-			Provider: &name,
-			Project:  &gname,
+			Provider: &rt.Provider,
+			Project:  &project,
 		},
 		Description: rt.Description,
 		Guidance:    rt.Guidance,

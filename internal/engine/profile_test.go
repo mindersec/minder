@@ -122,7 +122,6 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
   provider: github
 repository:
   - type: secret_scanning
@@ -217,7 +216,6 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
   provider: github
 repository:
   - type: secret_scanning
@@ -253,7 +251,6 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
   provider: github
 repository:
   - type: secret_scanning
@@ -269,7 +266,6 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
   provider: github
 repository:
   - type: secret_scanning
@@ -285,7 +281,6 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
   provider: github
 repository:
   - null

@@ -153,7 +153,7 @@ func TraverseRules(rules []*pb.Profile_Rule, fn func(*pb.Profile_Rule) error) er
 // profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *EntityContext) map[string]*pb.Profile {
+func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[string]*pb.Profile {
 	profiles := map[string]*pb.Profile{}
 
 	for idx := range ppl {
@@ -162,15 +162,15 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 		// first we check if profile already exists, if not we create a new one
-		// first we check if profile already exists, if not we create a new one
 		if _, ok := profiles[p.Name]; !ok {
 			profileID := p.ID.String()
+			project := p.ProjectID.String()
 			profiles[p.Name] = &pb.Profile{
 				Id:   &profileID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: &ectx.Provider.Name,
-					Project:  &ectx.Project.Name,
+					Provider: &p.Provider,
+					Project:  &project,
 				},
 			}
 
@@ -196,7 +196,7 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow, ectx *En
 // profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we migrate to that
-func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *EntityContext) map[string]*pb.Profile {
+func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[string]*pb.Profile {
 	profiles := map[string]*pb.Profile{}
 
 	for idx := range ppl {
@@ -208,12 +208,13 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow, ectx *En
 		// first we check if profile already exists, if not we create a new one
 		if _, ok := profiles[p.Name]; !ok {
 			profileID := p.ID.String()
+			project := p.ProjectID.String()
 			profiles[p.Name] = &pb.Profile{
 				Id:   &profileID,
 				Name: p.Name,
 				Context: &pb.Context{
-					Provider: &ectx.Provider.Name,
-					Project:  &ectx.Project.Name,
+					Provider: &p.Provider,
+					Project:  &project,
 				},
 			}
 

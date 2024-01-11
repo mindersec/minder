@@ -56,7 +56,7 @@ func (s *Server) ListRuleTypes(
 
 	for idx := range lrt {
 		rt := lrt[idx]
-		rtpb, err := engine.RuleTypePBFromDB(&rt, entityCtx)
+		rtpb, err := engine.RuleTypePBFromDB(&rt)
 		if err != nil {
 			return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rt.Name, err)
 		}
@@ -90,7 +90,7 @@ func (s *Server) GetRuleTypeByName(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	rt, err := engine.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}
@@ -110,8 +110,6 @@ func (s *Server) GetRuleTypeById(
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
-
 	resp := &minderv1.GetRuleTypeByIdResponse{}
 
 	parsedRuleTypeID, err := uuid.Parse(in.GetId())
@@ -124,7 +122,7 @@ func (s *Server) GetRuleTypeById(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	rt, err := engine.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}
@@ -141,7 +139,7 @@ func (s *Server) CreateRuleType(
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, crt.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
@@ -199,7 +197,7 @@ func (s *Server) UpdateRuleType(
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.authAndContextValidation(ctx, urt.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
@@ -218,7 +216,7 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
 	}
 
-	oldrt, err := engine.RuleTypePBFromDB(&rtdb, entityCtx)
+	oldrt, err := engine.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot convert rule type %s to pb: %v", in.GetName(), err)
 	}

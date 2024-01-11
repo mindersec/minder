@@ -48,3 +48,19 @@ func ParseRuleType(r io.Reader) (*RuleType, error) {
 
 	return rt, nil
 }
+
+// GetContext returns the context from the nested RuleType
+func (r *CreateRuleTypeRequest) GetContext() *Context {
+	if r != nil && r.RuleType != nil {
+		return r.RuleType.Context
+	}
+	return nil
+}
+
+// GetContext returns the context from the nested RuleType
+func (r *UpdateRuleTypeRequest) GetContext() *Context {
+	if r != nil && r.RuleType != nil {
+		return r.RuleType.Context
+	}
+	return nil
+}

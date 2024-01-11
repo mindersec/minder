@@ -20,3 +20,19 @@ const (
 	// ProfileTypeVersion is the version of the profile resource.
 	ProfileTypeVersion = "v1"
 )
+
+// GetContext returns the context from the nested Profile
+func (r *CreateProfileRequest) GetContext() *Context {
+	if r != nil && r.Profile != nil {
+		return r.Profile.Context
+	}
+	return nil
+}
+
+// GetContext returns the context from the nested Profile
+func (r *UpdateProfileRequest) GetContext() *Context {
+	if r != nil && r.Profile != nil {
+		return r.Profile.Context
+	}
+	return nil
+}

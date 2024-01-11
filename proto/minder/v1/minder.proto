@@ -773,7 +773,7 @@ message GetUserResponse {
 // Profile service
 message CreateProfileRequest {
     Profile profile = 1;
-    Context context = 2;
+    reserved 2; // deprecated context
 }
 
 message CreateProfileResponse {
@@ -782,7 +782,7 @@ message CreateProfileResponse {
 
 message UpdateProfileRequest {
     Profile profile = 1;
-    Context context = 2;
+    reserved 2; // deprecated context
 }
 
 message UpdateProfileResponse {
@@ -987,7 +987,7 @@ message GetRuleTypeByIdResponse {
 message CreateRuleTypeRequest {
     // rule_type is the rule type to be created.
     RuleType rule_type = 1;
-    Context context = 2;
+    reserved 2; // deprecated context
 }
 
 // CreateRuleTypeResponse is the response to create a rule type.
@@ -1000,7 +1000,7 @@ message CreateRuleTypeResponse {
 message UpdateRuleTypeRequest {
     // rule_type is the rule type to be updated.
     RuleType rule_type = 2;
-    Context context = 3;
+    reserved 3; // deprecated context
 }
 
 // UpdateRuleTypeResponse is the response to update a rule type.
