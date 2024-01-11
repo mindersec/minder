@@ -1979,8 +1979,6 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
-      context:
-        $ref: '#/definitions/v1Context'
     title: Profile service
   v1CreateProfileResponse:
     type: object
@@ -1993,8 +1991,6 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be created.
-      context:
-        $ref: '#/definitions/v1Context'
     description: CreateRuleTypeRequest is the request to create a rule type.
   v1CreateRuleTypeResponse:
     type: object
@@ -2508,8 +2504,6 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
-      context:
-        $ref: '#/definitions/v1Context'
   v1UpdateProfileResponse:
     type: object
     properties:
@@ -2521,8 +2515,6 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be updated.
-      context:
-        $ref: '#/definitions/v1Context'
     description: UpdateRuleTypeRequest is the request to update a rule type.
   v1UpdateRuleTypeResponse:
     type: object
