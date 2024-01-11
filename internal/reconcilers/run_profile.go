@@ -29,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util"
 )
@@ -132,7 +133,7 @@ func (s *Reconciler) publishProfileInitEvents(
 	for _, dbrepo := range dbrepos {
 		// protobufs are our API, so we always execute on these instead of the DB directly.
 		repo := util.PBRepositoryFromDB(dbrepo)
-		err := engine.NewEntityInfoWrapper().
+		err := entities.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider.Name).
 			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
@@ -179,7 +180,7 @@ func (s *Reconciler) publishArtifactProfileInitEvents(
 			return fmt.Errorf("error getting artifact versions: %w", err)
 		}
 
-		err = engine.NewEntityInfoWrapper().
+		err = entities.NewEntityInfoWrapper().
 			WithProvider(ectx.Provider.Name).
 			WithProjectID(ectx.Project.ID).
 			WithArtifact(pbArtifact).

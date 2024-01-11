@@ -31,8 +31,7 @@ import (
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/entities"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util"
 )
@@ -55,7 +54,7 @@ func NewEEA(querier db.Store, evt *events.Eventer, cfg *serverconfig.AggregatorC
 
 // Register implements the Consumer interface.
 func (e *EEA) Register(r events.Registrar) {
-	r.Register(engine.FlushEntityEventTopic, e.FlushMessageHandler)
+	r.Register(events.FlushEntityEventTopic, e.FlushMessageHandler)
 }
 
 // AggregateMiddleware will pass on the event to the executor engine
@@ -79,7 +78,7 @@ func (e *EEA) AggregateMiddleware(h message.HandlerFunc) message.HandlerFunc {
 // nolint:gocyclo // TODO: hacking in the TODO about foreign keys pushed this over the limit.
 func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	ctx := msg.Context()
-	inf, err := engine.ParseEntityEvent(msg)
+	inf, err := entities.ParseEntityEvent(msg)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -158,7 +157,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	}
 
 	logger.Str("execution_id", res.LockedBy.String()).Msg("event ready to be executed")
-	msg.Metadata.Set(engine.ExecutionIDKey, res.LockedBy.String())
+	msg.Metadata.Set(entities.ExecutionIDKey, res.LockedBy.String())
 
 	return msg, nil
 }
@@ -168,7 +167,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 	ctx := msg.Context()
 
-	inf, err := engine.ParseEntityEvent(msg)
+	inf, err := entities.ParseEntityEvent(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -266,7 +265,7 @@ func (e *EEA) buildEntityWrapper(
 	projID uuid.UUID,
 	provider string,
 	artID, prID uuid.NullUUID,
-) (*engine.EntityInfoWrapper, error) {
+) (*entities.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
 		return e.buildRepositoryInfoWrapper(ctx, repoID, projID, provider)
@@ -286,13 +285,13 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	repoID uuid.UUID,
 	projID uuid.UUID,
 	provider string,
-) (*engine.EntityInfoWrapper, error) {
+) (*entities.EntityInfoWrapper, error) {
 	r, err := util.GetRepository(ctx, e.querier, repoID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
 
-	return engine.NewEntityInfoWrapper().
+	return entities.NewEntityInfoWrapper().
 		WithRepository(r).
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
@@ -305,13 +304,13 @@ func (e *EEA) buildArtifactInfoWrapper(
 	projID uuid.UUID,
 	provider string,
 	artID uuid.NullUUID,
-) (*engine.EntityInfoWrapper, error) {
+) (*entities.EntityInfoWrapper, error) {
 	a, err := util.GetArtifactWithVersions(ctx, e.querier, repoID, artID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
 
-	return engine.NewEntityInfoWrapper().
+	return entities.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithArtifact(a).
@@ -325,13 +324,13 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	projID uuid.UUID,
 	provider string,
 	prID uuid.NullUUID,
-) (*engine.EntityInfoWrapper, error) {
+) (*entities.EntityInfoWrapper, error) {
 	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}
 
-	return engine.NewEntityInfoWrapper().
+	return entities.NewEntityInfoWrapper().
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithPullRequest(pr).

@@ -61,6 +61,13 @@ const (
 	metricsSubsystem = "eventer"
 )
 
+const (
+	// ExecuteEntityEventTopic is the topic for internal webhook events
+	ExecuteEntityEventTopic = "execute.entity.event"
+	// FlushEntityEventTopic is the topic for flushing internal webhook events
+	FlushEntityEventTopic = "flush.entity.event"
+)
+
 // Handler is an alias for the watermill handler type, which is both wordy and may be
 // detail we don't want to expose.
 type Handler = message.NoPublishHandlerFunc

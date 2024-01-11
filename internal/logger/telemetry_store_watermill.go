@@ -20,7 +20,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -39,7 +39,7 @@ func NewTelemetryStoreWMMiddleware(l *zerolog.Logger) *TelemetryStoreWMMiddlewar
 // logs the relevant telemetry data.
 func (m *TelemetryStoreWMMiddleware) TelemetryStoreMiddleware(h message.HandlerFunc) message.HandlerFunc {
 	return func(msg *message.Message) ([]*message.Message, error) {
-		inf, err := engine.ParseEntityEvent(msg)
+		inf, err := entities.ParseEntityEvent(msg)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 		}
@@ -77,7 +77,7 @@ func resourceFromEntity(typ minderv1.Entity, ent string) string {
 	return fmt.Sprintf("%s/%s", typ.ToString(), ent)
 }
 
-func getEntityID(inf *engine.EntityInfoWrapper) (string, error) {
+func getEntityID(inf *entities.EntityInfoWrapper) (string, error) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
 	var ent string

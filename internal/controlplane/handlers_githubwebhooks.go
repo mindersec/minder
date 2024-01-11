@@ -41,7 +41,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	githubprovider "github.com/stacklok/minder/internal/providers/github"
@@ -186,7 +186,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		wes.accepted = true
 
-		if err := s.evt.Publish(engine.ExecuteEntityEventTopic, m); err != nil {
+		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
 			wes.error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -458,7 +458,7 @@ func parseRepoEvent(
 ) error {
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := util.PBRepositoryFromDB(dbrepo)
-	eiw := engine.NewEntityInfoWrapper().
+	eiw := entities.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
@@ -507,7 +507,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error getting artifact with versions: %w", err)
 	}
 
-	eiw := engine.NewEntityInfoWrapper().
+	eiw := entities.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
@@ -556,7 +556,7 @@ func parsePullRequestModEvent(
 
 	log.Printf("evaluating PR %+v", prEvalInfo)
 
-	eiw := engine.NewEntityInfoWrapper().
+	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(dbPr.ID).
 		WithProvider(prov.GetName()).

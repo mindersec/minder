@@ -26,7 +26,7 @@ import (
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/cmd/cli/app/profile"
-	"github.com/stacklok/minder/internal/entities"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"

@@ -31,7 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
@@ -119,7 +119,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	// evaluate profile for repo
 	repo := util.PBRepositoryFromDB(repository)
 
-	err = engine.NewEntityInfoWrapper().
+	err = entities.NewEntityInfoWrapper().
 		WithProvider(prov.Name).
 		WithRepository(repo).
 		WithProjectID(evt.Project).
@@ -247,7 +247,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			Versions:   listVersionedArtifacts,
 			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
 		}
-		err = engine.NewEntityInfoWrapper().
+		err = entities.NewEntityInfoWrapper().
 			WithProvider(prov.Name).
 			WithArtifact(pbArtifact).
 			WithProjectID(evt.Project).

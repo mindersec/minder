@@ -26,7 +26,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )

@@ -29,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -133,7 +134,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		db.ProviderAccessToken{},
 		token,
 	))
-	inf := &engine.EntityInfoWrapper{
+	inf := &entities.EntityInfoWrapper{
 		Entity: ent,
 	}
 	if err != nil {
@@ -150,7 +151,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *engine.RuleTypeEngine,
-	inf *engine.EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	frags []*minderv1.Profile_Rule,
 ) error {
 	for idx := range frags {

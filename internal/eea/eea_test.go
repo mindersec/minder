@@ -31,7 +31,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -75,10 +75,10 @@ func TestAggregator(t *testing.T) {
 	evt.Register(rateLimitedMessageTopic, rateLimitedMessages.Add, aggr.AggregateMiddleware)
 
 	// This tests that flushing works as expected
-	evt.Register(engine.FlushEntityEventTopic, aggr.FlushMessageHandler)
+	evt.Register(events.FlushEntityEventTopic, aggr.FlushMessageHandler)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(engine.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
 
 	go func() {
 		t.Log("Running eventer")
@@ -87,7 +87,7 @@ func TestAggregator(t *testing.T) {
 	}()
 	defer evt.Close()
 
-	inf := engine.NewEntityInfoWrapper().
+	inf := entities.NewEntityInfoWrapper().
 		WithRepository(&minderv1.Repository{}).
 		WithRepositoryID(repoID).
 		WithProjectID(projectID).
@@ -125,7 +125,7 @@ func TestAggregator(t *testing.T) {
 			msg, err := inf.BuildMessage()
 			require.NoError(t, err, "expected no error when building message")
 
-			err = evt.Publish(engine.FlushEntityEventTopic, msg.Copy())
+			err = evt.Publish(events.FlushEntityEventTopic, msg.Copy())
 			require.NoError(t, err, "expected no error when publishing message")
 		}()
 	}
