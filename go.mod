@@ -34,6 +34,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.60.0
 	github.com/openfga/cli v0.2.4
+	github.com/openfga/go-sdk v0.3.3
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.18.0
 	github.com/puzpuzpuz/xsync v1.5.2
@@ -70,6 +71,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.29.0
+	k8s.io/client-go v0.29.0
 )
 
 require (
@@ -110,7 +112,6 @@ require (
 	github.com/nwidger/jsoncolor v0.3.2 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20231222042535-3037910c90c0 // indirect
-	github.com/openfga/go-sdk v0.3.3 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240109134059-a66ff55aca89 // indirect
 	github.com/openfga/openfga v1.4.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
@@ -126,7 +127,9 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 )
 
 require (

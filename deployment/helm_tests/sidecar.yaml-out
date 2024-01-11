@@ -112,6 +112,13 @@ data:
       router_close_timeout: 10
       go-channel: {}
     
+    authz:
+      api_url: http://openfga
+      store_name: minder
+      auth:
+        # Set to token for production
+        method: none
+    
   overrides.yaml: |
     
     database:
@@ -718,6 +725,13 @@ data:
       driver: go-channel
       router_close_timeout: 10
       go-channel: {}
+    
+    authz:
+      api_url: http://openfga
+      store_name: minder
+      auth:
+        # Set to token for production
+        method: none
     
   overrides.yaml: |
     
