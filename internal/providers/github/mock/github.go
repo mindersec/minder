@@ -364,11 +364,12 @@ func (mr *MockGitHubMockRecorder) CreateSecurityAdvisory(ctx, owner, repo, sever
 }
 
 // DeleteHook mocks base method.
-func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
+func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteHook", ctx, owner, repo, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*github.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteHook indicates an expected call of DeleteHook.

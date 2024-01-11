@@ -289,8 +289,13 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 		return nil, err
 	}
 
-	// delete the repository
-	if err := s.store.DeleteRepository(ctx, repo.ID); err != nil {
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, repo.ProjectID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
+	err = s.deleteRepositoryAndWebhook(ctx, repo, repo.ProjectID, provider)
+	if err != nil {
 		return nil, err
 	}
 
@@ -337,8 +342,8 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, err
 	}
 
-	// delete the repository
-	if err := s.store.DeleteRepository(ctx, repo.ID); err != nil {
+	err = s.deleteRepositoryAndWebhook(ctx, repo, projectID, provider)
+	if err != nil {
 		return nil, err
 	}
 
@@ -443,4 +448,32 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	return out, nil
+}
+
+func (s *Server) deleteRepositoryAndWebhook(
+	ctx context.Context,
+	repo db.Repository,
+	projectID uuid.UUID,
+	provider db.Provider,
+) error {
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return status.Errorf(codes.Internal, "error deleting repository")
+	}
+	defer s.store.Rollback(tx)
+
+	qtx := s.store.GetQuerierWithTransaction(tx)
+	if err := qtx.DeleteRepository(ctx, repo.ID); err != nil {
+		return status.Errorf(codes.Internal, "error deleting repository: %v", err)
+	}
+
+	if err := s.deleteWebhookFromRepository(ctx, provider, projectID, repo); err != nil {
+		return err
+	}
+
+	if err := s.store.Commit(tx); err != nil {
+		return status.Errorf(codes.Internal, "error deleting repository")
+	}
+
+	return nil
 }
