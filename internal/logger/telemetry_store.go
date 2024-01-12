@@ -49,6 +49,9 @@ type TelemetryStore struct {
 	// Project records the project that the request was associated with.
 	Project string `json:"project"`
 
+	// Provider records the provider that the request was associated with.
+	Provider string `json:"provider"`
+
 	// The resource processed by the request, for example, a repository or a profile.
 	Resource string `json:"resource"`
 
@@ -109,6 +112,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	// the small number of fields, we'll just add them explicitly.
 	if ts.Project != "" {
 		e.Str("project", ts.Project)
+	}
+	if ts.Provider != "" {
+		e.Str("provider", ts.Provider)
 	}
 	if ts.Resource != "" {
 		e.Str("resource", ts.Resource)
