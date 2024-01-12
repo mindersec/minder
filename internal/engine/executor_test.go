@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -33,8 +34,11 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -298,11 +302,19 @@ default allow = true`,
 		}).WithRepositoryID(repositoryID).
 		WithExecutionID(executionID)
 
+	t.Log("waiting for eventer to start")
+	<-evt.Running()
+
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")
 
-	t.Log("waiting for eventer to start")
-	<-evt.Running()
+	ts := &logger.TelemetryStore{
+		Project:  projectID.String(),
+		Provider: providerName,
+		Resource: fmt.Sprintf("repository/%s", repositoryID),
+	}
+	ctx = ts.WithTelemetry(ctx)
+	msg.SetContext(ctx)
 
 	// Run in the background
 	go func() {
@@ -318,4 +330,12 @@ default allow = true`,
 
 	t.Log("waiting for executor to finish")
 	e.Wait()
+
+	require.Len(t, ts.Evals, 1, "expected one eval to be logged")
+	requredEval := ts.Evals[0]
+	require.Equal(t, "test-profile", requredEval.ProfileName)
+	require.Equal(t, "success", requredEval.EvalResult)
+	require.Equal(t, "passthrough", requredEval.RuleName)
+	require.Equal(t, "off", requredEval.Actions[alert.ActionType].State)
+	require.Equal(t, "off", requredEval.Actions[remediate.ActionType].State)
 }

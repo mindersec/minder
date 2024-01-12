@@ -23,40 +23,108 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
+	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
-		name       string
-		telemetry  *logger.TelemetryStore
-		recordFunc func(context.Context)
-		expected   string
-		notPresent []string
+		name           string
+		telemetry      *logger.TelemetryStore
+		evalParamsFunc func() *engif.EvalStatusParams
+		recordFunc     func(context.Context, engif.ActionsParams)
+		expected       string
+		notPresent     []string
 	}{{
 		name: "nil telemetry",
-		recordFunc: func(ctx context.Context) {
+		evalParamsFunc: func() *engif.EvalStatusParams {
+			ep := &engif.EvalStatusParams{}
+
+			ep.Rule = &minderv1.Profile_Rule{
+				Type: "artifact_signature",
+			}
+			ep.Profile = &minderv1.Profile{
+				Name: "artifact_profile",
+			}
+			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
+			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
+				alert.ActionType:     engif.ActionOptOn,
+				remediate.ActionType: engif.ActionOptOff,
+			})
+			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
+				RemediateErr: nil,
+				AlertErr:     enginerr.ErrActionSkipped,
+			})
+			return ep
+		},
+		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = "bar"
 
 			logger.BusinessRecord(ctx).Resource = "foo/repo"
-			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
 	}, {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
-		recordFunc: func(ctx context.Context) {
+		evalParamsFunc: func() *engif.EvalStatusParams {
+			ep := &engif.EvalStatusParams{}
+
+			ep.Rule = &minderv1.Profile_Rule{
+				Type: "artifact_signature",
+			}
+			ep.Profile = &minderv1.Profile{
+				Name: "artifact_profile",
+			}
+			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
+			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
+				alert.ActionType:     engif.ActionOptOff,
+				remediate.ActionType: engif.ActionOptOn,
+			})
+			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
+				RemediateErr: nil,
+				AlertErr:     enginerr.ErrActionSkipped,
+			})
+			return ep
+		},
+		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = "bar"
 
 			logger.BusinessRecord(ctx).Resource = "foo/repo"
-			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", interfaces.ActionOptDryRun)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
-		expected: `{"project":"bar","resource":"foo/repo","rules":[{"name":"artifact_signature","action":2}]}`,
+		expected: `{
+    "project": "bar",
+    "resource": "foo/repo",
+    "rules": [
+        {
+            "rule_name": "artifact_signature",
+            "profile_name": "artifact_profile",
+            "eval_result": "failure",
+            "actions": {
+                "alert": {
+                    "state": "off",
+                    "result": "skipped"
+                },
+                "remediate": {
+                    "state": "on",
+                    "result": "success"
+                }
+            }
+        }
+    ]
+    }`,
 	}, {
 		name:      "empty telemetry",
 		telemetry: &logger.TelemetryStore{},
-		recordFunc: func(ctx context.Context) {
+		evalParamsFunc: func() *engif.EvalStatusParams {
+			return nil
+		},
+		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": true}`,
 		notPresent: []string{"project", "resource", "rules", "login_sha"},
@@ -75,7 +143,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 			// Create a new TelemetryStore instance
 			ctx := tc.telemetry.WithTelemetry(context.Background())
 
-			tc.recordFunc(ctx)
+			tc.recordFunc(ctx, tc.evalParamsFunc())
 
 			tc.telemetry.Record(zlog.Info()).Send()
 

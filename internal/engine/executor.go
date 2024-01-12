@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/events"
+	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -116,6 +117,8 @@ func (e *Executor) Wait() {
 // HandleEntityEvent handles events coming from webhooks/signals
 // as well as the init event.
 func (e *Executor) HandleEntityEvent(msg *message.Message) error {
+	// Grab the context before making a copy of the message
+	msgCtx := msg.Context()
 	// Let's not share memory with the caller
 	msg = msg.Copy()
 
@@ -131,6 +134,9 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
 		defer cancel()
 
+		ts := minderlogger.BusinessRecord(msgCtx)
+		ctx = ts.WithTelemetry(ctx)
+
 		if err := inf.WithExecutionIDFromMessage(msg); err != nil {
 			logger := zerolog.Ctx(ctx)
 			logger.Info().
@@ -139,7 +145,19 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 			return
 		}
 
-		if err := e.prepAndEvalEntityEvent(ctx, inf); err != nil {
+		err := e.prepAndEvalEntityEvent(ctx, inf)
+
+		// record telemetry regardless of error. We explicitly record telemetry
+		// here even though we also record it in the middleware because the evaluation
+		// is done in a separate goroutine which usually still runs after the middleware
+		// had already recorded the telemetry.
+		logMsg := zerolog.Ctx(ctx).Info()
+		if err != nil {
+			logMsg = zerolog.Ctx(ctx).Error()
+		}
+		ts.Record(logMsg).Send()
+
+		if err != nil {
 			zerolog.Ctx(ctx).Info().
 				Str("project", inf.ProjectID.String()).
 				Str("provider", inf.Provider).
@@ -303,6 +321,7 @@ func (e *Executor) getEvaluator(
 	rte = rte.WithIngesterCache(ingestCache)
 
 	// All okay
+	params.SetActionsOnOff(rte.GetActionsOnOff())
 	return params, rte, nil
 }
 
@@ -407,6 +426,9 @@ func logEval(
 		Str("action", "alert").
 		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
 		Msg("result - action")
+
+	// log business logic
+	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
 }
 
 func filterActionErrorForLogging(err error) error {
