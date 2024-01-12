@@ -589,8 +589,8 @@ github.com/opencontainers/image-spec v1.1.0-rc5 h1:Ygwkfw9bpDvs+c9E34SdgGOj41dX/
 github.com/opencontainers/image-spec v1.1.0-rc5/go.mod h1:X4pATf0uXsnn3g5aiGIsVnJBR4mxhKzfwmvK/B2NTm8=
 github.com/openfga/api/proto v0.0.0-20231222042535-3037910c90c0 h1:FW+CjkR6GrvJcUj3EZZ75q1Otog4sy+FOwHLeqZ3DKo=
 github.com/openfga/api/proto v0.0.0-20231222042535-3037910c90c0/go.mod h1:YSbEQDNGnVlThfExHQ3zDNd+puWXf4zzfL0ms2VbIwI=
-github.com/openfga/cli v0.2.2 h1:18QkytHFzV145j89d6Ll/XtbWed7qFOka1E2aTlV74c=
-github.com/openfga/cli v0.2.2/go.mod h1:VJ9wBiRYFupoiy6nurE/T28z2YeIyHp/FPj0EGF/nBE=
+github.com/openfga/cli v0.2.3 h1:uGFatru+zcmCIJqQPaXFjLuJhNSfqQh+oTpcVxlsOFc=
+github.com/openfga/cli v0.2.3/go.mod h1:eooLxnKUpF+FsIbIvbNrqU0jgVzRcbFYR/gpZehDJRg=
 github.com/openfga/go-sdk v0.3.3 h1:eMZGCEDW/sz9S3gNxbpO5rNpDezz7cjT+zwjpDgqTt0=
 github.com/openfga/go-sdk v0.3.3/go.mod h1:W4SNYMSxptGOtA9aGYxsYUmSC7LaZYP7y9qbT36ouCc=
 github.com/openfga/language/pkg/go v0.0.0-20240109134059-a66ff55aca89 h1:Dp84jFwRLOlDyTVulRUP8Te7PqH1raAZcOxcE2K7JAI=
