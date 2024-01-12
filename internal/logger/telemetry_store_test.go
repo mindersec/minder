@@ -28,6 +28,7 @@ import (
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
@@ -44,6 +45,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
 
+			ep.Rule = &minderv1.Profile_Rule{
+				Type: "artifact_signature",
+			}
+			ep.Profile = &minderv1.Profile{
+				Name: "artifact_profile",
+			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
 				alert.ActionType:     engif.ActionOptOn,
@@ -59,8 +66,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 			logger.BusinessRecord(ctx).Project = "bar"
 
 			logger.BusinessRecord(ctx).Resource = "foo/repo"
-			logger.BusinessRecord(ctx).AddRuleEval(
-				"artifact_signature", "artifact_profile", evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
 	}, {
 		name:      "standard telemetry",
@@ -68,6 +74,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
 
+			ep.Rule = &minderv1.Profile_Rule{
+				Type: "artifact_signature",
+			}
+			ep.Profile = &minderv1.Profile{
+				Name: "artifact_profile",
+			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
 				alert.ActionType:     engif.ActionOptOff,
@@ -83,7 +95,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 			logger.BusinessRecord(ctx).Project = "bar"
 
 			logger.BusinessRecord(ctx).Resource = "foo/repo"
-			logger.BusinessRecord(ctx).AddRuleEval("artifact_signature", "artifact_profile", evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
 		expected: `{
     "project": "bar",

@@ -253,7 +253,7 @@ func (e *Executor) evalEntityEvent(
 			evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
 
 			// Log the evaluation
-			logEval(ctx, inf, profile.Name, evalParams)
+			logEval(ctx, inf, evalParams)
 
 			// Create or update the evaluation status
 			return e.createOrUpdateEvalStatus(ctx, evalParams)
@@ -399,7 +399,6 @@ func (e *Executor) releaseLockAndFlush(
 func logEval(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
-	profileName string,
 	params *engif.EvalStatusParams) {
 	logger := zerolog.Ctx(ctx)
 	evalLog := logger.Debug().
@@ -429,8 +428,7 @@ func logEval(
 		Msg("result - action")
 
 	// log business logic
-	minderlogger.BusinessRecord(ctx).
-		AddRuleEval(params.Rule.Type, profileName, params)
+	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
 }
 
 func filterActionErrorForLogging(err error) error {

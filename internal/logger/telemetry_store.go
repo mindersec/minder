@@ -76,8 +76,6 @@ type TelemetryStore struct {
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
 func (ts *TelemetryStore) AddRuleEval(
-	ruleName string,
-	profileName string,
 	evalInfo interfaces.ActionsParams,
 ) {
 	if ts == nil {
@@ -85,8 +83,8 @@ func (ts *TelemetryStore) AddRuleEval(
 	}
 
 	red := RuleEvalData{
-		RuleName:    ruleName,
-		ProfileName: profileName,
+		RuleName:    evalInfo.GetRule().GetType(),
+		ProfileName: evalInfo.GetProfile().GetName(),
 		EvalResult:  errors.EvalErrorAsString(evalInfo.GetEvalErr()),
 		Actions: map[interfaces.ActionType]ActionEvalData{
 			remediate.ActionType: {
