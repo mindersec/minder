@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/actions"
+	"github.com/stacklok/minder/internal/engine/entities"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
@@ -243,7 +244,7 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, params engif.EvalParams) error {
+func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParams) error {
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
@@ -269,7 +270,7 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *EntityInfoWrapper, param
 // Actions runs all actions for the rule type engine against the given entity
 func (r *RuleTypeEngine) Actions(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	params engif.ActionsParams,
 ) enginerr.ActionsError {
 	// Process actions

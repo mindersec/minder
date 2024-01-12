@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+package entities
 
 import (
 	"fmt"
@@ -198,7 +198,7 @@ func (eiw *EntityInfoWrapper) Publish(evt *events.Eventer) error {
 		return err
 	}
 
-	if err := evt.Publish(ExecuteEntityEventTopic, msg); err != nil {
+	if err := evt.Publish(events.ExecuteEntityEventTopic, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 
@@ -299,7 +299,8 @@ func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message)
 	return eiw.withIDFromMessage(msg, PullRequestIDEventKey)
 }
 
-func (eiw *EntityInfoWrapper) withExecutionIDFromMessage(msg *message.Message) error {
+// WithExecutionIDFromMessage sets the execution ID from the message
+func (eiw *EntityInfoWrapper) WithExecutionIDFromMessage(msg *message.Message) error {
 	executionID := msg.Metadata.Get(ExecutionIDKey)
 	if executionID == "" {
 		return fmt.Errorf("%s not found in metadata", ExecutionIDKey)

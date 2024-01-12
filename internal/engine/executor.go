@@ -27,21 +27,14 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-)
-
-const (
-	// ExecuteEntityEventTopic is the topic for internal webhook events
-	ExecuteEntityEventTopic = "execute.entity.event"
-	// FlushEntityEventTopic is the topic for flushing internal webhook events
-	FlushEntityEventTopic = "flush.entity.event"
 )
 
 const (
@@ -112,7 +105,7 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
+	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
 }
 
 // Wait waits for all the executions to finish.
@@ -126,7 +119,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	// Let's not share memory with the caller
 	msg = msg.Copy()
 
-	inf, err := ParseEntityEvent(msg)
+	inf, err := entities.ParseEntityEvent(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -138,7 +131,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
 		defer cancel()
 
-		if err := inf.withExecutionIDFromMessage(msg); err != nil {
+		if err := inf.WithExecutionIDFromMessage(msg); err != nil {
 			logger := zerolog.Ctx(ctx)
 			logger.Info().
 				Str("message_id", msg.UUID).
@@ -157,7 +150,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 
 	return nil
 }
-func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *EntityInfoWrapper) error {
+func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
 
 	projectID := inf.ProjectID
 
@@ -200,7 +193,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *EntityInfoWr
 
 func (e *Executor) evalEntityEvent(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
 	cli *providers.ProviderBuilder,
 ) error {
@@ -262,7 +255,7 @@ func (e *Executor) evalEntityEvent(
 
 func (e *Executor) getEvaluator(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
 	cli *providers.ProviderBuilder,
 	profile *pb.Profile,
@@ -345,7 +338,7 @@ func (e *Executor) updateLockLease(
 
 func (e *Executor) releaseLockAndFlush(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 ) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
@@ -379,14 +372,14 @@ func (e *Executor) releaseLockAndFlush(
 		return
 	}
 
-	if err := e.evt.Publish(FlushEntityEventTopic, msg); err != nil {
+	if err := e.evt.Publish(events.FlushEntityEventTopic, msg); err != nil {
 		logger.Err(err).Msg("error publishing flush event")
 	}
 }
 
 func logEval(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	params *engif.EvalStatusParams) {
 	logger := zerolog.Ctx(ctx)
 	evalLog := logger.Debug().

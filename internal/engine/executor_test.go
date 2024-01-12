@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -273,7 +274,7 @@ default allow = true`,
 
 	go func() {
 		t.Log("Running eventer")
-		evt.Register(engine.FlushEntityEventTopic, pq.Pass)
+		evt.Register(events.FlushEntityEventTopic, pq.Pass)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
@@ -287,7 +288,7 @@ default allow = true`,
 	}, evt)
 	require.NoError(t, err, "expected no error")
 
-	eiw := engine.NewEntityInfoWrapper().
+	eiw := entities.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{

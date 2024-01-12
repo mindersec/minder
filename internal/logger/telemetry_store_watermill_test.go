@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util/testqueue"
@@ -66,7 +66,7 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 	projectID := uuid.New()
 	repositoryID := uuid.New()
 
-	eiw := engine.NewEntityInfoWrapper().
+	eiw := entities.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{

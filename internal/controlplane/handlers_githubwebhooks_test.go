@@ -39,7 +39,8 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util/rand"
 	"github.com/stacklok/minder/internal/util/testqueue"
 )
@@ -94,7 +95,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
+	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -147,7 +148,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
+	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -213,7 +214,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
+	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())
@@ -309,7 +310,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
 	assert.Equal(t, "github", received.Metadata["provider"])
-	assert.Equal(t, projectID.String(), received.Metadata[engine.ProjectIDEventKey])
+	assert.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 
 	// TODO: assert payload is Repository protobuf
@@ -330,7 +331,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(engine.ExecuteEntityEventTopic, pq.Pass)
+	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
 		err := srv.evt.Run(context.Background())

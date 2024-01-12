@@ -24,15 +24,15 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func (e *Executor) createEvalStatusParams(
 	ctx context.Context,
-	inf *EntityInfoWrapper,
+	inf *entities.EntityInfoWrapper,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
 ) (*engif.EvalStatusParams, error) {
