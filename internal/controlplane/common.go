@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/engine"
 	"slices"
 
 	"github.com/google/uuid"
@@ -94,4 +95,41 @@ func getProviderFromRequestOrDefault(
 		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", in.GetContext().GetProvider())
 	}
 	return providers[i], nil
+}
+
+// contextValidation is a helper function to initialize entity context info and validate input
+// It also sets up the needed information in the `in` entity context that's needed for the rest of the flow
+func (s *Server) contextValidation(ctx context.Context, inout *pb.Context) (context.Context, error) {
+	if inout == nil {
+		return ctx, fmt.Errorf("context cannot be nil")
+	}
+
+	if err := ensureDefaultProjectForContext(ctx, inout); err != nil {
+		return ctx, err
+	}
+
+	entityCtx, err := engine.GetContextFromInput(ctx, inout, s.store)
+	if err != nil {
+		return ctx, fmt.Errorf("cannot get context from input: %v", err)
+	}
+
+	return engine.WithEntityContext(ctx, entityCtx), nil
+}
+
+// ensureDefaultProjectForContext ensures a valid project is set in the context or sets the default project
+// if the project is not set in the incoming entity context, it'll set it.
+func ensureDefaultProjectForContext(ctx context.Context, inout *pb.Context) error {
+	// Project is already set
+	if inout.GetProject() != "" {
+		return nil
+	}
+
+	gid, err := auth.GetDefaultProject(ctx)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
+	}
+
+	project := gid.String()
+	inout.Project = &project
+	return nil
 }

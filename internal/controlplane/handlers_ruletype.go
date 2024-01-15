@@ -37,12 +37,17 @@ func (s *Server) ListRuleTypes(
 	ctx context.Context,
 	in *minderv1.ListRuleTypesRequest,
 ) (*minderv1.ListRuleTypesResponse, error) {
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.contextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
+	}
 
 	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
 		Provider:  entityCtx.GetProvider().Name,
@@ -72,12 +77,17 @@ func (s *Server) GetRuleTypeByName(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByNameRequest,
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.contextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
+	}
 
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
@@ -105,9 +115,16 @@ func (s *Server) GetRuleTypeById(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByIdRequest,
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
-	ctx, err := s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err := s.contextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
+	}
+
+	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
 	}
 
 	resp := &minderv1.GetRuleTypeByIdResponse{}
@@ -139,12 +156,18 @@ func (s *Server) CreateRuleType(
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
-	ctx, err := s.authAndContextValidation(ctx, crt.GetContext())
+	ctx, err := s.contextValidation(ctx, crt.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
+	}
+
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  entityCtx.GetProvider().Name,
 		ProjectID: entityCtx.GetProject().ID,
@@ -199,12 +222,17 @@ func (s *Server) UpdateRuleType(
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
-	ctx, err := s.authAndContextValidation(ctx, urt.GetContext())
+	ctx, err := s.contextValidation(ctx, urt.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
+	}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  entityCtx.GetProvider().Name,
@@ -303,9 +331,16 @@ func (s *Server) DeleteRuleType(
 
 	in.Context.Provider = &prov.Name
 
-	ctx, err = s.authAndContextValidation(ctx, in.GetContext())
+	ctx, err = s.contextValidation(ctx, in.GetContext())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
+	}
+
+	entityCtx := engine.EntityFromContext(ctx)
+
+	// check if user is authorized
+	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+		return nil, err
 	}
 
 	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
