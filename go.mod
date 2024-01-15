@@ -16,7 +16,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.25.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.11.0
-	github.com/go-playground/validator/v10 v10.16.0
+	github.com/go-playground/validator/v10 v10.17.0
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/mock v1.6.0
