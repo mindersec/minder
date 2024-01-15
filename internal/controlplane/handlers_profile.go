@@ -52,7 +52,7 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *minderv1.C
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	if err := s.ensureDefaultProjectForContext(ctx, inout); err != nil {
+	if err := ensureDefaultProjectForContext(ctx, inout); err != nil {
 		return ctx, err
 	}
 
@@ -70,18 +70,13 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *minderv1.C
 
 // ensureDefaultProjectForContext ensures a valid project is set in the context or sets the default project
 // if the project is not set in the incoming entity context, it'll set it.
-func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *minderv1.Context) error {
+func ensureDefaultProjectForContext(ctx context.Context, inout *minderv1.Context) error {
 	// Project is already set
 	if inout.GetProject() != "" {
 		return nil
 	}
 
 	gid, err := auth.GetDefaultProject(ctx)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
-	}
-
-	_, err = s.store.GetProjectByID(ctx, gid)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
