@@ -102,7 +102,6 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		},
 		Provider: engine.Provider{
 			Name: provInfo.Name,
-			ID:   provInfo.ID,
 		},
 	}
 

@@ -46,7 +46,7 @@ func (s *Server) ListRuleTypes(
 
 	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
 		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
@@ -83,7 +83,7 @@ func (s *Server) GetRuleTypeByName(
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 		Name:      in.GetName(),
 	})
 	if err != nil {
@@ -147,7 +147,7 @@ func (s *Server) CreateRuleType(
 	entityCtx := engine.EntityFromContext(ctx)
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 		Name:      in.GetName(),
 	})
 	if err == nil {
@@ -173,7 +173,7 @@ func (s *Server) CreateRuleType(
 	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
 		Provider:    entityCtx.GetProvider().Name,
-		ProjectID:   entityCtx.GetProject().GetID(),
+		ProjectID:   entityCtx.GetProject().ID,
 		Description: in.GetDescription(),
 		Definition:  def,
 		Guidance:    in.GetGuidance(),
@@ -206,7 +206,7 @@ func (s *Server) UpdateRuleType(
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 		Name:      in.GetName(),
 	})
 	if err != nil {

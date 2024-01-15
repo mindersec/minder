@@ -52,7 +52,7 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *minderv1.C
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	if err := s.ensureDefaultProjectForContext(ctx, inout); err != nil {
+	if err := ensureDefaultProjectForContext(ctx, inout); err != nil {
 		return ctx, err
 	}
 
@@ -70,18 +70,13 @@ func (s *Server) authAndContextValidation(ctx context.Context, inout *minderv1.C
 
 // ensureDefaultProjectForContext ensures a valid project is set in the context or sets the default project
 // if the project is not set in the incoming entity context, it'll set it.
-func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *minderv1.Context) error {
+func ensureDefaultProjectForContext(ctx context.Context, inout *minderv1.Context) error {
 	// Project is already set
 	if inout.GetProject() != "" {
 		return nil
 	}
 
 	gid, err := auth.GetDefaultProject(ctx)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
-	}
-
-	_, err = s.store.GetProjectByID(ctx, gid)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "cannot infer project id")
 	}
@@ -94,7 +89,7 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 // verifyValidProject verifies that the project is valid and the user is authorized to access it
 // TODO: This will have to change once we have the hierarchy tree in place.
 func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
-	if err := AuthorizedOnProject(ctx, in.GetProject().GetID()); err != nil {
+	if err := AuthorizedOnProject(ctx, in.GetProject().ID); err != nil {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -166,7 +161,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	params := db.CreateProfileParams{
 		Provider:  provider.Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 		Name:      in.GetName(),
 		Remediate: validateActionType(in.GetRemediate()),
 		Alert:     validateActionType(in.GetAlert()),
@@ -711,7 +706,7 @@ func (s *Server) getAndValidateRulesFromProfile(
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().GetID(),
+			ProjectID: entityCtx.GetProject().ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -772,7 +767,7 @@ func (s *Server) getRulesFromProfile(
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().GetID(),
+			ProjectID: entityCtx.GetProject().ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -913,7 +908,7 @@ func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx *en
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
 	}
 
-	if old.Provider != entityCtx.Provider.Name {
+	if old.Provider != entityCtx.GetProvider().Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
 	}
 
