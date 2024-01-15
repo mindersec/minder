@@ -20,29 +20,13 @@ import (
 	"time"
 
 	"github.com/charmbracelet/glamour"
-	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
+	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func marshalStructOrEmpty(v *structpb.Struct) string {
-	if v == nil {
-		return ""
-	}
-
-	m := v.AsMap()
-
-	// marhsal as YAML
-	out, err := yaml.Marshal(m)
-	if err != nil {
-		return ""
-	}
-
-	return string(out)
-}
 
 const (
 	successStatus      = "success"
@@ -102,8 +86,8 @@ func renderEntityRuleSets(entType minderv1.EntityType, rs []*minderv1.Profile_Ru
 }
 
 func renderRuleTable(entType minderv1.EntityType, rule *minderv1.Profile_Rule, t table.Table) {
-	params := marshalStructOrEmpty(rule.Params)
-	def := marshalStructOrEmpty(rule.Def)
+	params := util.MarshalStructOrEmpty(rule.Params)
+	def := util.MarshalStructOrEmpty(rule.Def)
 
 	t.AddRow(
 		entType.String(),
@@ -155,10 +139,20 @@ func RenderRuleEvaluationStatusTable(
 	statuses []*minderv1.RuleEvaluationStatus,
 	t table.Table,
 ) {
+	ruleTypeNameCount := make(map[string]int)
 	for _, eval := range statuses {
+		ruleTypeNameCount[eval.RuleTypeName]++
+	}
+
+	for _, eval := range statuses {
+		ruleName := eval.RuleTypeName
+		if ruleTypeNameCount[eval.RuleTypeName] > 1 {
+			ruleName = eval.RuleTypeName + "\n(" + eval.RuleHash + ")"
+		}
+
 		t.AddRowWithColor(
 			layouts.NoColor(eval.RuleId),
-			layouts.NoColor(eval.RuleName),
+			layouts.NoColor(ruleName),
 			layouts.NoColor(eval.Entity),
 			getColoredEvalStatus(eval.Status),
 			getRemediateStatusColor(eval.RemediationStatus),

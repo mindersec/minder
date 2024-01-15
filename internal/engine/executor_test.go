@@ -39,6 +39,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -93,6 +94,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// not valuable yet, but would have to be updated once actions start using this
 	mockStore.EXPECT().GetRuleEvaluationByProfileIdAndRuleType(gomock.Any(),
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -188,10 +190,12 @@ default allow = true`,
 		Name:       passthroughRuleType,
 		Provider:   providerName,
 		ProjectID:  projectID,
-		Definition: json.RawMessage(marshalledRTD),
+		Definition: marshalledRTD,
 	}, nil)
 
 	ruleEvalId := uuid.New()
+	ruleHash, err := util.HashProfileRuleSHA256(crs[0])
+	require.NoError(t, err, "expected no error")
 
 	// Upload passing status
 	mockStore.EXPECT().
@@ -204,6 +208,7 @@ default allow = true`,
 			ArtifactID: uuid.NullUUID{},
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
+			RuleHash:   ruleHash,
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status

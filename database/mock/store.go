@@ -1277,18 +1277,18 @@ func (mr *MockStoreMockRecorder) GetRootProjects(arg0 interface{}) *gomock.Call 
 }
 
 // GetRuleEvaluationByProfileIdAndRuleType mocks base method.
-func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 db.NullEntities, arg3 uuid.NullUUID, arg4 sql.NullString) (db.ListRuleEvaluationsByProfileIdRow, error) {
+func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 db.NullEntities, arg3 uuid.NullUUID, arg4, arg5 sql.NullString) (db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleEvaluationByProfileIdAndRuleType", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GetRuleEvaluationByProfileIdAndRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(db.ListRuleEvaluationsByProfileIdRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetRuleEvaluationByProfileIdAndRuleType indicates an expected call of GetRuleEvaluationByProfileIdAndRuleType.
-func (mr *MockStoreMockRecorder) GetRuleEvaluationByProfileIdAndRuleType(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetRuleEvaluationByProfileIdAndRuleType(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationByProfileIdAndRuleType", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationByProfileIdAndRuleType), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationByProfileIdAndRuleType", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationByProfileIdAndRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // GetRuleTypeByID mocks base method.

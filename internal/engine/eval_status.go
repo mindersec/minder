@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -78,12 +79,23 @@ func (e *Executor) createEvalStatusParams(
 		Valid:  true,
 	}
 
+	ruleHashSHA256, err := util.HashProfileRuleSHA256(rule)
+	if err != nil {
+		return nil, fmt.Errorf("error hashing rule: %w", err)
+	}
+
+	ruleHash := sql.NullString{
+		String: ruleHashSHA256,
+		Valid:  true,
+	}
+
 	// Get the current rule evaluation from the database
 	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
 		params.ProfileID,
 		entityType,
 		entityID,
 		ruleName,
+		ruleHash,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting rule evaluation status from db: %w", err)
@@ -116,6 +128,11 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
+	ruleHashSHA256, err := util.HashProfileRuleSHA256(params.Rule)
+	if err != nil {
+		return fmt.Errorf("error hashing rule: %w", err)
+	}
+
 	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID: params.ProfileID,
@@ -127,6 +144,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Entity:        params.EntityType,
 		RuleTypeID:    params.RuleTypeID,
 		PullRequestID: params.PullRequestID,
+		RuleHash:      ruleHashSHA256,
 	})
 
 	if err != nil {

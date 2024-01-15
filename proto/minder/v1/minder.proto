@@ -835,12 +835,13 @@ message ProfileStatus {
 
 // get the status of the rules for a given profile
 message RuleEvaluationStatus {
+    reserved 3;
+    reserved "rule_name";
+
     // profile_id is the id of the profile
     string profile_id = 1;
     // rule_id is the id of the rule
     string rule_id = 2;
-    // rule_name is the name of the rule
-    string rule_name = 3;
     // entity is the entity that was evaluated
     string entity = 4;
     // status is the status of the evaluation
@@ -859,6 +860,10 @@ message RuleEvaluationStatus {
     optional google.protobuf.Timestamp remediation_last_updated = 11;
     // remediation_details is the description of the remediation attempt if any
     string remediation_details = 12;
+    // rule_type_name is the name of the rule
+    string rule_type_name = 13;
+    // rule_hash is the hash of the rule
+    string rule_hash = 14;
 }
 
 message GetProfileStatusByNameRequest {

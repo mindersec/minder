@@ -18,6 +18,7 @@ package util
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
 	"database/sql"
 	"encoding/json"
@@ -44,7 +45,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
@@ -591,4 +594,40 @@ func GetPullRequest(
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,
 	}, nil
+}
+
+// MarshalStructOrEmpty marshals a protobuf struct to YAML
+func MarshalStructOrEmpty(v *structpb.Struct) string {
+	if v == nil {
+		return ""
+	}
+
+	m := v.AsMap()
+
+	// marhsal as YAML
+	out, err := yaml.Marshal(m)
+	if err != nil {
+		return ""
+	}
+
+	return string(out)
+}
+
+// HashProfileRuleSHA256 hashes a profile rule using SHA256
+func HashProfileRuleSHA256(rule *minderv1.Profile_Rule) (string, error) {
+	if rule == nil {
+		return "", fmt.Errorf("rule cannot be nil")
+	}
+
+	h := sha256.New()
+
+	params := MarshalStructOrEmpty(rule.Params)
+	def := MarshalStructOrEmpty(rule.Def)
+
+	_, err := h.Write([]byte(rule.Type + params + def))
+	if err != nil {
+		return "", fmt.Errorf("error hashing rule: %w", err)
+	}
+
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }

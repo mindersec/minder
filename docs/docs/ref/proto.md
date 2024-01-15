@@ -1105,7 +1105,6 @@ get the status of the rules for a given profile
 | ----- | ---- | ----- | ----------- |
 | profile_id | [string](#string) |  | profile_id is the id of the profile |
 | rule_id | [string](#string) |  | rule_id is the id of the rule |
-| rule_name | [string](#string) |  | rule_name is the name of the rule |
 | entity | [string](#string) |  | entity is the entity that was evaluated |
 | status | [string](#string) |  | status is the status of the evaluation |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
@@ -1115,6 +1114,8 @@ get the status of the rules for a given profile
 | remediation_status | [string](#string) |  | remediation_status is the status of the remediation |
 | remediation_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | remediation_last_updated is the last time the remediation was performed or attempted |
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
+| rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
+| rule_hash | [string](#string) |  | rule_hash is the hash of the rule |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
