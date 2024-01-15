@@ -94,7 +94,7 @@ func (s *Server) ensureDefaultProjectForContext(ctx context.Context, inout *mind
 // verifyValidProject verifies that the project is valid and the user is authorized to access it
 // TODO: This will have to change once we have the hierarchy tree in place.
 func verifyValidProject(ctx context.Context, in *engine.EntityContext) error {
-	if err := AuthorizedOnProject(ctx, in.GetProject().GetID()); err != nil {
+	if err := AuthorizedOnProject(ctx, in.GetProject().ID); err != nil {
 		return status.Errorf(codes.PermissionDenied, "user is not authorized to access this resource")
 	}
 
@@ -166,7 +166,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	params := db.CreateProfileParams{
 		Provider:  provider.Name,
-		ProjectID: entityCtx.GetProject().GetID(),
+		ProjectID: entityCtx.GetProject().ID,
 		Name:      in.GetName(),
 		Remediate: validateActionType(in.GetRemediate()),
 		Alert:     validateActionType(in.GetAlert()),
@@ -711,7 +711,7 @@ func (s *Server) getAndValidateRulesFromProfile(
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().GetID(),
+			ProjectID: entityCtx.GetProject().ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -772,7 +772,7 @@ func (s *Server) getRulesFromProfile(
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().GetID(),
+			ProjectID: entityCtx.GetProject().ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -913,7 +913,7 @@ func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx *en
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
 	}
 
-	if old.Provider != entityCtx.Provider.Name {
+	if old.Provider != entityCtx.GetProvider().Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
 	}
 
