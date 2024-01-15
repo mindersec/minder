@@ -197,12 +197,10 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID:   project.ID,
-			Name: project.Name,
+			ID: project.ID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
-			ID:   provider.ID,
 		},
 	}
 

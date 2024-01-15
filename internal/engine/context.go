@@ -51,24 +51,12 @@ func EntityFromContext(ctx context.Context) *EntityContext {
 // Project is a construct relevant to an entity's context.
 // This is relevant for getting the full information about an entity.
 type Project struct {
-	ID   uuid.UUID
-	Name string
-}
-
-// GetID returns the ID of the project
-func (g Project) GetID() uuid.UUID {
-	return g.ID
-}
-
-// GetName returns the name of the project
-func (g Project) GetName() string {
-	return g.Name
+	ID uuid.UUID
 }
 
 // Provider is a construct relevant to an entity's context.
 // This is relevant for getting the full information about an entity.
 type Provider struct {
-	ID   uuid.UUID
 	Name string
 }
 
@@ -117,11 +105,9 @@ func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*En
 
 	return &EntityContext{
 		Project: Project{
-			ID:   project.ID,
-			Name: project.Name,
+			ID: project.ID,
 		},
 		Provider: Provider{
-			ID:   prov.ID,
 			Name: prov.Name,
 		},
 	}, nil
