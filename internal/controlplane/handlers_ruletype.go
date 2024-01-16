@@ -182,11 +182,13 @@ func (s *Server) CreateRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	rtypeIDStr := dbrtyp.ID.String()
-	in.Id = &rtypeIDStr
+	rt, err := engine.RuleTypePBFromDB(&dbrtyp)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", dbrtyp.Name, err)
+	}
 
 	return &minderv1.CreateRuleTypeResponse{
-		RuleType: in,
+		RuleType: rt,
 	}, nil
 }
 
@@ -262,12 +264,13 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	// ensure ID is set
-	rtypeIDStr := rtdb.ID.String()
-	in.Id = &rtypeIDStr
+	rt, err := engine.RuleTypePBFromDB(&rtdb)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
+	}
 
 	return &minderv1.UpdateRuleTypeResponse{
-		RuleType: in,
+		RuleType: rt,
 	}, nil
 }
 
