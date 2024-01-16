@@ -365,7 +365,7 @@ service UserService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_ORGANIZATION
+            auth_scope: OBJECT_OWNER_USER
             owner_only: true
         };
     }
@@ -376,7 +376,7 @@ service UserService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_ORGANIZATION
+            auth_scope: OBJECT_OWNER_USER
             owner_only: true
         };
     }
