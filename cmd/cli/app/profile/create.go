@@ -44,6 +44,10 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	f := viper.GetString("file")
+	enableAlerts := viper.GetBool("enable-alerts")
+	enableRems := viper.GetBool("enable-remediations")
+
+	onOverride := "on"
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -57,6 +61,13 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	table := NewProfileTable()
 
 	createFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
+		if enableAlerts {
+			p.Alert = &onOverride
+		}
+		if enableRems {
+			p.Remediate = &onOverride
+		}
+
 		// create a profile
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
 			Profile: p,
@@ -80,6 +91,8 @@ func init() {
 	ProfileCmd.AddCommand(createCmd)
 	// Flags
 	createCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
+	createCmd.Flags().Bool("enable-alerts", false, "Explicitly enable alerts for this profile. Overrides the YAML file.")
+	createCmd.Flags().Bool("enable-remediations", false, "Explicitly enable remediations for this profile. Overrides the YAML file.")
 	// Required
 	if err := createCmd.MarkFlagRequired("file"); err != nil {
 		createCmd.Printf("Error marking flag required: %s", err)
