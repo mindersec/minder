@@ -52,6 +52,7 @@ type patchLocatorFormatter interface {
 	LineHasDependency(line string) bool
 	IndentedString(indent int, oldDepLine string, oldDep *pb.Dependency) string
 	HasPatchedVersion() bool
+	GetPatchedVersion() string
 }
 
 // RepoQuerier is the interface for querying a repository
@@ -123,6 +124,10 @@ func (pj *packageJson) HasPatchedVersion() bool {
 	return pj.Version != ""
 }
 
+func (pj *packageJson) GetPatchedVersion() string {
+	return pj.Version
+}
+
 // check that pypi repository implements RepoQuerier
 var _ RepoQuerier = (*pypiRepository)(nil)
 
@@ -163,6 +168,11 @@ func (p *PyPiReply) LineHasDependency(line string) bool {
 // HasPatchedVersion returns true if the vulnerable package can be updated to a patched version
 func (p *PyPiReply) HasPatchedVersion() bool {
 	return p.Info.Version != ""
+}
+
+// GetPatchedVersion returns the suggested patch version for a vulnerable package
+func (p *PyPiReply) GetPatchedVersion() string {
+	return p.Info.Version
 }
 
 func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
@@ -323,6 +333,10 @@ func (gmp *goModPackage) LineHasDependency(line string) bool {
 
 func (gmp *goModPackage) HasPatchedVersion() bool {
 	return gmp.Version != ""
+}
+
+func (gmp *goModPackage) GetPatchedVersion() string {
+	return gmp.Version
 }
 
 type goProxyRepository struct {
