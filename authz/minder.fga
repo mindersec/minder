@@ -70,3 +70,8 @@ type project
     define rule_type_create: editor
     define rule_type_update: editor
     define rule_type_delete: editor
+
+    define profile_get: viewer
+    define profile_create: editor
+    define profile_update: editor
+    define profile_delete: editor
