@@ -16,8 +16,10 @@ minder profile create [flags]
 ### Options
 
 ```
-  -f, --file string   Path to the YAML defining the profile (or - for stdin)
-  -h, --help          help for create
+      --enable-alerts         Explicitly enable alerts for this profile. Overrides the YAML file.
+      --enable-remediations   Explicitly enable remediations for this profile. Overrides the YAML file.
+  -f, --file string           Path to the YAML defining the profile (or - for stdin)
+  -h, --help                  help for create
 ```
 
 ### Options inherited from parent commands
