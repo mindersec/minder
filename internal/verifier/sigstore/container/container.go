@@ -253,15 +253,9 @@ func getBundleVerificationMaterial(params *verifyResult, manifestLayer *v1.Descr
 	}
 	// 3. Construct the verification material
 	return &protobundle.VerificationMaterial{
-		Content:     signingCert,
-		TlogEntries: tlogEntries,
-		TimestampVerificationData: &protobundle.TimestampVerificationData{
-			Rfc3161Timestamps: []*protocommon.RFC3161SignedTimestamp{
-				{
-					SignedTimestamp: tlogEntries[0].InclusionPromise.SignedEntryTimestamp,
-				},
-			},
-		},
+		Content:                   signingCert,
+		TlogEntries:               tlogEntries,
+		TimestampVerificationData: nil,
 	}, nil
 }
 
