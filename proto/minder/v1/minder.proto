@@ -701,14 +701,18 @@ message DeleteRepositoryByNameResponse {
 message ListRepositoriesRequest {
     string provider = 1 [deprecated=true];
     int32 limit = 3;
-    int32 offset = 4;
     Context context = 5;
+    string cursor = 6;
 
-    reserved 2; // deprecated project_id
+    reserved 2,4; // deprecated project_id, offset
+    reserved "project_id", "offset";
 }
 
 message ListRepositoriesResponse {
     repeated Repository results = 1;
+
+    // cursor is the cursor to use for the next page of results, empty if at the end
+    string cursor = 2;
 }
 
 message VerifyProviderTokenFromRequest {
