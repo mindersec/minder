@@ -45,13 +45,13 @@ func (s *Server) ListRuleTypes(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
 	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
-		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().ID,
+		Provider:  entityCtx.Provider.Name,
+		ProjectID: entityCtx.Project.ID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
@@ -85,15 +85,15 @@ func (s *Server) GetRuleTypeByName(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().ID,
+		Provider:  entityCtx.Provider.Name,
+		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
 	if err != nil {
@@ -123,7 +123,7 @@ func (s *Server) GetRuleTypeById(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -164,13 +164,13 @@ func (s *Server) CreateRuleType(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().ID,
+		Provider:  entityCtx.Provider.Name,
+		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
 	if err == nil {
@@ -195,8 +195,8 @@ func (s *Server) CreateRuleType(
 
 	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
-		Provider:    entityCtx.GetProvider().Name,
-		ProjectID:   entityCtx.GetProject().ID,
+		Provider:    entityCtx.Provider.Name,
+		ProjectID:   entityCtx.Project.ID,
 		Description: in.GetDescription(),
 		Definition:  def,
 		Guidance:    in.GetGuidance(),
@@ -230,13 +230,13 @@ func (s *Server) UpdateRuleType(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().ID,
+		Provider:  entityCtx.Provider.Name,
+		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
 	if err != nil {
@@ -339,7 +339,7 @@ func (s *Server) DeleteRuleType(
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 

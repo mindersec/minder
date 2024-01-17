@@ -71,14 +71,14 @@ func (s *Server) CreateProfile(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
 	// If provider doesn't exist, return error
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      entityCtx.GetProvider().Name,
-		ProjectID: entityCtx.GetProject().ID})
+		Name:      entityCtx.Provider.Name,
+		ProjectID: entityCtx.Project.ID})
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -112,7 +112,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	params := db.CreateProfileParams{
 		Provider:  provider.Name,
-		ProjectID: entityCtx.GetProject().ID,
+		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 		Remediate: validateActionType(in.GetRemediate()),
 		Alert:     validateActionType(in.GetAlert()),
@@ -231,7 +231,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -267,7 +267,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -297,7 +297,7 @@ func (s *Server) GetProfileById(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -323,7 +323,7 @@ func (s *Server) GetProfileById(ctx context.Context,
 func getProfilePBFromDB(
 	ctx context.Context,
 	id uuid.UUID,
-	entityCtx *engine.EntityContext,
+	entityCtx engine.EntityContext,
 	querier db.ExtendQuerier,
 ) (*minderv1.Profile, error) {
 	profiles, err := querier.GetProfileByProjectAndID(ctx, db.GetProfileByProjectAndIDParams{
@@ -399,7 +399,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -481,7 +481,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 				Entity:             string(rs.Entity),
 				Status:             string(rs.EvalStatus.EvalStatusTypes),
 				Details:            rs.EvalDetails.String,
-				EntityInfo:         getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.GetProvider().Name),
+				EntityInfo:         getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.Provider.Name),
 				Guidance:           guidance,
 				LastUpdated:        timestamppb.New(rs.EvalLastUpdated.Time),
 				RemediationStatus:  string(rs.RemStatus.RemediationStatusTypes),
@@ -521,7 +521,7 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -564,7 +564,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	}
 
 	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
+	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -691,7 +691,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 func (s *Server) getAndValidateRulesFromProfile(
 	ctx context.Context,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	entityCtx engine.EntityContext,
 ) (map[string]entityAndRuleTuple, error) {
 	// We capture the rule instantiations here so we can
 	// track them in the db later.
@@ -701,8 +701,8 @@ func (s *Server) getAndValidateRulesFromProfile(
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().ID,
+			Provider:  entityCtx.Provider.Name,
+			ProjectID: entityCtx.Project.ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -752,7 +752,7 @@ func (s *Server) getAndValidateRulesFromProfile(
 func (s *Server) getRulesFromProfile(
 	ctx context.Context,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	entityCtx engine.EntityContext,
 ) (map[string]entityAndRuleTuple, error) {
 	// We capture the rule instantiations here so we can
 	// track them in the db later.
@@ -762,8 +762,8 @@ func (s *Server) getRulesFromProfile(
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  entityCtx.GetProvider().Name,
-			ProjectID: entityCtx.GetProject().ID,
+			Provider:  entityCtx.Provider.Name,
+			ProjectID: entityCtx.Project.ID,
 			Name:      r.GetType(),
 		})
 		if err != nil {
@@ -850,7 +850,7 @@ func updateProfileRulesForEntity(
 func getProfileFromPBForUpdateWithQuerier(
 	ctx context.Context,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	entityCtx engine.EntityContext,
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	if prof.GetId() != "" {
@@ -881,12 +881,12 @@ func getProfileFromPBForUpdateByID(
 func getProfileFromPBForUpdateByName(
 	ctx context.Context,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	entityCtx engine.EntityContext,
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	pdb, err := querier.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
 		Name:      prof.GetName(),
-		ProjectID: entityCtx.GetProject().ID,
+		ProjectID: entityCtx.Project.ID,
 	})
 	if err != nil {
 		return nil, err
@@ -895,7 +895,7 @@ func getProfileFromPBForUpdateByName(
 	return &pdb, nil
 }
 
-func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx *engine.EntityContext) error {
+func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx engine.EntityContext) error {
 	if old.Name != new.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile name")
 	}
@@ -904,7 +904,7 @@ func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx *en
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
 	}
 
-	if old.Provider != entityCtx.GetProvider().Name {
+	if old.Provider != entityCtx.Provider.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
 	}
 

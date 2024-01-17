@@ -178,14 +178,14 @@ func populateEntityContext(ctx context.Context, in HasProtoContext) (context.Con
 	}
 
 	// don't look up default provider until user has been authorized
-	providerName := in.GetContext().Provider
+	providerName := in.GetContext().GetProvider()
 
 	entityCtx := &engine.EntityContext{
 		Project: engine.Project{
 			ID: projectID,
 		},
 		Provider: engine.Provider{
-			Name: *providerName,
+			Name: providerName,
 		},
 	}
 
