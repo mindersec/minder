@@ -19,11 +19,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type key int
@@ -77,38 +74,20 @@ func (c *EntityContext) GetProvider() Provider {
 	return c.Provider
 }
 
-// GetContextFromInput returns the context from the input. The
-// input is the context from the gRPC request which merely holds
-// user-friendly information about an object.
-func GetContextFromInput(ctx context.Context, in *pb.Context, q db.Querier) (*EntityContext, error) {
-	if in.Project == nil || *in.Project == "" {
-		return nil, fmt.Errorf("invalid context: missing project")
-	}
-
-	parsedProjectId, err := uuid.Parse(*in.Project)
+// Validate validates that the entity context contains values that are present in the DB
+func (c *EntityContext) Validate(ctx context.Context, q db.Querier) error {
+	_, err := q.GetProjectByID(ctx, c.Project.ID)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid context: invalid project ID")
+		return fmt.Errorf("unable to get context: failed getting project: %w", err)
 	}
 
-	project, err := q.GetProjectByID(ctx, parsedProjectId)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get context: %w", err)
-	}
-
-	prov, err := q.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      *in.Provider,
-		ProjectID: project.ID,
+	_, err = q.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:      c.Provider.Name,
+		ProjectID: c.Project.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("unable to get context: failed getting provider: %w", err)
+		return fmt.Errorf("unable to get context: failed getting provider: %w", err)
 	}
 
-	return &EntityContext{
-		Project: Project{
-			ID: project.ID,
-		},
-		Provider: Provider{
-			Name: prov.Name,
-		},
-	}, nil
+	return nil
 }

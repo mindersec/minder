@@ -35,14 +35,14 @@ import (
 // ListRuleTypes is a method to list all rule types for a given context
 func (s *Server) ListRuleTypes(
 	ctx context.Context,
-	in *minderv1.ListRuleTypesRequest,
+	_ *minderv1.ListRuleTypesRequest,
 ) (*minderv1.ListRuleTypesResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -77,12 +77,12 @@ func (s *Server) GetRuleTypeByName(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByNameRequest,
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -115,12 +115,12 @@ func (s *Server) GetRuleTypeById(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByIdRequest,
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -156,12 +156,12 @@ func (s *Server) CreateRuleType(
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
 
-	ctx, err := s.contextValidation(ctx, crt.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -222,12 +222,12 @@ func (s *Server) UpdateRuleType(
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
 
-	ctx, err := s.contextValidation(ctx, urt.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -331,12 +331,12 @@ func (s *Server) DeleteRuleType(
 
 	in.Context.Provider = &prov.Name
 
-	ctx, err = s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err = entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {

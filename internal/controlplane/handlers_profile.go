@@ -64,12 +64,11 @@ func (s *Server) CreateProfile(ctx context.Context,
 	cpr *minderv1.CreateProfileRequest) (*minderv1.CreateProfileResponse, error) {
 	in := cpr.GetProfile()
 
-	ctx, err := s.contextValidation(ctx, cpr.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -148,6 +147,11 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	idStr := profile.ID.String()
 	in.Id = &idStr
+	project := profile.ProjectID.String()
+	in.Context = &minderv1.Context{
+		Provider: &profile.Provider,
+		Project:  &project,
+	}
 	resp := &minderv1.CreateProfileResponse{
 		Profile: in,
 	}
@@ -219,12 +223,12 @@ func createProfileRulesForEntity(
 // DeleteProfile is a method to delete a profile
 func (s *Server) DeleteProfile(ctx context.Context,
 	in *minderv1.DeleteProfileRequest) (*minderv1.DeleteProfileResponse, error) {
-	_, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -254,13 +258,13 @@ func (s *Server) DeleteProfile(ctx context.Context,
 
 // ListProfiles is a method to get all profiles for a project
 func (s *Server) ListProfiles(ctx context.Context,
-	in *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
+	_ *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -284,12 +288,13 @@ func (s *Server) ListProfiles(ctx context.Context,
 // GetProfileById is a method to get a profile by id
 func (s *Server) GetProfileById(ctx context.Context,
 	in *minderv1.GetProfileByIdRequest) (*minderv1.GetProfileByIdResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -385,12 +390,13 @@ func getRuleEvalEntityInfo(
 // nolint:gocyclo // TODO: Refactor this to be more readable
 func (s *Server) GetProfileStatusByName(ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -505,13 +511,14 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 // GetProfileStatusByProject is a method to get profile status for a project
 func (s *Server) GetProfileStatusByProject(ctx context.Context,
-	in *minderv1.GetProfileStatusByProjectRequest) (*minderv1.GetProfileStatusByProjectResponse, error) {
-	ctx, err := s.contextValidation(ctx, in.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
+	_ *minderv1.GetProfileStatusByProjectRequest) (*minderv1.GetProfileStatusByProjectResponse, error) {
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -549,12 +556,12 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	cpr *minderv1.UpdateProfileRequest) (*minderv1.UpdateProfileResponse, error) {
 	in := cpr.GetProfile()
 
-	ctx, err := s.contextValidation(ctx, cpr.GetContext())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error ensuring default project: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, entityCtx.GetProject().ID); err != nil {
@@ -656,6 +663,11 @@ func (s *Server) UpdateProfile(ctx context.Context,
 
 	idStr := profile.ID.String()
 	in.Id = &idStr
+	project := profile.ProjectID.String()
+	in.Context = &minderv1.Context{
+		Provider: &profile.Provider,
+		Project:  &project,
+	}
 	resp := &minderv1.UpdateProfileResponse{
 		Profile: in,
 	}
