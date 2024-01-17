@@ -49,7 +49,7 @@ func New(trustedRoot, accessToken, cacheDir string) (*Sigstore, error) {
 		return nil, err
 	}
 	sev, err := verify.NewSignedEntityVerifier(trustedMaterial, verify.WithSignedCertificateTimestamps(1),
-		verify.WithTransparencyLog(1), verify.WithOnlineVerification(), verify.WithObserverTimestamps(1))
+		verify.WithTransparencyLog(1), verify.WithObserverTimestamps(1))
 	if err != nil {
 		return nil, err
 	}
