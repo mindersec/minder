@@ -16,8 +16,10 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -134,4 +137,57 @@ func AuthorizationUnaryInterceptor(ctx context.Context, req interface{}, info *g
 
 	ctx = auth.WithPermissionsContext(ctx, authorities)
 	return handler(ctx, req)
+}
+
+// EntityContextProjectInterceptor is a server interceptor that sets up the entity context project
+func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (any, error) {
+
+	opts := getRpcOptions(ctx)
+
+	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
+		if !opts.GetNoLog() {
+			zerolog.Ctx(ctx).Info().Msgf("Bypassing setting up context")
+		}
+		return handler(ctx, req)
+	}
+
+	request, ok := req.(HasProtoContext)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "Error extracting context from request")
+	}
+
+	ctx, err := populateEntityContext(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	return handler(ctx, req)
+}
+
+// populateEntityContext populates the project in the entity context, by looking at the proto context or
+// fetching the default project
+func populateEntityContext(ctx context.Context, in HasProtoContext) (context.Context, error) {
+	if in.GetContext() == nil {
+		return ctx, fmt.Errorf("context cannot be nil")
+	}
+
+	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	if err != nil {
+		return ctx, fmt.Errorf("cannot get project from context: %v", err)
+	}
+
+	// don't look up default provider until user has been authorized
+	providerName := in.GetContext().Provider
+
+	entityCtx := &engine.EntityContext{
+		Project: engine.Project{
+			ID: projectID,
+		},
+		Provider: engine.Provider{
+			Name: *providerName,
+		},
+	}
+
+	return engine.WithEntityContext(ctx, entityCtx), nil
 }

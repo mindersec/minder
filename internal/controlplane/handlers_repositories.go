@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"
@@ -43,10 +44,8 @@ const maxFetchLimit = 100
 // repositor(ies).
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
@@ -147,10 +146,8 @@ func (s *Server) RegisterRepository(ctx context.Context,
 // repositories that are registered present in the minder database
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
@@ -268,10 +265,8 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
@@ -351,11 +346,8 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
-
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
@@ -395,10 +387,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	ctx context.Context,
 	in *pb.ListRemoteRepositoriesFromProviderRequest,
 ) (*pb.ListRemoteRepositoriesFromProviderResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {

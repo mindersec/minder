@@ -29,6 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -36,10 +37,8 @@ import (
 // ListArtifacts lists all artifacts for a given project and provider
 // nolint:gocyclo
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {

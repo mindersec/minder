@@ -28,6 +28,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -151,6 +152,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
+	})
+	// Set the entity context
+	ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
+		Project: engine.Project{
+			ID: projectID,
+		},
 	})
 
 	for i := range testCases {

@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -41,10 +42,8 @@ import (
 // and a boolean indicating whether the client is a CLI or web client
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, req)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
 		return nil, err
@@ -247,10 +246,8 @@ func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
 // StoreProviderToken stores the provider token for a project
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
@@ -308,10 +305,8 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-	}
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	// check if user is authorized
 	if err := AuthorizedOnProject(ctx, projectID); err != nil {
