@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/logger"
 	"strings"
 
 	"github.com/google/uuid"
@@ -69,6 +70,10 @@ func (s *Server) ListRuleTypes(
 		resp.RuleTypes = append(resp.RuleTypes, rtpb)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+
 	return resp, nil
 }
 
@@ -106,6 +111,11 @@ func (s *Server) GetRuleTypeByName(
 	}
 
 	resp.RuleType = rt
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = rtdb.Provider
+	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return resp, nil
 }
@@ -145,6 +155,11 @@ func (s *Server) GetRuleTypeById(
 	}
 
 	resp.RuleType = rt
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = rtdb.Provider
+	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return resp, nil
 }
@@ -193,7 +208,7 @@ func (s *Server) CreateRuleType(
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
 	}
 
-	dbrtyp, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
+	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:        in.GetName(),
 		Provider:    entityCtx.Provider.Name,
 		ProjectID:   entityCtx.Project.ID,
@@ -205,10 +220,15 @@ func (s *Server) CreateRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&dbrtyp)
+	rt, err := engine.RuleTypePBFromDB(&rtdb)
 	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", dbrtyp.Name, err)
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = rtdb.Provider
+	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: rt,
@@ -297,6 +317,11 @@ func (s *Server) UpdateRuleType(
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = rtdb.Provider
+	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
+
 	return &minderv1.UpdateRuleTypeResponse{
 		RuleType: rt,
 	}, nil
@@ -313,7 +338,7 @@ func (s *Server) DeleteRuleType(
 	}
 
 	// first read rule type by id, so we can get provider
-	ruletype, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
+	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
@@ -322,8 +347,8 @@ func (s *Server) DeleteRuleType(
 	}
 
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      ruletype.Provider,
-		ProjectID: ruletype.ProjectID,
+		Name:      rtdb.Provider,
+		ProjectID: rtdb.ProjectID,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
@@ -343,7 +368,7 @@ func (s *Server) DeleteRuleType(
 		return nil, err
 	}
 
-	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, ruletype.ID)
+	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
 	// We have profiles that use this rule type, so we can't delete it
 	if err == nil {
 		if len(profileInfo) > 0 {
@@ -369,6 +394,11 @@ func (s *Server) DeleteRuleType(
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = rtdb.Provider
+	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return &minderv1.DeleteRuleTypeResponse{}, nil
 }
