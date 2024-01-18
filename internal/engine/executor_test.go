@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -309,9 +308,9 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	ts := &logger.TelemetryStore{
-		Project:  projectID.String(),
-		Provider: providerName,
-		Resource: fmt.Sprintf("repository/%s", repositoryID),
+		Project:    projectID,
+		Provider:   providerName,
+		Repository: repositoryID,
 	}
 	ctx = ts.WithTelemetry(ctx)
 	msg.SetContext(ctx)
@@ -333,9 +332,9 @@ default allow = true`,
 
 	require.Len(t, ts.Evals, 1, "expected one eval to be logged")
 	requredEval := ts.Evals[0]
-	require.Equal(t, "test-profile", requredEval.ProfileName)
+	require.Equal(t, "test-profile", requredEval.Profile.Name)
 	require.Equal(t, "success", requredEval.EvalResult)
-	require.Equal(t, "passthrough", requredEval.RuleName)
+	require.Equal(t, "passthrough", requredEval.RuleType.Name)
 	require.Equal(t, "off", requredEval.Actions[alert.ActionType].State)
 	require.Equal(t, "off", requredEval.Actions[remediate.ActionType].State)
 }

@@ -16,8 +16,8 @@ package logger
 
 import (
 	"context"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert"

@@ -19,7 +19,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/stacklok/minder/internal/logger"
 	"net/http"
 	"net/url"
 
@@ -32,6 +31,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/logger"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 

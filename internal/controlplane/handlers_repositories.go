@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/stacklok/minder/internal/logger"
 	"strings"
 
 	"github.com/google/uuid"
@@ -29,6 +28,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"

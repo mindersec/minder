@@ -16,9 +16,9 @@ package logger
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -46,9 +46,11 @@ func (m *TelemetryStoreWMMiddleware) TelemetryStoreMiddleware(h message.HandlerF
 		}
 
 		// Create a new telemetry store from entity
-		ts, err := newTelemetryFromEntity(inf)
+		ts, err := newTelemetryStoreFromEntity(inf)
 		if err != nil {
-			return nil, fmt.Errorf("error creating telemetry store from entity: %w", err)
+			// Log the error but don't fail the event processing, use the returned empty telemetry store instead
+			logger := zerolog.Ctx(msg.Context())
+			logger.Info().Msg("error creating telemetry store from entity")
 		}
 
 		// Store telemetry data in the context
@@ -68,18 +70,21 @@ func (m *TelemetryStoreWMMiddleware) TelemetryStoreMiddleware(h message.HandlerF
 	}
 }
 
-func newTelemetryFromEntity(inf *entities.EntityInfoWrapper) (*TelemetryStore, error) {
+// newTelemetryStoreFromEntity creates a new telemetry store from an entity.
+func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetryStore, error) {
+	// Create a new telemetry store
+	ts := &TelemetryStore{}
+
 	// Get the entity UUID - this is the entity we are processing
 	ent, err := getEntityID(inf)
 	if err != nil {
-		return nil, fmt.Errorf("error getting entity ID: %w", err)
+		// Return an error but also return the telemetry store so we don't fail the event
+		return ts, fmt.Errorf("error getting entity ID: %w", err)
 	}
 
-	// Create a new telemetry store
-	ts := &TelemetryStore{
-		Project:  *inf.ProjectID,
-		Provider: inf.Provider,
-	}
+	// Set the provider name and project ID
+	ts.Provider = inf.Provider
+	ts.Project = *inf.ProjectID
 
 	// Set the entity telemetry field based on the entity type
 	switch inf.Type {
@@ -89,11 +94,15 @@ func newTelemetryFromEntity(inf *entities.EntityInfoWrapper) (*TelemetryStore, e
 		ts.Artifact = ent
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		ts.PullRequest = ent
+	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
+	case minderv1.Entity_ENTITY_UNSPECIFIED:
+		// Do nothing
 	}
 
 	return ts, nil
 }
 
+// getEntityID returns the entity ID from the entity info wrapper based on its type.
 func getEntityID(inf *entities.EntityInfoWrapper) (uuid.UUID, error) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
