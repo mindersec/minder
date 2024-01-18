@@ -21,7 +21,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/engine"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -35,36 +38,59 @@ func (m request) GetContext() *minder.Context {
 	return m.Context
 }
 
+// Reply type containing the detected entityContext.
+type replyType struct {
+	Context engine.EntityContext
+}
+
 func TestEntityContextProjectInterceptor(t *testing.T) {
 	t.Parallel()
 	projectID := uuid.New()
+	defaultProjectID := uuid.New()
 	projectIdStr := projectID.String()
 	//nolint:goconst
 	provider := "github"
 
+	assert.NotEqual(t, projectID, defaultProjectID)
+
 	testCases := []struct {
-		name         string
-		req          interface{}
-		rpcOptions   *minder.RpcOptions
-		checkContext func(t *testing.T, ctx context.Context, err error)
+		name            string
+		req             any
+		scope           minder.ObjectOwner
+		rpcErr          error
+		expectedContext engine.EntityContext // Only if non-error
 	}{
 		{
 			name: "non project owner bypasses interceptor",
-			req:  struct{}{},
-			rpcOptions: &minder.RpcOptions{
-				Anonymous: false,
-				AuthScope: minder.ObjectOwner_OBJECT_OWNER_USER,
-			},
-			checkContext: func(t *testing.T, ctx context.Context, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
-
-				entity := engine.EntityFromContext(ctx)
-				assert.Nil(t, entity)
-			},
+			// Does not implement HasProtoContext
+			req:    struct{}{},
+			rpcErr: status.Errorf(codes.Internal, "Error extracting context from request"),
+		}, {
+			name:            "non project owner bypasses interceptor",
+			scope:           minder.ObjectOwner_OBJECT_OWNER_USER,
+			req:             &request{},
+			expectedContext: engine.EntityContext{},
 		},
 		{
+			name: "empty context",
+			req: &request{
+				Context: &minder.Context{},
+			},
+			expectedContext: engine.EntityContext{
+				// Uses the default project id
+				Project: engine.Project{ID: defaultProjectID},
+			},
+		}, {
+			name: "no provider",
+			req: &request{
+				Context: &minder.Context{
+					Project: &projectIdStr,
+				},
+			},
+			expectedContext: engine.EntityContext{
+				Project: engine.Project{ID: projectID},
+			},
+		}, {
 			name: "sets entity context",
 			req: &request{
 				Context: &minder.Context{
@@ -72,17 +98,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 					Provider: &provider,
 				},
 			},
-			rpcOptions: &minder.RpcOptions{
-				Anonymous: false,
-				AuthScope: minder.ObjectOwner_OBJECT_OWNER_PROJECT,
-			},
-			checkContext: func(t *testing.T, ctx context.Context, err error) {
-				t.Helper()
-
-				assert.NoError(t, err)
-
-				entity := engine.EntityFromContext(ctx)
-				assert.Equal(t, projectID, entity.Project.ID)
+			expectedContext: engine.EntityContext{
+				Project:  engine.Project{ID: projectID},
+				Provider: engine.Provider{Name: provider},
 			},
 		},
 	}
@@ -92,17 +110,28 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
-				return ctx, nil
+			if tc.scope == minder.ObjectOwner_OBJECT_OWNER_UNSPECIFIED {
+				tc.scope = minder.ObjectOwner_OBJECT_OWNER_PROJECT
 			}
-			ctx := withRpcOptions(context.Background(), tc.rpcOptions)
-			c, err := EntityContextProjectInterceptor(ctx, tc.req, &grpc.UnaryServerInfo{}, unaryHandler)
-			ctx, ok := c.(context.Context)
-			if !ok {
-				t.Errorf("Unexpected error, unary handler should return context: %v", err)
+			rpcOptions := &minder.RpcOptions{
+				AuthScope: tc.scope,
 			}
 
-			tc.checkContext(t, ctx, err)
+			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
+				return replyType{engine.EntityFromContext(ctx)}, nil
+			}
+			authorities := auth.UserPermissions{ProjectIds: []uuid.UUID{defaultProjectID}}
+			ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), authorities)
+			reply, err := EntityContextProjectInterceptor(ctx, tc.req, &grpc.UnaryServerInfo{}, unaryHandler)
+			if tc.rpcErr != nil {
+				assert.Equal(t, tc.rpcErr, err)
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			assert.Equal(t, tc.expectedContext, reply.(replyType).Context)
 		})
 	}
 }

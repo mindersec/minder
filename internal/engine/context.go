@@ -37,12 +37,12 @@ func WithEntityContext(ctx context.Context, c *EntityContext) context.Context {
 }
 
 // EntityFromContext extracts the current EntityContext, WHICH MAY BE NIL!
-func EntityFromContext(ctx context.Context) *EntityContext {
-	ec, ok := ctx.Value(entityContextKey).(*EntityContext)
-	if !ok {
-		return nil
+func EntityFromContext(ctx context.Context) EntityContext {
+	ec, _ := ctx.Value(entityContextKey).(*EntityContext)
+	if ec == nil {
+		return EntityContext{}
 	}
-	return ec
+	return *ec
 }
 
 // Project is a construct relevant to an entity's context.
@@ -62,16 +62,6 @@ type Provider struct {
 type EntityContext struct {
 	Project  Project
 	Provider Provider
-}
-
-// GetProject returns the project of the entity
-func (c *EntityContext) GetProject() Project {
-	return c.Project
-}
-
-// GetProvider returns the provider of the entity
-func (c *EntityContext) GetProvider() Provider {
-	return c.Provider
 }
 
 // Validate validates that the entity context contains values that are present in the DB
