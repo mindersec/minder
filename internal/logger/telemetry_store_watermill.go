@@ -16,6 +16,7 @@ package logger
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
@@ -44,16 +45,10 @@ func (m *TelemetryStoreWMMiddleware) TelemetryStoreMiddleware(h message.HandlerF
 			return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 		}
 
-		typ := inf.Type
-		ent, err := getEntityID(inf)
+		// Create a new telemetry store from entity
+		ts, err := newTelemetryFromEntity(inf)
 		if err != nil {
-			return nil, fmt.Errorf("error getting entity ID: %w", err)
-		}
-
-		ts := &TelemetryStore{
-			Project:  inf.ProjectID.String(),
-			Provider: inf.Provider,
-			Resource: resourceFromEntity(typ, ent),
+			return nil, fmt.Errorf("error creating telemetry store from entity: %w", err)
 		}
 
 		// Store telemetry data in the context
@@ -73,28 +68,50 @@ func (m *TelemetryStoreWMMiddleware) TelemetryStoreMiddleware(h message.HandlerF
 	}
 }
 
-func resourceFromEntity(typ minderv1.Entity, ent string) string {
-	return fmt.Sprintf("%s/%s", typ.ToString(), ent)
+func newTelemetryFromEntity(inf *entities.EntityInfoWrapper) (*TelemetryStore, error) {
+	// Get the entity UUID - this is the entity we are processing
+	ent, err := getEntityID(inf)
+	if err != nil {
+		return nil, fmt.Errorf("error getting entity ID: %w", err)
+	}
+
+	// Create a new telemetry store
+	ts := &TelemetryStore{
+		Project:  *inf.ProjectID,
+		Provider: inf.Provider,
+	}
+
+	// Set the entity telemetry field based on the entity type
+	switch inf.Type {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		ts.Repository = ent
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		ts.Artifact = ent
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		ts.PullRequest = ent
+	}
+
+	return ts, nil
 }
 
-func getEntityID(inf *entities.EntityInfoWrapper) (string, error) {
+func getEntityID(inf *entities.EntityInfoWrapper) (uuid.UUID, error) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
-	var ent string
+	var ent uuid.UUID
 
 	// In the case of this middleware, we receive entities
 	// to process by the executor.
 	switch inf.Type {
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
-		return "", fmt.Errorf("unspecified entity type")
+		return uuid.Nil, fmt.Errorf("unspecified entity type")
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
-		return "", fmt.Errorf("build environments not supported")
+		return uuid.Nil, fmt.Errorf("build environments not supported")
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		ent = repoID.String()
+		ent = repoID
 	case minderv1.Entity_ENTITY_ARTIFACTS:
-		ent = artID.UUID.String()
+		ent = artID.UUID
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		ent = prID.UUID.String()
+		ent = prID.UUID
 	}
 
 	return ent, nil
