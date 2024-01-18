@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/logger"
 	"slices"
 	"strings"
 
@@ -59,6 +60,10 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list artifacts: %w", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.ListArtifactsResponse{Results: results}, nil
 }
@@ -120,6 +125,12 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = artifact.Provider
+	logger.BusinessRecord(ctx).Project = artifact.ProjectID
+	logger.BusinessRecord(ctx).Artifact = artifact.ID
+	logger.BusinessRecord(ctx).Repository = artifact.RepositoryID
+
 	return &pb.GetArtifactByNameResponse{Artifact: &pb.Artifact{
 		ArtifactPk: artifact.ID.String(),
 		Owner:      artifact.RepoOwner,
@@ -173,6 +184,12 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = artifact.Provider
+	logger.BusinessRecord(ctx).Project = artifact.ProjectID
+	logger.BusinessRecord(ctx).Artifact = artifact.ID
+	logger.BusinessRecord(ctx).Repository = artifact.RepositoryID
 
 	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
 		ArtifactPk: artifact.ID.String(),
