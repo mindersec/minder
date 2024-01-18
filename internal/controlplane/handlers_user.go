@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/stacklok/minder/internal/logger"
 	"net/http"
 	"net/url"
 
@@ -115,6 +116,9 @@ func (s *Server) CreateUser(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = userProject
 
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
