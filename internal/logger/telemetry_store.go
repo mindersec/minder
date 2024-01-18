@@ -185,6 +185,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	if ts.Artifact != uuid.Nil {
 		e.Str("artifact", ts.Artifact.String())
 	}
+	if ts.PullRequest != uuid.Nil {
+		e.Str("pr", ts.PullRequest.String())
+	}
 	if ts.Profile != (Profile{}) {
 		e.Any("profile", ts.Profile)
 	}
