@@ -139,7 +139,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": true}`,
-		notPresent: []string{"project", "rules", "login_sha"},
+		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletype", "artifact", "pr"},
 	}}
 
 	count := len(cases)
