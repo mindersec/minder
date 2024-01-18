@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/stacklok/minder/internal/logger"
 	"strings"
 
 	"github.com/google/uuid"
@@ -41,7 +42,7 @@ const maxFetchLimit = 100
 // RegisterRepository adds repositories to the database and registers a webhook
 // Once a user had enrolled in a project (they have a valid token), they can register
 // repositories to be monitored by the minder by provisioning a webhook on the
-// repositor(ies).
+// repository(ies).
 func (s *Server) RegisterRepository(ctx context.Context,
 	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
@@ -124,7 +125,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	repoDBID := dbRepo.ID.String()
 	r.Id = &repoDBID
 
-	// publish a reconcile event for the registered repositories
+	// publish a reconciling event for the registered repositories
 	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
 
 	msg, err := reconcilers.NewRepoReconcilerMessage(provider.Name, r.RepoId, projectID)
@@ -137,6 +138,11 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+	logger.BusinessRecord(ctx).Repository = dbRepo.ID
 
 	return response, nil
 }
@@ -220,6 +226,10 @@ func (s *Server) ListRepositories(ctx context.Context,
 	resp.Results = results
 	resp.Cursor = respRepoCursor.String()
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	return &resp, nil
 }
 
@@ -250,6 +260,12 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		Project:  &projID,
 		Provider: &repo.Provider,
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).Project = repo.ProjectID
+	logger.BusinessRecord(ctx).Repository = repo.ID
+
 	return &pb.GetRepositoryByIdResponse{Repository: r}, nil
 }
 
@@ -297,6 +313,12 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		Project:  &projID,
 		Provider: &repo.Provider,
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).Project = repo.ProjectID
+	logger.BusinessRecord(ctx).Repository = repo.ID
+
 	return &pb.GetRepositoryByNameResponse{Repository: r}, nil
 }
 
@@ -330,6 +352,11 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).Project = repo.ProjectID
+	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the id of the deleted repository
 	return &pb.DeleteRepositoryByIdResponse{
@@ -375,6 +402,11 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).Project = repo.ProjectID
+	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the name of the deleted repository
 	return &pb.DeleteRepositoryByNameResponse{
@@ -473,6 +505,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		}
 		out.Results = append(out.Results, repo)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
 
 	return out, nil
 }
