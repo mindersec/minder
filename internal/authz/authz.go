@@ -24,11 +24,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	fgasdk "github.com/openfga/go-sdk"
 	fgaclient "github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
 	"k8s.io/client-go/transport"
 
+	"github.com/stacklok/minder/internal/auth"
 	srvconfig "github.com/stacklok/minder/internal/config/server"
 )
 
@@ -48,6 +50,8 @@ type ClientWrapper struct {
 	cfg *srvconfig.AuthzConfig
 	cli *fgaclient.OpenFgaClient
 }
+
+var _ Client = &ClientWrapper{}
 
 // NewAuthzClient returns a new AuthzClientWrapper
 func NewAuthzClient(cfg *srvconfig.AuthzConfig) (*ClientWrapper, error) {
@@ -170,4 +174,32 @@ func (a *ClientWrapper) WriteModel(ctx context.Context) (string, error) {
 	}
 
 	return data.GetAuthorizationModelId(), nil
+}
+
+func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.UUID) error {
+	// TODO: set ClientCheckOptions like in
+	// https://openfga.dev/docs/getting-started/perform-check#02-calling-check-api
+	options := fgaclient.ClientCheckOptions{}
+	userString := "user:" + auth.GetUserSubjectFromContext(ctx)
+	body := fgaclient.ClientCheckRequest{
+		User:     userString,
+		Relation: action,
+		Object:   "project:" + project.String(),
+	}
+	result, err := a.cli.Check(ctx).Options(options).Body(body).Execute()
+	if err != nil {
+		return fmt.Errorf("OpenFGA error: %w", err)
+	}
+	if result.Allowed != nil && *result.Allowed {
+		return nil
+	}
+	return NotAuthorized
+}
+
+func (a *ClientWrapper) Write(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error {
+	return fmt.Errorf("not implemented")
+}
+
+func (a *ClientWrapper) Delete(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error {
+	return fmt.Errorf("not implemented")
 }
