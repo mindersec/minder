@@ -40,7 +40,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.12.0
-	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.11.0
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.12.0
 	github.com/sigstore/protobuf-specs v0.2.1
 	github.com/sigstore/sigstore-go v0.0.0-20240108223800-a3df13b8ba29
 	github.com/spf13/cobra v1.8.0
