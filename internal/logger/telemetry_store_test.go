@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert"
@@ -32,6 +33,9 @@ import (
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
+	testUUIDString := "00000000-0000-0000-0000-000000000001"
+	testUUID := uuid.MustParse(testUUIDString)
+
 	t.Parallel()
 	cases := []struct {
 		name           string
@@ -45,11 +49,13 @@ func TestTelemetryStore_Record(t *testing.T) {
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
 
-			ep.Rule = &minderv1.Profile_Rule{
-				Type: "artifact_signature",
-			}
 			ep.Profile = &minderv1.Profile{
 				Name: "artifact_profile",
+				Id:   &testUUIDString,
+			}
+			ep.RuleType = &minderv1.RuleType{
+				Name: "artifact_signature",
+				Id:   &testUUIDString,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
@@ -63,9 +69,8 @@ func TestTelemetryStore_Record(t *testing.T) {
 			return ep
 		},
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
-			logger.BusinessRecord(ctx).Project = "bar"
-
-			logger.BusinessRecord(ctx).Resource = "foo/repo"
+			logger.BusinessRecord(ctx).Project = testUUID
+			logger.BusinessRecord(ctx).Repository = testUUID
 			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
 	}, {
@@ -74,11 +79,13 @@ func TestTelemetryStore_Record(t *testing.T) {
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
 
-			ep.Rule = &minderv1.Profile_Rule{
-				Type: "artifact_signature",
-			}
 			ep.Profile = &minderv1.Profile{
 				Name: "artifact_profile",
+				Id:   &testUUIDString,
+			}
+			ep.RuleType = &minderv1.RuleType{
+				Name: "artifact_signature",
+				Id:   &testUUIDString,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
@@ -92,29 +99,34 @@ func TestTelemetryStore_Record(t *testing.T) {
 			return ep
 		},
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
-			logger.BusinessRecord(ctx).Project = "bar"
-
-			logger.BusinessRecord(ctx).Resource = "foo/repo"
+			logger.BusinessRecord(ctx).Project = testUUID
+			logger.BusinessRecord(ctx).Repository = testUUID
 			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
 		},
 		expected: `{
-    "project": "bar",
-    "resource": "foo/repo",
+    "project": "00000000-0000-0000-0000-000000000001",
+    "repository": "00000000-0000-0000-0000-000000000001",
     "rules": [
         {
-            "rule_name": "artifact_signature",
-            "profile_name": "artifact_profile",
-            "eval_result": "failure",
-            "actions": {
-                "alert": {
-                    "state": "off",
-                    "result": "skipped"
-                },
-                "remediate": {
-                    "state": "on",
-                    "result": "success"
-                }
-            }
+			"ruletype": {
+				"name": "artifact_signature",
+				"id": "00000000-0000-0000-0000-000000000001"
+			},
+			"profile": {
+				"name": "artifact_profile",
+				"id": "00000000-0000-0000-0000-000000000001"
+			},
+			"eval_result": "failure",
+			"actions": {
+				"alert": {
+					"state": "off",
+					"result": "skipped"
+				},
+				"remediate": {
+					"state": "on",
+					"result": "success"
+				}
+			}
         }
     ]
     }`,
@@ -127,7 +139,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": true}`,
-		notPresent: []string{"project", "resource", "rules", "login_sha"},
+		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletype", "artifact", "pr"},
 	}}
 
 	count := len(cases)

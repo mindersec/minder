@@ -16,6 +16,8 @@ package controlplane
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -28,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -50,6 +53,10 @@ func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermiss
 	emptyPermissions := auth.UserPermissions{}
 
 	subject := auth.GetUserSubjectFromContext(ctx)
+
+	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
+	loginSHA := sha256.Sum256([]byte(subject))
+	logger.BusinessRecord(ctx).LoginHash = hex.EncodeToString(loginSHA[:])
 
 	// read all information for user claims
 	userInfo, err := store.GetUserBySubject(ctx, subject)

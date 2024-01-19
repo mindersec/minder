@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -168,6 +169,11 @@ func (s *Server) CreateProfile(ctx context.Context,
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = profile.Provider
+	logger.BusinessRecord(ctx).Project = profile.ProjectID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
+
 	return resp, nil
 }
 
@@ -240,7 +246,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
 	}
 
-	_, err = s.store.GetProfileByID(ctx, parsedProfileID)
+	profile, err := s.store.GetProfileByID(ctx, parsedProfileID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "profile not found")
@@ -252,6 +258,11 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete profile: %s", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = profile.Provider
+	logger.BusinessRecord(ctx).Project = profile.ProjectID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
 
 	return &minderv1.DeleteProfileResponse{}, nil
 }
@@ -281,6 +292,10 @@ func (s *Server) ListProfiles(ctx context.Context,
 	for _, profile := range engine.MergeDatabaseListIntoProfiles(profiles) {
 		resp.Profiles = append(resp.Profiles, profile)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return &resp, nil
 }
@@ -314,6 +329,11 @@ func (s *Server) GetProfileById(ctx context.Context,
 
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: prof.Name, ID: parsedProfileID}
 
 	return &minderv1.GetProfileByIdResponse{
 		Profile: prof,
@@ -498,6 +518,11 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		// TODO: Add other entities once we have database entries for them
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: dbstat.Name, ID: dbstat.ID}
+
 	return &minderv1.GetProfileStatusByNameResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
 			ProfileId:     dbstat.ID.String(),
@@ -545,6 +570,10 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 			ProfileStatus: string(dbstat.ProfileStatus),
 		})
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return res, nil
 }
@@ -684,6 +713,11 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	if err := s.evt.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = profile.Provider
+	logger.BusinessRecord(ctx).Project = profile.ProjectID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
 
 	return resp, nil
 }

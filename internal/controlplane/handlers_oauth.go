@@ -33,6 +33,7 @@ import (
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -108,13 +109,14 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
 	}
 
-	// Return the authorization URL and state
-	url := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
 
-	response := &pb.GetAuthorizationURLResponse{
-		Url: url,
-	}
-	return response, nil
+	// Return the authorization URL and state
+	return &pb.GetAuthorizationURLResponse{
+		Url: oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline),
+	}, nil
 }
 
 // ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
@@ -211,6 +213,10 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "error inserting access token: %s", err)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = stateData.ProjectID
+
 	return &httpbody.HttpBody{
 		ContentType: "text/html",
 		Data:        auth.OAuthSuccessHtml,
@@ -283,7 +289,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
-	// additionally add owner
+	// additionally, add an owner
 	var owner sql.NullString
 	if in.Owner == nil {
 		owner = sql.NullString{Valid: false}
@@ -299,6 +305,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	return &pb.StoreProviderTokenResponse{}, nil
 }
 
@@ -327,5 +338,10 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		}
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
 }

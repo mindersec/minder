@@ -17,6 +17,7 @@ package logger
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert"
@@ -32,6 +33,18 @@ const (
 	telemetryContextKey key = iota
 )
 
+// RuleType is a struct describing a rule type for telemetry purposes
+type RuleType struct {
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+}
+
+// Profile is a struct describing a Profile for telemetry purposes
+type Profile struct {
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+}
+
 // ActionEvalData reports
 type ActionEvalData struct {
 	// how was the action configured - on, off, ...
@@ -42,8 +55,8 @@ type ActionEvalData struct {
 
 // RuleEvalData reports
 type RuleEvalData struct {
-	RuleName    string `json:"rule_name"`
-	ProfileName string `json:"profile_name"`
+	RuleType RuleType `json:"ruletype"`
+	Profile  Profile  `json:"profile"`
 
 	EvalResult string                                   `json:"eval_result"`
 	Actions    map[interfaces.ActionType]ActionEvalData `json:"actions"`
@@ -53,14 +66,26 @@ type RuleEvalData struct {
 
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
 type TelemetryStore struct {
-	// Project records the project that the request was associated with.
-	Project string `json:"project"`
+	// Project records the project ID that the request was associated with.
+	Project uuid.UUID `json:"project"`
 
-	// Provider records the provider that the request was associated with.
+	// Provider records the provider name that the request was associated with.
 	Provider string `json:"provider"`
 
-	// The resource processed by the request, for example, a repository or a profile.
-	Resource string `json:"resource"`
+	// Repository is the repository ID that the request was associated with.
+	Repository uuid.UUID `json:"repository"`
+
+	// Artifact is the artifact ID that the request was associated with.
+	Artifact uuid.UUID `json:"artifact"`
+
+	// PullRequest is the pull request ID that the request was associated with.
+	PullRequest uuid.UUID `json:"pr"`
+
+	// Profile is the profile that the request was associated with.
+	Profile Profile `json:"profile"`
+
+	// RuleType is the rule type that the request was associated with.
+	RuleType RuleType `json:"ruletype"`
 
 	// Data from RPCs
 
@@ -82,10 +107,21 @@ func (ts *TelemetryStore) AddRuleEval(
 		return
 	}
 
+	// Get rule type ID
+	ruleTypeID, err := uuid.Parse(evalInfo.GetRuleType().GetId())
+	if err != nil {
+		return
+	}
+	// Get profile ID
+	profileID, err := uuid.Parse(evalInfo.GetProfile().GetId())
+	if err != nil {
+		return
+	}
+
 	red := RuleEvalData{
-		RuleName:    evalInfo.GetRule().GetType(),
-		ProfileName: evalInfo.GetProfile().GetName(),
-		EvalResult:  errors.EvalErrorAsString(evalInfo.GetEvalErr()),
+		RuleType:   RuleType{Name: evalInfo.GetRuleType().GetName(), ID: ruleTypeID},
+		Profile:    Profile{Name: evalInfo.GetProfile().GetName(), ID: profileID},
+		EvalResult: errors.EvalErrorAsString(evalInfo.GetEvalErr()),
 		Actions: map[interfaces.ActionType]ActionEvalData{
 			remediate.ActionType: {
 				State:  evalInfo.GetActionsOnOff()[remediate.ActionType].String(),
@@ -134,17 +170,29 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	// We could use reflection here like json.Marshal, but given
 	// the small number of fields, we'll just add them explicitly.
-	if ts.Project != "" {
-		e.Str("project", ts.Project)
+	if ts.Project != uuid.Nil {
+		e.Str("project", ts.Project.String())
 	}
 	if ts.Provider != "" {
 		e.Str("provider", ts.Provider)
 	}
-	if ts.Resource != "" {
-		e.Str("resource", ts.Resource)
-	}
 	if ts.LoginHash != "" {
 		e.Str("login_sha", ts.LoginHash)
+	}
+	if ts.Repository != uuid.Nil {
+		e.Str("repository", ts.Repository.String())
+	}
+	if ts.Artifact != uuid.Nil {
+		e.Str("artifact", ts.Artifact.String())
+	}
+	if ts.PullRequest != uuid.Nil {
+		e.Str("pr", ts.PullRequest.String())
+	}
+	if ts.Profile != (Profile{}) {
+		e.Any("profile", ts.Profile)
+	}
+	if ts.RuleType != (RuleType{}) {
+		e.Any("ruletype", ts.RuleType)
 	}
 	if len(ts.Evals) > 0 {
 		e.Any("rules", ts.Evals)
