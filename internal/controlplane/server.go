@@ -46,6 +46,8 @@ import (
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz"
+	"github.com/stacklok/minder/internal/authz/fake"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -80,6 +82,7 @@ type Server struct {
 	OAuth2       *oauth2.Config
 	ClientID     string
 	ClientSecret string
+	authzClient  authz.Client
 	cryptoEngine *crypto.Engine
 }
 
@@ -90,6 +93,13 @@ type ServerOption func(*Server)
 func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
 	return func(s *Server) {
 		s.provMt = mt
+	}
+}
+
+// WithAuthzClient sets the authz client for the server
+func WithAuthzClient(c authz.Client) ServerOption {
+	return func(s *Server) {
+		s.authzClient = c
 	}
 }
 
@@ -118,6 +128,11 @@ func NewServer(
 
 	for _, opt := range opts {
 		opt(s)
+	}
+	if s.authzClient == nil {
+		// TODO: this currently always returns authorized as a transitionary measure.
+		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
+		s.authzClient = &fake.NoopClient{Authorized: true}
 	}
 
 	return s, nil
