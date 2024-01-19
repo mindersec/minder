@@ -39,7 +39,7 @@ require (
 	github.com/puzpuzpuz/xsync v1.5.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.31.0
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.11.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.12.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.11.0
 	github.com/sigstore/protobuf-specs v0.2.1
 	github.com/sigstore/sigstore-go v0.0.0-20240108223800-a3df13b8ba29
@@ -117,7 +117,7 @@ require (
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.11.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.12.0 // indirect
 	github.com/sigstore/sigstore v1.8.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
