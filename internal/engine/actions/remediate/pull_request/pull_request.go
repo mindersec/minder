@@ -267,6 +267,16 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get primary email: %w", err)
 	}
 
+	currentHeadReference, err := repo.Head()
+	if err != nil {
+		return fmt.Errorf("cannot get current HEAD: %w", err)
+	}
+	currHeadName := currentHeadReference.Name()
+
+	// This resets the worktree so we don't corrupt the ingest cache (at least the main/originally-fetched branch).
+	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
+	defer checkoutToOriginallyFetchedBranch(&logger, wt, currHeadName)
+
 	logger.Debug().Str("branch", branchBaseName(title)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branchBaseName(title)),
@@ -507,4 +517,21 @@ func getPrimaryEmail(ctx context.Context, cli provifv1.GitHub) (string, error) {
 	}
 
 	return fallback, nil
+}
+
+func checkoutToOriginallyFetchedBranch(
+	logger *zerolog.Logger,
+	wt *git.Worktree,
+	originallyFetchedBranch plumbing.ReferenceName,
+) {
+	err := wt.Checkout(&git.CheckoutOptions{
+		Branch: originallyFetchedBranch,
+	})
+	if err != nil {
+		logger.Err(err).Msg(
+			"unable to checkout to the previous head, this can corrupt the ingest cache, should not happen",
+		)
+	} else {
+		logger.Info().Msg(fmt.Sprintf("checked out back to %s branch", originallyFetchedBranch))
+	}
 }
