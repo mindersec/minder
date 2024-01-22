@@ -28,7 +28,7 @@ type AuthzConfig struct {
 	// StoreName is the name of the store to use for authorization
 	StoreName string `mapstructure:"store_name" default:"minder" validate:"required_without=StoreID"`
 	// StoreID is the ID of the store to use for authorization
-	StoreID string `mapstructure:"store_id" default:"minder" validate:"required_without=StoreName"`
+	StoreID string `mapstructure:"store_id" default:"" validate:"required_without=StoreName"`
 	// Auth is the authentication configuration for the authorization server
 	Auth OpenFGAAuth `mapstructure:"auth" validate:"required"`
 }
