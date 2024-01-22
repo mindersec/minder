@@ -554,3 +554,84 @@ allow {
 	})
 	require.NoError(t, err, "could not evaluate")
 }
+
+func TestListYamlUsingLSGlob(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	require.NoError(t, fs.MkdirAll(".github", 0755))
+
+	_, err := fs.Create(".github/dependabot.yaml")
+	require.NoError(t, err, "could not create dependabot file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	files := file.ls_glob(".github/dependabot.y*ml")
+	count(files) == 1
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestListYamlsUsingLSGlob(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	require.NoError(t, fs.MkdirAll(".github", 0755))
+	require.NoError(t, fs.MkdirAll(".github/workflows", 0755))
+
+	_, err := fs.Create(".github/workflows/security.yaml")
+	require.NoError(t, err, "could not create sec workflow file")
+
+	_, err = fs.Create(".github/workflows/build.yml")
+	require.NoError(t, err, "could not create build workflow file")
+
+	_, err = fs.Create(".github/workflows/release.yaml")
+	require.NoError(t, err, "could not create release workflow file")
+
+	// non-matching file
+	_, err = fs.Create(".github/workflows/README.md")
+	require.NoError(t, err, "could not create README file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	files := file.ls_glob(".github/workflows/*.y*ml")
+	count(files) == 3
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}

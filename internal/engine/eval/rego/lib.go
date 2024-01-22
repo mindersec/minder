@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
@@ -36,6 +37,7 @@ import (
 var MinderRegoLib = []func(res *engif.Result) func(*rego.Rego){
 	FileExists,
 	FileLs,
+	FileLsGlob,
 	FileRead,
 	ListGithubActions,
 }
@@ -198,6 +200,45 @@ func FileLs(res *engif.Result) func(*rego.Rego) {
 			}
 
 			return nil, fmt.Errorf("cannot handle file type %s", finfo.Mode())
+		},
+	)
+}
+
+// FileLsGlob is a rego function that lists the files matching a glob in a directory
+// in the filesystem being evaluated (which comes from the ingester).
+// It takes one argument, the path to the pattern to match. It's exposed
+// as `file.ls_glob`.
+func FileLsGlob(res *engif.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "file.ls_glob",
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+			var path string
+			if err := ast.As(op1.Value, &path); err != nil {
+				return nil, err
+			}
+
+			if res.Fs == nil {
+				return nil, fmt.Errorf("cannot walk file without a filesystem")
+			}
+
+			rfs := res.Fs
+
+			matches, err := billyutil.Glob(rfs, path)
+			files := []*ast.Term{}
+
+			for _, m := range matches {
+				files = append(files, ast.NewTerm(ast.String(m)))
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.NewTerm(
+				ast.NewArray(files...)), nil
 		},
 	)
 }
