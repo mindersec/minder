@@ -65,7 +65,11 @@ bootstrap: ## install build deps
 			google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/sqlc-dev/sqlc \
-			github.com/norwoodj/helm-docs/cmd/helm-docs
+			github.com/norwoodj/helm-docs/cmd/helm-docs \
+			github.com/openfga/cli
+	# check if `cli` binary exists, and if it does, move it to be fga instead
+	# Check if cli usage prints the help message, if it does, then it's the cli binary
+	which cli && cli | grep -q "Usage:" && mv $$(which cli) $$(dirname $$(which cli))/fga || true
 	# Create a config.yaml and server-config.yaml if they don't exist
 	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"

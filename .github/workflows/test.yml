@@ -26,3 +26,24 @@ jobs:
       # Run the tests
       - name: Run tests
         run: make test-silent
+
+  authz:
+    name: Authz tests
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout your project with git
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      # Install Go on the VM running the action.
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run `make bootstrap`
+        run: |
+          make bootstrap
+
+      - name: Run authz tests
+        run: |
+          make authz-tests
