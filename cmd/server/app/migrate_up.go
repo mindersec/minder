@@ -109,34 +109,47 @@ var upCmd = &cobra.Command{
 		}
 
 		if !authzw.StoreIDProvided() {
-			if err := ensureAuthzStore(ctx, cmd, authzw); err != nil {
+			storeID, err := ensureAuthzStore(ctx, cmd, authzw)
+			if err != nil {
 				return err
 			}
+
+			authzw.GetConfig().StoreID = storeID
+			if err := authzw.ResetAuthzClient(); err != nil {
+				return fmt.Errorf("error while resetting authz client: %w", err)
+			}
 		}
+
+		mID, err := authzw.WriteModel(ctx)
+		if err != nil {
+			return fmt.Errorf("error while writing authz model: %w", err)
+		}
+
+		cmd.Printf("Wrote authz model %s to store.\n", mID)
 
 		return nil
 	},
 }
 
-func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.ClientWrapper) error {
+func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.ClientWrapper) (string, error) {
 	storeName := authzw.GetConfig().StoreName
 	storeID, err := authzw.FindStoreByName(ctx)
 	if err != nil && !errors.Is(err, authz.ErrStoreNotFound) {
-		return err
+		return "", err
 	} else if errors.Is(err, authz.ErrStoreNotFound) {
 		cmd.Printf("Creating authz store %s\n", storeName)
 		id, err := authzw.CreateStore(ctx)
 		if err != nil {
-			return err
+			return "", err
 		}
 		cmd.Printf("Created authz store %s/%s\n", id, storeName)
-		return nil
+		return id, nil
 	}
 
-	cmd.Printf("Not creating store. Found store with name '%s' and ID '%s'.",
+	cmd.Printf("Not creating store. Found store with name '%s' and ID '%s'.\n",
 		storeName, storeID)
 
-	return nil
+	return storeID, nil
 }
 
 func init() {
