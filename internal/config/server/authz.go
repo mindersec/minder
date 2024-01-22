@@ -29,6 +29,8 @@ type AuthzConfig struct {
 	StoreName string `mapstructure:"store_name" default:"minder" validate:"required_without=StoreID"`
 	// StoreID is the ID of the store to use for authorization
 	StoreID string `mapstructure:"store_id" default:"" validate:"required_without=StoreName"`
+	// ModelID is the ID of the model to use for authorization
+	ModelID string `mapstructure:"model_id" default:""`
 	// Auth is the authentication configuration for the authorization server
 	Auth OpenFGAAuth `mapstructure:"auth" validate:"required"`
 }
@@ -71,7 +73,7 @@ type TokenAuth struct {
 	// TokenPath is the path to the token to use for authentication.
 	// defaults to the kubernetes service account token
 	//nolint:lll
-	TokenPath string `mapstructure:"token_path" default:"/var/run/secrets/kubernetes.io/serviceaccount/token" validate:"required,file"`
+	TokenPath string `mapstructure:"token_path" default:"/var/run/secrets/kubernetes.io/serviceaccount/token"`
 }
 
 // Validate validates the TokenAuth configuration

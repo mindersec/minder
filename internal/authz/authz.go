@@ -18,10 +18,13 @@ package authz
 
 import (
 	"context"
+	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
+	fgasdk "github.com/openfga/go-sdk"
 	fgaclient "github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
 	"k8s.io/client-go/transport"
@@ -33,6 +36,9 @@ var (
 	// ErrStoreNotFound denotes the error where the store wasn't found via the
 	// given configuration.
 	ErrStoreNotFound = errors.New("Store not found")
+
+	//go:embed model/minder.generated.json
+	authzModel string
 )
 
 // ClientWrapper is a wrapper for the OpenFgaClient.
@@ -49,22 +55,36 @@ func NewAuthzClient(cfg *srvconfig.AuthzConfig) (*ClientWrapper, error) {
 		return nil, err
 	}
 
+	cliWrap := &ClientWrapper{
+		cfg: cfg,
+	}
+
+	if err := cliWrap.ResetAuthzClient(); err != nil {
+		return nil, err
+	}
+
+	return cliWrap, nil
+}
+
+// ResetAuthzClient initializes the authz client based on the configuration.
+// Note that this assumes the configuration has already been validated.
+func (a *ClientWrapper) ResetAuthzClient() error {
 	clicfg := &fgaclient.ClientConfiguration{
-		ApiUrl: cfg.ApiUrl,
+		ApiUrl: a.cfg.ApiUrl,
 		Credentials: &credentials.Credentials{
 			// We use our own bearer auth round tripper so we can refresh the token
 			Method: credentials.CredentialsMethodNone,
 		},
 	}
 
-	if cfg.StoreID != "" {
-		clicfg.StoreId = cfg.StoreID
+	if a.cfg.StoreID != "" {
+		clicfg.StoreId = a.cfg.StoreID
 	}
 
-	if cfg.Auth.Method == "token" {
-		rt, err := transport.NewBearerAuthWithRefreshRoundTripper("", cfg.Auth.Token.TokenPath, http.DefaultTransport)
+	if a.cfg.Auth.Method == "token" {
+		rt, err := transport.NewBearerAuthWithRefreshRoundTripper("", a.cfg.Auth.Token.TokenPath, http.DefaultTransport)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create bearer auth round tripper: %w", err)
+			return fmt.Errorf("failed to create bearer auth round tripper: %w", err)
 		}
 
 		clicfg.HTTPClient = &http.Client{
@@ -74,13 +94,11 @@ func NewAuthzClient(cfg *srvconfig.AuthzConfig) (*ClientWrapper, error) {
 
 	cli, err := fgaclient.NewSdkClient(clicfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create SDK client: %w", err)
+		return fmt.Errorf("failed to create SDK client: %w", err)
 	}
 
-	return &ClientWrapper{
-		cfg: cfg,
-		cli: cli,
-	}, nil
+	a.cli = cli
+	return nil
 }
 
 // GetClient returns the OpenFgaClient
@@ -127,4 +145,29 @@ func (a *ClientWrapper) CreateStore(ctx context.Context) (string, error) {
 	}
 
 	return st.Id, nil
+}
+
+// FindLatestModel returns the latest authz model ID
+func (a *ClientWrapper) FindLatestModel(ctx context.Context) (string, error) {
+	resp, err := a.cli.ReadLatestAuthorizationModel(ctx).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error while reading authz model: %w", err)
+	}
+
+	return resp.AuthorizationModel.Id, nil
+}
+
+// WriteModel writes the authz model to the configured store
+func (a *ClientWrapper) WriteModel(ctx context.Context) (string, error) {
+	var body fgasdk.WriteAuthorizationModelRequest
+	if err := json.Unmarshal([]byte(authzModel), &body); err != nil {
+		return "", fmt.Errorf("failed to unmarshal authz model: %w", err)
+	}
+
+	data, err := a.cli.WriteAuthorizationModel(ctx).Body(body).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error while writing authz model: %w", err)
+	}
+
+	return data.GetAuthorizationModelId(), nil
 }
