@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package rule_type provides the root command for the ruletype subcommands
-package rule_type
+// Package container provides the root command for the container subcommands
+package container
 
 import "github.com/spf13/cobra"
 
-// CmdRuleType is the root command for the ruletype subcommands
-func CmdRuleType() *cobra.Command {
+// CmdContainer is the root command for the container subcommands
+func CmdContainer() *cobra.Command {
 	var rtCmd = &cobra.Command{
-		Use:   "ruletype",
-		Short: "ruletype provides utilities for testing rule types",
+		Use:   "container",
+		Short: "container provides utilities to test minder container support",
 	}
 
-	rtCmd.AddCommand(CmdTest())
-	rtCmd.AddCommand(CmdLint())
+	rtCmd.AddCommand(CmdVerify())
 
 	return rtCmd
 }
