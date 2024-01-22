@@ -17,6 +17,8 @@
 package authz
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -25,6 +27,12 @@ import (
 	"k8s.io/client-go/transport"
 
 	srvconfig "github.com/stacklok/minder/internal/config/server"
+)
+
+var (
+	// ErrStoreNotFound denotes the error where the store wasn't found via the
+	// given configuration.
+	ErrStoreNotFound = errors.New("Store not found")
 )
 
 // ClientWrapper is a wrapper for the OpenFgaClient.
@@ -90,4 +98,33 @@ func (a *ClientWrapper) GetConfig() *srvconfig.AuthzConfig {
 // StoreIDProvided returns true if the store ID was provided in the configuration
 func (a *ClientWrapper) StoreIDProvided() bool {
 	return a.cfg.StoreID != ""
+}
+
+// FindStoreByName returns the store ID for the configured store name
+func (a *ClientWrapper) FindStoreByName(ctx context.Context) (string, error) {
+	stores, err := a.cli.ListStores(ctx).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error while listing authz stores: %w", err)
+	}
+
+	// TODO: We might want to handle pagination here.
+	for _, store := range stores.Stores {
+		if store.Name == a.cfg.StoreName {
+			return store.Id, nil
+		}
+	}
+
+	return "", ErrStoreNotFound
+}
+
+// CreateStore creates a new store with the configured name
+func (a *ClientWrapper) CreateStore(ctx context.Context) (string, error) {
+	st, err := a.cli.CreateStore(ctx).Body(fgaclient.ClientCreateStoreRequest{
+		Name: a.cfg.StoreName,
+	}).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error while creating authz store: %w", err)
+	}
+
+	return st.Id, nil
 }

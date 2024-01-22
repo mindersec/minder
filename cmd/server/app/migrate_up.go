@@ -25,7 +25,6 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
-	fgaclient "github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -120,32 +119,22 @@ var upCmd = &cobra.Command{
 }
 
 func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.ClientWrapper) error {
-
-	authzcli := authzw.GetClient()
-	stores, err := authzcli.ListStores(ctx).Execute()
-	if err != nil {
-		return fmt.Errorf("error while listing authz stores: %w", err)
-	}
-
-	var storeExists bool
-	// TODO: We might want to handle pagination here.
 	storeName := authzw.GetConfig().StoreName
-	for _, store := range stores.Stores {
-		if store.Name == storeName {
-			storeExists = true
-			break
-		}
-	}
-
-	if !storeExists {
+	storeID, err := authzw.FindStoreByName(ctx)
+	if err != nil && !errors.Is(err, authz.ErrStoreNotFound) {
+		return err
+	} else if errors.Is(err, authz.ErrStoreNotFound) {
 		cmd.Printf("Creating authz store %s\n", storeName)
-		st, err := authzcli.CreateStore(ctx).Body(fgaclient.ClientCreateStoreRequest{Name: storeName}).Execute()
+		id, err := authzw.CreateStore(ctx)
 		if err != nil {
-			return fmt.Errorf("error while creating authz store: %w", err)
+			return err
 		}
-
-		cmd.Printf("Created authz store %s/%s\n", st.Id, st.Name)
+		cmd.Printf("Created authz store %s/%s\n", id, storeName)
+		return nil
 	}
+
+	cmd.Printf("Not creating store. Found store with name '%s' and ID '%s'.",
+		storeName, storeID)
 
 	return nil
 }
