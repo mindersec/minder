@@ -19,6 +19,7 @@ clean-gen: ## clean generated files
 
 .PHONY: gen
 gen: buf sqlc mock ## run code generation targets (buf, sqlc, mock)
+	$(MAKE) authz-model
 
 .PHONY: buf
 buf: ## generate protobuf files
