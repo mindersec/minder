@@ -43,7 +43,6 @@ type UserPermissions struct {
 	ProjectIds     []uuid.UUID
 	Roles          []RoleInfo
 	OrganizationId uuid.UUID
-	IsStaff        bool
 }
 
 // JwtValidator provides the functions to validate a JWT

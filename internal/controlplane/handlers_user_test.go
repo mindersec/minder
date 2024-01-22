@@ -293,7 +293,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
-		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
@@ -415,7 +414,6 @@ func TestDeleteUser_gRPC(t *testing.T) {
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
-		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
