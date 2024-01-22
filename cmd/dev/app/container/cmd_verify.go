@@ -25,9 +25,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 )
 
-// CmdVerify returns the verify container command
+// CmdVerify is the root command for the container verify subcommands
 func CmdVerify() *cobra.Command {
 	var verifyCmd = &cobra.Command{
 		Use:          "verify",
@@ -67,7 +68,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 
 	token := viper.GetString("auth.token")
 
-	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, token)
+	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, container.WithAccessToken(token))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}

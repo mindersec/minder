@@ -40,16 +40,66 @@ import (
 
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+var (
+	// ErrOciImageSignatureNotFound is returned when the OCI image signature is not found
+	ErrOciImageSignatureNotFound = errors.New("OCI image signature not found")
+)
+
+// AuthMethod is an option for containerAuth
+type AuthMethod func(auth *containerAuth)
+
+// containerAuth is the authentication for the container
+type containerAuth struct {
+	accessToken string
+	ghClient    provifv1.GitHub
+}
+
+func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
+	var auth containerAuth
+	for _, opt := range authOpts {
+		opt(&auth)
+	}
+	return &auth
+}
+
+// WithAccessToken sets the access token as an authentication option we want to use during verification
+func WithAccessToken(accessToken string) AuthMethod {
+	return func(auth *containerAuth) {
+		auth.accessToken = accessToken
+	}
+}
+
+// WithGitHubClient sets the GitHub client as an authentication option we want to use during verification
+func WithGitHubClient(ghClient provifv1.GitHub) AuthMethod {
+	return func(auth *containerAuth) {
+		auth.ghClient = ghClient
+	}
+}
+
 // Verify verifies a container artifact using sigstore
-func Verify(_ context.Context, sev *verify.SignedEntityVerifier, accessToken, registry, owner, artifact, version string) (
-	[]byte, []byte, error) {
+func Verify(
+	_ context.Context,
+	sev *verify.SignedEntityVerifier,
+	registry, owner, artifact, version string,
+	authOpts ...AuthMethod,
+) ([]byte, []byte, error) {
+
 	// create a default verification result
 	params := newVerifyResult(BuildImageRef(registry, owner, artifact, version))
 
+	auth := newContainerAuth(authOpts...)
+
 	// construct the bundle
-	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, accessToken))
+	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, auth.accessToken))
+	// TODO: handle no access token?
+	if err != nil && !errors.Is(err, ErrOciImageSignatureNotFound) {
+		return nil, nil, err
+	}
+
+	err = bundleFromGHAttenstationEndpoint(params, auth.ghClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,6 +143,12 @@ func parseVerificationResult(params *verifyResult, res *verify.VerificationResul
 		return sig, nil, err
 	}
 	return sig, work, err
+}
+
+func bundleFromGHAttenstationEndpoint(params *verifyResult, hub provifv1.GitHub) error {
+	_ = params
+	_ = hub
+	return nil
 }
 
 // bundleFromOCIImage returns a ProtobufBundle based on OCI image reference.
@@ -179,7 +235,7 @@ func getSignatureManifestFromOCIImage(ret *verifyResult, auth githubAuthenticato
 	// 5. Get the manifest of the signature
 	mf, err := crane.Manifest(sigTag.Name(), craneOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting signature manifest: %w", err)
+		return nil, fmt.Errorf("%w: %s", ErrOciImageSignatureNotFound, err.Error())
 	}
 	sigManifest, err := v1.ParseManifest(bytes.NewReader(mf))
 	if err != nil {
