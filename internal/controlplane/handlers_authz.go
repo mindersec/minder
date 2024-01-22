@@ -43,11 +43,6 @@ func getRpcOptions(ctx context.Context) *minder.RpcOptions {
 	return opts
 }
 
-// checks if an user is superadmin
-func isSuperadmin(claims auth.UserPermissions) bool {
-	return claims.IsStaff
-}
-
 // lookupUserPermissions returns the user permissions from the database for the given user
 func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermissions {
 	emptyPermissions := auth.UserPermissions{}
@@ -108,9 +103,6 @@ func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermiss
 // project, and returns an error if the request is not authorized.
 func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
-	if isSuperadmin(claims) {
-		return nil
-	}
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
 		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-project method, should be %v", opts.GetAuthScope())

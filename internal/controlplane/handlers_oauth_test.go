@@ -144,12 +144,15 @@ func TestGetAuthorizationURL(t *testing.T) {
 		},
 	}
 
+	rpcOptions := &pb.RpcOptions{
+		AuthScope: pb.ObjectOwner_OBJECT_OWNER_PROJECT,
+	}
+
 	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
+	ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), auth.UserPermissions{
 		UserId:         1,
 		OrganizationId: orgID,
 		ProjectIds:     []uuid.UUID{projectID},
-		IsStaff:        true, // TODO: remove this
 		Roles: []auth.RoleInfo{
 			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
 	})
