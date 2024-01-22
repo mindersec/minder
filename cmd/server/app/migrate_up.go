@@ -25,9 +25,11 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
+	fgaclient "github.com/openfga/go-sdk/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/logger"
 )
@@ -99,8 +101,53 @@ var upCmd = &cobra.Command{
 		}
 
 		cmd.Println("Database migration completed successfully")
+
+		cmd.Println("Ensuring authorization store...")
+
+		authzw, err := authz.NewAuthzClient(&cfg.Authz)
+		if err != nil {
+			return fmt.Errorf("error while creating authz client: %w", err)
+		}
+
+		if !authzw.StoreIDProvided() {
+			if err := ensureAuthzStore(ctx, cmd, authzw); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	},
+}
+
+func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.ClientWrapper) error {
+
+	authzcli := authzw.GetClient()
+	stores, err := authzcli.ListStores(ctx).Execute()
+	if err != nil {
+		return fmt.Errorf("error while listing authz stores: %w", err)
+	}
+
+	var storeExists bool
+	// TODO: We might want to handle pagination here.
+	storeName := authzw.GetConfig().StoreName
+	for _, store := range stores.Stores {
+		if store.Name == storeName {
+			storeExists = true
+			break
+		}
+	}
+
+	if !storeExists {
+		cmd.Printf("Creating authz store %s\n", storeName)
+		st, err := authzcli.CreateStore(ctx).Body(fgaclient.ClientCreateStoreRequest{Name: storeName}).Execute()
+		if err != nil {
+			return fmt.Errorf("error while creating authz store: %w", err)
+		}
+
+		cmd.Printf("Created authz store %s/%s\n", st.Id, st.Name)
+	}
+
+	return nil
 }
 
 func init() {
