@@ -1,6 +1,6 @@
 module github.com/stacklok/minder
 
-go 1.21.5
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -33,7 +33,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.60.0
-	github.com/openfga/cli v0.2.4
 	github.com/openfga/go-sdk v0.3.3
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.18.0
@@ -76,7 +75,6 @@ require (
 
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0 // indirect
-	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/bubbles v0.17.1 // indirect
@@ -85,15 +83,11 @@ require (
 	github.com/deckarep/golang-set/v2 v2.5.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/chi/v5 v5.0.10 // indirect
-	github.com/google/cel-go v0.18.2 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
-	github.com/karlseguin/ccache/v3 v3.0.5 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
@@ -103,17 +97,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
-	github.com/muesli/mango v0.2.0 // indirect
-	github.com/muesli/mango-cobra v1.2.0 // indirect
-	github.com/muesli/mango-pflag v0.1.0 // indirect
-	github.com/muesli/roff v0.1.0 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
-	github.com/natefinch/wrap v0.2.0 // indirect
-	github.com/nwidger/jsoncolor v0.3.2 // indirect
-	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20231222042535-3037910c90c0 // indirect
-	github.com/openfga/language/pkg/go v0.0.0-20240109134059-a66ff55aca89 // indirect
-	github.com/openfga/openfga v1.4.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
@@ -121,14 +105,10 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.12.0 // indirect
 	github.com/sigstore/sigstore v1.8.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
-	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
+	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 )
 

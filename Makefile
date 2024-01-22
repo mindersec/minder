@@ -24,6 +24,7 @@ include .mk/test.mk
 include .mk/helm.mk
 include .mk/develop.mk
 include .mk/build.mk
+include .mk/authz.mk
 
 
 # OS detection for docker-compose
