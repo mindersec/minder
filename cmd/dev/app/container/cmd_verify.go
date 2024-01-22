@@ -17,6 +17,7 @@ package container
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -24,8 +25,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // CmdVerify is the root command for the container verify subcommands
@@ -40,6 +44,8 @@ func CmdVerify() *cobra.Command {
 	verifyCmd.Flags().StringP("owner", "o", "", "owner of the artifact")
 	verifyCmd.Flags().StringP("name", "n", "", "name of the artifact")
 	verifyCmd.Flags().StringP("digest", "s", "", "digest of the artifact")
+	verifyCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
+		"Can also be set via the AUTH_TOKEN environment variable.")
 
 	if err := verifyCmd.MarkFlagRequired("owner"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -56,6 +62,11 @@ func CmdVerify() *cobra.Command {
 		os.Exit(1)
 	}
 
+	if err := viper.BindPFlag("auth.token", verifyCmd.Flags().Lookup("token")); err != nil {
+		fmt.Fprintf(os.Stderr, "Error binding flag: %s\n", err)
+		os.Exit(1)
+	}
+
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	return verifyCmd
@@ -68,7 +79,14 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 
 	token := viper.GetString("auth.token")
 
-	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, container.WithAccessToken(token))
+	ghcli, err := buildGitHubClient(context.Background(), token)
+	if err != nil {
+		return fmt.Errorf("cannot build github client: %w", err)
+	}
+
+	artifactVerifier, err := verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		container.WithAccessToken(token), container.WithGitHubClient(ghcli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
@@ -85,4 +103,26 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	fmt.Fprintf(cmd.OutOrStdout(), "URI: %s\n", res.URI)
 
 	return nil
+}
+
+func buildGitHubClient(ctx context.Context, token string) (provifv1.GitHub, error) {
+	pbuild := providers.NewProviderBuilder(
+		&db.Provider{
+			Name:    "test",
+			Version: "v1",
+			Implements: []db.ProviderType{
+				"rest",
+				"git",
+				"github",
+			},
+			Definition: json.RawMessage(`{
+				"rest": {},
+				"github": {}
+			}`),
+		},
+		db.ProviderAccessToken{},
+		token,
+	)
+
+	return pbuild.GetGitHub(ctx)
 }

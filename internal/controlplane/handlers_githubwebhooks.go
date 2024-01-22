@@ -746,7 +746,9 @@ func storeSignatureAndWorkflowInVersion(
 	version *pb.ArtifactVersion,
 ) error {
 	// get the verifier for sigstore
-	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, container.WithAccessToken(client.GetToken()))
+	artifactVerifier, err := verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}

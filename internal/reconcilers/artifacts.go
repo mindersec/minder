@@ -154,7 +154,9 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	}
 
 	// create artifact verifier
-	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, container.WithAccessToken(cli.GetToken()))
+	artifactVerifier, err := verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		container.WithAccessToken(cli.GetToken()), container.WithGitHubClient(cli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}

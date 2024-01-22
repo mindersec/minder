@@ -26,17 +26,23 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	containerdigest "github.com/opencontainers/go-digest"
+	"github.com/rs/zerolog"
 	protobundle "github.com/sigstore/protobuf-specs/gen/pb-go/bundle/v1"
 	protocommon "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	protorekor "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
 	"github.com/sigstore/sigstore-go/pkg/bundle"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sigstore/sigstore-go/pkg/verify"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -46,6 +52,8 @@ import (
 var (
 	// ErrOciImageSignatureNotFound is returned when the OCI image signature is not found
 	ErrOciImageSignatureNotFound = errors.New("OCI image signature not found")
+	// ErrAuthNotProvided is returned when the selected authentication is not provided
+	ErrAuthNotProvided = errors.New("selected auth method not provided")
 )
 
 // AuthMethod is an option for containerAuth
@@ -81,7 +89,7 @@ func WithGitHubClient(ghClient provifv1.GitHub) AuthMethod {
 
 // Verify verifies a container artifact using sigstore
 func Verify(
-	_ context.Context,
+	ctx context.Context,
 	sev *verify.SignedEntityVerifier,
 	registry, owner, artifact, version string,
 	authOpts ...AuthMethod,
@@ -93,20 +101,21 @@ func Verify(
 	auth := newContainerAuth(authOpts...)
 
 	// construct the bundle
-	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, auth.accessToken))
 	// TODO: handle no access token?
-	if err != nil && !errors.Is(err, ErrOciImageSignatureNotFound) {
-		return nil, nil, err
+	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, auth.accessToken))
+	if errors.Is(err, ErrOciImageSignatureNotFound) {
+		err = bundleFromGHAttenstationEndpoint(ctx, params, auth.ghClient, owner, version)
 	}
 
-	err = bundleFromGHAttenstationEndpoint(params, auth.ghClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// verify the artifact
-	verificationResult, err := sev.Verify(params.bundle, verify.NewPolicy(verify.WithArtifactDigest("sha512", params.digest),
-		verify.WithCertificateIdentity(*params.certID)))
+	verificationResult, err := sev.Verify(params.bundle, verify.NewPolicy(
+		verify.WithArtifactDigest(params.digest.algo, params.digest.bytes),
+		verify.WithCertificateIdentity(*params.certID),
+	))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -145,10 +154,142 @@ func parseVerificationResult(params *verifyResult, res *verify.VerificationResul
 	return sig, work, err
 }
 
-func bundleFromGHAttenstationEndpoint(params *verifyResult, hub provifv1.GitHub) error {
-	_ = params
-	_ = hub
+// Attestation is the attestation from the GitHub attestation endpoint
+type Attestation struct {
+	Bundle json.RawMessage `json:"bundle"`
+}
+
+// AttestationReply is the reply from the GitHub attestation endpoint
+type AttestationReply struct {
+	Attestations []Attestation `json:"attestations"`
+}
+
+func bundleFromGHAttenstationEndpoint(
+	ctx context.Context, params *verifyResult, ghCli provifv1.GitHub, owner, version string,
+) error {
+	logger := zerolog.Ctx(ctx).With().Str("owner", owner).Str("version", version).Logger()
+
+	attestationReply, err := getAttestationReply(ctx, ghCli, owner, version)
+	if err != nil {
+		return fmt.Errorf("error getting attestation reply: %w", err)
+	}
+
+	for i := range attestationReply.Attestations {
+		// FIXME: handle multiple attestations properly
+		att := attestationReply.Attestations[i]
+		protobufBundle, err := unmarhsalAttestationReply(&att)
+		if err != nil {
+			logger.Err(err).Msg("error unmarshaling attestation reply")
+			continue
+		}
+
+		cs, err := getCerfificateSummaryFromBundle(protobufBundle)
+		if err != nil {
+			logger.Err(err).Msg("error getting certificate summary from bundle")
+			continue
+		}
+
+		digest, err := getDigestFromVersion(version)
+		if err != nil {
+			logger.Err(err).Msg("error getting digest from version")
+			continue
+		}
+
+		certID, err := verify.NewShortCertificateIdentity(cs.Issuer, "", "", cs.BuildSignerURI)
+		if err != nil {
+			logger.Err(err).Msg("error getting certificate identity")
+			continue
+		}
+
+		params.si.IsSigned = true
+		params.si.CertIdentity = &cs.BuildSignerURI
+		params.si.CertIssuer = &cs.Issuer
+		params.digest.algo = containerdigest.Canonical.String()
+		params.digest.bytes = digest
+		params.certID = &certID
+		params.bundle = protobufBundle
+		break
+	}
+
 	return nil
+}
+
+func getAttestationReply(ctx context.Context, ghCli provifv1.GitHub, owner, version string) (*AttestationReply, error) {
+	if ghCli == nil {
+		return nil, fmt.Errorf("%w: no github client available", ErrAuthNotProvided)
+	}
+
+	url := fmt.Sprintf("orgs/%s/attestations/%s", owner, version)
+	req, err := ghCli.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := ghCli.Do(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("error doing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var attestationReply AttestationReply
+	if err := json.NewDecoder(resp.Body).Decode(&attestationReply); err != nil {
+		return nil, fmt.Errorf("error decoding response: %w", err)
+	}
+
+	return &attestationReply, nil
+}
+
+func unmarhsalAttestationReply(attestation *Attestation) (*bundle.ProtobufBundle, error) {
+	var pbBundle protobundle.Bundle
+	if err := protojson.Unmarshal(attestation.Bundle, &pbBundle); err != nil {
+		return nil, fmt.Errorf("error unmarshaling attestation: %w", err)
+	}
+
+	protobufBundle, err := bundle.NewProtobufBundle(&pbBundle)
+	if err != nil {
+		return nil, fmt.Errorf("error creating protobuf bundle: %w", err)
+	}
+
+	return protobufBundle, nil
+}
+
+func getCerfificateSummaryFromBundle(protobufBundle *bundle.ProtobufBundle) (*certificate.Summary, error) {
+	vc, err := protobufBundle.VerificationContent()
+	if err != nil {
+		return nil, fmt.Errorf("error getting verification content: %w", err)
+	}
+
+	leaf, ok := vc.HasCertificate()
+	if !ok {
+		return nil, fmt.Errorf("expected verification content to be a certificate chain")
+	}
+
+	cs, err := certificate.SummarizeCertificate(&leaf)
+	if err != nil {
+		return nil, fmt.Errorf("error summarizing certificate: %w", err)
+	}
+
+	return &cs, nil
+}
+
+func getDigestFromVersion(version string) ([]byte, error) {
+	algoPrefix := containerdigest.Canonical.String() + ":"
+	if !strings.HasPrefix(version, algoPrefix) {
+		// TODO: support other digest algorithms?
+		return nil, fmt.Errorf("expected digest to start with %s", algoPrefix)
+	}
+
+	stringDigest := strings.TrimPrefix(version, algoPrefix)
+	if err := containerdigest.Canonical.Validate(stringDigest); err != nil {
+		return nil, fmt.Errorf("error validating digest: %w", err)
+	}
+
+	digest, err := hex.DecodeString(stringDigest)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding digest: %w", err)
+	}
+
+	return digest, nil
 }
 
 // bundleFromOCIImage returns a ProtobufBundle based on OCI image reference.
@@ -188,7 +329,8 @@ func bundleFromOCIImage(params *verifyResult, auth githubAuthenticator) error {
 	// 6. Return the bundle and the digest of the simple signing layer (this is what is signed)
 
 	// get the artifact digest
-	params.digest, err = hex.DecodeString(simpleSigningLayer.Digest.Hex)
+	params.digest.algo = simpleSigningLayer.Digest.Algorithm
+	params.digest.bytes, err = hex.DecodeString(simpleSigningLayer.Digest.Hex)
 	if err != nil {
 		return err
 	}
@@ -466,13 +608,19 @@ func BuildImageRef(registry, owner, artifact, version string) string {
 	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, version)
 }
 
+type verifyDigest struct {
+	bytes []byte
+	algo  string
+}
+
 // verifyResult is the result of the verification
 type verifyResult struct {
 	// Params for the verification process
 	imageRef string
-	digest   []byte
+	digest   verifyDigest
 	bundle   *bundle.ProtobufBundle
 	certID   *verify.CertificateIdentity
+
 	// Result of the verification
 	si *pb.SignatureVerification
 	wi *pb.GithubWorkflow
