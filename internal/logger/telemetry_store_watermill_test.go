@@ -90,5 +90,5 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 	require.Equal(t, projectID.String(), logged["project"], "expected project ID to be logged")
 	require.Equal(t, providerName, logged["provider"], "expected provider to be logged")
 	require.Equal(t, repositoryID.String(), logged["repository"], "expected repository ID to be logged")
-	require.Equal(t, true, logged["telemetry"], "expected telemetry to be logged")
+	require.Equal(t, "true", logged["telemetry"], "expected telemetry to be logged")
 }
