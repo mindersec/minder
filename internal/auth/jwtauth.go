@@ -17,7 +17,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -151,15 +150,6 @@ func GetUserSubjectFromContext(ctx context.Context) string {
 // WithUserSubjectContext stores the specified user subject in the context.
 func WithUserSubjectContext(ctx context.Context, subject string) context.Context {
 	return context.WithValue(ctx, userSubjectContextKey, subject)
-}
-
-// GetDefaultProject returns the default project id for the user
-func GetDefaultProject(ctx context.Context) (uuid.UUID, error) {
-	permissions := GetPermissionsFromContext(ctx)
-	if len(permissions.ProjectIds) != 1 {
-		return uuid.UUID{}, errors.New("cannot get default project")
-	}
-	return permissions.ProjectIds[0], nil
 }
 
 // UserDetails is a helper struct for getting user details

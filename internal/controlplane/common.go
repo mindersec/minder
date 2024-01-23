@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -42,28 +41,6 @@ func providerError(err error) error {
 		return util.UserVisibleError(codes.NotFound, "provider not found")
 	}
 	return fmt.Errorf("provider error: %w", err)
-}
-
-func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uuid.UUID, error) {
-	var requestedProject string
-
-	// Prefer the context message from the protobuf
-	if in.GetContext().GetProject() != "" {
-		requestedProject = in.GetContext().GetProject()
-	} else {
-		proj, err := auth.GetDefaultProject(ctx)
-		if err != nil {
-			return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot infer project id: %s", err)
-		}
-
-		return proj, err
-	}
-
-	parsedProjectID, err := uuid.Parse(requestedProject)
-	if err != nil {
-		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
-	}
-	return parsedProjectID, nil
 }
 
 func getProviderFromRequestOrDefault(

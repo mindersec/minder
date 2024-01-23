@@ -71,11 +71,6 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	// If provider doesn't exist, return error
 	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
 		Name:      entityCtx.Provider.Name,
@@ -236,11 +231,6 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	parsedProfileID, err := uuid.Parse(in.Id)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
@@ -277,11 +267,6 @@ func (s *Server) ListProfiles(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	profiles, err := s.store.ListProfilesByProjectID(ctx, entityCtx.Project.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
@@ -309,11 +294,6 @@ func (s *Server) GetProfileById(ctx context.Context,
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	parsedProfileID, err := uuid.Parse(in.Id)
@@ -416,11 +396,6 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	dbstat, err := s.store.GetProfileStatusByNameAndProject(ctx, db.GetProfileStatusByNameAndProjectParams{
@@ -545,11 +520,6 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	// read profile status
 	dbstats, err := s.store.GetProfileStatusByProject(ctx, entityCtx.Project.ID)
 	if err != nil {
@@ -590,11 +560,6 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	if err := in.Validate(); err != nil {

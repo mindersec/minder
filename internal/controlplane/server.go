@@ -213,8 +213,9 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		util.SanitizingInterceptor(),
 		logger.Interceptor(s.cfg.LoggingConfig),
 		TokenValidationInterceptor,
-		AuthorizationUnaryInterceptor,
+		PermissionsContextUnaryInterceptor,
 		EntityContextProjectInterceptor,
+		ProjectAuthorizationInterceptor,
 	}
 
 	options := []grpc.ServerOption{
