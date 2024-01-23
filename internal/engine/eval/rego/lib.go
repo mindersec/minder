@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -41,6 +42,7 @@ var MinderRegoLib = []func(res *engif.Result) func(*rego.Rego){
 	FileLsGlob,
 	FileHTTPType,
 	FileRead,
+	FileWalk,
 	ListGithubActions,
 }
 
@@ -235,6 +237,66 @@ func FileLsGlob(res *engif.Result) func(*rego.Rego) {
 				files = append(files, ast.NewTerm(ast.String(m)))
 			}
 
+			if err != nil {
+				return nil, err
+			}
+
+			return ast.NewTerm(
+				ast.NewArray(files...)), nil
+		},
+	)
+}
+
+// FileWalk is a rego function that walks the files in a directory
+// in the filesystem being evaluated (which comes from the ingester).
+// It takes one argument, the path to the directory to walk. It's exposed
+// as `file.walk`.
+func FileWalk(res *engif.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "file.walk",
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+			var path string
+			if err := ast.As(op1.Value, &path); err != nil {
+				return nil, err
+			}
+
+			if res.Fs == nil {
+				return nil, fmt.Errorf("cannot walk file without a filesystem")
+			}
+
+			rfs := res.Fs
+
+			// if the path is a file, return the file itself
+			// Check file information and return a list of files
+			// and directories
+			finfo, err := rfs.Lstat(path)
+			if err != nil {
+				return fileLsHandleError(err)
+			}
+
+			// If the file is a file return the file itself
+			if finfo.Mode().IsRegular() {
+				return fileLsHandleFile(path)
+			}
+
+			files := []*ast.Term{}
+			err = billyutil.Walk(rfs, path, func(path string, info fs.FileInfo, err error) error {
+				// skip if error
+				if err != nil {
+					return nil
+				}
+
+				// skip if directory
+				if info.IsDir() {
+					return nil
+				}
+
+				files = append(files, ast.NewTerm(ast.String(path)))
+				return nil
+			})
 			if err != nil {
 				return nil, err
 			}
