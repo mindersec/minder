@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package fake provides a no-op implementation of the minder the authorization client
+// Package mock provides a no-op implementation of the minder the authorization client
 package mock
 
 import (
@@ -37,17 +37,17 @@ func (n *SimpleClient) Check(_ context.Context, _ string, project uuid.UUID) err
 	if slices.Contains(n.Allowed, project) {
 		return nil
 	}
-	return authz.NotAuthorized
+	return authz.ErrNotAuthorized
 }
 
 // Write implements authz.Client
-func (n *SimpleClient) Write(_ context.Context, _ string, _ authz.AuthzRole, project uuid.UUID) error {
+func (n *SimpleClient) Write(_ context.Context, _ string, _ authz.Role, project uuid.UUID) error {
 	n.Allowed = append(n.Allowed, project)
 	return nil
 }
 
 // Delete implements authz.Client
-func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.AuthzRole, project uuid.UUID) error {
+func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project uuid.UUID) error {
 	index := slices.Index(n.Allowed, project)
 	if index != -1 {
 		n.Allowed[index] = n.Allowed[len(n.Allowed)-1]

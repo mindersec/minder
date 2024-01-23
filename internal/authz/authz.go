@@ -176,6 +176,8 @@ func (a *ClientWrapper) WriteModel(ctx context.Context) (string, error) {
 	return data.GetAuthorizationModelId(), nil
 }
 
+// Check checks if the user is authorized to perform the given action on the
+// given project.
 func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.UUID) error {
 	// TODO: set ClientCheckOptions like in
 	// https://openfga.dev/docs/getting-started/perform-check#02-calling-check-api
@@ -193,13 +195,19 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 	if result.Allowed != nil && *result.Allowed {
 		return nil
 	}
-	return NotAuthorized
+	return ErrNotAuthorized
 }
 
-func (a *ClientWrapper) Write(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error {
+// Write persists the given role for the given user and project
+//
+//nolint:revive // this will be implemented soon
+func (_ *ClientWrapper) Write(ctx context.Context, user string, role Role, project uuid.UUID) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (a *ClientWrapper) Delete(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error {
+// Delete removes the given role for the given user and project
+//
+//nolint:revive // this will be implemented soon
+func (_ *ClientWrapper) Delete(ctx context.Context, user string, role Role, project uuid.UUID) error {
 	return fmt.Errorf("not implemented")
 }

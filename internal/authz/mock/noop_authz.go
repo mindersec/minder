@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package fake provides a no-op implementation of the minder the authorization client
+// Package mock provides a no-op implementation of the minder the authorization client
 package mock
 
 import (
@@ -40,15 +40,15 @@ func (n *NoopClient) Check(_ context.Context, action string, project uuid.UUID) 
 	if n.Authorized {
 		return nil
 	}
-	return authz.NotAuthorized
+	return authz.ErrNotAuthorized
 }
 
 // Write_ implements authz.Client
-func (_ *NoopClient) Write(_ context.Context, _ string, _ authz.AuthzRole, _ uuid.UUID) error {
+func (_ *NoopClient) Write(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
 	return nil
 }
 
 // Delete implements authz.Client
-func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.AuthzRole, _ uuid.UUID) error {
+func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
 	return nil
 }

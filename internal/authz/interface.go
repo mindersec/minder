@@ -23,14 +23,19 @@ import (
 	"github.com/google/uuid"
 )
 
-var NotAuthorized = fmt.Errorf("not authorized")
+// ErrNotAuthorized is the error returned when a user is not authorized to perform an action
+var ErrNotAuthorized = fmt.Errorf("not authorized")
 
-type AuthzRole string
+// Role is the role a user can have on a project
+type Role string
 
 const (
-	AuthzRoleAdmin  AuthzRole = "admin"
-	AuthzRoleEditor AuthzRole = "editor"
-	AuthzRoleViewer AuthzRole = "viewer"
+	// AuthzRoleAdmin is the admin role
+	AuthzRoleAdmin Role = "admin"
+	// AuthzRoleEditor is the editor role
+	AuthzRoleEditor Role = "editor"
+	// AuthzRoleViewer is the viewer role
+	AuthzRoleViewer Role = "viewer"
 )
 
 // Client provides an abstract interface which simplifies interacting with
@@ -44,11 +49,11 @@ type Client interface {
 	//
 	// NOTE: this method _DOES NOT CHECK_ that the current user in the context
 	// has permissions to update the project.
-	Write(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error
+	Write(ctx context.Context, user string, role Role, project uuid.UUID) error
 	// Delete removes an authorization from user (an OAuth2 subject) to act in
 	// the specified role on the project.
 	//
 	// NOTE: this method _DOES NOT CHECK_ that the current user in the context
 	// has permissions to update the project.
-	Delete(ctx context.Context, user string, role AuthzRole, project uuid.UUID) error
+	Delete(ctx context.Context, user string, role Role, project uuid.UUID) error
 }
