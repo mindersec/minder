@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -38,6 +39,7 @@ var MinderRegoLib = []func(res *engif.Result) func(*rego.Rego){
 	FileExists,
 	FileLs,
 	FileLsGlob,
+	FileHTTPType,
 	FileRead,
 	ListGithubActions,
 }
@@ -315,6 +317,49 @@ func ListGithubActions(res *engif.Result) func(*rego.Rego) {
 			}
 
 			return ast.SetTerm(terms...), nil
+		},
+	)
+}
+
+// FileHTTPType is a rego function that returns the HTTP type of a file
+// in the filesystem being evaluated (which comes from the ingester).
+// It takes one argument, the path to the file to check. It's exposed
+// as `file.http_type`.
+func FileHTTPType(res *engif.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "file.http_type",
+			Decl: types.NewFunction(types.Args(types.S), types.S),
+		},
+		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+			var path string
+			if err := ast.As(op1.Value, &path); err != nil {
+				return nil, err
+			}
+
+			if res.Fs == nil {
+				return nil, fmt.Errorf("cannot list actions without a filesystem")
+			}
+
+			bfs := res.Fs
+
+			cpath := filepath.Clean(path)
+			f, err := bfs.Open(cpath)
+			if err != nil {
+				return nil, err
+			}
+
+			defer f.Close()
+
+			buffer := make([]byte, 512)
+			n, err := f.Read(buffer)
+			if err != nil && err != io.EOF {
+				return nil, err
+			}
+
+			httpTyp := http.DetectContentType(buffer[:n])
+			astHTTPTyp := ast.String(httpTyp)
+			return ast.NewTerm(astHTTPTyp), nil
 		},
 	)
 }
