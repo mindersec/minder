@@ -182,11 +182,11 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 	// TODO: set ClientCheckOptions like in
 	// https://openfga.dev/docs/getting-started/perform-check#02-calling-check-api
 	options := fgaclient.ClientCheckOptions{}
-	userString := "user:" + auth.GetUserSubjectFromContext(ctx)
+	userString := getUserForTuple(auth.GetUserSubjectFromContext(ctx))
 	body := fgaclient.ClientCheckRequest{
 		User:     userString,
 		Relation: action,
-		Object:   "project:" + project.String(),
+		Object:   getProjectForTuple(project),
 	}
 	result, err := a.cli.Check(ctx).Options(options).Body(body).Execute()
 	if err != nil {
@@ -199,15 +199,53 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 }
 
 // Write persists the given role for the given user and project
-//
-//nolint:revive // this will be implemented soon
-func (_ *ClientWrapper) Write(ctx context.Context, user string, role Role, project uuid.UUID) error {
-	return fmt.Errorf("not implemented")
+func (a *ClientWrapper) Write(ctx context.Context, user string, role Role, project uuid.UUID) error {
+	resp, err := a.cli.WriteTuples(ctx).Options(fgaclient.ClientWriteOptions{}).Body([]fgasdk.TupleKey{
+		{
+			User:     getUserForTuple(user),
+			Relation: role.String(),
+			Object:   getProjectForTuple(project),
+		},
+	}).Execute()
+	if err != nil {
+		return fmt.Errorf("unable to persist authorization tuple: %w", err)
+	}
+
+	for _, w := range resp.Writes {
+		if w.Error != nil {
+			return fmt.Errorf("unable to persist authorization tuple: %w", w.Error)
+		}
+	}
+
+	return nil
 }
 
 // Delete removes the given role for the given user and project
-//
-//nolint:revive // this will be implemented soon
-func (_ *ClientWrapper) Delete(ctx context.Context, user string, role Role, project uuid.UUID) error {
-	return fmt.Errorf("not implemented")
+func (a *ClientWrapper) Delete(ctx context.Context, user string, role Role, project uuid.UUID) error {
+	resp, err := a.cli.DeleteTuples(ctx).Options(fgaclient.ClientWriteOptions{}).Body([]fgasdk.TupleKeyWithoutCondition{
+		{
+			User:     getUserForTuple(user),
+			Relation: role.String(),
+			Object:   getProjectForTuple(project),
+		},
+	}).Execute()
+	if err != nil {
+		return fmt.Errorf("unable to remove authorization tuple: %w", err)
+	}
+
+	for _, w := range resp.Deletes {
+		if w.Error != nil {
+			return fmt.Errorf("unable to remove authorization tuple: %w", w.Error)
+		}
+	}
+
+	return nil
+}
+
+func getUserForTuple(user string) string {
+	return "user:" + user
+}
+
+func getProjectForTuple(project uuid.UUID) string {
+	return "project:" + project.String()
 }
