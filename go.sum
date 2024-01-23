@@ -532,8 +532,8 @@ github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0-rc5 h1:Ygwkfw9bpDvs+c9E34SdgGOj41dX/cbdlwvlWt0pnFI=
 github.com/opencontainers/image-spec v1.1.0-rc5/go.mod h1:X4pATf0uXsnn3g5aiGIsVnJBR4mxhKzfwmvK/B2NTm8=
-github.com/openfga/go-sdk v0.3.3 h1:eMZGCEDW/sz9S3gNxbpO5rNpDezz7cjT+zwjpDgqTt0=
-github.com/openfga/go-sdk v0.3.3/go.mod h1:W4SNYMSxptGOtA9aGYxsYUmSC7LaZYP7y9qbT36ouCc=
+github.com/openfga/go-sdk v0.3.4 h1:5VsDSmkXUP/XH9L4BtztYVPuthH5Pd3h1QZfqzZttL0=
+github.com/openfga/go-sdk v0.3.4/go.mod h1:u1iErzj5E9/bhe+8nsMv0gigcYbJtImcdgcE5DmpbBg=
 github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+1B0VhjKrZUs=
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
 github.com/pelletier/go-toml/v2 v2.1.1 h1:LWAJwfNvjQZCFIDKWYQaM62NcYeYViCmWIwmOStowAI=
