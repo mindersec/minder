@@ -38,6 +38,10 @@ const (
 	AuthzRoleViewer Role = "viewer"
 )
 
+func (r Role) String() string {
+	return string(r)
+}
+
 // Client provides an abstract interface which simplifies interacting with
 // OpenFGA and supports no-op and fake implementations.
 type Client interface {
