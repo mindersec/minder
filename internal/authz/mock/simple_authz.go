@@ -14,41 +14,44 @@
 // limitations under the License.
 
 // Package fake provides a no-op implementation of the minder the authorization client
-package fake
+package mock
 
 import (
 	"context"
-	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/authz"
 )
 
-// NoopClient is a no-op implementation of the authz.Client interface, which always returns
-// the same authorization result.
-type NoopClient struct {
-	// If Authorized is true, all Check calls will return nil
-	Authorized bool
+// SimpleClient maintains a list of authorized projects, suitable for use in tests.
+type SimpleClient struct {
+	Allowed []uuid.UUID
 }
 
-var _ authz.Client = &NoopClient{}
+var _ authz.Client = &SimpleClient{}
 
 // Check implements authz.Client
-func (n *NoopClient) Check(_ context.Context, action string, project uuid.UUID) error {
-	fmt.Printf("noop authz check (%t): %s %s\n", n.Authorized, action, project)
-	if n.Authorized {
+func (n *SimpleClient) Check(_ context.Context, _ string, project uuid.UUID) error {
+	if slices.Contains(n.Allowed, project) {
 		return nil
 	}
 	return authz.NotAuthorized
 }
 
-// Write_ implements authz.Client
-func (_ *NoopClient) Write(_ context.Context, _ string, _ authz.AuthzRole, _ uuid.UUID) error {
+// Write implements authz.Client
+func (n *SimpleClient) Write(_ context.Context, _ string, _ authz.AuthzRole, project uuid.UUID) error {
+	n.Allowed = append(n.Allowed, project)
 	return nil
 }
 
 // Delete implements authz.Client
-func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.AuthzRole, _ uuid.UUID) error {
+func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.AuthzRole, project uuid.UUID) error {
+	index := slices.Index(n.Allowed, project)
+	if index != -1 {
+		n.Allowed[index] = n.Allowed[len(n.Allowed)-1]
+		n.Allowed = n.Allowed[:len(n.Allowed)-1]
+	}
 	return nil
 }

@@ -47,7 +47,7 @@ import (
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/authz/fake"
+	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -132,7 +132,7 @@ func NewServer(
 	if s.authzClient == nil {
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
-		s.authzClient = &fake.NoopClient{Authorized: true}
+		s.authzClient = &mock.NoopClient{Authorized: true}
 	}
 
 	return s, nil
