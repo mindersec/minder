@@ -635,3 +635,76 @@ allow {
 	})
 	require.NoError(t, err, "could not evaluate")
 }
+
+func TestHTTPTypeWithTextFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	txtfile, err := fs.Create("textfile")
+	require.NoError(t, err, "could not create sec workflow file")
+
+	_, err = txtfile.Write([]byte("foo"))
+	require.NoError(t, err, "could not write to file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	htype := file.http_type("textfile")
+	htype == "text/plain; charset=utf-8"
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestHTTPTypeWithBinaryFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	binfile, err := fs.Create("binfile")
+	require.NoError(t, err, "could not create sec workflow file")
+
+	// write binary file
+	_, err = binfile.Write([]byte{0x00, 0x01, 0x02, 0x03})
+	require.NoError(t, err, "could not write to file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	htype := file.http_type("binfile")
+	htype == "application/octet-stream"
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
