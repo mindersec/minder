@@ -197,7 +197,7 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	if len(ts.Evals) > 0 {
 		e.Any("rules", ts.Evals)
 	}
-	e.Bool("telemetry", true)
+	e.Str("telemetry", "true")
 	// Note: we explicitly don't call e.Send() here so that Send() occurs in the
 	// same scope as the event is created.
 	return e

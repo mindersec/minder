@@ -138,7 +138,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		},
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
-		expected:   `{"telemetry": true}`,
+		expected:   `{"telemetry": "true"}`,
 		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletype", "artifact", "pr"},
 	}}
 
