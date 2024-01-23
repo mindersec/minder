@@ -44,6 +44,44 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	return i, err
 }
 
+const createProjectWithID = `-- name: CreateProjectWithID :one
+INSERT INTO projects (
+    id,
+    name,
+    parent_id,
+    metadata
+) VALUES (
+    $1, $2, $3, $4::jsonb
+) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
+`
+
+type CreateProjectWithIDParams struct {
+	ID       uuid.UUID       `json:"id"`
+	Name     string          `json:"name"`
+	ParentID uuid.NullUUID   `json:"parent_id"`
+	Metadata json.RawMessage `json:"metadata"`
+}
+
+func (q *Queries) CreateProjectWithID(ctx context.Context, arg CreateProjectWithIDParams) (Project, error) {
+	row := q.db.QueryRowContext(ctx, createProjectWithID,
+		arg.ID,
+		arg.Name,
+		arg.ParentID,
+		arg.Metadata,
+	)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteProject = `-- name: DeleteProject :many
 WITH RECURSIVE get_children AS (
     SELECT id, parent_id FROM projects

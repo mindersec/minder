@@ -88,7 +88,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
 	}
-	orgProject, userRoles, err := CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName)
+	orgProject, userRoles, err := s.CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
@@ -187,7 +187,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "unexpected status code when deleting account: %d", resp.StatusCode)
 	}
 
-	err = DeleteUser(ctx, s.store, subject)
+	err = DeleteUser(ctx, s.store, s.authzClient, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}

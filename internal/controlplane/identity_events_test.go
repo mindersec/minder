@@ -27,6 +27,7 @@ import (
 	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 )
@@ -72,6 +73,8 @@ func TestHandleEvents(t *testing.T) {
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
+	mockStore.EXPECT().GetUserProjects(gomock.Any(), gomock.Any()).
+		Return([]db.GetUserProjectsRow{}, nil)
 	mockStore.EXPECT().Rollback(gomock.Any())
 
 	c := serverconfig.Config{
@@ -83,7 +86,7 @@ func TestHandleEvents(t *testing.T) {
 			},
 		},
 	}
-	HandleEvents(context.Background(), mockStore, &c)
+	HandleEvents(context.Background(), mockStore, &mock.NoopClient{Authorized: true}, &c)
 }
 
 func tokenHandler(t *testing.T, w http.ResponseWriter) {

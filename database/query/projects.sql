@@ -7,6 +7,16 @@ INSERT INTO projects (
     $1, $2, sqlc.arg(metadata)::jsonb
 ) RETURNING *;
 
+-- name: CreateProjectWithID :one
+INSERT INTO projects (
+    id,
+    name,
+    parent_id,
+    metadata
+) VALUES (
+    $1, $2, $3, sqlc.arg(metadata)::jsonb
+) RETURNING *;
+
 -- name: GetRootProjects :many
 SELECT * FROM projects
 WHERE parent_id IS NULL;

@@ -21,10 +21,12 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	github "github.com/stacklok/minder/internal/providers/github"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -41,8 +43,8 @@ type ProjectMeta struct {
 }
 
 // CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
-func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
-	org db.Project, projectName string) (*pb.Project, []int32, error) {
+func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
+	org db.Project, projectName string, userSub string) (outproj *pb.Project, outroles []int32, projerr error) {
 	projectmeta := &ProjectMeta{
 		Description: fmt.Sprintf("Default admin project for %s", org.Name),
 	}
@@ -52,12 +54,30 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		return nil, nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
 	}
 
+	projectID := uuid.New()
+
+	// Create authorization tuple
+	// NOTE: This is only creating a tuple for the project, not the organization
+	//       We currently have no use for the organization and it might be
+	//       removed in the future.
+	if err := s.authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+		return nil, nil, status.Errorf(codes.Internal, "failed to create authorization tuple: %v", err)
+	}
+	defer func() {
+		if outproj == nil && projerr != nil {
+			if err := s.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
+			}
+		}
+	}()
+
 	// we need to create the default records for the organization
-	project, err := qtx.CreateProject(ctx, db.CreateProjectParams{
+	project, err := qtx.CreateProjectWithID(ctx, db.CreateProjectWithIDParams{
 		ParentID: uuid.NullUUID{
 			UUID:  org.ID,
 			Valid: true,
 		},
+		ID:       projectID,
 		Name:     projectName,
 		Metadata: jsonmeta,
 	})
@@ -93,6 +113,9 @@ func CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 	})
 
 	if err != nil {
+		if err := s.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
+		}
 		return nil, nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
 	}
 

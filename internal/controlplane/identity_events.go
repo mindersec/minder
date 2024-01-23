@@ -30,6 +30,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
+	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 )
@@ -49,10 +50,15 @@ type AccountEvent struct {
 }
 
 // SubscribeToIdentityEvents starts a cron job that periodically fetches events from the identity provider
-func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *serverconfig.Config) error {
+func SubscribeToIdentityEvents(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	cfg *serverconfig.Config,
+) error {
 	c := cron.New()
 	_, err := c.AddFunc(eventFetchInterval, func() {
-		HandleEvents(ctx, store, cfg)
+		HandleEvents(ctx, store, authzClient, cfg)
 	})
 	if err != nil {
 		return err
@@ -62,7 +68,12 @@ func SubscribeToIdentityEvents(ctx context.Context, store db.Store, cfg *serverc
 }
 
 // HandleEvents fetches events from the identity provider and performs any related changes to the minder database
-func HandleEvents(ctx context.Context, store db.Store, cfg *serverconfig.Config) {
+func HandleEvents(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	cfg *serverconfig.Config,
+) {
 	d := time.Now().Add(time.Duration(10) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
@@ -122,14 +133,14 @@ func HandleEvents(ctx context.Context, store db.Store, cfg *serverconfig.Config)
 	}
 	for _, event := range events {
 		if event.Type == deleteAccountEventType {
-			err := DeleteUser(ctx, store, event.UserId)
+			err := DeleteUser(ctx, store, authzClient, event.UserId)
 			zerolog.Ctx(ctx).Error().Msgf("events chron: error deleting user account: %v", err)
 		}
 	}
 }
 
 // DeleteUser deletes a user and all their associated data from the minder database
-func DeleteUser(ctx context.Context, store db.Store, userId string) error {
+func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) error {
 	tx, err := store.BeginTransaction()
 	if err != nil {
 		return err
@@ -145,6 +156,18 @@ func DeleteUser(ctx context.Context, store db.Store, userId string) error {
 		}
 		return fmt.Errorf("error retrieving user %v", err)
 	}
+
+	projs, err := store.GetUserProjects(ctx, user.ID)
+	if err != nil {
+		return fmt.Errorf("error retrieving user projects %v", err)
+	}
+
+	for _, proj := range projs {
+		if err := authzClient.Delete(ctx, userId, authz.AuthzRoleAdmin, proj.ID); err != nil {
+			return fmt.Errorf("error deleting authorization tuple %v", err)
+		}
+	}
+
 	err = qtx.DeleteOrganization(ctx, user.OrganizationID)
 	if err != nil {
 		return fmt.Errorf("error deleting organization %w", err)
