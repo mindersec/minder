@@ -708,3 +708,53 @@ allow {
 	})
 	require.NoError(t, err, "could not evaluate")
 }
+
+func TestFileWalk(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
+	require.NoError(t, fs.MkdirAll("bar", 0755), "could not create directory")
+
+	// Create a files
+	_, err := fs.Create("foo/bar")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/baz")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("foo/bat")
+	require.NoError(t, err, "could not create file")
+
+	_, err = fs.Create("bar/bar")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("bar/baz")
+	require.NoError(t, err, "could not create file")
+
+	_, err = fs.Create("beer")
+	require.NoError(t, err, "could not create file")
+	_, err = fs.Create("hmmm")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	files := file.walk(".")
+	count(files) == 7
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
