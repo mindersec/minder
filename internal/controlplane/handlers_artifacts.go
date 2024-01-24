@@ -41,11 +41,6 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -115,11 +110,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, artifact.ProjectID); err != nil {
-		return nil, err
-	}
-
 	pbVersions, err := getPbArtifactVersions(ctx, s.store, artifact.ID, in.Tag, in.LatestVersions)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
@@ -168,11 +158,6 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, artifact.ProjectID); err != nil {
-		return nil, err
 	}
 
 	// get artifact versions

@@ -45,11 +45,6 @@ func (s *Server) ListRuleTypes(
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
 		Provider:  entityCtx.Provider.Name,
 		ProjectID: entityCtx.Project.ID,
@@ -89,11 +84,6 @@ func (s *Server) GetRuleTypeByName(
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
-	}
-
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -130,11 +120,6 @@ func (s *Server) GetRuleTypeById(
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	resp := &minderv1.GetRuleTypeByIdResponse{}
@@ -176,11 +161,6 @@ func (s *Server) CreateRuleType(
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -247,11 +227,6 @@ func (s *Server) UpdateRuleType(
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -361,11 +336,6 @@ func (s *Server) DeleteRuleType(
 	err = entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
 	}
 
 	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)

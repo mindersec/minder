@@ -26,6 +26,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -132,6 +133,88 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.expectedContext, reply.(replyType).Context)
+		})
+	}
+}
+
+func TestProjectAuthorizationInterceptor(t *testing.T) {
+	t.Parallel()
+	projectID := uuid.New()
+	defaultProjectID := uuid.New()
+
+	assert.NotEqual(t, projectID, defaultProjectID)
+
+	testCases := []struct {
+		name      string
+		entityCtx *engine.EntityContext
+		anonymous bool
+		scope     minder.ObjectOwner
+		rpcErr    error
+	}{
+		{
+			name:      "anonymous bypasses interceptor",
+			entityCtx: &engine.EntityContext{},
+			anonymous: true,
+		},
+		{
+			name:      "non project owner bypasses interceptor",
+			scope:     minder.ObjectOwner_OBJECT_OWNER_USER,
+			entityCtx: &engine.EntityContext{},
+		},
+		{
+			name:      "no permissions error",
+			scope:     minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			entityCtx: &engine.EntityContext{},
+			rpcErr:    util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
+		},
+		{
+			name:  "not authorized on project error",
+			scope: minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			entityCtx: &engine.EntityContext{
+				Project: engine.Project{
+					ID: projectID,
+				},
+			},
+			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
+		},
+		{
+			name:  "authorized on project",
+			scope: minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			entityCtx: &engine.EntityContext{
+				Project: engine.Project{
+					ID: defaultProjectID,
+				},
+			},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tc.scope == minder.ObjectOwner_OBJECT_OWNER_UNSPECIFIED {
+				tc.scope = minder.ObjectOwner_OBJECT_OWNER_PROJECT
+			}
+			rpcOptions := &minder.RpcOptions{
+				Anonymous: tc.anonymous,
+				AuthScope: tc.scope,
+			}
+
+			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
+				return replyType{engine.EntityFromContext(ctx)}, nil
+			}
+			authorities := auth.UserPermissions{ProjectIds: []uuid.UUID{defaultProjectID}}
+			ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), authorities)
+			ctx = engine.WithEntityContext(ctx, tc.entityCtx)
+			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{}, unaryHandler)
+			if tc.rpcErr != nil {
+				assert.Equal(t, tc.rpcErr, err)
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 		})
 	}
 }

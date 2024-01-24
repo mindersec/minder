@@ -48,11 +48,6 @@ func (s *Server) RegisterRepository(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -155,11 +150,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -249,11 +239,6 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
-		return nil, err
-	}
-
 	projID := repo.ProjectID.String()
 	r := util.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
@@ -284,11 +269,6 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -300,10 +280,6 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
-		return nil, err
-	}
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
 		return nil, err
 	}
 
@@ -338,11 +314,6 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, repo.ProjectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -375,10 +346,6 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
@@ -393,11 +360,6 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 	} else if err != nil {
 		return nil, err
 	}
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, repo.ProjectID); err != nil {
-		return nil, err
-	}
-
 	err = s.deleteRepositoryAndWebhook(ctx, repo, projectID, provider)
 	if err != nil {
 		return nil, err
@@ -422,11 +384,6 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -438,7 +395,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Msg("listing repositories")
 
 	// FIXME: this is a hack to get the owner filter from the request
-	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID, true)
+	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID)
 
 	if err != nil {
 		return nil, util.UserVisibleError(codes.PermissionDenied,

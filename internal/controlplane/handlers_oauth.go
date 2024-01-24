@@ -46,10 +46,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
-
 	// get provider info
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
 	if err != nil {
@@ -225,13 +221,7 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 
 // getProviderAccessToken returns the access token for providers
 func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
-	projectID uuid.UUID, checkAuthz bool) (oauth2.Token, string, error) {
-	// check if user is authorized
-	if checkAuthz {
-		if err := AuthorizedOnProject(ctx, projectID); err != nil {
-			return oauth2.Token{}, "", err
-		}
-	}
+	projectID uuid.UUID) (oauth2.Token, string, error) {
 
 	encToken, err := s.store.GetAccessTokenByProjectID(ctx,
 		db.GetAccessTokenByProjectIDParams{Provider: provider, ProjectID: projectID})
@@ -254,11 +244,6 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
@@ -318,11 +303,6 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-
-	// check if user is authorized
-	if err := AuthorizedOnProject(ctx, projectID); err != nil {
-		return nil, err
-	}
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {

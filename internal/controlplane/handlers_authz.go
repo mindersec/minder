@@ -99,9 +99,9 @@ func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermiss
 	return claims
 }
 
-// AuthorizedOnProject checks if the request is authorized for the given
+// authorizedOnProject checks if the request is authorized for the given
 // project, and returns an error if the request is not authorized.
-func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
+func authorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
 	opts := getRpcOptions(ctx)
 	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
@@ -124,8 +124,8 @@ func AuthorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	return nil
 }
 
-// AuthorizationUnaryInterceptor is a server interceptor that sets up the user permissions
-func AuthorizationUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+// PermissionsContextUnaryInterceptor is a server interceptor that sets up the user permissions
+func PermissionsContextUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
 
 	server := info.Server.(*Server)
@@ -144,7 +144,7 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *gr
 
 	opts := getRpcOptions(ctx)
 
-	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
+	if !requiresProjectAuthorization(opts) {
 		if !opts.GetNoLog() {
 			zerolog.Ctx(ctx).Info().Msgf("Bypassing setting up context")
 		}
@@ -158,6 +158,27 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *gr
 
 	ctx, err := populateEntityContext(ctx, request)
 	if err != nil {
+		return nil, err
+	}
+
+	return handler(ctx, req)
+}
+
+// ProjectAuthorizationInterceptor is a server interceptor that checks if a user is authorized on the requested project
+func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (any, error) {
+
+	opts := getRpcOptions(ctx)
+
+	if !requiresProjectAuthorization(opts) {
+		if !opts.GetNoLog() {
+			zerolog.Ctx(ctx).Info().Msgf("Bypassing project authorization")
+		}
+		return handler(ctx, req)
+	}
+
+	entityCtx := engine.EntityFromContext(ctx)
+	if err := authorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
 		return nil, err
 	}
 
@@ -189,4 +210,29 @@ func populateEntityContext(ctx context.Context, in HasProtoContext) (context.Con
 	}
 
 	return engine.WithEntityContext(ctx, entityCtx), nil
+}
+
+func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uuid.UUID, error) {
+	// Prefer the context message from the protobuf
+	if in.GetContext().GetProject() != "" {
+		requestedProject := in.GetContext().GetProject()
+		parsedProjectID, err := uuid.Parse(requestedProject)
+		if err != nil {
+			return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
+		}
+		return parsedProjectID, nil
+	}
+
+	permissions := auth.GetPermissionsFromContext(ctx)
+	if len(permissions.ProjectIds) != 1 {
+		return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot get default project")
+	}
+	return permissions.ProjectIds[0], nil
+}
+
+// requiresProjectAuthorization return true if an authorization check should be performed on the requested project
+func requiresProjectAuthorization(opts *minder.RpcOptions) bool {
+	// default to returning true, unless we explicitly specify anonymous, or a different type of authorization scope
+	return !opts.Anonymous && opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_ORGANIZATION &&
+		opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER
 }
