@@ -113,7 +113,7 @@ data:
       go-channel: {}
     
     authz:
-      api_url: http://openfga
+      api_url: http://openfga:8080
       store_name: minder
       auth:
         # Set to token for production
@@ -708,7 +708,7 @@ data:
       go-channel: {}
     
     authz:
-      api_url: http://openfga
+      api_url: http://openfga:8080
       store_name: minder
       auth:
         # Set to token for production
