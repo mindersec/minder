@@ -1515,7 +1515,6 @@ Entity defines the entity that is supported by the provider.
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | OBJECT_OWNER_UNSPECIFIED | 0 |  |
-| OBJECT_OWNER_ORGANIZATION | 1 |  |
 | OBJECT_OWNER_PROJECT | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
 
