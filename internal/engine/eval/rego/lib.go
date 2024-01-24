@@ -77,16 +77,12 @@ func FileExists(res *engif.Result) func(*rego.Rego) {
 			fs := res.Fs
 
 			cpath := filepath.Clean(path)
-			finfo, err := fs.Stat(cpath)
+			_, err := fs.Stat(cpath)
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
 					return ast.BooleanTerm(false), nil
 				}
 				return nil, err
-			}
-
-			if finfo.IsDir() {
-				return ast.BooleanTerm(false), nil
 			}
 
 			return ast.BooleanTerm(true), nil
