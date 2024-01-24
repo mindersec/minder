@@ -105,6 +105,29 @@ func (a *ClientWrapper) ResetAuthzClient() error {
 	return nil
 }
 
+// PrepareForRun initializes the authz client based on the configuration.
+// This is handy when migrations have already been done and helps us auto-discover
+// the store ID and model.
+func (a *ClientWrapper) PrepareForRun(ctx context.Context) error {
+	storeID, err := a.FindStoreByName(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to find authz store: %w", err)
+	}
+
+	a.cli.SetStoreId(storeID)
+
+	modelID, err := a.FindLatestModel(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to find authz model: %w", err)
+	}
+
+	if err := a.cli.SetAuthorizationModelId(modelID); err != nil {
+		return fmt.Errorf("unable to set authz model: %w", err)
+	}
+
+	return nil
+}
+
 // GetClient returns the OpenFgaClient
 func (a *ClientWrapper) GetClient() *fgaclient.OpenFgaClient {
 	// TODO: check if token is expired and refresh it

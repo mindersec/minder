@@ -29,7 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/authz/mock"
+	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
@@ -105,8 +105,14 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
 
-		// TODO: Change this for an actual authz client
-		authzc := &mock.NoopClient{Authorized: true}
+		authzc, err := authz.NewAuthzClient(&cfg.Authz)
+		if err != nil {
+			return fmt.Errorf("unable to create authz client: %w", err)
+		}
+
+		if err := authzc.PrepareForRun(ctx); err != nil {
+			return fmt.Errorf("unable to prepare authz client for run: %w", err)
+		}
 
 		err = controlplane.SubscribeToIdentityEvents(ctx, store, authzc, cfg)
 		if err != nil {
