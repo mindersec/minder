@@ -124,15 +124,13 @@ func NewServer(
 		vldtr:        vldtr,
 		mt:           cpm,
 		provMt:       provtelemetry.NewNoopMetrics(),
+		// TODO: this currently always returns authorized as a transitionary measure.
+		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
+		authzClient: &mock.NoopClient{Authorized: true},
 	}
 
 	for _, opt := range opts {
 		opt(s)
-	}
-	if s.authzClient == nil {
-		// TODO: this currently always returns authorized as a transitionary measure.
-		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
-		s.authzClient = &mock.NoopClient{Authorized: true}
 	}
 
 	return s, nil

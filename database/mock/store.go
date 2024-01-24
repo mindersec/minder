@@ -276,6 +276,21 @@ func (mr *MockStoreMockRecorder) CreateProject(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProject", reflect.TypeOf((*MockStore)(nil).CreateProject), arg0, arg1)
 }
 
+// CreateProjectWithID mocks base method.
+func (m *MockStore) CreateProjectWithID(arg0 context.Context, arg1 db.CreateProjectWithIDParams) (db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateProjectWithID", arg0, arg1)
+	ret0, _ := ret[0].(db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateProjectWithID indicates an expected call of CreateProjectWithID.
+func (mr *MockStoreMockRecorder) CreateProjectWithID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProjectWithID", reflect.TypeOf((*MockStore)(nil).CreateProjectWithID), arg0, arg1)
+}
+
 // CreateProvider mocks base method.
 func (m *MockStore) CreateProvider(arg0 context.Context, arg1 db.CreateProviderParams) (db.Provider, error) {
 	m.ctrl.T.Helper()

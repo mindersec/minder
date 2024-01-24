@@ -29,6 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
@@ -104,7 +105,10 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
 
-		err = controlplane.SubscribeToIdentityEvents(ctx, store, cfg)
+		// TODO: Change this for an actual authz client
+		authzc := &mock.NoopClient{Authorized: true}
+
+		err = controlplane.SubscribeToIdentityEvents(ctx, store, authzc, cfg)
 		if err != nil {
 			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
@@ -112,7 +116,11 @@ var serveCmd = &cobra.Command{
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 
-		s, err := controlplane.NewServer(store, evt, serverMetrics, cfg, vldtr, controlplane.WithProviderMetrics(providerMetrics))
+		s, err := controlplane.NewServer(
+			store, evt, serverMetrics, cfg, vldtr,
+			controlplane.WithProviderMetrics(providerMetrics),
+			controlplane.WithAuthzClient(authzc),
+		)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
 		}
