@@ -233,6 +233,6 @@ func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uu
 // requiresProjectAuthorization return true if an authorization check should be performed on the requested project
 func requiresProjectAuthorization(opts *minder.RpcOptions) bool {
 	// default to returning true, unless we explicitly specify anonymous, or a different type of authorization scope
-	return !opts.Anonymous && opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_ORGANIZATION &&
+	return !opts.Anonymous &&
 		opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER
 }

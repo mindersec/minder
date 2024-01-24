@@ -26,9 +26,9 @@ option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
 enum ObjectOwner {
     OBJECT_OWNER_UNSPECIFIED = 0;
-    OBJECT_OWNER_ORGANIZATION = 1;
     OBJECT_OWNER_PROJECT = 2;
     OBJECT_OWNER_USER = 3;
+    reserved 1; // deprecated OBJECT_OWNER_ORGANIZATION
 }
 
 message RpcOptions {
