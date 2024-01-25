@@ -2678,12 +2678,6 @@
         "sha": {
           "type": "string"
         },
-        "signatureVerification": {
-          "$ref": "#/definitions/v1SignatureVerification"
-        },
-        "githubWorkflow": {
-          "$ref": "#/definitions/v1GithubWorkflow"
-        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
@@ -3014,23 +3008,6 @@
         }
       },
       "description": "GitType defines the git data ingester."
-    },
-    "v1GithubWorkflow": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "repository": {
-          "type": "string"
-        },
-        "commitSha": {
-          "type": "string"
-        },
-        "trigger": {
-          "type": "string"
-        }
-      }
     },
     "v1ListArtifactsResponse": {
       "type": "object",
@@ -3497,37 +3474,6 @@
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
-    },
-    "v1SignatureVerification": {
-      "type": "object",
-      "properties": {
-        "isSigned": {
-          "type": "boolean"
-        },
-        "isVerified": {
-          "type": "boolean"
-        },
-        "isBundleVerified": {
-          "type": "boolean"
-        },
-        "certIdentity": {
-          "type": "string"
-        },
-        "certIssuer": {
-          "type": "string"
-        },
-        "rekorLogId": {
-          "type": "string"
-        },
-        "rekorLogIndex": {
-          "type": "string",
-          "format": "int64"
-        },
-        "signatureTime": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"

@@ -227,12 +227,10 @@ func artifactVersionsDbToPb(versions []db.ArtifactVersion) ([]*pb.ArtifactVersio
 		}
 
 		final_versions = append(final_versions, &pb.ArtifactVersion{
-			VersionId:             version.Version,
-			Tags:                  tags,
-			Sha:                   version.Sha,
-			SignatureVerification: sigVerification,
-			GithubWorkflow:        ghWorkflow,
-			CreatedAt:             timestamppb.New(version.CreatedAt),
+			VersionId: version.Version,
+			Tags:      tags,
+			Sha:       version.Sha,
+			CreatedAt: timestamppb.New(version.CreatedAt),
 		})
 
 	}

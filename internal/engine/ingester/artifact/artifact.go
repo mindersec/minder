@@ -21,11 +21,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/sigstore"
+	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -36,13 +42,23 @@ const (
 // Ingest is the engine for a rule type that uses artifact data ingest
 // Implements enginer.ingester.Ingester
 type Ingest struct {
+	ghCli provifv1.GitHub
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
 func NewArtifactDataIngest(
 	_ *pb.ArtifactType,
+	pbuild *providers.ProviderBuilder,
 ) (*Ingest, error) {
-	return &Ingest{}, nil
+
+	ghCli, err := pbuild.GetGitHub(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get github client: %w", err)
+	}
+
+	return &Ingest{
+		ghCli: ghCli,
+	}, nil
 }
 
 // GetType returns the type of the artifact rule data ingest engine
@@ -57,8 +73,8 @@ func (*Ingest) GetConfig() proto.Message {
 
 // Ingest checks the passed in artifact, makes sure it is applicable to the current rule
 // and if it is, returns the appropriately marshalled data.
-func (_ *Ingest) Ingest(
-	_ context.Context,
+func (i *Ingest) Ingest(
+	ctx context.Context,
 	ent proto.Message,
 	params map[string]any,
 ) (*engif.Result, error) {
@@ -73,7 +89,7 @@ func (_ *Ingest) Ingest(
 	}
 
 	// Filter the versions of the artifact that are applicable to this rule
-	applicable, err := getApplicableArtifactVersions(artifact, cfg)
+	applicable, err := i.getApplicableArtifactVersions(ctx, artifact, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +99,8 @@ func (_ *Ingest) Ingest(
 	}, nil
 }
 
-func getApplicableArtifactVersions(
+func (i *Ingest) getApplicableArtifactVersions(
+	ctx context.Context,
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
 ) ([]map[string]any, error) {
@@ -114,10 +131,15 @@ func getApplicableArtifactVersions(
 		}
 
 		if tagMatcher.MatchTag(artifactVersion.Tags...) {
+			sig, wflow, err := getSignatureAndWorkflowInVersion(
+				ctx, i.ghCli, artifact.Owner, artifact.Name, artifactVersion.Sha)
+			if err != nil {
+				return nil, err
+			}
 			applicableArtifactVersions = append(applicableArtifactVersions, struct {
 				Verification   any
 				GithubWorkflow any
-			}{artifactVersion.SignatureVerification, artifactVersion.GithubWorkflow})
+			}{sig, wflow})
 		}
 	}
 
@@ -133,6 +155,9 @@ func getApplicableArtifactVersions(
 
 	result := make([]map[string]any, 0, len(applicableArtifactVersions))
 	err = json.Unmarshal(jsonBytes, &result)
+
+	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
+
 	if err != nil {
 		return nil, err
 	}
@@ -152,4 +177,29 @@ func isProcessable(tags []string) bool {
 	}
 
 	return true
+}
+
+func getSignatureAndWorkflowInVersion(
+	ctx context.Context,
+	client provifv1.GitHub,
+	artifactOwnerLogin, artifactName, packageVersionName string,
+) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
+	// get the verifier for sigstore
+	artifactVerifier, err := verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		sigstore.SigstorePublicTrustedRootRepo,
+		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting sigstore verifier: %w", err)
+	}
+	defer artifactVerifier.ClearCache()
+
+	// now get information for signature and workflow
+	res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
+		artifactOwnerLogin, artifactName, packageVersionName)
+	if err != nil {
+		zerolog.Ctx(ctx).Debug().Err(err).Str("URI", res.URI).Msg("no signature information found")
+	}
+
+	return res.SignatureInfoProto(), res.WorkflowInfoProto(), nil
 }

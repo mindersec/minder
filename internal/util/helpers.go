@@ -494,12 +494,10 @@ func GetArtifactWithVersions(
 			}
 		}
 		listArtifactVersions = append(listArtifactVersions, &minderv1.ArtifactVersion{
-			VersionId:             dbVersion.Version,
-			Tags:                  tags,
-			Sha:                   dbVersion.Sha,
-			SignatureVerification: sigVer,
-			GithubWorkflow:        ghWorkflow,
-			CreatedAt:             timestamppb.New(dbVersion.CreatedAt),
+			VersionId: dbVersion.Version,
+			Tags:      tags,
+			Sha:       dbVersion.Sha,
+			CreatedAt: timestamppb.New(dbVersion.CreatedAt),
 		})
 	}
 

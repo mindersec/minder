@@ -17,19 +17,48 @@ package artifact_test
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
+	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
+
+func testGithubProviderBuilder() *providers.ProviderBuilder {
+	const (
+		ghApiUrl = "https://api.github.com"
+	)
+
+	baseURL := ghApiUrl + "/"
+
+	definitionJSON := `{
+		"github": {
+			"endpoint": "` + baseURL + `"
+		}
+	}`
+
+	return providers.NewProviderBuilder(
+		&db.Provider{
+			Name:       "github",
+			Version:    provifv1.V1,
+			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
+			Definition: json.RawMessage(definitionJSON),
+		},
+		db.ProviderAccessToken{},
+		"token",
+	)
+}
 
 func TestArtifactIngestMatchingName(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -51,7 +80,7 @@ func TestArtifactIngestMatchingName(t *testing.T) {
 func TestArtifactIngestMatchingTags(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -76,7 +105,7 @@ func TestArtifactIngestMatchingTags(t *testing.T) {
 func TestArtifactIngestNoMatchingTags(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -101,7 +130,7 @@ func TestArtifactIngestNoMatchingTags(t *testing.T) {
 func TestArtifactIngestNoMatchingMultipleTagsFromDifferentVersions(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -126,7 +155,7 @@ func TestArtifactIngestNoMatchingMultipleTagsFromDifferentVersions(t *testing.T)
 func TestArtifactIngestNoMatchingMultipleTagsFromSameVersion(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -151,7 +180,7 @@ func TestArtifactIngestNoMatchingMultipleTagsFromSameVersion(t *testing.T) {
 func TestArtifactIngestMatchingMultipleTagsFromSameVersion(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -176,7 +205,7 @@ func TestArtifactIngestMatchingMultipleTagsFromSameVersion(t *testing.T) {
 func TestArtifactIngestNotMatchingName(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -194,7 +223,7 @@ func TestArtifactIngestNotMatchingName(t *testing.T) {
 func TestArtifactIngestMatchAnyName(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -215,7 +244,7 @@ func TestArtifactIngestMatchAnyName(t *testing.T) {
 func TestArtifactWithMatchingRegexp(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -238,7 +267,7 @@ func TestArtifactWithMatchingRegexp(t *testing.T) {
 func TestArtifactWithMultipleTagsAndMatchingRegexp(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -264,7 +293,7 @@ func TestArtifactWithMultipleTagsAndMatchingRegexp(t *testing.T) {
 func TestArtifactWithTagThatDoesntMatchRegexp(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -289,7 +318,7 @@ func TestArtifactWithTagThatDoesntMatchRegexp(t *testing.T) {
 func TestArtifactWithMultipleTagsThatDontMatchRegexp(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -316,7 +345,7 @@ func TestArtifactWithMultipleTagsThatDontMatchRegexp(t *testing.T) {
 func TestArtifactWithEmptyTagShouldError(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -343,7 +372,7 @@ func TestArtifactWithEmptyTagShouldError(t *testing.T) {
 func TestArtifactVersionWithNoTagsShouldError(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{
@@ -366,7 +395,7 @@ func TestArtifactVersionWithNoTagsShouldError(t *testing.T) {
 func TestArtifactVersionWithEmptyStringTagShouldError(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil)
+	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
 	require.NoError(t, err, "expected no error")
 
 	got, err := ing.Ingest(context.Background(), &pb.Artifact{

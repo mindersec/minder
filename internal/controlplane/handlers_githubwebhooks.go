@@ -37,7 +37,6 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
@@ -48,8 +47,6 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
-	"github.com/stacklok/minder/internal/verifier/sigstore"
-	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -612,11 +609,9 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 	}
 
 	version := &pb.ArtifactVersion{
-		VersionId:             int64(packageVersionId),
-		Tags:                  []string{tag},
-		Sha:                   packageVersionSha,
-		SignatureVerification: nil, // will be filled later by a call to the container registry
-		GithubWorkflow:        nil, // will be filled later by a call to the container registry
+		VersionId: int64(packageVersionId),
+		Tags:      []string{tag},
+		Sha:       packageVersionSha,
 	}
 
 	return version, nil
@@ -694,7 +689,7 @@ func gatherArtifactVersionInfo(
 
 	// not all information is in the payload, we need to get it from the container registry
 	// and/or GH API
-	err = updateArtifactVersionFromRegistry(ctx, cli, payload, artifactOwnerLogin, artifactName, version)
+	err = updateArtifactVersionFromRegistry(ctx, cli, artifactOwnerLogin, artifactName, version)
 	if err != nil {
 		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
 	}
@@ -726,11 +721,17 @@ func gatherArtifact(
 		}
 		// let's continue with the stored version
 		// now get information for signature and workflow
-		err = storeSignatureAndWorkflowInVersion(
-			ctx, cli, artifact.Owner, artifact.Name, transformTag(tagIsSigErr.signatureTag), storedVersion)
-		if err != nil {
-			return nil, fmt.Errorf("error storing signature and workflow in version: %w", err)
-		}
+		/*
+			just to remember I have to remove this later and handle in
+			the new code
+		*/
+		/*
+			err = storeSignatureAndWorkflowInVersion(
+				ctx, cli, artifact.Owner, artifact.Name, transformTag(tagIsSigErr.signatureTag), storedVersion)
+			if err != nil {
+				return nil, fmt.Errorf("error storing signature and workflow in version: %w", err)
+			}
+		*/
 
 		version = storedVersion
 	} else if err != nil {
@@ -740,46 +741,12 @@ func gatherArtifact(
 	return artifact, nil
 }
 
-func storeSignatureAndWorkflowInVersion(
-	ctx context.Context,
-	client provifv1.GitHub,
-	artifactOwnerLogin, artifactName, packageVersionName string,
-	version *pb.ArtifactVersion,
-) error {
-	// get the verifier for sigstore
-	artifactVerifier, err := verifier.NewVerifier(
-		verifier.VerifierSigstore,
-		sigstore.SigstorePublicTrustedRootRepo,
-		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
-	if err != nil {
-		return fmt.Errorf("error getting sigstore verifier: %w", err)
-	}
-	defer artifactVerifier.ClearCache()
-
-	// now get information for signature and workflow
-	res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
-		artifactOwnerLogin, artifactName, packageVersionName)
-	if err != nil {
-		log.Printf("no signature information found for: %s", res.URI)
-	}
-
-	version.SignatureVerification = res.SignatureInfoProto()
-	version.GithubWorkflow = res.WorkflowInfoProto()
-	return nil
-}
-
 func updateArtifactVersionFromRegistry(
 	ctx context.Context,
 	client provifv1.GitHub,
-	payload map[string]any,
 	artifactOwnerLogin, artifactName string,
 	version *pb.ArtifactVersion,
 ) error {
-	packageVersionName, err := util.JQReadFrom[string](ctx, ".package.package_version.name", payload)
-	if err != nil {
-		return fmt.Errorf("error getting package version name: %w", err)
-	}
-
 	// we'll grab the artifact version from the REST endpoint because we need the visibility
 	// and createdAt fields which are not in the payload
 	isOrg := client.GetOwner() != ""
@@ -790,7 +757,6 @@ func updateArtifactVersionFromRegistry(
 	}
 
 	tags := ghVersion.Metadata.Container.Tags
-
 	// if the artifact has no tags, skip it
 	if len(tags) == 0 {
 		return errArtifactVersionSkipped
@@ -801,13 +767,6 @@ func updateArtifactVersionFromRegistry(
 		return newTagIsASignatureError("version is a signature", sigTag)
 	}
 	sort.Strings(tags)
-
-	// now get information for signature and workflow
-	err = storeSignatureAndWorkflowInVersion(
-		ctx, client, artifactOwnerLogin, artifactName, packageVersionName, version)
-	if err != nil {
-		return fmt.Errorf("error storing signature and workflow in version: %w", err)
-	}
 
 	version.Tags = tags
 	if ghVersion.CreatedAt != nil {
@@ -824,15 +783,6 @@ func upsertVersionedArtifact(
 ) (*db.Artifact, *db.ArtifactVersion, error) {
 	// we expect to have only one version at this point, the one from this webhook update
 	newArtifactVersion := artifact.Versions[0]
-	sigInfo, err := protojson.Marshal(newArtifactVersion.SignatureVerification)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error marshalling signature verification: %w", err)
-	}
-
-	workflowInfo, err := protojson.Marshal(newArtifactVersion.GithubWorkflow)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error marshalling workflow info: %w", err)
-	}
 
 	tx, err := store.BeginTransaction()
 	if err != nil {
@@ -876,10 +826,8 @@ func upsertVersionedArtifact(
 			String: strings.Join(newArtifactVersion.Tags, ","),
 			Valid:  true,
 		},
-		Sha:                   newArtifactVersion.Sha,
-		CreatedAt:             newArtifactVersion.CreatedAt.AsTime(),
-		SignatureVerification: sigInfo,
-		GithubWorkflow:        workflowInfo,
+		Sha:       newArtifactVersion.Sha,
+		CreatedAt: newArtifactVersion.CreatedAt.AsTime(),
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("error upserting artifact version: %w", err)

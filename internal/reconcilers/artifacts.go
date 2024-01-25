@@ -232,12 +232,10 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 			// append to the list of versions we will publish to the topic
 			listVersionedArtifacts = append(listVersionedArtifacts, &pb.ArtifactVersion{
-				VersionId:             newVersion.Version,
-				Tags:                  tags,
-				Sha:                   *version.Name,
-				SignatureVerification: res.SignatureInfoProto(),
-				GithubWorkflow:        res.WorkflowInfoProto(),
-				CreatedAt:             timestamppb.New(version.CreatedAt.Time),
+				VersionId: newVersion.Version,
+				Tags:      tags,
+				Sha:       *version.Name,
+				CreatedAt: timestamppb.New(version.CreatedAt.Time),
 			})
 		}
 

@@ -94,8 +94,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 			tv.AddRow(
 				fmt.Sprintf("%d", version.VersionId),
 				strings.Join(version.Tags, ","),
-				getSignatureStatusText(version.SignatureVerification),
-				version.GetSignatureVerification().GetCertIdentity(),
 				version.CreatedAt.AsTime().Format(time.RFC3339),
 			)
 		}
@@ -160,19 +158,6 @@ func artifactGet(
 
 	err = errors.New("neither name nor ID set")
 	return
-}
-
-func getSignatureStatusText(sigVer *minderv1.SignatureVerification) string {
-	if !sigVer.IsSigned {
-		return "❌ not signed"
-	}
-	if !sigVer.IsVerified {
-		return "❌ signature not verified"
-	}
-	if !sigVer.IsBundleVerified {
-		return "❌ bundle signature not verified"
-	}
-	return "✅ Success"
 }
 
 func init() {

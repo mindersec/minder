@@ -150,8 +150,6 @@ ArtifactType defines the artifact data evaluation.
 | version_id | [int64](#int64) |  |  |
 | tags | [string](#string) | repeated |  |
 | sha | [string](#string) |  |  |
-| signature_verification | [SignatureVerification](#minder-v1-SignatureVerification) |  |  |
-| github_workflow | [GithubWorkflow](#minder-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
