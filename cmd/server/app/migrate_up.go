@@ -30,6 +30,7 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 )
 
@@ -114,15 +115,21 @@ var upCmd = &cobra.Command{
 				return err
 			}
 
-			authzw.GetConfig().StoreID = storeID
-			if err := authzw.ResetAuthzClient(); err != nil {
-				return fmt.Errorf("error while resetting authz client: %w", err)
-			}
+			authzw.GetClient().SetStoreId(storeID)
 		}
 
 		mID, err := authzw.WriteModel(ctx)
 		if err != nil {
 			return fmt.Errorf("error while writing authz model: %w", err)
+		}
+
+		if err := authzw.GetClient().SetAuthorizationModelId(mID); err != nil {
+			return fmt.Errorf("error setting authz model ID: %w", err)
+		}
+
+		store := db.NewStore(dbConn)
+		if err := migratePermsToFGA(ctx, store, authzw, cmd); err != nil {
+			return fmt.Errorf("error while migrating permissions to FGA: %w", err)
 		}
 
 		cmd.Printf("Wrote authz model %s to store.\n", mID)
@@ -150,6 +157,46 @@ func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.Cli
 		storeName, storeID)
 
 	return storeID, nil
+}
+
+func migratePermsToFGA(ctx context.Context, store db.Store, authzw *authz.ClientWrapper, cmd *cobra.Command) error {
+	cmd.Println("Migrating permissions to FGA...")
+
+	var i int32 = 0
+	for {
+		userList, err := store.ListUsers(ctx, db.ListUsersParams{Limit: 100, Offset: i})
+		if err != nil {
+			return fmt.Errorf("error while listing users: %w", err)
+		}
+		i = i + 100
+		cmd.Printf("Found %d users to migrate\n", len(userList))
+		if len(userList) == 0 {
+			break
+		}
+
+		for _, user := range userList {
+			projs, err := store.GetUserProjects(ctx, user.ID)
+			if err != nil {
+				cmd.Printf("Skipping user %d since getting user projects yielded error: %s\n",
+					user.ID, err)
+				continue
+			}
+
+			for _, proj := range projs {
+				cmd.Printf("Migrating user to FGA for project %s\n", proj.ProjectID)
+				if err := authzw.Write(
+					ctx, user.IdentitySubject, authz.AuthzRoleAdmin, proj.ProjectID,
+				); err != nil {
+					cmd.Printf("Error while writing permission for user %d: %s\n", user.ID, err)
+					continue
+				}
+			}
+		}
+	}
+
+	cmd.Println("Done migrating permissions to FGA")
+
+	return nil
 }
 
 func init() {

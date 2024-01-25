@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	fgasdk "github.com/openfga/go-sdk"
@@ -230,7 +231,9 @@ func (a *ClientWrapper) Write(ctx context.Context, user string, role Role, proje
 			Object:   getProjectForTuple(project),
 		},
 	}).Execute()
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "already exists") {
+		return nil
+	} else if err != nil {
 		return fmt.Errorf("unable to persist authorization tuple: %w", err)
 	}
 
