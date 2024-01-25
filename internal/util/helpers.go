@@ -32,13 +32,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
-	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -285,51 +283,6 @@ func LoadCredentials() (OpenIdCredentials, error) {
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
-}
-
-// WriteToFile writes the content to a file if the out parameter is not empty.
-func WriteToFile(out string, content []byte, perms fs.FileMode) error {
-	if out != "" {
-		err := os.WriteFile(out, content, perms)
-		if err != nil {
-			return fmt.Errorf("error writing to file: %s", err)
-		}
-	}
-
-	return nil
-}
-
-// GetPassFromTerm gets a password from the terminal
-func GetPassFromTerm(confirm bool) ([]byte, error) {
-	fmt.Print("Enter password for private key: ")
-
-	pw1, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println()
-
-	if !confirm {
-		return pw1, nil
-	}
-
-	fmt.Print("Enter password for private key again: ")
-	confirmpw, err := term.ReadPassword(int(syscall.Stdin))
-	fmt.Println()
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !bytesEqual(pw1, confirmpw) {
-		return nil, errors.New("passwords do not match")
-	}
-
-	return pw1, nil
-}
-
-func bytesEqual(a, b []byte) bool {
-	return strings.EqualFold(strings.TrimSpace(string(a)), strings.TrimSpace(string(b)))
 }
 
 func getProtoMarshalOptions() protojson.MarshalOptions {
