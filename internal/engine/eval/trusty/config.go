@@ -27,10 +27,27 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+var (
+	// SummaryScore is the score to use for the summary score
+	SummaryScore = "score"
+	// DefaultScore is the default score to use
+	DefaultScore = ""
+)
+
 type ecosystemConfig struct {
 	Name string `json:"name" mapstructure:"name" validate:"required"`
-	//nolint:lll
+
+	// Score is the score to use for the ecosystem. The actual score
+	// evaluated depends on the `evaluate_score` field.
 	Score float64 `json:"score" mapstructure:"score" validate:"required"`
+
+	// EvaluateScore tells the trusty executor which score to use
+	// for evaluation. This is useful when the trusty API returns.
+	// The default is the summary score. If `score` or an empty string, the
+	// summary score is used.
+	// If `evaluate_score` is set to something else (e.g. `provenance`)
+	// then that score is used, which comes from the details field.
+	EvaluateScore string `json:"evaluate_score" mapstructure:"evaluate_score"`
 }
 
 // config is the configuration for the vulncheck evaluator
@@ -72,4 +89,31 @@ func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig 
 	}
 
 	return nil
+}
+
+func (ec *ecosystemConfig) getScoreSource() string {
+	if ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore {
+		return SummaryScore
+	}
+
+	return ec.EvaluateScore
+}
+
+func (ec *ecosystemConfig) getScore(inSummary ScoreSummary) (float64, error) {
+	if ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore {
+		return inSummary.Score, nil
+	}
+
+	// If the score is not the summary score, then it must be in the details
+	rawScore, ok := inSummary.Description[ec.EvaluateScore]
+	if !ok {
+		return 0, fmt.Errorf("score %s not found in details", ec.EvaluateScore)
+	}
+
+	s, ok := rawScore.(float64)
+	if !ok {
+		return 0, fmt.Errorf("score %s is not a float64", ec.EvaluateScore)
+	}
+
+	return s, nil
 }

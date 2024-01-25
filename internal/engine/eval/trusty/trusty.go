@@ -135,10 +135,16 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			continue
 		}
 
-		if resp.Summary.Score >= ecoConfig.Score {
+		s, err := ecoConfig.getScore(resp.Summary)
+		if err != nil {
+			return fmt.Errorf("failed to get score: %w", err)
+		}
+
+		if s >= ecoConfig.Score {
 			logger.Debug().
 				Str("dependency", dep.Dep.Name).
-				Float64("pkgScore", resp.Summary.Score).
+				Str("score-source", ecoConfig.getScoreSource()).
+				Float64("score", s).
 				Float64("threshold", ecoConfig.Score).
 				Msgf("the dependency has higher score than threshold, skipping")
 			continue
@@ -146,7 +152,8 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
-			Float64("pkgScore", resp.Summary.Score).
+			Str("score-source", ecoConfig.getScoreSource()).
+			Float64("score", s).
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold, tracking")
 

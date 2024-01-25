@@ -58,13 +58,17 @@ type Alternative struct {
 	Score       float64 `json:"score"`
 }
 
+// ScoreSummary is the summary score returned from the package intelligence API
+type ScoreSummary struct {
+	Score       float64        `json:"score"`
+	Description map[string]any `json:"description"`
+}
+
 // Reply is the response from the package intelligence API
 type Reply struct {
-	PackageName string `json:"package_name"`
-	PackageType string `json:"package_type"`
-	Summary     struct {
-		Score float64 `json:"score"`
-	} `json:"summary"`
+	PackageName  string       `json:"package_name"`
+	PackageType  string       `json:"package_type"`
+	Summary      ScoreSummary `json:"summary"`
 	Alternatives struct {
 		Status   string        `json:"status"`
 		Packages []Alternative `json:"packages"`
