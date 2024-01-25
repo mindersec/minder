@@ -20,15 +20,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
-	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -125,14 +127,18 @@ func (i *Ingest) getApplicableArtifactVersions(
 	}
 
 	// get all versions of the artifact that are applicable to this rule
-	for _, artifactVersion := range artifact.Versions {
+	versions, err := getArtifactVersions(ctx, i.ghCli, artifact)
+	if err != nil {
+		return nil, err
+	}
+	for _, artifactVersion := range versions {
 		if !isProcessable(artifactVersion.Tags) {
 			continue
 		}
 
 		if tagMatcher.MatchTag(artifactVersion.Tags...) {
 			sig, wflow, err := getSignatureAndWorkflowInVersion(
-				ctx, i.ghCli, artifact.Owner, artifact.Name, artifactVersion.Sha)
+				ctx, i.ghCli, artifact.Owner, artifact.Name, artifactVersion.Sha, cfg.Sigstore)
 			if err != nil {
 				return nil, err
 			}
@@ -165,6 +171,43 @@ func (i *Ingest) getApplicableArtifactVersions(
 	return result, nil
 }
 
+func getArtifactVersions(ctx context.Context, ghCli provifv1.GitHub, artifact *pb.Artifact) ([]*pb.ArtifactVersion, error) {
+	// if the artifact has versions, use them - this is processing a webhook request where it will
+	// be just one version
+	if artifact.Versions != nil {
+		return artifact.Versions, nil
+	}
+
+	// if we don't have the versions, get them all from the API
+	// now query for versions, retrieve the ones from last month
+	isOrg := (ghCli.GetOwner() != "")
+	upstreamVersions, err := ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetType(), artifact.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
+	}
+
+	pbVersions := make([]*pb.ArtifactVersion, 0, len(upstreamVersions))
+	for _, version := range upstreamVersions {
+		tags := version.Metadata.Container.Tags
+		sort.Strings(tags)
+
+		err = isSkippable(verifier.ArtifactTypeContainer, version.CreatedAt.Time, map[string]interface{}{"tags": tags})
+		if err != nil {
+			zerolog.Ctx(ctx).Debug().Str("reason", err.Error()).Strs("tags", tags).Msg("skipping artifact version")
+			continue
+		}
+
+		pbVersions = append(pbVersions, &pb.ArtifactVersion{
+			VersionId: 0, // FIXME: this is a DB PK. Will be removed in a later commit
+			Tags:      tags,
+			Sha:       *version.Name,
+			CreatedAt: timestamppb.New(version.CreatedAt.Time),
+		})
+	}
+
+	return pbVersions, nil
+}
+
 func isProcessable(tags []string) bool {
 	if len(tags) == 0 {
 		return false
@@ -182,12 +225,12 @@ func isProcessable(tags []string) bool {
 func getSignatureAndWorkflowInVersion(
 	ctx context.Context,
 	client provifv1.GitHub,
-	artifactOwnerLogin, artifactName, packageVersionName string,
+	artifactOwnerLogin, artifactName, packageVersionName, sigstoreURL string,
 ) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
 	// get the verifier for sigstore
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
-		sigstore.SigstorePublicTrustedRootRepo,
+		sigstoreURL,
 		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting sigstore verifier: %w", err)
@@ -202,4 +245,35 @@ func getSignatureAndWorkflowInVersion(
 	}
 
 	return res.SignatureInfoProto(), res.WorkflowInfoProto(), nil
+}
+
+var (
+	// ArtifactTypeContainerRetentionPeriod represents the retention period for container artifacts
+	ArtifactTypeContainerRetentionPeriod = time.Now().AddDate(0, -6, 0)
+)
+
+// isSkippable determines if an artifact should be skipped
+// TODO - this should be refactored as well, for now just a forklift from reconciler
+func isSkippable(artifactType verifier.ArtifactType, createdAt time.Time, opts map[string]interface{}) error {
+	switch artifactType {
+	case verifier.ArtifactTypeContainer:
+		// if the artifact is older than the retention period, skip it
+		if createdAt.Before(ArtifactTypeContainerRetentionPeriod) {
+			return fmt.Errorf("artifact is older than retention period - %s", ArtifactTypeContainerRetentionPeriod)
+		}
+		tags, ok := opts["tags"].([]string)
+		if !ok {
+			return nil
+		} else if len(tags) == 0 {
+			// if the artifact has no tags, skip it
+			return fmt.Errorf("artifact has no tags")
+		}
+		// if the artifact has a .sig tag it's a signature, skip it
+		if verifier.GetSignatureTag(tags) != "" {
+			return fmt.Errorf("artifact is a signature")
+		}
+		return nil
+	default:
+		return nil
+	}
 }

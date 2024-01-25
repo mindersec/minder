@@ -16,12 +16,9 @@ package reconcilers
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -36,8 +33,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
-	"github.com/stacklok/minder/internal/verifier/sigstore"
-	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -154,16 +149,6 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return err
 	}
 
-	// create artifact verifier
-	artifactVerifier, err := verifier.NewVerifier(
-		verifier.VerifierSigstore,
-		sigstore.SigstorePublicTrustedRootRepo,
-		container.WithAccessToken(cli.GetToken()), container.WithGitHubClient(cli))
-	if err != nil {
-		return fmt.Errorf("error getting sigstore verifier: %w", err)
-	}
-	defer artifactVerifier.ClearCache()
-
 	for _, artifact := range artifacts {
 		// store information if we do not have it
 		newArtifact, err := e.store.UpsertArtifact(ctx,
@@ -176,69 +161,6 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			continue
 		}
 
-		// remove older versions
-		err = e.store.DeleteOldArtifactVersions(ctx,
-			db.DeleteOldArtifactVersionsParams{ArtifactID: newArtifact.ID, CreatedAt: ArtifactTypeContainerRetentionPeriod})
-		if err != nil {
-			// just log error, we will not remove older for now
-			log.Printf("error removing older artifact versions: %v", err)
-		}
-
-		// now query for versions, retrieve the ones from last month
-		versions, err := cli.GetPackageVersions(ctx, isOrg, repository.RepoOwner, artifact.GetPackageType(), artifact.GetName())
-		if err != nil {
-			// just log error and continue
-			log.Printf("error retrieving artifact versions: %v", err)
-			continue
-		}
-
-		// iterate over versions and store them
-		var listVersionedArtifacts []*pb.ArtifactVersion
-		for _, version := range versions {
-			tags := version.Metadata.Container.Tags
-			sort.Strings(tags)
-
-			// check if we should skip processing this version
-			err = IsSkippable(verifier.ArtifactTypeContainer, version.CreatedAt.Time, map[string]interface{}{"tags": tags})
-			if err != nil {
-				uri := fmt.Sprintf("%s/%s@%s", *artifact.GetOwner().Login, artifact.GetName(), version.GetName())
-				log.Printf("skipping artifact version %s, %v", uri, err)
-				continue
-			}
-
-			// get information for signature and workflow
-			res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
-				*artifact.GetOwner().Login, artifact.GetName(), version.GetName())
-			if err != nil {
-				log.Printf("no signature information found for: %s, tags: %s", res.URI, tags)
-			}
-
-			// store the artifact version
-			newVersion, err := e.store.UpsertArtifactVersion(ctx,
-				db.UpsertArtifactVersionParams{
-					ArtifactID:            newArtifact.ID,
-					Version:               *version.ID,
-					Tags:                  sql.NullString{Valid: true, String: strings.Join(tags, ",")},
-					Sha:                   *version.Name,
-					SignatureVerification: res.SignatureInfo,
-					GithubWorkflow:        res.WorkflowInfo,
-					CreatedAt:             version.CreatedAt.Time,
-				})
-			if err != nil {
-				// just log error and continue
-				log.Printf("error storing artifact version: %v", err)
-				continue
-			}
-
-			// append to the list of versions we will publish to the topic
-			listVersionedArtifacts = append(listVersionedArtifacts, &pb.ArtifactVersion{
-				VersionId: newVersion.Version,
-				Tags:      tags,
-				Sha:       *version.Name,
-				CreatedAt: timestamppb.New(version.CreatedAt.Time),
-			})
-		}
-
 		// publish event for artifact
 		pbArtifact := &pb.Artifact{
 			ArtifactPk: newArtifact.ID.String(),
@@ -247,7 +169,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			Type:       artifact.GetPackageType(),
 			Visibility: artifact.GetVisibility(),
 			Repository: repository.RepoName,
-			Versions:   listVersionedArtifacts,
+			Versions:   nil, // explicitly nil, will be filled by the ingester
 			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
 		}
 		err = entities.NewEntityInfoWrapper().
@@ -262,29 +184,4 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		}
 	}
 	return nil
-}
-
-// IsSkippable determines if an artifact should be skipped
-func IsSkippable(artifactType verifier.ArtifactType, createdAt time.Time, opts map[string]interface{}) error {
-	switch artifactType {
-	case verifier.ArtifactTypeContainer:
-		// if the artifact is older than the retention period, skip it
-		if createdAt.Before(ArtifactTypeContainerRetentionPeriod) {
-			return fmt.Errorf("artifact is older than retention period - %s", ArtifactTypeContainerRetentionPeriod)
-		}
-		tags, ok := opts["tags"].([]string)
-		if !ok {
-			return nil
-		} else if len(tags) == 0 {
-			// if the artifact has no tags, skip it
-			return fmt.Errorf("artifact has no tags")
-		}
-		// if the artifact has a .sig tag it's a signature, skip it
-		if verifier.GetSignatureTag(tags) != "" {
-			return fmt.Errorf("artifact is a signature")
-		}
-		return nil
-	default:
-		return nil
-	}
 }

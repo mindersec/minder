@@ -35,7 +35,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -444,8 +443,8 @@ func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID
 	return PBRepositoryFromDB(dbrepo), nil
 }
 
-// GetArtifactWithVersions retrieves an artifact and its versions from the database
-func GetArtifactWithVersions(
+// GetArtifact retrieves an artifact and its versions from the database
+func GetArtifact(
 	ctx context.Context, store db.ExtendQuerier, repoID, artifactID uuid.UUID) (*minderv1.Artifact, error) {
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
@@ -463,44 +462,6 @@ func GetArtifactWithVersions(
 		return nil, fmt.Errorf("failed to get artifact: %v", err)
 	}
 
-	// Get its versions
-	dbArtifactVersions, err := store.ListArtifactVersionsByArtifactID(ctx, db.ListArtifactVersionsByArtifactIDParams{
-		ArtifactID: artifact.ID,
-		Limit:      sql.NullInt32{Valid: false},
-	})
-	if err != nil {
-		log.Printf("error getting artifact versions for artifact %s: %v", artifact.ID, err)
-	}
-
-	// Translate each to protobuf so we can publish the event
-	var listArtifactVersions []*minderv1.ArtifactVersion
-	for _, dbVersion := range dbArtifactVersions {
-		var tags []string
-		if dbVersion.Tags.Valid {
-			tags = strings.Split(dbVersion.Tags.String, ",")
-		}
-		sigVer := &minderv1.SignatureVerification{}
-		if dbVersion.SignatureVerification.Valid {
-			if err := protojson.Unmarshal(dbVersion.SignatureVerification.RawMessage, sigVer); err != nil {
-				log.Printf("error unmarshalling signature verification: %v", err)
-				continue
-			}
-		}
-		ghWorkflow := &minderv1.GithubWorkflow{}
-		if dbVersion.GithubWorkflow.Valid {
-			if err := protojson.Unmarshal(dbVersion.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
-				log.Printf("error unmarshalling gh workflow: %v", err)
-				continue
-			}
-		}
-		listArtifactVersions = append(listArtifactVersions, &minderv1.ArtifactVersion{
-			VersionId: dbVersion.Version,
-			Tags:      tags,
-			Sha:       dbVersion.Sha,
-			CreatedAt: timestamppb.New(dbVersion.CreatedAt),
-		})
-	}
-
 	// Build the artifact protobuf
 	return &minderv1.Artifact{
 		ArtifactPk: artifact.ID.String(),
@@ -509,7 +470,6 @@ func GetArtifactWithVersions(
 		Type:       artifact.ArtifactType,
 		Visibility: artifact.ArtifactVisibility,
 		Repository: dbrepo.RepoName,
-		Versions:   listArtifactVersions,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	}, nil
 }
