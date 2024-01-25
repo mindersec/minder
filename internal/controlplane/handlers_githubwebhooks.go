@@ -48,6 +48,7 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -745,7 +746,9 @@ func storeSignatureAndWorkflowInVersion(
 	version *pb.ArtifactVersion,
 ) error {
 	// get the verifier for sigstore
-	artifactVerifier, err := verifier.NewVerifier(verifier.VerifierSigstore, client.GetToken())
+	artifactVerifier, err := verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}

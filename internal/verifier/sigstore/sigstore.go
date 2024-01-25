@@ -33,12 +33,12 @@ const (
 
 // Sigstore is the sigstore verifier
 type Sigstore struct {
-	verifier    *verify.SignedEntityVerifier
-	accessToken string
+	verifier *verify.SignedEntityVerifier
+	authOpts []container.AuthMethod
 }
 
 // New creates a new Sigstore verifier
-func New(trustedRoot, accessToken, cacheDir string) (*Sigstore, error) {
+func New(trustedRoot, cacheDir string, authOpts ...container.AuthMethod) (*Sigstore, error) {
 	// init sigstore's verifier
 	trustedrootJSON, err := tuf.GetTrustedrootJSON(trustedRoot, cacheDir)
 	if err != nil {
@@ -55,13 +55,13 @@ func New(trustedRoot, accessToken, cacheDir string) (*Sigstore, error) {
 	}
 	// return the verifier
 	return &Sigstore{
-		verifier:    sev,
-		accessToken: accessToken,
+		verifier: sev,
+		authOpts: authOpts,
 	}, nil
 }
 
 // VerifyContainer verifies a container artifact using sigstore
 func (s *Sigstore) VerifyContainer(ctx context.Context, registry, owner, artifact, version string) (
 	json.RawMessage, json.RawMessage, error) {
-	return container.Verify(ctx, s.verifier, s.accessToken, registry, owner, artifact, version)
+	return container.Verify(ctx, s.verifier, registry, owner, artifact, version, s.authOpts...)
 }
