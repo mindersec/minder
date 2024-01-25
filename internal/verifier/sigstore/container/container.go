@@ -101,9 +101,8 @@ func Verify(
 	auth := newContainerAuth(authOpts...)
 
 	// construct the bundle
-	// TODO: handle no access token?
 	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, auth.accessToken))
-	if errors.Is(err, ErrOciImageSignatureNotFound) {
+	if errors.Is(err, ErrOciImageSignatureNotFound) || errors.Is(err, ErrAuthNotProvided) {
 		err = bundleFromGHAttenstationEndpoint(ctx, params, auth.ghClient, owner, version)
 	}
 
@@ -592,6 +591,10 @@ type githubAuthenticator struct{ username, password string }
 
 // Authorization returns the username and password for the githubAuthenticator
 func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
+	if len(g.password) == 0 || len(g.username) == 0 {
+		return nil, ErrAuthNotProvided
+	}
+
 	return &authn.AuthConfig{
 		Username: g.username,
 		Password: g.password,
