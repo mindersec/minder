@@ -55,3 +55,13 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 	}
 	return nil
 }
+
+// PrepareForRun implements authz.Client
+func (_ *SimpleClient) PrepareForRun(_ context.Context) error {
+	return nil
+}
+
+// MigrateUp implements authz.Client
+func (_ *SimpleClient) MigrateUp(_ context.Context) error {
+	return nil
+}

@@ -52,3 +52,13 @@ func (_ *NoopClient) Write(_ context.Context, _ string, _ authz.Role, _ uuid.UUI
 func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
 	return nil
 }
+
+// PrepareForRun implements authz.Client
+func (_ *NoopClient) PrepareForRun(_ context.Context) error {
+	return nil
+}
+
+// MigrateUp implements authz.Client
+func (_ *NoopClient) MigrateUp(_ context.Context) error {
+	return nil
+}

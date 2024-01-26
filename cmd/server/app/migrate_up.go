@@ -25,6 +25,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -103,28 +104,19 @@ var upCmd = &cobra.Command{
 		cmd.Println("Database migration completed successfully")
 
 		cmd.Println("Ensuring authorization store...")
+		l := zerolog.Ctx(ctx)
 
-		authzw, err := authz.NewAuthzClient(&cfg.Authz)
+		authzw, err := authz.NewAuthzClient(&cfg.Authz, l)
 		if err != nil {
 			return fmt.Errorf("error while creating authz client: %w", err)
 		}
 
-		if !authzw.StoreIDProvided() {
-			storeID, err := ensureAuthzStore(ctx, cmd, authzw)
-			if err != nil {
-				return err
-			}
-
-			authzw.GetClient().SetStoreId(storeID)
+		if err := authzw.MigrateUp(ctx); err != nil {
+			return fmt.Errorf("error while running authz migrations: %w", err)
 		}
 
-		mID, err := authzw.WriteModel(ctx)
-		if err != nil {
-			return fmt.Errorf("error while writing authz model: %w", err)
-		}
-
-		if err := authzw.GetClient().SetAuthorizationModelId(mID); err != nil {
-			return fmt.Errorf("error setting authz model ID: %w", err)
+		if err := authzw.PrepareForRun(ctx); err != nil {
+			return fmt.Errorf("error preparing authz client: %w", err)
 		}
 
 		store := db.NewStore(dbConn)
@@ -132,34 +124,11 @@ var upCmd = &cobra.Command{
 			return fmt.Errorf("error while migrating permissions to FGA: %w", err)
 		}
 
-		cmd.Printf("Wrote authz model %s to store.\n", mID)
-
 		return nil
 	},
 }
 
-func ensureAuthzStore(ctx context.Context, cmd *cobra.Command, authzw *authz.ClientWrapper) (string, error) {
-	storeName := authzw.GetConfig().StoreName
-	storeID, err := authzw.FindStoreByName(ctx)
-	if err != nil && !errors.Is(err, authz.ErrStoreNotFound) {
-		return "", err
-	} else if errors.Is(err, authz.ErrStoreNotFound) {
-		cmd.Printf("Creating authz store %s\n", storeName)
-		id, err := authzw.CreateStore(ctx)
-		if err != nil {
-			return "", err
-		}
-		cmd.Printf("Created authz store %s/%s\n", id, storeName)
-		return id, nil
-	}
-
-	cmd.Printf("Not creating store. Found store with name '%s' and ID '%s'.\n",
-		storeName, storeID)
-
-	return storeID, nil
-}
-
-func migratePermsToFGA(ctx context.Context, store db.Store, authzw *authz.ClientWrapper, cmd *cobra.Command) error {
+func migratePermsToFGA(ctx context.Context, store db.Store, authzw authz.Client, cmd *cobra.Command) error {
 	cmd.Println("Migrating permissions to FGA...")
 
 	var i int32 = 0
