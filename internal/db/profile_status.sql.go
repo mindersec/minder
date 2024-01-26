@@ -20,14 +20,13 @@ const deleteRuleStatusesForProfileAndRuleType = `-- name: DeleteRuleStatusesForP
 DELETE FROM rule_evaluations
 WHERE id IN (
     SELECT id FROM rule_evaluations as re
-    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND
-          (re.rule_name = $3 OR $3 IS NULL) FOR UPDATE)
+    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND re.rule_name = $3 FOR UPDATE)
 `
 
 type DeleteRuleStatusesForProfileAndRuleTypeParams struct {
-	ProfileID  uuid.UUID      `json:"profile_id"`
-	RuleTypeID uuid.UUID      `json:"rule_type_id"`
-	RuleName   sql.NullString `json:"rule_name"`
+	ProfileID  uuid.UUID `json:"profile_id"`
+	RuleTypeID uuid.UUID `json:"rule_type_id"`
+	RuleName   string    `json:"rule_name"`
 }
 
 // DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
@@ -179,7 +178,7 @@ SELECT
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
-    COALESCE(res.rule_name, ''),
+    res.rule_name,
     repo.repo_name,
     repo.repo_owner,
     repo.provider,
@@ -390,13 +389,13 @@ RETURNING id
 `
 
 type UpsertRuleEvaluationsParams struct {
-	ProfileID     uuid.UUID      `json:"profile_id"`
-	RepositoryID  uuid.NullUUID  `json:"repository_id"`
-	ArtifactID    uuid.NullUUID  `json:"artifact_id"`
-	PullRequestID uuid.NullUUID  `json:"pull_request_id"`
-	RuleTypeID    uuid.UUID      `json:"rule_type_id"`
-	Entity        Entities       `json:"entity"`
-	RuleName      sql.NullString `json:"rule_name"`
+	ProfileID     uuid.UUID     `json:"profile_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
+	Entity        Entities      `json:"entity"`
+	RuleName      string        `json:"rule_name"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {

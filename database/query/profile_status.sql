@@ -2,7 +2,7 @@
 -- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
     profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
-) VALUES ($1, $2, $3, $4, $5, $6, sqlc.narg(rule_name))
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, rule_name)
   DO UPDATE SET profile_id = $1
 RETURNING id;
@@ -79,8 +79,7 @@ WHERE p.project_id = $1;
 DELETE FROM rule_evaluations
 WHERE id IN (
     SELECT id FROM rule_evaluations as re
-    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND
-          (re.rule_name = sqlc.narg(rule_name) OR sqlc.narg(rule_name) IS NULL) FOR UPDATE);
+    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND re.rule_name = $3 FOR UPDATE);
 
 -- name: ListRuleEvaluationsByProfileId :many
 WITH
@@ -123,7 +122,7 @@ SELECT
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
-    COALESCE(res.rule_name, ''),
+    res.rule_name,
     repo.repo_name,
     repo.repo_owner,
     repo.provider,

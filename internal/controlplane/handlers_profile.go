@@ -662,7 +662,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	oldRules, err := s.getRulesFromOldProfile(ctx, oldProfile, entityCtx)
+	oldRules, err := s.getRulesFromProfile(ctx, oldProfile, entityCtx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
@@ -813,7 +813,7 @@ func (s *Server) getAndValidateRulesFromProfile(
 	return rulesInProf, nil
 }
 
-func (s *Server) getRulesFromOldProfile(
+func (s *Server) getRulesFromProfile(
 	ctx context.Context,
 	prof *minderv1.Profile,
 	entityCtx engine.EntityContext,
@@ -839,11 +839,9 @@ func (s *Server) getRulesFromOldProfile(
 			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}
 
-		// TODO: Remove r.Name and replace with computeRuleName(..) after migration is complete for #1609
-		// Existing rules (before migration) would have r.Name == ""
 		key := ruleTypeAndNamePair{
 			RuleType: r.GetType(),
-			RuleName: r.Name,
+			RuleName: computeRuleName(r),
 		}
 
 		rulesInProf[key] = entityAndRuleTuple{
@@ -1057,16 +1055,11 @@ func deleteRuleStatusesForProfile(
 ) error {
 	for ruleTypeAndName, rule := range unusedRuleStatuses {
 		log.Printf("deleting rule evaluations for rule %s in profile %s", rule.RuleID, profile.ID)
-		// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
-		ruleName := sql.NullString{
-			String: ruleTypeAndName.RuleName,
-			Valid:  ruleTypeAndName.RuleName != "",
-		}
 
 		if err := querier.DeleteRuleStatusesForProfileAndRuleType(ctx, db.DeleteRuleStatusesForProfileAndRuleTypeParams{
 			ProfileID:  profile.ID,
 			RuleTypeID: rule.RuleID,
-			RuleName:   ruleName,
+			RuleName:   ruleTypeAndName.RuleName,
 		}); err != nil {
 			log.Printf("error deleting rule evaluations: %v", err)
 			return fmt.Errorf("error deleting rule evaluations: %w", err)

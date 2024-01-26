@@ -16,7 +16,6 @@ package engine_test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -206,7 +205,7 @@ default allow = true`,
 			ArtifactID: uuid.NullUUID{},
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
-			RuleName:   sql.NullString{String: passthroughRuleType, Valid: true},
+			RuleName:   passthroughRuleType,
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status
