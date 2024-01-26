@@ -36,6 +36,8 @@ const (
 	AuthzRoleEditor Role = "editor"
 	// AuthzRoleViewer is the viewer role
 	AuthzRoleViewer Role = "viewer"
+	// AuthzRolePolicyWriter is the `policy_writer` role
+	AuthzRolePolicyWriter Role = "policy_writer"
 )
 
 func (r Role) String() string {

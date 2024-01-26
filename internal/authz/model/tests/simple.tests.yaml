@@ -42,6 +42,9 @@ tuples:
 - user: user:otherproject
   relation: admin
   object: project:010
+- user: user:policy-writer
+  relation: policy_writer
+  object: project:001
 
 tests:
 - name: check-inheritance
@@ -124,3 +127,21 @@ tests:
       artifact_update: true
       provider_get: true
 
+- name: check-profile-writers
+  check:
+  - user: user:policy-writer
+    object: project:001
+    assertions:
+      create: false
+      get: false
+      repo_update: false
+      provider_create: false
+      artifact_update: false
+      rule_type_get: false
+      rule_type_create: true
+      rule_type_update: true
+      rule_type_delete: true
+      profile_get: false
+      profile_create: true
+      profile_update: true
+      profile_delete: true
