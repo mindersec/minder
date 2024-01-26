@@ -37,9 +37,14 @@ type project
   relations
     define parent: [project]
 
+    # Defines the `admin` role for this project.
     define admin: [user, group#member] or admin from parent
+    # Defines the `editor` role for this project.
     define editor: [user, group#member] or admin or editor from parent
+    # Defines a `viewer` or `read-only` role for this project.
     define viewer: [user, group#member] or editor or viewer from parent
+    # Defines a role that's only allowed to write rule types and profiles (create, update, delete)
+    define policy_writer: [user, group#member] or policy_writer from parent
 
     define get: viewer
     define create: admin
@@ -67,11 +72,11 @@ type project
     define provider_delete: admin
 
     define rule_type_get: viewer
-    define rule_type_create: editor
-    define rule_type_update: editor
-    define rule_type_delete: editor
+    define rule_type_create: editor or policy_writer
+    define rule_type_update: editor or policy_writer
+    define rule_type_delete: editor or policy_writer
 
     define profile_get: viewer
-    define profile_create: editor
-    define profile_update: editor
-    define profile_delete: editor
+    define profile_create: editor or policy_writer
+    define profile_update: editor or policy_writer
+    define profile_delete: editor or policy_writer
