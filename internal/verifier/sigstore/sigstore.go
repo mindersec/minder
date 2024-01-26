@@ -17,13 +17,13 @@ package sigstore
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"github.com/sigstore/sigstore-go/pkg/verify"
 
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 )
 
 const (
@@ -62,6 +62,6 @@ func New(trustedRoot, cacheDir string, authOpts ...container.AuthMethod) (*Sigst
 
 // VerifyContainer verifies a container artifact using sigstore
 func (s *Sigstore) VerifyContainer(ctx context.Context, registry, owner, artifact, version string) (
-	json.RawMessage, json.RawMessage, error) {
+	*verifyif.Result, error) {
 	return container.Verify(ctx, s.verifier, registry, owner, artifact, version, s.authOpts...)
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -32,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -45,6 +47,21 @@ const (
 // Implements enginer.ingester.Ingester
 type Ingest struct {
 	ghCli provifv1.GitHub
+}
+
+type verification struct {
+	IsSigned          bool   `json:"is_signed"`
+	IsVerified        bool   `json:"is_verified"`
+	IsBundleVerified  bool   `json:"is_bundle_verified"`
+	Repository        string `json:"repository"`
+	Branch            string `json:"branch"`
+	WorkflowName      string `json:"workflow_name"`
+	RunnerEnvironment string `json:"runner_environment"`
+	CertIssuer        string `json:"cert_issuer"`
+}
+
+type verificationResult struct {
+	Verification verification `json:"Verification"`
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
@@ -106,10 +123,6 @@ func (i *Ingest) getApplicableArtifactVersions(
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
 ) ([]map[string]any, error) {
-	var applicableArtifactVersions []struct {
-		Verification   any
-		GithubWorkflow any
-	}
 	// make sure the artifact type matches
 	if newArtifactIngestType(artifact.Type) != cfg.Type {
 		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact type mismatch")
@@ -131,35 +144,45 @@ func (i *Ingest) getApplicableArtifactVersions(
 	if err != nil {
 		return nil, err
 	}
+
+	versionResults := make([]verificationResult, 0, len(versions))
 	for _, artifactVersion := range versions {
 		if !isProcessable(artifactVersion.Tags) {
 			continue
 		}
 
 		if tagMatcher.MatchTag(artifactVersion.Tags...) {
-			sig, wflow, err := getSignatureAndWorkflowInVersion(
+			res, err := getVerificationResult(
 				ctx, i.ghCli, artifact.Owner, artifact.Name, artifactVersion.Sha, cfg.Sigstore)
 			if err != nil {
 				return nil, err
 			}
-			applicableArtifactVersions = append(applicableArtifactVersions, struct {
-				Verification   any
-				GithubWorkflow any
-			}{sig, wflow})
+			versionResults = append(versionResults, verificationResult{
+				Verification: verification{
+					IsSigned:          res.IsSigned,
+					IsVerified:        res.IsVerified,
+					IsBundleVerified:  res.IsBundleVerified,
+					Repository:        res.Signature.Certificate.SourceRepositoryURI,
+					Branch:            branchFromRef(res.Signature.Certificate.SourceRepositoryRef),
+					WorkflowName:      res.Signature.Certificate.BuildSignerURI,
+					RunnerEnvironment: res.Signature.Certificate.RunnerEnvironment,
+					CertIssuer:        res.Signature.Certificate.Issuer,
+				},
+			})
 		}
 	}
 
 	// if no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
-	if len(applicableArtifactVersions) == 0 {
+	if len(versionResults) == 0 {
 		return nil, evalerrors.NewErrEvaluationFailed("no applicable artifact versions found")
 	}
 
-	jsonBytes, err := json.Marshal(applicableArtifactVersions)
+	jsonBytes, err := json.Marshal(versionResults)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]map[string]any, 0, len(applicableArtifactVersions))
+	result := make([]map[string]any, 0, len(versionResults))
 	err = json.Unmarshal(jsonBytes, &result)
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
@@ -167,6 +190,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	if err != nil {
 		return nil, err
 	}
+
 	// return the list of applicable artifact versions
 	return result, nil
 }
@@ -222,29 +246,30 @@ func isProcessable(tags []string) bool {
 	return true
 }
 
-func getSignatureAndWorkflowInVersion(
+func getVerificationResult(
 	ctx context.Context,
 	client provifv1.GitHub,
-	artifactOwnerLogin, artifactName, packageVersionName, sigstoreURL string,
-) (*pb.SignatureVerification, *pb.GithubWorkflow, error) {
+	artifactOwnerLogin, artifactName, sha, sigstoreURL string,
+) (*verifyif.Result, error) {
 	// get the verifier for sigstore
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		sigstoreURL,
 		container.WithAccessToken(client.GetToken()), container.WithGitHubClient(client))
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting sigstore verifier: %w", err)
+		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
 	defer artifactVerifier.ClearCache()
 
 	// now get information for signature and workflow
 	res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
-		artifactOwnerLogin, artifactName, packageVersionName)
+		artifactOwnerLogin, artifactName, sha)
 	if err != nil {
+		// FIXME: safer to return a special error here and catch it in the caller
 		zerolog.Ctx(ctx).Debug().Err(err).Str("URI", res.URI).Msg("no signature information found")
 	}
 
-	return res.SignatureInfoProto(), res.WorkflowInfoProto(), nil
+	return res, nil
 }
 
 var (
@@ -276,4 +301,12 @@ func isSkippable(artifactType verifier.ArtifactType, createdAt time.Time, opts m
 	default:
 		return nil
 	}
+}
+
+func branchFromRef(ref string) string {
+	if strings.HasPrefix(ref, "refs/heads/") {
+		return ref[len("refs/heads/"):]
+	}
+
+	return ""
 }

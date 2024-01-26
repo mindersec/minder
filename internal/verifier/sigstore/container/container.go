@@ -44,7 +44,7 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -93,10 +93,10 @@ func Verify(
 	sev *verify.SignedEntityVerifier,
 	registry, owner, artifact, version string,
 	authOpts ...AuthMethod,
-) ([]byte, []byte, error) {
+) (*verifyif.Result, error) {
 
 	// create a default verification result
-	params := newVerifyResult(BuildImageRef(registry, owner, artifact, version))
+	params := newVerifyResult(buildImageRef(registry, owner, artifact, version))
 
 	auth := newContainerAuth(authOpts...)
 
@@ -107,7 +107,7 @@ func Verify(
 	}
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// verify the artifact
@@ -116,41 +116,16 @@ func Verify(
 		verify.WithCertificateIdentity(*params.certID),
 	))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	// at the point, we have verified the artifact
-	params.si.IsVerified = true
-	params.si.IsBundleVerified = true
-
-	// parse the verification result, populate signature and workflow info and return their bytes
-	return parseVerificationResult(params, verificationResult)
-}
-
-func parseVerificationResult(params *verifyResult, res *verify.VerificationResult) ([]byte, []byte, error) {
-	// this is not the workflow name, i.e. "Release", instead it is the workflow's URI
-	// example: https://github.com/stacklok/minder/.github/workflows/chart-publish.yml@refs/heads/main
-	params.wi.Name = res.Signature.Certificate.BuildSignerURI
-
-	// repository name, example: https://github.com/stacklok/minder
-	params.wi.Repository = res.Signature.Certificate.SourceRepositoryURI
-
-	// source commit sha, example: 6dc6c6c27184f919ba6ca258e064bd7dd18e9200
-	params.wi.CommitSha = res.Signature.Certificate.SourceRepositoryDigest
-
-	// build trigger event, example: push
-	params.wi.Trigger = res.Signature.Certificate.BuildTrigger
-
-	// convert the signature and workflow info to bytes
-	sig, err := util.GetBytesFromProto(params.si)
-	if err != nil {
-		return nil, nil, err
-	}
-	work, err := util.GetBytesFromProto(params.wi)
-	if err != nil {
-		return sig, nil, err
-	}
-	return sig, work, err
+	return &verifyif.Result{
+		IsSigned:           true,
+		IsVerified:         true,
+		IsBundleVerified:   true,
+		URI:                buildImageRef(registry, owner, artifact, version),
+		VerificationResult: *verificationResult,
+	}, nil
 }
 
 // Attestation is the attestation from the GitHub attestation endpoint
@@ -606,8 +581,8 @@ func newGithubAuthenticator(username, password string) githubAuthenticator {
 	return githubAuthenticator{username, password}
 }
 
-// BuildImageRef returns the OCI image reference
-func BuildImageRef(registry, owner, artifact, version string) string {
+// buildImageRef returns the OCI image reference
+func buildImageRef(registry, owner, artifact, version string) string {
 	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, version)
 }
 

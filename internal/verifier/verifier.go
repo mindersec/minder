@@ -17,17 +17,15 @@ package verifier
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 )
 
 const (
@@ -36,13 +34,6 @@ const (
 	// LocalCacheDir is the local cache directory for the verifier
 	LocalCacheDir = "/tmp/minder-cache"
 )
-
-// ArtifactVerifier is the interface for artifact verifiers
-type ArtifactVerifier interface {
-	VerifyContainer(ctx context.Context,
-		registry, owner, artifact, version string) (
-		sigInfo json.RawMessage, workflowInfo json.RawMessage, err error)
-}
 
 // Type represents the type of verifier, i.e., sigstore, slsa, etc.
 type Type string
@@ -70,14 +61,14 @@ const (
 
 // Verifier is the object that verifies artifacts
 type Verifier struct {
-	verifier ArtifactVerifier
+	verifier verifyif.ArtifactVerifier
 	cacheDir string
 }
 
 // NewVerifier creates a new Verifier object
 func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.AuthMethod) (*Verifier, error) {
 	var err error
-	var v ArtifactVerifier
+	var v verifyif.ArtifactVerifier
 
 	// create a temporary directory for storing the sigstore cache
 	tmpDir, err := createTmpDir(LocalCacheDir, "sigstore")
@@ -111,29 +102,21 @@ func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.A
 
 // Verify verifies an artifact
 func (v *Verifier) Verify(ctx context.Context, artifactType ArtifactType, registry ArtifactRegistry,
-	owner, artifact, version string) (*Result, error) {
+	owner, artifact, version string) (*verifyif.Result, error) {
 	var err error
-	var sigInfo, workInfo json.RawMessage
+	var res *verifyif.Result
 	// Sanitize the input
 	sanitizeInput(&registry, &owner)
-
-	ref := container.BuildImageRef(string(registry), owner, artifact, version)
 
 	// Process verification based on the artifact type
 	switch artifactType {
 	case ArtifactTypeContainer:
-		sigInfo, workInfo, err = v.verifier.VerifyContainer(ctx, string(registry), owner, artifact, version)
+		res, err = v.verifier.VerifyContainer(ctx, string(registry), owner, artifact, version)
 	default:
 		err = fmt.Errorf("unknown artifact type: %s", artifactType)
 	}
 
-	// Ensure we return valid empty infos on error
-	if err != nil {
-		return &Result{SignatureInfo: json.RawMessage("{}"), WorkflowInfo: json.RawMessage("{}"), URI: ref}, err
-	}
-
-	// All okay, return the signature and workflow info
-	return &Result{SignatureInfo: sigInfo, WorkflowInfo: workInfo, URI: ref}, nil
+	return res, err
 }
 
 // ClearCache cleans up the verifier cache directory and all its contents
@@ -163,35 +146,6 @@ func sanitizeInput(registry *ArtifactRegistry, owner *string) {
 	}
 	// (jaosorior): The owner can't be upper-cased, normalize the owner.
 	*owner = strings.ToLower(*owner)
-}
-
-// Result is the result of the verification
-type Result struct {
-	SignatureInfo json.RawMessage
-	WorkflowInfo  json.RawMessage
-	URI           string
-}
-
-// WorkflowInfoProto returns the workflow info as a GithubWorkflow protobuf
-func (r *Result) WorkflowInfoProto() *pb.GithubWorkflow {
-	ghWorkflow := &pb.GithubWorkflow{}
-	if err := protojson.Unmarshal(r.WorkflowInfo, ghWorkflow); err != nil {
-		log.Printf("error unmarshalling github workflow: %v", err)
-		// return empty workflow
-		return &pb.GithubWorkflow{}
-	}
-	return ghWorkflow
-}
-
-// SignatureInfoProto returns the signature info as a SignatureVerification protobuf
-func (r *Result) SignatureInfoProto() *pb.SignatureVerification {
-	sigInfo := &pb.SignatureVerification{}
-	if err := protojson.Unmarshal(r.SignatureInfo, sigInfo); err != nil {
-		log.Printf("error unmarshalling signature info: %v", err)
-		// return empty signature info
-		return &pb.SignatureVerification{}
-	}
-	return sigInfo
 }
 
 func createTmpDir(path, prefix string) (string, error) {

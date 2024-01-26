@@ -102,10 +102,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error verifying container: %w", err)
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "Signature: %s\n", res.SignatureInfo)
-	fmt.Fprintf(cmd.OutOrStdout(), "Workflow: %s\n", res.WorkflowInfo)
-	fmt.Fprintf(cmd.OutOrStdout(), "URI: %s\n", res.URI)
-
+	fmt.Fprintf(cmd.OutOrStdout(), "Result: %+v\n", res)
 	return nil
 }
 
