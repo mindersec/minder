@@ -29,6 +29,7 @@ import (
 	fgasdk "github.com/openfga/go-sdk"
 	fgaclient "github.com/openfga/go-sdk/client"
 	"github.com/openfga/go-sdk/credentials"
+	"github.com/rs/zerolog"
 	"k8s.io/client-go/transport"
 
 	"github.com/stacklok/minder/internal/auth"
@@ -50,30 +51,32 @@ var (
 type ClientWrapper struct {
 	cfg *srvconfig.AuthzConfig
 	cli *fgaclient.OpenFgaClient
+	l   *zerolog.Logger
 }
 
 var _ Client = &ClientWrapper{}
 
 // NewAuthzClient returns a new AuthzClientWrapper
-func NewAuthzClient(cfg *srvconfig.AuthzConfig) (*ClientWrapper, error) {
+func NewAuthzClient(cfg *srvconfig.AuthzConfig, l *zerolog.Logger) (Client, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 
 	cliWrap := &ClientWrapper{
 		cfg: cfg,
+		l:   l,
 	}
 
-	if err := cliWrap.ResetAuthzClient(); err != nil {
+	if err := cliWrap.initAuthzClient(); err != nil {
 		return nil, err
 	}
 
 	return cliWrap, nil
 }
 
-// ResetAuthzClient initializes the authz client based on the configuration.
+// initAuthzClient initializes the authz client based on the configuration.
 // Note that this assumes the configuration has already been validated.
-func (a *ClientWrapper) ResetAuthzClient() error {
+func (a *ClientWrapper) initAuthzClient() error {
 	clicfg := &fgaclient.ClientConfiguration{
 		ApiUrl: a.cfg.ApiUrl,
 		Credentials: &credentials.Credentials{
@@ -110,14 +113,14 @@ func (a *ClientWrapper) ResetAuthzClient() error {
 // This is handy when migrations have already been done and helps us auto-discover
 // the store ID and model.
 func (a *ClientWrapper) PrepareForRun(ctx context.Context) error {
-	storeID, err := a.FindStoreByName(ctx)
+	storeID, err := a.findStoreByName(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to find authz store: %w", err)
 	}
 
 	a.cli.SetStoreId(storeID)
 
-	modelID, err := a.FindLatestModel(ctx)
+	modelID, err := a.findLatestModel(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to find authz model: %w", err)
 	}
@@ -129,25 +132,55 @@ func (a *ClientWrapper) PrepareForRun(ctx context.Context) error {
 	return nil
 }
 
-// GetClient returns the OpenFgaClient
-func (a *ClientWrapper) GetClient() *fgaclient.OpenFgaClient {
-	// TODO: check if token is expired and refresh it
-	// Note that this will probably need a mutex
-	return a.cli
-}
-
-// GetConfig returns the authz configuration used to build the client
-func (a *ClientWrapper) GetConfig() *srvconfig.AuthzConfig {
-	return a.cfg
-}
-
 // StoreIDProvided returns true if the store ID was provided in the configuration
 func (a *ClientWrapper) StoreIDProvided() bool {
 	return a.cfg.StoreID != ""
 }
 
-// FindStoreByName returns the store ID for the configured store name
-func (a *ClientWrapper) FindStoreByName(ctx context.Context) (string, error) {
+// MigrateUp runs the authz migrations. For OpenFGA this means creating the store
+// and writing the authz model.
+func (a *ClientWrapper) MigrateUp(ctx context.Context) error {
+	if !a.StoreIDProvided() {
+		if err := a.ensureAuthzStore(ctx); err != nil {
+			return err
+		}
+	}
+
+	m, err := a.writeModel(ctx)
+	if err != nil {
+		return fmt.Errorf("error while writing authz model: %w", err)
+	}
+
+	a.l.Printf("Wrote authz model %s\n", m)
+
+	return nil
+}
+
+func (a *ClientWrapper) ensureAuthzStore(ctx context.Context) error {
+	storeName := a.cfg.StoreName
+	storeID, err := a.findStoreByName(ctx)
+	if err != nil && !errors.Is(err, ErrStoreNotFound) {
+		return err
+	} else if errors.Is(err, ErrStoreNotFound) {
+		a.l.Printf("Creating authz store %s\n", storeName)
+		id, err := a.createStore(ctx)
+		if err != nil {
+			return err
+		}
+		a.l.Printf("Created authz store %s/%s\n", id, storeName)
+		a.cli.SetStoreId(id)
+		return nil
+	}
+
+	a.l.Printf("Not creating store. Found store with name '%s' and ID '%s'.\n",
+		storeName, storeID)
+
+	a.cli.SetStoreId(storeID)
+	return nil
+}
+
+// findStoreByName returns the store ID for the configured store name
+func (a *ClientWrapper) findStoreByName(ctx context.Context) (string, error) {
 	stores, err := a.cli.ListStores(ctx).Execute()
 	if err != nil {
 		return "", fmt.Errorf("error while listing authz stores: %w", err)
@@ -163,8 +196,8 @@ func (a *ClientWrapper) FindStoreByName(ctx context.Context) (string, error) {
 	return "", ErrStoreNotFound
 }
 
-// CreateStore creates a new store with the configured name
-func (a *ClientWrapper) CreateStore(ctx context.Context) (string, error) {
+// createStore creates a new store with the configured name
+func (a *ClientWrapper) createStore(ctx context.Context) (string, error) {
 	st, err := a.cli.CreateStore(ctx).Body(fgaclient.ClientCreateStoreRequest{
 		Name: a.cfg.StoreName,
 	}).Execute()
@@ -175,8 +208,8 @@ func (a *ClientWrapper) CreateStore(ctx context.Context) (string, error) {
 	return st.Id, nil
 }
 
-// FindLatestModel returns the latest authz model ID
-func (a *ClientWrapper) FindLatestModel(ctx context.Context) (string, error) {
+// findLatestModel returns the latest authz model ID
+func (a *ClientWrapper) findLatestModel(ctx context.Context) (string, error) {
 	resp, err := a.cli.ReadLatestAuthorizationModel(ctx).Execute()
 	if err != nil {
 		return "", fmt.Errorf("error while reading authz model: %w", err)
@@ -185,8 +218,8 @@ func (a *ClientWrapper) FindLatestModel(ctx context.Context) (string, error) {
 	return resp.AuthorizationModel.Id, nil
 }
 
-// WriteModel writes the authz model to the configured store
-func (a *ClientWrapper) WriteModel(ctx context.Context) (string, error) {
+// writeModel writes the authz model to the configured store
+func (a *ClientWrapper) writeModel(ctx context.Context) (string, error) {
 	var body fgasdk.WriteAuthorizationModelRequest
 	if err := json.Unmarshal([]byte(authzModel), &body); err != nil {
 		return "", fmt.Errorf("failed to unmarshal authz model: %w", err)

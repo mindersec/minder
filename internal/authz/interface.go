@@ -62,4 +62,11 @@ type Client interface {
 	// NOTE: this method _DOES NOT CHECK_ that the current user in the context
 	// has permissions to update the project.
 	Delete(ctx context.Context, user string, role Role, project uuid.UUID) error
+
+	// PrepareForRun allows for any preflight configurations to be done before
+	// the server is started.
+	PrepareForRun(ctx context.Context) error
+
+	// MigrateUp runs the authz migrations
+	MigrateUp(ctx context.Context) error
 }

@@ -105,7 +105,7 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
 
-		authzc, err := authz.NewAuthzClient(&cfg.Authz)
+		authzc, err := authz.NewAuthzClient(&cfg.Authz, l)
 		if err != nil {
 			return fmt.Errorf("unable to create authz client: %w", err)
 		}
