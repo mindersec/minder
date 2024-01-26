@@ -75,7 +75,7 @@ type Verifier struct {
 }
 
 // NewVerifier creates a new Verifier object
-func NewVerifier(verifier Type, containerAuth ...container.AuthMethod) (*Verifier, error) {
+func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.AuthMethod) (*Verifier, error) {
 	var err error
 	var v ArtifactVerifier
 	// create a temporary directory for storing the sigstore cache
@@ -83,11 +83,13 @@ func NewVerifier(verifier Type, containerAuth ...container.AuthMethod) (*Verifie
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary sigstore cache directory: %w", err)
 	}
-
+	if verifierURL == "" {
+		verifierURL = sigstore.SigstorePublicTrustedRootRepo
+	}
 	// create the verifier
 	switch verifier {
 	case VerifierSigstore:
-		v, err = sigstore.New(sigstore.SigstorePublicTrustedRootRepo, tmpDir, containerAuth...)
+		v, err = sigstore.New(verifierURL, tmpDir, containerAuth...)
 		if err != nil {
 			return nil, fmt.Errorf("error creating sigstore verifier: %w", err)
 		}

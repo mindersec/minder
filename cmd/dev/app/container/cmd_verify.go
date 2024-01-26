@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -86,6 +87,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
+		sigstore.SigstorePublicTrustedRootRepo,
 		container.WithAccessToken(token), container.WithGitHubClient(ghcli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)

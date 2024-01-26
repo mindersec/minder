@@ -42,6 +42,7 @@ func newArtifactIngestType(s string) artifactType {
 type ingesterConfig struct {
 	Name     string       `yaml:"name" json:"name" mapstructure:"name"`
 	Tags     []string     `yaml:"tags" json:"tags" mapstructure:"tags"`
+	Sigstore string       `yaml:"sigstore" json:"sigstore" mapstructure:"sigstore"`
 	TagRegex string       `yaml:"tag_regex" json:"tag_regex" mapstructure:"tag_regex"`
 	Type     artifactType `yaml:"type" json:"type" mapstructure:"type"`
 }
