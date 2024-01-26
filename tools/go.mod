@@ -200,7 +200,7 @@ require (
 	github.com/openfga/api/proto v0.0.0-20231222042535-3037910c90c0 // indirect
 	github.com/openfga/go-sdk v0.3.4 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240123042137-314566b6bc14 // indirect
-	github.com/openfga/openfga v1.4.2 // indirect
+	github.com/openfga/openfga v1.4.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pganalyze/pg_query_go/v4 v4.2.4-0.20231205012101-7463430c7b73 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
