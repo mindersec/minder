@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -156,6 +157,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	// create artifact verifier
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
+		sigstore.SigstorePublicTrustedRootRepo,
 		container.WithAccessToken(cli.GetToken()), container.WithGitHubClient(cli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
