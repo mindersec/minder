@@ -255,7 +255,9 @@ func (a *ClientWrapper) Delete(ctx context.Context, user string, role Role, proj
 			Object:   getProjectForTuple(project),
 		},
 	}).Execute()
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "cannot delete a tuple which does not exist") {
+		return nil
+	} else if err != nil {
 		return fmt.Errorf("unable to remove authorization tuple: %w", err)
 	}
 
