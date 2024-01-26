@@ -56,6 +56,11 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 	return nil
 }
 
+// DeleteUser implements authz.Client
+func (_ *SimpleClient) DeleteUser(_ context.Context, _ string) error {
+	return nil
+}
+
 // PrepareForRun implements authz.Client
 func (_ *SimpleClient) PrepareForRun(_ context.Context) error {
 	return nil

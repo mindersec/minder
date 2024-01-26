@@ -157,15 +157,8 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 		return fmt.Errorf("error retrieving user %v", err)
 	}
 
-	projs, err := store.GetUserProjects(ctx, user.ID)
-	if err != nil {
-		return fmt.Errorf("error retrieving user projects %v", err)
-	}
-
-	for _, proj := range projs {
-		if err := authzClient.Delete(ctx, userId, authz.AuthzRoleAdmin, proj.ID); err != nil {
-			return fmt.Errorf("error deleting authorization tuple %v", err)
-		}
+	if err := authzClient.DeleteUser(ctx, userId); err != nil {
+		return fmt.Errorf("error deleting authorization tuple %v", err)
 	}
 
 	err = qtx.DeleteOrganization(ctx, user.OrganizationID)

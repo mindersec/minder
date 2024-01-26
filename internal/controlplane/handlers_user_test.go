@@ -341,8 +341,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().
 		DeleteOrganization(gomock.Any(), orgID).
 		Return(nil)
-	mockStore.EXPECT().GetUserProjects(gomock.Any(), gomock.Any()).
-		Return([]db.GetUserProjectsRow{}, nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
@@ -398,8 +396,6 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					Return(db.User{
 						OrganizationID: orgID,
 					}, nil)
-				store.EXPECT().GetUserProjects(gomock.Any(), gomock.Any()).
-					Return([]db.GetUserProjectsRow{}, nil)
 				store.EXPECT().
 					DeleteOrganization(gomock.Any(), orgID).
 					Return(nil)

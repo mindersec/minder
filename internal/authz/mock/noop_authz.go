@@ -53,6 +53,11 @@ func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UU
 	return nil
 }
 
+// DeleteUser implements authz.Client
+func (_ *NoopClient) DeleteUser(_ context.Context, _ string) error {
+	return nil
+}
+
 // PrepareForRun implements authz.Client
 func (_ *NoopClient) PrepareForRun(_ context.Context) error {
 	return nil

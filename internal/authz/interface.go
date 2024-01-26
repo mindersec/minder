@@ -40,6 +40,15 @@ const (
 	AuthzRolePolicyWriter Role = "policy_writer"
 )
 
+var (
+	allRoles = []Role{
+		AuthzRoleAdmin,
+		AuthzRoleEditor,
+		AuthzRoleViewer,
+		AuthzRolePolicyWriter,
+	}
+)
+
 func (r Role) String() string {
 	return string(r)
 }
@@ -62,6 +71,9 @@ type Client interface {
 	// NOTE: this method _DOES NOT CHECK_ that the current user in the context
 	// has permissions to update the project.
 	Delete(ctx context.Context, user string, role Role, project uuid.UUID) error
+
+	// DeleteUser removes all authorizations for the given user.
+	DeleteUser(ctx context.Context, user string) error
 
 	// PrepareForRun allows for any preflight configurations to be done before
 	// the server is started.
