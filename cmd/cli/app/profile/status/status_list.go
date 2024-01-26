@@ -46,7 +46,8 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	profileName := viper.GetString("name")
 	format := viper.GetString("output")
 	all := viper.GetBool("detailed")
-	rule := viper.GetString("rule")
+	ruleType := viper.GetString("ruleType")
+	ruleName := viper.GetString("ruleName")
 
 	// Ensure provider is supported
 	if !app.IsProviderSupported(provider) {
@@ -59,10 +60,11 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		Name:    profileName,
-		All:     all,
-		Rule:    rule,
+		Context:  &minderv1.Context{Provider: &provider, Project: &project},
+		Name:     profileName,
+		All:      all,
+		RuleType: ruleType,
+		RuleName: ruleName,
 	})
 	if err != nil {
 		return cli.MessageAndError("Error getting profile status", err)
@@ -98,5 +100,6 @@ func init() {
 	profileStatusCmd.AddCommand(listCmd)
 	// Flags
 	listCmd.Flags().BoolP("detailed", "d", false, "List all profile violations")
-	listCmd.Flags().StringP("rule", "r", "", "Filter profile status list by rule")
+	listCmd.Flags().StringP("ruleType", "r", "", "Filter profile status list by rule type")
+	listCmd.Flags().String("ruleName", "", "Filter profile status list by rule name")
 }

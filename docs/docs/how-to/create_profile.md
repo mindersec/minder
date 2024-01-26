@@ -230,6 +230,8 @@ alert: "on"
 remediate: "on"
 repository:
   - type: secret_scanning
+    name: "secret_scanning_github" # Optional, as there aren't multiple rules
+                                   # of the same type under the entity - repository
     def:
       enabled: true
 ```
@@ -251,3 +253,105 @@ run the following command:
 ```bash
 minder profile status list --name stacklok-remediate-profile -d -ojson 2>/dev/null | jq  -C '.ruleEvaluationStatus | map(select(.entityInfo.repo_name == "minder" and .status == "failure"))'
 ```
+
+## Defining Rule Names in Profiles
+
+In Minder profiles, rules are identified by their type and, optionally, a unique name.
+
+### Rule Types vs Rule Names
+
+Rule types are mandatory and refer to the kind of rule being applied. Rule names, on the other hand, are optional 
+identifiers that become crucial when multiple rules of the same type exist under an entity.
+
+```yaml
+repository:
+  - type: secret_scanning
+    name: "secret_scanning_github"
+    def:
+      enabled: true
+```
+In this example, `secret_scanning` is the rule type and `secret_scanning_github` is the rule name.
+
+### When are Rule Names Mandatory?
+
+If you're using multiple rules of the same type under an entity, each rule must have a unique name. This helps 
+distinguish between rules and understand their specific purpose.
+
+```yaml
+repository:
+  - type: secret_scanning
+    name: "secret_scanning_github"
+    def:
+      enabled: true
+  - type: secret_scanning
+    name: "secret_scanning_github_2"
+    def:
+      enabled: false
+```
+Here, we have two rules of the same type `secret_scanning` under the `repository` entity. Each rule has a unique name.
+
+### Uniqueness of Rule Names
+
+No two rules, whether of the same type or different types, can have the same name under an entity. This avoids 
+confusion and ensures each rule can be individually managed.
+
+```yaml
+repository: # Would return an error while creating
+  - type: secret_scanning
+    name: "protect_github"
+    def:
+      enabled: true
+  - type: secret_push_protection
+    name: "protect_github"
+    def:
+      enabled: false
+```
+In the above used example, even though the rules are of different types (`secret_scanning` and `secret_push_protection`), 
+Minder will return an error while creating this profile as rule names are same under the same entity. 
+You may use same rule names under different entities (repository, artifacts, etc.)
+
+Rule name should not match any rule type, except its own rule type. If a rule name matches its own rule type, it should
+not conflict with any other rule name under the same entity, including default rule names. Example:
+
+```yaml
+repository: # Would return an error while creating
+  - type: dependabot_configured
+    name: "dependabot_configured"
+    def:
+      package_ecosystem: gomod
+      schedule_interval: daily
+      apply_if_file: go.mod
+  - type: dependabot_configured # default 'name' would be 'dependabot_configured'
+    def:
+      package_ecosystem: npm
+      schedule_interval: daily
+      apply_if_file: docs/package.json
+```
+
+In the above used example, even though the rules names appear different visually, Minder will return an error while
+creating this profile as the rule name for `npm` rule would be `dependabot_configured` internally, which is same as
+the explicit name of the `gomod` rule.
+
+### Example
+
+Consider a profile with two `dependabot_configured` rules under the `repository` entity. The first rule has a unique 
+name, "Dependabot Configured for GoLang". The second rule doesn't have a name, which is acceptable as Minder would 
+add rule type as the default name for the rule.
+
+```yaml
+repository:
+  - type: dependabot_configured
+    name: "Dependabot Configured for GoLang"
+    def:
+      package_ecosystem: gomod
+      schedule_interval: daily
+      apply_if_file: go.mod
+  - type: dependabot_configured # default 'name' would be 'dependabot_configured'
+    def:
+      package_ecosystem: npm
+      schedule_interval: daily
+      apply_if_file: docs/package.json
+```
+
+You can find the rule definitions used above and many profile examples at 
+[minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles) repository.

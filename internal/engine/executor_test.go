@@ -16,6 +16,7 @@ package engine_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -96,6 +97,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
+		gomock.Any(),
 	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
 
 	// get project information
@@ -132,6 +134,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	crs := []*minderv1.Profile_Rule{
 		{
 			Type: passthroughRuleType,
+			Name: passthroughRuleType,
 			Def:  &structpb.Struct{},
 		},
 	}
@@ -203,6 +206,7 @@ default allow = true`,
 			ArtifactID: uuid.NullUUID{},
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
+			RuleName:   sql.NullString{String: passthroughRuleType, Valid: true},
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status

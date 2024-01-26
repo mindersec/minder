@@ -20,18 +20,20 @@ const deleteRuleStatusesForProfileAndRuleType = `-- name: DeleteRuleStatusesForP
 DELETE FROM rule_evaluations
 WHERE id IN (
     SELECT id FROM rule_evaluations as re
-    WHERE re.profile_id = $1 AND re.rule_type_id = $2 FOR UPDATE)
+    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND
+          (re.rule_name = $3 OR $3 IS NULL) FOR UPDATE)
 `
 
 type DeleteRuleStatusesForProfileAndRuleTypeParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
-	RuleTypeID uuid.UUID `json:"rule_type_id"`
+	ProfileID  uuid.UUID      `json:"profile_id"`
+	RuleTypeID uuid.UUID      `json:"rule_type_id"`
+	RuleName   sql.NullString `json:"rule_name"`
 }
 
 // DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
 // but locks the table before doing so.
 func (q *Queries) DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error {
-	_, err := q.db.ExecContext(ctx, deleteRuleStatusesForProfileAndRuleType, arg.ProfileID, arg.RuleTypeID)
+	_, err := q.db.ExecContext(ctx, deleteRuleStatusesForProfileAndRuleType, arg.ProfileID, arg.RuleTypeID, arg.RuleName)
 	return err
 }
 
@@ -177,6 +179,7 @@ SELECT
     ad.alert_last_updated,
     res.repository_id,
     res.entity,
+    COALESCE(res.rule_name, ''),
     repo.repo_name,
     repo.repo_owner,
     repo.provider,
@@ -199,13 +202,15 @@ WHERE res.profile_id = $1 AND
             ELSE false
             END
         ) AND (rt.name = $4 OR $4 IS NULL)
+          AND (res.rule_name = $5 OR $5 IS NULL)
 `
 
 type ListRuleEvaluationsByProfileIdParams struct {
-	ProfileID  uuid.UUID      `json:"profile_id"`
-	EntityType NullEntities   `json:"entity_type"`
-	EntityID   uuid.NullUUID  `json:"entity_id"`
-	RuleName   sql.NullString `json:"rule_name"`
+	ProfileID    uuid.UUID      `json:"profile_id"`
+	EntityType   NullEntities   `json:"entity_type"`
+	EntityID     uuid.NullUUID  `json:"entity_id"`
+	RuleTypeName sql.NullString `json:"rule_type_name"`
+	RuleName     sql.NullString `json:"rule_name"`
 }
 
 type ListRuleEvaluationsByProfileIdRow struct {
@@ -221,6 +226,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	AlertLastUpdated sql.NullTime               `json:"alert_last_updated"`
 	RepositoryID     uuid.NullUUID              `json:"repository_id"`
 	Entity           Entities                   `json:"entity"`
+	RuleName         string                     `json:"rule_name"`
 	RepoName         string                     `json:"repo_name"`
 	RepoOwner        string                     `json:"repo_owner"`
 	Provider         string                     `json:"provider"`
@@ -233,6 +239,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 		arg.ProfileID,
 		arg.EntityType,
 		arg.EntityID,
+		arg.RuleTypeName,
 		arg.RuleName,
 	)
 	if err != nil {
@@ -255,6 +262,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.AlertLastUpdated,
 			&i.RepositoryID,
 			&i.Entity,
+			&i.RuleName,
 			&i.RepoName,
 			&i.RepoOwner,
 			&i.Provider,
@@ -374,20 +382,21 @@ func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRule
 
 const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity
-) VALUES ($1, $2, $3, $4, $5, $6)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, rule_name)
   DO UPDATE SET profile_id = $1
 RETURNING id
 `
 
 type UpsertRuleEvaluationsParams struct {
-	ProfileID     uuid.UUID     `json:"profile_id"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
-	Entity        Entities      `json:"entity"`
+	ProfileID     uuid.UUID      `json:"profile_id"`
+	RepositoryID  uuid.NullUUID  `json:"repository_id"`
+	ArtifactID    uuid.NullUUID  `json:"artifact_id"`
+	PullRequestID uuid.NullUUID  `json:"pull_request_id"`
+	RuleTypeID    uuid.UUID      `json:"rule_type_id"`
+	Entity        Entities       `json:"entity"`
+	RuleName      sql.NullString `json:"rule_name"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
@@ -398,6 +407,7 @@ func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvalu
 		arg.PullRequestID,
 		arg.RuleTypeID,
 		arg.Entity,
+		arg.RuleName,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

@@ -27,7 +27,7 @@ import (
 type ExtendQuerier interface {
 	Querier
 	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
-		entityID uuid.NullUUID, ruleName sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
+		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
 }
 
 // Store provides all functions to execute db queries and transactions
@@ -84,14 +84,16 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ctx context.Context,
 	profileID uuid.UUID,
 	entityType NullEntities,
-	entityID uuid.NullUUID,
 	ruleName sql.NullString,
+	entityID uuid.NullUUID,
+	ruleTypeName sql.NullString,
 ) (ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
-		ProfileID:  profileID,
-		EntityType: entityType,
-		EntityID:   entityID,
-		RuleName:   ruleName,
+		ProfileID:    profileID,
+		EntityType:   entityType,
+		EntityID:     entityID,
+		RuleName:     ruleName,
+		RuleTypeName: ruleTypeName,
 	}
 	res, err := q.ListRuleEvaluationsByProfileId(ctx, params)
 	if err != nil {
