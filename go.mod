@@ -42,7 +42,7 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.12.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.12.0
 	github.com/sigstore/protobuf-specs v0.2.1
-	github.com/sigstore/sigstore-go v0.0.0-20240108223800-a3df13b8ba29
+	github.com/sigstore/sigstore-go v0.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
@@ -103,7 +103,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.12.0 // indirect
-	github.com/sigstore/sigstore v1.8.0 // indirect
+	github.com/sigstore/sigstore v1.8.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/time v0.5.0 // indirect
