@@ -16,6 +16,7 @@
 version: '3.2'
 services:
   minder:
+    container_name: minder_sever
     build: .
     image: minder:latest
 
@@ -66,6 +67,7 @@ services:
       keycloak:
         condition: service_healthy
   migrate:
+    container_name: minder_migrate_up
     build: .
     image: minder:latest
 
@@ -91,6 +93,8 @@ services:
         window: 120s
     depends_on:
       postgres:
+        condition: service_healthy
+      openfga:
         condition: service_healthy
   postgres:
       container_name: postgres_container

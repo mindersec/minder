@@ -16,15 +16,23 @@ jobs:
           go-version-file: 'go.mod'
       - name: Install ko
         uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
+      - name: Copy server-config.yaml
+        run: cp config/server-config.yaml.example server-config.yaml
       - name: Start containers
-        run: KO_DOCKER_REPO=ko.local make run-docker services="postgres migrate"
+        run: KO_DOCKER_REPO=ko.local make run-docker services="postgres migrate openfga" COMPOSE="docker compose"
       - name: Wait for the migrations to complete
         timeout-minutes: 1
         run: |
           set -e
 
-          while [ "$(docker logs minder_migrate_1 | grep 'Database migration completed successfully')" = "" ]; do
-            sleep 1
+          while [ "$(docker inspect -f '{{.State.Running}}' minder_migrate_up)" == "true" ]; do
+              sleep 1
           done
+          
+          if [ "$(docker inspect -f '{{.State.ExitCode}}' minder_migrate_up)" != "0" ]; then
+              echo "Migrations failed"
+              docker logs minder_migrate_up
+              exit 1
+          fi
       - name: Check that the database contains the tables found in the migrations folder
         run: "set -e\n\ntables=$(grep -Ri 'CREATE TABLE' database/migrations | sed -E 's/.*CREATE TABLE (IF NOT EXISTS )?(.*) \\(/\\2/i')\nfor table in $tables; do\n  docker exec $(docker ps -a | grep postgres | awk '{print $1}') psql -U postgres -d minder -c \"SELECT * FROM $table\"\ndone \n"
