@@ -140,7 +140,7 @@ services:
 
   openfga:
     container_name: openfga
-    image: openfga/openfga:v1.4.1
+    image: openfga/openfga:v1.4.3
     command:
       - "run"
     healthcheck:
