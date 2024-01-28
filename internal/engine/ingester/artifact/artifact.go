@@ -266,7 +266,8 @@ func getVerificationResult(
 		artifactOwnerLogin, artifactName, sha)
 	if err != nil {
 		// FIXME: safer to return a special error here and catch it in the caller
-		zerolog.Ctx(ctx).Debug().Err(err).Str("URI", res.URI).Msg("no signature information found")
+		zerolog.Ctx(ctx).Debug().Err(err).Str("URI", res.GetUri()).Msg("no signature information found")
+		return nil, err
 	}
 
 	return res, nil

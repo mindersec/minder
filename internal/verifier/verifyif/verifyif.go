@@ -31,6 +31,16 @@ type Result struct {
 	verify.VerificationResult
 }
 
+// GetUri returns the URI of the artifact
+// explicit getter because the URI is something we might want to try
+// displaying even if the result is nil as part of error handling
+func (r *Result) GetUri() string {
+	if r == nil {
+		return ""
+	}
+	return r.URI
+}
+
 // ArtifactVerifier is the interface for artifact verifiers
 type ArtifactVerifier interface {
 	VerifyContainer(ctx context.Context,
