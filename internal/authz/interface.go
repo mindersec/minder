@@ -41,7 +41,8 @@ const (
 )
 
 var (
-	allRoles = []Role{
+	// AllRoles is a list of all roles
+	AllRoles = []Role{
 		AuthzRoleAdmin,
 		AuthzRoleEditor,
 		AuthzRoleViewer,
