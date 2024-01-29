@@ -57,19 +57,27 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 	testCases := []struct {
 		name            string
 		req             any
-		scope           minder.ObjectOwner
+		resource        minder.TargetResource
 		rpcErr          error
 		expectedContext engine.EntityContext // Only if non-error
 	}{
 		{
-			name: "non project owner bypasses interceptor",
+			name: "not implementing proto context throws error",
 			// Does not implement HasProtoContext
-			req:    struct{}{},
-			rpcErr: status.Errorf(codes.Internal, "Error extracting context from request"),
-		}, {
+			req:      struct{}{},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			rpcErr:   status.Errorf(codes.Internal, "Error extracting context from request"),
+		},
+		{
+			name:     "target resource unspecified throws error",
+			req:      &request{},
+			resource: minder.TargetResource_TARGET_RESOURCE_UNSPECIFIED,
+			rpcErr:   status.Errorf(codes.Internal, "cannot perform authorization, because target resource is unspecified"),
+		},
+		{
 			name:            "non project owner bypasses interceptor",
-			scope:           minder.ObjectOwner_OBJECT_OWNER_USER,
 			req:             &request{},
+			resource:        minder.TargetResource_TARGET_RESOURCE_USER,
 			expectedContext: engine.EntityContext{},
 		},
 		{
@@ -77,6 +85,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			req: &request{
 				Context: &minder.Context{},
 			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			expectedContext: engine.EntityContext{
 				// Uses the default project id
 				Project: engine.Project{ID: defaultProjectID},
@@ -88,6 +97,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 					Project: &projectIdStr,
 				},
 			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			expectedContext: engine.EntityContext{
 				Project: engine.Project{ID: projectID},
 			},
@@ -99,6 +109,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 					Provider: &provider,
 				},
 			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			expectedContext: engine.EntityContext{
 				Project:  engine.Project{ID: projectID},
 				Provider: engine.Provider{Name: provider},
@@ -111,11 +122,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tc.scope == minder.ObjectOwner_OBJECT_OWNER_UNSPECIFIED {
-				tc.scope = minder.ObjectOwner_OBJECT_OWNER_PROJECT
-			}
 			rpcOptions := &minder.RpcOptions{
-				AuthScope: tc.scope,
+				TargetResource: tc.resource,
 			}
 
 			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
@@ -147,29 +155,28 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 	testCases := []struct {
 		name      string
 		entityCtx *engine.EntityContext
-		anonymous bool
-		scope     minder.ObjectOwner
+		resource  minder.TargetResource
 		rpcErr    error
 	}{
 		{
 			name:      "anonymous bypasses interceptor",
 			entityCtx: &engine.EntityContext{},
-			anonymous: true,
+			resource:  minder.TargetResource_TARGET_RESOURCE_NONE,
 		},
 		{
 			name:      "non project owner bypasses interceptor",
-			scope:     minder.ObjectOwner_OBJECT_OWNER_USER,
+			resource:  minder.TargetResource_TARGET_RESOURCE_USER,
 			entityCtx: &engine.EntityContext{},
 		},
 		{
 			name:      "no permissions error",
-			scope:     minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			resource:  minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			entityCtx: &engine.EntityContext{},
 			rpcErr:    util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
 		},
 		{
-			name:  "not authorized on project error",
-			scope: minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			name:     "not authorized on project error",
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			entityCtx: &engine.EntityContext{
 				Project: engine.Project{
 					ID: projectID,
@@ -178,8 +185,8 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
 		},
 		{
-			name:  "authorized on project",
-			scope: minder.ObjectOwner_OBJECT_OWNER_PROJECT,
+			name:     "authorized on project",
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			entityCtx: &engine.EntityContext{
 				Project: engine.Project{
 					ID: defaultProjectID,
@@ -193,12 +200,8 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			if tc.scope == minder.ObjectOwner_OBJECT_OWNER_UNSPECIFIED {
-				tc.scope = minder.ObjectOwner_OBJECT_OWNER_PROJECT
-			}
 			rpcOptions := &minder.RpcOptions{
-				Anonymous: tc.anonymous,
-				AuthScope: tc.scope,
+				TargetResource: tc.resource,
 			}
 
 			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {

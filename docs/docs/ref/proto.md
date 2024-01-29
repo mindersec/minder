@@ -1217,11 +1217,11 @@ This is used to fetch data from a REST endpoint.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| anonymous | [bool](#bool) |  |  |
 | no_log | [bool](#bool) |  |  |
 | owner_only | [bool](#bool) |  |  |
 | root_admin_only | [bool](#bool) |  |  |
-| auth_scope | [ObjectOwner](#minder-v1-ObjectOwner) |  |  |
+| target_resource | [TargetResource](#minder-v1-TargetResource) |  |  |
+| relation | [Relation](#minder-v1-Relation) |  |  |
 
 
 <a name="minder-v1-RuleEvaluationStatus"></a>
@@ -1602,6 +1602,7 @@ user record to be returned
 
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
+| name | string | .google.protobuf.EnumValueOptions | 42445 |  |
 | rpc_options | RpcOptions | .google.protobuf.MethodOptions | 51077 |  |
 
 
@@ -1647,6 +1648,62 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_USER | 3 |  |
 
 
+<a name="minder-v1-Relation"></a>
+
+### Relation
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RELATION_UNSPECIFIED | 0 |  |
+| RELATION_CREATE | 1 |  |
+| RELATION_GET | 2 |  |
+| RELATION_UPDATE | 3 |  |
+| RELATION_DELETE | 4 |  |
+| RELATION_ROLE_LIST | 5 |  |
+| RELATION_ROLE_ASSIGNMENT_LIST | 6 |  |
+| RELATION_ROLE_ASSIGNMENT_CREATE | 7 |  |
+| RELATION_ROLE_ASSIGNMENT_REMOVE | 8 |  |
+| RELATION_REPO_GET | 9 |  |
+| RELATION_REPO_CREATE | 10 |  |
+| RELATION_REPO_UPDATE | 11 |  |
+| RELATION_REPO_DELETE | 12 |  |
+| RELATION_ARTIFACT_GET | 13 |  |
+| RELATION_ARTIFACT_CREATE | 14 |  |
+| RELATION_ARTIFACT_UPDATE | 15 |  |
+| RELATION_ARTIFACT_DELETE | 16 |  |
+| RELATION_PR_GET | 17 |  |
+| RELATION_PR_CREATE | 18 |  |
+| RELATION_PR_UPDATE | 19 |  |
+| RELATION_PR_DELETE | 20 |  |
+| RELATION_PROVIDER_GET | 21 |  |
+| RELATION_PROVIDER_CREATE | 22 |  |
+| RELATION_PROVIDER_UPDATE | 23 |  |
+| RELATION_PROVIDER_DELETE | 24 |  |
+| RELATION_RULE_TYPE_GET | 25 |  |
+| RELATION_RULE_TYPE_CREATE | 26 |  |
+| RELATION_RULE_TYPE_UPDATE | 27 |  |
+| RELATION_RULE_TYPE_DELETE | 28 |  |
+| RELATION_PROFILE_GET | 29 |  |
+| RELATION_PROFILE_CREATE | 30 |  |
+| RELATION_PROFILE_UPDATE | 31 |  |
+| RELATION_PROFILE_DELETE | 32 |  |
+| RELATION_PROFILE_STATUS_GET | 33 |  |
+
+
+<a name="minder-v1-TargetResource"></a>
+
+### TargetResource
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TARGET_RESOURCE_UNSPECIFIED | 0 |  |
+| TARGET_RESOURCE_NONE | 1 |  |
+| TARGET_RESOURCE_USER | 2 |  |
+| TARGET_RESOURCE_PROJECT | 3 |  |
+
+
 
 
 <a name="minder_v1_minder-proto-extensions"></a>
@@ -1654,6 +1711,7 @@ Entity defines the entity that is supported by the provider.
 ### File-level Extensions
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
+| name | string | .google.protobuf.EnumValueOptions | 42445 |  |
 | rpc_options | RpcOptions | .google.protobuf.MethodOptions | 51077 |  |
 
 

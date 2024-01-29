@@ -87,3 +87,5 @@ type project
     define profile_create: editor or policy_writer
     define profile_update: editor or policy_writer
     define profile_delete: editor or policy_writer
+
+    define profile_status_get: viewer

@@ -105,9 +105,12 @@ func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermiss
 func authorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
 	claims := auth.GetPermissionsFromContext(ctx)
 	opts := getRpcOptions(ctx)
-	if opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_PROJECT {
-		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-project method, should be %v", opts.GetAuthScope())
+	if opts.GetTargetResource() != minder.TargetResource_TARGET_RESOURCE_PROJECT {
+		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-project method, should be %v", opts.GetTargetResource())
 	}
+
+	// call openFGA using the relation and project ID
+	// opts.GetRelation()
 
 	if !slices.Contains(claims.ProjectIds, projectID) {
 		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project")
@@ -145,7 +148,11 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *gr
 
 	opts := getRpcOptions(ctx)
 
-	if !requiresProjectAuthorization(opts) {
+	if opts.GetTargetResource() == minder.TargetResource_TARGET_RESOURCE_UNSPECIFIED {
+		return nil, status.Error(codes.Internal, "cannot perform authorization, because target resource is unspecified")
+	}
+
+	if opts.GetTargetResource() != minder.TargetResource_TARGET_RESOURCE_PROJECT {
 		if !opts.GetNoLog() {
 			zerolog.Ctx(ctx).Info().Msgf("Bypassing setting up context")
 		}
@@ -171,7 +178,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, _ *gr
 
 	opts := getRpcOptions(ctx)
 
-	if !requiresProjectAuthorization(opts) {
+	if opts.GetTargetResource() != minder.TargetResource_TARGET_RESOURCE_PROJECT {
 		if !opts.GetNoLog() {
 			zerolog.Ctx(ctx).Info().Msgf("Bypassing project authorization")
 		}
@@ -229,13 +236,6 @@ func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uu
 		return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot get default project")
 	}
 	return permissions.ProjectIds[0], nil
-}
-
-// requiresProjectAuthorization return true if an authorization check should be performed on the requested project
-func requiresProjectAuthorization(opts *minder.RpcOptions) bool {
-	// default to returning true, unless we explicitly specify anonymous, or a different type of authorization scope
-	return !opts.Anonymous &&
-		opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER
 }
 
 // Permissions API

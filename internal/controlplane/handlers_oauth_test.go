@@ -145,7 +145,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 	}
 
 	rpcOptions := &pb.RpcOptions{
-		AuthScope: pb.ObjectOwner_OBJECT_OWNER_PROJECT,
+		TargetResource: pb.TargetResource_TARGET_RESOURCE_USER,
 	}
 
 	// Create a new context and set the claims value

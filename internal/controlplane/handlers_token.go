@@ -45,7 +45,7 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 
 	ctx = withRpcOptions(ctx, opts)
 
-	if opts.GetAnonymous() {
+	if opts.GetTargetResource() == minder.TargetResource_TARGET_RESOURCE_NONE {
 		if !opts.GetNoLog() {
 			zerolog.Ctx(ctx).Info().Msgf("Bypassing authentication")
 		}
