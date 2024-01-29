@@ -281,11 +281,17 @@ func (a *ClientWrapper) Write(ctx context.Context, user string, role Role, proje
 
 // Delete removes the given role for the given user and project
 func (a *ClientWrapper) Delete(ctx context.Context, user string, role Role, project uuid.UUID) error {
+	return a.doDelete(ctx, getUserForTuple(user), role.String(), getProjectForTuple(project))
+}
+
+// doDelete wraps the OpenFGA DeleteTuples call and handles edge cases as needed. It takes
+// the user, role, and project as tuple-formatted strings.
+func (a *ClientWrapper) doDelete(ctx context.Context, user string, role string, project string) error {
 	resp, err := a.cli.DeleteTuples(ctx).Options(fgaclient.ClientWriteOptions{}).Body([]fgasdk.TupleKeyWithoutCondition{
 		{
-			User:     getUserForTuple(user),
-			Relation: role.String(),
-			Object:   getProjectForTuple(project),
+			User:     user,
+			Relation: role,
+			Object:   project,
 		},
 	}).Execute()
 	if err != nil && strings.Contains(err.Error(), "cannot delete a tuple which does not exist") {
@@ -297,6 +303,28 @@ func (a *ClientWrapper) Delete(ctx context.Context, user string, role Role, proj
 	for _, w := range resp.Deletes {
 		if w.Error != nil {
 			return fmt.Errorf("unable to remove authorization tuple: %w", w.Error)
+		}
+	}
+
+	return nil
+}
+
+// DeleteUser removes all tuples for the given user
+func (a *ClientWrapper) DeleteUser(ctx context.Context, user string) error {
+	for _, role := range allRoles {
+		listresp, err := a.cli.ListObjects(ctx).Body(fgaclient.ClientListObjectsRequest{
+			Type:     "project",
+			Relation: role.String(),
+			User:     getUserForTuple(user),
+		}).Execute()
+		if err != nil {
+			return fmt.Errorf("unable to list authorization tuples: %w", err)
+		}
+
+		for _, obj := range listresp.GetObjects() {
+			if err := a.doDelete(ctx, getUserForTuple(user), role.String(), obj); err != nil {
+				return err
+			}
 		}
 	}
 

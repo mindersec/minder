@@ -73,8 +73,6 @@ func TestHandleEvents(t *testing.T) {
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
-	mockStore.EXPECT().GetUserProjects(gomock.Any(), gomock.Any()).
-		Return([]db.GetUserProjectsRow{}, nil)
 	mockStore.EXPECT().Rollback(gomock.Any())
 
 	c := serverconfig.Config{
