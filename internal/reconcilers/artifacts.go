@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -151,9 +152,10 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 	for _, artifact := range artifacts {
 		// store information if we do not have it
+		typeLower := strings.ToLower(artifact.GetPackageType())
 		newArtifact, err := e.store.UpsertArtifact(ctx,
 			db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),
-				ArtifactType: artifact.GetPackageType(), ArtifactVisibility: artifact.GetVisibility()})
+				ArtifactType: typeLower, ArtifactVisibility: artifact.GetVisibility()})
 
 		if err != nil {
 			// just log error and continue

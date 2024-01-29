@@ -205,7 +205,7 @@ func getArtifactVersions(ctx context.Context, ghCli provifv1.GitHub, artifact *p
 	// if we don't have the versions, get them all from the API
 	// now query for versions, retrieve the ones from last month
 	isOrg := (ghCli.GetOwner() != "")
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetType(), artifact.GetName())
+	upstreamVersions, err := ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}

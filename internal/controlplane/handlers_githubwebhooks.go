@@ -498,7 +498,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	dbArtifact, err := s.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
 		RepositoryID:       dbrepo.ID,
 		ArtifactName:       tempArtifact.GetName(),
-		ArtifactType:       tempArtifact.GetType(),
+		ArtifactType:       tempArtifact.GetTypeLower(),
 		ArtifactVisibility: tempArtifact.Visibility,
 	})
 	if err != nil {
