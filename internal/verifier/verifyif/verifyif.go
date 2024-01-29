@@ -24,21 +24,9 @@ import (
 
 // Result is the result of the verification
 type Result struct {
-	IsSigned         bool   `json:"is_signed"`
-	IsVerified       bool   `json:"is_verified"`
-	IsBundleVerified bool   `json:"is_bundle_verified"`
-	URI              string `json:"uri"`
+	IsSigned   bool `json:"is_signed"`
+	IsVerified bool `json:"is_verified"`
 	verify.VerificationResult
-}
-
-// GetUri returns the URI of the artifact
-// explicit getter because the URI is something we might want to try
-// displaying even if the result is nil as part of error handling
-func (r *Result) GetUri() string {
-	if r == nil {
-		return ""
-	}
-	return r.URI
 }
 
 // ArtifactVerifier is the interface for artifact verifiers
