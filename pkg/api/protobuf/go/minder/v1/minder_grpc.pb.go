@@ -1502,3 +1502,204 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "minder/v1/minder.proto",
 }
+
+const (
+	PermissionsService_ListRoles_FullMethodName           = "/minder.v1.PermissionsService/ListRoles"
+	PermissionsService_ListRoleAssignments_FullMethodName = "/minder.v1.PermissionsService/ListRoleAssignments"
+	PermissionsService_AssignRole_FullMethodName          = "/minder.v1.PermissionsService/AssignRole"
+	PermissionsService_RemoveRole_FullMethodName          = "/minder.v1.PermissionsService/RemoveRole"
+)
+
+// PermissionsServiceClient is the client API for PermissionsService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PermissionsServiceClient interface {
+	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
+	ListRoleAssignments(ctx context.Context, in *ListRoleAssignmentsRequest, opts ...grpc.CallOption) (*ListRoleAssignmentsResponse, error)
+	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
+	RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error)
+}
+
+type permissionsServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPermissionsServiceClient(cc grpc.ClientConnInterface) PermissionsServiceClient {
+	return &permissionsServiceClient{cc}
+}
+
+func (c *permissionsServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
+	out := new(ListRolesResponse)
+	err := c.cc.Invoke(ctx, PermissionsService_ListRoles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *permissionsServiceClient) ListRoleAssignments(ctx context.Context, in *ListRoleAssignmentsRequest, opts ...grpc.CallOption) (*ListRoleAssignmentsResponse, error) {
+	out := new(ListRoleAssignmentsResponse)
+	err := c.cc.Invoke(ctx, PermissionsService_ListRoleAssignments_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *permissionsServiceClient) AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error) {
+	out := new(AssignRoleResponse)
+	err := c.cc.Invoke(ctx, PermissionsService_AssignRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *permissionsServiceClient) RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error) {
+	out := new(RemoveRoleResponse)
+	err := c.cc.Invoke(ctx, PermissionsService_RemoveRole_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PermissionsServiceServer is the server API for PermissionsService service.
+// All implementations must embed UnimplementedPermissionsServiceServer
+// for forward compatibility
+type PermissionsServiceServer interface {
+	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
+	ListRoleAssignments(context.Context, *ListRoleAssignmentsRequest) (*ListRoleAssignmentsResponse, error)
+	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
+	RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error)
+	mustEmbedUnimplementedPermissionsServiceServer()
+}
+
+// UnimplementedPermissionsServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedPermissionsServiceServer struct {
+}
+
+func (UnimplementedPermissionsServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRoles not implemented")
+}
+func (UnimplementedPermissionsServiceServer) ListRoleAssignments(context.Context, *ListRoleAssignmentsRequest) (*ListRoleAssignmentsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRoleAssignments not implemented")
+}
+func (UnimplementedPermissionsServiceServer) AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AssignRole not implemented")
+}
+func (UnimplementedPermissionsServiceServer) RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveRole not implemented")
+}
+func (UnimplementedPermissionsServiceServer) mustEmbedUnimplementedPermissionsServiceServer() {}
+
+// UnsafePermissionsServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PermissionsServiceServer will
+// result in compilation errors.
+type UnsafePermissionsServiceServer interface {
+	mustEmbedUnimplementedPermissionsServiceServer()
+}
+
+func RegisterPermissionsServiceServer(s grpc.ServiceRegistrar, srv PermissionsServiceServer) {
+	s.RegisterService(&PermissionsService_ServiceDesc, srv)
+}
+
+func _PermissionsService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRolesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionsServiceServer).ListRoles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionsService_ListRoles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionsServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PermissionsService_ListRoleAssignments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRoleAssignmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionsServiceServer).ListRoleAssignments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionsService_ListRoleAssignments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionsServiceServer).ListRoleAssignments(ctx, req.(*ListRoleAssignmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PermissionsService_AssignRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionsServiceServer).AssignRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionsService_AssignRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionsServiceServer).AssignRole(ctx, req.(*AssignRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PermissionsService_RemoveRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PermissionsServiceServer).RemoveRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PermissionsService_RemoveRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PermissionsServiceServer).RemoveRole(ctx, req.(*RemoveRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PermissionsService_ServiceDesc is the grpc.ServiceDesc for PermissionsService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PermissionsService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.PermissionsService",
+	HandlerType: (*PermissionsServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListRoles",
+			Handler:    _PermissionsService_ListRoles_Handler,
+		},
+		{
+			MethodName: "ListRoleAssignments",
+			Handler:    _PermissionsService_ListRoleAssignments_Handler,
+		},
+		{
+			MethodName: "AssignRole",
+			Handler:    _PermissionsService_AssignRole_Handler,
+		},
+		{
+			MethodName: "RemoveRole",
+			Handler:    _PermissionsService_RemoveRole_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}

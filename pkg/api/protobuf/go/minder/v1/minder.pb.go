@@ -5584,6 +5584,529 @@ func (x *Profile) GetVersion() string {
 	return ""
 }
 
+type ListRolesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// context is the context in which the roles are evaluated.
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+}
+
+func (x *ListRolesRequest) Reset() {
+	*x = ListRolesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[87]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRolesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRolesRequest) ProtoMessage() {}
+
+func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[87]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRolesRequest.ProtoReflect.Descriptor instead.
+func (*ListRolesRequest) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{87}
+}
+
+func (x *ListRolesRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+type ListRolesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Roles []*Role `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+}
+
+func (x *ListRolesResponse) Reset() {
+	*x = ListRolesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[88]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRolesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRolesResponse) ProtoMessage() {}
+
+func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[88]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRolesResponse.ProtoReflect.Descriptor instead.
+func (*ListRolesResponse) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{88}
+}
+
+func (x *ListRolesResponse) GetRoles() []*Role {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+type ListRoleAssignmentsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// context is the context in which the role assignments are evaluated.
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+}
+
+func (x *ListRoleAssignmentsRequest) Reset() {
+	*x = ListRoleAssignmentsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[89]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRoleAssignmentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRoleAssignmentsRequest) ProtoMessage() {}
+
+func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[89]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRoleAssignmentsRequest.ProtoReflect.Descriptor instead.
+func (*ListRoleAssignmentsRequest) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{89}
+}
+
+func (x *ListRoleAssignmentsRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+type ListRoleAssignmentsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RoleAssignments []*RoleAssignment `protobuf:"bytes,1,rep,name=role_assignments,json=roleAssignments,proto3" json:"role_assignments,omitempty"`
+}
+
+func (x *ListRoleAssignmentsResponse) Reset() {
+	*x = ListRoleAssignmentsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[90]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListRoleAssignmentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRoleAssignmentsResponse) ProtoMessage() {}
+
+func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[90]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRoleAssignmentsResponse.ProtoReflect.Descriptor instead.
+func (*ListRoleAssignmentsResponse) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{90}
+}
+
+func (x *ListRoleAssignmentsResponse) GetRoleAssignments() []*RoleAssignment {
+	if x != nil {
+		return x.RoleAssignments
+	}
+	return nil
+}
+
+type AssignRoleRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// context is the context in which the role assignment is evaluated.
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	// role_assignment is the role assignment to be created.
+	RoleAssignment *RoleAssignment `protobuf:"bytes,2,opt,name=role_assignment,json=roleAssignment,proto3" json:"role_assignment,omitempty"`
+}
+
+func (x *AssignRoleRequest) Reset() {
+	*x = AssignRoleRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[91]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AssignRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignRoleRequest) ProtoMessage() {}
+
+func (x *AssignRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[91]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignRoleRequest.ProtoReflect.Descriptor instead.
+func (*AssignRoleRequest) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{91}
+}
+
+func (x *AssignRoleRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+func (x *AssignRoleRequest) GetRoleAssignment() *RoleAssignment {
+	if x != nil {
+		return x.RoleAssignment
+	}
+	return nil
+}
+
+type AssignRoleResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// role_assignment is the role assignment that was created.
+	RoleAssignment *RoleAssignment `protobuf:"bytes,1,opt,name=role_assignment,json=roleAssignment,proto3" json:"role_assignment,omitempty"`
+}
+
+func (x *AssignRoleResponse) Reset() {
+	*x = AssignRoleResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[92]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AssignRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignRoleResponse) ProtoMessage() {}
+
+func (x *AssignRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[92]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignRoleResponse.ProtoReflect.Descriptor instead.
+func (*AssignRoleResponse) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{92}
+}
+
+func (x *AssignRoleResponse) GetRoleAssignment() *RoleAssignment {
+	if x != nil {
+		return x.RoleAssignment
+	}
+	return nil
+}
+
+type RemoveRoleRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// context is the context in which the role assignment is evaluated.
+	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
+	// role_assignment is the role assignment to be removed.
+	RoleAssignment *RoleAssignment `protobuf:"bytes,2,opt,name=role_assignment,json=roleAssignment,proto3" json:"role_assignment,omitempty"`
+}
+
+func (x *RemoveRoleRequest) Reset() {
+	*x = RemoveRoleRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[93]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RemoveRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveRoleRequest) ProtoMessage() {}
+
+func (x *RemoveRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[93]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveRoleRequest.ProtoReflect.Descriptor instead.
+func (*RemoveRoleRequest) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{93}
+}
+
+func (x *RemoveRoleRequest) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
+func (x *RemoveRoleRequest) GetRoleAssignment() *RoleAssignment {
+	if x != nil {
+		return x.RoleAssignment
+	}
+	return nil
+}
+
+type RemoveRoleResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// role_assignment is the role assignment that was removed.
+	RoleAssignment *RoleAssignment `protobuf:"bytes,1,opt,name=role_assignment,json=roleAssignment,proto3" json:"role_assignment,omitempty"`
+}
+
+func (x *RemoveRoleResponse) Reset() {
+	*x = RemoveRoleResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[94]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RemoveRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveRoleResponse) ProtoMessage() {}
+
+func (x *RemoveRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[94]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveRoleResponse.ProtoReflect.Descriptor instead.
+func (*RemoveRoleResponse) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{94}
+}
+
+func (x *RemoveRoleResponse) GetRoleAssignment() *RoleAssignment {
+	if x != nil {
+		return x.RoleAssignment
+	}
+	return nil
+}
+
+type Role struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// name is the name of the role.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// description is the description of the role.
+	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+}
+
+func (x *Role) Reset() {
+	*x = Role{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[95]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Role) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Role) ProtoMessage() {}
+
+func (x *Role) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[95]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Role.ProtoReflect.Descriptor instead.
+func (*Role) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{95}
+}
+
+func (x *Role) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Role) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type RoleAssignment struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// role is the role that is assigned.
+	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
+	// subject is the subject to which the role is assigned.
+	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
+	// context is the context in which the role is assigned.
+	Context *Context `protobuf:"bytes,3,opt,name=context,proto3,oneof" json:"context,omitempty"`
+}
+
+func (x *RoleAssignment) Reset() {
+	*x = RoleAssignment{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_minder_v1_minder_proto_msgTypes[96]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RoleAssignment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RoleAssignment) ProtoMessage() {}
+
+func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
+	mi := &file_minder_v1_minder_proto_msgTypes[96]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RoleAssignment.ProtoReflect.Descriptor instead.
+func (*RoleAssignment) Descriptor() ([]byte, []int) {
+	return file_minder_v1_minder_proto_rawDescGZIP(), []int{96}
+}
+
+func (x *RoleAssignment) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *RoleAssignment) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *RoleAssignment) GetContext() *Context {
+	if x != nil {
+		return x.Context
+	}
+	return nil
+}
+
 type PrDependencies_ContextualDependency struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5596,7 +6119,7 @@ type PrDependencies_ContextualDependency struct {
 func (x *PrDependencies_ContextualDependency) Reset() {
 	*x = PrDependencies_ContextualDependency{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[87]
+		mi := &file_minder_v1_minder_proto_msgTypes[97]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5609,7 +6132,7 @@ func (x *PrDependencies_ContextualDependency) String() string {
 func (*PrDependencies_ContextualDependency) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[87]
+	mi := &file_minder_v1_minder_proto_msgTypes[97]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5651,7 +6174,7 @@ type PrDependencies_ContextualDependency_FilePatch struct {
 func (x *PrDependencies_ContextualDependency_FilePatch) Reset() {
 	*x = PrDependencies_ContextualDependency_FilePatch{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[88]
+		mi := &file_minder_v1_minder_proto_msgTypes[98]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5664,7 +6187,7 @@ func (x *PrDependencies_ContextualDependency_FilePatch) String() string {
 func (*PrDependencies_ContextualDependency_FilePatch) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency_FilePatch) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[88]
+	mi := &file_minder_v1_minder_proto_msgTypes[98]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5706,7 +6229,7 @@ type RegisterRepoResult_Status struct {
 func (x *RegisterRepoResult_Status) Reset() {
 	*x = RegisterRepoResult_Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[89]
+		mi := &file_minder_v1_minder_proto_msgTypes[99]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5719,7 +6242,7 @@ func (x *RegisterRepoResult_Status) String() string {
 func (*RegisterRepoResult_Status) ProtoMessage() {}
 
 func (x *RegisterRepoResult_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[89]
+	mi := &file_minder_v1_minder_proto_msgTypes[99]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5766,7 +6289,7 @@ type GetProfileStatusByNameRequest_EntityTypedId struct {
 func (x *GetProfileStatusByNameRequest_EntityTypedId) Reset() {
 	*x = GetProfileStatusByNameRequest_EntityTypedId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[91]
+		mi := &file_minder_v1_minder_proto_msgTypes[101]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5779,7 +6302,7 @@ func (x *GetProfileStatusByNameRequest_EntityTypedId) String() string {
 func (*GetProfileStatusByNameRequest_EntityTypedId) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameRequest_EntityTypedId) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[91]
+	mi := &file_minder_v1_minder_proto_msgTypes[101]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5821,7 +6344,7 @@ type RestType_Fallback struct {
 func (x *RestType_Fallback) Reset() {
 	*x = RestType_Fallback{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[92]
+		mi := &file_minder_v1_minder_proto_msgTypes[102]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5834,7 +6357,7 @@ func (x *RestType_Fallback) String() string {
 func (*RestType_Fallback) ProtoMessage() {}
 
 func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[92]
+	mi := &file_minder_v1_minder_proto_msgTypes[102]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5878,7 +6401,7 @@ type DiffType_Ecosystem struct {
 func (x *DiffType_Ecosystem) Reset() {
 	*x = DiffType_Ecosystem{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[93]
+		mi := &file_minder_v1_minder_proto_msgTypes[103]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5891,7 +6414,7 @@ func (x *DiffType_Ecosystem) String() string {
 func (*DiffType_Ecosystem) ProtoMessage() {}
 
 func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[93]
+	mi := &file_minder_v1_minder_proto_msgTypes[103]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5944,7 +6467,7 @@ type RuleType_Definition struct {
 func (x *RuleType_Definition) Reset() {
 	*x = RuleType_Definition{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[94]
+		mi := &file_minder_v1_minder_proto_msgTypes[104]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -5957,7 +6480,7 @@ func (x *RuleType_Definition) String() string {
 func (*RuleType_Definition) ProtoMessage() {}
 
 func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[94]
+	mi := &file_minder_v1_minder_proto_msgTypes[104]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6047,7 +6570,7 @@ type RuleType_Definition_Ingest struct {
 func (x *RuleType_Definition_Ingest) Reset() {
 	*x = RuleType_Definition_Ingest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[95]
+		mi := &file_minder_v1_minder_proto_msgTypes[105]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6060,7 +6583,7 @@ func (x *RuleType_Definition_Ingest) String() string {
 func (*RuleType_Definition_Ingest) ProtoMessage() {}
 
 func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[95]
+	mi := &file_minder_v1_minder_proto_msgTypes[105]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6144,7 +6667,7 @@ type RuleType_Definition_Eval struct {
 func (x *RuleType_Definition_Eval) Reset() {
 	*x = RuleType_Definition_Eval{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[96]
+		mi := &file_minder_v1_minder_proto_msgTypes[106]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6157,7 +6680,7 @@ func (x *RuleType_Definition_Eval) String() string {
 func (*RuleType_Definition_Eval) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[96]
+	mi := &file_minder_v1_minder_proto_msgTypes[106]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6222,7 +6745,7 @@ type RuleType_Definition_Remediate struct {
 func (x *RuleType_Definition_Remediate) Reset() {
 	*x = RuleType_Definition_Remediate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[97]
+		mi := &file_minder_v1_minder_proto_msgTypes[107]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6235,7 +6758,7 @@ func (x *RuleType_Definition_Remediate) String() string {
 func (*RuleType_Definition_Remediate) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[97]
+	mi := &file_minder_v1_minder_proto_msgTypes[107]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6291,7 +6814,7 @@ type RuleType_Definition_Alert struct {
 func (x *RuleType_Definition_Alert) Reset() {
 	*x = RuleType_Definition_Alert{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[98]
+		mi := &file_minder_v1_minder_proto_msgTypes[108]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6304,7 +6827,7 @@ func (x *RuleType_Definition_Alert) String() string {
 func (*RuleType_Definition_Alert) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[98]
+	mi := &file_minder_v1_minder_proto_msgTypes[108]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6348,7 +6871,7 @@ type RuleType_Definition_Eval_JQComparison struct {
 func (x *RuleType_Definition_Eval_JQComparison) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[99]
+		mi := &file_minder_v1_minder_proto_msgTypes[109]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6361,7 +6884,7 @@ func (x *RuleType_Definition_Eval_JQComparison) String() string {
 func (*RuleType_Definition_Eval_JQComparison) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[99]
+	mi := &file_minder_v1_minder_proto_msgTypes[109]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6419,7 +6942,7 @@ type RuleType_Definition_Eval_Rego struct {
 func (x *RuleType_Definition_Eval_Rego) Reset() {
 	*x = RuleType_Definition_Eval_Rego{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[100]
+		mi := &file_minder_v1_minder_proto_msgTypes[110]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6432,7 +6955,7 @@ func (x *RuleType_Definition_Eval_Rego) String() string {
 func (*RuleType_Definition_Eval_Rego) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[100]
+	mi := &file_minder_v1_minder_proto_msgTypes[110]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6478,7 +7001,7 @@ type RuleType_Definition_Eval_Vulncheck struct {
 func (x *RuleType_Definition_Eval_Vulncheck) Reset() {
 	*x = RuleType_Definition_Eval_Vulncheck{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[101]
+		mi := &file_minder_v1_minder_proto_msgTypes[111]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6491,7 +7014,7 @@ func (x *RuleType_Definition_Eval_Vulncheck) String() string {
 func (*RuleType_Definition_Eval_Vulncheck) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[101]
+	mi := &file_minder_v1_minder_proto_msgTypes[111]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6519,7 +7042,7 @@ type RuleType_Definition_Eval_Trusty struct {
 func (x *RuleType_Definition_Eval_Trusty) Reset() {
 	*x = RuleType_Definition_Eval_Trusty{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[102]
+		mi := &file_minder_v1_minder_proto_msgTypes[112]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6532,7 +7055,7 @@ func (x *RuleType_Definition_Eval_Trusty) String() string {
 func (*RuleType_Definition_Eval_Trusty) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[102]
+	mi := &file_minder_v1_minder_proto_msgTypes[112]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6566,7 +7089,7 @@ type RuleType_Definition_Eval_JQComparison_Operator struct {
 func (x *RuleType_Definition_Eval_JQComparison_Operator) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison_Operator{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[103]
+		mi := &file_minder_v1_minder_proto_msgTypes[113]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6579,7 +7102,7 @@ func (x *RuleType_Definition_Eval_JQComparison_Operator) String() string {
 func (*RuleType_Definition_Eval_JQComparison_Operator) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[103]
+	mi := &file_minder_v1_minder_proto_msgTypes[113]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6613,7 +7136,7 @@ type RuleType_Definition_Remediate_GhBranchProtectionType struct {
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) Reset() {
 	*x = RuleType_Definition_Remediate_GhBranchProtectionType{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[104]
+		mi := &file_minder_v1_minder_proto_msgTypes[114]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6626,7 +7149,7 @@ func (x *RuleType_Definition_Remediate_GhBranchProtectionType) String() string {
 func (*RuleType_Definition_Remediate_GhBranchProtectionType) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[104]
+	mi := &file_minder_v1_minder_proto_msgTypes[114]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6677,7 +7200,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[105]
+		mi := &file_minder_v1_minder_proto_msgTypes[115]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6690,7 +7213,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) String() string {
 func (*RuleType_Definition_Remediate_PullRequestRemediation) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	mi := &file_minder_v1_minder_proto_msgTypes[115]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6762,7 +7285,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_Content{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[106]
+		mi := &file_minder_v1_minder_proto_msgTypes[116]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6775,7 +7298,7 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) String() 
 func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[106]
+	mi := &file_minder_v1_minder_proto_msgTypes[116]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6831,7 +7354,7 @@ type RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWith
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[107]
+		mi := &file_minder_v1_minder_proto_msgTypes[117]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6845,7 +7368,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWi
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[107]
+	mi := &file_minder_v1_minder_proto_msgTypes[117]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6879,7 +7402,7 @@ type RuleType_Definition_Alert_AlertTypeSA struct {
 func (x *RuleType_Definition_Alert_AlertTypeSA) Reset() {
 	*x = RuleType_Definition_Alert_AlertTypeSA{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[108]
+		mi := &file_minder_v1_minder_proto_msgTypes[118]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6892,7 +7415,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) String() string {
 func (*RuleType_Definition_Alert_AlertTypeSA) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[108]
+	mi := &file_minder_v1_minder_proto_msgTypes[118]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -6934,7 +7457,7 @@ type Profile_Rule struct {
 func (x *Profile_Rule) Reset() {
 	*x = Profile_Rule{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[109]
+		mi := &file_minder_v1_minder_proto_msgTypes[119]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -6947,7 +7470,7 @@ func (x *Profile_Rule) String() string {
 func (*Profile_Rule) ProtoMessage() {}
 
 func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
-	mi := &file_minder_v1_minder_proto_msgTypes[109]
+	mi := &file_minder_v1_minder_proto_msgTypes[119]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -7936,7 +8459,66 @@ var file_minder_v1_minder_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52,
 	0x03, 0x64, 0x65, 0x66, 0x42, 0x05, 0x0a, 0x03, 0x5f, 0x69, 0x64, 0x42, 0x0c, 0x0a, 0x0a, 0x5f,
 	0x72, 0x65, 0x6d, 0x65, 0x64, 0x69, 0x61, 0x74, 0x65, 0x42, 0x08, 0x0a, 0x06, 0x5f, 0x61, 0x6c,
-	0x65, 0x72, 0x74, 0x2a, 0x62, 0x0a, 0x0b, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4f, 0x77, 0x6e,
+	0x65, 0x72, 0x74, 0x22, 0x40, 0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2c, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65,
+	0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52, 0x07, 0x63, 0x6f,
+	0x6e, 0x74, 0x65, 0x78, 0x74, 0x22, 0x3a, 0x0a, 0x11, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x25, 0x0a, 0x05, 0x72, 0x6f,
+	0x6c, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x6d, 0x69, 0x6e, 0x64,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x05, 0x72, 0x6f, 0x6c, 0x65,
+	0x73, 0x22, 0x4a, 0x0a, 0x1a, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73,
+	0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x2c, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x12, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e,
+	0x74, 0x65, 0x78, 0x74, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x22, 0x63, 0x0a,
+	0x1b, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x10,
+	0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e,
+	0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e,
+	0x74, 0x52, 0x0f, 0x72, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e,
+	0x74, 0x73, 0x22, 0x85, 0x01, 0x0a, 0x11, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x6f, 0x6c,
+	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2c, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74,
+	0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x69, 0x6e, 0x64,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52, 0x07, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x12, 0x42, 0x0a, 0x0f, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61,
+	0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x19, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0e, 0x72, 0x6f, 0x6c, 0x65,
+	0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0x58, 0x0a, 0x12, 0x41, 0x73,
+	0x73, 0x69, 0x67, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x42, 0x0a, 0x0f, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x6d, 0x69, 0x6e, 0x64,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0e, 0x72, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x22, 0x85, 0x01, 0x0a, 0x11, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52,
+	0x6f, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2c, 0x0a, 0x07, 0x63, 0x6f,
+	0x6e, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x69,
+	0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52,
+	0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x12, 0x42, 0x0a, 0x0f, 0x72, 0x6f, 0x6c, 0x65,
+	0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x19, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f,
+	0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0e, 0x72, 0x6f,
+	0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0x58, 0x0a, 0x12,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x42, 0x0a, 0x0f, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x6d, 0x69,
+	0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69,
+	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x0e, 0x72, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69,
+	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0x3c, 0x0a, 0x04, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x12,
+	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
+	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x22, 0x7d, 0x0a, 0x0e, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69,
+	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x72, 0x6f, 0x6c, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75,
+	0x62, 0x6a, 0x65, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x75, 0x62,
+	0x6a, 0x65, 0x63, 0x74, 0x12, 0x31, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76,
+	0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x48, 0x00, 0x52, 0x07, 0x63, 0x6f, 0x6e,
+	0x74, 0x65, 0x78, 0x74, 0x88, 0x01, 0x01, 0x42, 0x0a, 0x0a, 0x08, 0x5f, 0x63, 0x6f, 0x6e, 0x74,
+	0x65, 0x78, 0x74, 0x2a, 0x62, 0x0a, 0x0b, 0x4f, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x4f, 0x77, 0x6e,
 	0x65, 0x72, 0x12, 0x1c, 0x0a, 0x18, 0x4f, 0x42, 0x4a, 0x45, 0x43, 0x54, 0x5f, 0x4f, 0x57, 0x4e,
 	0x45, 0x52, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00,
 	0x12, 0x18, 0x0a, 0x14, 0x4f, 0x42, 0x4a, 0x45, 0x43, 0x54, 0x5f, 0x4f, 0x57, 0x4e, 0x45, 0x52,
@@ -8249,17 +8831,54 @@ var file_minder_v1_minder_proto_rawDesc = []byte{
 	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x75, 0x6c, 0x65, 0x54, 0x79, 0x70, 0x65, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x26, 0xaa, 0xf8, 0x18, 0x04, 0x18, 0x01, 0x28, 0x02,
 	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x18, 0x2a, 0x16, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f,
-	0x72, 0x75, 0x6c, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x3a, 0x58,
-	0x0a, 0x0b, 0x72, 0x70, 0x63, 0x5f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1e, 0x2e,
-	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
-	0x4d, 0x65, 0x74, 0x68, 0x6f, 0x64, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x85, 0x8f,
-	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76,
-	0x31, 0x2e, 0x52, 0x70, 0x63, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0a, 0x72, 0x70,
-	0x63, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x3a, 0x5a, 0x38, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x6c, 0x6f, 0x6b, 0x2f,
-	0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x67, 0x6f, 0x2f, 0x6d, 0x69, 0x6e, 0x64, 0x65,
-	0x72, 0x2f, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x75, 0x6c, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x2f, 0x7b, 0x69, 0x64, 0x7d, 0x32, 0xca,
+	0x04, 0x0a, 0x12, 0x50, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x53, 0x65,
+	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x71, 0x0a, 0x09, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c,
+	0x65, 0x73, 0x12, 0x1b, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x4c,
+	0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x1c, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74,
+	0x52, 0x6f, 0x6c, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x29, 0xaa,
+	0xf8, 0x18, 0x04, 0x18, 0x01, 0x28, 0x02, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1b, 0x12, 0x19, 0x2f,
+	0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f,
+	0x6e, 0x73, 0x2f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x12, 0x95, 0x01, 0x0a, 0x13, 0x4c, 0x69, 0x73,
+	0x74, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x12, 0x25, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73,
+	0x74, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x41, 0x73, 0x73, 0x69,
+	0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x2f, 0xaa, 0xf8, 0x18, 0x04, 0x18, 0x01, 0x28, 0x02, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x21, 0x12,
+	0x1f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73,
+	0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x12, 0x78, 0x0a, 0x0a, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x1c,
+	0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73, 0x69, 0x67,
+	0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x6d,
+	0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x52,
+	0x6f, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2d, 0xaa, 0xf8, 0x18,
+	0x04, 0x18, 0x01, 0x28, 0x02, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x1f, 0x3a, 0x01, 0x2a, 0x22, 0x1a,
+	0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69,
+	0x6f, 0x6e, 0x73, 0x2f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x12, 0xae, 0x01, 0x0a, 0x0a, 0x52,
+	0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x1c, 0x2e, 0x6d, 0x69, 0x6e, 0x64,
+	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x65,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1d, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72,
+	0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x63, 0xaa, 0xf8, 0x18, 0x04, 0x18, 0x01, 0x28, 0x02,
+	0x82, 0xd3, 0xe4, 0x93, 0x02, 0x55, 0x2a, 0x53, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x76, 0x31, 0x2f,
+	0x70, 0x65, 0x72, 0x6d, 0x69, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x73, 0x2f, 0x72, 0x65, 0x6d, 0x6f,
+	0x76, 0x65, 0x2f, 0x7b, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d,
+	0x65, 0x6e, 0x74, 0x2e, 0x72, 0x6f, 0x6c, 0x65, 0x7d, 0x2f, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63,
+	0x74, 0x2f, 0x7b, 0x72, 0x6f, 0x6c, 0x65, 0x5f, 0x61, 0x73, 0x73, 0x69, 0x67, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x2e, 0x73, 0x75, 0x62, 0x6a, 0x65, 0x63, 0x74, 0x7d, 0x3a, 0x58, 0x0a, 0x0b, 0x72,
+	0x70, 0x63, 0x5f, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1e, 0x2e, 0x67, 0x6f, 0x6f,
+	0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x4d, 0x65, 0x74,
+	0x68, 0x6f, 0x64, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x85, 0x8f, 0x03, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x15, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x52,
+	0x70, 0x63, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0a, 0x72, 0x70, 0x63, 0x4f, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x42, 0x3a, 0x5a, 0x38, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x6c, 0x6f, 0x6b, 0x2f, 0x6d, 0x69, 0x6e,
+	0x64, 0x65, 0x72, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2f, 0x67, 0x6f, 0x2f, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2f, 0x76,
+	0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -8275,7 +8894,7 @@ func file_minder_v1_minder_proto_rawDescGZIP() []byte {
 }
 
 var file_minder_v1_minder_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 110)
+var file_minder_v1_minder_proto_msgTypes = make([]protoimpl.MessageInfo, 120)
 var file_minder_v1_minder_proto_goTypes = []interface{}{
 	(ObjectOwner)(0),                                                     // 0: minder.v1.ObjectOwner
 	(DepEcosystem)(0),                                                    // 1: minder.v1.DepEcosystem
@@ -8367,44 +8986,54 @@ var file_minder_v1_minder_proto_goTypes = []interface{}{
 	(*DiffType)(nil),                                                     // 87: minder.v1.DiffType
 	(*RuleType)(nil),                                                     // 88: minder.v1.RuleType
 	(*Profile)(nil),                                                      // 89: minder.v1.Profile
-	(*PrDependencies_ContextualDependency)(nil),                          // 90: minder.v1.PrDependencies.ContextualDependency
-	(*PrDependencies_ContextualDependency_FilePatch)(nil),                // 91: minder.v1.PrDependencies.ContextualDependency.FilePatch
-	(*RegisterRepoResult_Status)(nil),                                    // 92: minder.v1.RegisterRepoResult.Status
-	nil,                                                                  // 93: minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	(*GetProfileStatusByNameRequest_EntityTypedId)(nil),                  // 94: minder.v1.GetProfileStatusByNameRequest.EntityTypedId
-	(*RestType_Fallback)(nil),                                            // 95: minder.v1.RestType.Fallback
-	(*DiffType_Ecosystem)(nil),                                           // 96: minder.v1.DiffType.Ecosystem
-	(*RuleType_Definition)(nil),                                          // 97: minder.v1.RuleType.Definition
-	(*RuleType_Definition_Ingest)(nil),                                   // 98: minder.v1.RuleType.Definition.Ingest
-	(*RuleType_Definition_Eval)(nil),                                     // 99: minder.v1.RuleType.Definition.Eval
-	(*RuleType_Definition_Remediate)(nil),                                // 100: minder.v1.RuleType.Definition.Remediate
-	(*RuleType_Definition_Alert)(nil),                                    // 101: minder.v1.RuleType.Definition.Alert
-	(*RuleType_Definition_Eval_JQComparison)(nil),                        // 102: minder.v1.RuleType.Definition.Eval.JQComparison
-	(*RuleType_Definition_Eval_Rego)(nil),                                // 103: minder.v1.RuleType.Definition.Eval.Rego
-	(*RuleType_Definition_Eval_Vulncheck)(nil),                           // 104: minder.v1.RuleType.Definition.Eval.Vulncheck
-	(*RuleType_Definition_Eval_Trusty)(nil),                              // 105: minder.v1.RuleType.Definition.Eval.Trusty
-	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),               // 106: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),         // 107: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),         // 108: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil), // 109: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 110: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 111: minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	(*Profile_Rule)(nil),               // 112: minder.v1.Profile.Rule
-	(*timestamppb.Timestamp)(nil),      // 113: google.protobuf.Timestamp
-	(*structpb.Struct)(nil),            // 114: google.protobuf.Struct
-	(*descriptorpb.MethodOptions)(nil), // 115: google.protobuf.MethodOptions
-	(*httpbody.HttpBody)(nil),          // 116: google.api.HttpBody
+	(*ListRolesRequest)(nil),                                             // 90: minder.v1.ListRolesRequest
+	(*ListRolesResponse)(nil),                                            // 91: minder.v1.ListRolesResponse
+	(*ListRoleAssignmentsRequest)(nil),                                   // 92: minder.v1.ListRoleAssignmentsRequest
+	(*ListRoleAssignmentsResponse)(nil),                                  // 93: minder.v1.ListRoleAssignmentsResponse
+	(*AssignRoleRequest)(nil),                                            // 94: minder.v1.AssignRoleRequest
+	(*AssignRoleResponse)(nil),                                           // 95: minder.v1.AssignRoleResponse
+	(*RemoveRoleRequest)(nil),                                            // 96: minder.v1.RemoveRoleRequest
+	(*RemoveRoleResponse)(nil),                                           // 97: minder.v1.RemoveRoleResponse
+	(*Role)(nil),                                                         // 98: minder.v1.Role
+	(*RoleAssignment)(nil),                                               // 99: minder.v1.RoleAssignment
+	(*PrDependencies_ContextualDependency)(nil),                          // 100: minder.v1.PrDependencies.ContextualDependency
+	(*PrDependencies_ContextualDependency_FilePatch)(nil),                // 101: minder.v1.PrDependencies.ContextualDependency.FilePatch
+	(*RegisterRepoResult_Status)(nil),                                    // 102: minder.v1.RegisterRepoResult.Status
+	nil,                                                                  // 103: minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	(*GetProfileStatusByNameRequest_EntityTypedId)(nil),                  // 104: minder.v1.GetProfileStatusByNameRequest.EntityTypedId
+	(*RestType_Fallback)(nil),                                            // 105: minder.v1.RestType.Fallback
+	(*DiffType_Ecosystem)(nil),                                           // 106: minder.v1.DiffType.Ecosystem
+	(*RuleType_Definition)(nil),                                          // 107: minder.v1.RuleType.Definition
+	(*RuleType_Definition_Ingest)(nil),                                   // 108: minder.v1.RuleType.Definition.Ingest
+	(*RuleType_Definition_Eval)(nil),                                     // 109: minder.v1.RuleType.Definition.Eval
+	(*RuleType_Definition_Remediate)(nil),                                // 110: minder.v1.RuleType.Definition.Remediate
+	(*RuleType_Definition_Alert)(nil),                                    // 111: minder.v1.RuleType.Definition.Alert
+	(*RuleType_Definition_Eval_JQComparison)(nil),                        // 112: minder.v1.RuleType.Definition.Eval.JQComparison
+	(*RuleType_Definition_Eval_Rego)(nil),                                // 113: minder.v1.RuleType.Definition.Eval.Rego
+	(*RuleType_Definition_Eval_Vulncheck)(nil),                           // 114: minder.v1.RuleType.Definition.Eval.Vulncheck
+	(*RuleType_Definition_Eval_Trusty)(nil),                              // 115: minder.v1.RuleType.Definition.Eval.Trusty
+	(*RuleType_Definition_Eval_JQComparison_Operator)(nil),               // 116: minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	(*RuleType_Definition_Remediate_GhBranchProtectionType)(nil),         // 117: minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	(*RuleType_Definition_Remediate_PullRequestRemediation)(nil),         // 118: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	(*RuleType_Definition_Remediate_PullRequestRemediation_Content)(nil), // 119: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha)(nil), // 120: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	(*RuleType_Definition_Alert_AlertTypeSA)(nil),                                          // 121: minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	(*Profile_Rule)(nil),               // 122: minder.v1.Profile.Rule
+	(*timestamppb.Timestamp)(nil),      // 123: google.protobuf.Timestamp
+	(*structpb.Struct)(nil),            // 124: google.protobuf.Struct
+	(*descriptorpb.MethodOptions)(nil), // 125: google.protobuf.MethodOptions
+	(*httpbody.HttpBody)(nil),          // 126: google.api.HttpBody
 }
 var file_minder_v1_minder_proto_depIdxs = []int32{
 	0,   // 0: minder.v1.RpcOptions.auth_scope:type_name -> minder.v1.ObjectOwner
 	70,  // 1: minder.v1.ListArtifactsRequest.context:type_name -> minder.v1.Context
 	6,   // 2: minder.v1.ListArtifactsResponse.results:type_name -> minder.v1.Artifact
 	9,   // 3: minder.v1.Artifact.versions:type_name -> minder.v1.ArtifactVersion
-	113, // 4: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
-	113, // 5: minder.v1.SignatureVerification.signature_time:type_name -> google.protobuf.Timestamp
+	123, // 4: minder.v1.Artifact.created_at:type_name -> google.protobuf.Timestamp
+	123, // 5: minder.v1.SignatureVerification.signature_time:type_name -> google.protobuf.Timestamp
 	8,   // 6: minder.v1.ArtifactVersion.signature_verification:type_name -> minder.v1.SignatureVerification
 	7,   // 7: minder.v1.ArtifactVersion.github_workflow:type_name -> minder.v1.GithubWorkflow
-	113, // 8: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
+	123, // 8: minder.v1.ArtifactVersion.created_at:type_name -> google.protobuf.Timestamp
 	70,  // 9: minder.v1.GetArtifactByIdRequest.context:type_name -> minder.v1.Context
 	6,   // 10: minder.v1.GetArtifactByIdResponse.artifact:type_name -> minder.v1.Artifact
 	9,   // 11: minder.v1.GetArtifactByIdResponse.versions:type_name -> minder.v1.ArtifactVersion
@@ -8413,21 +9042,21 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	9,   // 14: minder.v1.GetArtifactByNameResponse.versions:type_name -> minder.v1.ArtifactVersion
 	1,   // 15: minder.v1.Dependency.ecosystem:type_name -> minder.v1.DepEcosystem
 	14,  // 16: minder.v1.PrDependencies.pr:type_name -> minder.v1.PullRequest
-	90,  // 17: minder.v1.PrDependencies.deps:type_name -> minder.v1.PrDependencies.ContextualDependency
+	100, // 17: minder.v1.PrDependencies.deps:type_name -> minder.v1.PrDependencies.ContextualDependency
 	70,  // 18: minder.v1.GetAuthorizationURLRequest.context:type_name -> minder.v1.Context
 	70,  // 19: minder.v1.ExchangeCodeForTokenCLIRequest.context:type_name -> minder.v1.Context
 	70,  // 20: minder.v1.StoreProviderTokenRequest.context:type_name -> minder.v1.Context
-	113, // 21: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
-	113, // 22: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
+	123, // 21: minder.v1.Project.created_at:type_name -> google.protobuf.Timestamp
+	123, // 22: minder.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
 	70,  // 23: minder.v1.ListRemoteRepositoriesFromProviderRequest.context:type_name -> minder.v1.Context
 	27,  // 24: minder.v1.ListRemoteRepositoriesFromProviderResponse.results:type_name -> minder.v1.UpstreamRepositoryRef
 	70,  // 25: minder.v1.Repository.context:type_name -> minder.v1.Context
-	113, // 26: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
-	113, // 27: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
+	123, // 26: minder.v1.Repository.created_at:type_name -> google.protobuf.Timestamp
+	123, // 27: minder.v1.Repository.updated_at:type_name -> google.protobuf.Timestamp
 	27,  // 28: minder.v1.RegisterRepositoryRequest.repository:type_name -> minder.v1.UpstreamRepositoryRef
 	70,  // 29: minder.v1.RegisterRepositoryRequest.context:type_name -> minder.v1.Context
 	28,  // 30: minder.v1.RegisterRepoResult.repository:type_name -> minder.v1.Repository
-	92,  // 31: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
+	102, // 31: minder.v1.RegisterRepoResult.status:type_name -> minder.v1.RegisterRepoResult.Status
 	30,  // 32: minder.v1.RegisterRepositoryResponse.result:type_name -> minder.v1.RegisterRepoResult
 	70,  // 33: minder.v1.GetRepositoryByIdRequest.context:type_name -> minder.v1.Context
 	28,  // 34: minder.v1.GetRepositoryByIdResponse.repository:type_name -> minder.v1.Repository
@@ -8437,12 +9066,12 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	70,  // 38: minder.v1.DeleteRepositoryByNameRequest.context:type_name -> minder.v1.Context
 	70,  // 39: minder.v1.ListRepositoriesRequest.context:type_name -> minder.v1.Context
 	28,  // 40: minder.v1.ListRepositoriesResponse.results:type_name -> minder.v1.Repository
-	113, // 41: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
+	123, // 41: minder.v1.VerifyProviderTokenFromRequest.timestamp:type_name -> google.protobuf.Timestamp
 	70,  // 42: minder.v1.VerifyProviderTokenFromRequest.context:type_name -> minder.v1.Context
-	113, // 43: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	123, // 43: minder.v1.CreateUserResponse.created_at:type_name -> google.protobuf.Timestamp
 	70,  // 44: minder.v1.CreateUserResponse.context:type_name -> minder.v1.Context
-	113, // 45: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
-	113, // 46: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
+	123, // 45: minder.v1.UserRecord.created_at:type_name -> google.protobuf.Timestamp
+	123, // 46: minder.v1.UserRecord.updated_at:type_name -> google.protobuf.Timestamp
 	49,  // 47: minder.v1.GetUserResponse.user:type_name -> minder.v1.UserRecord
 	24,  // 48: minder.v1.GetUserResponse.projects:type_name -> minder.v1.Project
 	89,  // 49: minder.v1.CreateProfileRequest.profile:type_name -> minder.v1.Profile
@@ -8454,12 +9083,12 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	89,  // 55: minder.v1.ListProfilesResponse.profiles:type_name -> minder.v1.Profile
 	70,  // 56: minder.v1.GetProfileByIdRequest.context:type_name -> minder.v1.Context
 	89,  // 57: minder.v1.GetProfileByIdResponse.profile:type_name -> minder.v1.Profile
-	113, // 58: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
-	113, // 59: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
-	93,  // 60: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
-	113, // 61: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
+	123, // 58: minder.v1.ProfileStatus.last_updated:type_name -> google.protobuf.Timestamp
+	123, // 59: minder.v1.RuleEvaluationStatus.last_updated:type_name -> google.protobuf.Timestamp
+	103, // 60: minder.v1.RuleEvaluationStatus.entity_info:type_name -> minder.v1.RuleEvaluationStatus.EntityInfoEntry
+	123, // 61: minder.v1.RuleEvaluationStatus.remediation_last_updated:type_name -> google.protobuf.Timestamp
 	70,  // 62: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
-	94,  // 63: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.GetProfileStatusByNameRequest.EntityTypedId
+	104, // 63: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.GetProfileStatusByNameRequest.EntityTypedId
 	62,  // 64: minder.v1.GetProfileStatusByNameResponse.profile_status:type_name -> minder.v1.ProfileStatus
 	63,  // 65: minder.v1.GetProfileStatusByNameResponse.rule_evaluation_status:type_name -> minder.v1.RuleEvaluationStatus
 	70,  // 66: minder.v1.GetProfileStatusByProjectRequest.context:type_name -> minder.v1.Context
@@ -8475,112 +9104,131 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	88,  // 76: minder.v1.UpdateRuleTypeRequest.rule_type:type_name -> minder.v1.RuleType
 	88,  // 77: minder.v1.UpdateRuleTypeResponse.rule_type:type_name -> minder.v1.RuleType
 	70,  // 78: minder.v1.DeleteRuleTypeRequest.context:type_name -> minder.v1.Context
-	95,  // 79: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
-	96,  // 80: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
+	105, // 79: minder.v1.RestType.fallback:type_name -> minder.v1.RestType.Fallback
+	106, // 80: minder.v1.DiffType.ecosystems:type_name -> minder.v1.DiffType.Ecosystem
 	70,  // 81: minder.v1.RuleType.context:type_name -> minder.v1.Context
-	97,  // 82: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
+	107, // 82: minder.v1.RuleType.def:type_name -> minder.v1.RuleType.Definition
 	70,  // 83: minder.v1.Profile.context:type_name -> minder.v1.Context
-	112, // 84: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
-	112, // 85: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
-	112, // 86: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
-	112, // 87: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
-	15,  // 88: minder.v1.PrDependencies.ContextualDependency.dep:type_name -> minder.v1.Dependency
-	91,  // 89: minder.v1.PrDependencies.ContextualDependency.file:type_name -> minder.v1.PrDependencies.ContextualDependency.FilePatch
-	2,   // 90: minder.v1.GetProfileStatusByNameRequest.EntityTypedId.type:type_name -> minder.v1.Entity
-	114, // 91: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
-	114, // 92: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
-	98,  // 93: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
-	99,  // 94: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
-	100, // 95: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
-	101, // 96: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
-	83,  // 97: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
-	84,  // 98: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
-	85,  // 99: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
-	86,  // 100: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
-	87,  // 101: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
-	102, // 102: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
-	103, // 103: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
-	104, // 104: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
-	105, // 105: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
-	83,  // 106: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
-	107, // 107: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
-	108, // 108: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
-	111, // 109: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
-	106, // 110: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	106, // 111: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
-	109, // 112: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
-	110, // 113: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
-	114, // 114: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
-	114, // 115: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
-	115, // 116: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
-	3,   // 117: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
-	17,  // 118: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
-	4,   // 119: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
-	10,  // 120: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
-	12,  // 121: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
-	19,  // 122: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
-	21,  // 123: minder.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> minder.v1.ExchangeCodeForTokenCLIRequest
-	22,  // 124: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
-	42,  // 125: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
-	29,  // 126: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
-	25,  // 127: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
-	40,  // 128: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
-	32,  // 129: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
-	36,  // 130: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
-	34,  // 131: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
-	38,  // 132: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
-	45,  // 133: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
-	47,  // 134: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
-	50,  // 135: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
-	52,  // 136: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
-	54,  // 137: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
-	56,  // 138: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
-	58,  // 139: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
-	60,  // 140: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
-	64,  // 141: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
-	66,  // 142: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
-	71,  // 143: minder.v1.ProfileService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
-	73,  // 144: minder.v1.ProfileService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
-	75,  // 145: minder.v1.ProfileService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
-	77,  // 146: minder.v1.ProfileService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
-	79,  // 147: minder.v1.ProfileService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
-	81,  // 148: minder.v1.ProfileService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
-	18,  // 149: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
-	5,   // 150: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
-	11,  // 151: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
-	13,  // 152: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
-	20,  // 153: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
-	116, // 154: minder.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> google.api.HttpBody
-	23,  // 155: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
-	43,  // 156: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
-	31,  // 157: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
-	26,  // 158: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
-	41,  // 159: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
-	33,  // 160: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
-	37,  // 161: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
-	35,  // 162: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
-	39,  // 163: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
-	46,  // 164: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
-	48,  // 165: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
-	51,  // 166: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
-	53,  // 167: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
-	55,  // 168: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
-	57,  // 169: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
-	59,  // 170: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
-	61,  // 171: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
-	65,  // 172: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
-	67,  // 173: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
-	72,  // 174: minder.v1.ProfileService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
-	74,  // 175: minder.v1.ProfileService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
-	76,  // 176: minder.v1.ProfileService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
-	78,  // 177: minder.v1.ProfileService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
-	80,  // 178: minder.v1.ProfileService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
-	82,  // 179: minder.v1.ProfileService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
-	149, // [149:180] is the sub-list for method output_type
-	118, // [118:149] is the sub-list for method input_type
-	117, // [117:118] is the sub-list for extension type_name
-	116, // [116:117] is the sub-list for extension extendee
-	0,   // [0:116] is the sub-list for field type_name
+	122, // 84: minder.v1.Profile.repository:type_name -> minder.v1.Profile.Rule
+	122, // 85: minder.v1.Profile.build_environment:type_name -> minder.v1.Profile.Rule
+	122, // 86: minder.v1.Profile.artifact:type_name -> minder.v1.Profile.Rule
+	122, // 87: minder.v1.Profile.pull_request:type_name -> minder.v1.Profile.Rule
+	70,  // 88: minder.v1.ListRolesRequest.context:type_name -> minder.v1.Context
+	98,  // 89: minder.v1.ListRolesResponse.roles:type_name -> minder.v1.Role
+	70,  // 90: minder.v1.ListRoleAssignmentsRequest.context:type_name -> minder.v1.Context
+	99,  // 91: minder.v1.ListRoleAssignmentsResponse.role_assignments:type_name -> minder.v1.RoleAssignment
+	70,  // 92: minder.v1.AssignRoleRequest.context:type_name -> minder.v1.Context
+	99,  // 93: minder.v1.AssignRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
+	99,  // 94: minder.v1.AssignRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
+	70,  // 95: minder.v1.RemoveRoleRequest.context:type_name -> minder.v1.Context
+	99,  // 96: minder.v1.RemoveRoleRequest.role_assignment:type_name -> minder.v1.RoleAssignment
+	99,  // 97: minder.v1.RemoveRoleResponse.role_assignment:type_name -> minder.v1.RoleAssignment
+	70,  // 98: minder.v1.RoleAssignment.context:type_name -> minder.v1.Context
+	15,  // 99: minder.v1.PrDependencies.ContextualDependency.dep:type_name -> minder.v1.Dependency
+	101, // 100: minder.v1.PrDependencies.ContextualDependency.file:type_name -> minder.v1.PrDependencies.ContextualDependency.FilePatch
+	2,   // 101: minder.v1.GetProfileStatusByNameRequest.EntityTypedId.type:type_name -> minder.v1.Entity
+	124, // 102: minder.v1.RuleType.Definition.rule_schema:type_name -> google.protobuf.Struct
+	124, // 103: minder.v1.RuleType.Definition.param_schema:type_name -> google.protobuf.Struct
+	108, // 104: minder.v1.RuleType.Definition.ingest:type_name -> minder.v1.RuleType.Definition.Ingest
+	109, // 105: minder.v1.RuleType.Definition.eval:type_name -> minder.v1.RuleType.Definition.Eval
+	110, // 106: minder.v1.RuleType.Definition.remediate:type_name -> minder.v1.RuleType.Definition.Remediate
+	111, // 107: minder.v1.RuleType.Definition.alert:type_name -> minder.v1.RuleType.Definition.Alert
+	83,  // 108: minder.v1.RuleType.Definition.Ingest.rest:type_name -> minder.v1.RestType
+	84,  // 109: minder.v1.RuleType.Definition.Ingest.builtin:type_name -> minder.v1.BuiltinType
+	85,  // 110: minder.v1.RuleType.Definition.Ingest.artifact:type_name -> minder.v1.ArtifactType
+	86,  // 111: minder.v1.RuleType.Definition.Ingest.git:type_name -> minder.v1.GitType
+	87,  // 112: minder.v1.RuleType.Definition.Ingest.diff:type_name -> minder.v1.DiffType
+	112, // 113: minder.v1.RuleType.Definition.Eval.jq:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison
+	113, // 114: minder.v1.RuleType.Definition.Eval.rego:type_name -> minder.v1.RuleType.Definition.Eval.Rego
+	114, // 115: minder.v1.RuleType.Definition.Eval.vulncheck:type_name -> minder.v1.RuleType.Definition.Eval.Vulncheck
+	115, // 116: minder.v1.RuleType.Definition.Eval.trusty:type_name -> minder.v1.RuleType.Definition.Eval.Trusty
+	83,  // 117: minder.v1.RuleType.Definition.Remediate.rest:type_name -> minder.v1.RestType
+	117, // 118: minder.v1.RuleType.Definition.Remediate.gh_branch_protection:type_name -> minder.v1.RuleType.Definition.Remediate.GhBranchProtectionType
+	118, // 119: minder.v1.RuleType.Definition.Remediate.pull_request:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation
+	121, // 120: minder.v1.RuleType.Definition.Alert.security_advisory:type_name -> minder.v1.RuleType.Definition.Alert.AlertTypeSA
+	116, // 121: minder.v1.RuleType.Definition.Eval.JQComparison.ingested:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	116, // 122: minder.v1.RuleType.Definition.Eval.JQComparison.profile:type_name -> minder.v1.RuleType.Definition.Eval.JQComparison.Operator
+	119, // 123: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.contents:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.Content
+	120, // 124: minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.actions_replace_tags_with_sha:type_name -> minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+	124, // 125: minder.v1.Profile.Rule.params:type_name -> google.protobuf.Struct
+	124, // 126: minder.v1.Profile.Rule.def:type_name -> google.protobuf.Struct
+	125, // 127: minder.v1.rpc_options:extendee -> google.protobuf.MethodOptions
+	3,   // 128: minder.v1.rpc_options:type_name -> minder.v1.RpcOptions
+	17,  // 129: minder.v1.HealthService.CheckHealth:input_type -> minder.v1.CheckHealthRequest
+	4,   // 130: minder.v1.ArtifactService.ListArtifacts:input_type -> minder.v1.ListArtifactsRequest
+	10,  // 131: minder.v1.ArtifactService.GetArtifactById:input_type -> minder.v1.GetArtifactByIdRequest
+	12,  // 132: minder.v1.ArtifactService.GetArtifactByName:input_type -> minder.v1.GetArtifactByNameRequest
+	19,  // 133: minder.v1.OAuthService.GetAuthorizationURL:input_type -> minder.v1.GetAuthorizationURLRequest
+	21,  // 134: minder.v1.OAuthService.ExchangeCodeForTokenCLI:input_type -> minder.v1.ExchangeCodeForTokenCLIRequest
+	22,  // 135: minder.v1.OAuthService.StoreProviderToken:input_type -> minder.v1.StoreProviderTokenRequest
+	42,  // 136: minder.v1.OAuthService.VerifyProviderTokenFrom:input_type -> minder.v1.VerifyProviderTokenFromRequest
+	29,  // 137: minder.v1.RepositoryService.RegisterRepository:input_type -> minder.v1.RegisterRepositoryRequest
+	25,  // 138: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:input_type -> minder.v1.ListRemoteRepositoriesFromProviderRequest
+	40,  // 139: minder.v1.RepositoryService.ListRepositories:input_type -> minder.v1.ListRepositoriesRequest
+	32,  // 140: minder.v1.RepositoryService.GetRepositoryById:input_type -> minder.v1.GetRepositoryByIdRequest
+	36,  // 141: minder.v1.RepositoryService.GetRepositoryByName:input_type -> minder.v1.GetRepositoryByNameRequest
+	34,  // 142: minder.v1.RepositoryService.DeleteRepositoryById:input_type -> minder.v1.DeleteRepositoryByIdRequest
+	38,  // 143: minder.v1.RepositoryService.DeleteRepositoryByName:input_type -> minder.v1.DeleteRepositoryByNameRequest
+	45,  // 144: minder.v1.UserService.CreateUser:input_type -> minder.v1.CreateUserRequest
+	47,  // 145: minder.v1.UserService.DeleteUser:input_type -> minder.v1.DeleteUserRequest
+	50,  // 146: minder.v1.UserService.GetUser:input_type -> minder.v1.GetUserRequest
+	52,  // 147: minder.v1.ProfileService.CreateProfile:input_type -> minder.v1.CreateProfileRequest
+	54,  // 148: minder.v1.ProfileService.UpdateProfile:input_type -> minder.v1.UpdateProfileRequest
+	56,  // 149: minder.v1.ProfileService.DeleteProfile:input_type -> minder.v1.DeleteProfileRequest
+	58,  // 150: minder.v1.ProfileService.ListProfiles:input_type -> minder.v1.ListProfilesRequest
+	60,  // 151: minder.v1.ProfileService.GetProfileById:input_type -> minder.v1.GetProfileByIdRequest
+	64,  // 152: minder.v1.ProfileService.GetProfileStatusByName:input_type -> minder.v1.GetProfileStatusByNameRequest
+	66,  // 153: minder.v1.ProfileService.GetProfileStatusByProject:input_type -> minder.v1.GetProfileStatusByProjectRequest
+	71,  // 154: minder.v1.ProfileService.ListRuleTypes:input_type -> minder.v1.ListRuleTypesRequest
+	73,  // 155: minder.v1.ProfileService.GetRuleTypeByName:input_type -> minder.v1.GetRuleTypeByNameRequest
+	75,  // 156: minder.v1.ProfileService.GetRuleTypeById:input_type -> minder.v1.GetRuleTypeByIdRequest
+	77,  // 157: minder.v1.ProfileService.CreateRuleType:input_type -> minder.v1.CreateRuleTypeRequest
+	79,  // 158: minder.v1.ProfileService.UpdateRuleType:input_type -> minder.v1.UpdateRuleTypeRequest
+	81,  // 159: minder.v1.ProfileService.DeleteRuleType:input_type -> minder.v1.DeleteRuleTypeRequest
+	90,  // 160: minder.v1.PermissionsService.ListRoles:input_type -> minder.v1.ListRolesRequest
+	92,  // 161: minder.v1.PermissionsService.ListRoleAssignments:input_type -> minder.v1.ListRoleAssignmentsRequest
+	94,  // 162: minder.v1.PermissionsService.AssignRole:input_type -> minder.v1.AssignRoleRequest
+	96,  // 163: minder.v1.PermissionsService.RemoveRole:input_type -> minder.v1.RemoveRoleRequest
+	18,  // 164: minder.v1.HealthService.CheckHealth:output_type -> minder.v1.CheckHealthResponse
+	5,   // 165: minder.v1.ArtifactService.ListArtifacts:output_type -> minder.v1.ListArtifactsResponse
+	11,  // 166: minder.v1.ArtifactService.GetArtifactById:output_type -> minder.v1.GetArtifactByIdResponse
+	13,  // 167: minder.v1.ArtifactService.GetArtifactByName:output_type -> minder.v1.GetArtifactByNameResponse
+	20,  // 168: minder.v1.OAuthService.GetAuthorizationURL:output_type -> minder.v1.GetAuthorizationURLResponse
+	126, // 169: minder.v1.OAuthService.ExchangeCodeForTokenCLI:output_type -> google.api.HttpBody
+	23,  // 170: minder.v1.OAuthService.StoreProviderToken:output_type -> minder.v1.StoreProviderTokenResponse
+	43,  // 171: minder.v1.OAuthService.VerifyProviderTokenFrom:output_type -> minder.v1.VerifyProviderTokenFromResponse
+	31,  // 172: minder.v1.RepositoryService.RegisterRepository:output_type -> minder.v1.RegisterRepositoryResponse
+	26,  // 173: minder.v1.RepositoryService.ListRemoteRepositoriesFromProvider:output_type -> minder.v1.ListRemoteRepositoriesFromProviderResponse
+	41,  // 174: minder.v1.RepositoryService.ListRepositories:output_type -> minder.v1.ListRepositoriesResponse
+	33,  // 175: minder.v1.RepositoryService.GetRepositoryById:output_type -> minder.v1.GetRepositoryByIdResponse
+	37,  // 176: minder.v1.RepositoryService.GetRepositoryByName:output_type -> minder.v1.GetRepositoryByNameResponse
+	35,  // 177: minder.v1.RepositoryService.DeleteRepositoryById:output_type -> minder.v1.DeleteRepositoryByIdResponse
+	39,  // 178: minder.v1.RepositoryService.DeleteRepositoryByName:output_type -> minder.v1.DeleteRepositoryByNameResponse
+	46,  // 179: minder.v1.UserService.CreateUser:output_type -> minder.v1.CreateUserResponse
+	48,  // 180: minder.v1.UserService.DeleteUser:output_type -> minder.v1.DeleteUserResponse
+	51,  // 181: minder.v1.UserService.GetUser:output_type -> minder.v1.GetUserResponse
+	53,  // 182: minder.v1.ProfileService.CreateProfile:output_type -> minder.v1.CreateProfileResponse
+	55,  // 183: minder.v1.ProfileService.UpdateProfile:output_type -> minder.v1.UpdateProfileResponse
+	57,  // 184: minder.v1.ProfileService.DeleteProfile:output_type -> minder.v1.DeleteProfileResponse
+	59,  // 185: minder.v1.ProfileService.ListProfiles:output_type -> minder.v1.ListProfilesResponse
+	61,  // 186: minder.v1.ProfileService.GetProfileById:output_type -> minder.v1.GetProfileByIdResponse
+	65,  // 187: minder.v1.ProfileService.GetProfileStatusByName:output_type -> minder.v1.GetProfileStatusByNameResponse
+	67,  // 188: minder.v1.ProfileService.GetProfileStatusByProject:output_type -> minder.v1.GetProfileStatusByProjectResponse
+	72,  // 189: minder.v1.ProfileService.ListRuleTypes:output_type -> minder.v1.ListRuleTypesResponse
+	74,  // 190: minder.v1.ProfileService.GetRuleTypeByName:output_type -> minder.v1.GetRuleTypeByNameResponse
+	76,  // 191: minder.v1.ProfileService.GetRuleTypeById:output_type -> minder.v1.GetRuleTypeByIdResponse
+	78,  // 192: minder.v1.ProfileService.CreateRuleType:output_type -> minder.v1.CreateRuleTypeResponse
+	80,  // 193: minder.v1.ProfileService.UpdateRuleType:output_type -> minder.v1.UpdateRuleTypeResponse
+	82,  // 194: minder.v1.ProfileService.DeleteRuleType:output_type -> minder.v1.DeleteRuleTypeResponse
+	91,  // 195: minder.v1.PermissionsService.ListRoles:output_type -> minder.v1.ListRolesResponse
+	93,  // 196: minder.v1.PermissionsService.ListRoleAssignments:output_type -> minder.v1.ListRoleAssignmentsResponse
+	95,  // 197: minder.v1.PermissionsService.AssignRole:output_type -> minder.v1.AssignRoleResponse
+	97,  // 198: minder.v1.PermissionsService.RemoveRole:output_type -> minder.v1.RemoveRoleResponse
+	164, // [164:199] is the sub-list for method output_type
+	129, // [129:164] is the sub-list for method input_type
+	128, // [128:129] is the sub-list for extension type_name
+	127, // [127:128] is the sub-list for extension extendee
+	0,   // [0:127] is the sub-list for field type_name
 }
 
 func init() { file_minder_v1_minder_proto_init() }
@@ -9634,7 +10282,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[87].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PrDependencies_ContextualDependency); i {
+			switch v := v.(*ListRolesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9646,7 +10294,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[88].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
+			switch v := v.(*ListRolesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9658,7 +10306,19 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[89].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterRepoResult_Status); i {
+			switch v := v.(*ListRoleAssignmentsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[90].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRoleAssignmentsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9670,7 +10330,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[91].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetProfileStatusByNameRequest_EntityTypedId); i {
+			switch v := v.(*AssignRoleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9682,7 +10342,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[92].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RestType_Fallback); i {
+			switch v := v.(*AssignRoleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9694,7 +10354,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[93].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DiffType_Ecosystem); i {
+			switch v := v.(*RemoveRoleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9706,7 +10366,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[94].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition); i {
+			switch v := v.(*RemoveRoleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9718,7 +10378,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[95].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Ingest); i {
+			switch v := v.(*Role); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9730,7 +10390,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[96].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval); i {
+			switch v := v.(*RoleAssignment); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9742,7 +10402,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[97].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Remediate); i {
+			switch v := v.(*PrDependencies_ContextualDependency); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9754,7 +10414,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[98].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Alert); i {
+			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9766,19 +10426,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[99].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval_JQComparison); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[100].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval_Rego); i {
+			switch v := v.(*RegisterRepoResult_Status); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9790,7 +10438,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[101].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval_Vulncheck); i {
+			switch v := v.(*GetProfileStatusByNameRequest_EntityTypedId); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9802,7 +10450,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[102].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval_Trusty); i {
+			switch v := v.(*RestType_Fallback); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9814,7 +10462,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[103].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Eval_JQComparison_Operator); i {
+			switch v := v.(*DiffType_Ecosystem); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9826,7 +10474,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[104].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Remediate_GhBranchProtectionType); i {
+			switch v := v.(*RuleType_Definition); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9838,7 +10486,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[105].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation); i {
+			switch v := v.(*RuleType_Definition_Ingest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9850,7 +10498,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[106].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_Content); i {
+			switch v := v.(*RuleType_Definition_Eval); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9862,7 +10510,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[107].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha); i {
+			switch v := v.(*RuleType_Definition_Remediate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9874,7 +10522,7 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[108].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RuleType_Definition_Alert_AlertTypeSA); i {
+			switch v := v.(*RuleType_Definition_Alert); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -9886,6 +10534,126 @@ func file_minder_v1_minder_proto_init() {
 			}
 		}
 		file_minder_v1_minder_proto_msgTypes[109].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Eval_JQComparison); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[110].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Eval_Rego); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[111].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Eval_Vulncheck); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[112].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Eval_Trusty); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[113].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Eval_JQComparison_Operator); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[114].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Remediate_GhBranchProtectionType); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[115].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[116].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_Content); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[117].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[118].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RuleType_Definition_Alert_AlertTypeSA); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_minder_v1_minder_proto_msgTypes[119].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Profile_Rule); i {
 			case 0:
 				return &v.state
@@ -9909,24 +10677,25 @@ func file_minder_v1_minder_proto_init() {
 	file_minder_v1_minder_proto_msgTypes[80].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[85].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[86].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[89].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[94].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[95].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[96].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[97].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[98].OneofWrappers = []interface{}{}
-	file_minder_v1_minder_proto_msgTypes[100].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[99].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[104].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[105].OneofWrappers = []interface{}{}
 	file_minder_v1_minder_proto_msgTypes[106].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[107].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[108].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[110].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[115].OneofWrappers = []interface{}{}
+	file_minder_v1_minder_proto_msgTypes[116].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_minder_v1_minder_proto_rawDesc,
 			NumEnums:      3,
-			NumMessages:   110,
+			NumMessages:   120,
 			NumExtensions: 1,
-			NumServices:   6,
+			NumServices:   7,
 		},
 		GoTypes:           file_minder_v1_minder_proto_goTypes,
 		DependencyIndexes: file_minder_v1_minder_proto_depIdxs,

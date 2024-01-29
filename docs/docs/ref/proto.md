@@ -50,6 +50,19 @@ replies with OK
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
 
+<a name="minder-v1-PermissionsService"></a>
+
+#### PermissionsService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListRoles | [ListRolesRequest](#minder-v1-ListRolesRequest) | [ListRolesResponse](#minder-v1-ListRolesResponse) |  |
+| ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
+| AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
+| RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
+
+
 <a name="minder-v1-ProfileService"></a>
 
 #### ProfileService
@@ -140,6 +153,29 @@ ArtifactType defines the artifact data evaluation.
 | signature_verification | [SignatureVerification](#minder-v1-SignatureVerification) |  |  |
 | github_workflow | [GithubWorkflow](#minder-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+<a name="minder-v1-AssignRoleRequest"></a>
+
+#### AssignRoleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be created. |
+
+
+<a name="minder-v1-AssignRoleResponse"></a>
+
+#### AssignRoleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -827,6 +863,50 @@ list profiles
 | cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
 
 
+<a name="minder-v1-ListRoleAssignmentsRequest"></a>
+
+#### ListRoleAssignmentsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignments are evaluated. |
+
+
+<a name="minder-v1-ListRoleAssignmentsResponse"></a>
+
+#### ListRoleAssignmentsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated |  |
+
+
+<a name="minder-v1-ListRolesRequest"></a>
+
+#### ListRolesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the roles are evaluated. |
+
+
+<a name="minder-v1-ListRolesResponse"></a>
+
+#### ListRolesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| roles | [Role](#minder-v1-Role) | repeated |  |
+
+
 <a name="minder-v1-ListRuleTypesRequest"></a>
 
 #### ListRuleTypesRequest
@@ -1024,6 +1104,29 @@ RESTProviderConfig contains the configuration for the REST provider.
 | result | [RegisterRepoResult](#minder-v1-RegisterRepoResult) |  |  |
 
 
+<a name="minder-v1-RemoveRoleRequest"></a>
+
+#### RemoveRoleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be removed. |
+
+
+<a name="minder-v1-RemoveRoleResponse"></a>
+
+#### RemoveRoleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was removed. |
+
+
 <a name="minder-v1-Repository"></a>
 
 #### Repository
@@ -1079,6 +1182,31 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | http_code | [int32](#int32) |  |  |
 | body | [string](#string) |  |  |
+
+
+<a name="minder-v1-Role"></a>
+
+#### Role
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the role. |
+| description | [string](#string) |  | description is the description of the role. |
+
+
+<a name="minder-v1-RoleAssignment"></a>
+
+#### RoleAssignment
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [string](#string) |  | role is the role that is assigned. |
+| subject | [string](#string) |  | subject is the subject to which the role is assigned. |
+| context | [Context](#minder-v1-Context) | optional | context is the context in which the role is assigned. |
 
 
 <a name="minder-v1-RpcOptions"></a>
