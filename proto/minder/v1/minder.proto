@@ -543,6 +543,54 @@ service ProfileService {
     }
 }
 
+service PermissionsService {
+    rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/permissions/roles"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
+    rpc ListRoleAssignments (ListRoleAssignmentsRequest) returns (ListRoleAssignmentsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/permissions/assignments"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
+    rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/permissions/assign"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+
+    rpc RemoveRole (RemoveRoleRequest) returns (RemoveRoleResponse) {
+        // The role name comes from the name field in the role object
+        option (google.api.http) = {
+            delete: "/api/v1/permissions/remove/{role_assignment.role}/subject/{role_assignment.subject}"
+        };
+
+        option (rpc_options) = {
+            auth_scope: OBJECT_OWNER_PROJECT
+            owner_only: true
+        };
+    }
+}
+
 message CheckHealthRequest {
 }
 
@@ -1327,4 +1375,62 @@ message Profile {
 
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11;
+}
+
+message ListRolesRequest {
+    // context is the context in which the roles are evaluated.
+    Context context = 1;
+}
+
+message ListRolesResponse {
+    repeated Role roles = 1;
+}
+
+message ListRoleAssignmentsRequest {
+    // context is the context in which the role assignments are evaluated.
+    Context context = 1;
+}
+
+message ListRoleAssignmentsResponse {
+    repeated RoleAssignment role_assignments = 1;
+}
+
+message AssignRoleRequest {
+    // context is the context in which the role assignment is evaluated.
+    Context context = 1;
+    // role_assignment is the role assignment to be created.
+    RoleAssignment role_assignment = 2;
+}
+
+message AssignRoleResponse {
+    // role_assignment is the role assignment that was created.
+    RoleAssignment role_assignment = 1;
+}
+
+message RemoveRoleRequest {
+    // context is the context in which the role assignment is evaluated.
+    Context context = 1;
+    // role_assignment is the role assignment to be removed.
+    RoleAssignment role_assignment = 2;
+}
+
+message RemoveRoleResponse {
+    // role_assignment is the role assignment that was removed.
+    RoleAssignment role_assignment = 1;
+}
+
+message Role {
+    // name is the name of the role.
+    string name = 1;
+    // description is the description of the role.
+    string description = 2;
+}
+
+message RoleAssignment {
+    // role is the role that is assigned.
+    string role = 1;
+    // subject is the subject to which the role is assigned.
+    string subject = 2;
+    // context is the context in which the role is assigned.
+    optional Context context = 3;
 }
