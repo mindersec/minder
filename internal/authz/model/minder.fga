@@ -45,11 +45,18 @@ type project
     define viewer: [user, group#member] or editor or viewer from parent
     # Defines a role that's only allowed to write rule types and profiles (create, update, delete)
     define policy_writer: [user, group#member] or policy_writer from parent
+    # Defines a role that's only allowed to manage roles.
+    define permissions_manager: [user, group#member] or permissions_manager from parent
 
     define get: viewer
     define create: admin
     define update: admin
     define delete: admin
+
+    define role_list: admin or permissions_manager
+    define role_assignment_list: admin or permissions_manager
+    define role_assignment_create: admin or permissions_manager
+    define role_assignment_remove: admin or permissions_manager
 
     define repo_get: viewer
     define repo_create: editor
