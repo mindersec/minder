@@ -9,6 +9,7 @@ tags:
   - name: RepositoryService
   - name: UserService
   - name: ProfileService
+  - name: PermissionsService
 consumes:
   - application/json
 produces:
@@ -469,6 +470,137 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       tags:
         - HealthService
+  /api/v1/permissions/assign:
+    post:
+      operationId: PermissionsService_AssignRole
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1AssignRoleResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1AssignRoleRequest'
+      tags:
+        - PermissionsService
+  /api/v1/permissions/assignments:
+    get:
+      operationId: PermissionsService_ListRoleAssignments
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListRoleAssignmentsResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+      tags:
+        - PermissionsService
+  /api/v1/permissions/remove/{roleAssignment.role}/subject/{roleAssignment.subject}:
+    delete:
+      operationId: PermissionsService_RemoveRole
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1RemoveRoleResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: roleAssignment.role
+          description: role is the role that is assigned.
+          in: path
+          required: true
+          type: string
+        - name: roleAssignment.subject
+          description: subject is the subject to which the role is assigned.
+          in: path
+          required: true
+          type: string
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.context.retiredOrganization
+          in: query
+          required: false
+          type: string
+      tags:
+        - PermissionsService
+  /api/v1/permissions/roles:
+    get:
+      operationId: PermissionsService_ListRoles
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListRolesResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+      tags:
+        - PermissionsService
   /api/v1/profile:
     post:
       operationId: ProfileService_CreateProfile
@@ -1948,6 +2080,21 @@ definitions:
       createdAt:
         type: string
         format: date-time
+  v1AssignRoleRequest:
+    type: object
+    properties:
+      context:
+        $ref: '#/definitions/v1Context'
+        description: context is the context in which the role assignment is evaluated.
+      roleAssignment:
+        $ref: '#/definitions/v1RoleAssignment'
+        description: role_assignment is the role assignment to be created.
+  v1AssignRoleResponse:
+    type: object
+    properties:
+      roleAssignment:
+        $ref: '#/definitions/v1RoleAssignment'
+        description: role_assignment is the role assignment that was created.
   v1BuiltinType:
     type: object
     properties:
@@ -2217,6 +2364,22 @@ definitions:
         title: >-
           cursor is the cursor to use for the next page of results, empty if at
           the end
+  v1ListRoleAssignmentsResponse:
+    type: object
+    properties:
+      roleAssignments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1RoleAssignment'
+  v1ListRolesResponse:
+    type: object
+    properties:
+      roles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1Role'
   v1ListRuleTypesResponse:
     type: object
     properties:
@@ -2333,6 +2496,12 @@ definitions:
     properties:
       result:
         $ref: '#/definitions/v1RegisterRepoResult'
+  v1RemoveRoleResponse:
+    type: object
+    properties:
+      roleAssignment:
+        $ref: '#/definitions/v1RoleAssignment'
+        description: role_assignment is the role assignment that was removed.
   v1Repository:
     type: object
     properties:
@@ -2413,6 +2582,27 @@ definitions:
     description: |-
       RestType defines the rest data evaluation.
       This is used to fetch data from a REST endpoint.
+  v1Role:
+    type: object
+    properties:
+      name:
+        type: string
+        description: name is the name of the role.
+      description:
+        type: string
+        description: description is the description of the role.
+  v1RoleAssignment:
+    type: object
+    properties:
+      role:
+        type: string
+        description: role is the role that is assigned.
+      subject:
+        type: string
+        description: subject is the subject to which the role is assigned.
+      context:
+        $ref: '#/definitions/v1Context'
+        description: context is the context in which the role is assigned.
   v1RuleEvaluationStatus:
     type: object
     properties:
