@@ -38,6 +38,8 @@ const (
 	AuthzRoleViewer Role = "viewer"
 	// AuthzRolePolicyWriter is the `policy_writer` role
 	AuthzRolePolicyWriter Role = "policy_writer"
+	// AuthzRolePermissionsManager is the `permissions_manager` role
+	AuthzRolePermissionsManager Role = "permissions_manager"
 )
 
 var (
@@ -46,6 +48,7 @@ var (
 		AuthzRoleEditor,
 		AuthzRoleViewer,
 		AuthzRolePolicyWriter,
+		AuthzRolePermissionsManager,
 	}
 )
 
