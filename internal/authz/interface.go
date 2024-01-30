@@ -44,12 +44,16 @@ const (
 
 var (
 	// AllRoles is a list of all roles
-	AllRoles = []Role{
-		AuthzRoleAdmin,
-		AuthzRoleEditor,
-		AuthzRoleViewer,
-		AuthzRolePolicyWriter,
-		AuthzRolePermissionsManager,
+	AllRoles = map[Role]string{
+		AuthzRoleAdmin: "The admin role allows the user to perform all actions on the project and " +
+			"sub-projects.",
+		AuthzRoleEditor: "The editor role allows for more write and read actions on the project and " +
+			"sub-projects except for project administration.",
+		AuthzRoleViewer: "The viewer role allows for read actions on the project and sub-projects.",
+		AuthzRolePolicyWriter: "The policy_writer role allows for writing policies (rule types and " +
+			"profiles) on the project and sub-projects. This is handy for CI jobs.",
+		AuthzRolePermissionsManager: "The permissions_manager role allows for managing permissions " +
+			"on the project and sub-projects.",
 	}
 )
 

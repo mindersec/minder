@@ -311,7 +311,7 @@ func (a *ClientWrapper) doDelete(ctx context.Context, user string, role string, 
 
 // DeleteUser removes all tuples for the given user
 func (a *ClientWrapper) DeleteUser(ctx context.Context, user string) error {
-	for _, role := range AllRoles {
+	for role := range AllRoles {
 		listresp, err := a.cli.ListObjects(ctx).Body(fgaclient.ClientListObjectsRequest{
 			Type:     "project",
 			Relation: role.String(),

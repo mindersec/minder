@@ -54,7 +54,7 @@ func TestAllRolesExistInFGAModel(t *testing.T) {
 
 	t.Logf("relations: %v", projectTypeDef.Relations)
 
-	for _, r := range authz.AllRoles {
+	for r := range authz.AllRoles {
 		assert.Contains(t, *projectTypeDef.Relations, r.String(), "role %s not found in authz model", r)
 	}
 }
