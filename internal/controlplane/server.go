@@ -66,24 +66,27 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store      db.Store
-	cfg        *serverconfig.Config
-	evt        *events.Eventer
-	mt         *metrics
-	provMt     provtelemetry.ProviderMetrics
-	grpcServer *grpc.Server
-	vldtr      auth.JwtValidator
+	store        db.Store
+	cfg          *serverconfig.Config
+	evt          *events.Eventer
+	mt           *metrics
+	provMt       provtelemetry.ProviderMetrics
+	grpcServer   *grpc.Server
+	vldtr        auth.JwtValidator
+	OAuth2       *oauth2.Config
+	ClientID     string
+	ClientSecret string
+	authzClient  authz.Client
+	cryptoEngine *crypto.Engine
+
+	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
-	OAuth2       *oauth2.Config
-	ClientID     string
-	ClientSecret string
-	authzClient  authz.Client
-	cryptoEngine *crypto.Engine
+	pb.UnimplementedPermissionsServiceServer
 }
 
 // ServerOption is a function that modifies a server

@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
@@ -235,4 +236,41 @@ func requiresProjectAuthorization(opts *minder.RpcOptions) bool {
 	// default to returning true, unless we explicitly specify anonymous, or a different type of authorization scope
 	return !opts.Anonymous &&
 		opts.GetAuthScope() != minder.ObjectOwner_OBJECT_OWNER_USER
+}
+
+// Permissions API
+// ensure interface implementation
+var _ minder.PermissionsServiceServer = (*Server)(nil)
+
+// ListRoles returns the list of available roles for the minder instance
+func (*Server) ListRoles(_ context.Context, _ *minder.ListRolesRequest) (*minder.ListRolesResponse, error) {
+	resp := minder.ListRolesResponse{
+		Roles: make([]*minder.Role, 0, len(authz.AllRoles)),
+	}
+	for role, desc := range authz.AllRoles {
+		resp.Roles = append(resp.Roles, &minder.Role{
+			Name:        role.String(),
+			Description: desc,
+		})
+	}
+
+	return &resp, nil
+}
+
+// ListRoleAssignments returns the list of role assignments for the given project
+func (*Server) ListRoleAssignments(
+	context.Context,
+	*minder.ListRoleAssignmentsRequest,
+) (*minder.ListRoleAssignmentsResponse, error) {
+	return nil, nil
+}
+
+// AssignRole assigns a role to a user on a project
+func (*Server) AssignRole(context.Context, *minder.AssignRoleRequest) (*minder.AssignRoleResponse, error) {
+	return nil, nil
+}
+
+// RemoveRole removes a role from a user on a project
+func (*Server) RemoveRole(context.Context, *minder.RemoveRoleRequest) (*minder.RemoveRoleResponse, error) {
+	return nil, nil
 }

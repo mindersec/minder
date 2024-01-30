@@ -56,6 +56,11 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterArtifactServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
+
+	// Register the Permissions service
+	if err := pb.RegisterPermissionsServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatal().Err(err).Msg("failed to register gateway")
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -77,4 +82,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the Artifact service
 	pb.RegisterArtifactServiceServer(s.grpcServer, s)
+
+	// Register the Permissions service
+	pb.RegisterPermissionsServiceServer(s.grpcServer, s)
 }
