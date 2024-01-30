@@ -167,24 +167,6 @@ message Artifact {
     google.protobuf.Timestamp created_at = 8;
 }
 
-message GithubWorkflow {
-    string name = 1;
-    string repository = 2;
-    string commit_sha = 3;
-    string trigger = 4;
-}
-
-message SignatureVerification {
-    bool is_signed = 1;
-    bool is_verified = 2;
-    bool is_bundle_verified = 3;
-    optional string cert_identity = 4;
-    optional string cert_issuer = 5;
-    optional string rekor_log_id = 6;
-    optional int64 rekor_log_index = 7;
-    optional google.protobuf.Timestamp signature_time = 8;
-}
-
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;

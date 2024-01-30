@@ -754,20 +754,6 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
-<a name="minder-v1-GithubWorkflow"></a>
-
-#### GithubWorkflow
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
-| commit_sha | [string](#string) |  |  |
-| trigger | [string](#string) |  |  |
-
-
 <a name="minder-v1-ListArtifactsRequest"></a>
 
 #### ListArtifactsRequest
@@ -1465,24 +1451,6 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
 | mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
-
-
-<a name="minder-v1-SignatureVerification"></a>
-
-#### SignatureVerification
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| is_signed | [bool](#bool) |  |  |
-| is_verified | [bool](#bool) |  |  |
-| is_bundle_verified | [bool](#bool) |  |  |
-| cert_identity | [string](#string) | optional |  |
-| cert_issuer | [string](#string) | optional |  |
-| rekor_log_id | [string](#string) | optional |  |
-| rekor_log_index | [int64](#int64) | optional |  |
-| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 
 <a name="minder-v1-StoreProviderTokenRequest"></a>
