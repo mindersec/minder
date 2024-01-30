@@ -17,7 +17,9 @@ package controlplane
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -265,12 +267,88 @@ func (*Server) ListRoleAssignments(
 	return nil, nil
 }
 
-// AssignRole assigns a role to a user on a project
-func (*Server) AssignRole(context.Context, *minder.AssignRoleRequest) (*minder.AssignRoleResponse, error) {
-	return nil, nil
+// AssignRole assigns a role to a user on a project.
+// Note that this assumes that the request has already been authorized.
+func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) (*minder.AssignRoleResponse, error) {
+	// Request Validation
+	role := req.GetRoleAssignment().GetRole()
+	sub := req.GetRoleAssignment().GetSubject()
+
+	if role == "" || sub == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
+	}
+
+	// Parse role (this also validates)
+	authzrole, err := authz.ParseRole(role)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify if user exists
+	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	}
+
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
+		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	respProj := projectID.String()
+	return &minder.AssignRoleResponse{
+		RoleAssignment: &minder.RoleAssignment{
+			Role:    role,
+			Subject: sub,
+			Project: &respProj,
+		},
+	}, nil
 }
 
 // RemoveRole removes a role from a user on a project
-func (*Server) RemoveRole(context.Context, *minder.RemoveRoleRequest) (*minder.RemoveRoleResponse, error) {
-	return nil, nil
+// Note that this assumes that the request has already been authorized.
+func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) (*minder.RemoveRoleResponse, error) {
+	// Request Validation
+	role := req.GetRoleAssignment().GetRole()
+	sub := req.GetRoleAssignment().GetSubject()
+
+	if role == "" || sub == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
+	}
+
+	// Parse role (this also validates)
+	authzrole, err := authz.ParseRole(role)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
+	// Verify if user exists
+	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	}
+
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	if err := s.authzClient.Delete(ctx, sub, authzrole, projectID); err != nil {
+		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	respProj := projectID.String()
+	return &minder.RemoveRoleResponse{
+		RoleAssignment: &minder.RoleAssignment{
+			Role:    role,
+			Subject: sub,
+			Project: &respProj,
+		},
+	}, nil
 }

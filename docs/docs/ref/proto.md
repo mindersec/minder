@@ -1206,7 +1206,7 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | role | [string](#string) |  | role is the role that is assigned. |
 | subject | [string](#string) |  | subject is the subject to which the role is assigned. |
-| context | [Context](#minder-v1-Context) | optional | context is the context in which the role is assigned. |
+| project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
 
 
 <a name="minder-v1-RpcOptions"></a>
