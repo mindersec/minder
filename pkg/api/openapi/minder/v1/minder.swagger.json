@@ -59,19 +59,6 @@
             "type": "string"
           },
           {
-            "name": "latestVersions",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "context.provider",
             "description": "name of the provider",
             "in": "query",
@@ -119,19 +106,6 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "latestVersions",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": false,
             "type": "string"
           },
           {

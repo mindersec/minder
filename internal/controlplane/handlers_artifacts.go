@@ -66,19 +66,6 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 // nolint:gocyclo
 func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
 	// tag and latest versions cannot be set at same time
-	if in.Tag != "" && in.LatestVersions > 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
-	}
-
-	if in.LatestVersions < 1 || in.LatestVersions > 10 {
-		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
-	}
-
-	// get artifact versions
-	if in.LatestVersions <= 0 {
-		in.LatestVersions = 10
-	}
-
 	nameParts := strings.Split(in.Name, "/")
 	if len(nameParts) < 3 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact name user repoOwner/repoName/artifactName")
@@ -132,14 +119,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 // nolint:gocyclo
 func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequest) (*pb.GetArtifactByIdResponse, error) {
 	// tag and latest versions cannot be set at same time
-	if in.Tag != "" && in.LatestVersions > 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
-	}
-
-	if in.LatestVersions < 1 || in.LatestVersions > 10 {
-		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
-	}
-
 	parsedArtifactID, err := uuid.Parse(in.Id)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact ID")
@@ -152,11 +131,6 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
-	}
-
-	// get artifact versions
-	if in.LatestVersions <= 0 {
-		in.LatestVersions = 10
 	}
 
 	// Telemetry logging

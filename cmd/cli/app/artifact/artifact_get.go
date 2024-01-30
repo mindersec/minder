@@ -16,7 +16,9 @@
 package artifact
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -32,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -48,10 +51,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
-	tag := viper.GetString("tag")
 	artifactID := viper.GetString("id")
 	artifactName := viper.GetString("name")
-	latestVersions := viper.GetInt32("versions")
 	format := viper.GetString("output")
 
 	// Ensure provider is supported
@@ -68,11 +69,110 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	pbArt, art, versions, err := artifactGet(ctx, client, provider, project, artifactID, artifactName, latestVersions, tag)
+	pbArt, art, err := artifactGet(ctx, client, provider, project, artifactID, artifactName)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact", err)
 	}
 
+	if err := printArtifact(cmd, pbArt, art, format); err != nil {
+		return cli.MessageAndError("Error printing artifact", err)
+	}
+
+	evalStatus, err := artifactEvalStatus(ctx, conn, art, provider, project)
+	if err != nil {
+		return cli.MessageAndError("Error getting artifact evaluation status", err)
+	}
+
+	if err := printEvalStatus(cmd, evalStatus, format); err != nil {
+		return cli.MessageAndError("Error printing artifact evaluation status", err)
+	}
+
+	return nil
+}
+
+func artifactGet(
+	ctx context.Context,
+	client minderv1.ArtifactServiceClient,
+	provider string, project string,
+	artifactID string, artifactName string,
+) (pbArt protoreflect.ProtoMessage, art *minderv1.Artifact, err error) {
+
+	if artifactName != "" {
+		// check artifact by Name
+		artByName, errGet := client.GetArtifactByName(ctx, &minderv1.GetArtifactByNameRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Name:    artifactName,
+		})
+		if errGet != nil {
+			err = fmt.Errorf("error getting artifact by name: %w", errGet)
+			return
+		}
+		pbArt = artByName
+		art = artByName.GetArtifact()
+		return
+	} else if artifactID != "" {
+		// check artifact by ID
+		artById, errGet := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Id:      artifactID,
+		})
+		if errGet != nil {
+			err = fmt.Errorf("error getting artifact by id: %w", errGet)
+			return
+		}
+		pbArt = artById
+		art = artById.GetArtifact()
+		return
+	}
+
+	err = errors.New("neither name nor ID set")
+	return
+}
+
+func artifactEvalStatus(
+	ctx context.Context, conn *grpc.ClientConn,
+	artifact *minderv1.Artifact,
+	provider, project string,
+) ([]*minderv1.RuleEvaluationStatus, error) {
+	profClient := minderv1.NewProfileServiceClient(conn)
+	profiles, err := profClient.ListProfiles(ctx, &minderv1.ListProfilesRequest{
+		Context: &minderv1.Context{
+			Provider: &provider,
+			Project:  &project,
+		},
+	})
+	if err != nil {
+		return nil, cli.MessageAndError("Error getting profiles", err)
+	}
+
+	var respList []*minderv1.RuleEvaluationStatus
+
+	for _, profile := range profiles.Profiles {
+		req := &minderv1.GetProfileStatusByNameRequest{
+			Context: &minderv1.Context{
+				Provider: &provider,
+				Project:  &project,
+			},
+			Name: profile.GetName(),
+			Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
+				Id:   artifact.ArtifactPk,
+				Type: minderv1.Entity_ENTITY_ARTIFACTS,
+			},
+		}
+
+		resp, err := profClient.GetProfileStatusByName(ctx, req)
+		if err != nil {
+			return nil, cli.MessageAndError("Error getting profile status", err)
+		}
+		respList = append(respList, resp.GetRuleEvaluationStatus()...)
+	}
+
+	return respList, nil
+}
+
+func printArtifact(
+	cmd *cobra.Command, pbArt protoreflect.ProtoMessage, art *minderv1.Artifact, format string,
+) error {
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default,
@@ -87,17 +187,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 			art.CreatedAt.AsTime().Format(time.RFC3339),
 		)
 		ta.Render()
-
-		tv := table.New(table.Simple, layouts.Default,
-			[]string{"ID", "Tags", "Signature", "Identity", "Creation date"})
-		for _, version := range versions {
-			tv.AddRow(
-				fmt.Sprintf("%d", version.VersionId),
-				strings.Join(version.Tags, ","),
-				version.CreatedAt.AsTime().Format(time.RFC3339),
-			)
-		}
-		tv.Render()
 	case app.JSON:
 		out, err := util.GetJsonFromProto(pbArt)
 		if err != nil {
@@ -115,49 +204,51 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	return nil
 }
 
-func artifactGet(
-	ctx context.Context,
-	client minderv1.ArtifactServiceClient,
-	provider string, project string,
-	artifactID string, artifactName string, latestVersions int32, tag string,
-) (pbArt protoreflect.ProtoMessage, art *minderv1.Artifact, versions []*minderv1.ArtifactVersion, err error) {
+func printEvalStatus(
+	cmd *cobra.Command, evalStatus []*minderv1.RuleEvaluationStatus, format string,
+) error {
+	switch format {
+	case app.Table:
+		ta := table.New(table.Simple, layouts.Default,
+			[]string{"Profile", "Rule", "Status", "Message"})
+		for _, status := range evalStatus {
+			ta.AddRow(
+				status.ProfileId,
+				status.RuleName,
+				status.Status,
+				status.Details,
+			)
+		}
+		ta.Render()
+	case app.JSON, app.YAML:
+		jsonList := make([]string, 0)
+		for _, es := range evalStatus {
+			jsonEs, err := util.GetJsonFromProto(es)
+			if err != nil {
+				return cli.MessageAndError("Error getting json from proto", err)
+			}
+			jsonList = append(jsonList, jsonEs)
+		}
 
-	if artifactName != "" {
-		// check artifact by Name
-		artByName, errGet := client.GetArtifactByName(ctx, &minderv1.GetArtifactByNameRequest{
-			Context:        &minderv1.Context{Provider: &provider, Project: &project},
-			Name:           artifactName,
-			LatestVersions: latestVersions,
-			Tag:            tag,
-		})
-		if errGet != nil {
-			err = fmt.Errorf("error getting artifact by name: %w", errGet)
-			return
+		jsonArray := "[" + strings.Join(jsonList, ",") + "]"
+		if format == app.JSON {
+			var prettyBuffer bytes.Buffer
+			err := json.Indent(&prettyBuffer, []byte(jsonArray), "", "  ")
+			if err != nil {
+				return cli.MessageAndError("Error indenting json", err)
+			}
+			cmd.Println(prettyBuffer.String())
+		} else {
+			raw := json.RawMessage(jsonArray)
+			yamlResult, err := jsonyaml.ConvertJsonToYaml(raw)
+			if err != nil {
+				return cli.MessageAndError("Error converting json to yaml", err)
+			}
+			cmd.Println(yamlResult)
 		}
-		pbArt = artByName
-		art = artByName.GetArtifact()
-		versions = artByName.GetVersions()
-		return
-	} else if artifactID != "" {
-		// check artifact by ID
-		artById, errGet := client.GetArtifactById(ctx, &minderv1.GetArtifactByIdRequest{
-			Context:        &minderv1.Context{Provider: &provider, Project: &project},
-			Id:             artifactID,
-			LatestVersions: latestVersions,
-			Tag:            tag,
-		})
-		if errGet != nil {
-			err = fmt.Errorf("error getting artifact by id: %w", errGet)
-			return
-		}
-		pbArt = artById
-		art = artById.GetArtifact()
-		versions = artById.GetVersions()
-		return
 	}
 
-	err = errors.New("neither name nor ID set")
-	return
+	return nil
 }
 
 func init() {
@@ -167,11 +258,6 @@ func init() {
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 	getCmd.Flags().StringP("name", "n", "", "name of the artifact to get info from in the form repoOwner/repoName/artifactName")
 	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
-	getCmd.Flags().Int32P("versions", "v", 1, "Latest artifact versions to retrieve")
-	getCmd.Flags().StringP("tag", "", "", "Specific artifact tag to retrieve")
-	// We allow searching by either versions or tags but not both. It's OK to not specify either, in which case
-	// we return all the versions and tags
-	getCmd.MarkFlagsMutuallyExclusive("versions", "tag")
 	// We allow searching by name or ID but not both. One of them must be specified.
 	getCmd.MarkFlagsMutuallyExclusive("name", "id")
 	getCmd.MarkFlagsOneRequired("name", "id")

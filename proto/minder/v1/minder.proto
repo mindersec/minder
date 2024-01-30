@@ -179,9 +179,10 @@ message ArtifactVersion {
 
 message GetArtifactByIdRequest {
     string id = 1;
-    int32 latest_versions = 5;
-    string tag = 6;
+
     Context context = 7;
+
+    reserved 5, 6; // deprecated latest_versions, tag
 }
 
 message GetArtifactByIdResponse {
@@ -191,9 +192,9 @@ message GetArtifactByIdResponse {
 
 message GetArtifactByNameRequest {
     string name = 1;
-    int32 latest_versions = 2;
-    string tag = 3;
     Context context = 4;
+
+    reserved 2, 3; // deprecated latest_versions, tag
 }
 
 message GetArtifactByNameResponse {

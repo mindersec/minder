@@ -457,8 +457,6 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
-| latest_versions | [int32](#int32) |  |  |
-| tag | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
 
@@ -483,8 +481,6 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| latest_versions | [int32](#int32) |  |  |
-| tag | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
 
