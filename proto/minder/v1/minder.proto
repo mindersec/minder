@@ -31,12 +31,62 @@ enum ObjectOwner {
     reserved 1; // deprecated OBJECT_OWNER_ORGANIZATION
 }
 
+enum Relation {
+    RELATION_UNSPECIFIED = 0;
+    RELATION_CREATE = 1 [(name) = "create"];
+    RELATION_GET = 2 [(name) = "get"];
+    RELATION_UPDATE = 3 [(name) = "update"];
+    RELATION_DELETE = 4 [(name) = "delete"];
+    RELATION_ROLE_LIST = 5 [(name) = "role_list"];
+    RELATION_ROLE_ASSIGNMENT_LIST = 6 [(name) = "role_assignment_list"];
+    RELATION_ROLE_ASSIGNMENT_CREATE = 7 [(name) = "role_assignment_create"];
+    RELATION_ROLE_ASSIGNMENT_REMOVE = 8 [(name) = "role_assignment_remove"];
+    RELATION_REPO_GET = 9 [(name) = "repo_get"];
+    RELATION_REPO_CREATE = 10 [(name) = "repo_create"];
+    RELATION_REPO_UPDATE = 11 [(name) = "repo_update"];
+    RELATION_REPO_DELETE = 12 [(name) = "repo_delete"];
+    RELATION_ARTIFACT_GET = 13 [(name) = "artifact_get"];
+    RELATION_ARTIFACT_CREATE = 14 [(name) = "artifact_create"];
+    RELATION_ARTIFACT_UPDATE = 15 [(name) = "artifact_update"];
+    RELATION_ARTIFACT_DELETE = 16 [(name) = "artifact_delete"];
+    RELATION_PR_GET = 17 [(name) = "pr_get"];
+    RELATION_PR_CREATE = 18 [(name) = "pr_create"];
+    RELATION_PR_UPDATE = 19 [(name) = "pr_update"];
+    RELATION_PR_DELETE = 20 [(name) = "pr_delete"];
+    RELATION_PROVIDER_GET = 21 [(name) = "provider_get"];
+    RELATION_PROVIDER_CREATE = 22 [(name) = "provider_create"];
+    RELATION_PROVIDER_UPDATE = 23 [(name) = "provider_update"];
+    RELATION_PROVIDER_DELETE = 24 [(name) = "provider_delete"];
+    RELATION_RULE_TYPE_GET = 25 [(name) = "rule_type_get"];
+    RELATION_RULE_TYPE_CREATE = 26 [(name) = "rule_type_create"];
+    RELATION_RULE_TYPE_UPDATE = 27 [(name) = "rule_type_update"];
+    RELATION_RULE_TYPE_DELETE = 28 [(name) = "rule_type_delete"];
+    RELATION_PROFILE_GET = 29 [(name) = "profile_get"];
+    RELATION_PROFILE_CREATE = 30 [(name) = "profile_create"];
+    RELATION_PROFILE_UPDATE = 31 [(name) = "profile_update"];
+    RELATION_PROFILE_DELETE = 32 [(name) = "profile_delete"];
+    RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
+
+}
+
+extend google.protobuf.EnumValueOptions {
+    optional string name = 42445;
+}
+
+enum TargetResource {
+    TARGET_RESOURCE_UNSPECIFIED = 0;
+    TARGET_RESOURCE_NONE = 1;
+    TARGET_RESOURCE_USER = 2;
+    TARGET_RESOURCE_PROJECT = 3;
+}
+
 message RpcOptions {
-    bool anonymous = 1;
     bool no_log = 2;
     bool owner_only = 3;
     bool root_admin_only = 4;
-    ObjectOwner auth_scope = 5;
+    TargetResource target_resource = 6;
+    Relation relation = 7;
+    reserved 1, 5; // deprecated anonymous and auth_scope
 }
 
 extend google.protobuf.MethodOptions {
@@ -52,7 +102,7 @@ service HealthService {
         };
 
         option (rpc_options) = {
-            anonymous: true
+            target_resource: TARGET_RESOURCE_NONE
             no_log: true
         };
     }
@@ -68,7 +118,8 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ARTIFACT_GET
         };
     }
 
@@ -78,7 +129,8 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ARTIFACT_GET
         };
     }
 
@@ -88,7 +140,8 @@ service ArtifactService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ARTIFACT_GET
         };
     }
 }
@@ -216,7 +269,8 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
             owner_only: true
         };
     }
@@ -230,7 +284,7 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            anonymous: true  // Don't need token auth for code exchange
+            target_resource: TARGET_RESOURCE_NONE  // Don't need token auth for code exchange
         };
     }
 
@@ -244,7 +298,8 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_UPDATE
         };
     }
 
@@ -258,7 +313,8 @@ service OAuthService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
         };
     }
 
@@ -275,7 +331,8 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_CREATE
             owner_only: true
         };
     }
@@ -288,7 +345,8 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_GET
             owner_only: true
         };
     }
@@ -301,7 +359,8 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_GET
             owner_only: false
         };
     }
@@ -311,7 +370,8 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_GET
             owner_only: false
         };
     }
@@ -325,7 +385,8 @@ service RepositoryService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_GET
             owner_only: false
         };
     }
@@ -336,7 +397,8 @@ service RepositoryService {
         };
 
         option (minder.v1.rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_DELETE
             owner_only: true
         };
     }
@@ -350,7 +412,8 @@ service RepositoryService {
         };
 
         option (minder.v1.rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_DELETE
             owner_only: true
         };
     }
@@ -365,7 +428,7 @@ service UserService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_USER
+            target_resource: TARGET_RESOURCE_USER
             owner_only: true
         };
     }
@@ -376,7 +439,7 @@ service UserService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_USER
+            target_resource: TARGET_RESOURCE_USER
             owner_only: true
         };
     }
@@ -387,7 +450,7 @@ service UserService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_USER
+            target_resource: TARGET_RESOURCE_USER
             owner_only: false
         };
     }
@@ -402,7 +465,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_CREATE
             owner_only: true
         };
     }
@@ -414,7 +478,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_UPDATE
             owner_only: true
         };
     }
@@ -425,7 +490,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_DELETE
             owner_only: true
         };
     }
@@ -436,7 +502,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_GET
             owner_only: false
         };
     }
@@ -444,10 +511,11 @@ service ProfileService {
     rpc GetProfileById (GetProfileByIdRequest) returns (GetProfileByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/{id}"
-        };    
+        };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_GET
             owner_only: false
         };
     }
@@ -458,7 +526,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
             owner_only: false
         };
     }
@@ -469,7 +538,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
             owner_only: false
         };
     }    
@@ -480,7 +550,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_GET
             owner_only: false
         };
     }
@@ -491,7 +562,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_GET
             owner_only: false
         };
     }
@@ -502,7 +574,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_GET
             owner_only: false
         };
     }
@@ -514,7 +587,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_CREATE
             owner_only: true
         };
     }
@@ -526,7 +600,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_UPDATE
             owner_only: true
         };
     }
@@ -537,7 +612,8 @@ service ProfileService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_RULE_TYPE_DELETE
             owner_only: true
         };
     }
@@ -550,7 +626,8 @@ service PermissionsService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_LIST
             owner_only: true
         };
     }
@@ -561,7 +638,8 @@ service PermissionsService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_LIST
             owner_only: true
         };
     }
@@ -573,7 +651,8 @@ service PermissionsService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_CREATE
             owner_only: true
         };
     }
@@ -585,7 +664,8 @@ service PermissionsService {
         };
 
         option (rpc_options) = {
-            auth_scope: OBJECT_OWNER_PROJECT
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_REMOVE
             owner_only: true
         };
     }
