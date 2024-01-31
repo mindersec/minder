@@ -48,6 +48,8 @@ func New(layout layouts.TableLayout, header []string) *Table {
 		profileStatusLayout(table)
 	case layouts.RuleEvaluations:
 		ruleEvaluationsLayout(table)
+	case layouts.RoleList:
+		roleListLayout(table)
 	case layouts.Default:
 		table.SetHeader(header)
 		defaultLayout(table)
@@ -134,5 +136,11 @@ func ruleTypeLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Rule Type"})
 	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(false)
+}
+
+func roleListLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Name", "Description"})
 	table.SetAutoWrapText(false)
 }
