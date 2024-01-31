@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/authz"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // NoopClient is a no-op implementation of the authz.Client interface, which always returns
@@ -56,6 +57,11 @@ func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UU
 // DeleteUser implements authz.Client
 func (_ *NoopClient) DeleteUser(_ context.Context, _ string) error {
 	return nil
+}
+
+// AssignmentsToProject implements authz.Client
+func (_ *NoopClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+	return nil, nil
 }
 
 // PrepareForRun implements authz.Client

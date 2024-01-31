@@ -260,11 +260,22 @@ func (*Server) ListRoles(_ context.Context, _ *minder.ListRolesRequest) (*minder
 }
 
 // ListRoleAssignments returns the list of role assignments for the given project
-func (*Server) ListRoleAssignments(
-	context.Context,
-	*minder.ListRoleAssignmentsRequest,
+func (s *Server) ListRoleAssignments(
+	ctx context.Context,
+	_ *minder.ListRoleAssignmentsRequest,
 ) (*minder.ListRoleAssignmentsResponse, error) {
-	return nil, nil
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	as, err := s.authzClient.AssignmentsToProject(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	return &minder.ListRoleAssignmentsResponse{
+		RoleAssignments: as,
+	}, nil
 }
 
 // AssignRole assigns a role to a user on a project.
