@@ -17,6 +17,7 @@ package role
 
 import (
 	"context"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -59,7 +60,7 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		return cli.MessageAndError("Error denying role", err)
 	}
 
-	cmd.Println("Success.")
+	cmd.Println("Denied role successfully.")
 	return nil
 }
 
@@ -68,5 +69,12 @@ func init() {
 
 	denyCmd.Flags().StringP("sub", "s", "", "subject to grant access to")
 	denyCmd.Flags().StringP("role", "r", "", "the role to grant")
-	denyCmd.MarkFlagsOneRequired("sub", "role")
+	if err := grantCmd.MarkFlagRequired("sub"); err != nil {
+		grantCmd.Print("Error marking `sub` flag as required.")
+		os.Exit(1)
+	}
+	if err := grantCmd.MarkFlagRequired("role"); err != nil {
+		grantCmd.Print("Error marking `role` flag as required.")
+		os.Exit(1)
+	}
 }

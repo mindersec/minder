@@ -46,6 +46,10 @@ func ListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	// Ensure the output format is supported
+	if !app.IsOutputFormatSupported(format) {
+		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
