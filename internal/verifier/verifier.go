@@ -65,6 +65,14 @@ type Verifier struct {
 	cacheDir string
 }
 
+// NewCustomVerifier creates a new Verifier object for testing using a custom verifier instance
+func NewCustomVerifier(verifier verifyif.ArtifactVerifier) *Verifier {
+	return &Verifier{
+		verifier: verifier,
+		cacheDir: "",
+	}
+}
+
 // NewVerifier creates a new Verifier object
 func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.AuthMethod) (*Verifier, error) {
 	var err error

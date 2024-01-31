@@ -45,6 +45,8 @@ const (
 // Implements enginer.ingester.Ingester
 type Ingest struct {
 	ghCli provifv1.GitHub
+
+	testOverrideVerifier *verifier.Verifier
 }
 
 type verification struct {
@@ -138,7 +140,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	}
 
 	// Get the provenance info for all artifact versions that apply to this rule
-	verificationResults, err := getVerificationResult(ctx, cfg, i.ghCli, artifact, versions)
+	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, versions)
 	if err != nil {
 		return nil, err
 	}
@@ -161,19 +163,15 @@ func (i *Ingest) getApplicableArtifactVersions(
 	return result, nil
 }
 
-func getVerificationResult(
+func (i *Ingest) getVerificationResult(
 	ctx context.Context,
 	cfg *ingesterConfig,
-	ghCli provifv1.GitHub,
 	artifact *pb.Artifact,
 	versions []string,
 ) ([]verificationResult, error) {
 	versionResults := make([]verificationResult, 0, len(versions))
 	// Get the verifier for sigstore
-	artifactVerifier, err := verifier.NewVerifier(
-		verifier.VerifierSigstore,
-		cfg.Sigstore,
-		container.WithAccessToken(ghCli.GetToken()), container.WithGitHubClient(ghCli))
+	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
@@ -219,6 +217,17 @@ func getVerificationResult(
 	}
 
 	return versionResults, nil
+}
+
+func getVerifier(i *Ingest, cfg *ingesterConfig) (*verifier.Verifier, error) {
+	if i.testOverrideVerifier != nil {
+		return i.testOverrideVerifier, nil
+	}
+
+	return verifier.NewVerifier(
+		verifier.VerifierSigstore,
+		cfg.Sigstore,
+		container.WithAccessToken(i.ghCli.GetToken()), container.WithGitHubClient(i.ghCli))
 }
 
 func getAndFilterArtifactVersions(

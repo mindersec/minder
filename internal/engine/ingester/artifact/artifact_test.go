@@ -13,19 +13,25 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package artifact_test
+package artifact
 
 import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/golang/mock/gomock"
+	"github.com/google/go-github/v56/github"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/ingester/artifact"
 	"github.com/stacklok/minder/internal/providers"
+	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/verifier"
+	mockverify "github.com/stacklok/minder/internal/verifier/mock"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -55,362 +61,541 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 	)
 }
 
-func TestArtifactIngestMatchingName(t *testing.T) {
+func TestArtifactIngestMatching(t *testing.T) {
 	t.Parallel()
 
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
+	ctrl := gomock.NewController(t)
+	t.Cleanup(func() {
+		ctrl.Finish()
+	})
 
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"latest"},
+	tests := []struct {
+		name          string
+		wantErr       bool
+		wantNonNilRes bool
+		errType       error
+		mockSetup     func(*mock_ghclient.MockGitHub, *mockverify.MockArtifactVerifier)
+		artifact      *pb.Artifact
+		params        map[string]interface{}
+	}{
+		{
+			name:          "matching-name",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"latest"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
+
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "matching-name",
+				// missing tags means wildcard match any tag
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name",
-		// missing tags means wildcard match any tag
-	})
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
+		{
+			name:          "matching-name-and-tag",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-and-tag").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"latest"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"main", "production"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:5678"),
+						},
+					}, nil)
 
-func TestArtifactIngestMatchingTags(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name-and-tag",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"main", "production"},
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name-and-tag", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
 			},
-			{
-				Tags: []string{"latest"},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-and-tag",
+				Owner: "stacklok",
 			},
-		},
-	}, map[string]interface{}{
-		"name": "matching-name-and-tag",
-		"tags": []string{"latest"},
-	})
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
-
-func TestArtifactIngestNoMatchingTags(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name-but-not-tags",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"main", "production"},
-			},
-			{
-				Tags: []string{"dev"},
+			params: map[string]interface{}{
+				"name": "matching-name-and-tag",
+				"tags": []string{"latest"},
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name-but-not-tags",
-		"tags": []string{"latest"},
-	})
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactIngestNoMatchingMultipleTagsFromDifferentVersions(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name-but-not-tags",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"main", "production"},
+		{
+			name:          "matching-name-but-not-tags",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"main", "production"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"dev"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:5678"),
+						},
+					}, nil)
 			},
-			{
-				Tags: []string{"dev"},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
 			},
-		},
-	}, map[string]interface{}{
-		"name": "matching-name-but-not-tags",
-		"tags": []string{"latest", "dev"},
-	})
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactIngestNoMatchingMultipleTagsFromSameVersion(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name-but-not-tags",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"main", "production"},
-			},
-			{
-				Tags: []string{"dev"},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{"latest"},
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name-but-not-tags",
-		"tags": []string{"main", "production", "dev"},
-	})
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactIngestMatchingMultipleTagsFromSameVersion(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name-but-not-tags",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"main", "production", "dev"},
+		{
+			name:          "multiple-tags-from-different-versions",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"main", "production"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"dev"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:5678"),
+						},
+					}, nil)
 			},
-			{
-				Tags: []string{"v1.0.0"},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
 			},
-		},
-	}, map[string]interface{}{
-		"name": "matching-name-but-not-tags",
-		"tags": []string{"main", "production"},
-	})
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
-
-func TestArtifactIngestNotMatchingName(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type:     "container",
-		Name:     "name-does-not-match",
-		Versions: []*pb.ArtifactVersion{},
-	}, map[string]interface{}{
-		"name": "name-does-NOT-match",
-	})
-	require.Error(t, err, "expected error")
-	require.ErrorIs(t, err, evalerrors.ErrEvaluationSkipSilently, "expected ErrEvaluationSkipSilently")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactIngestMatchAnyName(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "surely-noone-will-set-this-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"latest"},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{"latest", "dev"},
 			},
 		},
-	}, map[string]interface{}{
-		"name": "", // empty string means match any name
-	})
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
-
-func TestArtifactWithMatchingRegexp(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{"v1.0.0"},
+		{
+			name:          "multiple-tags-from-same-version",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"main", "production"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"dev"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:5678"),
+						},
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{"main", "production", "dev"},
 			},
 		},
-	}, map[string]interface{}{
-		"name":      "matching-name",
-		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
-	})
+		{
+			name:          "matching-multiple-tags-from-same-version",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"main", "production", "dev"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"v1.0.0"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:5678"),
+						},
+					}, nil)
 
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
-
-func TestArtifactWithMultipleTagsAndMatchingRegexp(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{
-					"v2.0.0",
-					"latest",
-				},
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name-but-not-tags", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{"main", "production", "dev"},
 			},
 		},
-	}, map[string]interface{}{
-		"name":      "matching-name",
-		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
-	})
-
-	require.NoError(t, err, "expected no error")
-	require.NotNil(t, got, "expected non-nil result")
-}
-
-func TestArtifactWithTagThatDoesntMatchRegexp(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{
-					"latest",
-				},
+		{
+			name:          "not-matching-name",
+			wantErr:       true,
+			wantNonNilRes: false,
+			errType:       evalerrors.ErrEvaluationSkipSilently,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "not-matching-name",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "name-does-NOT-match",
 			},
 		},
-	}, map[string]interface{}{
-		"name":      "matching-name",
-		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
-	})
+		{
+			name:          "match-any-name",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"latest"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
 
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactWithMultipleTagsThatDontMatchRegexp(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{
-					"latest",
-					"pr-123",
-					"testing",
-				},
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "", // empty string means match any name
 			},
 		},
-	}, map[string]interface{}{
-		"name":      "matching-name",
-		"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
-	})
+		{
+			name:          "test-matching-regex",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"v1.0.0"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
 
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactWithEmptyTagShouldError(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{
-					"latest",
-					"pr-123",
-					"testing",
-				},
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name":      "matching-name",
+				"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name",
-		"tags": []string{""},
-	})
+		{
+			name:          "test-matching-regex-with-multiple-tags",
+			wantErr:       false,
+			wantNonNilRes: true,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"v2.0.0", "latest"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
 
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactVersionWithNoTagsShouldError(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{},
+				mockVerifier.EXPECT().
+					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
+					Return(&verifyif.Result{
+						IsSigned:   false,
+						IsVerified: false,
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name":      "matching-name",
+				"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name",
-		"tags": []string{},
-	})
-
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
-}
-
-func TestArtifactVersionWithEmptyStringTagShouldError(t *testing.T) {
-	t.Parallel()
-
-	ing, err := artifact.NewArtifactDataIngest(nil, testGithubProviderBuilder())
-	require.NoError(t, err, "expected no error")
-
-	got, err := ing.Ingest(context.Background(), &pb.Artifact{
-		Type: "container",
-		Name: "matching-name",
-		Versions: []*pb.ArtifactVersion{
-			{
-				Tags: []string{""},
+		{
+			name:          "tag-doesnt-match-regex",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{"latest"},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name":      "matching-name-but-not-tags",
+				"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
 			},
 		},
-	}, map[string]interface{}{
-		"name": "matching-name",
-		"tags": []string{},
-	})
+		{
+			name:          "multiple-tags-doesnt-match-regex",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{
+										"latest",
+										"pr-123",
+										"testing",
+									},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name":      "matching-name-but-not-tags",
+				"tag_regex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+			},
+		},
+		{
+			name:          "test-artifact-with-empty-tags",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{""},
+			},
+		},
+		{
+			name:          "test-artifact-version-with-no-tags",
+			wantErr:       true,
+			wantNonNilRes: false,
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+				mockGhClient.EXPECT().GetOwner().Return("stacklok")
+				mockGhClient.EXPECT().
+					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					Return([]*github.PackageVersion{
+						{
+							Metadata: &github.PackageMetadata{
+								Container: &github.PackageContainerMetadata{
+									Tags: []string{},
+								},
+							},
+							CreatedAt: &github.Timestamp{Time: time.Now()},
+							Name:      github.String("sha256:1234"),
+						},
+					}, nil)
+			},
+			artifact: &pb.Artifact{
+				Type:  "container",
+				Name:  "matching-name-but-not-tags",
+				Owner: "stacklok",
+			},
+			params: map[string]interface{}{
+				"name": "matching-name-but-not-tags",
+				"tags": []string{},
+			},
+		},
+	}
 
-	require.Error(t, err, "expected error")
-	require.Nil(t, got, "expected nil result")
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockGhClient := mock_ghclient.NewMockGitHub(ctrl)
+			mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
+
+			ing, err := NewArtifactDataIngest(nil, testGithubProviderBuilder())
+			require.NoError(t, err, "expected no error")
+
+			ing.ghCli = mockGhClient
+			ing.testOverrideVerifier = verifier.NewCustomVerifier(mockVerifier)
+
+			tt.mockSetup(mockGhClient, mockVerifier)
+
+			got, err := ing.Ingest(context.Background(), tt.artifact, tt.params)
+
+			if tt.wantErr {
+				require.Error(t, err, "expected error")
+			} else {
+				require.NoError(t, err, "expected no error")
+			}
+
+			if tt.errType != nil {
+				require.ErrorIs(t, err, tt.errType, "expected error type")
+			}
+
+			if tt.wantNonNilRes {
+				require.NotNil(t, got, "expected non-nil result")
+			} else {
+				require.Nil(t, got, "expected nil result")
+			}
+		})
+	}
 }
