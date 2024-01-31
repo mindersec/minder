@@ -1689,6 +1689,7 @@ Entity defines the entity that is supported by the provider.
 | RELATION_PROFILE_UPDATE | 31 |  |
 | RELATION_PROFILE_DELETE | 32 |  |
 | RELATION_PROFILE_STATUS_GET | 33 |  |
+| RELATION_REMOTE_REPO_GET | 34 |  |
 
 
 <a name="minder-v1-TargetResource"></a>
