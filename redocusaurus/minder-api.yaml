@@ -556,17 +556,8 @@ paths:
           in: query
           required: false
           type: string
-        - name: roleAssignment.context.provider
-          description: name of the provider
-          in: query
-          required: false
-          type: string
-        - name: roleAssignment.context.project
-          description: ID of the project
-          in: query
-          required: false
-          type: string
-        - name: roleAssignment.context.retiredOrganization
+        - name: roleAssignment.project
+          description: projectt is the projectt in which the role is assigned.
           in: query
           required: false
           type: string
@@ -2600,9 +2591,9 @@ definitions:
       subject:
         type: string
         description: subject is the subject to which the role is assigned.
-      context:
-        $ref: '#/definitions/v1Context'
-        description: context is the context in which the role is assigned.
+      project:
+        type: string
+        description: projectt is the projectt in which the role is assigned.
   v1RuleEvaluationStatus:
     type: object
     properties:
