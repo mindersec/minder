@@ -16,9 +16,10 @@ minder profile status list [flags]
 ### Options
 
 ```
-  -d, --detailed      List all profile violations
-  -h, --help          help for list
-  -r, --rule string   Filter profile status list by rule
+  -d, --detailed          List all profile violations
+  -h, --help              help for list
+      --ruleName string   Filter profile status list by rule name
+  -r, --ruleType string   Filter profile status list by rule type
 ```
 
 ### Options inherited from parent commands
