@@ -1,25 +1,24 @@
 ---
-title: minder project role grant
+title: minder project role grant list
 ---
-## minder project role grant
+## minder project role grant list
 
-Grant a role to a subject on a project within the minder control plane
+List role grants within a given project
 
 ### Synopsis
 
-The minder project role grant command allows one to grant a role
-to a user (subject) on a particular project.
+The minder project role grant list command lists all role grants
+on a particular project.
 
 ```
-minder project role grant [flags]
+minder project role grant list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help          help for grant
-  -r, --role string   the role to grant
-  -s, --sub string    subject to grant access to
+  -h, --help            help for list
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -36,6 +35,5 @@ minder project role grant [flags]
 
 ### SEE ALSO
 
-* [minder project role](minder_project_role.md)	 - Manage roles within a minder control plane
-* [minder project role grant list](minder_project_role_grant_list.md)	 - List role grants within a given project
+* [minder project role grant](minder_project_role_grant.md)	 - Grant a role to a subject on a project within the minder control plane
 
