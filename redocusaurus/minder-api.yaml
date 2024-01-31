@@ -687,6 +687,15 @@ paths:
           required: false
           type: boolean
         - name: rule
+          description: rule is the type of the rule. Deprecated in favor of rule_type
+          in: query
+          required: false
+          type: string
+        - name: ruleType
+          in: query
+          required: false
+          type: string
+        - name: ruleName
           in: query
           required: false
           type: string
@@ -1645,6 +1654,9 @@ definitions:
         description: |-
           def is the definition of the rule.
           This depends on the rule type.
+      name:
+        type: string
+        title: name is the descriptive name of the rule, not to be confused with type
     description: Rule defines the individual call of a certain rule type.
   PullRequestRemediationActionsReplaceTagsWithSha:
     type: object
@@ -2605,7 +2617,9 @@ definitions:
         title: rule_id is the id of the rule
       ruleName:
         type: string
-        title: rule_name is the name of the rule
+        title: >-
+          rule_name is the type of the rule. Deprecated in favor of
+          rule_type_name
       entity:
         type: string
         title: entity is the entity that was evaluated
@@ -2641,6 +2655,12 @@ definitions:
         title: >-
           remediation_details is the description of the remediation attempt if
           any
+      ruleTypeName:
+        type: string
+        title: rule_type_name is the name of the rule
+      ruleDescriptionName:
+        type: string
+        title: rule_description_name is the name to describe the rule
     title: get the status of the rules for a given profile
   v1RuleType:
     type: object
