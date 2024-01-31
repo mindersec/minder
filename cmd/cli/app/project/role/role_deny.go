@@ -69,12 +69,12 @@ func init() {
 
 	denyCmd.Flags().StringP("sub", "s", "", "subject to grant access to")
 	denyCmd.Flags().StringP("role", "r", "", "the role to grant")
-	if err := grantCmd.MarkFlagRequired("sub"); err != nil {
-		grantCmd.Print("Error marking `sub` flag as required.")
+	if err := denyCmd.MarkFlagRequired("sub"); err != nil {
+		denyCmd.Print("Error marking `sub` flag as required.")
 		os.Exit(1)
 	}
-	if err := grantCmd.MarkFlagRequired("role"); err != nil {
-		grantCmd.Print("Error marking `role` flag as required.")
+	if err := denyCmd.MarkFlagRequired("role"); err != nil {
+		denyCmd.Print("Error marking `role` flag as required.")
 		os.Exit(1)
 	}
 }
