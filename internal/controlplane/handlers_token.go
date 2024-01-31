@@ -16,6 +16,8 @@ package controlplane
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -29,6 +31,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -68,6 +71,10 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 	}
 
 	ctx = auth.WithUserSubjectContext(ctx, parsedToken.Subject())
+
+	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
+	loginSHA := sha256.Sum256([]byte(parsedToken.Subject()))
+	logger.BusinessRecord(ctx).LoginHash = hex.EncodeToString(loginSHA[:])
 
 	return handler(ctx, req)
 }
