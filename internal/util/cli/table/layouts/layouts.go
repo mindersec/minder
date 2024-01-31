@@ -37,6 +37,8 @@ const (
 	ProfileStatus TableLayout = "profile_status"
 	// RuleEvaluations is the rule evaluations table layout
 	RuleEvaluations TableLayout = "rule_evaluations"
+	// RoleList is the roles list table layout
+	RoleList TableLayout = "role_list"
 	// Default is the default table layout
 	Default TableLayout = ""
 )
