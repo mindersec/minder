@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/authz"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // SimpleClient maintains a list of authorized projects, suitable for use in tests.
@@ -59,6 +60,11 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 // DeleteUser implements authz.Client
 func (_ *SimpleClient) DeleteUser(_ context.Context, _ string) error {
 	return nil
+}
+
+// AssignmentsToProject implements authz.Client
+func (_ *SimpleClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+	return nil, nil
 }
 
 // PrepareForRun implements authz.Client

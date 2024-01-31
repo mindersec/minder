@@ -34,6 +34,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	srvconfig "github.com/stacklok/minder/internal/config/server"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -331,10 +332,59 @@ func (a *ClientWrapper) DeleteUser(ctx context.Context, user string) error {
 	return nil
 }
 
+// AssignmentsToProject lists the current role assignments that are scoped to a project
+func (a *ClientWrapper) AssignmentsToProject(ctx context.Context, project uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+	o := getProjectForTuple(project)
+	prjStr := project.String()
+
+	var pagesize int32 = 50
+	var contTok *string = nil
+
+	assignments := []*minderv1.RoleAssignment{}
+
+	for {
+		resp, err := a.cli.Read(ctx).Options(fgaclient.ClientReadOptions{
+			PageSize:          &pagesize,
+			ContinuationToken: contTok,
+		}).Body(fgaclient.ClientReadRequest{
+			Object: &o,
+		}).Execute()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read authorization tuples: %w", err)
+		}
+
+		for _, t := range resp.GetTuples() {
+			k := t.GetKey()
+			r, err := ParseRole(k.GetRelation())
+			if err != nil {
+				a.l.Err(err).Msg("Found invalid role in authz store")
+				continue
+			}
+			assignments = append(assignments, &minderv1.RoleAssignment{
+				Subject: getUserFromTuple(k.GetUser()),
+				Role:    r.String(),
+				Project: &prjStr,
+			})
+		}
+
+		if resp.GetContinuationToken() == "" {
+			break
+		}
+
+		contTok = &resp.ContinuationToken
+	}
+
+	return assignments, nil
+}
+
 func getUserForTuple(user string) string {
 	return "user:" + user
 }
 
 func getProjectForTuple(project uuid.UUID) string {
 	return "project:" + project.String()
+}
+
+func getUserFromTuple(user string) string {
+	return strings.TrimPrefix(user, "user:")
 }

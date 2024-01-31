@@ -21,6 +21,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ErrNotAuthorized is the error returned when a user is not authorized to perform an action
@@ -92,6 +94,9 @@ type Client interface {
 
 	// DeleteUser removes all authorizations for the given user.
 	DeleteUser(ctx context.Context, user string) error
+
+	// AssignmentsToProject outputs the existing role assignments for a given project.
+	AssignmentsToProject(ctx context.Context, project uuid.UUID) ([]*minderv1.RoleAssignment, error)
 
 	// PrepareForRun allows for any preflight configurations to be done before
 	// the server is started.
