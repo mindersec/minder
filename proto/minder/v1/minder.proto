@@ -971,8 +971,8 @@ message RuleEvaluationStatus {
     string profile_id = 1;
     // rule_id is the id of the rule
     string rule_id = 2;
-    // rule_name is the name of the rule
-    string rule_name = 3;
+    // rule_name is the type of the rule. Deprecated in favor of rule_type_name
+    string rule_name = 3 [deprecated=true];
     // entity is the entity that was evaluated
     string entity = 4;
     // status is the status of the evaluation
@@ -991,6 +991,10 @@ message RuleEvaluationStatus {
     optional google.protobuf.Timestamp remediation_last_updated = 11;
     // remediation_details is the description of the remediation attempt if any
     string remediation_details = 12;
+    // rule_type_name is the name of the rule
+    string rule_type_name = 13;
+    // rule_description_name is the name to describe the rule
+    string rule_description_name = 14;
 }
 
 message GetProfileStatusByNameRequest {
@@ -1011,7 +1015,11 @@ message GetProfileStatusByNameRequest {
 
     EntityTypedId entity = 3;
     bool all = 4;
-    string rule = 5;
+
+    // rule is the type of the rule. Deprecated in favor of rule_type
+    string rule = 5 [deprecated=true];
+    string rule_type = 6;
+    string rule_name = 7;
 }
 
 message GetProfileStatusByNameResponse {
@@ -1434,6 +1442,9 @@ message Profile {
         // def is the definition of the rule.
         // This depends on the rule type.
         google.protobuf.Struct def = 3;
+
+        // name is the descriptive name of the rule, not to be confused with type
+        string name = 4;
     }
 
     // These are the entities that one could set in the profile.

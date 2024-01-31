@@ -81,6 +81,9 @@ To address this security exposure, we recommend taking the following actions:
 
 - Profile: {{.Profile}}
 - Rule: {{.Rule}}
+{{if and (not (eq .Name "")) (ne .Name .Rule) -}}
+- Name: {{.Name}}
+{{end -}}
 - Repository: {{.Repository}}
 - Severity: {{.Severity}}
 
@@ -118,6 +121,7 @@ type templateParamsSA struct {
 	Severity        string
 	Guidance        string
 	RuleRemediation string
+	Name            string
 }
 type alertMetadata struct {
 	ID string `json:"ghsa_id,omitempty"`
@@ -344,6 +348,9 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	result.Template.Rule = params.GetRuleType().Name
 	// Get the profile name
 	result.Template.Profile = params.GetProfile().Name
+	// Get the rule name
+	result.Template.Name = params.GetRule().Name
+
 	// Check if remediation is available for the rule type
 	if params.GetRuleType().Def.Remediate != nil {
 		result.Template.RuleRemediation = "already available"

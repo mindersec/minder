@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -42,6 +43,11 @@ import (
 type entityAndRuleTuple struct {
 	Entity minderv1.Entity
 	RuleID uuid.UUID
+}
+
+type ruleTypeAndNamePair struct {
+	RuleType string
+	RuleName string
 }
 
 // validateActionType returns the appropriate remediate type or the
@@ -95,6 +101,9 @@ func (s *Server) CreateProfile(ctx context.Context,
 		log.Printf("error getting rule type: %v", err)
 		return nil, status.Errorf(codes.Internal, "error creating profile")
 	}
+
+	// Adds default rule names, if not present
+	populateRuleNames(in)
 
 	// Now that we know it's valid, let's persist it!
 	tx, err := s.store.BeginTransaction()
@@ -178,7 +187,7 @@ func createProfileRulesForEntity(
 	profile *db.Profile,
 	qtx db.Querier,
 	rules []*minderv1.Profile_Rule,
-	rulesInProf map[string]entityAndRuleTuple,
+	rulesInProf map[ruleTypeAndNamePair]entityAndRuleTuple,
 ) error {
 	if rules == nil {
 		return nil
@@ -212,7 +221,9 @@ func createProfileRulesForEntity(
 			EntityProfileID: entProf.ID,
 			RuleTypeID:      ruleID,
 		})
-		if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("the rule instantiation for rule already existed.")
+		} else if err != nil {
 			log.Printf("error creating rule instantiation: %v", err)
 			return status.Errorf(codes.Internal, "error creating profile")
 		}
@@ -398,7 +409,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	dbstat, err := s.store.GetProfileStatusByNameAndProject(ctx, db.GetProfileStatusByNameAndProjectParams{
+	dbProfileStatus, err := s.store.GetProfileStatusByNameAndProject(ctx, db.GetProfileStatusByNameAndProjectParams{
 		ProjectID: entityCtx.Project.ID,
 		Name:      in.Name,
 	})
@@ -409,10 +420,11 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", err)
 	}
 
-	var rulestats []*minderv1.RuleEvaluationStatus
+	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 	var selector *uuid.NullUUID
 	var dbEntity *db.NullEntities
-	var rule *sql.NullString
+	var ruleType *sql.NullString
+	var ruleName *sql.NullString
 
 	if in.GetAll() {
 		selector = &uuid.NullUUID{}
@@ -430,83 +442,118 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		dbEntity = &db.NullEntities{Entities: entities.EntityTypeToDB(e.GetType()), Valid: true}
 	}
 
-	if len(in.GetRule()) > 0 {
-		rule = &sql.NullString{String: in.GetRule(), Valid: true}
-	} else {
-		rule = &sql.NullString{Valid: false}
+	ruleType = &sql.NullString{
+		String: in.GetRuleType(),
+		Valid:  in.GetRuleType() != "",
+	}
+
+	// TODO: Remove deprecated 'rule' field from proto
+	if !ruleType.Valid {
+		//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
+		ruleType = &sql.NullString{
+			String: in.GetRule(),
+			Valid:  in.GetRule() != "",
+		}
+	}
+
+	ruleName = &sql.NullString{
+		String: in.GetRuleName(),
+		Valid:  in.GetRuleName() != "",
 	}
 
 	// TODO: Handle retrieving status for other types of entities
 	if selector != nil {
-		dbrulestat, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
-			ProfileID:  dbstat.ID,
-			EntityID:   *selector,
-			EntityType: *dbEntity,
-			RuleName:   *rule,
+		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
+			ProfileID:    dbProfileStatus.ID,
+			EntityID:     *selector,
+			EntityType:   *dbEntity,
+			RuleTypeName: *ruleType,
+			RuleName:     *ruleName,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
 		}
 
-		rulestats = make([]*minderv1.RuleEvaluationStatus, 0, len(dbrulestat))
-		for _, rs := range dbrulestat {
-			rs := rs
-
-			var guidance string
-
-			// make sure all fields are valid
-			if !rs.EvalStatus.Valid || !rs.EvalDetails.Valid || !rs.RemStatus.Valid || !rs.RemDetails.Valid || !rs.EvalLastUpdated.Valid {
-				log.Print("error rule evaluation value not valid")
-				continue
-			}
-
-			if rs.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure || rs.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
-				ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, rs.RuleTypeID)
-				if err != nil {
-					log.Printf("error getting rule type info: %v", err)
-				} else {
-					guidance = ruleTypeInfo.Guidance
-				}
-			}
-
-			st := &minderv1.RuleEvaluationStatus{
-				ProfileId:          dbstat.ID.String(),
-				RuleId:             rs.RuleTypeID.String(),
-				RuleName:           rs.RuleTypeName,
-				Entity:             string(rs.Entity),
-				Status:             string(rs.EvalStatus.EvalStatusTypes),
-				Details:            rs.EvalDetails.String,
-				EntityInfo:         getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, rs, entityCtx.Provider.Name),
-				Guidance:           guidance,
-				LastUpdated:        timestamppb.New(rs.EvalLastUpdated.Time),
-				RemediationStatus:  string(rs.RemStatus.RemediationStatusTypes),
-				RemediationDetails: rs.RemDetails.String,
-			}
-
-			if rs.RemLastUpdated.Valid {
-				st.RemediationLastUpdated = timestamppb.New(rs.RemLastUpdated.Time)
-			}
-
-			rulestats = append(rulestats, st)
-		}
-
+		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
+			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
+			dbEntity, selector, entityCtx.Provider.Name,
+		)
 		// TODO: Add other entities once we have database entries for them
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: dbstat.Name, ID: dbstat.ID}
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: dbProfileStatus.Name, ID: dbProfileStatus.ID}
 
 	return &minderv1.GetProfileStatusByNameResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
-			ProfileId:     dbstat.ID.String(),
-			ProfileName:   dbstat.Name,
-			ProfileStatus: string(dbstat.ProfileStatus),
-			LastUpdated:   timestamppb.New(dbstat.LastUpdated),
+			ProfileId:     dbProfileStatus.ID.String(),
+			ProfileName:   dbProfileStatus.Name,
+			ProfileStatus: string(dbProfileStatus.ProfileStatus),
+			LastUpdated:   timestamppb.New(dbProfileStatus.LastUpdated),
 		},
-		RuleEvaluationStatus: rulestats,
+		RuleEvaluationStatus: ruleEvaluationStatuses,
 	}, nil
+}
+
+func (s *Server) getRuleEvaluationStatuses(
+	ctx context.Context,
+	dbRuleEvaluationStatuses []db.ListRuleEvaluationsByProfileIdRow,
+	profileId string,
+	dbEntity *db.NullEntities,
+	selector *uuid.NullUUID,
+	providerName string,
+) []*minderv1.RuleEvaluationStatus {
+	ruleEvaluationStatuses := make(
+		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
+	)
+	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
+		var guidance string
+
+		// make sure all fields are valid
+		if !dbRuleEvalStat.EvalStatus.Valid ||
+			!dbRuleEvalStat.EvalDetails.Valid ||
+			!dbRuleEvalStat.RemStatus.Valid ||
+			!dbRuleEvalStat.RemDetails.Valid ||
+			!dbRuleEvalStat.EvalLastUpdated.Valid {
+			log.Print("error rule evaluation value not valid")
+			continue
+		}
+
+		if dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
+			dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
+			ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
+			if err != nil {
+				log.Printf("error getting rule type info: %v", err)
+			} else {
+				guidance = ruleTypeInfo.Guidance
+			}
+		}
+
+		st := &minderv1.RuleEvaluationStatus{
+			ProfileId:           profileId,
+			RuleId:              dbRuleEvalStat.RuleTypeID.String(),
+			RuleName:            dbRuleEvalStat.RuleTypeName,
+			RuleTypeName:        dbRuleEvalStat.RuleTypeName,
+			RuleDescriptionName: dbRuleEvalStat.RuleName,
+			Entity:              string(dbRuleEvalStat.Entity),
+			Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
+			Details:             dbRuleEvalStat.EvalDetails.String,
+			EntityInfo:          getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, dbRuleEvalStat, providerName),
+			Guidance:            guidance,
+			LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
+			RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
+			RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+		}
+
+		if dbRuleEvalStat.RemLastUpdated.Valid {
+			st.RemediationLastUpdated = timestamppb.New(dbRuleEvalStat.RemLastUpdated.Time)
+		}
+
+		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
+	}
+	return ruleEvaluationStatuses
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project
@@ -603,6 +650,9 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error updating profile")
 	}
 
+	// Adds default rule names, if not present
+	populateRuleNames(in)
+
 	oldProfile, err := getProfilePBFromDB(ctx, oldDBProfile.ID, entityCtx, qtx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
@@ -612,7 +662,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	oldRules, err := s.getRulesFromProfile(ctx, oldProfile, entityCtx)
+	oldRules, err := s.getRulesFromOldProfile(ctx, oldProfile, entityCtx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
@@ -637,16 +687,19 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
 		minderv1.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
 	} {
-		if err := updateProfileRulesForEntity(ctx, ent, &profile, qtx, entRules, rules, oldRules); err != nil {
+		if err := updateProfileRulesForEntity(ctx, ent, &profile, qtx, entRules, rules); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := deleteUnusedRulesFromProfile(ctx, &profile, oldRules, qtx); err != nil {
+	unusedRuleStatuses := getUnusedOldRuleStatuses(rules, oldRules)
+	unusedRuleTypes := getUnusedOldRuleTypes(rules, oldRules)
+
+	if err := deleteUnusedRulesFromProfile(ctx, &profile, unusedRuleTypes, qtx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
-	if err := deleteRuleStatusesForProfile(ctx, &profile, oldRules, qtx); err != nil {
+	if err := deleteRuleStatusesForProfile(ctx, &profile, unusedRuleStatuses, qtx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
@@ -691,12 +744,17 @@ func (s *Server) getAndValidateRulesFromProfile(
 	ctx context.Context,
 	prof *minderv1.Profile,
 	entityCtx engine.EntityContext,
-) (map[string]entityAndRuleTuple, error) {
+) (map[ruleTypeAndNamePair]entityAndRuleTuple, error) {
 	// We capture the rule instantiations here so we can
 	// track them in the db later.
-	rulesInProf := map[string]entityAndRuleTuple{}
+	rulesInProf := map[ruleTypeAndNamePair]entityAndRuleTuple{}
 
-	err := engine.TraverseAllRulesForPipeline(prof, func(r *minderv1.Profile_Rule) error {
+	err := validateRuleNameAndTypeInProfile(prof)
+	if err != nil {
+		return nil, err
+	}
+
+	err = engine.TraverseAllRulesForPipeline(prof, func(r *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -733,7 +791,14 @@ func (s *Server) getAndValidateRulesFromProfile(
 			return fmt.Errorf("error validating rule params: %w", err)
 		}
 
-		rulesInProf[r.GetType()] = entityAndRuleTuple{
+		ruleName := computeRuleName(r)
+
+		key := ruleTypeAndNamePair{
+			RuleType: r.GetType(),
+			RuleName: ruleName,
+		}
+
+		rulesInProf[key] = entityAndRuleTuple{
 			Entity: minderv1.EntityFromString(rtyppb.Def.InEntity),
 			RuleID: rtdb.ID,
 		}
@@ -748,14 +813,14 @@ func (s *Server) getAndValidateRulesFromProfile(
 	return rulesInProf, nil
 }
 
-func (s *Server) getRulesFromProfile(
+func (s *Server) getRulesFromOldProfile(
 	ctx context.Context,
 	prof *minderv1.Profile,
 	entityCtx engine.EntityContext,
-) (map[string]entityAndRuleTuple, error) {
+) (map[ruleTypeAndNamePair]entityAndRuleTuple, error) {
 	// We capture the rule instantiations here so we can
 	// track them in the db later.
-	rulesInProf := map[string]entityAndRuleTuple{}
+	rulesInProf := map[ruleTypeAndNamePair]entityAndRuleTuple{}
 
 	err := engine.TraverseAllRulesForPipeline(prof, func(r *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
@@ -774,13 +839,21 @@ func (s *Server) getRulesFromProfile(
 			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}
 
-		rulesInProf[r.GetType()] = entityAndRuleTuple{
+		// TODO: Remove r.Name and replace with computeRuleName(..) after migration is complete for #1609
+		// Existing rules (before migration) would have r.Name == ""
+		key := ruleTypeAndNamePair{
+			RuleType: r.GetType(),
+			RuleName: r.Name,
+		}
+
+		rulesInProf[key] = entityAndRuleTuple{
 			Entity: minderv1.EntityFromString(rtyppb.Def.InEntity),
 			RuleID: rtdb.ID,
 		}
 
 		return nil
-	})
+	},
+	)
 
 	if err != nil {
 		return nil, err
@@ -795,8 +868,7 @@ func updateProfileRulesForEntity(
 	profile *db.Profile,
 	qtx db.Querier,
 	rules []*minderv1.Profile_Rule,
-	rulesInProf map[string]entityAndRuleTuple,
-	oldRulesInProf map[string]entityAndRuleTuple,
+	rulesInProf map[ruleTypeAndNamePair]entityAndRuleTuple,
 ) error {
 	if len(rules) == 0 {
 		return qtx.DeleteProfileForEntity(ctx, db.DeleteProfileForEntityParams{
@@ -837,10 +909,6 @@ func updateProfileRulesForEntity(
 			log.Printf("error creating rule instantiation: %v", err)
 			return status.Errorf(codes.Internal, "error updating profile")
 		}
-
-		// Remove the rule from the old rule IDs so we
-		// can delete the ones that are no longer needed
-		delete(oldRulesInProf, idx)
 	}
 
 	return err
@@ -910,10 +978,46 @@ func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx eng
 	return nil
 }
 
+func getUnusedOldRuleStatuses(
+	newRules, oldRules map[ruleTypeAndNamePair]entityAndRuleTuple,
+) map[ruleTypeAndNamePair]entityAndRuleTuple {
+	unusedRuleStatuses := make(map[ruleTypeAndNamePair]entityAndRuleTuple)
+
+	for ruleTypeAndName, rule := range oldRules {
+		if _, ok := newRules[ruleTypeAndName]; !ok {
+			unusedRuleStatuses[ruleTypeAndName] = rule
+		}
+	}
+
+	return unusedRuleStatuses
+}
+
+func getUnusedOldRuleTypes(newRules, oldRules map[ruleTypeAndNamePair]entityAndRuleTuple) []entityAndRuleTuple {
+	var unusedRuleTypes []entityAndRuleTuple
+
+	oldRulesTypeMap := make(map[string]entityAndRuleTuple)
+	for ruleTypeAndName, rule := range oldRules {
+		oldRulesTypeMap[ruleTypeAndName.RuleType] = rule
+	}
+
+	newRulesTypeMap := make(map[string]entityAndRuleTuple)
+	for ruleTypeAndName, rule := range newRules {
+		newRulesTypeMap[ruleTypeAndName.RuleType] = rule
+	}
+
+	for ruleType, rule := range oldRulesTypeMap {
+		if _, ok := newRulesTypeMap[ruleType]; !ok {
+			unusedRuleTypes = append(unusedRuleTypes, rule)
+		}
+	}
+
+	return unusedRuleTypes
+}
+
 func deleteUnusedRulesFromProfile(
 	ctx context.Context,
 	profile *db.Profile,
-	unusedRules map[string]entityAndRuleTuple,
+	unusedRules []entityAndRuleTuple,
 	querier db.ExtendQuerier,
 ) error {
 	for _, rule := range unusedRules {
@@ -948,19 +1052,150 @@ func deleteUnusedRulesFromProfile(
 func deleteRuleStatusesForProfile(
 	ctx context.Context,
 	profile *db.Profile,
-	unusedRules map[string]entityAndRuleTuple,
+	unusedRuleStatuses map[ruleTypeAndNamePair]entityAndRuleTuple,
 	querier db.ExtendQuerier,
 ) error {
-	for _, rule := range unusedRules {
+	for ruleTypeAndName, rule := range unusedRuleStatuses {
 		log.Printf("deleting rule evaluations for rule %s in profile %s", rule.RuleID, profile.ID)
+		// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
+		ruleName := sql.NullString{
+			String: ruleTypeAndName.RuleName,
+			Valid:  ruleTypeAndName.RuleName != "",
+		}
+
 		if err := querier.DeleteRuleStatusesForProfileAndRuleType(ctx, db.DeleteRuleStatusesForProfileAndRuleTypeParams{
 			ProfileID:  profile.ID,
 			RuleTypeID: rule.RuleID,
+			RuleName:   ruleName,
 		}); err != nil {
 			log.Printf("error deleting rule evaluations: %v", err)
 			return fmt.Errorf("error deleting rule evaluations: %w", err)
 		}
 	}
 
+	return nil
+}
+
+func computeRuleName(rule *minderv1.Profile_Rule) string {
+	if rule.GetName() != "" {
+		return rule.GetName()
+	}
+
+	return rule.GetType()
+}
+
+func populateRuleNames(profile *minderv1.Profile) {
+	_ = engine.TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
+		r.Name = computeRuleName(r)
+		return nil
+	},
+	)
+}
+
+func validateRuleNameAndTypeInProfile(profile *minderv1.Profile) error {
+	for ent, entRules := range map[minderv1.Entity][]*minderv1.Profile_Rule{
+		minderv1.Entity_ENTITY_REPOSITORIES:       profile.GetRepository(),
+		minderv1.Entity_ENTITY_ARTIFACTS:          profile.GetArtifact(),
+		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: profile.GetBuildEnvironment(),
+		minderv1.Entity_ENTITY_PULL_REQUESTS:      profile.GetPullRequest(),
+	} {
+		if err := validateRuleNameAndType(ent, entRules); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// validateRuleNameAndType validates that the rules in the profile have unique names and types.
+// Default Rule Name: For rules with no name, rule type is assumed to be the rule name.
+// Validation rules:
+// 1. Rule name can't match other rule types (excluding default rule name)
+// 2. Rule name can't be empty if there are multiple rules with no name and same type
+// 3. Non empty rule name can't match any other rule name (including default rule name)
+func validateRuleNameAndType(entity minderv1.Entity, rules []*minderv1.Profile_Rule) error {
+	ruleNameToType := make(map[string]string)
+
+	typesSet := sets.New[string]()
+	emptyNameTypesSet := sets.New[string]()
+
+	for _, rule := range rules {
+		ruleName := rule.GetName()
+		ruleType := rule.GetType()
+		typesSet.Insert(ruleType)
+
+		if typesSet.Has(ruleName) && ruleName != ruleType {
+			return &engine.RuleValidationError{
+				Err: fmt.Sprintf("rule name '%s' conflicts with a rule type in entity '%s', rule name cannot match other rule types",
+					ruleName, entity.ToString()),
+				RuleType: ruleType,
+			}
+		}
+
+		if ruleName == "" {
+			err := validateRuleWithEmptyName(ruleType, entity, emptyNameTypesSet)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, rule := range rules {
+		if rule.GetName() != "" {
+			err := validateRuleWithNonEmptyName(rule, entity, ruleNameToType, emptyNameTypesSet)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func validateRuleWithEmptyName(
+	ruleType string, entity minderv1.Entity, emptyNameTypesSet sets.Set[string],
+) error {
+	if emptyNameTypesSet.Has(ruleType) {
+		return &engine.RuleValidationError{
+			Err: fmt.Sprintf(
+				"multiple rules with empty name and same type in entity '%s', add unique names to rules", entity.ToString()),
+			RuleType: ruleType,
+		}
+	}
+	emptyNameTypesSet.Insert(ruleType)
+	return nil
+}
+
+func validateRuleWithNonEmptyName(
+	rule *minderv1.Profile_Rule, entity minderv1.Entity,
+	ruleNameToType map[string]string, emptyNameTypesSet sets.Set[string],
+) error {
+	ruleName := rule.GetName()
+	ruleType := rule.GetType()
+	if existingType, ok := ruleNameToType[ruleName]; ok {
+		if existingType == ruleType {
+			return &engine.RuleValidationError{
+				Err: fmt.Sprintf("multiple rules of same type with same name '%s' in entity '%s', assign unique names to rules",
+					ruleName, entity.ToString()),
+				RuleType: ruleType,
+			}
+		}
+		return &engine.RuleValidationError{
+			Err: fmt.Sprintf("rule name '%s' conflicts with rule name of type '%s' in entity '%s', assign unique names to rules",
+				ruleName, existingType, entity.ToString()),
+			RuleType: ruleType,
+		}
+
+	}
+
+	if ruleName == ruleType && emptyNameTypesSet.Has(ruleType) {
+		return &engine.RuleValidationError{
+			Err: fmt.Sprintf(
+				"rule name '%s' conflicts with default rule name of unnamed rule in entity '%s', assign unique names to rules",
+				ruleName, entity.ToString()),
+			RuleType: ruleType,
+		}
+	}
+
+	ruleNameToType[ruleName] = ruleType
 	return nil
 }

@@ -73,17 +73,24 @@ func (e *Executor) createEvalStatusParams(
 		return nil, fmt.Errorf("build environment entity type not supported")
 	}
 
-	ruleName := sql.NullString{
+	ruleTypeName := sql.NullString{
 		String: rule.Type,
 		Valid:  true,
+	}
+
+	// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
+	ruleName := sql.NullString{
+		String: rule.Name,
+		Valid:  rule.Name != "",
 	}
 
 	// Get the current rule evaluation from the database
 	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
 		params.ProfileID,
 		entityType,
-		entityID,
 		ruleName,
+		entityID,
+		ruleTypeName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting rule evaluation status from db: %w", err)
@@ -116,6 +123,12 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
+	// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
+	ruleName := sql.NullString{
+		String: params.Rule.Name,
+		Valid:  params.Rule.Name != "",
+	}
+
 	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID: params.ProfileID,
@@ -127,6 +140,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Entity:        params.EntityType,
 		RuleTypeID:    params.RuleTypeID,
 		PullRequestID: params.PullRequestID,
+		RuleName:      ruleName,
 	})
 
 	if err != nil {

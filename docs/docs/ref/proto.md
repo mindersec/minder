@@ -562,7 +562,9 @@ get profile by id
 | name | [string](#string) |  | name is the name of the profile to get |
 | entity | [GetProfileStatusByNameRequest.EntityTypedId](#minder-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
-| rule | [string](#string) |  |  |
+| rule | [string](#string) |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
+| rule_type | [string](#string) |  |  |
+| rule_name | [string](#string) |  |  |
 
 
 <a name="minder-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
@@ -997,6 +999,7 @@ Rule defines the individual call of a certain rule type.
 | type | [string](#string) |  | type is the type of the rule to be instantiated. |
 | params | [google.protobuf.Struct](#google-protobuf-Struct) |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
 | def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
+| name | [string](#string) |  | name is the descriptive name of the rule, not to be confused with type |
 
 
 <a name="minder-v1-ProfileStatus"></a>
@@ -1234,7 +1237,7 @@ get the status of the rules for a given profile
 | ----- | ---- | ----- | ----------- |
 | profile_id | [string](#string) |  | profile_id is the id of the profile |
 | rule_id | [string](#string) |  | rule_id is the id of the rule |
-| rule_name | [string](#string) |  | rule_name is the name of the rule |
+| rule_name | [string](#string) |  | **Deprecated.** rule_name is the type of the rule. Deprecated in favor of rule_type_name |
 | entity | [string](#string) |  | entity is the entity that was evaluated |
 | status | [string](#string) |  | status is the status of the evaluation |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
@@ -1244,6 +1247,8 @@ get the status of the rules for a given profile
 | remediation_status | [string](#string) |  | remediation_status is the status of the remediation |
 | remediation_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | remediation_last_updated is the last time the remediation was performed or attempted |
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
+| rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
+| rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
