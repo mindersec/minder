@@ -47,7 +47,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/stacklok/frizbee v0.0.12
+	github.com/stacklok/frizbee v0.0.13
 	github.com/stretchr/testify v1.8.4
 	github.com/styrainc/regal v0.15.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -80,7 +80,7 @@ require (
 	github.com/charmbracelet/bubbles v0.17.1 // indirect
 	github.com/charmbracelet/bubbletea v0.25.0 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
-	github.com/deckarep/golang-set/v2 v2.5.0 // indirect
+	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
