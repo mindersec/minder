@@ -35,7 +35,7 @@ on a particular project.`,
 	RunE: cli.GRPCClientWrapRunE(DenyCommand),
 }
 
-// DenyCommand is the command for enrolling a provider
+// DenyCommand is the command for removing a role assignment from a project
 func DenyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
