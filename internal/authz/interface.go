@@ -61,6 +61,16 @@ func (r Role) String() string {
 	return string(r)
 }
 
+// ParseRole parses a string into a Role
+func ParseRole(r string) (Role, error) {
+	rr := Role(r)
+	if _, ok := AllRoles[rr]; !ok {
+		return "", fmt.Errorf("invalid role %s", r)
+	}
+
+	return rr, nil
+}
+
 // Client provides an abstract interface which simplifies interacting with
 // OpenFGA and supports no-op and fake implementations.
 type Client interface {

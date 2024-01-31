@@ -1511,6 +1511,8 @@ message RoleAssignment {
     string role = 1;
     // subject is the subject to which the role is assigned.
     string subject = 2;
-    // context is the context in which the role is assigned.
-    optional Context context = 3;
+    // projectt is the projectt in which the role is assigned.
+    optional string project = 4;
+
+    reserved 3; // deprecated context
 }
