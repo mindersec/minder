@@ -63,6 +63,8 @@ type project
     define repo_update: editor
     define repo_delete: editor
 
+    define remote_repo_get: admin
+
     define artifact_get: viewer
     define artifact_create: editor
     define artifact_update: editor

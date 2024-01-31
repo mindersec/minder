@@ -66,7 +66,7 @@ enum Relation {
     RELATION_PROFILE_UPDATE = 31 [(name) = "profile_update"];
     RELATION_PROFILE_DELETE = 32 [(name) = "profile_delete"];
     RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
-
+    RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -346,7 +346,7 @@ service RepositoryService {
 
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_REPO_GET
+            relation: RELATION_REMOTE_REPO_GET
             owner_only: true
         };
     }
