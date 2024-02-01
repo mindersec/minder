@@ -20,29 +20,12 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
 	"github.com/stacklok/minder/internal/util"
 )
-
-// RoleInfo contains the role information for a user
-type RoleInfo struct {
-	RoleID         int32      `json:"role_id"`
-	IsAdmin        bool       `json:"is_admin"`
-	ProjectID      *uuid.UUID `json:"project_id"`
-	OrganizationID uuid.UUID  `json:"organization_id"`
-}
-
-// UserPermissions contains the permissions for a user
-type UserPermissions struct {
-	UserId         int32
-	ProjectIds     []uuid.UUID
-	Roles          []RoleInfo
-	OrganizationId uuid.UUID
-}
 
 // JwtValidator provides the functions to validate a JWT
 type JwtValidator interface {
@@ -121,22 +104,7 @@ func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) 
 	}, nil
 }
 
-var tokenContextKey struct{}
 var userSubjectContextKey struct{}
-
-// GetPermissionsFromContext returns the claims from the context, or an empty default
-func GetPermissionsFromContext(ctx context.Context) UserPermissions {
-	permissions, ok := ctx.Value(tokenContextKey).(UserPermissions)
-	if !ok {
-		return UserPermissions{UserId: -1, OrganizationId: uuid.UUID{}}
-	}
-	return permissions
-}
-
-// WithPermissionsContext stores the specified UserClaim in the context.
-func WithPermissionsContext(ctx context.Context, claims UserPermissions) context.Context {
-	return context.WithValue(ctx, tokenContextKey, claims)
-}
 
 // GetUserSubjectFromContext returns the user subject from the context, or nil
 func GetUserSubjectFromContext(ctx context.Context) string {

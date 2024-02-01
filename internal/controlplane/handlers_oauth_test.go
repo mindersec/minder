@@ -85,7 +85,6 @@ func TestGetAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	state := "test"
-	orgID := uuid.New()
 	projectID := uuid.New()
 	port := sql.NullInt32{Int32: 8080, Valid: true}
 	providerID := uuid.New()
@@ -148,14 +147,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 		TargetResource: pb.TargetResource_TARGET_RESOURCE_USER,
 	}
 
-	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
+	ctx := withRpcOptions(context.Background(), rpcOptions)
 	// Set the entity context
 	ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
 		Project: engine.Project{
