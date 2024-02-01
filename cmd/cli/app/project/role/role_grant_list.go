@@ -61,7 +61,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.Client
 		},
 	})
 	if err != nil {
-		return cli.MessageAndError("Error granting role", err)
+		return cli.MessageAndError("Error listing role grants", err)
 	}
 
 	switch format {
