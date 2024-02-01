@@ -152,6 +152,41 @@ following command:
 make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
 
+## OpenFGA
+Minder requires a OpenFGA instance to be running. You can install this locally, or use a container.
+
+Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local OpenFGA configuration.
+```yaml
+authz:
+   api_url: http://localhost:8082
+   store_name: minder
+   auth:
+      # Set to token for production
+      method: none
+```
+
+### Using a container
+
+A simple way to get started is to use the provided `docker-compose` file.
+
+```bash
+docker-compose up -d openfga
+```
+
+### Create the model
+
+Once you have a running OpenFGA instance, you can create the model using the `minder-server` CLI tool or via the `make` command.
+
+```bash
+make migrateup
+```
+
+or:
+
+```bash
+minder-server migrate up
+```
+
 ## Create token key passphrase
 
 Create a token key passphrase that is used when storing the provider's token in the database. 
