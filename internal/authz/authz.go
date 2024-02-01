@@ -417,7 +417,7 @@ func getUserFromTuple(user string) string {
 	return strings.TrimPrefix(user, "user:")
 }
 
-func getRoleAssignmentsFromReadResones(resp *fgaclient.ClientReadResponse, proj *string) []*minderv1.RoleAssignment {
+func getRoleAssignmentsFromReadResponse(resp *fgaclient.ClientReadResponse, proj *string) []*minderv1.RoleAssignment {
 	assignments := []*minderv1.RoleAssignment{}
 
 	for _, t := range resp.GetTuples() {
