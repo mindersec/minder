@@ -67,6 +67,12 @@ func (_ *SimpleClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*
 	return nil, nil
 }
 
+// AssignmentsToProjectForUser implements authz.Client
+func (_ *SimpleClient) AssignmentsToProjectForUser(
+	_ context.Context, _ uuid.UUID, _ string) ([]*minderv1.RoleAssignment, error) {
+	return nil, nil
+}
+
 // PrepareForRun implements authz.Client
 func (_ *SimpleClient) PrepareForRun(_ context.Context) error {
 	return nil

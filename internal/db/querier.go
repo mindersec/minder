@@ -128,6 +128,7 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
+	RemoveUserProject(ctx context.Context, arg RemoveUserProjectParams) (UserProject, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)

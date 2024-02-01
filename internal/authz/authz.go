@@ -353,19 +353,47 @@ func (a *ClientWrapper) AssignmentsToProject(ctx context.Context, project uuid.U
 			return nil, fmt.Errorf("unable to read authorization tuples: %w", err)
 		}
 
-		for _, t := range resp.GetTuples() {
-			k := t.GetKey()
-			r, err := ParseRole(k.GetRelation())
-			if err != nil {
-				a.l.Err(err).Msg("Found invalid role in authz store")
-				continue
-			}
-			assignments = append(assignments, &minderv1.RoleAssignment{
-				Subject: getUserFromTuple(k.GetUser()),
-				Role:    r.String(),
-				Project: &prjStr,
-			})
+		assignments = append(assignments, getRoleAssignmentsFromReadResones(resp, &prjStr)...)
+
+		if resp.GetContinuationToken() == "" {
+			break
 		}
+
+		contTok = &resp.ContinuationToken
+	}
+
+	return assignments, nil
+}
+
+// AssignmentsToProjectForUser lists the current role assignments that are scoped to a project
+// for a given user
+func (a *ClientWrapper) AssignmentsToProjectForUser(
+	ctx context.Context,
+	project uuid.UUID,
+	sub string,
+) ([]*minderv1.RoleAssignment, error) {
+	o := getProjectForTuple(project)
+	u := getUserForTuple(sub)
+	prjStr := project.String()
+
+	var pagesize int32 = 50
+	var contTok *string = nil
+
+	assignments := []*minderv1.RoleAssignment{}
+
+	for {
+		resp, err := a.cli.Read(ctx).Options(fgaclient.ClientReadOptions{
+			PageSize:          &pagesize,
+			ContinuationToken: contTok,
+		}).Body(fgaclient.ClientReadRequest{
+			User:   &u,
+			Object: &o,
+		}).Execute()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read authorization tuples: %w", err)
+		}
+
+		assignments = append(assignments, getRoleAssignmentsFromReadResones(resp, &prjStr)...)
 
 		if resp.GetContinuationToken() == "" {
 			break
@@ -387,4 +415,23 @@ func getProjectForTuple(project uuid.UUID) string {
 
 func getUserFromTuple(user string) string {
 	return strings.TrimPrefix(user, "user:")
+}
+
+func getRoleAssignmentsFromReadResones(resp *fgaclient.ClientReadResponse, proj *string) []*minderv1.RoleAssignment {
+	assignments := []*minderv1.RoleAssignment{}
+
+	for _, t := range resp.GetTuples() {
+		k := t.GetKey()
+		r, err := ParseRole(k.GetRelation())
+		if err != nil {
+			continue
+		}
+		assignments = append(assignments, &minderv1.RoleAssignment{
+			Subject: getUserFromTuple(k.GetUser()),
+			Role:    r.String(),
+			Project: proj,
+		})
+	}
+
+	return assignments
 }

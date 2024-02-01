@@ -19,7 +19,7 @@ INSERT INTO user_projects (
   project_id
     ) VALUES (
         $1, $2
-) RETURNING id, user_id, project_id
+) ON CONFLICT DO NOTHING RETURNING id, user_id, project_id
 `
 
 type AddUserProjectParams struct {
@@ -83,4 +83,20 @@ func (q *Queries) GetUserProjects(ctx context.Context, userID int32) ([]GetUserP
 		return nil, err
 	}
 	return items, nil
+}
+
+const removeUserProject = `-- name: RemoveUserProject :one
+DELETE FROM user_projects WHERE user_id = $1 AND project_id = $2 RETURNING id, user_id, project_id
+`
+
+type RemoveUserProjectParams struct {
+	UserID    int32     `json:"user_id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) RemoveUserProject(ctx context.Context, arg RemoveUserProjectParams) (UserProject, error) {
+	row := q.db.QueryRowContext(ctx, removeUserProject, arg.UserID, arg.ProjectID)
+	var i UserProject
+	err := row.Scan(&i.ID, &i.UserID, &i.ProjectID)
+	return i, err
 }

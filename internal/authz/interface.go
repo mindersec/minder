@@ -98,6 +98,10 @@ type Client interface {
 	// AssignmentsToProject outputs the existing role assignments for a given project.
 	AssignmentsToProject(ctx context.Context, project uuid.UUID) ([]*minderv1.RoleAssignment, error)
 
+	// AssingmentsToProjectForUser outputs the existing role assignments for a given project and user.
+	//nolint:lll
+	AssignmentsToProjectForUser(ctx context.Context, project uuid.UUID, user string) ([]*minderv1.RoleAssignment, error)
+
 	// PrepareForRun allows for any preflight configurations to be done before
 	// the server is started.
 	PrepareForRun(ctx context.Context) error

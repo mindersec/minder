@@ -221,7 +221,8 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	}
 
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+	usr, err := s.store.GetUserBySubject(ctx, sub)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -234,6 +235,17 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 
 	if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	// Add user to project
+	_, err = s.store.AddUserProject(ctx, db.AddUserProjectParams{
+		UserID:    usr.ID,
+		ProjectID: projectID,
+	})
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.Internal, "error adding user to project: %v", err)
+		}
 	}
 
 	respProj := projectID.String()
@@ -264,7 +276,8 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	}
 
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+	usr, err := s.store.GetUserBySubject(ctx, sub)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -277,6 +290,23 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 
 	if err := s.authzClient.Delete(ctx, sub, authzrole, projectID); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	// Verify if user still has roles on project
+	assignments, err := s.authzClient.AssignmentsToProjectForUser(ctx, projectID, sub)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	if len(assignments) == 0 {
+		// Remove user from project
+		_, err := s.store.RemoveUserProject(ctx, db.RemoveUserProjectParams{
+			UserID:    usr.ID,
+			ProjectID: projectID,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error removing user from project: %v", err)
+		}
 	}
 
 	respProj := projectID.String()
