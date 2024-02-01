@@ -214,7 +214,7 @@ func printEvalStatus(
 		for _, status := range evalStatus {
 			ta.AddRow(
 				status.ProfileId,
-				status.RuleName,
+				status.RuleTypeName,
 				status.Status,
 				status.Details,
 			)
