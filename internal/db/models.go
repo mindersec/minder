@@ -428,16 +428,6 @@ type Repository struct {
 	DefaultBranch sql.NullString `json:"default_branch"`
 }
 
-type Role struct {
-	ID             int32         `json:"id"`
-	OrganizationID uuid.UUID     `json:"organization_id"`
-	ProjectID      uuid.NullUUID `json:"project_id"`
-	Name           string        `json:"name"`
-	IsAdmin        bool          `json:"is_admin"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
-}
-
 type RuleDetailsAlert struct {
 	ID          uuid.UUID        `json:"id"`
 	RuleEvalID  uuid.UUID        `json:"rule_eval_id"`
@@ -519,10 +509,4 @@ type UserProject struct {
 	ID        int32     `json:"id"`
 	UserID    int32     `json:"user_id"`
 	ProjectID uuid.UUID `json:"project_id"`
-}
-
-type UserRole struct {
-	ID     int32 `json:"id"`
-	UserID int32 `json:"user_id"`
-	RoleID int32 `json:"role_id"`
 }

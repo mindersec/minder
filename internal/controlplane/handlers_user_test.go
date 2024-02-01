@@ -86,20 +86,12 @@ func TestCreateUserDBMock(t *testing.T) {
 							Valid: true,
 						},
 					}, nil)
-				store.EXPECT().
-					CreateRole(gomock.Any(), gomock.Any()).
-					Return(db.Role{ID: 2}, nil)
-				store.EXPECT().
-					CreateRole(gomock.Any(), gomock.Any()).
-					Return(db.Role{ID: 3}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: orgID,
 						IdentitySubject: "subject1"}).
 					Return(returnedUser, nil)
 				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: projectID})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 2})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 3})
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
@@ -183,12 +175,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 							Valid: true,
 						},
 					}, nil)
-				store.EXPECT().
-					CreateRole(gomock.Any(), gomock.Any()).
-					Return(db.Role{ID: 2}, nil)
-				store.EXPECT().
-					CreateRole(gomock.Any(), gomock.Any()).
-					Return(db.Role{ID: 3}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
@@ -200,8 +186,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 					}, nil).
 					Times(1)
 				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: projectID})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 2})
-				store.EXPECT().AddUserRole(gomock.Any(), db.AddUserRoleParams{UserID: 1, RoleID: 3})
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)

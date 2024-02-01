@@ -53,21 +53,6 @@ func (mr *MockStoreMockRecorder) AddUserProject(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserProject", reflect.TypeOf((*MockStore)(nil).AddUserProject), arg0, arg1)
 }
 
-// AddUserRole mocks base method.
-func (m *MockStore) AddUserRole(arg0 context.Context, arg1 db.AddUserRoleParams) (db.UserRole, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserRole", arg0, arg1)
-	ret0, _ := ret[0].(db.UserRole)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AddUserRole indicates an expected call of AddUserRole.
-func (mr *MockStoreMockRecorder) AddUserRole(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserRole", reflect.TypeOf((*MockStore)(nil).AddUserRole), arg0, arg1)
-}
-
 // BeginTransaction mocks base method.
 func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
 	m.ctrl.T.Helper()
@@ -336,21 +321,6 @@ func (mr *MockStoreMockRecorder) CreateRepository(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockStore)(nil).CreateRepository), arg0, arg1)
 }
 
-// CreateRole mocks base method.
-func (m *MockStore) CreateRole(arg0 context.Context, arg1 db.CreateRoleParams) (db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRole", arg0, arg1)
-	ret0, _ := ret[0].(db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateRole indicates an expected call of CreateRole.
-func (mr *MockStoreMockRecorder) CreateRole(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockStore)(nil).CreateRole), arg0, arg1)
-}
-
 // CreateRuleType mocks base method.
 func (m *MockStore) CreateRuleType(arg0 context.Context, arg1 db.CreateRuleTypeParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -578,20 +548,6 @@ func (m *MockStore) DeleteRepository(arg0 context.Context, arg1 uuid.UUID) error
 func (mr *MockStoreMockRecorder) DeleteRepository(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockStore)(nil).DeleteRepository), arg0, arg1)
-}
-
-// DeleteRole mocks base method.
-func (m *MockStore) DeleteRole(arg0 context.Context, arg1 int32) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteRole", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteRole indicates an expected call of DeleteRole.
-func (mr *MockStoreMockRecorder) DeleteRole(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRole", reflect.TypeOf((*MockStore)(nil).DeleteRole), arg0, arg1)
 }
 
 // DeleteRuleInstantiation mocks base method.
@@ -1246,36 +1202,6 @@ func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoName), arg0, arg1)
 }
 
-// GetRoleByID mocks base method.
-func (m *MockStore) GetRoleByID(arg0 context.Context, arg1 int32) (db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRoleByID", arg0, arg1)
-	ret0, _ := ret[0].(db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRoleByID indicates an expected call of GetRoleByID.
-func (mr *MockStoreMockRecorder) GetRoleByID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleByID", reflect.TypeOf((*MockStore)(nil).GetRoleByID), arg0, arg1)
-}
-
-// GetRoleByName mocks base method.
-func (m *MockStore) GetRoleByName(arg0 context.Context, arg1 db.GetRoleByNameParams) (db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRoleByName", arg0, arg1)
-	ret0, _ := ret[0].(db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRoleByName indicates an expected call of GetRoleByName.
-func (mr *MockStoreMockRecorder) GetRoleByName(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoleByName", reflect.TypeOf((*MockStore)(nil).GetRoleByName), arg0, arg1)
-}
-
 // GetRootProjects mocks base method.
 func (m *MockStore) GetRootProjects(arg0 context.Context) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1439,21 +1365,6 @@ func (m *MockStore) GetUserProjects(arg0 context.Context, arg1 int32) ([]db.GetU
 func (mr *MockStoreMockRecorder) GetUserProjects(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockStore)(nil).GetUserProjects), arg0, arg1)
-}
-
-// GetUserRoles mocks base method.
-func (m *MockStore) GetUserRoles(arg0 context.Context, arg1 int32) ([]db.GetUserRolesRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserRoles", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetUserRolesRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserRoles indicates an expected call of GetUserRoles.
-func (mr *MockStoreMockRecorder) GetUserRoles(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserRoles", reflect.TypeOf((*MockStore)(nil).GetUserRoles), arg0, arg1)
 }
 
 // GlobalListProviders mocks base method.
@@ -1651,36 +1562,6 @@ func (mr *MockStoreMockRecorder) ListRepositoriesByProjectID(arg0, arg1 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesByProjectID", reflect.TypeOf((*MockStore)(nil).ListRepositoriesByProjectID), arg0, arg1)
 }
 
-// ListRoles mocks base method.
-func (m *MockStore) ListRoles(arg0 context.Context, arg1 db.ListRolesParams) ([]db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRoles", arg0, arg1)
-	ret0, _ := ret[0].([]db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListRoles indicates an expected call of ListRoles.
-func (mr *MockStoreMockRecorder) ListRoles(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRoles", reflect.TypeOf((*MockStore)(nil).ListRoles), arg0, arg1)
-}
-
-// ListRolesByProjectID mocks base method.
-func (m *MockStore) ListRolesByProjectID(arg0 context.Context, arg1 db.ListRolesByProjectIDParams) ([]db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRolesByProjectID", arg0, arg1)
-	ret0, _ := ret[0].([]db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListRolesByProjectID indicates an expected call of ListRolesByProjectID.
-func (mr *MockStoreMockRecorder) ListRolesByProjectID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRolesByProjectID", reflect.TypeOf((*MockStore)(nil).ListRolesByProjectID), arg0, arg1)
-}
-
 // ListRuleEvaluationsByProfileId mocks base method.
 func (m *MockStore) ListRuleEvaluationsByProfileId(arg0 context.Context, arg1 db.ListRuleEvaluationsByProfileIdParams) ([]db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
@@ -1754,21 +1635,6 @@ func (m *MockStore) ListUsersByProject(arg0 context.Context, arg1 db.ListUsersBy
 func (mr *MockStoreMockRecorder) ListUsersByProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByProject", reflect.TypeOf((*MockStore)(nil).ListUsersByProject), arg0, arg1)
-}
-
-// ListUsersByRoleId mocks base method.
-func (m *MockStore) ListUsersByRoleId(arg0 context.Context, arg1 int32) ([]int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsersByRoleId", arg0, arg1)
-	ret0, _ := ret[0].([]int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListUsersByRoleId indicates an expected call of ListUsersByRoleId.
-func (mr *MockStoreMockRecorder) ListUsersByRoleId(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByRoleId", reflect.TypeOf((*MockStore)(nil).ListUsersByRoleId), arg0, arg1)
 }
 
 // LockIfThresholdNotExceeded mocks base method.
@@ -1901,21 +1767,6 @@ func (m *MockStore) UpdateRepositoryByID(arg0 context.Context, arg1 db.UpdateRep
 func (mr *MockStoreMockRecorder) UpdateRepositoryByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepositoryByID", reflect.TypeOf((*MockStore)(nil).UpdateRepositoryByID), arg0, arg1)
-}
-
-// UpdateRole mocks base method.
-func (m *MockStore) UpdateRole(arg0 context.Context, arg1 db.UpdateRoleParams) (db.Role, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRole", arg0, arg1)
-	ret0, _ := ret[0].(db.Role)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateRole indicates an expected call of UpdateRole.
-func (mr *MockStoreMockRecorder) UpdateRole(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRole", reflect.TypeOf((*MockStore)(nil).UpdateRole), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.

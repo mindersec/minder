@@ -13,7 +13,6 @@ import (
 
 type Querier interface {
 	AddUserProject(ctx context.Context, arg AddUserProjectParams) (UserProject, error)
-	AddUserRole(ctx context.Context, arg AddUserRoleParams) (UserRole, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -29,7 +28,6 @@ type Querier interface {
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
 	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
-	CreateRole(ctx context.Context, arg CreateRoleParams) (Role, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
@@ -46,7 +44,6 @@ type Querier interface {
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
-	DeleteRole(ctx context.Context, id int32) error
 	DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error
 	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
 	// but locks the table before doing so.
@@ -94,8 +91,6 @@ type Querier interface {
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
-	GetRoleByID(ctx context.Context, id int32) (Role, error)
-	GetRoleByName(ctx context.Context, arg GetRoleByNameParams) (Role, error)
 	GetRootProjects(ctx context.Context) ([]Project, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
@@ -106,7 +101,6 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GetUserProjects(ctx context.Context, userID int32) ([]GetUserProjectsRow, error)
-	GetUserRoles(ctx context.Context, userID int32) ([]GetUserRolesRow, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
@@ -123,14 +117,11 @@ type Querier interface {
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
-	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
-	ListRolesByProjectID(ctx context.Context, arg ListRolesByProjectIDParams) ([]Role, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
 	ListUsersByProject(ctx context.Context, arg ListUsersByProjectParams) ([]User, error)
-	ListUsersByRoleId(ctx context.Context, roleID int32) ([]int32, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
 	// attempt to insert or update the entity_execution_lock table only if the
 	// last_lock_time is older than the threshold. If the lock is successful, it
@@ -148,7 +139,6 @@ type Querier interface {
 	// set clone_url if the value is not an empty string
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
-	UpdateRole(ctx context.Context, arg UpdateRoleParams) (Role, error)
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertArtifactVersion(ctx context.Context, arg UpsertArtifactVersionParams) (ArtifactVersion, error)
