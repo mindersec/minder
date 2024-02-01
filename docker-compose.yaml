@@ -16,7 +16,7 @@
 version: '3.2'
 services:
   minder:
-    container_name: minder_sever
+    container_name: minder_server
     build: .
     image: minder:latest
 
