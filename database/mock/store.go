@@ -351,21 +351,6 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionState", reflect.TypeOf((*MockStore)(nil).CreateSessionState), arg0, arg1)
 }
 
-// CreateSigningKey mocks base method.
-func (m *MockStore) CreateSigningKey(arg0 context.Context, arg1 db.CreateSigningKeyParams) (db.SigningKey, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSigningKey", arg0, arg1)
-	ret0, _ := ret[0].(db.SigningKey)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateSigningKey indicates an expected call of CreateSigningKey.
-func (mr *MockStoreMockRecorder) CreateSigningKey(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSigningKey", reflect.TypeOf((*MockStore)(nil).CreateSigningKey), arg0, arg1)
-}
-
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -618,20 +603,6 @@ func (m *MockStore) DeleteSessionStateByProjectID(arg0 context.Context, arg1 db.
 func (mr *MockStoreMockRecorder) DeleteSessionStateByProjectID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).DeleteSessionStateByProjectID), arg0, arg1)
-}
-
-// DeleteSigningKey mocks base method.
-func (m *MockStore) DeleteSigningKey(arg0 context.Context, arg1 db.DeleteSigningKeyParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSigningKey", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSigningKey indicates an expected call of DeleteSigningKey.
-func (mr *MockStoreMockRecorder) DeleteSigningKey(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSigningKey", reflect.TypeOf((*MockStore)(nil).DeleteSigningKey), arg0, arg1)
 }
 
 // DeleteUser mocks base method.
@@ -1290,36 +1261,6 @@ func (m *MockStore) GetSessionStateByProjectID(arg0 context.Context, arg1 uuid.U
 func (mr *MockStoreMockRecorder) GetSessionStateByProjectID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).GetSessionStateByProjectID), arg0, arg1)
-}
-
-// GetSigningKeyByIdentifier mocks base method.
-func (m *MockStore) GetSigningKeyByIdentifier(arg0 context.Context, arg1 string) (db.SigningKey, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSigningKeyByIdentifier", arg0, arg1)
-	ret0, _ := ret[0].(db.SigningKey)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSigningKeyByIdentifier indicates an expected call of GetSigningKeyByIdentifier.
-func (mr *MockStoreMockRecorder) GetSigningKeyByIdentifier(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSigningKeyByIdentifier", reflect.TypeOf((*MockStore)(nil).GetSigningKeyByIdentifier), arg0, arg1)
-}
-
-// GetSigningKeyByProjectID mocks base method.
-func (m *MockStore) GetSigningKeyByProjectID(arg0 context.Context, arg1 uuid.UUID) (db.SigningKey, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSigningKeyByProjectID", arg0, arg1)
-	ret0, _ := ret[0].(db.SigningKey)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSigningKeyByProjectID indicates an expected call of GetSigningKeyByProjectID.
-func (mr *MockStoreMockRecorder) GetSigningKeyByProjectID(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSigningKeyByProjectID", reflect.TypeOf((*MockStore)(nil).GetSigningKeyByProjectID), arg0, arg1)
 }
 
 // GetUserByID mocks base method.
