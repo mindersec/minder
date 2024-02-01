@@ -12,6 +12,8 @@ import (
 )
 
 type Querier interface {
+	// AddMappedRoleGrant adds a new mapped role grant to the database.
+	AddMappedRoleGrant(ctx context.Context, arg AddMappedRoleGrantParams) (MappedRoleGrant, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -34,6 +36,8 @@ type Querier interface {
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteArtifactVersion(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
+	// DeleteMappedRoleGrant deletes a mapped role grant from the database.
+	DeleteMappedRoleGrant(ctx context.Context, arg DeleteMappedRoleGrantParams) (MappedRoleGrant, error)
 	DeleteOldArtifactVersions(ctx context.Context, arg DeleteOldArtifactVersionsParams) error
 	DeleteOrganization(ctx context.Context, id uuid.UUID) error
 	DeleteProfile(ctx context.Context, id uuid.UUID) error
@@ -64,6 +68,8 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
+	// GetMappedRoleGrant retrieves a mapped role grant from the database.
+	GetMappedRoleGrant(ctx context.Context, arg GetMappedRoleGrantParams) (MappedRoleGrant, error)
 	GetOrganization(ctx context.Context, id uuid.UUID) (Project, error)
 	GetOrganizationByName(ctx context.Context, name string) (Project, error)
 	GetOrganizationForUpdate(ctx context.Context, name string) (Project, error)
@@ -101,6 +107,8 @@ type Querier interface {
 	ListArtifactVersionsByArtifactIDAndTag(ctx context.Context, arg ListArtifactVersionsByArtifactIDAndTagParams) ([]ArtifactVersion, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
+	// ListMappedRoleGrants retrieves all mapped role grants from the database.
+	ListMappedRoleGrants(ctx context.Context, projectID uuid.UUID) ([]MappedRoleGrant, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
@@ -129,6 +137,11 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
+	// ResolveMappedRoleGrant resolves the subject of a mapped role grant.
+	ResolveMappedRoleGrant(ctx context.Context, arg ResolveMappedRoleGrantParams) (MappedRoleGrant, error)
+	// SearchUnresolvedMappedRoleGrants searches for unresolved mapped role grants using
+	// the provided claim mappings.
+	SearchUnresolvedMappedRoleGrants(ctx context.Context, claimMappings json.RawMessage) ([]MappedRoleGrant, error)
 	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)

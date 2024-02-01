@@ -38,6 +38,21 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// AddMappedRoleGrant mocks base method.
+func (m *MockStore) AddMappedRoleGrant(arg0 context.Context, arg1 db.AddMappedRoleGrantParams) (db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMappedRoleGrant", arg0, arg1)
+	ret0, _ := ret[0].(db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddMappedRoleGrant indicates an expected call of AddMappedRoleGrant.
+func (mr *MockStoreMockRecorder) AddMappedRoleGrant(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMappedRoleGrant", reflect.TypeOf((*MockStore)(nil).AddMappedRoleGrant), arg0, arg1)
+}
+
 // BeginTransaction mocks base method.
 func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
 	m.ctrl.T.Helper()
@@ -405,6 +420,21 @@ func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) error {
 func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredSessionStates", reflect.TypeOf((*MockStore)(nil).DeleteExpiredSessionStates), arg0)
+}
+
+// DeleteMappedRoleGrant mocks base method.
+func (m *MockStore) DeleteMappedRoleGrant(arg0 context.Context, arg1 db.DeleteMappedRoleGrantParams) (db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMappedRoleGrant", arg0, arg1)
+	ret0, _ := ret[0].(db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteMappedRoleGrant indicates an expected call of DeleteMappedRoleGrant.
+func (mr *MockStoreMockRecorder) DeleteMappedRoleGrant(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMappedRoleGrant", reflect.TypeOf((*MockStore)(nil).DeleteMappedRoleGrant), arg0, arg1)
 }
 
 // DeleteOldArtifactVersions mocks base method.
@@ -782,6 +812,21 @@ func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeature
 func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
+}
+
+// GetMappedRoleGrant mocks base method.
+func (m *MockStore) GetMappedRoleGrant(arg0 context.Context, arg1 db.GetMappedRoleGrantParams) (db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMappedRoleGrant", arg0, arg1)
+	ret0, _ := ret[0].(db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMappedRoleGrant indicates an expected call of GetMappedRoleGrant.
+func (mr *MockStoreMockRecorder) GetMappedRoleGrant(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMappedRoleGrant", reflect.TypeOf((*MockStore)(nil).GetMappedRoleGrant), arg0, arg1)
 }
 
 // GetOrganization mocks base method.
@@ -1368,6 +1413,21 @@ func (mr *MockStoreMockRecorder) ListFlushCache(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlushCache", reflect.TypeOf((*MockStore)(nil).ListFlushCache), arg0)
 }
 
+// ListMappedRoleGrants mocks base method.
+func (m *MockStore) ListMappedRoleGrants(arg0 context.Context, arg1 uuid.UUID) ([]db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMappedRoleGrants", arg0, arg1)
+	ret0, _ := ret[0].([]db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListMappedRoleGrants indicates an expected call of ListMappedRoleGrants.
+func (mr *MockStoreMockRecorder) ListMappedRoleGrants(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMappedRoleGrants", reflect.TypeOf((*MockStore)(nil).ListMappedRoleGrants), arg0, arg1)
+}
+
 // ListOrganizations mocks base method.
 func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganizationsParams) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1577,6 +1637,21 @@ func (mr *MockStoreMockRecorder) ReleaseLock(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseLock", reflect.TypeOf((*MockStore)(nil).ReleaseLock), arg0, arg1)
 }
 
+// ResolveMappedRoleGrant mocks base method.
+func (m *MockStore) ResolveMappedRoleGrant(arg0 context.Context, arg1 db.ResolveMappedRoleGrantParams) (db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveMappedRoleGrant", arg0, arg1)
+	ret0, _ := ret[0].(db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveMappedRoleGrant indicates an expected call of ResolveMappedRoleGrant.
+func (mr *MockStoreMockRecorder) ResolveMappedRoleGrant(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveMappedRoleGrant", reflect.TypeOf((*MockStore)(nil).ResolveMappedRoleGrant), arg0, arg1)
+}
+
 // Rollback mocks base method.
 func (m *MockStore) Rollback(arg0 *sql.Tx) error {
 	m.ctrl.T.Helper()
@@ -1589,6 +1664,21 @@ func (m *MockStore) Rollback(arg0 *sql.Tx) error {
 func (mr *MockStoreMockRecorder) Rollback(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), arg0)
+}
+
+// SearchUnresolvedMappedRoleGrants mocks base method.
+func (m *MockStore) SearchUnresolvedMappedRoleGrants(arg0 context.Context, arg1 json.RawMessage) ([]db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchUnresolvedMappedRoleGrants", arg0, arg1)
+	ret0, _ := ret[0].([]db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchUnresolvedMappedRoleGrants indicates an expected call of SearchUnresolvedMappedRoleGrants.
+func (mr *MockStoreMockRecorder) SearchUnresolvedMappedRoleGrants(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchUnresolvedMappedRoleGrants", reflect.TypeOf((*MockStore)(nil).SearchUnresolvedMappedRoleGrants), arg0, arg1)
 }
 
 // UpdateAccessToken mocks base method.
