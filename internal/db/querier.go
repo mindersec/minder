@@ -30,7 +30,6 @@ type Querier interface {
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
-	CreateSigningKey(ctx context.Context, arg CreateSigningKeyParams) (SigningKey, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
@@ -51,7 +50,6 @@ type Querier interface {
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
-	DeleteSigningKey(ctx context.Context, arg DeleteSigningKeyParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
 	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
@@ -96,8 +94,6 @@ type Querier interface {
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
 	GetSessionStateByProjectID(ctx context.Context, projectID uuid.UUID) (SessionStore, error)
-	GetSigningKeyByIdentifier(ctx context.Context, keyIdentifier string) (SigningKey, error)
-	GetSigningKeyByProjectID(ctx context.Context, projectID uuid.UUID) (SigningKey, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GetUserProjects(ctx context.Context, userID int32) ([]GetUserProjectsRow, error)

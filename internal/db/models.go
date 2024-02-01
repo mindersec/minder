@@ -486,17 +486,6 @@ type SessionStore struct {
 	CreatedAt    time.Time      `json:"created_at"`
 }
 
-type SigningKey struct {
-	ID            int32     `json:"id"`
-	ProjectID     uuid.UUID `json:"project_id"`
-	PrivateKey    string    `json:"private_key"`
-	PublicKey     string    `json:"public_key"`
-	Passphrase    string    `json:"passphrase"`
-	KeyIdentifier string    `json:"key_identifier"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-}
-
 type User struct {
 	ID              int32     `json:"id"`
 	OrganizationID  uuid.UUID `json:"organization_id"`
