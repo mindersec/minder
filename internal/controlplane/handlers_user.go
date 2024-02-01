@@ -101,11 +101,6 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	_, err = qtx.AddUserProject(ctx, db.AddUserProjectParams{UserID: user.ID, ProjectID: userProject})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to add user to project: %s", err)
-	}
-
 	err = s.store.Commit(tx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
@@ -189,20 +184,25 @@ func (s *Server) DeleteUser(ctx context.Context,
 	return &pb.DeleteUserResponse{}, nil
 }
 
-func getUserDependencies(ctx context.Context, store db.Store, user db.User) ([]*pb.Project, error) {
+func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.Project, error) {
 	// get all the projects associated with that user
-	projects, err := store.GetUserProjects(ctx, user.ID)
+	projects, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
 	if err != nil {
 		return nil, err
 	}
 
 	var projectsPB []*pb.Project
 	for _, proj := range projects {
+		pinfo, err := s.store.GetProjectByID(ctx, proj)
+		if err != nil {
+			return nil, err
+		}
+
 		projectsPB = append(projectsPB, &pb.Project{
-			ProjectId: proj.ID.String(),
-			Name:      proj.Name,
-			CreatedAt: timestamppb.New(proj.CreatedAt),
-			UpdatedAt: timestamppb.New(proj.UpdatedAt),
+			ProjectId: proj.String(),
+			Name:      pinfo.Name,
+			CreatedAt: timestamppb.New(pinfo.CreatedAt),
+			UpdatedAt: timestamppb.New(pinfo.UpdatedAt),
 		})
 	}
 
@@ -240,7 +240,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	projects, err := getUserDependencies(ctx, s.store, user)
+	projects, err := s.getUserDependencies(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}

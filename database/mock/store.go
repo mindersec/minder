@@ -38,21 +38,6 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
-// AddUserProject mocks base method.
-func (m *MockStore) AddUserProject(arg0 context.Context, arg1 db.AddUserProjectParams) (db.UserProject, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserProject", arg0, arg1)
-	ret0, _ := ret[0].(db.UserProject)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AddUserProject indicates an expected call of AddUserProject.
-func (mr *MockStoreMockRecorder) AddUserProject(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserProject", reflect.TypeOf((*MockStore)(nil).AddUserProject), arg0, arg1)
-}
-
 // BeginTransaction mocks base method.
 func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
 	m.ctrl.T.Helper()
@@ -1293,21 +1278,6 @@ func (mr *MockStoreMockRecorder) GetUserBySubject(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserBySubject", reflect.TypeOf((*MockStore)(nil).GetUserBySubject), arg0, arg1)
 }
 
-// GetUserProjects mocks base method.
-func (m *MockStore) GetUserProjects(arg0 context.Context, arg1 int32) ([]db.GetUserProjectsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserProjects", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetUserProjectsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserProjects indicates an expected call of GetUserProjects.
-func (mr *MockStoreMockRecorder) GetUserProjects(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserProjects", reflect.TypeOf((*MockStore)(nil).GetUserProjects), arg0, arg1)
-}
-
 // GlobalListProviders mocks base method.
 func (m *MockStore) GlobalListProviders(arg0 context.Context) ([]db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -1561,21 +1531,6 @@ func (m *MockStore) ListUsersByOrganization(arg0 context.Context, arg1 db.ListUs
 func (mr *MockStoreMockRecorder) ListUsersByOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByOrganization", reflect.TypeOf((*MockStore)(nil).ListUsersByOrganization), arg0, arg1)
-}
-
-// ListUsersByProject mocks base method.
-func (m *MockStore) ListUsersByProject(arg0 context.Context, arg1 db.ListUsersByProjectParams) ([]db.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsersByProject", arg0, arg1)
-	ret0, _ := ret[0].([]db.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListUsersByProject indicates an expected call of ListUsersByProject.
-func (mr *MockStoreMockRecorder) ListUsersByProject(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByProject", reflect.TypeOf((*MockStore)(nil).ListUsersByProject), arg0, arg1)
 }
 
 // LockIfThresholdNotExceeded mocks base method.

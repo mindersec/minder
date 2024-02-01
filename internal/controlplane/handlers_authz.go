@@ -67,7 +67,7 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, info 
 
 	server := info.Server.(*Server)
 
-	ctx, err := populateEntityContext(ctx, server.store, request)
+	ctx, err := populateEntityContext(ctx, server.store, server.authzClient, request)
 	if err != nil {
 		return nil, err
 	}
@@ -112,12 +112,17 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 
 // populateEntityContext populates the project in the entity context, by looking at the proto context or
 // fetching the default project
-func populateEntityContext(ctx context.Context, store db.Store, in HasProtoContext) (context.Context, error) {
+func populateEntityContext(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	in HasProtoContext,
+) (context.Context, error) {
 	if in.GetContext() == nil {
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, store, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, store, authzClient, in)
 	if err != nil {
 		return ctx, err
 	}
@@ -137,7 +142,12 @@ func populateEntityContext(ctx context.Context, store db.Store, in HasProtoConte
 	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
-func getProjectFromRequestOrDefault(ctx context.Context, store db.Store, in HasProtoContext) (uuid.UUID, error) {
+func getProjectFromRequestOrDefault(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	in HasProtoContext,
+) (uuid.UUID, error) {
 	// Prefer the context message from the protobuf
 	if in.GetContext().GetProject() != "" {
 		requestedProject := in.GetContext().GetProject()
@@ -154,7 +164,7 @@ func getProjectFromRequestOrDefault(ctx context.Context, store db.Store, in HasP
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.NotFound, "user not found")
 	}
-	projects, err := store.GetUserProjects(ctx, userInfo.ID)
+	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.NotFound, "cannot find projects for user")
 	}
@@ -162,7 +172,7 @@ func getProjectFromRequestOrDefault(ctx context.Context, store db.Store, in HasP
 	if len(projects) != 1 {
 		return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot get default project")
 	}
-	return projects[0].ID, nil
+	return projects[0], nil
 }
 
 // Permissions API

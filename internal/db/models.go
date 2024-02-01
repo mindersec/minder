@@ -493,9 +493,3 @@ type User struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
-
-type UserProject struct {
-	ID        int32     `json:"id"`
-	UserID    int32     `json:"user_id"`
-	ProjectID uuid.UUID `json:"project_id"`
-}

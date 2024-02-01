@@ -12,7 +12,6 @@ import (
 )
 
 type Querier interface {
-	AddUserProject(ctx context.Context, arg AddUserProjectParams) (UserProject, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -96,7 +95,6 @@ type Querier interface {
 	GetSessionStateByProjectID(ctx context.Context, projectID uuid.UUID) (SessionStore, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
-	GetUserProjects(ctx context.Context, userID int32) ([]GetUserProjectsRow, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListArtifactVersionsByArtifactID(ctx context.Context, arg ListArtifactVersionsByArtifactIDParams) ([]ArtifactVersion, error)
@@ -117,7 +115,6 @@ type Querier interface {
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
-	ListUsersByProject(ctx context.Context, arg ListUsersByProjectParams) ([]User, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
 	// attempt to insert or update the entity_execution_lock table only if the
 	// last_lock_time is older than the threshold. If the lock is successful, it

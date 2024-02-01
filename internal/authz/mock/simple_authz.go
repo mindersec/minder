@@ -64,7 +64,12 @@ func (_ *SimpleClient) DeleteUser(_ context.Context, _ string) error {
 
 // AssignmentsToProject implements authz.Client
 func (_ *SimpleClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
-	return nil, nil
+	return []*minderv1.RoleAssignment{}, nil
+}
+
+// ProjectsForUser implements authz.Client
+func (n *SimpleClient) ProjectsForUser(_ context.Context, _ string) ([]uuid.UUID, error) {
+	return n.Allowed, nil
 }
 
 // PrepareForRun implements authz.Client
