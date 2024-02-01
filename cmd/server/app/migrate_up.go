@@ -103,6 +103,14 @@ var upCmd = &cobra.Command{
 
 		cmd.Println("Database migration completed successfully")
 
+		version, dirty, err := m.Version()
+		if err != nil {
+			cmd.Printf("Error while getting migration version: %v\n", err)
+			// not fatal
+		} else {
+			cmd.Printf("Version=%v dirty=%v\n", version, dirty)
+		}
+
 		cmd.Println("Ensuring authorization store...")
 		l := zerolog.Ctx(ctx)
 
