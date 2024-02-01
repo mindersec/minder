@@ -22,10 +22,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"golang.org/x/exp/slices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
@@ -43,102 +43,8 @@ func getRpcOptions(ctx context.Context) *minder.RpcOptions {
 	return opts
 }
 
-// lookupUserPermissions returns the user permissions from the database for the given user
-func lookupUserPermissions(ctx context.Context, store db.Store) auth.UserPermissions {
-	emptyPermissions := auth.UserPermissions{}
-
-	subject := auth.GetUserSubjectFromContext(ctx)
-
-	// read all information for user claims
-	userInfo, err := store.GetUserBySubject(ctx, subject)
-	if err != nil {
-		return emptyPermissions
-	}
-
-	// read projects and add id to claims
-	gs, err := store.GetUserProjects(ctx, userInfo.ID)
-	if err != nil {
-		return emptyPermissions
-	}
-	var projects []uuid.UUID
-	for _, g := range gs {
-		projects = append(projects, g.ID)
-	}
-
-	// read roles and add details to claims
-	rs, err := store.GetUserRoles(ctx, userInfo.ID)
-	if err != nil {
-		return emptyPermissions
-	}
-
-	var roles []auth.RoleInfo
-	for _, r := range rs {
-		rif := auth.RoleInfo{
-			RoleID:         r.ID,
-			IsAdmin:        r.IsAdmin,
-			OrganizationID: r.OrganizationID,
-		}
-		if r.ProjectID.Valid {
-			pID := r.ProjectID.UUID
-			rif.ProjectID = &pID
-		}
-		roles = append(roles, rif)
-	}
-
-	claims := auth.UserPermissions{
-		UserId:         userInfo.ID,
-		Roles:          roles,
-		ProjectIds:     projects,
-		OrganizationId: userInfo.OrganizationID,
-	}
-
-	return claims
-}
-
-// authorizedOnProject checks if the request is authorized for the given
-// project, and returns an error if the request is not authorized.
-func authorizedOnProject(ctx context.Context, projectID uuid.UUID) error {
-	claims := auth.GetPermissionsFromContext(ctx)
-	opts := getRpcOptions(ctx)
-	if opts.GetTargetResource() != minder.TargetResource_TARGET_RESOURCE_PROJECT {
-		return status.Errorf(codes.Internal, "Called IsProjectAuthorized on non-project method, should be %v", opts.GetTargetResource())
-	}
-
-	// call openFGA using the relation and project ID
-	// opts.GetRelation()
-
-	if !slices.Contains(claims.ProjectIds, projectID) {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project")
-	}
-	isOwner := func(role auth.RoleInfo) bool {
-		if role.ProjectID == nil {
-			return false
-		}
-		return *role.ProjectID == projectID && role.IsAdmin
-	}
-	// check if is admin of project
-	if opts.GetOwnerOnly() && !slices.ContainsFunc(claims.Roles, isOwner) {
-		return util.UserVisibleError(codes.PermissionDenied, "user is not an administrator on this project")
-	}
-	return nil
-}
-
-// PermissionsContextUnaryInterceptor is a server interceptor that sets up the user permissions
-func PermissionsContextUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler) (any, error) {
-
-	server := info.Server.(*Server)
-
-	// get user authorities from the database
-	// ignore any error because the user may not exist yet
-	authorities := lookupUserPermissions(ctx, server.store)
-
-	ctx = auth.WithPermissionsContext(ctx, authorities)
-	return handler(ctx, req)
-}
-
 // EntityContextProjectInterceptor is a server interceptor that sets up the entity context project
-func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo,
+func EntityContextProjectInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
 
 	opts := getRpcOptions(ctx)
@@ -159,7 +65,9 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *gr
 		return nil, status.Errorf(codes.Internal, "Error extracting context from request")
 	}
 
-	ctx, err := populateEntityContext(ctx, request)
+	server := info.Server.(*Server)
+
+	ctx, err := populateEntityContext(ctx, server.store, request)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +76,7 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, _ *gr
 }
 
 // ProjectAuthorizationInterceptor is a server interceptor that checks if a user is authorized on the requested project
-func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo,
+func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
 
 	opts := getRpcOptions(ctx)
@@ -180,9 +88,23 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, _ *gr
 		return handler(ctx, req)
 	}
 
+	relation := opts.GetRelation()
+
+	relationValue := relation.Descriptor().Values().ByNumber(relation.Number())
+	if relationValue == nil {
+		return nil, status.Errorf(codes.Internal, "error reading relation value %v", relation)
+	}
+	extension := proto.GetExtension(relationValue.Options(), minder.E_Name)
+	relationName, ok := extension.(string)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "error getting name for requested relation %v", relation)
+	}
+
 	entityCtx := engine.EntityFromContext(ctx)
-	if err := authorizedOnProject(ctx, entityCtx.Project.ID); err != nil {
-		return nil, err
+	server := info.Server.(*Server)
+
+	if err := server.authzClient.Check(ctx, relationName, entityCtx.Project.ID); err != nil {
+		return nil, util.UserVisibleError(codes.PermissionDenied, "user is not authorized to perform this operation")
 	}
 
 	return handler(ctx, req)
@@ -190,14 +112,14 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, _ *gr
 
 // populateEntityContext populates the project in the entity context, by looking at the proto context or
 // fetching the default project
-func populateEntityContext(ctx context.Context, in HasProtoContext) (context.Context, error) {
+func populateEntityContext(ctx context.Context, store db.Store, in HasProtoContext) (context.Context, error) {
 	if in.GetContext() == nil {
 		return ctx, fmt.Errorf("context cannot be nil")
 	}
 
-	projectID, err := getProjectFromRequestOrDefault(ctx, in)
+	projectID, err := getProjectFromRequestOrDefault(ctx, store, in)
 	if err != nil {
-		return ctx, fmt.Errorf("cannot get project from context: %v", err)
+		return ctx, err
 	}
 
 	// don't look up default provider until user has been authorized
@@ -215,7 +137,7 @@ func populateEntityContext(ctx context.Context, in HasProtoContext) (context.Con
 	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
-func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uuid.UUID, error) {
+func getProjectFromRequestOrDefault(ctx context.Context, store db.Store, in HasProtoContext) (uuid.UUID, error) {
 	// Prefer the context message from the protobuf
 	if in.GetContext().GetProject() != "" {
 		requestedProject := in.GetContext().GetProject()
@@ -226,11 +148,21 @@ func getProjectFromRequestOrDefault(ctx context.Context, in HasProtoContext) (uu
 		return parsedProjectID, nil
 	}
 
-	permissions := auth.GetPermissionsFromContext(ctx)
-	if len(permissions.ProjectIds) != 1 {
+	subject := auth.GetUserSubjectFromContext(ctx)
+
+	userInfo, err := store.GetUserBySubject(ctx, subject)
+	if err != nil {
+		return uuid.UUID{}, status.Errorf(codes.NotFound, "user not found")
+	}
+	projects, err := store.GetUserProjects(ctx, userInfo.ID)
+	if err != nil {
+		return uuid.UUID{}, status.Errorf(codes.NotFound, "cannot find projects for user")
+	}
+
+	if len(projects) != 1 {
 		return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot get default project")
 	}
-	return permissions.ProjectIds[0], nil
+	return projects[0].ID, nil
 }
 
 // Permissions API

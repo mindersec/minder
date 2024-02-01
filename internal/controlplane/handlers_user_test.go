@@ -33,7 +33,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -117,22 +116,13 @@ func TestCreateUserDBMock(t *testing.T) {
 		},
 	}
 
-	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
 		"authorization": "bearer some-access-token",
 	})
 
 	// Create a new context with added header metadata
-	ctx = metadata.NewIncomingContext(ctx, md)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -230,22 +220,13 @@ func TestCreateUser_gRPC(t *testing.T) {
 		},
 	}
 
-	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
 		"authorization": "bearer some-access-token",
 	})
 
 	// Create a new context with added header metadata
-	ctx = metadata.NewIncomingContext(ctx, md)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
 
 	for i := range testCases {
 		tc := testCases[i]
@@ -288,16 +269,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 	request := &pb.DeleteUserRequest{}
 
 	orgID := uuid.New()
-	projectID := uuid.New()
-
-	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
 
 	// Create header metadata
 	md := metadata.New(map[string]string{
@@ -305,7 +276,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	})
 
 	// Create a new context with added header metadata
-	ctx = metadata.NewIncomingContext(ctx, md)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -372,7 +343,6 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
 	orgID := uuid.New()
-	projectID := uuid.New()
 
 	testCases := []struct {
 		name               string
@@ -412,14 +382,6 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			expectedStatusCode: codes.OK,
 		},
 	}
-	// Create a new context and set the claims value
-	ctx := auth.WithPermissionsContext(context.Background(), auth.UserPermissions{
-		UserId:         1,
-		OrganizationId: orgID,
-		ProjectIds:     []uuid.UUID{projectID},
-		Roles: []auth.RoleInfo{
-			{RoleID: 1, IsAdmin: true, ProjectID: &projectID, OrganizationID: orgID}},
-	})
 
 	// Create header metadata
 	md := metadata.New(map[string]string{
@@ -427,7 +389,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	})
 
 	// Create a new context with added header metadata
-	ctx = metadata.NewIncomingContext(ctx, md)
+	ctx := metadata.NewIncomingContext(context.Background(), md)
 
 	for i := range testCases {
 		tc := testCases[i]

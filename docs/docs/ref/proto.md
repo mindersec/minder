@@ -1221,8 +1221,6 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | no_log | [bool](#bool) |  |  |
-| owner_only | [bool](#bool) |  |  |
-| root_admin_only | [bool](#bool) |  |  |
 | target_resource | [TargetResource](#minder-v1-TargetResource) |  |  |
 | relation | [Relation](#minder-v1-Relation) |  |  |
 

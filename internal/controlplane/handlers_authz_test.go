@@ -18,13 +18,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz/mock"
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -49,8 +53,10 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 	projectID := uuid.New()
 	defaultProjectID := uuid.New()
 	projectIdStr := projectID.String()
+	malformedProjectID := "malformed"
 	//nolint:goconst
 	provider := "github"
+	subject := "subject1"
 
 	assert.NotEqual(t, projectID, defaultProjectID)
 
@@ -58,6 +64,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		name            string
 		req             any
 		resource        minder.TargetResource
+		buildStubs      func(store *mockdb.MockStore)
 		rpcErr          error
 		expectedContext engine.EntityContext // Only if non-error
 	}{
@@ -81,11 +88,33 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			expectedContext: engine.EntityContext{},
 		},
 		{
+			name: "malformed project ID",
+			req: &request{
+				Context: &minder.Context{
+					Project: &malformedProjectID,
+				},
+			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			rpcErr:   util.UserVisibleError(codes.InvalidArgument, "malformed project ID"),
+		},
+		{
 			name: "empty context",
 			req: &request{
 				Context: &minder.Context{},
 			},
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUserBySubject(gomock.Any(), subject).
+					Return(db.User{
+						ID: 1,
+					}, nil)
+				store.EXPECT().
+					GetUserProjects(gomock.Any(), gomock.Any()).
+					Return([]db.GetUserProjectsRow{{
+						ID: defaultProjectID,
+					}}, nil)
+			},
 			expectedContext: engine.EntityContext{
 				// Uses the default project id
 				Project: engine.Project{ID: defaultProjectID},
@@ -129,9 +158,21 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
 				return replyType{engine.EntityFromContext(ctx)}, nil
 			}
-			authorities := auth.UserPermissions{ProjectIds: []uuid.UUID{defaultProjectID}}
-			ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), authorities)
-			reply, err := EntityContextProjectInterceptor(ctx, tc.req, &grpc.UnaryServerInfo{}, unaryHandler)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			if tc.buildStubs != nil {
+				tc.buildStubs(mockStore)
+			}
+			ctx := auth.WithUserSubjectContext(withRpcOptions(context.Background(), rpcOptions), subject)
+			server := Server{
+				store: mockStore,
+			}
+			reply, err := EntityContextProjectInterceptor(ctx, tc.req, &grpc.UnaryServerInfo{
+				Server: &server,
+			}, unaryHandler)
 			if tc.rpcErr != nil {
 				assert.Equal(t, tc.rpcErr, err)
 				return
@@ -169,12 +210,6 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			entityCtx: &engine.EntityContext{},
 		},
 		{
-			name:      "no permissions error",
-			resource:  minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			entityCtx: &engine.EntityContext{},
-			rpcErr:    util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
-		},
-		{
 			name:     "not authorized on project error",
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
 			entityCtx: &engine.EntityContext{
@@ -182,7 +217,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 					ID: projectID,
 				},
 			},
-			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to access this project"),
+			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to perform this operation"),
 		},
 		{
 			name:     "authorized on project",
@@ -207,10 +242,16 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
 				return replyType{engine.EntityFromContext(ctx)}, nil
 			}
-			authorities := auth.UserPermissions{ProjectIds: []uuid.UUID{defaultProjectID}}
-			ctx := auth.WithPermissionsContext(withRpcOptions(context.Background(), rpcOptions), authorities)
+			server := Server{
+				authzClient: &mock.SimpleClient{
+					Allowed: []uuid.UUID{defaultProjectID},
+				},
+			}
+			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engine.WithEntityContext(ctx, tc.entityCtx)
-			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{}, unaryHandler)
+			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
+				Server: &server,
+			}, unaryHandler)
 			if tc.rpcErr != nil {
 				assert.Equal(t, tc.rpcErr, err)
 				return
