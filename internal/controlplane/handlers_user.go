@@ -88,7 +88,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
 	}
-	orgProject, userRoles, err := s.CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName, subject)
+	orgProject, err := s.CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
@@ -106,12 +106,6 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to add user to project: %s", err)
 	}
 
-	for _, id := range userRoles {
-		_, err := qtx.AddUserRole(ctx, db.AddUserRoleParams{UserID: user.ID, RoleID: id})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to add user to role: %s", err)
-		}
-	}
 	err = s.store.Commit(tx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)

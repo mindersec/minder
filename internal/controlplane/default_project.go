@@ -44,14 +44,14 @@ type ProjectMeta struct {
 
 // CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
 func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
-	org db.Project, projectName string, userSub string) (outproj *pb.Project, outroles []int32, projerr error) {
+	org db.Project, projectName string, userSub string) (outproj *pb.Project, projerr error) {
 	projectmeta := &ProjectMeta{
 		Description: fmt.Sprintf("Default admin project for %s", org.Name),
 	}
 
 	jsonmeta, err := json.Marshal(projectmeta)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
 	}
 
 	projectID := uuid.New()
@@ -61,7 +61,7 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 	//       We currently have no use for the organization and it might be
 	//       removed in the future.
 	if err := s.authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create authorization tuple: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create authorization tuple: %v", err)
 	}
 	defer func() {
 		if outproj == nil && projerr != nil {
@@ -82,7 +82,7 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		Metadata: jsonmeta,
 	})
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create default project: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create default project: %v", err)
 	}
 
 	prj := pb.Project{
@@ -93,30 +93,11 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		UpdatedAt:   timestamppb.New(project.UpdatedAt),
 	}
 
-	// we can create the default role for org and for project
-	// This creates the role for the organization admin
-	role1, err := qtx.CreateRole(ctx, db.CreateRoleParams{
-		OrganizationID: org.ID,
-		Name:           fmt.Sprintf("%s-org-admin", org.Name),
-		IsAdmin:        true,
-	})
-	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create default org role: %v", err)
-	}
-
-	// this creates te role for the project admin
-	role2, err := qtx.CreateRole(ctx, db.CreateRoleParams{
-		OrganizationID: org.ID,
-		ProjectID:      uuid.NullUUID{UUID: project.ID, Valid: true},
-		Name:           fmt.Sprintf("%s-project-admin", org.Name),
-		IsAdmin:        true,
-	})
-
 	if err != nil {
 		if err := s.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
 		}
-		return nil, nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
 	}
 
 	// Create GitHub provider
@@ -127,7 +108,7 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 		Definition: json.RawMessage(`{"github": {}}`),
 	})
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
 	}
-	return &prj, []int32{role1.ID, role2.ID}, nil
+	return &prj, nil
 }
