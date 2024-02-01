@@ -61,6 +61,9 @@ replies with OK
 | ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
 | AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
 | RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
+| CreateRoleMapping | [CreateRoleMappingRequest](#minder-v1-CreateRoleMappingRequest) | [CreateRoleMappingResponse](#minder-v1-CreateRoleMappingResponse) |  |
+| DeleteRoleMapping | [DeleteRoleMappingRequest](#minder-v1-DeleteRoleMappingRequest) | [DeleteRoleMappingResponse](#minder-v1-DeleteRoleMappingResponse) |  |
+| ListRoleMappings | [ListRoleMappingsRequest](#minder-v1-ListRoleMappingsRequest) | [ListRoleMappingsResponse](#minder-v1-ListRoleMappingsResponse) |  |
 
 
 <a name="minder-v1-ProfileService"></a>
@@ -265,6 +268,29 @@ Profile service
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
+<a name="minder-v1-CreateRoleMappingRequest"></a>
+
+#### CreateRoleMappingRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role mapping is evaluated. |
+| role_mapping | [RoleMapping](#minder-v1-RoleMapping) |  | role_mapping is the role mapping to be created. |
+
+
+<a name="minder-v1-CreateRoleMappingResponse"></a>
+
+#### CreateRoleMappingResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_mapping | [RoleMapping](#minder-v1-RoleMapping) |  | role_mapping is the role mapping that was created. |
+
+
 <a name="minder-v1-CreateRuleTypeRequest"></a>
 
 #### CreateRuleTypeRequest
@@ -374,6 +400,29 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
+
+
+<a name="minder-v1-DeleteRoleMappingRequest"></a>
+
+#### DeleteRoleMappingRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role mapping is evaluated. |
+| id | [string](#string) |  | id is the id of the role mapping to be deleted. |
+
+
+<a name="minder-v1-DeleteRoleMappingResponse"></a>
+
+#### DeleteRoleMappingResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | id is the id of the role mapping that was deleted. |
 
 
 <a name="minder-v1-DeleteRuleTypeRequest"></a>
@@ -902,6 +951,28 @@ list profiles
 | role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated |  |
 
 
+<a name="minder-v1-ListRoleMappingsRequest"></a>
+
+#### ListRoleMappingsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role mappings are evaluated. |
+
+
+<a name="minder-v1-ListRoleMappingsResponse"></a>
+
+#### ListRoleMappingsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_mappings | [RoleMapping](#minder-v1-RoleMapping) | repeated |  |
+
+
 <a name="minder-v1-ListRolesRequest"></a>
 
 #### ListRolesRequest
@@ -1277,6 +1348,21 @@ This is used to fetch data from a REST endpoint.
 | role | [string](#string) |  | role is the role that is assigned. |
 | subject | [string](#string) |  | subject is the subject to which the role is assigned. |
 | project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
+
+
+<a name="minder-v1-RoleMapping"></a>
+
+#### RoleMapping
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) | optional |  |
+| role | [string](#string) |  | role is the role that is assigned. |
+| claims_to_match | [google.protobuf.Struct](#google-protobuf-Struct) |  | claims_to_match is the claims that must match for the role to be assigned. |
+| project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
+| resolved_subject | [string](#string) | optional | resolved_subject is the subject to which the role is assigned. This may be left empty if claims_to_match is set. |
 
 
 <a name="minder-v1-RpcOptions"></a>

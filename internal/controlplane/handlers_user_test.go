@@ -93,6 +93,7 @@ func TestCreateUserDBMock(t *testing.T) {
 					Return(returnedUser, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
+				store.EXPECT().SearchUnresolvedMappedRoleGrants(gomock.Any(), gomock.Any()).Return(nil, sql.ErrNoRows)
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 			},
@@ -186,6 +187,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 					Times(1)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
+				store.EXPECT().SearchUnresolvedMappedRoleGrants(gomock.Any(), gomock.Any()).Return(nil, sql.ErrNoRows)
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.CreateUserResponse, err error) {

@@ -352,6 +352,16 @@ type FlushCache struct {
 	QueuedAt      time.Time     `json:"queued_at"`
 }
 
+type MappedRoleGrant struct {
+	ID              uuid.UUID       `json:"id"`
+	ProjectID       uuid.UUID       `json:"project_id"`
+	Role            string          `json:"role"`
+	ClaimMappings   json.RawMessage `json:"claim_mappings"`
+	ResolvedSubject sql.NullString  `json:"resolved_subject"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+}
+
 type MigrationProfileBackfillLog struct {
 	ProfileID uuid.UUID `json:"profile_id"`
 }

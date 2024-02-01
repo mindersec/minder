@@ -641,6 +641,40 @@ service PermissionsService {
             relation: RELATION_ROLE_ASSIGNMENT_REMOVE
         };
     }
+
+    rpc CreateRoleMapping (CreateRoleMappingRequest) returns (CreateRoleMappingResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/permissions/role_mapping"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_CREATE
+        };
+    }
+
+    rpc DeleteRoleMapping (DeleteRoleMappingRequest) returns (DeleteRoleMappingResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/permissions/role_mapping/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_REMOVE
+        };
+    }
+
+    rpc ListRoleMappings (ListRoleMappingsRequest) returns (ListRoleMappingsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/permissions/role_mappings"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_LIST
+        };
+    }
 }
 
 service ProvidersService {
@@ -1520,6 +1554,22 @@ message RoleAssignment {
     reserved 3; // deprecated context
 }
 
+message RoleMapping {
+    optional string id = 1;
+    // role is the role that is assigned.
+    string role = 2;
+
+    // claims_to_match is the claims that must match for the role to be assigned.
+    google.protobuf.Struct claims_to_match = 5;
+
+    // projectt is the projectt in which the role is assigned.
+    optional string project = 4;
+
+    // resolved_subject is the subject to which the role is assigned.
+    // This may be left empty if claims_to_match is set.
+    optional string resolved_subject = 3;
+}
+
 message ListProvidersRequest {
     // context is the context in which the providers are evaluated.
     Context context = 1;
@@ -1536,6 +1586,39 @@ message ListProvidersResponse {
 
     // cursor is the cursor to use for the next page of results, empty if at the end
     string cursor = 2;
+}
+
+message CreateRoleMappingRequest {
+    // context is the context in which the role mapping is evaluated.
+    Context context = 1;
+    // role_mapping is the role mapping to be created.
+    RoleMapping role_mapping = 2;
+}
+
+message CreateRoleMappingResponse {
+    // role_mapping is the role mapping that was created.
+    RoleMapping role_mapping = 1;
+}
+
+message DeleteRoleMappingRequest {
+    // context is the context in which the role mapping is evaluated.
+    Context context = 1;
+    // id is the id of the role mapping to be deleted.
+    string id = 2;
+}
+
+message DeleteRoleMappingResponse {
+    // id is the id of the role mapping that was deleted.
+    string id = 1;
+}
+
+message ListRoleMappingsRequest {
+    // context is the context in which the role mappings are evaluated.
+    Context context = 1;
+}
+
+message ListRoleMappingsResponse {
+    repeated RoleMapping role_mappings = 1;
 }
 
 // ProviderType is the type of the provider.

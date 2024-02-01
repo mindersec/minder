@@ -831,6 +831,133 @@
         ]
       }
     },
+    "/api/v1/permissions/role_mapping": {
+      "post": {
+        "operationId": "PermissionsService_CreateRoleMapping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateRoleMappingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateRoleMappingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PermissionsService"
+        ]
+      }
+    },
+    "/api/v1/permissions/role_mapping/{id}": {
+      "delete": {
+        "operationId": "PermissionsService_DeleteRoleMapping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteRoleMappingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the role mapping to be deleted.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PermissionsService"
+        ]
+      }
+    },
+    "/api/v1/permissions/role_mappings": {
+      "get": {
+        "operationId": "PermissionsService_ListRoleMappings",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListRoleMappingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "PermissionsService"
+        ]
+      }
+    },
     "/api/v1/permissions/roles": {
       "get": {
         "operationId": "PermissionsService_ListRoles",
@@ -2805,6 +2932,28 @@
         }
       }
     },
+    "v1CreateRoleMappingRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the role mapping is evaluated."
+        },
+        "roleMapping": {
+          "$ref": "#/definitions/v1RoleMapping",
+          "description": "role_mapping is the role mapping to be created."
+        }
+      }
+    },
+    "v1CreateRoleMappingResponse": {
+      "type": "object",
+      "properties": {
+        "roleMapping": {
+          "$ref": "#/definitions/v1RoleMapping",
+          "description": "role_mapping is the role mapping that was created."
+        }
+      }
+    },
     "v1CreateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -2876,6 +3025,15 @@
       "properties": {
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "v1DeleteRoleMappingResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is the id of the role mapping that was deleted."
         }
       }
     },
@@ -3133,6 +3291,18 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1RoleAssignment"
+          }
+        }
+      }
+    },
+    "v1ListRoleMappingsResponse": {
+      "type": "object",
+      "properties": {
+        "roleMappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleMapping"
           }
         }
       }
@@ -3480,6 +3650,30 @@
         "project": {
           "type": "string",
           "description": "projectt is the projectt in which the role is assigned."
+        }
+      }
+    },
+    "v1RoleMapping": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "description": "role is the role that is assigned."
+        },
+        "claimsToMatch": {
+          "type": "object",
+          "description": "claims_to_match is the claims that must match for the role to be assigned."
+        },
+        "project": {
+          "type": "string",
+          "description": "projectt is the projectt in which the role is assigned."
+        },
+        "resolvedSubject": {
+          "type": "string",
+          "description": "resolved_subject is the subject to which the role is assigned.\nThis may be left empty if claims_to_match is set."
         }
       }
     },

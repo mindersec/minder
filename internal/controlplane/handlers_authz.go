@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
@@ -228,8 +230,12 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
 
-	if role == "" || sub == "" {
+	if role == "" {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
+	}
+
+	if sub == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "subject must be specified")
 	}
 
 	// Parse role (this also validates)
@@ -238,27 +244,46 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
-	}
-
 	// Determine target project.
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	respProj := projectID.String()
 
-	if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
-		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	if sub != "" {
+		// Verify if user exists
+		if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "User not found")
+			}
+			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+		}
+
+		if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
+			return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+		}
+
+		return &minder.AssignRoleResponse{
+			RoleAssignment: &minder.RoleAssignment{
+				Role:    role,
+				Subject: sub,
+				Project: &respProj,
+			},
+		}, nil
 	}
 
-	respProj := projectID.String()
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	if err := tx.Commit(); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	}
+
 	return &minder.AssignRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
 			Role:    role,
-			Subject: sub,
 			Project: &respProj,
 		},
 	}, nil
@@ -304,5 +329,130 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 			Subject: sub,
 			Project: &respProj,
 		},
+	}, nil
+}
+
+// CreateRoleMapping creates a role mapping for the given project
+func (s *Server) CreateRoleMapping(
+	ctx context.Context,
+	req *minder.CreateRoleMappingRequest,
+) (*minder.CreateRoleMappingResponse, error) {
+	// Request Validation
+	role := req.GetRoleMapping().GetRole()
+	claims := req.GetRoleMapping().GetClaimsToMatch()
+
+	if role == "" || claims == nil || len(claims.AsMap()) == 0 {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "role and claims must be specified")
+	}
+
+	// Parse role (this also validates)
+	authzrole, err := authz.ParseRole(role)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+	}
+
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	jsonclaims, err := json.Marshal(claims)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error marshalling claims: %v", err)
+	}
+
+	mrg, err := s.store.AddMappedRoleGrant(ctx, db.AddMappedRoleGrantParams{
+		ProjectID:     projectID,
+		Role:          authzrole.String(),
+		ClaimMappings: jsonclaims,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating role mapping: %v", err)
+	}
+
+	mrgID := mrg.ID.String()
+	return &minder.CreateRoleMappingResponse{
+		RoleMapping: &minder.RoleMapping{
+			Id:            &mrgID,
+			Role:          role,
+			ClaimsToMatch: claims,
+		},
+	}, nil
+}
+
+// ListRoleMappings returns the list of role mappings for the given project
+func (s *Server) ListRoleMappings(
+	ctx context.Context,
+	_ *minder.ListRoleMappingsRequest,
+) (*minder.ListRoleMappingsResponse, error) {
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	mrgs, err := s.store.ListMappedRoleGrants(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error listing role mappings: %v", err)
+	}
+
+	resp := minder.ListRoleMappingsResponse{
+		RoleMappings: make([]*minder.RoleMapping, 0, len(mrgs)),
+	}
+	for _, mrg := range mrgs {
+		mrgID := mrg.ID.String()
+		mappings := &structpb.Struct{}
+		prj := projectID.String()
+
+		if err := json.Unmarshal(mrg.ClaimMappings, mappings); err != nil {
+			return nil, status.Errorf(codes.Internal, "error unmarshalling role mapping: %v", err)
+		}
+
+		rm := &minder.RoleMapping{
+			Id:            &mrgID,
+			Project:       &prj,
+			Role:          mrg.Role,
+			ClaimsToMatch: mappings,
+		}
+
+		if mrg.ResolvedSubject.Valid {
+			sub := mrg.ResolvedSubject.String
+			rm.ResolvedSubject = &sub
+		}
+
+		resp.RoleMappings = append(resp.RoleMappings, rm)
+	}
+
+	return &resp, nil
+}
+
+// DeleteRoleMapping deletes a role mapping from the given project
+func (s *Server) DeleteRoleMapping(
+	ctx context.Context,
+	req *minder.DeleteRoleMappingRequest,
+) (*minder.DeleteRoleMappingResponse, error) {
+	// Request Validation
+	mappingID := req.GetId()
+
+	if mappingID == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "role mapping ID must be specified")
+	}
+
+	mrgUUID, err := uuid.Parse(mappingID)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "malformed role mapping ID")
+	}
+
+	// Determine target project.
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	_, err = s.store.DeleteMappedRoleGrant(ctx, db.DeleteMappedRoleGrantParams{
+		ID:        mrgUUID,
+		ProjectID: projectID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error deleting role mapping: %v", err)
+	}
+
+	return &minder.DeleteRoleMappingResponse{
+		Id: mappingID,
 	}, nil
 }

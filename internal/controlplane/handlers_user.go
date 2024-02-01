@@ -19,17 +19,21 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -108,6 +112,11 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = userProject
+
+	_, err = s.matchClaimsForUser(ctx, subject, token)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to match claims for user: %s", err)
+	}
 
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
@@ -246,5 +255,80 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	}
 	resp.Projects = projects
 
+	prjs, err := s.matchClaimsForUser(ctx, openIdToken.Subject(), openIdToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to match claims for user: %s", err)
+	}
+
+	resp.Projects = append(resp.Projects, prjs...)
+
 	return &resp, nil
+}
+
+func (s *Server) matchClaimsForUser(
+	ctx context.Context,
+	subject string,
+	tok openid.Token,
+) ([]*pb.Project, error) {
+	zerolog.Ctx(ctx).Debug().Str("subject", subject).Msg("matching claims for user")
+
+	jsonClaims, err := json.Marshal(tok)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal claims: %w", err)
+	}
+
+	// log attempt to match
+	zerolog.Ctx(ctx).Debug().Str("subject", subject).Str("claims", string(jsonClaims)).Msg("attempting to match claims")
+
+	// Get mappings that match the user's claims
+	resolvedMappings, err := s.store.SearchUnresolvedMappedRoleGrants(ctx, jsonClaims)
+	if err != nil {
+		// If no mappings are found, we can just return an empty list
+		if errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Debug().Str("subject", subject).Msg("no mappings found")
+			return []*pb.Project{}, nil
+		}
+		return nil, fmt.Errorf("failed to merge unmatched claim mappings: %w", err)
+	}
+
+	zerolog.Ctx(ctx).Debug().Str("subject", subject).Int("mappings", len(resolvedMappings)).Msg("resolved mappings")
+
+	projs := []*pb.Project{}
+	for _, mapping := range resolvedMappings {
+		authzrole, err := authz.ParseRole(mapping.Role)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to parse role from mapping")
+			continue
+		}
+
+		dbproj, err := s.store.GetProjectByID(ctx, mapping.ProjectID)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to get project by ID")
+			continue
+		}
+
+		if err := s.authzClient.Write(ctx, subject, authzrole, mapping.ProjectID); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to write role to user")
+			continue
+		}
+
+		_, err = s.store.ResolveMappedRoleGrant(ctx, db.ResolveMappedRoleGrantParams{
+			ID: mapping.ID,
+			ResolvedSubject: sql.NullString{
+				String: subject,
+				Valid:  true,
+			},
+		})
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to resolve mapped role grant")
+			continue
+		}
+
+		projs = append(projs, &pb.Project{
+			ProjectId: dbproj.ID.String(),
+			Name:      dbproj.Name,
+		})
+	}
+
+	return projs, nil
 }
