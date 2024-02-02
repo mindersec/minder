@@ -484,13 +484,6 @@ spec:
             name: minder-grpc
             port:
               name: grpc
-      - path: /minder.v1.AuthService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
       - path: /minder.v1.ArtifactService
         pathType: Prefix
         backend:
@@ -498,49 +491,7 @@ spec:
             name: minder-grpc
             port:
               name: grpc
-      - path: /minder.v1.VulnerabilitiesService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.SecretsService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
       - path: /minder.v1.RepositoryService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.BranchProtectionService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.OrganizationService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.GroupService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.RoleService
         pathType: Prefix
         backend:
           service:
@@ -555,13 +506,6 @@ spec:
             port:
               name: grpc
       - path: /minder.v1.ProfileService
-        pathType: Prefix
-        backend:
-          service:
-            name: minder-grpc
-            port:
-              name: grpc
-      - path: /minder.v1.KeyService
         pathType: Prefix
         backend:
           service:
