@@ -183,6 +183,7 @@ message GetArtifactByIdRequest {
     Context context = 7;
 
     reserved 5, 6; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByIdResponse {
@@ -195,6 +196,7 @@ message GetArtifactByNameRequest {
     Context context = 4;
 
     reserved 2, 3; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByNameResponse {
