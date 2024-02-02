@@ -29,12 +29,12 @@ To add a user to your project, follow these steps:
 1) Determine the User's Role: Decide the appropriate role for the user based on their responsibilities.
 
 2) Execute the Command:
-    ```bash
-    minder project role grant --sub user-id --role desired-role --project project-id
-    ```
-    - Replace `user-id` with the unique identifier of the user you want to add.
-    - Replace `desired-role` with the chosen role for the user (e.g., `viewer`, `editor`).
-    - Replace `project-id` with the identifier of the project to which you want to add the user.
+ ```bash
+ minder project role grant --sub user-id --role desired-role --project project-id
+ ```
+ - Replace `user-id` with the unique identifier of the user you want to add.
+ - Replace `desired-role` with the chosen role for the user (e.g., `viewer`, `editor`).
+ - Replace `project-id` with the identifier of the project to which you want to add the user.
 
 You can then view all the project collaborators and their roles by executing:
 ```bash
