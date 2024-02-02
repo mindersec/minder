@@ -268,7 +268,7 @@ service OAuthService {
 
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_PROVIDER_GET
+            relation: RELATION_PROVIDER_UPDATE
         };
     }
     // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
@@ -311,7 +311,7 @@ service OAuthService {
 
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_PROVIDER_GET
+            relation: RELATION_PROVIDER_UPDATE
         };
     }
 
