@@ -47,6 +47,7 @@ func CmdVerify() *cobra.Command {
 	verifyCmd.Flags().StringP("digest", "s", "", "digest of the artifact")
 	verifyCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the AUTH_TOKEN environment variable.")
+	verifyCmd.Flags().StringP("tuf-root", "r", sigstore.SigstorePublicTrustedRootRepo, "TUF root to use for verification")
 
 	if err := verifyCmd.MarkFlagRequired("owner"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -77,6 +78,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	owner := cmd.Flag("owner")
 	name := cmd.Flag("name")
 	digest := cmd.Flag("digest")
+	tufRoot := cmd.Flag("tuf-root")
 
 	token := viper.GetString("auth.token")
 
@@ -87,7 +89,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
-		sigstore.SigstorePublicTrustedRootRepo,
+		tufRoot.Value.String(),
 		container.WithAccessToken(token), container.WithGitHubClient(ghcli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
