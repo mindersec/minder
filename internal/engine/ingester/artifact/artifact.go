@@ -18,7 +18,6 @@ package artifact
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -57,10 +56,6 @@ type verification struct {
 	WorkflowName      string `json:"workflow_name"`
 	RunnerEnvironment string `json:"runner_environment"`
 	CertIssuer        string `json:"cert_issuer"`
-}
-
-type verificationResult struct {
-	Verification verification `json:"Verification"`
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
@@ -145,13 +140,13 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	jsonBytes, err := json.Marshal(verificationResults)
-	if err != nil {
-		return nil, err
-	}
-
+	// Build the result to be returned to the rule engine as a slice of map["Verification"]any
 	result := make([]map[string]any, 0, len(verificationResults))
-	err = json.Unmarshal(jsonBytes, &result)
+	for _, item := range verificationResults {
+		result = append(result, map[string]any{
+			"Verification": item,
+		})
+	}
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
 
@@ -168,8 +163,8 @@ func (i *Ingest) getVerificationResult(
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
 	versions []string,
-) ([]verificationResult, error) {
-	versionResults := make([]verificationResult, 0, len(versions))
+) ([]verification, error) {
+	versionResults := make([]verification, 0, len(versions))
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
@@ -211,9 +206,7 @@ func (i *Ingest) getVerificationResult(
 		}
 
 		// Append the verification result to the list
-		versionResults = append(versionResults, verificationResult{
-			Verification: *verResult,
-		})
+		versionResults = append(versionResults, *verResult)
 	}
 
 	return versionResults, nil
