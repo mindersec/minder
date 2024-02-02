@@ -37,6 +37,8 @@ type Sigstore struct {
 	authOpts []container.AuthMethod
 }
 
+var _ verifyif.ArtifactVerifier = (*Sigstore)(nil)
+
 // New creates a new Sigstore verifier
 func New(trustedRoot, cacheDir string, authOpts ...container.AuthMethod) (*Sigstore, error) {
 	// init sigstore's verifier
