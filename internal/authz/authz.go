@@ -377,6 +377,53 @@ func (a *ClientWrapper) AssignmentsToProject(ctx context.Context, project uuid.U
 	return assignments, nil
 }
 
+// ProjectsForUser lists the projects that the given user has access to
+func (a *ClientWrapper) ProjectsForUser(ctx context.Context, sub string) ([]uuid.UUID, error) {
+	u := getUserForTuple(sub)
+
+	var pagesize int32 = 50
+	var contTok *string = nil
+
+	projs := map[string]any{}
+	projectObj := "project:"
+
+	for {
+		resp, err := a.cli.Read(ctx).Options(fgaclient.ClientReadOptions{
+			PageSize:          &pagesize,
+			ContinuationToken: contTok,
+		}).Body(fgaclient.ClientReadRequest{
+			User:   &u,
+			Object: &projectObj,
+		}).Execute()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read authorization tuples: %w", err)
+		}
+
+		for _, t := range resp.GetTuples() {
+			k := t.GetKey()
+
+			projs[k.GetObject()] = struct{}{}
+		}
+
+		if resp.GetContinuationToken() == "" {
+			break
+		}
+
+		contTok = &resp.ContinuationToken
+	}
+
+	out := []uuid.UUID{}
+	for proj := range projs {
+		u, err := uuid.Parse(getProjectFromTuple(proj))
+		if err != nil {
+			continue
+		}
+		out = append(out, u)
+	}
+
+	return out, nil
+}
+
 func getUserForTuple(user string) string {
 	return "user:" + user
 }
@@ -387,4 +434,8 @@ func getProjectForTuple(project uuid.UUID) string {
 
 func getUserFromTuple(user string) string {
 	return strings.TrimPrefix(user, "user:")
+}
+
+func getProjectFromTuple(project string) string {
+	return strings.TrimPrefix(project, "project:")
 }

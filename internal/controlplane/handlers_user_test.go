@@ -91,7 +91,6 @@ func TestCreateUserDBMock(t *testing.T) {
 					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: orgID,
 						IdentitySubject: "subject1"}).
 					Return(returnedUser, nil)
-				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: projectID})
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
@@ -185,7 +184,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 						UpdatedAt:      time.Now(),
 					}, nil).
 					Times(1)
-				store.EXPECT().AddUserProject(gomock.Any(), db.AddUserProjectParams{UserID: 1, ProjectID: projectID})
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(openid.New(), nil)

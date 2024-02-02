@@ -21,6 +21,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -64,8 +65,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		name            string
 		req             any
 		resource        minder.TargetResource
-		buildStubs      func(store *mockdb.MockStore)
+		buildStubs      func(t *testing.T, store *mockdb.MockStore)
 		rpcErr          error
+		defaultProject  bool
 		expectedContext engine.EntityContext // Only if non-error
 	}{
 		{
@@ -102,18 +104,15 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			req: &request{
 				Context: &minder.Context{},
 			},
-			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			buildStubs: func(store *mockdb.MockStore) {
+			resource:       minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			defaultProject: true,
+			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
+				t.Helper()
 				store.EXPECT().
 					GetUserBySubject(gomock.Any(), subject).
 					Return(db.User{
 						ID: 1,
 					}, nil)
-				store.EXPECT().
-					GetUserProjects(gomock.Any(), gomock.Any()).
-					Return([]db.GetUserProjectsRow{{
-						ID: defaultProjectID,
-					}}, nil)
 			},
 			expectedContext: engine.EntityContext{
 				// Uses the default project id
@@ -164,11 +163,21 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			if tc.buildStubs != nil {
-				tc.buildStubs(mockStore)
+				tc.buildStubs(t, mockStore)
 			}
 			ctx := auth.WithUserSubjectContext(withRpcOptions(context.Background(), rpcOptions), subject)
+
+			authzClient := &mock.SimpleClient{}
+
+			if tc.defaultProject {
+				authzClient.Allowed = []uuid.UUID{defaultProjectID}
+			} else {
+				authzClient.Allowed = []uuid.UUID{projectID}
+			}
+
 			server := Server{
-				store: mockStore,
+				store:       mockStore,
+				authzClient: authzClient,
 			}
 			reply, err := EntityContextProjectInterceptor(ctx, tc.req, &grpc.UnaryServerInfo{
 				Server: &server,
@@ -177,10 +186,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				assert.Equal(t, tc.rpcErr, err)
 				return
 			}
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
 
+			require.NoError(t, err, "expected no error")
 			assert.Equal(t, tc.expectedContext, reply.(replyType).Context)
 		})
 	}

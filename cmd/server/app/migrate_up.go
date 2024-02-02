@@ -31,7 +31,6 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 )
 
@@ -127,53 +126,8 @@ var upCmd = &cobra.Command{
 			return fmt.Errorf("error preparing authz client: %w", err)
 		}
 
-		store := db.NewStore(dbConn)
-		if err := migratePermsToFGA(ctx, store, authzw, cmd); err != nil {
-			return fmt.Errorf("error while migrating permissions to FGA: %w", err)
-		}
-
 		return nil
 	},
-}
-
-func migratePermsToFGA(ctx context.Context, store db.Store, authzw authz.Client, cmd *cobra.Command) error {
-	cmd.Println("Migrating permissions to FGA...")
-
-	var i int32 = 0
-	for {
-		userList, err := store.ListUsers(ctx, db.ListUsersParams{Limit: 100, Offset: i})
-		if err != nil {
-			return fmt.Errorf("error while listing users: %w", err)
-		}
-		i = i + 100
-		cmd.Printf("Found %d users to migrate\n", len(userList))
-		if len(userList) == 0 {
-			break
-		}
-
-		for _, user := range userList {
-			projs, err := store.GetUserProjects(ctx, user.ID)
-			if err != nil {
-				cmd.Printf("Skipping user %d since getting user projects yielded error: %s\n",
-					user.ID, err)
-				continue
-			}
-
-			for _, proj := range projs {
-				cmd.Printf("Migrating user to FGA for project %s\n", proj.ProjectID)
-				if err := authzw.Write(
-					ctx, user.IdentitySubject, authz.AuthzRoleAdmin, proj.ProjectID,
-				); err != nil {
-					cmd.Printf("Error while writing permission for user %d: %s\n", user.ID, err)
-					continue
-				}
-			}
-		}
-	}
-
-	cmd.Println("Done migrating permissions to FGA")
-
-	return nil
 }
 
 func init() {

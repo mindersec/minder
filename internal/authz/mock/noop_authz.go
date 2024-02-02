@@ -64,6 +64,11 @@ func (_ *NoopClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*mi
 	return nil, nil
 }
 
+// ProjectsForUser implements authz.Client
+func (_ *NoopClient) ProjectsForUser(_ context.Context, _ string) ([]uuid.UUID, error) {
+	return nil, nil
+}
+
 // PrepareForRun implements authz.Client
 func (_ *NoopClient) PrepareForRun(_ context.Context) error {
 	return nil

@@ -23,13 +23,5 @@ ORDER BY id
 LIMIT $2
 OFFSET $3;
 
--- name: ListUsersByProject :many
-SELECT users.* FROM users
-JOIN user_projects ON users.id = user_projects.user_id
-WHERE user_projects.project_id = $1
-ORDER BY users.id
-LIMIT $2
-OFFSET $3;
-
 -- name: CountUsers :one
 SELECT COUNT(*) FROM users;
