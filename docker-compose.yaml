@@ -32,22 +32,22 @@ services:
       # config file, point to them here:
       # "--github-client-id-file=/secrets/github_client_id",
       # "--github-client-secret-file=/secrets/github_client_secret",
-      ]
+    ]
     restart: always # keep the server running
     tmpfs:
-      - /tmp/minder-cache
+      - /tmp
     # read_only: true
     ports:
       - "8080:8080"
       - "8090:8090"
       - "9090:9090"
     volumes:
-          - ./server-config.yaml:/app/server-config.yaml:z
-          # If you don't want to store your GitHub client ID and secret in the main
-          # config file, point to them here:
-          # - ./.github_client_id:/secrets/github_client_id:z
-          # - ./.github_client_secret:/secrets/github_client_secret:z
-          - ./.ssh:/app/.ssh:z
+      - ./server-config.yaml:/app/server-config.yaml:z
+      # If you don't want to store your GitHub client ID and secret in the main
+      # config file, point to them here:
+      # - ./.github_client_id:/secrets/github_client_id:z
+      # - ./.github_client_secret:/secrets/github_client_secret:z
+      - ./.ssh:/app/.ssh:z
     environment:
       - KO_DATA_PATH=/app/
       # Use viper environment variables to set specific paths to keys;
@@ -79,8 +79,8 @@ services:
       "--config=/app/server-config.yaml",
       ]
     volumes:
-          - ./server-config.yaml:/app/server-config.yaml:z
-          - ./database/migrations:/app/database/migrations:z
+      - ./server-config.yaml:/app/server-config.yaml:z
+      - ./database/migrations:/app/database/migrations:z
     environment:
       - KO_DATA_PATH=/app/
     networks:
