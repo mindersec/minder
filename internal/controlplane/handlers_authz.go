@@ -162,16 +162,24 @@ func getProjectFromRequestOrDefault(
 
 	userInfo, err := store.GetUserBySubject(ctx, subject)
 	if err != nil {
-		return uuid.UUID{}, status.Errorf(codes.NotFound, "user not found")
+		// Note that we're revealing that the user is not registered in minder
+		// since the caller has a valid token (this is checked in earlier middleware).
+		// Therefore, we assume it's safe output that the user is not found.
+		return uuid.UUID{}, util.UserVisibleError(codes.NotFound, "user not found")
 	}
 	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
-		return uuid.UUID{}, status.Errorf(codes.NotFound, "cannot find projects for user")
+		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user")
+	}
+
+	if len(projects) == 0 {
+		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "User has no role grants in projects")
 	}
 
 	if len(projects) != 1 {
-		return uuid.UUID{}, status.Errorf(codes.InvalidArgument, "cannot get default project")
+		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Cannot determine default project. Please specify one.")
 	}
+
 	return projects[0], nil
 }
 
