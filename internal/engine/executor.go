@@ -46,12 +46,12 @@ const (
 
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
-	querier    db.Store
-	evt        *events.Eventer
-	crypteng   *crypto.Engine
-	provMt     providertelemetry.ProviderMetrics
-	mdws       []message.HandlerMiddleware
-	executions *sync.WaitGroup
+	querier                db.Store
+	evt                    *events.Eventer
+	crypteng               *crypto.Engine
+	provMt                 providertelemetry.ProviderMetrics
+	mdws                   []message.HandlerMiddleware
+	wgEntityEventExecution *sync.WaitGroup
 	// terminationcontext is used to terminate the executor
 	// when the server is shutting down.
 	terminationcontext context.Context
@@ -88,13 +88,13 @@ func NewExecutor(
 	}
 
 	e := &Executor{
-		querier:            querier,
-		crypteng:           crypteng,
-		provMt:             providertelemetry.NewNoopMetrics(),
-		evt:                evt,
-		executions:         &sync.WaitGroup{},
-		terminationcontext: ctx,
-		mdws:               []message.HandlerMiddleware{},
+		querier:                querier,
+		crypteng:               crypteng,
+		provMt:                 providertelemetry.NewNoopMetrics(),
+		evt:                    evt,
+		wgEntityEventExecution: &sync.WaitGroup{},
+		terminationcontext:     ctx,
+		mdws:                   []message.HandlerMiddleware{},
 	}
 
 	for _, opt := range opts {
@@ -109,9 +109,9 @@ func (e *Executor) Register(r events.Registrar) {
 	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
 }
 
-// Wait waits for all the executions to finish.
+// Wait waits for all the entity executions to finish.
 func (e *Executor) Wait() {
-	e.executions.Wait()
+	e.wgEntityEventExecution.Wait()
 }
 
 // HandleEntityEvent handles events coming from webhooks/signals
@@ -127,9 +127,9 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	e.executions.Add(1)
+	e.wgEntityEventExecution.Add(1)
 	go func() {
-		defer e.executions.Done()
+		defer e.wgEntityEventExecution.Done()
 		// TODO: Make this timeout configurable
 		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
 		defer cancel()

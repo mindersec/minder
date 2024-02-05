@@ -173,6 +173,9 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("error flushing cache: %w", err)
 		}
 
+		// Wait for all entity events to be executed
+		exec.Wait()
+
 		return errg.Wait()
 	},
 }
