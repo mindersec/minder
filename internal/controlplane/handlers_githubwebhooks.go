@@ -46,6 +46,7 @@ import (
 	githubprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -639,7 +640,7 @@ func gatherArtifactInfo(
 
 	// we also need to fill in the visibility which is not in the payload
 	isOrg := client.GetOwner() != ""
-	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, string(verifier.ArtifactTypeContainer), artifact.Name)
+	ghArtifact, err := client.GetPackageByName(ctx, isOrg, artifact.Owner, string(verifyif.ArtifactTypeContainer), artifact.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
 	}
@@ -700,7 +701,7 @@ func updateArtifactVersionFromRegistry(
 	// and createdAt fields which are not in the payload
 	isOrg := client.GetOwner() != ""
 	ghVersion, err := client.GetPackageVersionById(ctx, isOrg,
-		artifactOwnerLogin, string(verifier.ArtifactTypeContainer), artifactName, version.VersionId)
+		artifactOwnerLogin, string(verifyif.ArtifactTypeContainer), artifactName, version.VersionId)
 	if err != nil {
 		return fmt.Errorf("error getting package version from repository: %w", err)
 	}

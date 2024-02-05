@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -45,7 +46,9 @@ const (
 type Ingest struct {
 	ghCli provifv1.GitHub
 
-	testOverrideVerifier *verifier.Verifier
+	// artifactVerifier is the verifier for sigstore. It's only used in the Ingest method
+	// but we store it in the Ingest structure to allow tests to set a custom artifactVerifier
+	artifactVerifier verifyif.ArtifactVerifier
 }
 
 type verification struct {
@@ -168,14 +171,14 @@ func (i *Ingest) getVerificationResult(
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
+		return nil, fmt.Errorf("error getting verifier: %w", err)
 	}
 	defer artifactVerifier.ClearCache()
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
 	for _, artifactVersion := range versions {
 		// Try getting provenance info for the artifact version
-		results, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
+		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer, "",
 			artifact.Owner, artifact.Name, artifactVersion)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
@@ -212,15 +215,20 @@ func (i *Ingest) getVerificationResult(
 	return versionResults, nil
 }
 
-func getVerifier(i *Ingest, cfg *ingesterConfig) (*verifier.Verifier, error) {
-	if i.testOverrideVerifier != nil {
-		return i.testOverrideVerifier, nil
+func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, error) {
+	if i.artifactVerifier != nil {
+		return i.artifactVerifier, nil
 	}
 
-	return verifier.NewVerifier(
+	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		cfg.Sigstore,
 		container.WithAccessToken(i.ghCli.GetToken()), container.WithGitHubClient(i.ghCli))
+	if err != nil {
+		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
+	}
+
+	return artifactVerifier, nil
 }
 
 func getAndFilterArtifactVersions(
@@ -250,7 +258,7 @@ func getAndFilterArtifactVersions(
 		sort.Strings(tags)
 
 		// Decide if the artifact version should be skipped or not
-		err = isSkippable(verifier.ArtifactTypeContainer, version.CreatedAt.Time, map[string]interface{}{"tags": tags}, filter)
+		err = isSkippable(verifyif.ArtifactTypeContainer, version.CreatedAt.Time, map[string]interface{}{"tags": tags}, filter)
 		if err != nil {
 			zerolog.Ctx(ctx).Debug().Str("name", *version.Name).Strs("tags", tags).Str(
 				"reason",
@@ -280,9 +288,9 @@ var (
 
 // isSkippable determines if an artifact should be skipped
 // TODO - this should be refactored as well, for now just a forklift from reconciler
-func isSkippable(artifactType verifier.ArtifactType, createdAt time.Time, opts map[string]interface{}, filter tagMatcher) error {
+func isSkippable(artifactType verifyif.ArtifactType, createdAt time.Time, opts map[string]interface{}, filter tagMatcher) error {
 	switch artifactType {
-	case verifier.ArtifactTypeContainer:
+	case verifyif.ArtifactTypeContainer:
 		// if the artifact is older than the retention period, skip it
 		if createdAt.Before(ArtifactTypeContainerRetentionPeriod) {
 			return fmt.Errorf("artifact is older than retention period - %s", ArtifactTypeContainerRetentionPeriod)

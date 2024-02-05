@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -96,7 +97,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	}
 	defer artifactVerifier.ClearCache()
 
-	res, err := artifactVerifier.Verify(context.Background(), verifier.ArtifactTypeContainer, "",
+	res, err := artifactVerifier.Verify(context.Background(), verifyif.ArtifactTypeContainer, "",
 		owner.Value.String(), name.Value.String(), digest.Value.String())
 	if err != nil {
 		return fmt.Errorf("error verifying container: %w", err)

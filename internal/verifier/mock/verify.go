@@ -35,11 +35,38 @@ func (m *MockArtifactVerifier) EXPECT() *MockArtifactVerifierMockRecorder {
 	return m.recorder
 }
 
+// ClearCache mocks base method.
+func (m *MockArtifactVerifier) ClearCache() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ClearCache")
+}
+
+// ClearCache indicates an expected call of ClearCache.
+func (mr *MockArtifactVerifierMockRecorder) ClearCache() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearCache", reflect.TypeOf((*MockArtifactVerifier)(nil).ClearCache))
+}
+
+// Verify mocks base method.
+func (m *MockArtifactVerifier) Verify(arg0 context.Context, arg1 verifyif.ArtifactType, arg2 verifyif.ArtifactRegistry, arg3, arg4, arg5 string) ([]verifyif.Result, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Verify", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].([]verifyif.Result)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Verify indicates an expected call of Verify.
+func (mr *MockArtifactVerifierMockRecorder) Verify(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Verify", reflect.TypeOf((*MockArtifactVerifier)(nil).Verify), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // VerifyContainer mocks base method.
-func (m *MockArtifactVerifier) VerifyContainer(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*verifyif.Result, error) {
+func (m *MockArtifactVerifier) VerifyContainer(arg0 context.Context, arg1, arg2, arg3, arg4 string) ([]verifyif.Result, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyContainer", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*verifyif.Result)
+	ret0, _ := ret[0].([]verifyif.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -29,7 +29,6 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/providers"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/verifier"
 	mockverify "github.com/stacklok/minder/internal/verifier/mock"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -98,12 +97,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 						},
 					}, nil)
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
-
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -145,11 +146,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name-and-tag", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name-and-tag", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -308,11 +312,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name-but-not-tags", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name-but-not-tags", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -361,11 +368,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -397,11 +407,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -434,11 +447,14 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					VerifyContainer(gomock.Any(), "ghcr.io", "stacklok", "matching-name", "sha256:1234").
-					Return(&verifyif.Result{
-						IsSigned:   false,
-						IsVerified: false,
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Return([]verifyif.Result{
+						{
+							IsSigned:   false,
+							IsVerified: false,
+						},
 					}, nil)
+				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -575,7 +591,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			require.NoError(t, err, "expected no error")
 
 			ing.ghCli = mockGhClient
-			ing.testOverrideVerifier = verifier.NewCustomVerifier(mockVerifier)
+			ing.artifactVerifier = mockVerifier
 
 			tt.mockSetup(mockGhClient, mockVerifier)
 
