@@ -110,9 +110,9 @@ func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.A
 
 // Verify verifies an artifact
 func (v *Verifier) Verify(ctx context.Context, artifactType ArtifactType, registry ArtifactRegistry,
-	owner, artifact, version string) (*verifyif.Result, error) {
+	owner, artifact, version string) ([]verifyif.Result, error) {
 	var err error
-	var res *verifyif.Result
+	var res []verifyif.Result
 	// Sanitize the input
 	sanitizeInput(&registry, &owner)
 

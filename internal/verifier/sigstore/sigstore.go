@@ -64,6 +64,6 @@ func New(trustedRoot, cacheDir string, authOpts ...container.AuthMethod) (*Sigst
 
 // VerifyContainer verifies a container artifact using sigstore
 func (s *Sigstore) VerifyContainer(ctx context.Context, registry, owner, artifact, version string) (
-	*verifyif.Result, error) {
+	[]verifyif.Result, error) {
 	return container.Verify(ctx, s.verifier, registry, owner, artifact, version, s.authOpts...)
 }

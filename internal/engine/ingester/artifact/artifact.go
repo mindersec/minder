@@ -164,7 +164,7 @@ func (i *Ingest) getVerificationResult(
 	artifact *pb.Artifact,
 	versions []string,
 ) ([]verification, error) {
-	versionResults := make([]verification, 0, len(versions))
+	var versionResults []verification
 	// Get the verifier for sigstore
 	artifactVerifier, err := getVerifier(i, cfg)
 	if err != nil {
@@ -175,7 +175,7 @@ func (i *Ingest) getVerificationResult(
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
 	for _, artifactVersion := range versions {
 		// Try getting provenance info for the artifact version
-		res, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
+		results, err := artifactVerifier.Verify(ctx, verifier.ArtifactTypeContainer, "",
 			artifact.Owner, artifact.Name, artifactVersion)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
@@ -183,32 +183,32 @@ func (i *Ingest) getVerificationResult(
 			zerolog.Ctx(ctx).Debug().Err(err).Str("name", artifactName).Msg("failed getting signature information")
 			return nil, fmt.Errorf("failed getting signature information: %w", err)
 		}
+		// Loop through all results and build the verification result for each
+		for _, res := range results {
+			// Log a debug message in case we failed to find or verify any signature information for the artifact version
+			if !res.IsSigned || !res.IsVerified {
+				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
+				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
+			}
 
-		// Log a debug message in case we failed to find or verify any signature information for the artifact version
-		if !res.IsSigned || !res.IsVerified {
-			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
-			zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
+			// Begin building the verification result
+			verResult := &verification{
+				IsSigned:   res.IsSigned,
+				IsVerified: res.IsVerified,
+			}
+
+			// If we got verified provenance info for the artifact version, populate the rest of the verification result
+			if res.IsVerified {
+				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
+				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
+				verResult.WorkflowName = workflowFromBuildSignerURI(res.Signature.Certificate.BuildSignerURI)
+				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
+				verResult.CertIssuer = res.Signature.Certificate.Issuer
+			}
+			// Append the verification result to the list
+			versionResults = append(versionResults, *verResult)
 		}
-
-		// Begin building the verification result
-		verResult := &verification{
-			IsSigned:   res.IsSigned,
-			IsVerified: res.IsVerified,
-		}
-
-		// If we got verified provenance info for the artifact version, populate the rest of the verification result
-		if res.IsVerified {
-			verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
-			verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-			verResult.WorkflowName = workflowFromBuildSignerURI(res.Signature.Certificate.BuildSignerURI)
-			verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
-			verResult.CertIssuer = res.Signature.Certificate.Issuer
-		}
-
-		// Append the verification result to the list
-		versionResults = append(versionResults, *verResult)
 	}
-
 	return versionResults, nil
 }
 

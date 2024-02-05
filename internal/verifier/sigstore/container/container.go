@@ -92,52 +92,112 @@ func Verify(
 	sev *verify.SignedEntityVerifier,
 	registry, owner, artifact, version string,
 	authOpts ...AuthMethod,
-) (*verifyif.Result, error) {
-	// Construct the params
-	params := &verifyResult{
-		imageRef: BuildImageRef(registry, owner, artifact, version),
-		result:   &verifyif.Result{},
+) ([]verifyif.Result, error) {
+	// Construct the bundle(s) - OCI image or GitHub's attestation endpoint
+	// We consider the artifact is not signed if we failed to construct a bundle
+	// Error means we got some other unexpected error
+	bundles, err := getSigstoreBundles(ctx, registry, owner, artifact, version, newContainerAuth(authOpts...))
+	if err != nil {
+		return nil, err
 	}
 
-	auth := newContainerAuth(authOpts...)
+	// Verify if bundle(s) are signed by the configured sigstore instance and extract the medata that we need for
+	// ingestion.
+	// We consider the artifact is not verified if we failed to verify the constructed bundle against the configured
+	// sigstore instance.
+	// Error means we got some other unexpected error
+	verifiedResults, err := getVerifiedResults(ctx, sev, bundles)
+	if err != nil {
+		return nil, err
+	}
 
-	// Construct the bundle - OCI image or GitHub's attestation endpoint
-	err := bundleFromOCIImage(params, newGithubAuthenticator(owner, auth.accessToken))
+	// Return the results
+	return verifiedResults, nil
+}
+
+// getVerifiedResults verifies the artifact using the bundles against the configured sigstore instance
+// and returns the extracted metadata that we need for ingestion
+func getVerifiedResults(ctx context.Context, sev *verify.SignedEntityVerifier, bundles []sigstoreBundle) ([]verifyif.Result, error) {
+	var results []verifyif.Result
+	logger := zerolog.Ctx(ctx).With().Logger()
+
+	// Exit early if we don't have any bundles to verify
+	if bundles == nil || len(bundles) == 0 {
+		// We've tried building a bundle from the OCI image/the GitHub attestation endpoint and failed to find the signature
+		// This means there's most probably no available provenance information about this image
+		return []verifyif.Result{{
+			IsSigned:   false,
+			IsVerified: false,
+		}}, nil
+	}
+
+	// Verify each bundle we've constructed
+	for _, b := range bundles {
+		// Create a new verification result
+		// Explicitly set the IsVerified and IsSigned flags to false for better visibility
+		res := verifyif.Result{
+			IsSigned:   false,
+			IsVerified: false,
+		}
+
+		// Get the certificate identity
+		certID, err := verify.NewShortCertificateIdentity(b.certIssuer, "", "", b.certIdentity)
+		if err != nil {
+			// Log the error and continue to the next bundle, this one is considered signed but not verified
+			logger.Err(err).Msg("error getting certificate identity")
+			results = append(results, res)
+			continue
+		}
+
+		// At this point, we managed to extract a bundle, so we can set the IsSigned flag to true
+		// This doesn't mean the bundle is verified though, just that it exists
+		res.IsSigned = true
+
+		// Verify the artifact using the bundle
+		verificationResult, err := sev.Verify(b.bundle, verify.NewPolicy(
+			verify.WithArtifactDigest(b.digestAlgo, b.digestBytes),
+			verify.WithCertificateIdentity(certID),
+		))
+		if err != nil {
+			// The bundle we provided failed verification
+			// Log the error and continue to the next bundle, this one is considered signed but not verified
+			logger.Err(err).Msg("error verifying bundle")
+			results = append(results, res)
+			continue
+		}
+
+		// We've successfully verified and extracted the artifact provenance information
+		res.IsVerified = true
+		res.VerificationResult = *verificationResult
+		results = append(results, res)
+	}
+
+	return results, nil
+}
+
+// getSigstoreBundles returns the sigstore bundles, either through the OCI registry or the GitHub attestation endpoint
+func getSigstoreBundles(
+	ctx context.Context,
+	registry, owner, artifact, version string,
+	auth *containerAuth,
+) ([]sigstoreBundle, error) {
+	imageRef := BuildImageRef(registry, owner, artifact, version)
+
+	// Try to build a bundle from the OCI image reference
+	bundles, err := bundleFromOCIImage(imageRef, newGithubAuthenticator(owner, auth.accessToken))
 	if errors.Is(err, ErrOciImageSignatureNotFound) || errors.Is(err, ErrAuthNotProvided) {
-		err = bundleFromGHAttestationEndpoint(ctx, params, auth.ghClient, owner, version)
+		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
+		bundles, err = bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)
 	}
 	if err != nil {
 		if errors.Is(err, ErrOciImageSignatureNotFound) {
 			// We've tried building a bundle from the OCI image/the GitHub attestation endpoint and failed to find the signature
-			// This means there's most probably no available provenance information about this image
-			params.result.IsSigned = false
-			params.result.IsVerified = false
-			return params.result, nil
+			// This means there's most probably no available provenance information about this image.
+			// Return an empty bundle list and nil error since it's a valid use case
+			return nil, nil
 		}
-		// We got some other unexpected error
-		return nil, err
 	}
-
-	// At this point, we managed to extract a bundle, so we can set the IsSigned flag to true
-	// This doesn't mean the bundle is verified, just that it exists
-	params.result.IsSigned = true
-
-	// Verify the artifact using the bundle
-	verificationResult, err := sev.Verify(params.bundle, verify.NewPolicy(
-		verify.WithArtifactDigest(params.digest.algo, params.digest.bytes),
-		verify.WithCertificateIdentity(*params.certID),
-	))
-	if err != nil {
-		// The bundle we provided failed verification
-		params.result.IsVerified = false
-	} else {
-		// We've successfully extracted and verified the artifact provenance information
-		params.result.IsVerified = true
-		params.result.VerificationResult = *verificationResult
-	}
-
-	// Return the result
-	return params.result, nil
+	return bundles, nil
 }
 
 // Attestation is the attestation from the GitHub attestation endpoint
@@ -151,51 +211,50 @@ type AttestationReply struct {
 }
 
 func bundleFromGHAttestationEndpoint(
-	ctx context.Context, params *verifyResult, ghCli provifv1.GitHub, owner, version string,
-) error {
+	ctx context.Context, ghCli provifv1.GitHub, owner, version string,
+) ([]sigstoreBundle, error) {
 	logger := zerolog.Ctx(ctx).With().Str("owner", owner).Str("version", version).Logger()
 
+	// Get the attestation reply from the GitHub attestation endpoint
 	attestationReply, err := getAttestationReply(ctx, ghCli, owner, version)
 	if err != nil {
-		return fmt.Errorf("error getting attestation reply: %w", err)
+		return nil, fmt.Errorf("error getting attestation reply: %w", err)
 	}
 
-	if len(attestationReply.Attestations) == 0 {
-		return nil
+	var bundles []sigstoreBundle
+	// Loop through all available attestations and extract the bundle and the certificate identity information
+	for i := range attestationReply.Attestations {
+		att := attestationReply.Attestations[i]
+		protobufBundle, err := unmarhsalAttestationReply(&att)
+		if err != nil {
+			logger.Err(err).Msg("error unmarshalling attestation reply")
+			continue
+		}
+
+		cs, err := getCerfificateSummaryFromBundle(protobufBundle)
+		if err != nil {
+			logger.Err(err).Msg("error getting certificate summary from bundle")
+			continue
+		}
+
+		digest, err := getDigestFromVersion(version)
+		if err != nil {
+			logger.Err(err).Msg("error getting digest from version")
+			continue
+		}
+
+		// Store the bundle and the certificate identity we extracted from the attestation
+		bundles = append(bundles, sigstoreBundle{
+			bundle:       protobufBundle,
+			certIssuer:   cs.Issuer,
+			certIdentity: cs.BuildSignerURI,
+			digestBytes:  digest,
+			digestAlgo:   containerdigest.Canonical.String(),
+		})
 	}
-	att := attestationReply.Attestations[0]
 
-	protobufBundle, err := unmarhsalAttestationReply(&att)
-	if err != nil {
-		logger.Err(err).Msg("error unmarshalling attestation reply")
-		return err
-	}
+	return bundles, nil
 
-	cs, err := getCerfificateSummaryFromBundle(protobufBundle)
-	if err != nil {
-		logger.Err(err).Msg("error getting certificate summary from bundle")
-		return err
-	}
-
-	digest, err := getDigestFromVersion(version)
-	if err != nil {
-		logger.Err(err).Msg("error getting digest from version")
-		return err
-	}
-
-	certID, err := verify.NewShortCertificateIdentity(cs.Issuer, "", "", cs.BuildSignerURI)
-	if err != nil {
-		logger.Err(err).Msg("error getting certificate identity")
-		return err
-	}
-
-	// Store the bundle and the certificate identity we extracted from the attestation
-	params.digest.algo = containerdigest.Canonical.String()
-	params.digest.bytes = digest
-	params.certID = &certID
-	params.bundle = protobufBundle
-
-	return nil
 }
 
 func getAttestationReply(ctx context.Context, ghCli provifv1.GitHub, owner, version string) (*AttestationReply, error) {
@@ -280,29 +339,29 @@ func getDigestFromVersion(version string) ([]byte, error) {
 }
 
 // bundleFromOCIImage returns a ProtobufBundle based on OCI image reference.
-func bundleFromOCIImage(params *verifyResult, auth githubAuthenticator) error {
+func bundleFromOCIImage(imageRef string, auth githubAuthenticator) ([]sigstoreBundle, error) {
 	// 1. Get the signature manifest from the OCI image reference
-	manifest, err := getSignatureManifestFromOCIImage(params, auth)
+	manifest, err := getSignatureManifestFromOCIImage(imageRef, auth)
 	if err != nil {
-		return fmt.Errorf("error getting signature manifest: %w", err)
+		return nil, fmt.Errorf("error getting signature manifest: %w", err)
 	}
 
 	// 2. Parse the manifest and return the simple signing layer
-	simpleSigningLayer, err := parseSignatureManifest(params, manifest)
+	certIdentity, certIssuer, simpleSigningLayer, err := parseSignatureManifest(manifest)
 	if err != nil {
-		return fmt.Errorf("error parsing the signature manifest: %w", err)
+		return nil, fmt.Errorf("error parsing the signature manifest: %w", err)
 	}
 
 	// 3. Build the verification material for the bundle
 	verificationMaterial, err := getBundleVerificationMaterial(simpleSigningLayer)
 	if err != nil {
-		return fmt.Errorf("error getting verification material: %w", err)
+		return nil, fmt.Errorf("error getting verification material: %w", err)
 	}
 
 	// 4. Build the message signature for the bundle
 	msgSignature, err := getBundleMsgSignature(simpleSigningLayer)
 	if err != nil {
-		return fmt.Errorf("error getting message signature: %w", err)
+		return nil, fmt.Errorf("error getting message signature: %w", err)
 	}
 
 	// 5. Construct and verify the bundle
@@ -313,37 +372,34 @@ func bundleFromOCIImage(params *verifyResult, auth githubAuthenticator) error {
 	}
 	bun, err := bundle.NewProtobufBundle(&pbb)
 	if err != nil {
-		return fmt.Errorf("error creating bundle: %w", err)
+		return nil, fmt.Errorf("error creating bundle: %w", err)
 	}
 
-	// 6. Return the bundle and the digest of the simple signing layer (this is what is signed)
-	// get the artifact digest
-	params.digest.algo = simpleSigningLayer.Digest.Algorithm
-	params.digest.bytes, err = hex.DecodeString(simpleSigningLayer.Digest.Hex)
+	// 6. Collect the digest of the simple signing layer (this is what is signed)
+	digestBytes, err := hex.DecodeString(simpleSigningLayer.Digest.Hex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// get the certificate identity
-	certID, err := verify.NewShortCertificateIdentity(params.certIssuer, "", "", params.certIdentity)
-	if err != nil {
-		return err
-	}
-
-	// store the bundle and the certificate identity
-	params.bundle = bun
-	params.certID = &certID
-	return nil
+	// 7. Return the bundle (using a slice for consistency with the other method)
+	// Expand if we decide to support verifying all simplesigning layers in the future
+	return []sigstoreBundle{{
+		bundle:       bun,
+		certIdentity: certIdentity,
+		certIssuer:   certIssuer,
+		digestAlgo:   simpleSigningLayer.Digest.Algorithm,
+		digestBytes:  digestBytes,
+	}}, nil
 }
 
 // getSignatureManifestFromOCIImage returns the simple signing layer from the OCI image reference
-func getSignatureManifestFromOCIImage(ret *verifyResult, auth githubAuthenticator) (*v1.Manifest, error) {
+func getSignatureManifestFromOCIImage(imageRef string, auth githubAuthenticator) (*v1.Manifest, error) {
 	// 0. Get the auth options
 	opts := []remote.Option{remote.WithAuth(auth)}
 	craneOpts := []crane.Option{crane.WithAuth(auth)}
 
 	// 1. Get the image reference
-	ref, err := name.ParseReference(ret.imageRef)
+	ref, err := name.ParseReference(imageRef)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing image reference: %w", err)
 	}
@@ -379,26 +435,28 @@ func getSignatureManifestFromOCIImage(ret *verifyResult, auth githubAuthenticato
 }
 
 // parseSignatureManifest returns the identity and issuer from the certificate
-func parseSignatureManifest(ret *verifyResult, manifest *v1.Manifest) (*v1.Descriptor, error) {
+func parseSignatureManifest(manifest *v1.Manifest) (string, string, *v1.Descriptor, error) {
 	res := v1.Descriptor{}
 	for _, layer := range manifest.Layers {
 		if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
+			certIdentity := ""
+			certIssuer := ""
 			//signature_digest := layer.Digest.String()
 			//signature := layer.Annotations["dev.cosignproject.cosign/signature"]
 			cert := layer.Annotations["dev.sigstore.cosign/certificate"]
 			// Decode the PEM-encoded certificate
 			pemBlock, _ := pem.Decode([]byte(cert))
 			if pemBlock == nil || pemBlock.Type != "CERTIFICATE" {
-				return nil, fmt.Errorf("failed to decode PEM certificate")
+				return "", "", nil, fmt.Errorf("failed to decode PEM certificate")
 			}
 
 			// Parse the X.509 certificate
 			certObj, err := x509.ParseCertificate(pemBlock.Bytes)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing certificate: %w", err)
+				return "", "", nil, fmt.Errorf("error parsing certificate: %w", err)
 			}
 			for _, uri := range certObj.URIs {
-				ret.certIdentity = uri.String()
+				certIdentity = uri.String()
 				res = layer
 				break
 			}
@@ -409,14 +467,14 @@ func parseSignatureManifest(ret *verifyResult, manifest *v1.Manifest) (*v1.Descr
 			// Search for the custom OID in the certificate extensions
 			for _, ext := range certObj.Extensions {
 				if ext.Id.Equal(customOID) {
-					ret.certIssuer = string(ext.Value)
-					return &layer, nil
+					certIssuer = string(ext.Value)
+					return certIdentity, certIssuer, &layer, nil
 				}
 			}
 			break
 		}
 	}
-	return &res, nil
+	return "", "", &res, nil
 }
 
 // getBundleVerificationMaterial returns the bundle verification material from the simple signing layer
@@ -592,21 +650,19 @@ func BuildImageRef(registry, owner, artifact, version string) string {
 	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, version)
 }
 
-type verifyDigest struct {
-	bytes []byte
-	algo  string
+type sigstoreBundle struct {
+	bundle       *bundle.ProtobufBundle
+	certIssuer   string
+	certIdentity string
+	digestBytes  []byte
+	digestAlgo   string
 }
 
 // verifyResult is the result of the verification
 type verifyResult struct {
 	// Params for the verification process
-	imageRef     string
-	digest       verifyDigest
-	bundle       *bundle.ProtobufBundle
-	certID       *verify.CertificateIdentity
-	certIdentity string
-	certIssuer   string
+	imageRef string
 
 	// Result of the verification
-	result *verifyif.Result
+	result []verifyif.Result
 }
