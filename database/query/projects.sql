@@ -11,15 +11,10 @@ INSERT INTO projects (
 INSERT INTO projects (
     id,
     name,
-    parent_id,
     metadata
 ) VALUES (
-    $1, $2, $3, sqlc.arg(metadata)::jsonb
+    $1, $2, sqlc.arg(metadata)::jsonb
 ) RETURNING *;
-
--- name: GetRootProjects :many
-SELECT * FROM projects
-WHERE parent_id IS NULL;
 
 -- name: GetProjectByID :one
 SELECT * FROM projects
@@ -79,7 +74,7 @@ SELECT * FROM get_children;
 -- name: DeleteProject :many
 WITH RECURSIVE get_children AS (
     SELECT id, parent_id FROM projects
-    WHERE projects.id = $1 AND projects.parent_id IS NOT NULL
+    WHERE projects.id = $1
 
     UNION
 
@@ -89,3 +84,32 @@ WITH RECURSIVE get_children AS (
 DELETE FROM projects
 WHERE id IN (SELECT id FROM get_children)
 RETURNING id, name, metadata, created_at, updated_at, parent_id;
+
+-- ListNonOrgProjects is a query that lists all non-organization projects.
+-- projects have a boolean field is_organization that is set to true if the project is an organization.
+-- this flag is no longer used and will be removed in the future.
+
+-- name: ListNonOrgProjects :many
+SELECT * FROM projects
+WHERE is_organization = FALSE;
+
+-- ListOrgProjects is a query that lists all organization projects.
+-- projects have a boolean field is_organization that is set to true if the project is an organization.
+-- this flag is no longer used and will be removed in the future.
+
+-- name: ListOldOrgProjects :many
+SELECT * FROM projects
+WHERE is_organization = TRUE;
+
+
+-- OrphanProject is a query that sets the parent_id of a project to NULL.
+
+-- name: OrphanProject :one
+UPDATE projects
+SET metadata = $2, parent_id = NULL
+WHERE id = $1 RETURNING *;
+
+-- name: UpdateProjectMeta :one
+UPDATE projects
+SET metadata = $2
+WHERE id = $1 RETURNING *;

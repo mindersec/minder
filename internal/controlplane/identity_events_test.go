@@ -62,9 +62,6 @@ func TestHandleEvents(t *testing.T) {
 		Return(db.User{
 			OrganizationID: orgID,
 		}, nil)
-	mockStore.EXPECT().
-		DeleteOrganization(gomock.Any(), orgID).
-		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
@@ -73,6 +70,7 @@ func TestHandleEvents(t *testing.T) {
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
+	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
 	c := serverconfig.Config{

@@ -3611,9 +3611,6 @@
           "type": "integer",
           "format": "int32"
         },
-        "organizationId": {
-          "type": "string"
-        },
         "identitySubject": {
           "type": "string"
         },

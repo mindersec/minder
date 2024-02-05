@@ -847,8 +847,8 @@ message CreateUserRequest { }
 
 message CreateUserResponse {
     int32 id = 1;
-    string organization_id = 2;
-    string organizatio_name = 3;
+    string organization_id = 2 [deprecated=true];
+    string organizatio_name =3 [deprecated=true];
     string project_id = 4;
     string project_name = 5;
     string identity_subject = 6;
@@ -866,10 +866,12 @@ message DeleteUserResponse {
 // user record to be returned
 message UserRecord {
     int32 id = 1;
-    string organization_id = 2;
     string identity_subject = 3;
     google.protobuf.Timestamp created_at = 4;
     google.protobuf.Timestamp updated_at = 5;
+
+    reserved 2; // deprecated organization_id
+    reserved "organization_id";
 }
 
 // list users

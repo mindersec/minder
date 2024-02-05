@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -63,40 +62,26 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	var userOrg uuid.UUID
 	var userProject uuid.UUID
-
-	orgmeta := &OrgMeta{
-		Company: subject + " - Self enrolled",
-	}
-
-	marshaled, err := json.Marshal(orgmeta)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
-	}
 
 	baseName := subject
 	if token.PreferredUsername() != "" {
 		baseName = token.PreferredUsername()
 	}
 
-	// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
-	organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
-		Name:     baseName + "-org",
-		Metadata: marshaled,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
-	}
-	orgProject, err := s.CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName, subject)
+	orgProject, err := ProvisionSelfEnrolledProject(ctx, s.authzClient, qtx, baseName, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
 
-	userOrg = organization.ID
 	userProject = uuid.MustParse(orgProject.ProjectId)
-	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
-		IdentitySubject: subject})
+	user, err := qtx.CreateUser(ctx, db.CreateUserParams{
+		// NOTE: We're setting the organization ID to the project ID
+		//       to satisfy the constraint. This is a temporary solution
+		//       until we completely remove the organization concept.
+		OrganizationID:  userProject,
+		IdentitySubject: subject,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
@@ -111,8 +96,6 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID.String(),
-		OrganizatioName: organization.Name,
 		ProjectId:       userProject.String(),
 		ProjectName:     orgProject.Name,
 		IdentitySubject: user.IdentitySubject,
@@ -234,7 +217,6 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	var resp pb.GetUserResponse
 	resp.User = &pb.UserRecord{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID.String(),
 		IdentitySubject: user.IdentitySubject,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
