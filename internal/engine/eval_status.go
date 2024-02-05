@@ -78,10 +78,9 @@ func (e *Executor) createEvalStatusParams(
 		Valid:  true,
 	}
 
-	// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
 	ruleName := sql.NullString{
 		String: rule.Name,
-		Valid:  rule.Name != "",
+		Valid:  true,
 	}
 
 	// Get the current rule evaluation from the database
@@ -123,12 +122,6 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
-	ruleName := sql.NullString{
-		String: params.Rule.Name,
-		Valid:  params.Rule.Name != "",
-	}
-
 	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID: params.ProfileID,
@@ -140,7 +133,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		Entity:        params.EntityType,
 		RuleTypeID:    params.RuleTypeID,
 		PullRequestID: params.PullRequestID,
-		RuleName:      ruleName,
+		RuleName:      params.Rule.Name,
 	})
 
 	if err != nil {

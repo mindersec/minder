@@ -81,7 +81,7 @@ To address this security exposure, we recommend taking the following actions:
 
 - Profile: {{.Profile}}
 - Rule: {{.Rule}}
-{{if and (not (eq .Name "")) (ne .Name .Rule) -}}
+{{if (ne .Name .Rule) -}}
 - Name: {{.Name}}
 {{end -}}
 - Repository: {{.Repository}}

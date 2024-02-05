@@ -156,17 +156,9 @@ func RenderRuleEvaluationStatusTable(
 	t table.Table,
 ) {
 	for _, eval := range statuses {
-		ruleName := eval.RuleDescriptionName
-
-		// TODO: Remove this after migration, ruleName would be valid after updating existing evaluations (#1609)
-		//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
-		if ruleName == "" {
-			ruleName = eval.RuleName
-		}
-
 		t.AddRowWithColor(
 			layouts.NoColor(eval.RuleId),
-			layouts.NoColor(ruleName),
+			layouts.NoColor(eval.RuleDescriptionName),
 			layouts.NoColor(eval.Entity),
 			getColoredEvalStatus(eval.Status),
 			getRemediateStatusColor(eval.RemediationStatus),
