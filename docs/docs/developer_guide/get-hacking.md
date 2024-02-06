@@ -29,7 +29,7 @@ Note that the application requires a database to be running. This can be achieve
 using docker-compose:
 
 ```bash
-services="postgres keycloak migrate" make run-docker
+services="postgres keycloak migrate openfga" make run-docker
 ```
 
 Then run the application
