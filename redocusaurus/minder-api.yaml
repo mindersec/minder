@@ -32,15 +32,6 @@ paths:
           in: path
           required: true
           type: string
-        - name: latestVersions
-          in: query
-          required: false
-          type: integer
-          format: int32
-        - name: tag
-          in: query
-          required: false
-          type: string
         - name: context.provider
           description: name of the provider
           in: query
@@ -73,15 +64,6 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - name: latestVersions
-          in: query
-          required: false
-          type: integer
-          format: int32
-        - name: tag
-          in: query
-          required: false
           type: string
         - name: context.provider
           description: name of the provider
@@ -2076,10 +2058,6 @@ definitions:
           type: string
       sha:
         type: string
-      signatureVerification:
-        $ref: '#/definitions/v1SignatureVerification'
-      githubWorkflow:
-        $ref: '#/definitions/v1GithubWorkflow'
       createdAt:
         type: string
         format: date-time
@@ -2319,17 +2297,6 @@ definitions:
         type: string
         description: branch is the branch of the git repository.
     description: GitType defines the git data ingester.
-  v1GithubWorkflow:
-    type: object
-    properties:
-      name:
-        type: string
-      repository:
-        type: string
-      commitSha:
-        type: string
-      trigger:
-        type: string
   v1ListArtifactsResponse:
     type: object
     properties:
@@ -2688,27 +2655,6 @@ definitions:
     description: |-
       RuleType defines rules that may or may not be user defined.
       The version is assumed from the folder's version.
-  v1SignatureVerification:
-    type: object
-    properties:
-      isSigned:
-        type: boolean
-      isVerified:
-        type: boolean
-      isBundleVerified:
-        type: boolean
-      certIdentity:
-        type: string
-      certIssuer:
-        type: string
-      rekorLogId:
-        type: string
-      rekorLogIndex:
-        type: string
-        format: int64
-      signatureTime:
-        type: string
-        format: date-time
   v1StoreProviderTokenResponse:
     type: object
   v1UpdateProfileRequest:
