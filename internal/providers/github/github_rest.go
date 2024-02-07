@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/google/go-github/v56/github"
 
@@ -211,6 +212,9 @@ func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner s
 	package_name string) ([]*github.PackageVersion, error) {
 	state := "active"
 
+	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
+	package_type = strings.ToLower(package_type)
+
 	opt := &github.PackageListOptions{
 		PackageType: &package_type,
 		State:       &state,
@@ -259,6 +263,10 @@ func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner s
 // GetPackageVersionByTag returns a single package version for the specific tag
 func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string, tag string) (*github.PackageVersion, error) {
+
+	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
+	package_type = strings.ToLower(package_type)
+
 	// get all versions
 	versions, err := c.GetPackageVersions(ctx, isOrg, owner, package_type, package_name)
 	if err != nil {
@@ -283,6 +291,9 @@ func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner str
 	package_name string) (*github.Package, error) {
 	var pkg *github.Package
 	var err error
+
+	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
+	package_type = strings.ToLower(package_type)
 
 	package_name = url.PathEscape(package_name)
 	if isOrg {

@@ -402,6 +402,7 @@ func logEval(
 	evalLog := logger.Debug().
 		Str("profile", params.Profile.Name).
 		Str("ruleType", params.Rule.Type).
+		Str("ruleName", params.Rule.Name).
 		Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
 		Str("projectId", inf.ProjectID.String()).
 		Str("repositoryId", params.RepoID.String())

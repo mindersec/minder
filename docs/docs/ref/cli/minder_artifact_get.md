@@ -16,12 +16,10 @@ minder artifact get [flags]
 ### Options
 
 ```
-  -h, --help             help for get
-  -i, --id string        ID of the artifact to get info from
-  -n, --name string      name of the artifact to get info from in the form repoOwner/repoName/artifactName
-  -o, --output string    Output format (one of json,yaml,table) (default "table")
-      --tag string       Specific artifact tag to retrieve
-  -v, --versions int32   Latest artifact versions to retrieve (default 1)
+  -h, --help            help for get
+  -i, --id string       ID of the artifact to get info from
+  -n, --name string     name of the artifact to get info from in the form repoOwner/repoName/artifactName
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
