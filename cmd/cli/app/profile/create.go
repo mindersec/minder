@@ -91,7 +91,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 
 	// display the name above the table
-	cmd.Println("Successfully created profile named:", profileName)
+	cmd.Println("Successfully created new profile named:", profileName)
 	table.Render()
 	return nil
 }
