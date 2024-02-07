@@ -25,7 +25,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/puzpuzpuz/xsync"
+	"github.com/puzpuzpuz/xsync/v3"
 
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -67,7 +67,7 @@ type repoCache struct {
 
 func newRepoCache() *repoCache {
 	return &repoCache{
-		cache: xsync.NewMapOf[RepoQuerier](),
+		cache: xsync.NewMapOf[string, RepoQuerier](),
 	}
 }
 
