@@ -16,15 +16,24 @@
 package authz_test
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
+	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	fgasdk "github.com/openfga/go-sdk"
+	"github.com/openfga/openfga/cmd/run"
+	"github.com/openfga/openfga/pkg/logger"
+	"github.com/openfga/openfga/pkg/testutils"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
+	srvconfig "github.com/stacklok/minder/internal/config/server"
 )
 
 var (
@@ -32,6 +41,12 @@ var (
 	//
 	//go:embed model/minder.generated.json
 	authzModel string
+
+	// fgaServerRunMux is a mutex to ensure that we start an OpenFGA server
+	// at a time. The problem is that OpenFGA server uses global state and
+	// if we start multiple servers at the same time, they will conflict
+	// with each other.
+	fgaServerRunMux = &sync.Mutex{}
 )
 
 func TestAllRolesExistInFGAModel(t *testing.T) {
@@ -56,5 +71,183 @@ func TestAllRolesExistInFGAModel(t *testing.T) {
 
 	for r := range authz.AllRoles {
 		assert.Contains(t, *projectTypeDef.Relations, r.String(), "role %s not found in authz model", r)
+	}
+}
+
+func TestMigration(t *testing.T) {
+	t.Parallel()
+
+	c, stopFunc := newOpenFGAServerAndClient(t)
+	defer stopFunc()
+	assert.NotNil(t, c)
+
+	assert.NoError(t, c.MigrateUp(context.Background()), "failed to migrate up")
+}
+
+func TestVerifyOneProject(t *testing.T) {
+	t.Parallel()
+
+	c, stopFunc := newOpenFGAServerAndClient(t)
+	defer stopFunc()
+	assert.NotNil(t, c)
+
+	ctx := context.Background()
+
+	assert.NoError(t, c.MigrateUp(ctx), "failed to migrate up")
+
+	// this is required to auto-detect the generated model and store
+	assert.NoError(t, c.PrepareForRun(ctx), "failed to prepare for run")
+
+	// create a project
+	prj := uuid.New()
+	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to write project")
+
+	userctx := auth.WithUserSubjectContext(ctx, "user-1")
+
+	// verify the project
+	assert.NoError(t, c.Check(userctx, "get", prj), "failed to check project")
+
+	// ensure projects for user returns the project
+	projects, err := c.ProjectsForUser(userctx, "user-1")
+	assert.NoError(t, err, "failed to get projects for user")
+	assert.Len(t, projects, 1, "expected 1 project for user")
+	assert.Equal(t, prj, projects[0], "expected project to be returned")
+
+	// ensure assignments to project returns the user
+	assignments, err := c.AssignmentsToProject(userctx, prj)
+	assert.NoError(t, err, "failed to get assignments to project")
+	assert.Len(t, assignments, 1, "expected 1 assignment to project")
+	assert.Equal(t, "user-1", assignments[0].Subject, "expected user to be assigned to project")
+
+	// delete the project
+	assert.NoError(t, c.Delete(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to delete project")
+
+	// verify the project is gone
+	assert.Error(t, c.Check(userctx, "get", prj), "expected project to be gone")
+
+	// ensure projects for user returns no projects
+	projects, err = c.ProjectsForUser(userctx, "user-1")
+	assert.NoError(t, err, "failed to get projects for user")
+	assert.Len(t, projects, 0, "expected 0 projects for user")
+
+	// ensure assignments to project returns no assignments
+	assignments, err = c.AssignmentsToProject(userctx, prj)
+	assert.NoError(t, err, "failed to get assignments to project")
+	assert.Len(t, assignments, 0, "expected 0 assignments to project")
+}
+
+func TestVerifyMultipleProjects(t *testing.T) {
+	t.Parallel()
+
+	c, stopFunc := newOpenFGAServerAndClient(t)
+	defer stopFunc()
+	assert.NotNil(t, c)
+
+	ctx := context.Background()
+
+	assert.NoError(t, c.MigrateUp(ctx), "failed to migrate up")
+
+	// this is required to auto-detect the generated model and store
+	assert.NoError(t, c.PrepareForRun(ctx), "failed to prepare for run")
+
+	// create a project
+	prj1 := uuid.New()
+	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj1), "failed to write project")
+
+	userctx := auth.WithUserSubjectContext(ctx, "user-1")
+
+	// verify the project
+	assert.NoError(t, c.Check(userctx, "get", prj1), "failed to check project")
+
+	// create another project
+	prj2 := uuid.New()
+	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleViewer, prj2), "failed to write project")
+
+	// verify the project
+	assert.NoError(t, c.Check(userctx, "get", prj2), "failed to check project")
+
+	// create an unrelated project
+	prj3 := uuid.New()
+	assert.NoError(t, c.Write(ctx, "user-2", authz.AuthzRoleAdmin, prj3), "failed to write project")
+
+	// verify the project
+	assert.NoError(t, c.Check(auth.WithUserSubjectContext(ctx, "user-2"), "get", prj3), "failed to check project")
+
+	// verify user-1 cannot operate on project 3
+	assert.Error(t, c.Check(userctx, "get", prj3), "expected user-1 to not be able to operate on project 3")
+
+	// ensure projects for user returns the projects
+	projects, err := c.ProjectsForUser(userctx, "user-1")
+	assert.NoError(t, err, "failed to get projects for user")
+	assert.Len(t, projects, 2, "expected 2 projects for user")
+	assert.Contains(t, projects, prj1, "expected project to be returned")
+	assert.Contains(t, projects, prj2, "expected project to be returned")
+
+	// ensure assignments to project returns the user
+	assignments, err := c.AssignmentsToProject(userctx, prj1)
+	assert.NoError(t, err, "failed to get assignments to project")
+	assert.Len(t, assignments, 1, "expected 1 assignment to project")
+	assert.Equal(t, "user-1", assignments[0].Subject, "expected user to be assigned to project")
+
+	// ensure assignments to project returns the user
+	assignments, err = c.AssignmentsToProject(userctx, prj2)
+	assert.NoError(t, err, "failed to get assignments to project")
+	assert.Len(t, assignments, 1, "expected 1 assignment to project")
+	assert.Equal(t, "user-1", assignments[0].Subject, "expected user to be assigned to project")
+
+	// Delete the user (which also deletes the projects)
+	assert.NoError(t, c.DeleteUser(ctx, "user-1"), "failed to delete user")
+
+	// verify the projects are gone
+	assert.Error(t, c.Check(userctx, "get", prj1), "expected project to be gone")
+	assert.Error(t, c.Check(userctx, "get", prj2), "expected project to be gone")
+
+	// ensure projects for user returns no projects
+	projects, err = c.ProjectsForUser(userctx, "user-1")
+	assert.NoError(t, err, "failed to get projects for user")
+	assert.Len(t, projects, 0, "expected 0 projects for user")
+
+	// ensure assignments to project returns no assignments
+	assignments, err = c.AssignmentsToProject(userctx, prj1)
+	assert.NoError(t, err, "failed to get assignments to project")
+	assert.Len(t, assignments, 0, "expected 0 assignments to project")
+}
+
+func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
+	t.Helper()
+
+	fgaServerRunMux.Lock()
+
+	cfg := run.MustDefaultConfigWithRandomPorts()
+	cfg.Log.Level = "error"
+	cfg.Datastore.Engine = "memory"
+
+	loggr := logger.MustNewLogger("text", "error")
+	serverCtx := &run.ServerContext{Logger: loggr}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		err := serverCtx.Run(ctx, cfg)
+		require.NoError(t, err)
+	}()
+
+	testutils.EnsureServiceHealthy(t, cfg.GRPC.Addr, cfg.HTTP.Addr, nil, false)
+
+	testw := zerolog.NewTestWriter(t)
+	l := zerolog.New(testw)
+
+	c, err := authz.NewAuthzClient(&srvconfig.AuthzConfig{
+		ApiUrl:    "http://" + cfg.HTTP.Addr,
+		StoreName: "minder",
+		Auth: srvconfig.OpenFGAAuth{
+			Method: "none",
+		},
+	}, &l)
+	require.NoError(t, err, "failed to create authz client")
+
+	return c, func() {
+		cancel()
+		fgaServerRunMux.Unlock()
 	}
 }
