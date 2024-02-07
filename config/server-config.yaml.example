@@ -83,7 +83,7 @@ events:
   go-channel: {}
 
 authz:
-  api_url: http://openfga:8080
+  api_url: http://openfga:8080 # Use http://localhost:8082 instead for running minder outside of docker-compose
   store_name: minder
   auth:
     # Set to token for production
