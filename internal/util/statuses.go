@@ -179,7 +179,6 @@ func (s *NiceStatus) Error() string {
 // SanitizingInterceptor sanitized error statuses which do not conform to NiceStatus, ensuring
 // that we don't accidentally leak implementation details over gRPC.
 func SanitizingInterceptor() grpc.UnaryServerInterceptor {
-	// TODO: this has no test coverage!
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		ret, err := handler(ctx, req)
 		if err != nil {

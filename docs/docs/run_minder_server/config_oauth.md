@@ -23,6 +23,7 @@ Minder uses OAuth2 to authenticate users. This means that you will need to confi
    - Application Name: `Minder` (or any other name you like)
    - Homepage URL: `http://localhost:8080`
    - Authorization callback URL: `http://localhost:8080/api/v1/auth/callback/github`
+   - If you are prompted to enter a `Webhook URL`, deselect the `Active` option in the `Webhook` section.
 6. Select "Register Application"
 7. Generate a client secret
 7. Copy the "Client ID" , "Client Secret" and "Authorization callback URL" values

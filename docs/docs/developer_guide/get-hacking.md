@@ -23,28 +23,28 @@ git clone git@github.com:stacklok/minder.git
 make build
 ```
 
-## Run the application
+## Install tools
+
+You may bootstrap the whole development environment, which includes initializing the `config.yaml` and `server-config.yaml`
+files with:
+
+```bash
+make bootstrap
+```
+
+Note that if you intend to run minder outside docker-compose, you should
+change the Keycloak and OpenFGA URLs in `server-config.yaml` to refer to
+localhost instead of the docker-compose names. There are comments inside the
+config file which explain what needs to be changed.
+
+## Start dependencies
 
 Note that the application requires a database to be running. This can be achieved
 using docker-compose:
 
 ```bash
-services="postgres keycloak migrate" make run-docker
+services="postgres keycloak migrate openfga" make run-docker
 ```
-
-Then run the application
-
-```bash
-bin/minder-server serve
-```
-
-Or direct from source
-
-```bash
-go run cmd/server/main.go serve
-```
-
-The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
 
 ## Set up a Keycloak user
 
@@ -64,8 +64,8 @@ to create a `testuser` Keycloak user with the password `tester`.  (You can creat
 ### GitHub App
 
 [Create an OAuth2 application for GitHub](../run_minder_server/config_oauth.md).
-Select `New OAuth App` and fill in the details. The callback URL should be
-`http://localhost:8081/realms/stacklok/broker/github/endpoint`.
+Select `New OAuth App` and fill in the details.
+
 Create a new client secret for your OAuth2 client.
 
 Using the client ID and client secret you created above, enable GitHub login on Keycloak by running the following command:
@@ -73,24 +73,31 @@ Using the client ID and client secret you created above, enable GitHub login on 
 make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
 
+## Run the application
+
+Then run the application
+
+```bash
+bin/minder-server serve
+```
+
+Or direct from source
+
+```bash
+go run cmd/server/main.go serve
+```
+
+The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
+
 ## Run the tests
 
 ```bash
 make test
 ```
 
-## Install tools
-
-You may bootstrap the whole development environment, which includes initializing the `config.yaml` and `server-config.yaml`
-files with:
-
-```bash
-make bootstrap
-```
-
 ## CLI
 
-The CLI is available in the `cmd/cli` directory.  You can also use the pre-built `minder` CLI with your new application; you'll need to set the `--grpc_host localhost --grpc_port 8090` arguments in either case.
+The CLI is available in the `cmd/cli` directory.  You can also use the pre-built `minder` CLI with your new application; you'll need to set the `--grpc-host localhost --grpc-port 8090` arguments in either case.
 
 ```bash
 go run cmd/cli/main.go --help

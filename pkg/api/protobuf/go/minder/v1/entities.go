@@ -85,3 +85,8 @@ func EntityFromString(entity string) Entity {
 	// take advantage of the default value of the map being Entity_ENTITY_UNSPECIFIED
 	return entityTypeToPb[et]
 }
+
+// GetTypeLower returns the type of the artifact entity in lowercase
+func (a *Artifact) GetTypeLower() string {
+	return strings.ToLower(a.GetType())
+}

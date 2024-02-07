@@ -20,7 +20,6 @@ require (
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/mock v1.6.0
-	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.19.0
 	github.com/google/go-github/v56 v56.0.0
 	github.com/google/uuid v1.6.0
@@ -36,7 +35,7 @@ require (
 	github.com/openfga/go-sdk v0.3.4
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.18.0
-	github.com/puzpuzpuz/xsync v1.5.2
+	github.com/puzpuzpuz/xsync/v3 v3.0.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.32.0
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.12.0
@@ -53,12 +52,12 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.47.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
-	go.opentelemetry.io/otel v1.22.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.45.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.22.0
-	go.opentelemetry.io/otel/sdk v1.22.0
-	go.opentelemetry.io/otel/sdk/metric v1.22.0
-	go.opentelemetry.io/otel/trace v1.22.0
+	go.opentelemetry.io/otel v1.23.0
+	go.opentelemetry.io/otel/exporters/prometheus v0.45.1
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.23.0
+	go.opentelemetry.io/otel/sdk v1.23.0
+	go.opentelemetry.io/otel/sdk/metric v1.23.0
+	go.opentelemetry.io/otel/trace v1.23.0
 	golang.org/x/crypto v0.18.0
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc
 	golang.org/x/oauth2 v0.16.0
@@ -98,6 +97,7 @@ require (
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
+	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
@@ -235,7 +235,7 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
 	github.com/zitadel/oidc/v2 v2.12.0
 	go.mongodb.org/mongo-driver v1.13.1 // indirect
-	go.opentelemetry.io/otel/metric v1.22.0
+	go.opentelemetry.io/otel/metric v1.23.0
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
