@@ -176,7 +176,7 @@ func getVerifiedResults(
 	return results
 }
 
-// getSigstoreBundles returns the sigstore bundles, either through the OCI registry or the GitHub attestation endpointz
+// getSigstoreBundles returns the sigstore bundles, either through the OCI registry or the GitHub attestation endpoint
 func getSigstoreBundles(
 	ctx context.Context,
 	registry, owner, artifact, version string,
