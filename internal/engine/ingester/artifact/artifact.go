@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -56,7 +57,7 @@ type verification struct {
 	IsVerified        bool   `json:"is_verified"`
 	Repository        string `json:"repository"`
 	Branch            string `json:"branch"`
-	WorkflowName      string `json:"workflow_name"`
+	SignerIdentity    string `json:"signer_identity"`
 	RunnerEnvironment string `json:"runner_environment"`
 	CertIssuer        string `json:"cert_issuer"`
 }
@@ -204,7 +205,7 @@ func (i *Ingest) getVerificationResult(
 			if res.IsVerified {
 				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
 				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.WorkflowName = workflowFromBuildSignerURI(res.Signature.Certificate.BuildSignerURI)
+				verResult.SignerIdentity = signerIdentityFromSignature(res.Signature)
 				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
 				verResult.CertIssuer = res.Signature.Certificate.Issuer
 			}
@@ -324,24 +325,31 @@ func branchFromRef(ref string) string {
 	return ""
 }
 
-func workflowFromBuildSignerURI(uri string) string {
-	// Find the index of the start of the ".github/workflows/" part
-	startIndex := strings.Index(uri, ".github/workflows/")
-	if startIndex == -1 {
-		return ""
+func signerIdentityFromSignature(s *verify.SignatureVerificationResult) string {
+	if s.Certificate.BuildSignerURI != "" {
+		// Find the index of the start of the ".github/workflows/" part
+		startIndex := strings.Index(s.Certificate.BuildSignerURI, ".github/workflows/")
+		if startIndex == -1 {
+			return ""
+		}
+
+		// Adjust startIndex to get the part right after ".github/workflows/"
+		startIndex += len(".github/workflows/")
+
+		// Extract the part after ".github/workflows/"
+		remainingURL := s.Certificate.BuildSignerURI[startIndex:]
+
+		// Find the index of '@' to isolate the file name
+		atSymbolIndex := strings.Index(remainingURL, "@")
+		if atSymbolIndex != -1 {
+			return remainingURL[:atSymbolIndex]
+		}
+		return remainingURL
+	} else if s.Certificate.SubjectAlternativeName.Value != "" {
+		// This is the use case where there is no build signer URI but there is a subject alternative name
+		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
+		return s.Certificate.SubjectAlternativeName.Value
 	}
-
-	// Adjust startIndex to get the part right after ".github/workflows/"
-	startIndex += len(".github/workflows/")
-
-	// Extract the part after ".github/workflows/"
-	remainingURL := uri[startIndex:]
-
-	// Find the index of '@' to isolate the file name
-	atSymbolIndex := strings.Index(remainingURL, "@")
-	if atSymbolIndex != -1 {
-		return remainingURL[:atSymbolIndex]
-	}
-
-	return remainingURL
+	// If we can't find the signer identity, return an empty string
+	return ""
 }
