@@ -167,38 +167,23 @@ message Artifact {
     google.protobuf.Timestamp created_at = 8;
 }
 
-message GithubWorkflow {
-    string name = 1;
-    string repository = 2;
-    string commit_sha = 3;
-    string trigger = 4;
-}
-
-message SignatureVerification {
-    bool is_signed = 1;
-    bool is_verified = 2;
-    bool is_bundle_verified = 3;
-    optional string cert_identity = 4;
-    optional string cert_issuer = 5;
-    optional string rekor_log_id = 6;
-    optional int64 rekor_log_index = 7;
-    optional google.protobuf.Timestamp signature_time = 8;
-}
-
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;
     string sha = 3;
-    SignatureVerification signature_verification = 4;
-    optional GithubWorkflow github_workflow = 5;
     google.protobuf.Timestamp created_at = 6;
+
+    reserved 4, 5;
+    reserved "github_workflow", "signature_verification";
 }
 
 message GetArtifactByIdRequest {
     string id = 1;
-    int32 latest_versions = 5;
-    string tag = 6;
+
     Context context = 7;
+
+    reserved 5, 6; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByIdResponse {
@@ -208,9 +193,10 @@ message GetArtifactByIdResponse {
 
 message GetArtifactByNameRequest {
     string name = 1;
-    int32 latest_versions = 2;
-    string tag = 3;
     Context context = 4;
+
+    reserved 2, 3; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByNameResponse {

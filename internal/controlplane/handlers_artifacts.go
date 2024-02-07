@@ -25,7 +25,6 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
@@ -67,19 +66,6 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 // nolint:gocyclo
 func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByNameRequest) (*pb.GetArtifactByNameResponse, error) {
 	// tag and latest versions cannot be set at same time
-	if in.Tag != "" && in.LatestVersions > 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
-	}
-
-	if in.LatestVersions < 1 || in.LatestVersions > 10 {
-		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
-	}
-
-	// get artifact versions
-	if in.LatestVersions <= 0 {
-		in.LatestVersions = 10
-	}
-
 	nameParts := strings.Split(in.Name, "/")
 	if len(nameParts) < 3 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact name user repoOwner/repoName/artifactName")
@@ -110,11 +96,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
 	}
 
-	pbVersions, err := getPbArtifactVersions(ctx, s.store, artifact.ID, in.Tag, in.LatestVersions)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
-	}
-
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = artifact.Provider
 	logger.BusinessRecord(ctx).Project = artifact.ProjectID
@@ -130,7 +111,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		Repository: artifact.RepoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	},
-		Versions: pbVersions,
+		Versions: nil, // explicitly nil, will probably deprecate that field later
 	}, nil
 }
 
@@ -138,14 +119,6 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 // nolint:gocyclo
 func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequest) (*pb.GetArtifactByIdResponse, error) {
 	// tag and latest versions cannot be set at same time
-	if in.Tag != "" && in.LatestVersions > 1 {
-		return nil, status.Errorf(codes.InvalidArgument, "tag and latest versions cannot be set at same time")
-	}
-
-	if in.LatestVersions < 1 || in.LatestVersions > 10 {
-		return nil, status.Errorf(codes.InvalidArgument, "latest versions must be between 1 and 10")
-	}
-
 	parsedArtifactID, err := uuid.Parse(in.Id)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact ID")
@@ -158,16 +131,6 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
-	}
-
-	// get artifact versions
-	if in.LatestVersions <= 0 {
-		in.LatestVersions = 10
-	}
-
-	pbVersions, err := getPbArtifactVersions(ctx, s.store, parsedArtifactID, in.Tag, in.LatestVersions)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get artifact versions: %s", err)
 	}
 
 	// Telemetry logging
@@ -185,70 +148,8 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		Repository: artifact.RepoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	},
-		Versions: pbVersions,
+		Versions: nil, // explicitly nil, will probably deprecate that field later
 	}, nil
-}
-
-func getDbArtifactVersions(
-	ctx context.Context, store db.Store, artifactID uuid.UUID, tag string, limit int32,
-) ([]db.ArtifactVersion, error) {
-	if tag != "" {
-		return store.ListArtifactVersionsByArtifactIDAndTag(ctx,
-			db.ListArtifactVersionsByArtifactIDAndTagParams{ArtifactID: artifactID,
-				Tags:  sql.NullString{Valid: true, String: tag},
-				Limit: sql.NullInt32{Valid: true, Int32: limit}})
-	}
-
-	return store.ListArtifactVersionsByArtifactID(ctx,
-		db.ListArtifactVersionsByArtifactIDParams{ArtifactID: artifactID,
-			Limit: sql.NullInt32{Valid: true, Int32: limit}})
-}
-
-func artifactVersionsDbToPb(versions []db.ArtifactVersion) ([]*pb.ArtifactVersion, error) {
-	final_versions := []*pb.ArtifactVersion{}
-	for _, version := range versions {
-		tags := []string{}
-		if version.Tags.Valid {
-			tags = strings.Split(version.Tags.String, ",")
-		}
-
-		sigVerification := &pb.SignatureVerification{}
-		if version.SignatureVerification.Valid {
-			if err := protojson.Unmarshal(version.SignatureVerification.RawMessage, sigVerification); err != nil {
-				return nil, err
-			}
-		}
-
-		ghWorkflow := &pb.GithubWorkflow{}
-		if version.GithubWorkflow.Valid {
-			if err := protojson.Unmarshal(version.GithubWorkflow.RawMessage, ghWorkflow); err != nil {
-				return nil, err
-			}
-		}
-
-		final_versions = append(final_versions, &pb.ArtifactVersion{
-			VersionId:             version.Version,
-			Tags:                  tags,
-			Sha:                   version.Sha,
-			SignatureVerification: sigVerification,
-			GithubWorkflow:        ghWorkflow,
-			CreatedAt:             timestamppb.New(version.CreatedAt),
-		})
-
-	}
-
-	return final_versions, nil
-}
-
-func getPbArtifactVersions(
-	ctx context.Context, store db.Store, artifactID uuid.UUID, tag string, limit int32,
-) ([]*pb.ArtifactVersion, error) {
-	versions, err := getDbArtifactVersions(ctx, store, artifactID, tag, limit)
-	if err != nil {
-		return nil, err
-	}
-
-	return artifactVersionsDbToPb(versions)
 }
 
 type artifactSource string
