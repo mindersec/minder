@@ -81,36 +81,31 @@ func NewProfileTable() table.Table {
 // RenderProfileTable renders the profile table
 func RenderProfileTable(p *minderv1.Profile, t table.Table) {
 	// repositories
-	renderEntityRuleSets(minderv1.RepositoryEntity, p.Repository, t)
+	renderProfileRow(minderv1.RepositoryEntity, p.Repository, t)
 
 	// build_environments
-	renderEntityRuleSets(minderv1.BuildEnvironmentEntity, p.BuildEnvironment, t)
+	renderProfileRow(minderv1.BuildEnvironmentEntity, p.BuildEnvironment, t)
 
 	// artifacts
-	renderEntityRuleSets(minderv1.ArtifactEntity, p.Artifact, t)
+	renderProfileRow(minderv1.ArtifactEntity, p.Artifact, t)
 
 	// pull request
-	renderEntityRuleSets(minderv1.PullRequestEntity, p.PullRequest, t)
+	renderProfileRow(minderv1.PullRequestEntity, p.PullRequest, t)
 }
 
-func renderEntityRuleSets(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
+func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
 	for idx := range rs {
 		rule := rs[idx]
+		params := marshalStructOrEmpty(rule.Params)
+		def := marshalStructOrEmpty(rule.Def)
 
-		renderRuleTable(entType, rule, t)
+		t.AddRow(
+			entType.String(),
+			rule.Type,
+			params,
+			def,
+		)
 	}
-}
-
-func renderRuleTable(entType minderv1.EntityType, rule *minderv1.Profile_Rule, t table.Table) {
-	params := marshalStructOrEmpty(rule.Params)
-	def := marshalStructOrEmpty(rule.Def)
-
-	t.AddRow(
-		entType.String(),
-		rule.Type,
-		params,
-		def,
-	)
 }
 
 // NewProfileStatusTable creates a new table for rendering profile status
