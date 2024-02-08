@@ -202,13 +202,13 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_Fil
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	regex := regexp.MustCompile(`@@ -\d+,\d+ \+(\d+),\d+ @@`)
 
-	var currentLineNumber int
+	var currentLineNumber int64
 	var err error
 	for scanner.Scan() {
 		line := scanner.Text()
 
 		if matches := regex.FindStringSubmatch(line); matches != nil {
-			currentLineNumber, err = strconv.Atoi(matches[1])
+			currentLineNumber, err = strconv.ParseInt(matches[1], 10, 32)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing line number from the hunk header: %w", err)
 			}

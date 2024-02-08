@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package application contains the application logic for the homoglyphs rule type
 package application
 
 import (
