@@ -2343,6 +2343,42 @@ func local_request_PermissionsService_RemoveRole_0(ctx context.Context, marshale
 
 }
 
+var (
+	filter_ProvidersService_ListProviders_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_ProvidersService_ListProviders_0(ctx context.Context, marshaler runtime.Marshaler, client ProvidersServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListProvidersRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProvidersService_ListProviders_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListProviders(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_ProvidersService_ListProviders_0(ctx context.Context, marshaler runtime.Marshaler, server ProvidersServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListProvidersRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ProvidersService_ListProviders_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListProviders(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 // RegisterHealthServiceHandlerServer registers the http handlers for service HealthService to "mux".
 // UnaryRPC     :call HealthServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -3500,6 +3536,40 @@ func RegisterPermissionsServiceHandlerServer(ctx context.Context, mux *runtime.S
 		}
 
 		forward_PermissionsService_RemoveRole_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+// RegisterProvidersServiceHandlerServer registers the http handlers for service ProvidersService to "mux".
+// UnaryRPC     :call ProvidersServiceServer directly.
+// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterProvidersServiceHandlerFromEndpoint instead.
+func RegisterProvidersServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ProvidersServiceServer) error {
+
+	mux.Handle("GET", pattern_ProvidersService_ListProviders_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProvidersService/ListProviders", runtime.WithHTTPPathPattern("/api/v1/providers"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_ProvidersService_ListProviders_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ProvidersService_ListProviders_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -4963,4 +5033,75 @@ var (
 	forward_PermissionsService_AssignRole_0 = runtime.ForwardResponseMessage
 
 	forward_PermissionsService_RemoveRole_0 = runtime.ForwardResponseMessage
+)
+
+// RegisterProvidersServiceHandlerFromEndpoint is same as RegisterProvidersServiceHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterProvidersServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.DialContext(ctx, endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterProvidersServiceHandler(ctx, mux, conn)
+}
+
+// RegisterProvidersServiceHandler registers the http handlers for service ProvidersService to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterProvidersServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterProvidersServiceHandlerClient(ctx, mux, NewProvidersServiceClient(conn))
+}
+
+// RegisterProvidersServiceHandlerClient registers the http handlers for service ProvidersService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ProvidersServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ProvidersServiceClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "ProvidersServiceClient" to call the correct interceptors.
+func RegisterProvidersServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ProvidersServiceClient) error {
+
+	mux.Handle("GET", pattern_ProvidersService_ListProviders_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProvidersService/ListProviders", runtime.WithHTTPPathPattern("/api/v1/providers"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_ProvidersService_ListProviders_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_ProvidersService_ListProviders_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+var (
+	pattern_ProvidersService_ListProviders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "providers"}, ""))
+)
+
+var (
+	forward_ProvidersService_ListProviders_0 = runtime.ForwardResponseMessage
 )

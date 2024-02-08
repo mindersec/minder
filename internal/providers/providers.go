@@ -29,6 +29,7 @@ import (
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -187,4 +188,22 @@ func (pb *ProviderBuilder) GetRepoLister(ctx context.Context) (provinfv1.RepoLis
 
 	// TODO: We'll need to add support for other providers here
 	return nil, fmt.Errorf("provider does not implement repo lister")
+}
+
+// DBToPBType converts a database provider type to a protobuf provider type.
+func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
+	switch t {
+	case db.ProviderTypeGit:
+		return minderv1.ProviderType_PROVIDER_TYPE_GIT, true
+	case db.ProviderTypeGithub:
+		return minderv1.ProviderType_PROVIDER_TYPE_GITHUB, true
+	case db.ProviderTypeRest:
+		return minderv1.ProviderType_PROVIDER_TYPE_REST, true
+	case db.ProviderTypeRepoLister:
+		return minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER, true
+	case db.ProviderTypeOci:
+		return minderv1.ProviderType_PROVIDER_TYPE_OCI, true
+	default:
+		return minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
+	}
 }

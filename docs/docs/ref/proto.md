@@ -85,6 +85,16 @@ replies with OK
 | DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
+<a name="minder-v1-ProvidersService"></a>
+
+#### ProvidersService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
+
+
 <a name="minder-v1-RepositoryService"></a>
 
 #### RepositoryService
@@ -796,6 +806,31 @@ list profiles
 | profiles | [Profile](#minder-v1-Profile) | repeated |  |
 
 
+<a name="minder-v1-ListProvidersRequest"></a>
+
+#### ListProvidersRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the providers are evaluated. |
+| limit | [int32](#int32) |  | limit is the maximum number of providers to return. |
+| cursor | [string](#string) |  | cursor is the cursor to use for the page of results, empty if at the beginning |
+
+
+<a name="minder-v1-ListProvidersResponse"></a>
+
+#### ListProvidersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| providers | [Provider](#minder-v1-Provider) | repeated |  |
+| cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
+
+
 <a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>
 
 #### ListRemoteRepositoriesFromProviderRequest
@@ -1009,6 +1044,21 @@ Project API Objects
 | description | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+<a name="minder-v1-Provider"></a>
+
+#### Provider
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the provider. |
+| project | [string](#string) |  | project is the project where the provider is. |
+| version | [string](#string) |  | version is the version of the provider. |
+| implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
+| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1611,6 +1661,21 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_UNSPECIFIED | 0 |  |
 | OBJECT_OWNER_PROJECT | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
+
+
+<a name="minder-v1-ProviderType"></a>
+
+### ProviderType
+ProviderType is the type of the provider.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PROVIDER_TYPE_UNSPECIFIED | 0 |  |
+| PROVIDER_TYPE_GITHUB | 1 |  |
+| PROVIDER_TYPE_REST | 2 |  |
+| PROVIDER_TYPE_GIT | 3 |  |
+| PROVIDER_TYPE_OCI | 4 |  |
+| PROVIDER_TYPE_REPO_LISTER | 5 |  |
 
 
 <a name="minder-v1-Relation"></a>
