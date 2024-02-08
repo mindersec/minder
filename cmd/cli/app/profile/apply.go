@@ -57,6 +57,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	cmd.SilenceUsage = true
 
 	table := NewProfileTable()
+	alreadyExists := false
 
 	applyFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
@@ -77,6 +78,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 			return nil, err
 		}
 		// The profile already exists, so update it
+		alreadyExists = true
 		updateResp, err := client.UpdateProfile(ctx, &minderv1.UpdateProfileRequest{
 			Profile: p,
 		})
@@ -86,12 +88,21 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 		return updateResp.GetProfile(), nil
 	}
+
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	if _, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, applyFunc); err != nil {
+	profile, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, applyFunc)
+	if err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error applying profile from %s", f), err)
 	}
 
+	// display the name above the table
+	// use a different message depending on whether this is a new project
+	if alreadyExists {
+		cmd.Println("Successfully updated existing profile named:", profile.GetName())
+	} else {
+		cmd.Println("Successfully created new profile named:", profile.GetName())
+	}
 	table.Render()
 	return nil
 }
