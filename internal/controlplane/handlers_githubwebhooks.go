@@ -45,24 +45,10 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	githubprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
-
-type tagIsASignatureError struct {
-	message      string
-	signatureTag string
-}
-
-func (e *tagIsASignatureError) Error() string {
-	return e.message
-}
-
-func newTagIsASignatureError(msg, signatureTag string) *tagIsASignatureError {
-	return &tagIsASignatureError{message: msg, signatureTag: signatureTag}
-}
 
 // errRepoNotFound is returned when a repository is not found
 var errRepoNotFound = errors.New("repository not found")
@@ -506,10 +492,6 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	if err != nil {
-		return fmt.Errorf("error upserting artifact from payload: %w", err)
-	}
-
 	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ID, dbArtifact.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifact with versions: %w", err)
@@ -680,11 +662,8 @@ func gatherArtifact(
 		return nil, fmt.Errorf("error gatherinfo artifact info: %w", err)
 	}
 
-	var tagIsSigErr *tagIsASignatureError
 	version, err := gatherArtifactVersionInfo(ctx, cli, payload, artifact.Owner, artifact.Name)
-	if errors.As(err, &tagIsSigErr) {
-		return nil, errArtifactNotFound
-	} else if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
 	}
 	artifact.Versions = []*pb.ArtifactVersion{version}
@@ -711,11 +690,7 @@ func updateArtifactVersionFromRegistry(
 	if len(tags) == 0 {
 		return errArtifactVersionSkipped
 	}
-	sigTag := verifier.GetSignatureTag(tags)
-	if sigTag != "" {
-		// handle the case where a signature arrives later than the image
-		return newTagIsASignatureError("version is a signature", sigTag)
-	}
+
 	sort.Strings(tags)
 
 	version.Tags = tags
