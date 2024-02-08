@@ -141,6 +141,11 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to parse issuer URL: %v", err)
 	}
 
+	err = DeleteUser(ctx, s.store, s.authzClient, subject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
+	}
+
 	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
 
 	clientSecret, err := s.cfg.Identity.Server.GetClientSecret()
@@ -174,11 +179,6 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	if resp.StatusCode != http.StatusNoContent {
 		return nil, status.Errorf(codes.Internal, "unexpected status code when deleting account: %d", resp.StatusCode)
-	}
-
-	err = DeleteUser(ctx, s.store, s.authzClient, subject)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
 	return &pb.DeleteUserResponse{}, nil
