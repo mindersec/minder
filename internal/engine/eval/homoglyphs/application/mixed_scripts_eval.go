@@ -56,7 +56,7 @@ func NewMixedScriptEvaluator(pbuild *providers.ProviderBuilder) (*MixedScriptsEv
 	}, nil
 }
 
-func (mse *MixedScriptsEvaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (mse *MixedScriptsEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
 	if res == nil {
 		return fmt.Errorf("result is nil")
 	}
