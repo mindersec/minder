@@ -59,7 +59,6 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	cmd.SilenceUsage = true
 
 	table := NewProfileTable()
-	var profileName string
 
 	createFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		if enableAlerts {
@@ -77,21 +76,17 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 			return nil, err
 		}
 
-		// capture the profile name from this closure
-		// doing this because there is no one place in this codepath where we
-		// have both the cmd and profile structs in the same scope
-		profileName = p.GetName()
-
 		return resp.GetProfile(), nil
 	}
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	if err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, createFunc); err != nil {
+	profile, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, createFunc)
+	if err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error creating profile from %s", f), err)
 	}
 
 	// display the name above the table
-	cmd.Println("Successfully created new profile named:", profileName)
+	cmd.Println("Successfully created new profile named:", profile.GetName())
 	table.Render()
 	return nil
 }

@@ -31,29 +31,29 @@ import (
 // ExecOnOneProfile is a helper function to execute a function on a single profile
 func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.Reader, project string, provider string,
 	exec func(context.Context, string, *minderv1.Profile) (*minderv1.Profile, error),
-) error {
+) (*minderv1.Profile, error) {
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
 	defer cancel()
 
 	reader, closer, err := util.OpenFileArg(f, dashOpen)
 	if err != nil {
-		return fmt.Errorf("error opening file arg: %w", err)
+		return nil, fmt.Errorf("error opening file arg: %w", err)
 	}
 	defer closer()
 
 	p, err := parseProfile(reader, project, provider)
 	if err != nil {
-		return fmt.Errorf("error parsing profile: %w", err)
+		return nil, fmt.Errorf("error parsing profile: %w", err)
 	}
 
 	// create a rule
 	profile, err := exec(ctx, f, p)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	RenderProfileTable(profile, t)
-	return nil
+	return profile, nil
 }
 
 func parseProfile(r io.Reader, proj string, provider string) (*minderv1.Profile, error) {
