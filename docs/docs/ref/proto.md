@@ -911,6 +911,43 @@ ListRuleTypesResponse is the response to list rule types.
 | rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
+<a name="minder-v1-PrContents"></a>
+
+#### PrContents
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
+| files | [PrContents.File](#minder-v1-PrContents-File) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File"></a>
+
+#### PrContents.File
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| file_patch_url | [string](#string) |  |  |
+| patch_lines | [PrContents.File.Line](#minder-v1-PrContents-File-Line) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File-Line"></a>
+
+#### PrContents.File.Line
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| line_number | [int32](#int32) |  |  |
+| content | [string](#string) |  |  |
+
+
 <a name="minder-v1-PrDependencies"></a>
 
 #### PrDependencies
@@ -1313,6 +1350,18 @@ endpoint and how we compare it to the rule.
 | rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 | trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | trusty is only used if the `trusty` type is selected. |
+| homoglyphs | [RuleType.Definition.Eval.Homoglyphs](#minder-v1-RuleType-Definition-Eval-Homoglyphs) | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
+
+
+<a name="minder-v1-RuleType-Definition-Eval-Homoglyphs"></a>
+
+#### RuleType.Definition.Eval.Homoglyphs
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>
