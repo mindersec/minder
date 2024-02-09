@@ -67,7 +67,7 @@ minder profile create -f profile.yaml
 
 Check the status of the profile:
 ```
-minder profile status list --profile github-profile
+minder profile status list --name github-profile
 ```
 If all registered repositories have secret scanning enabled, you will see the `OVERALL STATUS` is `Success`, otherwise the 
 overall status is `Failure`.
@@ -85,7 +85,7 @@ If secret scanning is not enabled, you will see `❌ Failure` instead of `✅ Su
 
 See a detailed view of which repositories satisfy the secret scanning rule:
 ```
-minder profile status list --profile github-profile --detailed
+minder profile status list --name github-profile --detailed
 ```
 
 ## Viewing alerts
