@@ -45,7 +45,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
 	format := viper.GetString("output")
-	all := viper.GetBool("detailed")
+	detailed := viper.GetBool("detailed")
 	ruleType := viper.GetString("ruleType")
 	ruleName := viper.GetString("ruleName")
 
@@ -62,7 +62,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 		Context:  &minderv1.Context{Provider: &provider, Project: &project},
 		Name:     profileName,
-		All:      all,
+		All:      detailed,
 		RuleType: ruleType,
 		RuleName: ruleName,
 	})
@@ -87,7 +87,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		table := profile.NewProfileStatusTable()
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
 		table.Render()
-		if all {
+		if detailed {
 			table = profile.NewRuleEvaluationsTable()
 			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table)
 			table.Render()

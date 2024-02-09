@@ -85,8 +85,9 @@ func execOnOneRuleType(
 		*rt.Context.Project,
 		*rt.Id,
 		rt.Name,
-		rt.Description,
+		cli.ConcatenateAndWrap(rt.Description, 20),
 	)
+
 	return nil
 }
 
@@ -132,9 +133,9 @@ func initializeTableForOne() table.Table {
 func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("ID", *rt.Id)
 	t.AddRow("Name", rt.Name)
+	t.AddRow("Description", rt.Description)
 	t.AddRow("Provider", *rt.Context.Provider)
 	t.AddRow("Project", *rt.Context.Project)
-	t.AddRow("Description", rt.Description)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
 	rem := "unsupported"
@@ -147,6 +148,6 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	if rt.Def.GetAlert() != nil {
 		alert = rt.Def.GetAlert().Type
 	}
-
 	t.AddRow("Alert", alert)
+	t.AddRow("Guidance", rt.Guidance)
 }
