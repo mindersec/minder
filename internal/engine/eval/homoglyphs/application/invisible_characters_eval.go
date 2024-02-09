@@ -35,6 +35,7 @@ type InvisibleCharactersEvaluator struct {
 	reviewHandler *communication.GhReviewPrHandler
 }
 
+// NewInvisibleCharactersEvaluator creates a new invisible characters evaluator
 func NewInvisibleCharactersEvaluator(pbuild *providers.ProviderBuilder) (*InvisibleCharactersEvaluator, error) {
 	if pbuild == nil {
 		return nil, fmt.Errorf("provider builder is nil")
@@ -51,6 +52,7 @@ func NewInvisibleCharactersEvaluator(pbuild *providers.ProviderBuilder) (*Invisi
 	}, nil
 }
 
+// Eval evaluates the invisible characters rule type
 func (ice *InvisibleCharactersEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
 	if res == nil {
 		return fmt.Errorf("result is nil")

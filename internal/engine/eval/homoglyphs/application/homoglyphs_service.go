@@ -24,13 +24,18 @@ import (
 )
 
 const (
+	// HomoglyphsEvalType is the type of the homoglyphs evaluator
 	HomoglyphsEvalType = "homoglyphs"
 
 	invisibleCharacters = "invisible_characters"
 	mixedScript         = "mixed_scripts"
 )
 
-func NewHomoglyphsEvaluator(reh *pb.RuleType_Definition_Eval_Homoglyphs, pbuild *providers.ProviderBuilder) (interfaces.Evaluator, error) {
+// NewHomoglyphsEvaluator creates a new homoglyphs evaluator
+func NewHomoglyphsEvaluator(
+	reh *pb.RuleType_Definition_Eval_Homoglyphs,
+	pbuild *providers.ProviderBuilder,
+) (interfaces.Evaluator, error) {
 	if pbuild == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}

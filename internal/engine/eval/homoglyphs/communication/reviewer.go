@@ -28,6 +28,7 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// GhReviewPrHandler is a GitHub pull request review handler
 type GhReviewPrHandler struct {
 	logger zerolog.Logger
 
@@ -38,12 +39,14 @@ type GhReviewPrHandler struct {
 	comments     []*github.DraftReviewComment
 }
 
+// NewGhReviewPrHandler creates a new GitHub pull request review handler
 func NewGhReviewPrHandler(ghClient provifv1.GitHub) *GhReviewPrHandler {
 	return &GhReviewPrHandler{
 		ghClient: ghClient,
 	}
 }
 
+// SubmitReview submits a review to a pull request
 func (ra *GhReviewPrHandler) SubmitReview(ctx context.Context, reviewText string) error {
 	if err := ra.findPreviousReview(ctx); err != nil {
 		return fmt.Errorf("could not find previous review: %w", err)
@@ -76,6 +79,7 @@ func (ra *GhReviewPrHandler) SubmitReview(ctx context.Context, reviewText string
 	return nil
 }
 
+// Hydrate hydrates the handler with a pull request
 func (ra *GhReviewPrHandler) Hydrate(ctx context.Context, pr *pb.PullRequest) {
 	logger := zerolog.Ctx(ctx).With().
 		Int32("pull-number", pr.Number).
@@ -89,10 +93,12 @@ func (ra *GhReviewPrHandler) Hydrate(ctx context.Context, pr *pb.PullRequest) {
 	ra.minderReview = nil
 }
 
+// AddComment adds a comment to the review
 func (ra *GhReviewPrHandler) AddComment(comment *github.DraftReviewComment) {
 	ra.comments = append(ra.comments, comment)
 }
 
+// GetComments returns the comments of the review
 func (ra *GhReviewPrHandler) GetComments() []*github.DraftReviewComment {
 	return ra.comments
 }

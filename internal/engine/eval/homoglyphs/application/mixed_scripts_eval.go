@@ -35,6 +35,7 @@ type MixedScriptsEvaluator struct {
 	reviewHandler *communication.GhReviewPrHandler
 }
 
+// NewMixedScriptEvaluator creates a new mixed scripts evaluator
 func NewMixedScriptEvaluator(pbuild *providers.ProviderBuilder) (*MixedScriptsEvaluator, error) {
 	if pbuild == nil {
 		return nil, fmt.Errorf("provider builder is nil")
@@ -56,6 +57,7 @@ func NewMixedScriptEvaluator(pbuild *providers.ProviderBuilder) (*MixedScriptsEv
 	}, nil
 }
 
+// Eval evaluates the mixed scripts rule type
 func (mse *MixedScriptsEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
 	if res == nil {
 		return fmt.Errorf("result is nil")
