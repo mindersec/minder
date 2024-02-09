@@ -10,6 +10,7 @@ tags:
   - name: UserService
   - name: ProfileService
   - name: PermissionsService
+  - name: ProvidersService
 consumes:
   - application/json
 produces:
@@ -808,6 +809,48 @@ paths:
           type: string
       tags:
         - ProfileService
+  /api/v1/providers:
+    get:
+      operationId: ProvidersService_ListProviders
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListProvidersResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: limit
+          description: limit is the maximum number of providers to return.
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: cursor
+          description: >-
+            cursor is the cursor to use for the page of results, empty if at the
+            beginning
+          in: query
+          required: false
+          type: string
+      tags:
+        - ProvidersService
   /api/v1/repositories:
     get:
       operationId: RepositoryService_ListRepositories2
@@ -2313,6 +2356,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Profile'
+  v1ListProvidersResponse:
+    type: object
+    properties:
+      providers:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1Provider'
+      cursor:
+        type: string
+        title: >-
+          cursor is the cursor to use for the next page of results, empty if at
+          the end
   v1ListRemoteRepositoriesFromProviderResponse:
     type: object
     properties:
@@ -2447,6 +2503,37 @@ definitions:
         type: string
         format: date-time
     title: Project API Objects
+  v1Provider:
+    type: object
+    properties:
+      name:
+        type: string
+        description: name is the name of the provider.
+      project:
+        type: string
+        description: project is the project where the provider is.
+      version:
+        type: string
+        description: version is the version of the provider.
+      implements:
+        type: array
+        items:
+          $ref: '#/definitions/v1ProviderType'
+        description: implements is the list of interfaces that the provider implements.
+      config:
+        type: object
+        description: config is the configuration of the provider.
+  v1ProviderType:
+    type: string
+    enum:
+      - PROVIDER_TYPE_UNSPECIFIED
+      - PROVIDER_TYPE_GITHUB
+      - PROVIDER_TYPE_REST
+      - PROVIDER_TYPE_GIT
+      - PROVIDER_TYPE_OCI
+      - PROVIDER_TYPE_REPO_LISTER
+    default: PROVIDER_TYPE_UNSPECIFIED
+    description: ProviderType is the type of the provider.
   v1RegisterRepoResult:
     type: object
     properties:
