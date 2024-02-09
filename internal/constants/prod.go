@@ -1,5 +1,3 @@
-//go:build !staging
-
 //
 // Copyright 2023 Stacklok, Inc.
 //
