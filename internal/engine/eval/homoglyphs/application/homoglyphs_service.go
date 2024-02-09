@@ -60,7 +60,12 @@ func NewHomoglyphsEvaluator(
 }
 
 // evaluateHomoglyphs is a helper function to evaluate the homoglyphs rule type
-func evaluateHomoglyphs(ctx context.Context, processor domain.HomoglyphProcessor, res *engif.Result, reviewHandler *communication.GhReviewPrHandler) error {
+func evaluateHomoglyphs(
+	ctx context.Context,
+	processor domain.HomoglyphProcessor,
+	res *engif.Result,
+	reviewHandler *communication.GhReviewPrHandler,
+) error {
 	if res == nil {
 		return fmt.Errorf("result is nil")
 	}

@@ -32,15 +32,18 @@ type MixedScriptsProcessor struct {
 	runeToScript map[rune]string
 }
 
+// FindViolations finds mixed scripts in the given line
 func (mse *MixedScriptsProcessor) FindViolations(line string) []*Violation {
 	return mse.FindMixedScripts(line)
 }
 
-func (mse *MixedScriptsProcessor) GetSubCommentText() string {
+// GetSubCommentText returns the sub comment text for mixed scripts
+func (_ *MixedScriptsProcessor) GetSubCommentText() string {
 	return "**Mixed Scripts Found:**\n\n"
 }
 
-func (mse *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string {
+// GetLineCommentText returns the line comment text for mixed scripts
+func (_ *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string {
 	if violation == nil {
 		return ""
 	}
@@ -48,11 +51,13 @@ func (mse *MixedScriptsProcessor) GetLineCommentText(violation *Violation) strin
 	return fmt.Sprintf("- Text: `%s`, Scripts: %v\n", violation.mixedScript.text, violation.mixedScript.scriptsFound)
 }
 
-func (mse *MixedScriptsProcessor) GetPassedReviewText() string {
+// GetPassedReviewText returns the passed review text for mixed scripts
+func (_ *MixedScriptsProcessor) GetPassedReviewText() string {
 	return util.NoMixedScriptsFoundText
 }
 
-func (mse *MixedScriptsProcessor) GetFailedReviewText() string {
+// GetFailedReviewText returns the failed review text for mixed scripts
+func (_ *MixedScriptsProcessor) GetFailedReviewText() string {
 	return util.MixedScriptsFoundText
 }
 

@@ -34,15 +34,18 @@ func NewInvisibleCharactersProcessor() HomoglyphProcessor {
 	}
 }
 
+// FindViolations finds invisible characters in the given line
 func (ice *InvisibleCharactersProcessor) FindViolations(line string) []*Violation {
 	return ice.FindInvisibleCharacters(line)
 }
 
-func (ice *InvisibleCharactersProcessor) GetSubCommentText() string {
+// GetSubCommentText returns the sub comment text for invisible characters
+func (_ *InvisibleCharactersProcessor) GetSubCommentText() string {
 	return "**Invisible Characters Found:**\n\n"
 }
 
-func (ice *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) string {
+// GetLineCommentText returns the line comment text for invisible characters
+func (_ *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) string {
 	if violation == nil {
 		return ""
 	}
@@ -50,11 +53,13 @@ func (ice *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation
 	return fmt.Sprintf("- `%U` \n", violation.invisibleChar)
 }
 
-func (ice *InvisibleCharactersProcessor) GetFailedReviewText() string {
+// GetFailedReviewText returns the failed review text for invisible characters
+func (_ *InvisibleCharactersProcessor) GetFailedReviewText() string {
 	return util.InvisibleCharsFoundText
 }
 
-func (ice *InvisibleCharactersProcessor) GetPassedReviewText() string {
+// GetPassedReviewText returns the passed review text for invisible characters
+func (_ *InvisibleCharactersProcessor) GetPassedReviewText() string {
 	return util.NoInvisibleCharsFoundText
 }
 
