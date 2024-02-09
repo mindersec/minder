@@ -31,6 +31,8 @@ const (
 	ProfileSettings TableLayout = "profile_settings"
 	// Profile is the profile table layout
 	Profile TableLayout = "profile"
+	// ProviderList is the provider list table layout
+	ProviderList TableLayout = "provider_list"
 	// RepoList is the repo list table layout
 	RepoList TableLayout = "repolist"
 	// ProfileStatus is the profile status table layout

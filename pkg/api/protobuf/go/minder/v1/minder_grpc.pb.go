@@ -1703,3 +1703,93 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "minder/v1/minder.proto",
 }
+
+const (
+	ProvidersService_ListProviders_FullMethodName = "/minder.v1.ProvidersService/ListProviders"
+)
+
+// ProvidersServiceClient is the client API for ProvidersService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ProvidersServiceClient interface {
+	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
+}
+
+type providersServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewProvidersServiceClient(cc grpc.ClientConnInterface) ProvidersServiceClient {
+	return &providersServiceClient{cc}
+}
+
+func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error) {
+	out := new(ListProvidersResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_ListProviders_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ProvidersServiceServer is the server API for ProvidersService service.
+// All implementations must embed UnimplementedProvidersServiceServer
+// for forward compatibility
+type ProvidersServiceServer interface {
+	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
+	mustEmbedUnimplementedProvidersServiceServer()
+}
+
+// UnimplementedProvidersServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProvidersServiceServer struct {
+}
+
+func (UnimplementedProvidersServiceServer) ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProviders not implemented")
+}
+func (UnimplementedProvidersServiceServer) mustEmbedUnimplementedProvidersServiceServer() {}
+
+// UnsafeProvidersServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProvidersServiceServer will
+// result in compilation errors.
+type UnsafeProvidersServiceServer interface {
+	mustEmbedUnimplementedProvidersServiceServer()
+}
+
+func RegisterProvidersServiceServer(s grpc.ServiceRegistrar, srv ProvidersServiceServer) {
+	s.RegisterService(&ProvidersService_ServiceDesc, srv)
+}
+
+func _ProvidersService_ListProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProvidersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).ListProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_ListProviders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).ListProviders(ctx, req.(*ListProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ProvidersService_ServiceDesc is the grpc.ServiceDesc for ProvidersService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ProvidersService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.ProvidersService",
+	HandlerType: (*ProvidersServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListProviders",
+			Handler:    _ProvidersService_ListProviders_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
