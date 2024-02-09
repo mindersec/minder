@@ -47,10 +47,6 @@ KO_PLATFORMS=linux/amd64,linux/arm64
 # Helm package version
 HELM_PACKAGE_VERSION?=0.1.0
 
-# Build environment
-TARGET_ENV?=staging
-BUILDTAGS?=$(TARGET_ENV)
-
 default: help
 
 .PHONY: help
