@@ -16,9 +16,13 @@
 package diff
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -76,7 +80,7 @@ func (di *Diff) GetConfig() protoreflect.ProtoMessage {
 	return di.cfg
 }
 
-// Ingest ingests a pull request and returns a list of dependencies
+// Ingest ingests a diff from a pull request in accordance with its type
 func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
@@ -93,39 +97,74 @@ func (di *Diff) Ingest(
 		Str("repo-name", pr.RepoName).
 		Logger()
 
-	allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
-
 	page := 0
-	for {
-		prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
-		if err != nil {
-			return nil, fmt.Errorf("error getting pull request files: %w", err)
-		}
-
-		for _, file := range prFiles {
-			fileDiffs, err := di.ingestFile(file.GetFilename(), file.GetPatch(), file.GetRawURL(), logger)
+	switch di.cfg.GetType() {
+	case "", pb.DiffTypeDep:
+		allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
+		for {
+			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 			if err != nil {
-				return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+				return nil, fmt.Errorf("error getting pull request files: %w", err)
 			}
-			allDiffs = append(allDiffs, fileDiffs...)
+
+			for _, file := range prFiles {
+				fileDiffs, err := di.ingestFileForDepDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL(), logger)
+				if err != nil {
+					return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+				}
+				allDiffs = append(allDiffs, fileDiffs...)
+			}
+
+			if resp.NextPage == 0 {
+				break
+			}
+
+			page = resp.NextPage
 		}
 
-		if resp.NextPage == 0 {
-			break
+		return &engif.Result{
+			Object: pb.PrDependencies{
+				Pr:   pr,
+				Deps: allDiffs,
+			},
+		}, nil
+
+	case pb.DiffTypeFull:
+		allDiffs := make([]*pb.PrContents_File, 0)
+		for {
+			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
+			if err != nil {
+				return nil, fmt.Errorf("error getting pull request files: %w", err)
+			}
+
+			for _, file := range prFiles {
+				fileDiffs, err := ingestFileForFullDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL())
+				if err != nil {
+					return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+				}
+				allDiffs = append(allDiffs, fileDiffs)
+			}
+
+			if resp.NextPage == 0 {
+				break
+			}
+
+			page = resp.NextPage
 		}
 
-		page = resp.NextPage
+		return &engif.Result{
+			Object: pb.PrContents{
+				Pr:    pr,
+				Files: allDiffs,
+			},
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unknown diff type")
 	}
-
-	return &engif.Result{
-		Object: pb.PrDependencies{
-			Pr:   pr,
-			Deps: allDiffs,
-		},
-	}, nil
 }
 
-func (di *Diff) ingestFile(
+func (di *Diff) ingestFileForDepDiff(
 	filename, patchContents, patchUrl string,
 	logger zerolog.Logger,
 ) ([]*pb.PrDependencies_ContextualDependency, error) {
@@ -152,6 +191,49 @@ func (di *Diff) ingestFile(
 	}
 
 	return batchCtxDeps, nil
+}
+
+// ingestFileForFullDiff processes a given file's patch from a pull request.
+// It scans through the patch line by line, identifying the changes made.
+// If it's a hunk header, it extracts the starting line number. If it's an addition, it records the line content and its number.
+// The function also increments the line number for context lines (lines that provide context but haven't been modified).
+func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_File, error) {
+	var result []*pb.PrContents_File_Line
+
+	scanner := bufio.NewScanner(strings.NewReader(patch))
+	regex := regexp.MustCompile(`@@ -\d+,\d+ \+(\d+),\d+ @@`)
+
+	var currentLineNumber int64
+	var err error
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if matches := regex.FindStringSubmatch(line); matches != nil {
+			currentLineNumber, err = strconv.ParseInt(matches[1], 10, 32)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing line number from the hunk header: %w", err)
+			}
+		} else if strings.HasPrefix(line, "+") {
+			result = append(result, &pb.PrContents_File_Line{
+				Content:    line[1:],
+				LineNumber: int32(currentLineNumber),
+			})
+
+			currentLineNumber++
+		} else if !strings.HasPrefix(line, "-") {
+			currentLineNumber++
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading patch: %w", err)
+	}
+
+	return &pb.PrContents_File{
+		Name:         filename,
+		FilePatchUrl: patchUrl,
+		PatchLines:   result,
+	}, nil
 }
 
 func (di *Diff) getEcosystemForFile(filename string) DependencyEcosystem {
