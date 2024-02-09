@@ -17,10 +17,14 @@ package auth
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -58,16 +62,32 @@ func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
 	t.Render()
 }
 
-func renderUserInfoWhoami(conn string, user *minderv1.GetUserResponse) {
-	t := table.New(table.Simple, layouts.KeyValue, nil)
-	t.AddRow("Subject", user.GetUser().GetIdentitySubject())
-	t.AddRow("Created At", user.GetUser().GetCreatedAt().AsTime().String())
-	t.AddRow("Updated At", user.GetUser().GetUpdatedAt().AsTime().String())
-	t.AddRow("Minder Server", conn)
-	for _, project := range getProjectTableRows(user.Projects) {
-		t.AddRow(project...)
+func renderUserInfoWhoami(conn string, outWriter io.Writer, format string, user *minderv1.GetUserResponse) {
+	switch format {
+	case app.Table:
+		fmt.Fprintln(outWriter, cli.Header.Render("Here are your details:"))
+		t := table.New(table.Simple, layouts.KeyValue, nil)
+		t.AddRow("Subject", user.GetUser().GetIdentitySubject())
+		t.AddRow("Created At", user.GetUser().GetCreatedAt().AsTime().String())
+		t.AddRow("Updated At", user.GetUser().GetUpdatedAt().AsTime().String())
+		t.AddRow("Minder Server", conn)
+		for _, project := range getProjectTableRows(user.Projects) {
+			t.AddRow(project...)
+		}
+		t.Render()
+	case app.JSON:
+		out, err := util.GetJsonFromProto(user)
+		if err != nil {
+			fmt.Fprintf(outWriter, "Error converting to JSON: %v\n", err)
+		}
+		fmt.Fprintln(outWriter, out)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(user)
+		if err != nil {
+			fmt.Fprintf(outWriter, "Error converting to YAML: %v\n", err)
+		}
+		fmt.Fprintln(outWriter, out)
 	}
-	t.Render()
 }
 
 func getProjectTableRows(projects []*minderv1.Project) [][]string {

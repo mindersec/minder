@@ -42,6 +42,8 @@ func New(layout layouts.TableLayout, header []string) *Table {
 		profileSettingsLayout(table)
 	case layouts.Profile:
 		profileLayout(table)
+	case layouts.ProviderList:
+		providerListLayout(table)
 	case layouts.RepoList:
 		repoListLayout(table)
 	case layouts.ProfileStatus:
@@ -142,5 +144,13 @@ func ruleTypeLayout(table *tablewriter.Table) {
 func roleListLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{"Name", "Description"})
+	table.SetAutoWrapText(false)
+}
+
+func providerListLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Name", "Project", "Version", "Implements"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
+	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
 }

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // cursorDelimiter is the delimiter used to encode/decode cursors
@@ -78,4 +79,39 @@ func DecodeValue(value string) (string, error) {
 		return "", fmt.Errorf("error decoding cursor: %w", err)
 	}
 	return string(decoded), nil
+}
+
+// ProviderCursor is the the creation time of the provider
+type ProviderCursor struct {
+	// CreatedAt is the creation time of the provider
+	CreatedAt time.Time
+}
+
+// NewProviderCursor creates a new ProviderCursor from an encoded cursor
+func NewProviderCursor(encodedCursor string) (*ProviderCursor, error) {
+	if encodedCursor == "" {
+		return &ProviderCursor{}, nil
+	}
+
+	cursor, err := DecodeValue(encodedCursor)
+	if err != nil {
+		return nil, err
+	}
+
+	// parse time with as much precision as possible
+	creationTime, err := time.Parse(time.RFC3339Nano, cursor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProviderCursor{
+		CreatedAt: creationTime,
+	}, nil
+}
+
+func (c *ProviderCursor) String() string {
+	if c == nil {
+		return ""
+	}
+	return EncodeValue(c.CreatedAt.Format(time.RFC3339Nano))
 }

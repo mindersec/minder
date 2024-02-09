@@ -1,22 +1,22 @@
 ---
-title: minder auth whoami
+title: minder provider list
 ---
-## minder auth whoami
+## minder provider list
 
-whoami for current user
+List the providers available in a specific project
 
 ### Synopsis
 
-whoami gets information about the current user from the minder server
+The minder provider list command lists the providers available in a specific project.
 
 ```
-minder auth whoami [flags]
+minder provider list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help            help for whoami
+  -h, --help            help for list
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
@@ -29,9 +29,11 @@ minder auth whoami [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO
 
-* [minder auth](minder_auth.md)	 - Authorize and manage accounts within a minder control plane
+* [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
 

@@ -643,6 +643,19 @@ service PermissionsService {
     }
 }
 
+service ProvidersService {
+    rpc ListProviders (ListProvidersRequest) returns (ListProvidersResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
+}
+
 message CheckHealthRequest {
 }
 
@@ -1505,4 +1518,47 @@ message RoleAssignment {
     optional string project = 4;
 
     reserved 3; // deprecated context
+}
+
+message ListProvidersRequest {
+    // context is the context in which the providers are evaluated.
+    Context context = 1;
+
+    // limit is the maximum number of providers to return.
+    int32 limit = 2;
+
+    // cursor is the cursor to use for the page of results, empty if at the beginning
+    string cursor = 3;
+}
+
+message ListProvidersResponse {
+    repeated Provider providers = 1;
+
+    // cursor is the cursor to use for the next page of results, empty if at the end
+    string cursor = 2;
+}
+
+// ProviderType is the type of the provider.
+enum ProviderType {
+    PROVIDER_TYPE_UNSPECIFIED = 0;
+    PROVIDER_TYPE_GITHUB = 1 [(name) = "github"];
+    PROVIDER_TYPE_REST = 2 [(name) = "rest"];
+    PROVIDER_TYPE_GIT = 3 [(name) = "git"];
+    PROVIDER_TYPE_OCI = 4 [(name) = "oci"];
+    PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
+}
+
+message Provider {
+    // name is the name of the provider.
+    string name = 1;
+    // project is the project where the provider is.
+    string project = 2;
+    // version is the version of the provider.
+    string version = 3;
+
+    // implements is the list of interfaces that the provider implements.
+    repeated ProviderType implements = 4;
+
+    // config is the configuration of the provider.
+    google.protobuf.Struct config = 5;
 }

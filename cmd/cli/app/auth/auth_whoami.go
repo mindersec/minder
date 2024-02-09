@@ -17,10 +17,14 @@ package auth
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -46,11 +50,13 @@ func whoamiCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		return cli.MessageAndError("Error getting information for user", err)
 	}
 
-	cmd.Println(cli.Header.Render("Here are your details:"))
-	renderUserInfoWhoami(conn.Target(), userInfo)
+	renderUserInfoWhoami(conn.Target(), cmd.OutOrStderr(), viper.GetString("output"), userInfo)
 	return nil
 }
 
 func init() {
 	AuthCmd.AddCommand(whoamiCmd)
+
+	whoamiCmd.Flags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 }

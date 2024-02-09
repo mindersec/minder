@@ -80,6 +80,7 @@ func (di *Diff) GetConfig() protoreflect.ProtoMessage {
 	return di.cfg
 }
 
+// Ingest ingests a diff from a pull request in accordance with its type
 func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
