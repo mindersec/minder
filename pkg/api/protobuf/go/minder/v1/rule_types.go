@@ -31,6 +31,9 @@ const (
 const (
 	// DiffTypeDep is the diff type for a dependency
 	DiffTypeDep = "dep"
+
+	// DiffTypeFull is the diff type for including all files from the PR diff
+	DiffTypeFull = "full"
 )
 
 // ParseRuleType parses a rule type from a reader

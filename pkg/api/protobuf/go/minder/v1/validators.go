@@ -143,19 +143,12 @@ func (diffing *DiffType) Validate() error {
 		return fmt.Errorf("%w: diffing is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if diffing.getTypeOrDefault() != DiffTypeDep {
+	switch diffing.GetType() {
+	case "", DiffTypeDep, DiffTypeFull:
+		return nil
+	default:
 		return fmt.Errorf("%w: diffing type is invalid: %s", ErrInvalidRuleTypeDefinition, diffing.GetType())
 	}
-
-	return nil
-}
-
-func (diffing *DiffType) getTypeOrDefault() string {
-	if diffing.GetType() != "" {
-		return diffing.GetType()
-	}
-
-	return DiffTypeDep
 }
 
 func (p *Profile) getTypeWithDefault() string {

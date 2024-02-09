@@ -946,6 +946,43 @@ ListRuleTypesResponse is the response to list rule types.
 | rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
+<a name="minder-v1-PrContents"></a>
+
+#### PrContents
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
+| files | [PrContents.File](#minder-v1-PrContents-File) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File"></a>
+
+#### PrContents.File
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| file_patch_url | [string](#string) |  |  |
+| patch_lines | [PrContents.File.Line](#minder-v1-PrContents-File-Line) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File-Line"></a>
+
+#### PrContents.File.Line
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| line_number | [int32](#int32) |  |  |
+| content | [string](#string) |  |  |
+
+
 <a name="minder-v1-PrDependencies"></a>
 
 #### PrDependencies
