@@ -1379,7 +1379,7 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | e.g. https://staging.stacklok.dev/ |
+| endpoint | [string](#string) |  | e.g. https://api.trustypkg.dev/ |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-Vulncheck"></a>

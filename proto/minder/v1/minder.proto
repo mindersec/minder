@@ -1298,7 +1298,7 @@ message RuleType {
             }
 
             message Trusty {
-                // e.g. https://staging.stacklok.dev/
+                // e.g. https://api.trustypkg.dev/
                 string endpoint = 1;
             }
 
