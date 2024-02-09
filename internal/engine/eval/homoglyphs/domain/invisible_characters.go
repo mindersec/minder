@@ -16,7 +16,10 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain/resources"
+	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"
 )
 
 // InvisibleCharactersProcessor is a processor for the invisible characters rule type
@@ -25,19 +28,43 @@ type InvisibleCharactersProcessor struct {
 }
 
 // NewInvisibleCharactersProcessor creates a new InvisibleCharactersProcessor
-func NewInvisibleCharactersProcessor() *InvisibleCharactersProcessor {
+func NewInvisibleCharactersProcessor() HomoglyphProcessor {
 	return &InvisibleCharactersProcessor{
 		invisibleCharacters: resources.InvisibleCharacters,
 	}
 }
 
+func (ice *InvisibleCharactersProcessor) FindViolations(line string) []*Violation {
+	return ice.FindInvisibleCharacters(line)
+}
+
+func (ice *InvisibleCharactersProcessor) GetSubCommentText() string {
+	return "**Invisible Characters Found:**\n\n"
+}
+
+func (ice *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) string {
+	if violation == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("- `%U` \n", violation.invisibleChar)
+}
+
+func (ice *InvisibleCharactersProcessor) GetFailedReviewText() string {
+	return util.InvisibleCharsFoundText
+}
+
+func (ice *InvisibleCharactersProcessor) GetPassedReviewText() string {
+	return util.NoInvisibleCharsFoundText
+}
+
 // FindInvisibleCharacters checks for invisible characters in the given line
 // and returns a slice of runes representing the invisible characters found.
-func (ice *InvisibleCharactersProcessor) FindInvisibleCharacters(line string) []rune {
-	invisibleChars := make([]rune, 0)
+func (ice *InvisibleCharactersProcessor) FindInvisibleCharacters(line string) []*Violation {
+	invisibleChars := make([]*Violation, 0)
 	for _, r := range line {
 		if _, exists := ice.invisibleCharacters[r]; exists {
-			invisibleChars = append(invisibleChars, r)
+			invisibleChars = append(invisibleChars, &Violation{invisibleChar: r})
 		}
 	}
 

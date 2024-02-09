@@ -37,34 +37,40 @@ func TestFindMixedScripts(t *testing.T) {
 	tests := []struct {
 		description string
 		line        string
-		expected    []MixedScriptInfo
+		expected    []*Violation
 	}{
 		{
 			description: "No mixed scripts",
 			line:        "Hello World.",
-			expected:    []MixedScriptInfo{},
+			expected:    []*Violation{},
 		},
 		{
 			description: "Mixed scripts in one word",
 			line:        "Hello Бorld.",
-			expected: []MixedScriptInfo{
+			expected: []*Violation{
 				{
-					Text:         "Бorld.",
-					ScriptsFound: []string{"Cyrillic", "Latin"},
+					mixedScript: &MixedScriptInfo{
+						text:         "Бorld.",
+						scriptsFound: []string{"Cyrillic", "Latin"},
+					},
 				},
 			},
 		},
 		{
 			description: "Multiple words with mixed scripts",
 			line:        "AБ AБ.",
-			expected: []MixedScriptInfo{
+			expected: []*Violation{
 				{
-					Text:         "AБ",
-					ScriptsFound: []string{"Cyrillic", "Latin"},
+					mixedScript: &MixedScriptInfo{
+						text:         "AБ",
+						scriptsFound: []string{"Cyrillic", "Latin"},
+					},
 				},
 				{
-					Text:         "AБ.",
-					ScriptsFound: []string{"Cyrillic", "Latin"},
+					mixedScript: &MixedScriptInfo{
+						text:         "AБ.",
+						scriptsFound: []string{"Cyrillic", "Latin"},
+					},
 				},
 			},
 		},
@@ -77,7 +83,7 @@ func TestFindMixedScripts(t *testing.T) {
 
 			got := mse.FindMixedScripts(tt.line)
 			for i := range got {
-				sort.Strings(got[i].ScriptsFound)
+				sort.Strings(got[i].mixedScript.scriptsFound)
 			}
 
 			if !reflect.DeepEqual(got, tt.expected) {

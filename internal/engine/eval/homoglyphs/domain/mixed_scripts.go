@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+
+	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"
 )
 
 //go:embed resources/scripts.txt
@@ -30,8 +32,32 @@ type MixedScriptsProcessor struct {
 	runeToScript map[rune]string
 }
 
+func (mse *MixedScriptsProcessor) FindViolations(line string) []*Violation {
+	return mse.FindMixedScripts(line)
+}
+
+func (mse *MixedScriptsProcessor) GetSubCommentText() string {
+	return "**Mixed Scripts Found:**\n\n"
+}
+
+func (mse *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string {
+	if violation == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("- Text: `%s`, Scripts: %v\n", violation.mixedScript.text, violation.mixedScript.scriptsFound)
+}
+
+func (mse *MixedScriptsProcessor) GetPassedReviewText() string {
+	return util.NoMixedScriptsFoundText
+}
+
+func (mse *MixedScriptsProcessor) GetFailedReviewText() string {
+	return util.MixedScriptsFoundText
+}
+
 // NewMixedScriptsProcessor creates a new MixedScriptsProcessor
-func NewMixedScriptsProcessor() (*MixedScriptsProcessor, error) {
+func NewMixedScriptsProcessor() (HomoglyphProcessor, error) {
 	// 7th of Feb, 2024: https://www.unicode.org/Public/UCD/latest/ucd/Scripts.txt
 	runeToScript, err := loadScriptData("resources/scripts.txt")
 	if err != nil {
@@ -45,8 +71,8 @@ func NewMixedScriptsProcessor() (*MixedScriptsProcessor, error) {
 
 // MixedScriptInfo contains information about a word that mixes multiple scripts
 type MixedScriptInfo struct {
-	Text         string
-	ScriptsFound []string
+	text         string
+	scriptsFound []string
 }
 
 // FindMixedScripts returns a slice of MixedScriptInfo for words in the input string that
@@ -54,9 +80,9 @@ type MixedScriptInfo struct {
 // potential obfuscation in text. Words with only common script characters are not flagged.
 // E.g. “B. C“ is not considered mixed-scripts by default: it contains characters
 // from Latin and Common, but Common is excluded by default.
-func (mse *MixedScriptsProcessor) FindMixedScripts(line string) []MixedScriptInfo {
+func (mse *MixedScriptsProcessor) FindMixedScripts(line string) []*Violation {
 	words := strings.Fields(line)
-	mixedScripts := make([]MixedScriptInfo, 0)
+	mixedScripts := make([]*Violation, 0)
 
 	for _, word := range words {
 		scriptsFound := make(map[string]struct{})
@@ -73,10 +99,12 @@ func (mse *MixedScriptsProcessor) FindMixedScripts(line string) []MixedScriptInf
 			for script := range scriptsFound {
 				scripts = append(scripts, script)
 			}
-			mixedScripts = append(mixedScripts, MixedScriptInfo{
-				Text:         word,
-				ScriptsFound: scripts,
-			})
+
+			msi := &MixedScriptInfo{
+				text:         word,
+				scriptsFound: scripts,
+			}
+			mixedScripts = append(mixedScripts, &Violation{mixedScript: msi})
 		}
 	}
 

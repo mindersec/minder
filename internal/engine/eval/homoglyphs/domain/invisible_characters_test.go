@@ -17,6 +17,8 @@ package domain
 import (
 	"reflect"
 	"testing"
+
+	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain/resources"
 )
 
 func TestFindInvisibleCharacters(t *testing.T) {
@@ -25,26 +27,44 @@ func TestFindInvisibleCharacters(t *testing.T) {
 	tests := []struct {
 		description string
 		line        string
-		expected    []rune
+		expected    []*Violation
 	}{
 		{
 			description: "No invisible characters",
 			line:        "Hello, World!",
-			expected:    []rune{},
+			//expected:    []rune{},
+			expected: []*Violation{},
 		},
 		{
 			description: "Contains Zero Width Space",
 			line:        "Hello,\u200BWorld!",
-			expected:    []rune{'\u200B'},
+			expected: []*Violation{
+				{
+					invisibleChar: '\u200B',
+				},
+			},
 		},
 		{
 			description: "Multiple invisible characters",
 			line:        "Invisible\u200BText\u200C\u200D",
-			expected:    []rune{'\u200B', '\u200C', '\u200D'},
+			// expected:    []rune{'\u200B', '\u200C', '\u200D'},
+			expected: []*Violation{
+				{
+					invisibleChar: '\u200B',
+				},
+				{
+					invisibleChar: '\u200C',
+				},
+				{
+					invisibleChar: '\u200D',
+				},
+			},
 		},
 	}
 
-	processor := NewInvisibleCharactersProcessor()
+	processor := &InvisibleCharactersProcessor{
+		invisibleCharacters: resources.InvisibleCharacters,
+	}
 
 	for _, tt := range tests {
 		tt := tt
