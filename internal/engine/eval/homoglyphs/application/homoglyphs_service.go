@@ -99,7 +99,7 @@ func evaluateHomoglyphs(
 			commentBody.WriteString(processor.GetSubCommentText())
 
 			for _, v := range violations {
-				commentBody.WriteString(fmt.Sprintf(processor.GetLineCommentText(v)))
+				commentBody.WriteString(processor.GetLineCommentText(v))
 			}
 
 			reviewComment := &github.DraftReviewComment{

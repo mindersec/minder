@@ -32,8 +32,7 @@ func TestFindInvisibleCharacters(t *testing.T) {
 		{
 			description: "No invisible characters",
 			line:        "Hello, World!",
-			//expected:    []rune{},
-			expected: []*Violation{},
+			expected:    []*Violation{},
 		},
 		{
 			description: "Contains Zero Width Space",
@@ -47,7 +46,6 @@ func TestFindInvisibleCharacters(t *testing.T) {
 		{
 			description: "Multiple invisible characters",
 			line:        "Invisible\u200BText\u200C\u200D",
-			// expected:    []rune{'\u200B', '\u200C', '\u200D'},
 			expected: []*Violation{
 				{
 					invisibleChar: '\u200B',
