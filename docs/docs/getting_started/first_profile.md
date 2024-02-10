@@ -76,11 +76,11 @@ overall status is `Failure`.
 +--------------------------------------+----------------+----------------+----------------------+
 |                  ID                  |      NAME      | OVERALL STATUS |     LAST UPDATED     |
 +--------------------------------------+----------------+----------------+----------------------+
-| 1abcae55-5eb8-4d9e-847c-18e605fbc1cc | github-profile | ✅ Success     | 2023-11-06T17:42:04Z |
+| 1abcae55-5eb8-4d9e-847c-18e605fbc1cc | github-profile |    Success     | 2023-11-06T17:42:04Z |
 +--------------------------------------+----------------+----------------+----------------------+
 ```
 
-If secret scanning is not enabled, you will see `❌ Failure` instead of `✅ Success`.
+If secret scanning is not enabled, you will see `Failure` instead of `Success`.
 
 
 See a detailed view of which repositories satisfy the secret scanning rule:
