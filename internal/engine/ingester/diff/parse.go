@@ -160,7 +160,7 @@ func goParse(patch string) ([]*pb.Dependency, error) {
 			} else if strings.HasPrefix(lineContent, "\t") {
 				dep.Name = fields[0]
 				dep.Version = fields[1]
-			} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) == 5 {
+			} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
 				// For lines with version replacements, the new version is after the "=>"
 				// Assuming format is module path version => newModulePath newVersion
 				dep.Name = fields[3]
