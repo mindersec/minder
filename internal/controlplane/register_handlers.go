@@ -93,4 +93,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the Providers service
 	pb.RegisterProvidersServiceServer(s.grpcServer, s)
+
+	// Register the Projects service
+	pb.RegisterProjectsServiceServer(s.grpcServer, s)
 }
