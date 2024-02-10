@@ -17,32 +17,29 @@ version: v1
 type: profile
 name: acme-github-profile
 context:
-  organization: ACME
-  group: Root Group
+  provider: github
 repository:
-  - context: github
-    rules:
-      - type: secret_scanning
-        def:
-          enabled: true
-      - type: branch_protection
-        params:
-          branch: main
-        def:
-          required_pull_request_reviews:
-            dismiss_stale_reviews: true
-            require_code_owner_reviews: true
-            required_approving_review_count: 1
-          required_linear_history: true
-          allow_force_pushes: false
-          allow_deletions: false
-          allow_fork_syncing: true
+  - type: secret_scanning
+    def:
+      enabled: true
+  - type: branch_protection
+    params:
+      branch: main
+    def:
+      required_pull_request_reviews:
+        dismiss_stale_reviews: true
+        require_code_owner_reviews: true
+        required_approving_review_count: 1
+      required_linear_history: true
+      allow_force_pushes: false
+      allow_deletions: false
+      allow_fork_syncing: true
 ```
 
 The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles).
 
-This profile is checking that secret scanning is enabled for all repositories belonging to the ACME organization,
-and that the `main` branch is protected, requiring at least one approval from a code owner before landing a pull request.
+This profile is checking that secret scanning is enabled for all repositories and that the `main` branch is protected, 
+requiring at least one approval from a code owner before landing a pull request.
 
 You'll notice that this profile calls two different rules: `secret_scanning` and `branch_protection`.
 
@@ -59,7 +56,6 @@ type: rule-type
 name: secret_scanning
 context:
   provider: github
-  group: Root Group
 description: Verifies that secret scanning is enabled for a given repository.
 def:
   # Defines the section of the pipeline the rule will appear in.
@@ -98,7 +94,7 @@ def:
 
 The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles)
 
-This rule type is checking that secret scanning is enabled for all repositories belonging to the ACME organization.
+This rule type is checking that secret scanning is enabled for all repositories.
 
 The rule type defines how the upstream GitHub API is to be queried, and how the data is to be evaluated.
 It also defines how instances of this rule will be validated against the rule schema.
