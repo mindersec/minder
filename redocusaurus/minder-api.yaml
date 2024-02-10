@@ -436,14 +436,7 @@ paths:
           in: body
           required: true
           schema:
-            type: object
-            properties:
-              accessToken:
-                type: string
-              owner:
-                type: string
-              context:
-                $ref: '#/definitions/v1Context'
+            $ref: '#/definitions/OAuthServiceStoreProviderTokenBody'
       tags:
         - OAuthService
   /api/v1/health:
@@ -1240,12 +1233,7 @@ paths:
           in: body
           required: true
           schema:
-            type: object
-            properties:
-              repository:
-                $ref: '#/definitions/v1UpstreamRepositoryRef'
-              context:
-                $ref: '#/definitions/v1Context'
+            $ref: '#/definitions/RepositoryServiceRegisterRepositoryBody'
       tags:
         - RepositoryService
   /api/v1/repository/register:
@@ -1666,6 +1654,15 @@ definitions:
     properties:
       def:
         type: string
+  OAuthServiceStoreProviderTokenBody:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      owner:
+        type: string
+      context:
+        $ref: '#/definitions/v1Context'
   ProfileRule:
     type: object
     properties:
@@ -1760,6 +1757,13 @@ definitions:
     title: >-
       the name stutters a bit but we already use a PullRequest message for
       handling PR entities
+  RepositoryServiceRegisterRepositoryBody:
+    type: object
+    properties:
+      repository:
+        $ref: '#/definitions/v1UpstreamRepositoryRef'
+      context:
+        $ref: '#/definitions/v1Context'
   RestTypeFallback:
     type: object
     properties:
@@ -1934,7 +1938,10 @@ definitions:
 
           protobuf release, and it is not used for type URLs beginning with
 
-          type.googleapis.com.
+          type.googleapis.com. As of May 2023, there are no widely used type
+          server
+
+          implementations and no plans to implement one.
 
 
           Schemes other than `http`, `https` (or the empty scheme) might be
@@ -1976,7 +1983,7 @@ definitions:
             foo = any.unpack(Foo.getDefaultInstance());
           }
 
-      Example 3: Pack and unpack a message in Python.
+       Example 3: Pack and unpack a message in Python.
 
           foo = Foo(...)
           any = Any()
@@ -1986,7 +1993,7 @@ definitions:
             any.Unpack(foo)
             ...
 
-      Example 4: Pack and unpack a message in Go
+       Example 4: Pack and unpack a message in Go
 
            foo := &pb.Foo{...}
            any, err := anypb.New(foo)
@@ -2012,6 +2019,7 @@ definitions:
 
       JSON
 
+      ====
 
       The JSON representation of an `Any` value uses the regular
 
@@ -2052,7 +2060,7 @@ definitions:
       `NullValue` is a singleton enumeration to represent the null value for the
       `Value` type union.
 
-       The JSON representation for `NullValue` is JSON `null`.
+      The JSON representation for `NullValue` is JSON `null`.
 
        - NULL_VALUE: Null value.
   v1Artifact:
