@@ -7,7 +7,7 @@ sidebar_position: 20
 
 In order to detect security deviations from repositories or other entities, Minder is relying on the concepts of **Profiles**.
 A profile is a definition of a verification we want to do on an entity in a pipeline.
-A **profile** is an instance of a profile type applied to an specific group, with the relevant settings filled in.
+A **profile** is an instance of a profile type and applies to all repositories in a project, with the relevant settings filled in.
 
 An example profile is the following:
 
@@ -22,26 +22,19 @@ repository:
   - type: secret_scanning
     def:
       enabled: true
-  - type: branch_protection
+  - type: branch_protection_require_pull_request_approving_review_count
     params:
       branch: main
     def:
-      required_pull_request_reviews:
-        dismiss_stale_reviews: true
-        require_code_owner_reviews: true
-        required_approving_review_count: 1
-      required_linear_history: true
-      allow_force_pushes: false
-      allow_deletions: false
-      allow_fork_syncing: true
+      required_approving_review_count: 2
 ```
 
 The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles).
 
 This profile is checking that secret scanning is enabled for all repositories and that the `main` branch is protected, 
-requiring at least one approval from a code owner before landing a pull request.
+requiring at least two approvals from code owners before landing a pull request.
 
-You'll notice that this profile calls two different rules: `secret_scanning` and `branch_protection`.
+You'll notice that this profile calls two different rules: `secret_scanning` and `branch_protection_require_pull_request_approving_review_count`.
 
 Rules can be instantiated from rule types, and they are the ones that are actually doing the verification.
 
@@ -56,10 +49,22 @@ type: rule-type
 name: secret_scanning
 context:
   provider: github
-description: Verifies that secret scanning is enabled for a given repository.
+description: |
+  Verifies that secret scanning is enabled for a given repository.
+  Note that this will will not work as expected for private repositories
+  unless you have GitHub Advanced Security enabled. If you still want to use
+  this rule because you have a mixture of private and public repositories,
+  enable the `skip_private_repos` flag.
+guidance: |
+  Secret scanning is a feature that scans repositories for secrets and alerts
+  the repository owner when a secret is found. To enable this feature in GitHub,
+  you must enable it in the repository settings.
+
+  For more information, see
+  https://docs.github.com/en/github/administering-a-repository/about-secret-scanning
 def:
   # Defines the section of the pipeline the rule will appear in.
-  # This will affect the template that is used to render multiple parts
+  # This will affect the template used to render multiple parts
   # of the rule.
   in_entity: repository
   # Defines the schema for writing a rule with this rule being checked
@@ -68,6 +73,11 @@ def:
       enabled:
         type: boolean
         default: true
+      skip_private_repos:
+        type: boolean
+        default: true
+        description: |
+          If true, this rule will be marked as skipped for private repositories
   # Defines the configuration for ingesting data relevant for the rule
   ingest:
     type: rest
@@ -81,14 +91,31 @@ def:
       parse: json
   # Defines the configuration for evaluating data ingested against the given profile
   eval:
-    type: jq
-    jq:
-      # Ingested points to the data retrieved in the `ingest` section
-      - ingested:
-          def: '.security_and_analysis.secret_scanning.status == "enabled"'
-        # profile points to the profile itself.
-        profile:
-          def: ".enabled"
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package minder
+
+        import future.keywords.if
+
+        default allow := false
+        default skip := false
+
+        allow if {
+          input.profile.enabled
+          input.ingested.security_and_analysis.secret_scanning.status == "enabled"
+        }
+
+        allow if {
+          not input.profile.enabled
+          input.ingested.security_and_analysis.secret_scanning.status == "disabled"
+        }
+
+        skip if {
+          input.profile.skip_private_repos == true
+          input.ingested.private == true
+        }
 
 ```
 
@@ -114,7 +141,7 @@ actions to comply with the profile.
 
 Covered rule types are now:
 
-- branch_protection: controls the branch protection rules on a repo
+- branch_protection_require_pull_request_approving_review_count: controls the branch protection approving review count rule on a repo
 - secret_scanning: enforces secret scanning for a repo
 
 You can list all profile types registered in Minder:
@@ -133,7 +160,7 @@ Before creating a profile, we need to ensure that all rule types exist in Minder
 A rule type can be created by pointing to a directory (or file) containing the rule type definition:
 
 ```bash
-minder ruletype create -f ./examples/github/rule-types
+minder ruletype create -f ./examples/rules-and-profiles/rule-types/github/secret_scanning.yaml
 ```
 
 Where the yaml files in the directory `rule-types` may look as the example above.
@@ -146,33 +173,32 @@ by creating a profile.
 When there is a need to control the specific behaviours for a set of repositories, a profile can be
 created, based on the previous profile types.
 
-A profile needs to be associated with a provider and a group ID, and it will be applied to all
-repositories belonging to that group.
-The profile can be created by using the provided defaults, or by providing a new one stored on a file.
+A profile needs to be associated with a provider, created within a certain project and it will be applied
+to all repositories belonging to that project.
 
-For creating based on a file:
+For example creating a profile happens by running:
 
 ```bash
-minder profile create -f ./examples/github/profiles/profile.yaml
+minder profile create -f ./examples/rules-and-profiles/profiles/github/profile.yaml
 ```
 
 Where `profile.yaml` may look as the example above.
 
-When an specific setting is not provided, the value of this setting is not compared against the profile.
-This specific profile will monitor the `main` branch for all related repositories, checking that pull request enforcement is on
-place, requiring reviews from code owners and a minimum of 2 approvals before landing. It will also require
-that force pushes and deletions are disabled for the `main` branch.
+When a specific setting is not provided, the value of this setting is not compared against the profile.
+This specific profile will monitor the `main` branch for all registered repositories, checking that pull
+request enforcement is on place, requiring at least 2 code owners approvals before landing.
+It will also require that force pushes and deletions are disabled for the `main` branch.
 
-When a profile for a provider and group is created, any repos registered for the same provider and group,
-are being observed. Each time that there is a change on the repo that causes the profile status to be updated.
+When a profile is created, any repos registered for the same provider and project,
+are being reconciled. Each time that there is a change on the repo it causes the related profile status to be updated.
 
 ## List profile status
 
 When there is an event that causes a profile violation, the violation is stored in the database, and the
 overall status of the profile for this specific repository is changed.
-Profile status will inform about:
+The `profile status` command will inform about:
 
-- profile_type (branch_protection...)
+- profile_type (secret_scanning...)
 - status: [success, failure]
 - last updated: time when this status was updated
 
