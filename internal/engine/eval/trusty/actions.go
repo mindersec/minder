@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	htmltemplate "html/template"
+	"net/url"
 	"strings"
 
 	"github.com/stacklok/minder/internal/constants"
@@ -53,7 +54,7 @@ Minder profiles. Below is a summary of the packages with low scores and their al
 	<td>{{ $.Ecosystem }}</td>
 	<td>{{ $.Name }}</td>
 	<td>{{ $.Score }}</td>
-	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageName }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
+	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageNameURL }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
 	<td>{{ if .PackageName }}{{ .Score }}{{ else }}-{{ end }}</td>
   </tr>
 {{ end }}
@@ -120,6 +121,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		higherScoringAlternatives := make([]Alternative, 0)
 		for _, alt := range sph.trackedAlternatives[i].trustyReply.Alternatives.Packages {
 			if alt.Score > sph.trackedAlternatives[i].trustyReply.Summary.Score {
+				alt.PackageNameURL = url.PathEscape(alt.PackageName)
 				higherScoringAlternatives = append(higherScoringAlternatives, alt)
 			}
 		}
