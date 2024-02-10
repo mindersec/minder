@@ -94,6 +94,20 @@ replies with OK
 | DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
+<a name="minder-v1-ProjectsService"></a>
+
+#### ProjectsService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
+| ListRoles | [ListRolesRequest](#minder-v1-ListRolesRequest) | [ListRolesResponse](#minder-v1-ListRolesResponse) |  |
+| ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
+| AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
+| RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
+
+
 <a name="minder-v1-ProvidersService"></a>
 
 #### ProvidersService
@@ -829,6 +843,23 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profiles | [Profile](#minder-v1-Profile) | repeated |  |
+
+
+<a name="minder-v1-ListProjectsRequest"></a>
+
+#### ListProjectsRequest
+
+
+
+<a name="minder-v1-ListProjectsResponse"></a>
+
+#### ListProjectsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| projects | [Project](#minder-v1-Project) | repeated |  |
 
 
 <a name="minder-v1-ListProvidersRequest"></a>
