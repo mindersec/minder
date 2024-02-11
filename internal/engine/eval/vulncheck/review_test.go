@@ -105,7 +105,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(`+    "mongodb": {
 +      "version": "5.1.0",
 +      }`))
@@ -198,7 +198,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(`+    "mongodb": {
 +      "version": "5.1.0",
 +      }`))
@@ -378,7 +378,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, err := w.Write([]byte(`+    "mongodb": {
 +      "version": "5.1.0",
 +      }`))

@@ -169,7 +169,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "matching-name-but-not-tags",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
@@ -208,7 +208,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "multiple-tags-from-different-versions",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
@@ -247,7 +247,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "multiple-tags-from-same-version",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
@@ -336,7 +336,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			errType:       evalerrors.ErrEvaluationSkipSilently,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(_ *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -470,7 +470,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "tag-doesnt-match-regex",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
@@ -500,7 +500,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "multiple-tags-doesnt-match-regex",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
@@ -534,7 +534,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "test-artifact-with-empty-tags",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(_ *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -550,7 +550,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			name:          "test-artifact-version-with-no-tags",
 			wantErr:       true,
 			wantNonNilRes: false,
-			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
+			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
 				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
 					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").

@@ -107,7 +107,7 @@ func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout 
 func GRPCClientWrapRunE(
 	runEFunc func(ctx context.Context, cmd *cobra.Command, c *grpc.ClientConn) error,
 ) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)
 		}

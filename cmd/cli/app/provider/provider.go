@@ -28,7 +28,7 @@ var ProviderCmd = &cobra.Command{
 	Use:   "provider",
 	Short: "Manage providers within a minder control plane",
 	Long:  `The minder provider commands manage providers within a minder control plane.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

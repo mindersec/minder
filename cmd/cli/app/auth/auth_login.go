@@ -116,8 +116,8 @@ func loginCommand(cmd *cobra.Command, _ []string) error {
 
 	tokenChan := make(chan *oidc.Tokens[*oidc.IDTokenClaims])
 
-	callback := func(w http.ResponseWriter, r *http.Request, tokens *oidc.Tokens[*oidc.IDTokenClaims], state string,
-		rpValue rp.RelyingParty) {
+	callback := func(w http.ResponseWriter, _ *http.Request,
+		tokens *oidc.Tokens[*oidc.IDTokenClaims], _ string, _ rp.RelyingParty) {
 
 		tokenChan <- tokens
 		// send a success message to the browser

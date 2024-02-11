@@ -36,7 +36,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "get the db version",
 	Long:  `Command to get the database version`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)

@@ -52,21 +52,21 @@ func TestSanitizingInterceptor(t *testing.T) {
 	}{
 		{
 			name: "success",
-			handler: func(ctx context.Context, req interface{}) (interface{}, error) {
+			handler: func(_ context.Context, _ interface{}) (interface{}, error) {
 				return "success", nil
 			},
 			wantErr: false,
 		},
 		{
 			name: "some error",
-			handler: func(ctx context.Context, req interface{}) (interface{}, error) {
+			handler: func(_ context.Context, _ interface{}) (interface{}, error) {
 				return nil, status.Error(codes.Internal, "some error")
 			},
 			wantErr: true,
 		},
 		{
 			name: "nice error",
-			handler: func(ctx context.Context, req interface{}) (interface{}, error) {
+			handler: func(_ context.Context, _ interface{}) (interface{}, error) {
 				return nil, util.UserVisibleError(codes.Internal, "some error")
 			},
 			wantErr:   true,

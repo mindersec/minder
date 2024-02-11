@@ -29,7 +29,7 @@ var AuthCmd = &cobra.Command{
 	Long: `The minder auth command project lets you create accounts and grant or revoke
 authorization to existing accounts within a minder control plane.`,
 
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

@@ -60,7 +60,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	table := NewProfileTable()
 
-	createFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
+	createFunc := func(ctx context.Context, _ string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		if enableAlerts {
 			p.Alert = &onOverride
 		}
