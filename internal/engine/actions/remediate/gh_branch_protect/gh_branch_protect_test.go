@@ -166,7 +166,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: "",
 			},
-			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *mock_ghclient.MockGitHub) {
 			},
 			remArgs: &remediateArgs{
 				remAction: interfaces.ActionOptOn,

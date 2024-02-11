@@ -188,18 +188,18 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 	}{
 		{
 			name: "Profile with no rule evaluations, should be pending",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+			ruleStatusSetupFn: func(_ Profile, _ *testRandomEntities) {
 				// noop
 			},
 			expectedStatusAfterSetup: EvalStatusTypesPending,
-			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+			ruleStatusModifyFn: func(_ Profile, _ *testRandomEntities) {
 				// noop
 			},
 			expectedStatusAfterModify: EvalStatusTypesPending,
 		},
 		{
 			name: "Profile with only success rule evaluation, should be success",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+			ruleStatusSetupFn: func(_ Profile, _ *testRandomEntities) {
 				// noop
 			},
 			expectedStatusAfterSetup: EvalStatusTypesPending,
@@ -212,7 +212,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		},
 		{
 			name: "Profile with all skipped evaluations should be skipped",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+			ruleStatusSetupFn: func(_ Profile, _ *testRandomEntities) {
 				// noop
 			},
 			expectedStatusAfterSetup: EvalStatusTypesPending,

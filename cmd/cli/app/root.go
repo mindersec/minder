@@ -40,7 +40,7 @@ var (
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if constants.TargetEnv == "staging" {
 				fmt.Fprintf(cmd.ErrOrStderr(), "WARNING: This build uses a test environment and may not be stable \n")
 			}

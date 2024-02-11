@@ -34,7 +34,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 	require.NoError(t, err, "failed to parse example profile, make sure to do - make init-examples")
 
 	// open rules in example directory
-	err = filepath.Walk("../../examples/rules-and-profiles/rule-types/github", func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk("../../examples/rules-and-profiles/rule-types/github", func(path string, info os.FileInfo, _ error) error {
 		// skip directories
 		if info.IsDir() {
 			return nil

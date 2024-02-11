@@ -64,7 +64,7 @@ func FileExists(res *engif.Result) func(*rego.Rego) {
 			Name: "file.exists",
 			Decl: types.NewFunction(types.Args(types.S), types.B),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err
@@ -99,7 +99,7 @@ func FileRead(res *engif.Result) func(*rego.Rego) {
 			Name: "file.read",
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err
@@ -144,7 +144,7 @@ func FileLs(res *engif.Result) func(*rego.Rego) {
 			Name: "file.ls",
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err
@@ -214,7 +214,7 @@ func FileLsGlob(res *engif.Result) func(*rego.Rego) {
 			Name: "file.ls_glob",
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err
@@ -253,7 +253,7 @@ func FileWalk(res *engif.Result) func(*rego.Rego) {
 			Name: "file.walk",
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err
@@ -347,7 +347,7 @@ func ListGithubActions(res *engif.Result) func(*rego.Rego) {
 			Name: "github_workflow.ls_actions",
 			Decl: types.NewFunction(types.Args(types.S), types.NewSet(types.S)),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var base string
 			if err := ast.As(op1.Value, &base); err != nil {
 				return nil, err
@@ -358,7 +358,7 @@ func ListGithubActions(res *engif.Result) func(*rego.Rego) {
 			}
 
 			var terms []*ast.Term
-			err := frizgh.TraverseGitHubActionWorkflows(res.Fs, base, func(path string, wflow *yaml.Node) error {
+			err := frizgh.TraverseGitHubActionWorkflows(res.Fs, base, func(_ string, wflow *yaml.Node) error {
 				actions, err := frizgh.ListActionsInYAML(wflow)
 				if err != nil {
 					return err
@@ -389,7 +389,7 @@ func FileHTTPType(res *engif.Result) func(*rego.Rego) {
 			Name: "file.http_type",
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
-		func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 			var path string
 			if err := ast.As(op1.Value, &path); err != nil {
 				return nil, err

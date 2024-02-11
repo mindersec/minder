@@ -59,7 +59,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	table := NewProfileTable()
 	alreadyExists := false
 
-	applyFunc := func(ctx context.Context, f string, p *minderv1.Profile) (*minderv1.Profile, error) {
+	applyFunc := func(ctx context.Context, _ string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		// create a profile
 		resp, err := client.CreateProfile(ctx, &minderv1.CreateProfileRequest{
 			Profile: p,

@@ -110,7 +110,7 @@ func TestNpmPkgDb(t *testing.T) {
 		},
 		{
 			name: "Non200Response",
-			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				_, err := w.Write([]byte("Not Found"))
 				if err != nil {
@@ -122,7 +122,7 @@ func TestNpmPkgDb(t *testing.T) {
 		},
 		{
 			name: "InvalidJSON",
-			mockHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte("{ invalid json }"))
 				if err != nil {
@@ -336,7 +336,7 @@ func TestPyPiPkgDb(t *testing.T) {
 		},
 		{
 			name: "Non200Response",
-			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockPyPiHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				_, err := w.Write([]byte("Not Found"))
 				if err != nil {
@@ -348,7 +348,7 @@ func TestPyPiPkgDb(t *testing.T) {
 		},
 		{
 			name: "InvalidJSON",
-			mockPyPiHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockPyPiHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte("{ invalid json }"))
 				if err != nil {
@@ -422,7 +422,7 @@ func TestGoPkgDb(t *testing.T) {
 					t.Fatal(err)
 				}
 			},
-			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockSumHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(`19383665
 golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
@@ -457,7 +457,7 @@ go.sum database tree
 					t.Fatal(err)
 				}
 			},
-			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockSumHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(`19383665
 golang.org/x/text v0.13.1 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
@@ -481,7 +481,7 @@ go.sum database tree
 		},
 		{
 			name: "Non200ResponseProxy",
-			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockProxyHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				_, err := w.Write([]byte("Not Found"))
 				if err != nil {
@@ -493,7 +493,7 @@ go.sum database tree
 		},
 		{
 			name: "InvalidJSONProxy",
-			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockProxyHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte("{ invalid json }"))
 				if err != nil {
@@ -505,7 +505,7 @@ go.sum database tree
 		},
 		{
 			name: "MissingVersionProxy",
-			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockProxyHandler: func(w http.ResponseWriter, _ *http.Request) {
 				data := goModPackage{
 					Name: "golang.org/x/text",
 				}
@@ -521,7 +521,7 @@ go.sum database tree
 		},
 		{
 			name: "Non200ResponseSum",
-			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockProxyHandler: func(w http.ResponseWriter, _ *http.Request) {
 				data := goModPackage{
 					Version: "v0.13.0",
 				}
@@ -531,7 +531,7 @@ go.sum database tree
 					t.Fatal(err)
 				}
 			},
-			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockSumHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
 			depName:     "golang.org/x/text",
@@ -539,7 +539,7 @@ go.sum database tree
 		},
 		{
 			name: "TooFewLinesSum",
-			mockProxyHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockProxyHandler: func(w http.ResponseWriter, _ *http.Request) {
 				data := goModPackage{
 					Version: "v0.13.0",
 				}
@@ -549,7 +549,7 @@ go.sum database tree
 					t.Fatal(err)
 				}
 			},
-			mockSumHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockSumHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(`19383665
 golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))

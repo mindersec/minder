@@ -27,7 +27,7 @@ var RoleCmd = &cobra.Command{
 	Use:   "role",
 	Short: "Manage roles within a minder control plane",
 	Long:  `The minder role commands manage permissions within a minder control plane.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

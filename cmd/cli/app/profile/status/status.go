@@ -32,7 +32,7 @@ var profileStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Manage profile status",
 	Long:  `The profile status subcommand allows management of profile status within Minder.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

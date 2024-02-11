@@ -154,7 +154,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				TargetResource: tc.resource,
 			}
 
-			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
+			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
 				return replyType{engine.EntityFromContext(ctx)}, nil
 			}
 
@@ -246,7 +246,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 				TargetResource: tc.resource,
 			}
 
-			unaryHandler := func(ctx context.Context, req interface{}) (any, error) {
+			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
 				return replyType{engine.EntityFromContext(ctx)}, nil
 			}
 			server := Server{
