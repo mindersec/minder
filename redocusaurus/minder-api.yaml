@@ -1538,6 +1538,9 @@ definitions:
       trusty:
         $ref: '#/definitions/EvalTrusty'
         description: trusty is only used if the `trusty` type is selected.
+      homoglyphs:
+        $ref: '#/definitions/EvalHomoglyphs'
+        description: homoglyphs is only used if the `homoglyphs` type is selected.
     description: |-
       Eval defines the data evaluation definition.
       This pertains to the way we traverse data from the upstream
@@ -1588,6 +1591,11 @@ definitions:
       depfile:
         type: string
         title: depfile is the file that contains the dependencies for this ecosystem
+  EvalHomoglyphs:
+    type: object
+    properties:
+      type:
+        type: string
   EvalJQComparison:
     type: object
     properties:
