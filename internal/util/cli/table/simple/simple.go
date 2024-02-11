@@ -55,6 +55,8 @@ func New(layout layouts.TableLayout, header []string) *Table {
 	case layouts.Default:
 		table.SetHeader(header)
 		defaultLayout(table)
+	case layouts.ProjectList:
+		projectListLayout(table)
 	default:
 		table.SetHeader(header)
 		defaultLayout(table)
@@ -131,6 +133,12 @@ func ruleTypeListLayout(table *tablewriter.Table) {
 	table.SetHeader([]string{"Provider", "Project", "ID", "Name", "Description"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
 	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(true)
+}
+
+func projectListLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"ID", "Project", "Description"})
 	table.SetAutoWrapText(true)
 }
 

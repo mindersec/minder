@@ -64,7 +64,7 @@ func renderProjectList(_ string, outWriter io.Writer, format string, user *minde
 	switch format {
 	case app.Table:
 		fmt.Fprintln(outWriter, cli.Header.Render(fmt.Sprintf("Displaying data for %d projects:", len(user.GetProjects()))))
-		t := table.New(table.Simple, layouts.KeyValue, nil)
+		t := table.New(table.Simple, layouts.ProjectList, nil)
 
 		for _, p := range getProjectTableRows(user.GetProjects()) {
 			t.AddRow(p...)

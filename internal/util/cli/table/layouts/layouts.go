@@ -41,6 +41,8 @@ const (
 	RuleEvaluations TableLayout = "rule_evaluations"
 	// RoleList is the roles list table layout
 	RoleList TableLayout = "role_list"
+	// ProjectList is the list of projects
+	ProjectList TableLayout = "project_list"
 	// Default is the default table layout
 	Default TableLayout = ""
 )
