@@ -1400,6 +1400,18 @@ endpoint and how we compare it to the rule.
 | rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 | trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | trusty is only used if the `trusty` type is selected. |
+| homoglyphs | [RuleType.Definition.Eval.Homoglyphs](#minder-v1-RuleType-Definition-Eval-Homoglyphs) | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
+
+
+<a name="minder-v1-RuleType-Definition-Eval-Homoglyphs"></a>
+
+#### RuleType.Definition.Eval.Homoglyphs
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>

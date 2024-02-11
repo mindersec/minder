@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/stacklok/minder/internal/engine/eval/jq"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	"github.com/stacklok/minder/internal/engine/eval/trusty"
@@ -58,6 +59,8 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 			trustyEvalConfig.Endpoint = os.Getenv("MINDER_UNSTABLE_TRUSTY_ENDPOINT")
 		}
 		return trusty.NewTrustyEvaluator(trustyEvalConfig, cli)
+	case application.HomoglyphsEvalType:
+		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), cli)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}

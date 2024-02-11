@@ -1317,6 +1317,10 @@ message RuleType {
                 string endpoint = 1;
             }
 
+            message Homoglyphs {
+                string type = 1;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the profile rule.
@@ -1330,6 +1334,9 @@ message RuleType {
 
             // trusty is only used if the `trusty` type is selected.
             optional Trusty trusty = 5;
+
+            // homoglyphs is only used if the `homoglyphs` type is selected.
+            optional Homoglyphs homoglyphs = 6;
         }
         Eval eval = 5;
 
