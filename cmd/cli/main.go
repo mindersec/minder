@@ -24,6 +24,7 @@ import (
 	_ "github.com/stacklok/minder/cmd/cli/app/profile"
 	_ "github.com/stacklok/minder/cmd/cli/app/profile/status"
 	_ "github.com/stacklok/minder/cmd/cli/app/project"
+	_ "github.com/stacklok/minder/cmd/cli/app/project/list"
 	_ "github.com/stacklok/minder/cmd/cli/app/project/role"
 	_ "github.com/stacklok/minder/cmd/cli/app/provider"
 	_ "github.com/stacklok/minder/cmd/cli/app/quickstart"
