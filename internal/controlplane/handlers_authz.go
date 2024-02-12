@@ -320,13 +320,13 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Request Validation
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
-	cm := req.GetRoleAssignment().GetMapping().GetClaimsToMatch().AsMap()
+	cm := req.GetRoleAssignment().GetMapping().GetClaimsToMatch()
 
 	if role == "" {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "role must be specified")
 	}
 
-	if sub == "" && len(cm) == 0 {
+	if sub == "" && len(cm.AsMap()) == 0 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "subject or claim mappings must be specified")
 	}
 
@@ -344,32 +344,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return s.assignRoleToSubject(ctx, sub, authzrole, projectID)
 	}
 
-	jsonclaims, err := json.Marshal(cm)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error marshalling claims: %v", err)
-	}
-
-	mrg, err := s.store.AddMappedRoleGrant(ctx, db.AddMappedRoleGrantParams{
-		ProjectID:     projectID,
-		Role:          authzrole.String(),
-		ClaimMappings: jsonclaims,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating role mapping: %v", err)
-	}
-
-	respProj := projectID.String()
-	mrgID := mrg.ID.String()
-	return &minder.AssignRoleResponse{
-		RoleAssignment: &minder.RoleAssignment{
-			Role:    role,
-			Project: &respProj,
-			Mapping: &minder.RoleAssignment_Mapping{
-				Id:            &mrgID,
-				ClaimsToMatch: req.GetRoleAssignment().GetMapping().GetClaimsToMatch(),
-			},
-		},
-	}, nil
+	return s.createMappingForAssignment(ctx, cm, authzrole, projectID)
 }
 
 func (s *Server) assignRoleToSubject(
@@ -392,6 +367,41 @@ func (s *Server) assignRoleToSubject(
 			Role:    authzrole.String(),
 			Subject: sub,
 			Project: &respProj,
+		},
+	}, nil
+}
+
+func (s *Server) createMappingForAssignment(
+	ctx context.Context,
+	claimsToMatch *structpb.Struct,
+	authzrole authz.Role,
+	projectID uuid.UUID,
+) (*minder.AssignRoleResponse, error) {
+	cm := claimsToMatch.AsMap()
+	jsonclaims, err := json.Marshal(cm)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error marshalling claims: %v", err)
+	}
+
+	mrg, err := s.store.AddMappedRoleGrant(ctx, db.AddMappedRoleGrantParams{
+		ProjectID:     projectID,
+		Role:          authzrole.String(),
+		ClaimMappings: jsonclaims,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating role mapping: %v", err)
+	}
+
+	respProj := projectID.String()
+	mrgID := mrg.ID.String()
+	return &minder.AssignRoleResponse{
+		RoleAssignment: &minder.RoleAssignment{
+			Role:    authzrole.String(),
+			Project: &respProj,
+			Mapping: &minder.RoleAssignment_Mapping{
+				Id:            &mrgID,
+				ClaimsToMatch: claimsToMatch,
+			},
 		},
 	}, nil
 }
