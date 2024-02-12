@@ -17,7 +17,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.25.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.11.0
-	github.com/go-playground/validator/v10 v10.17.0
+	github.com/go-playground/validator/v10 v10.18.0
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golang/mock v1.6.0
@@ -209,7 +209,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
-	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/jwx/v2 v2.0.19
 	github.com/letsencrypt/boulder v0.0.0-20231030195133-fdaab3e21ab0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
