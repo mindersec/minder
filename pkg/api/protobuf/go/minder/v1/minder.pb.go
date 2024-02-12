@@ -7482,7 +7482,7 @@ type RuleType_Definition_Eval_Trusty struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// e.g. https://staging.stacklok.dev/
+	// e.g. https://api.trustypkg.dev/
 	Endpoint string `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 }
 

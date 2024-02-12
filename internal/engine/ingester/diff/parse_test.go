@@ -36,49 +36,65 @@ func TestGoParse(t *testing.T) {
 		{
 			description: "Single addition",
 			content: `
-+cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
-+cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
-cloud.google.com/go/compute/metadata v0.2.3 h1:mg4jlk7mCAj6xXp9UJ4fjI9VUI5rubuGBW5aJ7UnBMY=
-cloud.google.com/go/compute/metadata v0.2.3/go.mod h1:VAV5nSsACxMJvgaAuX6Pk2AawlZn8kiOGuCv6gTkwuA=`,
+	github.com/openfga/go-sdk v0.3.4
++	github.com/openfga/openfga v1.4.3
+	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
+	github.com/prometheus/client_golang v1.18.0`,
 			expectedCount: 1,
 			expectedDependencies: []*pb.Dependency{
 				{
 					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-					Name:      "cloud.google.com/go/compute",
-					Version:   "v1.23.0",
+					Name:      "github.com/openfga/openfga",
+					Version:   "v1.4.3",
 				},
 			},
 		},
 		{
 			description: "Single removal",
 			content: `
--cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
--cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
-cloud.google.com/go/compute/metadata v0.2.3 h1:mg4jlk7mCAj6xXp9UJ4fjI9VUI5rubuGBW5aJ7UnBMY=
-cloud.google.com/go/compute/metadata v0.2.3/go.mod h1:VAV5nSsACxMJvgaAuX6Pk2AawlZn8kiOGuCv6gTkwuA=`,
+	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
+-	gotest.tools/v3 v3.4.0 // indirect
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
 			expectedCount:        0,
 			expectedDependencies: nil,
 		},
 		{
 			description: "Mixed additions and removals",
 			content: `
--cloud.google.com/go/compute v1.23.0 h1:tP41Zoavr8ptEqaW6j+LQOnyBBhO7OkOMAGrgLopTwY=
--cloud.google.com/go/compute v1.23.0/go.mod h1:4tCnrn48xsqlwSAiLf1HXMQk8CONslYbdiEZc9FEIbM=
-+cloud.google.com/go/compute/metadata v0.2.3 h1:mg4jlk7mCAj6xXp9UJ4fjI9VUI5rubuGBW5aJ7UnBMY=
-+cloud.google.com/go/compute/metadata v0.2.3/go.mod h1:VAV5nSsACxMJvgaAuX6Pk2AawlZn8kiOGuCv6gTkwuA=
-+dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
-+dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=`,
++	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
++	go.uber.org/mock v0.4.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
+-	gotest.tools/v3 v3.4.0 // indirect
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
 			expectedCount: 2,
 			expectedDependencies: []*pb.Dependency{
 				{
 					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-					Name:      "cloud.google.com/go/compute/metadata",
-					Version:   "v0.2.3",
+					Name:      "go.opentelemetry.io/proto/otlp",
+					Version:   "v1.0.0",
 				},
 				{
 					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-					Name:      "dario.cat/mergo",
-					Version:   "v1.0.0",
+					Name:      "go.uber.org/mock",
+					Version:   "v0.4.0",
+				},
+			},
+		},
+		{
+			description: "Replace",
+			content: `
+	k8s.io/klog/v2 v2.110.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
+)
++
++replace github.com/opencontainers/runc => github.com/stacklok/runc v1.1.12 // indirect`,
+			expectedCount: 1,
+			expectedDependencies: []*pb.Dependency{
+				{
+					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Name:      "github.com/stacklok/runc",
+					Version:   "v1.1.12",
 				},
 			},
 		},

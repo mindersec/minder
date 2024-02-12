@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/stacklok/minder/internal/util"
@@ -137,31 +138,52 @@ func pyNormalizeName(pkgName string) string {
 }
 
 func goParse(patch string) ([]*pb.Dependency, error) {
-	scanner := bufio.NewScanner(strings.NewReader(patch))
 	var deps []*pb.Dependency
+	scanner := bufio.NewScanner(strings.NewReader(patch))
 
 	for scanner.Scan() {
 		line := scanner.Text()
-
-		if strings.HasPrefix(line, "+") {
-			fields := strings.Split(line, " ")
-			if len(fields) > 2 && !strings.HasSuffix(fields[1], "/go.mod") {
-				name, version := fields[0], fields[1]
-				dep := &pb.Dependency{
-					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-					Name:      name[1:],
-					Version:   version,
-				}
-
-				deps = append(deps, dep)
+		// Look for lines that add dependencies.
+		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
+			// Extract the part after the '+' sign.
+			lineContent := line[1:]
+			fields := strings.Fields(lineContent)
+			if len(fields) < 2 {
+				continue
 			}
+			dep := &pb.Dependency{
+				Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
+			}
+			if fields[0] == "require" && fields[1] != "(" {
+				dep.Name = fields[1]
+				dep.Version = fields[2]
+			} else if strings.HasPrefix(lineContent, "\t") {
+				dep.Name = fields[0]
+				dep.Version = fields[1]
+			} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
+				// For lines with version replacements, the new version is after the "=>"
+				// Assuming format is module path version => newModulePath newVersion
+				dep.Name = fields[3]
+				dep.Version = fields[4]
+			} else {
+				continue
+			}
+			// If the dependency is already in the slice, we don't want to add it again
+			if slices.ContainsFunc(deps, func(n *pb.Dependency) bool {
+				if n.Name == dep.Name && n.Version == dep.Version {
+					return true
+				}
+				return false
+			}) {
+				continue
+			}
+			// Add the dependency to the slice
+			deps = append(deps, dep)
 		}
 	}
-
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-
 	return deps, nil
 }
 
