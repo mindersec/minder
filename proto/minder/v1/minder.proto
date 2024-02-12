@@ -1509,7 +1509,13 @@ message ListRoleAssignmentsRequest {
 }
 
 message ListRoleAssignmentsResponse {
+    // role_assignemnts is the effective role assignments
+    // for users in the given context.
     repeated RoleAssignment role_assignments = 1;
+
+    // unmatched_mappings is the created mappings that have not yet
+    // been resolved.
+    repeated RoleMapping unmatched_mappings = 2;
 }
 
 message AssignRoleRequest {
@@ -1547,9 +1553,23 @@ message RoleAssignment {
     // role is the role that is assigned.
     string role = 1;
     // subject is the subject to which the role is assigned.
+    // If left empty, the `claims_to_match` option will be used.
     string subject = 2;
     // projectt is the projectt in which the role is assigned.
     optional string project = 4;
+
+    message Mapping {
+        // ID of the claims mapping
+        optional string id = 1;
+
+        // claims_to_match is the claims that must match for the role to be assigned.
+        google.protobuf.Struct claims_to_match = 2;
+    }
+
+    // mapping adds the ability to map a role to claims
+    // that match. This enables the ability to pre-provision
+    // a role assignment to a user not yet registered in Minder.
+    optional Mapping mapping = 5;
 
     reserved 3; // deprecated context
 }

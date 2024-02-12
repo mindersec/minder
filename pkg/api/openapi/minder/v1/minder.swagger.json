@@ -793,7 +793,7 @@
           },
           {
             "name": "roleAssignment.subject",
-            "description": "subject is the subject to which the role is assigned.",
+            "description": "subject is the subject to which the role is assigned.\nIf left empty, the `claims_to_match` option will be used.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -824,6 +824,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "roleAssignment.mapping.id",
+            "description": "ID of the claims mapping",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "roleAssignment.mapping.claimsToMatch",
+            "description": "claims_to_match is the claims that must match for the role to be assigned.",
+            "in": "query",
+            "required": false,
+            "type": "object"
           }
         ],
         "tags": [
@@ -2708,6 +2722,19 @@
         }
       }
     },
+    "RoleAssignmentMapping": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "ID of the claims mapping"
+        },
+        "claimsToMatch": {
+          "type": "object",
+          "description": "claims_to_match is the claims that must match for the role to be assigned."
+        }
+      }
+    },
     "RuleTypeDefinition": {
       "type": "object",
       "properties": {
@@ -3291,7 +3318,16 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1RoleAssignment"
-          }
+          },
+          "description": "role_assignemnts is the effective role assignments\nfor users in the given context."
+        },
+        "unmatchedMappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleMapping"
+          },
+          "description": "unmatched_mappings is the created mappings that have not yet\nbeen resolved."
         }
       }
     },
@@ -3645,11 +3681,15 @@
         },
         "subject": {
           "type": "string",
-          "description": "subject is the subject to which the role is assigned."
+          "description": "subject is the subject to which the role is assigned.\nIf left empty, the `claims_to_match` option will be used."
         },
         "project": {
           "type": "string",
           "description": "projectt is the projectt in which the role is assigned."
+        },
+        "mapping": {
+          "$ref": "#/definitions/RoleAssignmentMapping",
+          "description": "mapping adds the ability to map a role to claims\nthat match. This enables the ability to pre-provision\na role assignment to a user not yet registered in Minder."
         }
       }
     },

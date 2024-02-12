@@ -218,9 +218,100 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
+	as, err = s.mergeMatchedRoleMappingstoAssignments(ctx, projectID, as)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error matching role assignments to mappings: %v", err)
+	}
+
+	unm, err := s.getUnmatchedMappings(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting unmatched mappings: %v", err)
+	}
+
 	return &minder.ListRoleAssignmentsResponse{
-		RoleAssignments: as,
+		RoleAssignments:   as,
+		UnmatchedMappings: unm,
 	}, nil
+
+}
+
+func (s *Server) mergeMatchedRoleMappingstoAssignments(
+	ctx context.Context,
+	projectID uuid.UUID,
+	assignmentsToMerge []*minder.RoleAssignment,
+) ([]*minder.RoleAssignment, error) {
+	res, err := s.store.ListResolvedMappedRoleGrantsForProject(ctx, projectID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	} else if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return assignmentsToMerge, nil
+	}
+
+	for idx := range assignmentsToMerge {
+		aToM := assignmentsToMerge[idx]
+
+		foundIdx := -1
+
+		for idx, r := range res {
+			if aToM.Role == r.Role && aToM.Subject == r.ResolvedSubject.String {
+				mID := r.ID.String()
+				ctom := &structpb.Struct{}
+
+				if err := json.Unmarshal(r.ClaimMappings, ctom); err != nil {
+					zerolog.Ctx(ctx).Err(err).Str("mapping-id", r.ID.String()).
+						Msg("couldn't marshal mappings into JSON")
+					continue
+				}
+
+				aToM.Mapping = &minder.RoleAssignment_Mapping{
+					Id:            &mID,
+					ClaimsToMatch: ctom,
+				}
+
+				foundIdx = idx
+				break
+			}
+		}
+
+		if foundIdx >= 0 {
+			res = append(res[:foundIdx], res[foundIdx+1:]...)
+		}
+	}
+
+	return assignmentsToMerge, nil
+}
+
+func (s *Server) getUnmatchedMappings(ctx context.Context, projectID uuid.UUID) ([]*minder.RoleMapping, error) {
+	umrg, err := s.store.ListUnresolvedMappedRoleGrantsForProject(ctx, projectID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	} else if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return []*minder.RoleMapping{}, nil
+	}
+
+	out := make([]*minder.RoleMapping, 0, len(umrg))
+	for idx := range umrg {
+		u := &umrg[idx]
+		id := u.ID.String()
+		prjID := projectID.String()
+
+		ctom := &structpb.Struct{}
+
+		if err := json.Unmarshal(u.ClaimMappings, ctom); err != nil {
+			zerolog.Ctx(ctx).Err(err).Str("mapping-id", u.ID.String()).
+				Msg("couldn't marshal mappings into JSON")
+			continue
+		}
+
+		out = append(out, &minder.RoleMapping{
+			Id:            &id,
+			Role:          u.Role,
+			ClaimsToMatch: ctom,
+			Project:       &prjID,
+		})
+	}
+
+	return out, nil
 }
 
 // AssignRole assigns a role to a user on a project.
@@ -229,13 +320,14 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Request Validation
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
+	cm := req.GetRoleAssignment().GetMapping().GetClaimsToMatch().AsMap()
 
 	if role == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "role must be specified")
 	}
 
-	if sub == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "subject must be specified")
+	if sub == "" && len(cm) == 0 {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "subject or claim mappings must be specified")
 	}
 
 	// Parse role (this also validates)
@@ -247,43 +339,58 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Determine target project.
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	respProj := projectID.String()
 
 	if sub != "" {
-		// Verify if user exists
-		if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, util.UserVisibleError(codes.NotFound, "User not found")
-			}
-			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
-		}
-
-		if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
-			return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
-		}
-
-		return &minder.AssignRoleResponse{
-			RoleAssignment: &minder.RoleAssignment{
-				Role:    role,
-				Subject: sub,
-				Project: &respProj,
-			},
-		}, nil
+		return s.assignRoleToSubject(ctx, sub, authzrole, projectID)
 	}
 
-	tx, err := s.store.BeginTransaction()
+	jsonclaims, err := json.Marshal(cm)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	if err := tx.Commit(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+		return nil, status.Errorf(codes.Internal, "error marshalling claims: %v", err)
 	}
 
+	mrg, err := s.store.AddMappedRoleGrant(ctx, db.AddMappedRoleGrantParams{
+		ProjectID:     projectID,
+		Role:          authzrole.String(),
+		ClaimMappings: jsonclaims,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating role mapping: %v", err)
+	}
+
+	respProj := projectID.String()
+	mrgID := mrg.ID.String()
 	return &minder.AssignRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
 			Role:    role,
+			Project: &respProj,
+			Mapping: &minder.RoleAssignment_Mapping{
+				Id:            &mrgID,
+				ClaimsToMatch: req.GetRoleAssignment().GetMapping().GetClaimsToMatch(),
+			},
+		},
+	}, nil
+}
+
+func (s *Server) assignRoleToSubject(
+	ctx context.Context, sub string, authzrole authz.Role, projectID uuid.UUID) (*minder.AssignRoleResponse, error) {
+	// Verify if user exists
+	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	}
+
+	if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
+		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	respProj := projectID.String()
+	return &minder.AssignRoleResponse{
+		RoleAssignment: &minder.RoleAssignment{
+			Role:    authzrole.String(),
+			Subject: sub,
 			Project: &respProj,
 		},
 	}, nil

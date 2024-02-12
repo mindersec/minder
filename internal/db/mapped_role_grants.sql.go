@@ -136,6 +136,82 @@ func (q *Queries) ListMappedRoleGrants(ctx context.Context, projectID uuid.UUID)
 	return items, nil
 }
 
+const listResolvedMappedRoleGrantsForProject = `-- name: ListResolvedMappedRoleGrantsForProject :many
+
+SELECT id, project_id, role, claim_mappings, resolved_subject, created_at, updated_at FROM mapped_role_grants
+WHERE project_id = $1 AND resolved_subject IS NOT NULL
+`
+
+// ListResolvedMappedRoleGrantsForProject retrieves all resolved mapped role grants for a given project
+func (q *Queries) ListResolvedMappedRoleGrantsForProject(ctx context.Context, projectID uuid.UUID) ([]MappedRoleGrant, error) {
+	rows, err := q.db.QueryContext(ctx, listResolvedMappedRoleGrantsForProject, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MappedRoleGrant{}
+	for rows.Next() {
+		var i MappedRoleGrant
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.Role,
+			&i.ClaimMappings,
+			&i.ResolvedSubject,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnresolvedMappedRoleGrantsForProject = `-- name: ListUnresolvedMappedRoleGrantsForProject :many
+
+SELECT id, project_id, role, claim_mappings, resolved_subject, created_at, updated_at FROM mapped_role_grants
+WHERE project_id = $1 AND resolved_subject IS NULL
+`
+
+// ListUnresolvedMappedRoleGrantsForProject retrieves all unresolved mapped role grants for a given project
+func (q *Queries) ListUnresolvedMappedRoleGrantsForProject(ctx context.Context, projectID uuid.UUID) ([]MappedRoleGrant, error) {
+	rows, err := q.db.QueryContext(ctx, listUnresolvedMappedRoleGrantsForProject, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MappedRoleGrant{}
+	for rows.Next() {
+		var i MappedRoleGrant
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.Role,
+			&i.ClaimMappings,
+			&i.ResolvedSubject,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const resolveMappedRoleGrant = `-- name: ResolveMappedRoleGrant :one
 
 UPDATE mapped_role_grants SET resolved_subject = $1 WHERE id = $2 RETURNING id, project_id, role, claim_mappings, resolved_subject, created_at, updated_at

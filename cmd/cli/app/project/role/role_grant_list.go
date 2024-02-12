@@ -80,7 +80,14 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.Client
 	case app.Table:
 		t := initializeTableForGrantList()
 		for _, r := range resp.RoleAssignments {
-			t.AddRow(r.Subject, r.Role)
+			t.AddRow(r.Subject, r.Role, r.GetMapping().GetId(),
+				structtoYAMLOrEmpty(r.GetMapping().GetClaimsToMatch()),
+			)
+		}
+		for _, r := range resp.UnmatchedMappings {
+			t.AddRow("", r.Role, r.GetId(),
+				structtoYAMLOrEmpty(r.GetClaimsToMatch()),
+			)
 		}
 		t.Render()
 	}
@@ -88,7 +95,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.Client
 }
 
 func initializeTableForGrantList() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role"})
+	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role", "Mapping ID", "Mapping"})
 }
 
 func init() {

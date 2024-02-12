@@ -948,7 +948,8 @@ list profiles
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated |  |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignemnts is the effective role assignments for users in the given context. |
+| unmatched_mappings | [RoleMapping](#minder-v1-RoleMapping) | repeated | unmatched_mappings is the created mappings that have not yet been resolved. |
 
 
 <a name="minder-v1-ListRoleMappingsRequest"></a>
@@ -1346,8 +1347,21 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role | [string](#string) |  | role is the role that is assigned. |
-| subject | [string](#string) |  | subject is the subject to which the role is assigned. |
+| subject | [string](#string) |  | subject is the subject to which the role is assigned. If left empty, the `claims_to_match` option will be used. |
 | project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
+| mapping | [RoleAssignment.Mapping](#minder-v1-RoleAssignment-Mapping) | optional | mapping adds the ability to map a role to claims that match. This enables the ability to pre-provision a role assignment to a user not yet registered in Minder. |
+
+
+<a name="minder-v1-RoleAssignment-Mapping"></a>
+
+#### RoleAssignment.Mapping
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) | optional | ID of the claims mapping |
+| claims_to_match | [google.protobuf.Struct](#google-protobuf-Struct) |  | claims_to_match is the claims that must match for the role to be assigned. |
 
 
 <a name="minder-v1-RoleMapping"></a>

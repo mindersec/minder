@@ -18,6 +18,8 @@ package role
 
 import (
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v2"
 
 	"github.com/stacklok/minder/cmd/cli/app/project"
 )
@@ -35,4 +37,19 @@ var RoleCmd = &cobra.Command{
 func init() {
 	project.ProjectCmd.AddCommand(RoleCmd)
 	RoleCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
+}
+
+func structtoYAMLOrEmpty(m *structpb.Struct) string {
+	if m == nil {
+		return ""
+	}
+
+	mmap := m.AsMap()
+
+	yamlText, err := yaml.Marshal(mmap)
+	if err != nil {
+		return ""
+	}
+
+	return string(yamlText)
 }

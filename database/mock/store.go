@@ -1548,6 +1548,21 @@ func (mr *MockStoreMockRecorder) ListRepositoriesByProjectID(arg0, arg1 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesByProjectID", reflect.TypeOf((*MockStore)(nil).ListRepositoriesByProjectID), arg0, arg1)
 }
 
+// ListResolvedMappedRoleGrantsForProject mocks base method.
+func (m *MockStore) ListResolvedMappedRoleGrantsForProject(arg0 context.Context, arg1 uuid.UUID) ([]db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListResolvedMappedRoleGrantsForProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListResolvedMappedRoleGrantsForProject indicates an expected call of ListResolvedMappedRoleGrantsForProject.
+func (mr *MockStoreMockRecorder) ListResolvedMappedRoleGrantsForProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListResolvedMappedRoleGrantsForProject", reflect.TypeOf((*MockStore)(nil).ListResolvedMappedRoleGrantsForProject), arg0, arg1)
+}
+
 // ListRuleEvaluationsByProfileId mocks base method.
 func (m *MockStore) ListRuleEvaluationsByProfileId(arg0 context.Context, arg1 db.ListRuleEvaluationsByProfileIdParams) ([]db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
@@ -1576,6 +1591,21 @@ func (m *MockStore) ListRuleTypesByProviderAndProject(arg0 context.Context, arg1
 func (mr *MockStoreMockRecorder) ListRuleTypesByProviderAndProject(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProviderAndProject", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProviderAndProject), arg0, arg1)
+}
+
+// ListUnresolvedMappedRoleGrantsForProject mocks base method.
+func (m *MockStore) ListUnresolvedMappedRoleGrantsForProject(arg0 context.Context, arg1 uuid.UUID) ([]db.MappedRoleGrant, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUnresolvedMappedRoleGrantsForProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.MappedRoleGrant)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUnresolvedMappedRoleGrantsForProject indicates an expected call of ListUnresolvedMappedRoleGrantsForProject.
+func (mr *MockStoreMockRecorder) ListUnresolvedMappedRoleGrantsForProject(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnresolvedMappedRoleGrantsForProject", reflect.TypeOf((*MockStore)(nil).ListUnresolvedMappedRoleGrantsForProject), arg0, arg1)
 }
 
 // ListUsers mocks base method.

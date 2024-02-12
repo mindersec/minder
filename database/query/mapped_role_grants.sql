@@ -35,3 +35,15 @@ SELECT * FROM mapped_role_grants WHERE project_id = $1;
 -- name: GetMappedRoleGrant :one
 SELECT * FROM mapped_role_grants
 WHERE project_id = $1 AND role = $2 AND resolved_subject = $3;
+
+-- ListResolvedMappedRoleGrantsForProject retrieves all resolved mapped role grants for a given project
+
+-- name: ListResolvedMappedRoleGrantsForProject :many
+SELECT * FROM mapped_role_grants
+WHERE project_id = $1 AND resolved_subject IS NOT NULL;
+
+-- ListUnresolvedMappedRoleGrantsForProject retrieves all unresolved mapped role grants for a given project
+
+-- name: ListUnresolvedMappedRoleGrantsForProject :many
+SELECT * FROM mapped_role_grants
+WHERE project_id = $1 AND resolved_subject IS NULL;

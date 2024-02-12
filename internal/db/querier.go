@@ -123,8 +123,12 @@ type Querier interface {
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
+	// ListResolvedMappedRoleGrantsForProject retrieves all resolved mapped role grants for a given project
+	ListResolvedMappedRoleGrantsForProject(ctx context.Context, projectID uuid.UUID) ([]MappedRoleGrant, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
+	// ListUnresolvedMappedRoleGrantsForProject retrieves all unresolved mapped role grants for a given project
+	ListUnresolvedMappedRoleGrantsForProject(ctx context.Context, projectID uuid.UUID) ([]MappedRoleGrant, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
