@@ -1636,7 +1636,7 @@ definitions:
     properties:
       endpoint:
         type: string
-        title: e.g. https://staging.stacklok.dev/
+        title: e.g. https://api.trustypkg.dev/
   EvalVulncheck:
     type: object
     title: no configuration for now
