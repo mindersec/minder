@@ -277,9 +277,6 @@ func (s *Server) matchClaimsForUser(
 		return nil, fmt.Errorf("failed to marshal claims: %w", err)
 	}
 
-	// log attempt to match
-	zerolog.Ctx(ctx).Debug().Str("subject", subject).Str("claims", string(jsonClaims)).Msg("attempting to match claims")
-
 	// Get mappings that match the user's claims
 	resolvedMappings, err := s.store.SearchUnresolvedMappedRoleGrants(ctx, jsonClaims)
 	if err != nil {
@@ -290,8 +287,6 @@ func (s *Server) matchClaimsForUser(
 		}
 		return nil, fmt.Errorf("failed to merge unmatched claim mappings: %w", err)
 	}
-
-	zerolog.Ctx(ctx).Debug().Str("subject", subject).Int("mappings", len(resolvedMappings)).Msg("resolved mappings")
 
 	projs := []*pb.Project{}
 	for _, mapping := range resolvedMappings {
