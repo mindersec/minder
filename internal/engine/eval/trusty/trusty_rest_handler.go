@@ -54,8 +54,9 @@ type trustyClient struct {
 
 // Alternative is an alternative package returned from the package intelligence API
 type Alternative struct {
-	PackageName string  `json:"package_name"`
-	Score       float64 `json:"score"`
+	PackageName    string  `json:"package_name"`
+	Score          float64 `json:"score"`
+	PackageNameURL string
 }
 
 // ScoreSummary is the summary score returned from the package intelligence API

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	htmltemplate "html/template"
+	"net/url"
 	"strings"
 
 	"github.com/stacklok/minder/internal/constants"
@@ -37,25 +38,26 @@ Minder profiles. Below is a summary of the packages with low scores and their al
 
 <table>
   <tr>
-    <td> Ecosystem </td>
-    <td> DependencyName </td>
-    <td> DependencyScore </td>
+    <td> Pkg </td>
+    <td> Name </td>
+    <td> Score </td>
     <td> Alternative Name </td>
     <td> Alternative Score </td>
   </tr>
 `
 	tableFooter       = "</table>"
 	tableRowsTmplName = "alternativesTableRow"
-	tableTemplateRow  = `
-  {{ range .Alternatives }}
+	// nolint:lll
+	tableTemplateRow = `
+{{ range .Alternatives }}
   <tr>
-    <td>{{ $.DependencyEcosystem }}</td>
-    <td>{{ $.DependencyName }}</td>
-    <td>{{ $.DependencyScore }}</td>
-    <td><a href="{{ $.BaseUrl }}/{{ $.DependencyEcosystem }}/{{ .PackageName }}" >{{ .PackageName }}</a></td>
-    <td>{{ .Score }}</td>
+	<td>{{ $.Ecosystem }}</td>
+	<td>{{ $.Name }}</td>
+	<td>{{ $.Score }}</td>
+	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageNameURL }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
+	<td>{{ if .PackageName }}{{ .Score }}{{ else }}-{{ end }}</td>
   </tr>
-  {{ end }}
+{{ end }}
 `
 )
 
@@ -101,6 +103,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 
 func (sph *summaryPrHandler) generateSummary() (string, error) {
 	var summary strings.Builder
+
 	if len(sph.trackedAlternatives) == 0 {
 		summary.WriteString(noLowScoresText)
 		return summary.String(), nil
@@ -118,22 +121,29 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		higherScoringAlternatives := make([]Alternative, 0)
 		for _, alt := range sph.trackedAlternatives[i].trustyReply.Alternatives.Packages {
 			if alt.Score > sph.trackedAlternatives[i].trustyReply.Summary.Score {
+				alt.PackageNameURL = url.PathEscape(alt.PackageName)
 				higherScoringAlternatives = append(higherScoringAlternatives, alt)
 			}
 		}
+		if len(higherScoringAlternatives) == 0 {
+			higherScoringAlternatives = append(higherScoringAlternatives, Alternative{
+				PackageName: "", // Note: Set it to empty to indicate no alternative found in the template
+				Score:       0,
+			})
+		}
 
 		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
-			DependencyEcosystem string
-			DependencyName      string
-			DependencyScore     float64
-			Alternatives        []Alternative
-			BaseUrl             string
+			Ecosystem    string
+			Name         string
+			Score        float64
+			Alternatives []Alternative
+			BaseUrl      string
 		}{
-			DependencyEcosystem: strings.ToLower(sph.trackedAlternatives[i].Dependency.Ecosystem.AsString()),
-			DependencyName:      sph.trackedAlternatives[i].Dependency.Name,
-			DependencyScore:     sph.trackedAlternatives[i].trustyReply.Summary.Score,
-			Alternatives:        higherScoringAlternatives,
-			BaseUrl:             constants.TrustyHttpURL,
+			Ecosystem:    strings.ToLower(sph.trackedAlternatives[i].Dependency.Ecosystem.AsString()),
+			Name:         sph.trackedAlternatives[i].Dependency.Name,
+			Score:        sph.trackedAlternatives[i].trustyReply.Summary.Score,
+			Alternatives: higherScoringAlternatives,
+			BaseUrl:      constants.TrustyHttpURL,
 		}); err != nil {
 			return "", fmt.Errorf("could not execute template: %w", err)
 		}

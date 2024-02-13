@@ -19,7 +19,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/puzpuzpuz/xsync"
+	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -39,7 +39,7 @@ type cache struct {
 // NewCache returns a new cache
 func NewCache() Cache {
 	return &cache{
-		cache: xsync.NewMapOf[*engif.Result](),
+		cache: xsync.NewMapOf[string, *engif.Result](),
 	}
 }
 

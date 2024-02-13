@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -150,11 +151,62 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 }
 
 const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
+
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE project_id = $1
 `
 
+// ListProvidersByProjectID allows us to lits all providers for a given project.
 func (q *Queries) ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error) {
 	rows, err := q.db.QueryContext(ctx, listProvidersByProjectID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Provider{}
+	for rows.Next() {
+		var i Provider
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Version,
+			&i.ProjectID,
+			pq.Array(&i.Implements),
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProvidersByProjectIDPaginated = `-- name: ListProvidersByProjectIDPaginated :many
+
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers
+WHERE project_id = $1
+    AND (created_at > $2 OR $2 IS NULL)
+ORDER BY created_at DESC, id
+LIMIT $3
+`
+
+type ListProvidersByProjectIDPaginatedParams struct {
+	ProjectID uuid.UUID    `json:"project_id"`
+	CreatedAt sql.NullTime `json:"created_at"`
+	Limit     int32        `json:"limit"`
+}
+
+// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
+// with pagination taken into account. In this case, the cursor is the creation date.
+func (q *Queries) ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, listProvidersByProjectIDPaginated, arg.ProjectID, arg.CreatedAt, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

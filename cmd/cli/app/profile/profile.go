@@ -28,7 +28,7 @@ var ProfileCmd = &cobra.Command{
 	Use:   "profile",
 	Short: "Manage profiles",
 	Long:  `The profile subcommands allows the management of profiles within Minder.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

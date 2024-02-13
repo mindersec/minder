@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/puzpuzpuz/xsync"
+	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -78,9 +78,7 @@ type httpClientMetrics struct {
 }
 
 func newProviderMapOf[V any]() *xsync.MapOf[db.ProviderType, V] {
-	return xsync.NewTypedMapOf[db.ProviderType, V](func(k db.ProviderType) uint64 {
-		return xsync.StrHash64(string(k))
-	})
+	return xsync.NewMapOf[db.ProviderType, V]()
 }
 
 // newHttpClientMetrics creates a new http provider metrics instance.

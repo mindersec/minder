@@ -174,7 +174,7 @@ func (s *Reconciler) publishArtifactProfileInitEvents(
 	}
 	for _, dbA := range dbArtifacts {
 		// Get the artifact with all its versions as a protobuf
-		pbArtifact, err := util.GetArtifactWithVersions(ctx, s.store, dbrepo.ID, dbA.ID)
+		pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ID, dbA.ID)
 		if err != nil {
 			return fmt.Errorf("error getting artifact versions: %w", err)
 		}

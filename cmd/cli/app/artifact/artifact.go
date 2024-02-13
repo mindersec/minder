@@ -28,7 +28,7 @@ var ArtifactCmd = &cobra.Command{
 	Use:   "artifact",
 	Short: "Manage artifacts within a minder control plane",
 	Long:  `The minder artifact commands allow the management of artifacts within a minder control plane`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

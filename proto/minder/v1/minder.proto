@@ -167,38 +167,23 @@ message Artifact {
     google.protobuf.Timestamp created_at = 8;
 }
 
-message GithubWorkflow {
-    string name = 1;
-    string repository = 2;
-    string commit_sha = 3;
-    string trigger = 4;
-}
-
-message SignatureVerification {
-    bool is_signed = 1;
-    bool is_verified = 2;
-    bool is_bundle_verified = 3;
-    optional string cert_identity = 4;
-    optional string cert_issuer = 5;
-    optional string rekor_log_id = 6;
-    optional int64 rekor_log_index = 7;
-    optional google.protobuf.Timestamp signature_time = 8;
-}
-
 message ArtifactVersion {
     int64 version_id = 1;
     repeated string tags = 2;
     string sha = 3;
-    SignatureVerification signature_verification = 4;
-    optional GithubWorkflow github_workflow = 5;
     google.protobuf.Timestamp created_at = 6;
+
+    reserved 4, 5;
+    reserved "github_workflow", "signature_verification";
 }
 
 message GetArtifactByIdRequest {
     string id = 1;
-    int32 latest_versions = 5;
-    string tag = 6;
+
     Context context = 7;
+
+    reserved 5, 6; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByIdResponse {
@@ -208,9 +193,10 @@ message GetArtifactByIdResponse {
 
 message GetArtifactByNameRequest {
     string name = 1;
-    int32 latest_versions = 2;
-    string tag = 3;
     Context context = 4;
+
+    reserved 2, 3; // deprecated latest_versions, tag
+    reserved "latest_versions", "tag";
 }
 
 message GetArtifactByNameResponse {
@@ -258,6 +244,22 @@ message PrDependencies {
 
     PullRequest pr = 1;
     repeated ContextualDependency deps = 2;
+}
+
+message PrContents {
+    message File {
+        string name = 1;
+        string file_patch_url = 2;
+        repeated Line patch_lines = 3;
+
+        message Line {
+            int32 line_number = 1;
+            string content = 2;
+        }
+    }
+
+    PullRequest pr = 1;
+    repeated File files = 2;
 }
 
 service OAuthService {
@@ -637,6 +639,19 @@ service PermissionsService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_ROLE_ASSIGNMENT_REMOVE
+        };
+    }
+}
+
+service ProvidersService {
+    rpc ListProviders (ListProvidersRequest) returns (ListProvidersResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
         };
     }
 }
@@ -1302,6 +1317,10 @@ message RuleType {
                 string endpoint = 1;
             }
 
+            message Homoglyphs {
+                string type = 1;
+            }
+
             // jq is only used if the `jq` type is selected.
             // It defines the comparisons that are made between
             // the ingested data and the profile rule.
@@ -1315,6 +1334,9 @@ message RuleType {
 
             // trusty is only used if the `trusty` type is selected.
             optional Trusty trusty = 5;
+
+            // homoglyphs is only used if the `homoglyphs` type is selected.
+            optional Homoglyphs homoglyphs = 6;
         }
         Eval eval = 5;
 
@@ -1496,4 +1518,47 @@ message RoleAssignment {
     optional string project = 4;
 
     reserved 3; // deprecated context
+}
+
+message ListProvidersRequest {
+    // context is the context in which the providers are evaluated.
+    Context context = 1;
+
+    // limit is the maximum number of providers to return.
+    int32 limit = 2;
+
+    // cursor is the cursor to use for the page of results, empty if at the beginning
+    string cursor = 3;
+}
+
+message ListProvidersResponse {
+    repeated Provider providers = 1;
+
+    // cursor is the cursor to use for the next page of results, empty if at the end
+    string cursor = 2;
+}
+
+// ProviderType is the type of the provider.
+enum ProviderType {
+    PROVIDER_TYPE_UNSPECIFIED = 0;
+    PROVIDER_TYPE_GITHUB = 1 [(name) = "github"];
+    PROVIDER_TYPE_REST = 2 [(name) = "rest"];
+    PROVIDER_TYPE_GIT = 3 [(name) = "git"];
+    PROVIDER_TYPE_OCI = 4 [(name) = "oci"];
+    PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
+}
+
+message Provider {
+    // name is the name of the provider.
+    string name = 1;
+    // project is the project where the provider is.
+    string project = 2;
+    // version is the version of the provider.
+    string version = 3;
+
+    // implements is the list of interfaces that the provider implements.
+    repeated ProviderType implements = 4;
+
+    // config is the configuration of the provider.
+    google.protobuf.Struct config = 5;
 }

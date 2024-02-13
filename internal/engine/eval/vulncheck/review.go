@@ -465,9 +465,9 @@ Minder found the following vulnerabilities in this PR:
 	tableVulnerabilitiesRows     = `
   {{ range .Vulnerabilities }}
   <tr>
-    <td>{{ $.DependencyEcosystem }}</td>
-    <td>{{ $.DependencyName }}</td>
-    <td>{{ $.DependencyVersion }}</td>
+    <td>{{ $.Ecosystem }}</td>
+    <td>{{ $.Name }}</td>
+    <td>{{ $.Version }}</td>
     <td>{{ .ID }}</td>
     <td>{{ .Summary }}</td>
     <td>{{ .Introduced }}</td>
@@ -527,15 +527,15 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		var rowBuf bytes.Buffer
 
 		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
-			DependencyEcosystem string
-			DependencyName      string
-			DependencyVersion   string
-			Vulnerabilities     []Vulnerability
+			Ecosystem       string
+			Name            string
+			Version         string
+			Vulnerabilities []Vulnerability
 		}{
-			DependencyEcosystem: sph.trackedDeps[i].Dependency.Ecosystem.AsString(),
-			DependencyName:      sph.trackedDeps[i].Dependency.Name,
-			DependencyVersion:   sph.trackedDeps[i].Dependency.Version,
-			Vulnerabilities:     sph.trackedDeps[i].Vulnerabilities,
+			Ecosystem:       sph.trackedDeps[i].Dependency.Ecosystem.AsString(),
+			Name:            sph.trackedDeps[i].Dependency.Name,
+			Version:         sph.trackedDeps[i].Dependency.Version,
+			Vulnerabilities: sph.trackedDeps[i].Vulnerabilities,
 		}); err != nil {
 			return "", fmt.Errorf("could not execute template: %w", err)
 		}

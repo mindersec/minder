@@ -34,7 +34,7 @@ var downCmd = &cobra.Command{
 	Use:   "down",
 	Short: "migrate a down a database version",
 	Long:  `Command to downgrade database`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)

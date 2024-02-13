@@ -28,7 +28,7 @@ var ruleTypeCmd = &cobra.Command{
 	Use:   "ruletype",
 	Short: "Manage rule types",
 	Long:  `The ruletype subcommands allows the management of rule types within Minder.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

@@ -31,7 +31,7 @@ var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		if err := util.RemoveCredentials(); err != nil {
 			return cli.MessageAndError("Error removing credentials", err)
 		}

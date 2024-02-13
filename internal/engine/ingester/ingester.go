@@ -58,7 +58,7 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
-		return artifact.NewArtifactDataIngest(ing.GetArtifact())
+		return artifact.NewArtifactDataIngest(ing.GetArtifact(), pbuild)
 
 	case git.GitRuleDataIngestType:
 		return git.NewGitIngester(ing.GetGit(), pbuild)

@@ -223,7 +223,7 @@ func TestGoVulnDb(t *testing.T) {
 	}{
 		{
 			name: "SemverMultipleRanges",
-			mockVulnHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockVulnHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(multipleRanges))
 				if err != nil {
@@ -247,7 +247,7 @@ func TestGoVulnDb(t *testing.T) {
 		},
 		{
 			name: "NonSemver",
-			mockVulnHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockVulnHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(nonSemver))
 				if err != nil {
@@ -271,7 +271,7 @@ func TestGoVulnDb(t *testing.T) {
 		},
 		{
 			name: "NotFixed",
-			mockVulnHandler: func(w http.ResponseWriter, r *http.Request) {
+			mockVulnHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, err := w.Write([]byte(notFixed))
 				if err != nil {

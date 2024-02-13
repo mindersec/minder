@@ -39,7 +39,7 @@ var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "migrate the database to the latest version",
 	Long:  `Command to upgrade database`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)

@@ -28,7 +28,7 @@ var RepoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "Manage repositories",
 	Long:  `The repo commands allow the management of repositories within Minder.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

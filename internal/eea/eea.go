@@ -305,7 +305,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 	provider string,
 	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	a, err := util.GetArtifactWithVersions(ctx, e.querier, repoID, artID.UUID)
+	a, err := util.GetArtifact(ctx, e.querier, repoID, artID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}

@@ -45,7 +45,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the minder platform",
 	Long:  `Starts the minder platform, which includes the gRPC server and the HTTP gateway.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()

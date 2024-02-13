@@ -70,7 +70,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	table := initializeTableForList()
 
-	createFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
+	createFunc := func(ctx context.Context, _ string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
 			RuleType: rt,
 		})

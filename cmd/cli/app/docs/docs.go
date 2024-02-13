@@ -35,13 +35,13 @@ var DocsCmd = &cobra.Command{
 	Use:   "docs",
 	Short: "Generates documentation for the client",
 	Long:  `Generates documentation for the client.`,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return cli.MessageAndError("Error binding flags", err)
 		}
 		return nil
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		// We auto-generate the docs daily, so don't include the date at the bottom.
 		app.RootCmd.DisableAutoGenTag = true
 		// We need to add header material, since GenMarkdownTree always

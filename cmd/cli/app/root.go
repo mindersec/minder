@@ -40,7 +40,7 @@ var (
 		Long: `For more information about minder, please visit:
 https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// Print a warning if the build is not pointing to the production environment
 			cfg, _ := clientconfig.ReadConfigFromViper(viper.GetViper())
 

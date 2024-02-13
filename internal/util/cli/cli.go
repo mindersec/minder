@@ -107,7 +107,7 @@ func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout 
 func GRPCClientWrapRunE(
 	runEFunc func(ctx context.Context, cmd *cobra.Command, c *grpc.ClientConn) error,
 ) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)
 		}
@@ -163,4 +163,33 @@ func GetRepositoryName(owner, name string) string {
 		return name
 	}
 	return fmt.Sprintf("%s/%s", owner, name)
+}
+
+// ConcatenateAndWrap takes a string and a maximum line length (maxLen),
+// then outputs the string as a multiline string where each line does not exceed maxLen characters.
+func ConcatenateAndWrap(input string, maxLen int) string {
+	if maxLen <= 0 {
+		return input
+	}
+
+	var result string
+	var lineLength int
+
+	for _, runeValue := range input {
+		// If the line length equals the len, append a newline and reset lineLength
+		if lineLength == maxLen {
+			if result[len(result)-1] != ' ' {
+				// We trim at a word
+				result += "-\n"
+			} else {
+				// We trim at a space, no need to add "-"
+				result += "\n"
+			}
+			lineLength = 0
+		}
+		result += string(runeValue)
+		lineLength++
+	}
+
+	return result
 }

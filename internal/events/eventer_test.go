@@ -257,8 +257,8 @@ func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounter *int) {
 	}
 }
 
-func makeFailingHandler(counter *int) func(_ string, out chan eventPair) events.Handler {
-	return func(_ string, out chan eventPair) events.Handler {
+func makeFailingHandler(counter *int) func(_ string, _ chan eventPair) events.Handler {
+	return func(_ string, _ chan eventPair) events.Handler {
 		return countFailuresHandler(counter)
 	}
 }

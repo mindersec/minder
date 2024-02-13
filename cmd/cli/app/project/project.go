@@ -27,7 +27,7 @@ var ProjectCmd = &cobra.Command{
 	Use:   "project",
 	Short: "Manage project within a minder control plane",
 	Long:  `The minder project commands manage projects within a minder control plane.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
 }

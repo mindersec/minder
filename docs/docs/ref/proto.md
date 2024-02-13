@@ -85,6 +85,16 @@ replies with OK
 | DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
+<a name="minder-v1-ProvidersService"></a>
+
+#### ProvidersService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
+
+
 <a name="minder-v1-RepositoryService"></a>
 
 #### RepositoryService
@@ -150,8 +160,6 @@ ArtifactType defines the artifact data evaluation.
 | version_id | [int64](#int64) |  |  |
 | tags | [string](#string) | repeated |  |
 | sha | [string](#string) |  |  |
-| signature_verification | [SignatureVerification](#minder-v1-SignatureVerification) |  |  |
-| github_workflow | [GithubWorkflow](#minder-v1-GithubWorkflow) | optional |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 
 
@@ -459,8 +467,6 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) |  |  |
-| latest_versions | [int32](#int32) |  |  |
-| tag | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
 
@@ -485,8 +491,6 @@ DiffType defines the diff data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
-| latest_versions | [int32](#int32) |  |  |
-| tag | [string](#string) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 
 
@@ -756,20 +760,6 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
-<a name="minder-v1-GithubWorkflow"></a>
-
-#### GithubWorkflow
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
-| commit_sha | [string](#string) |  |  |
-| trigger | [string](#string) |  |  |
-
-
 <a name="minder-v1-ListArtifactsRequest"></a>
 
 #### ListArtifactsRequest
@@ -814,6 +804,31 @@ list profiles
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profiles | [Profile](#minder-v1-Profile) | repeated |  |
+
+
+<a name="minder-v1-ListProvidersRequest"></a>
+
+#### ListProvidersRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the providers are evaluated. |
+| limit | [int32](#int32) |  | limit is the maximum number of providers to return. |
+| cursor | [string](#string) |  | cursor is the cursor to use for the page of results, empty if at the beginning |
+
+
+<a name="minder-v1-ListProvidersResponse"></a>
+
+#### ListProvidersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| providers | [Provider](#minder-v1-Provider) | repeated |  |
+| cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
 
 
 <a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>
@@ -931,6 +946,43 @@ ListRuleTypesResponse is the response to list rule types.
 | rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
 
 
+<a name="minder-v1-PrContents"></a>
+
+#### PrContents
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
+| files | [PrContents.File](#minder-v1-PrContents-File) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File"></a>
+
+#### PrContents.File
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| file_patch_url | [string](#string) |  |  |
+| patch_lines | [PrContents.File.Line](#minder-v1-PrContents-File-Line) | repeated |  |
+
+
+<a name="minder-v1-PrContents-File-Line"></a>
+
+#### PrContents.File.Line
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| line_number | [int32](#int32) |  |  |
+| content | [string](#string) |  |  |
+
+
 <a name="minder-v1-PrDependencies"></a>
 
 #### PrDependencies
@@ -1029,6 +1081,21 @@ Project API Objects
 | description | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+<a name="minder-v1-Provider"></a>
+
+#### Provider
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the provider. |
+| project | [string](#string) |  | project is the project where the provider is. |
+| version | [string](#string) |  | version is the version of the provider. |
+| implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
+| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1333,6 +1400,18 @@ endpoint and how we compare it to the rule.
 | rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
 | trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | trusty is only used if the `trusty` type is selected. |
+| homoglyphs | [RuleType.Definition.Eval.Homoglyphs](#minder-v1-RuleType-Definition-Eval-Homoglyphs) | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
+
+
+<a name="minder-v1-RuleType-Definition-Eval-Homoglyphs"></a>
+
+#### RuleType.Definition.Eval.Homoglyphs
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>
@@ -1467,24 +1546,6 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
 | mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
-
-
-<a name="minder-v1-SignatureVerification"></a>
-
-#### SignatureVerification
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| is_signed | [bool](#bool) |  |  |
-| is_verified | [bool](#bool) |  |  |
-| is_bundle_verified | [bool](#bool) |  |  |
-| cert_identity | [string](#string) | optional |  |
-| cert_issuer | [string](#string) | optional |  |
-| rekor_log_id | [string](#string) | optional |  |
-| rekor_log_index | [int64](#int64) | optional |  |
-| signature_time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional |  |
 
 
 <a name="minder-v1-StoreProviderTokenRequest"></a>
@@ -1649,6 +1710,21 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_UNSPECIFIED | 0 |  |
 | OBJECT_OWNER_PROJECT | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
+
+
+<a name="minder-v1-ProviderType"></a>
+
+### ProviderType
+ProviderType is the type of the provider.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PROVIDER_TYPE_UNSPECIFIED | 0 |  |
+| PROVIDER_TYPE_GITHUB | 1 |  |
+| PROVIDER_TYPE_REST | 2 |  |
+| PROVIDER_TYPE_GIT | 3 |  |
+| PROVIDER_TYPE_OCI | 4 |  |
+| PROVIDER_TYPE_REPO_LISTER | 5 |  |
 
 
 <a name="minder-v1-Relation"></a>

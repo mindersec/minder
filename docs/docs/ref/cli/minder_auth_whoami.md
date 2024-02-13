@@ -16,7 +16,8 @@ minder auth whoami [flags]
 ### Options
 
 ```
-  -h, --help   help for whoami
+  -h, --help            help for whoami
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands

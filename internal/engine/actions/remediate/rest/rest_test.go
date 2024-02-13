@@ -360,7 +360,7 @@ func TestRestRemediate(t *testing.T) {
 					"allowed_actions": "selected",
 				},
 			},
-			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+			testHandler: func(_ http.ResponseWriter, _ *http.Request) {
 				assert.Fail(t, "unexpected request")
 			},
 			wantErr: false,
@@ -384,7 +384,7 @@ func TestRestRemediate(t *testing.T) {
 					"allowed_actions": "selected",
 				},
 			},
-			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+			testHandler: func(writer http.ResponseWriter, _ *http.Request) {
 				writer.WriteHeader(http.StatusForbidden)
 				_, err := writer.Write([]byte("forbidden"))
 				assert.NoError(t, err, "unexpected error writing response")

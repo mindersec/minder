@@ -34,6 +34,7 @@ mock: ## generate mocks
 	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/minder/internal/db Store
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
 	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/minder/internal/auth JwtValidator,KeySetFetcher
+	mockgen -package mockverify -destination internal/verifier/mock/verify.go github.com/stacklok/minder/internal/verifier/verifyif ArtifactVerifier
 
 .PHONY: cli-docs
 cli-docs: ## generate cli-docs

@@ -1428,6 +1428,21 @@ func (mr *MockStoreMockRecorder) ListProvidersByProjectID(arg0, arg1 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProvidersByProjectID", reflect.TypeOf((*MockStore)(nil).ListProvidersByProjectID), arg0, arg1)
 }
 
+// ListProvidersByProjectIDPaginated mocks base method.
+func (m *MockStore) ListProvidersByProjectIDPaginated(arg0 context.Context, arg1 db.ListProvidersByProjectIDPaginatedParams) ([]db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProvidersByProjectIDPaginated", arg0, arg1)
+	ret0, _ := ret[0].([]db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProvidersByProjectIDPaginated indicates an expected call of ListProvidersByProjectIDPaginated.
+func (mr *MockStoreMockRecorder) ListProvidersByProjectIDPaginated(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProvidersByProjectIDPaginated", reflect.TypeOf((*MockStore)(nil).ListProvidersByProjectIDPaginated), arg0, arg1)
+}
+
 // ListRegisteredRepositoriesByProjectIDAndProvider mocks base method.
 func (m *MockStore) ListRegisteredRepositoriesByProjectIDAndProvider(arg0 context.Context, arg1 db.ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]db.Repository, error) {
 	m.ctrl.T.Helper()

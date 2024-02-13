@@ -19,7 +19,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/glamour"
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
@@ -81,36 +80,31 @@ func NewProfileTable() table.Table {
 // RenderProfileTable renders the profile table
 func RenderProfileTable(p *minderv1.Profile, t table.Table) {
 	// repositories
-	renderEntityRuleSets(minderv1.RepositoryEntity, p.Repository, t)
+	renderProfileRow(minderv1.RepositoryEntity, p.Repository, t)
 
 	// build_environments
-	renderEntityRuleSets(minderv1.BuildEnvironmentEntity, p.BuildEnvironment, t)
+	renderProfileRow(minderv1.BuildEnvironmentEntity, p.BuildEnvironment, t)
 
 	// artifacts
-	renderEntityRuleSets(minderv1.ArtifactEntity, p.Artifact, t)
+	renderProfileRow(minderv1.ArtifactEntity, p.Artifact, t)
 
 	// pull request
-	renderEntityRuleSets(minderv1.PullRequestEntity, p.PullRequest, t)
+	renderProfileRow(minderv1.PullRequestEntity, p.PullRequest, t)
 }
 
-func renderEntityRuleSets(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
+func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
 	for idx := range rs {
 		rule := rs[idx]
+		params := marshalStructOrEmpty(rule.Params)
+		def := marshalStructOrEmpty(rule.Def)
 
-		renderRuleTable(entType, rule, t)
+		t.AddRow(
+			entType.String(),
+			rule.Type,
+			params,
+			def,
+		)
 	}
-}
-
-func renderRuleTable(entType minderv1.EntityType, rule *minderv1.Profile_Rule, t table.Table) {
-	params := marshalStructOrEmpty(rule.Params)
-	def := marshalStructOrEmpty(rule.Def)
-
-	t.AddRow(
-		entType.String(),
-		rule.Type,
-		params,
-		def,
-	)
 }
 
 // NewProfileStatusTable creates a new table for rendering profile status
@@ -163,7 +157,6 @@ func RenderRuleEvaluationStatusTable(
 			getColoredEvalStatus(eval.Status),
 			getRemediateStatusColor(eval.RemediationStatus),
 			layouts.NoColor(mapToYAMLOrEmpty(eval.EntityInfo)),
-			layouts.NoColor(guidanceOrEncouragement(eval.Status, eval.Guidance)),
 		)
 	}
 }
@@ -178,7 +171,7 @@ func getRemediateStatusColor(status string) layouts.ColoredColumn {
 		return layouts.RedColumn(txt)
 	case errorStatus:
 		return layouts.RedColumn(txt)
-	case notAvailableStatus:
+	case notAvailableStatus, skippedStatus:
 		return layouts.YellowColumn(txt)
 	default:
 		return layouts.NoColor(txt)
@@ -190,17 +183,17 @@ func getEvalStatusText(status string) string {
 	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
 	switch strings.ToLower(status) {
 	case successStatus:
-		return "✅ Success"
+		return "Success"
 	case failureStatus:
-		return "❌ Failure"
+		return "Failure"
 	case errorStatus:
-		return "❌ Error"
+		return "Error"
 	case skippedStatus:
-		return "⏹ Skipped"
+		return "Skipped"
 	case pendingStatus:
-		return "⏳ Pending"
+		return "Pending"
 	default:
-		return "⚠️ Unknown"
+		return "Unknown"
 	}
 }
 
@@ -209,17 +202,17 @@ func getRemediationStatusText(status string) string {
 	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
 	switch strings.ToLower(status) {
 	case successStatus:
-		return "✅ Success"
+		return "Success"
 	case failureStatus:
-		return "❌ Failure"
+		return "Failure"
 	case errorStatus:
-		return "❌ Error"
+		return "Error"
 	case skippedStatus:
-		return "" // visually empty as we didn't have to remediate
+		return "Skipped" // visually empty as we didn't have to remediate
 	case notAvailableStatus:
-		return "🚫 Not Available"
+		return "Not Available"
 	default:
-		return "⚠️ Unknown"
+		return "Unknown"
 	}
 }
 
@@ -234,23 +227,4 @@ func mapToYAMLOrEmpty(m map[string]string) string {
 	}
 
 	return string(yamlText)
-}
-
-func guidanceOrEncouragement(status, guidance string) string {
-	if status == successStatus && guidance == "" {
-		return "👍"
-	}
-
-	if guidance == "" {
-		return "No guidance available for this rule 😞"
-	}
-
-	// TODO: use a color scheme for minder instead of a pre-defined one.
-	// Related-to: https://github.com/stacklok/minder/issues/1006
-	renderedGuidance, err := glamour.Render(guidance, "dark")
-	if err != nil {
-		return guidance
-	}
-
-	return renderedGuidance
 }
