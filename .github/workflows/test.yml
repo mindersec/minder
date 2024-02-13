@@ -44,7 +44,7 @@ jobs:
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
       - name: Run coverage
-        run: make coverage
+        run: make cover
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2.2.3
         with:
