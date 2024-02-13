@@ -43,8 +43,6 @@ jobs:
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
-      - name: Init examples
-        run: make init-examples
       - name: Run coverage
         run: make cover
       - name: Coveralls GitHub Action
