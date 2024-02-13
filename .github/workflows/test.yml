@@ -27,28 +27,28 @@ jobs:
       - name: Run tests
         run: make test-silent
 
-    cover:
-      name: Coverage
-      permissions:
-        contents: read
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout
-          uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-        - name: Set up Go
-          uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
-          with:
-            go-version-file: 'go.mod'
-        - name: Set up helm (test dependency)
-          uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
-        - name: Copy config file
-          run: cp config/server-config.yaml.example ./server-config.yaml
-        - name: Run coverage
-          run: make coverage
-        - name: Coveralls GitHub Action
-          uses: coverallsapp/github-action@v2.2.3
-          with:
-            measure: true
+  cover:
+    name: Coverage
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - name: Set up Go
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Set up helm (test dependency)
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3
+      - name: Copy config file
+        run: cp config/server-config.yaml.example ./server-config.yaml
+      - name: Run coverage
+        run: make coverage
+      - name: Coveralls GitHub Action
+        uses: coverallsapp/github-action@v2.2.3
+        with:
+          measure: true
 
   authz:
     name: Authz tests
