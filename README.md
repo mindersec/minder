@@ -229,6 +229,8 @@ minder auth login
 
 Upon completion, you should see that the Minder Server is set to `localhost:8090`.
 
+By default, the `minder` CLI will point to the production Stacklok environment if a config file is not present, but [creating the `config.yaml` for running the server](#initial-configuration) will point the CLI at your local development environment.  If you explicitly want to use a different instance, you can set the `MINDER_CONFIG` environment variable to point to a particular configuration.  We have configurations for local development, the Stacklok production environment, and Stacklok staging environment (updated frequently) checked in to [the `config` directory](./config/).
+
 ### Development guidelines
 
 You can find more detailed information about the development process in the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
