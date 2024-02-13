@@ -49,6 +49,8 @@ jobs:
         uses: coverallsapp/github-action@v2.2.3
         with:
           measure: true
+          files: ./coverage.out
+          format: gcov
 
   authz:
     name: Authz tests
