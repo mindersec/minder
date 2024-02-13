@@ -94,7 +94,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 		return fmt.Errorf("could not generate summary: %w", err)
 	}
 
-	err = sph.cli.CreateComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
+	_, err = sph.cli.CreateComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
 	if err != nil {
 		return fmt.Errorf("could not create comment: %w", err)
 	}

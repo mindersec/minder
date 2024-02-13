@@ -90,7 +90,11 @@ type GitHub interface {
 	GetPackageVersionById(context.Context, bool, string, string, string, int64) (*github.PackageVersion, error)
 	GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error)
 	CreateReview(context.Context, string, string, int, *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
+	UpdateReview(context.Context, string, string, int, int64, string) (*github.PullRequestReview, error)
 	ListReviews(context.Context, string, string, int, *github.ListOptions) ([]*github.PullRequestReview, error)
+	ListComments(ctx context.Context, owner, repo string, number int,
+		opts *github.PullRequestListCommentsOptions,
+	) ([]*github.PullRequestComment, error)
 	DismissReview(context.Context, string, string, int, int64,
 		*github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
 	SetCommitStatus(context.Context, string, string, string, *github.RepoStatus) (*github.RepoStatus, error)
@@ -105,10 +109,11 @@ type GitHub interface {
 	CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
-	CreateComment(ctx context.Context, owner, repo string, number int, comment string) error
 	GetUserId(ctx context.Context) (int64, error)
 	GetUsername(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
+	CreateComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error)
+	UpdateComment(ctx context.Context, owner, repo string, number int64, comment string) error
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

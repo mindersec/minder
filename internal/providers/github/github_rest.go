@@ -406,6 +406,28 @@ func (c *RestClient) CreateReview(
 	return review, nil
 }
 
+// UpdateReview is a wrapper for the GitHub API to update a review
+func (c *RestClient) UpdateReview(
+	ctx context.Context, owner, repo string, number int, reviewId int64, body string,
+) (*github.PullRequestReview, error) {
+	review, _, err := c.client.PullRequests.UpdateReview(ctx, owner, repo, number, reviewId, body)
+	if err != nil {
+		return nil, fmt.Errorf("error updating review: %w", err)
+	}
+	return review, nil
+}
+
+// ListComments is a wrapper for the GitHub API to get all comments in a review
+func (c *RestClient) ListComments(
+	ctx context.Context, owner, repo string, number int, opts *github.PullRequestListCommentsOptions,
+) ([]*github.PullRequestComment, error) {
+	comments, _, err := c.client.PullRequests.ListComments(ctx, owner, repo, number, opts)
+	if err != nil {
+		return nil, fmt.Errorf("error getting list of comments: %w", err)
+	}
+	return comments, nil
+}
+
 // ListReviews is a wrapper for the GitHub API to list reviews
 func (c *RestClient) ListReviews(
 	ctx context.Context,
@@ -636,9 +658,13 @@ func (c *RestClient) ListPullRequests(
 }
 
 // CreateComment creates a comment on a pull request or an issue
-func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, number int, comment string) error {
+func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error) {
+	var issueComment *github.IssueComment
+
 	op := func() (any, error) {
-		_, _, err := c.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
+		var err error
+
+		issueComment, _, err = c.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
 			Body: &comment,
 		})
 
@@ -652,7 +678,15 @@ func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, numb
 
 		return nil, backoffv4.Permanent(err)
 	}
-	_, err := performWithRetry(ctx, op)
+	_, retryErr := performWithRetry(ctx, op)
+	return issueComment, retryErr
+}
+
+// UpdateComment updates a comment on a pull request or an issue
+func (c *RestClient) UpdateComment(ctx context.Context, owner, repo string, number int64, comment string) error {
+	_, _, err := c.client.Issues.EditComment(ctx, owner, repo, number, &github.IssueComment{
+		Body: &comment,
+	})
 	return err
 }
 
