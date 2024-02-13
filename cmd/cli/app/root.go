@@ -43,9 +43,12 @@ https://docs.stacklok.com/minder`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Print a warning if the build is not pointing to the production environment
 			cfg, _ := clientconfig.ReadConfigFromViper(viper.GetViper())
-			
+
 			if cfg == nil || cfg.GRPCClientConfig.Host != constants.MinderGRPCHost {
-				fmt.Fprintf(cmd.ErrOrStderr(), "WARNING: Running against a test environment (%s) and may not be stable\n", cfg.GRPCClientConfig.Host)
+				fmt.Fprintf(
+					cmd.ErrOrStderr(),
+					"WARNING: Running against a test environment (%s) and may not be stable\n",
+					cfg.GRPCClientConfig.Host)
 			}
 			return nil
 		},
