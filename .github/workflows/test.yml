@@ -45,12 +45,15 @@ jobs:
         run: cp config/server-config.yaml.example ./server-config.yaml
       - name: Run coverage
         run: make cover
+      - name: Debug coverage
+        run: head ./coverage.out
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@v2.2.3
         with:
           measure: true
           files: ./coverage.out
           format: gcov
+          debug: true
 
   authz:
     name: Authz tests
