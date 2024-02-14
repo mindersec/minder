@@ -33,7 +33,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.61.0
-	github.com/openfga/go-sdk v0.3.4
+	github.com/openfga/go-sdk v0.3.5
 	github.com/openfga/openfga v1.4.3
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.18.0
