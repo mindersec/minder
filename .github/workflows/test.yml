@@ -54,7 +54,7 @@ jobs:
         with:
           measure: true
           # files: ./coverage.out
-          format: gcov
+          # format: gcov
           debug: true
 
   authz:
