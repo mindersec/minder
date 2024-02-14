@@ -53,6 +53,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -66,18 +67,19 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store        db.Store
-	cfg          *serverconfig.Config
-	evt          *events.Eventer
-	mt           *metrics
-	provMt       provtelemetry.ProviderMetrics
-	grpcServer   *grpc.Server
-	vldtr        auth.JwtValidator
-	OAuth2       *oauth2.Config
-	ClientID     string
-	ClientSecret string
-	authzClient  authz.Client
-	cryptoEngine *crypto.Engine
+	store           db.Store
+	cfg             *serverconfig.Config
+	evt             *events.Eventer
+	mt              *metrics
+	provMt          provtelemetry.ProviderMetrics
+	grpcServer      *grpc.Server
+	vldtr           auth.JwtValidator
+	OAuth2          *oauth2.Config
+	ClientID        string
+	ClientSecret    string
+	authzClient     authz.Client
+	cryptoEngine    *crypto.Engine
+	restClientCache ratecache.RestClientCache
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -104,6 +106,13 @@ func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
 func WithAuthzClient(c authz.Client) ServerOption {
 	return func(s *Server) {
 		s.authzClient = c
+	}
+}
+
+// WithRestClientCache sets the rest client cache for the server
+func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
+	return func(s *Server) {
+		s.restClientCache = c
 	}
 }
 

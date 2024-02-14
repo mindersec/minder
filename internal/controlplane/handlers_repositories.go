@@ -55,6 +55,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
 	}
 	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
@@ -404,6 +405,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
 	}
 	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
@@ -414,7 +416,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, util.UserVisibleError(codes.Unimplemented, "provider does not implement repository listing")
 	}
 
-	client, err := p.GetRepoLister(ctx)
+	client, err := p.GetRepoLister()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}

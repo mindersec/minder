@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strings"
 
+	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/google/go-github/v56/github"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -362,11 +363,36 @@ func (c *RestClient) ListFiles(
 	perPage int,
 	pageNumber int,
 ) ([]*github.CommitFile, *github.Response, error) {
-	opt := &github.ListOptions{
-		Page:    pageNumber,
-		PerPage: perPage,
+	type listFilesRespWrapper struct {
+		files []*github.CommitFile
+		resp  *github.Response
 	}
-	return c.client.PullRequests.ListFiles(ctx, owner, repo, prNumber, opt)
+
+	op := func() (listFilesRespWrapper, error) {
+		opt := &github.ListOptions{
+			Page:    pageNumber,
+			PerPage: perPage,
+		}
+		files, resp, err := c.client.PullRequests.ListFiles(ctx, owner, repo, prNumber, opt)
+
+		listFileResp := listFilesRespWrapper{
+			files: files,
+			resp:  resp,
+		}
+
+		if isRateLimitError(err) {
+			waitErr := c.waitForRateLimitReset(ctx, err)
+			if waitErr == nil {
+				return listFileResp, err
+			}
+			return listFileResp, backoffv4.Permanent(err)
+		}
+
+		return listFileResp, backoffv4.Permanent(err)
+	}
+
+	resp, err := performWithRetry(ctx, op)
+	return resp.files, resp.resp, err
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review
@@ -620,9 +646,22 @@ func (c *RestClient) ListPullRequests(
 
 // CreateComment creates a comment on a pull request or an issue
 func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, number int, comment string) error {
-	_, _, err := c.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
-		Body: &comment,
-	})
+	op := func() (any, error) {
+		_, _, err := c.client.Issues.CreateComment(ctx, owner, repo, number, &github.IssueComment{
+			Body: &comment,
+		})
+
+		if isRateLimitError(err) {
+			waitWrr := c.waitForRateLimitReset(ctx, err)
+			if waitWrr == nil {
+				return nil, err
+			}
+			return nil, backoffv4.Permanent(err)
+		}
+
+		return nil, backoffv4.Permanent(err)
+	}
+	_, err := performWithRetry(ctx, op)
 	return err
 }
 

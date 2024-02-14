@@ -152,7 +152,7 @@ func NewSecurityAdvisoryAlert(
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
 	// Get the GitHub client
-	cli, err := pbuild.GetGitHub(context.Background())
+	cli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}

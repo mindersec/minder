@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -55,6 +56,7 @@ type Executor struct {
 	// terminationcontext is used to terminate the executor
 	// when the server is shutting down.
 	terminationcontext context.Context
+	restClientCache    ratecache.RestClientCache
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -71,6 +73,13 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ExecutorOption {
 func WithMiddleware(mdw message.HandlerMiddleware) ExecutorOption {
 	return func(e *Executor) {
 		e.mdws = append(e.mdws, mdw)
+	}
+}
+
+// WithRestClientCache sets the rest client cache for the executor
+func WithRestClientCache(cache ratecache.RestClientCache) ExecutorOption {
+	return func(e *Executor) {
+		e.restClientCache = cache
 	}
 }
 
@@ -189,6 +198,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(e.provMt),
+		providers.WithRestClientCache(e.restClientCache),
 	}
 	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, pbOpts...)
 	if err != nil {

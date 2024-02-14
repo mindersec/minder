@@ -108,6 +108,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(e.provMt),
+		providers.WithRestClientCache(e.restClientCache),
 	}
 	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng, pbOpts...)
 	if err != nil {
@@ -132,7 +133,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return nil
 	}
 
-	cli, err := p.GetGitHub(ctx)
+	cli, err := p.GetGitHub()
 	if err != nil {
 		return fmt.Errorf("error getting github client: %w", err)
 	}

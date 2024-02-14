@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
 )
@@ -121,11 +122,13 @@ var serveCmd = &cobra.Command{
 
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
+		restClientCache := ratecache.NewRestClientCache(ctx)
 
 		s, err := controlplane.NewServer(
 			store, evt, serverMetrics, cfg, vldtr,
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
+			controlplane.WithRestClientCache(restClientCache),
 		)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
@@ -141,6 +144,7 @@ var serveCmd = &cobra.Command{
 			engine.WithProviderMetrics(providerMetrics),
 			engine.WithMiddleware(aggr.AggregateMiddleware),
 			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
+			engine.WithRestClientCache(restClientCache),
 		)
 		if err != nil {
 			return fmt.Errorf("unable to create executor: %w", err)
@@ -148,7 +152,9 @@ var serveCmd = &cobra.Command{
 
 		s.ConsumeEvents(exec)
 
-		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, reconcilers.WithProviderMetrics(providerMetrics))
+		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth,
+			reconcilers.WithProviderMetrics(providerMetrics),
+			reconcilers.WithRestClientCache(restClientCache))
 		if err != nil {
 			return fmt.Errorf("unable to create reconciler: %w", err)
 		}
@@ -175,6 +181,9 @@ var serveCmd = &cobra.Command{
 
 		// Wait for all entity events to be executed
 		exec.Wait()
+
+		// Wait for the client cache background routine to finish
+		restClientCache.Wait()
 
 		return errg.Wait()
 	},

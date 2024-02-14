@@ -83,7 +83,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 
 	token := viper.GetString("auth.token")
 
-	ghcli, err := buildGitHubClient(context.Background(), token)
+	ghcli, err := buildGitHubClient(token)
 	if err != nil {
 		return fmt.Errorf("cannot build github client: %w", err)
 	}
@@ -107,7 +107,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func buildGitHubClient(ctx context.Context, token string) (provifv1.GitHub, error) {
+func buildGitHubClient(token string) (provifv1.GitHub, error) {
 	pbuild := providers.NewProviderBuilder(
 		&db.Provider{
 			Name:    "test",
@@ -126,5 +126,5 @@ func buildGitHubClient(ctx context.Context, token string) (provifv1.GitHub, erro
 		token,
 	)
 
-	return pbuild.GetGitHub(ctx)
+	return pbuild.GetGitHub()
 }

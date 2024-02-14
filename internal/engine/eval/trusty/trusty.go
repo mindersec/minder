@@ -54,7 +54,7 @@ func NewTrustyEvaluator(
 		return nil, fmt.Errorf("endpoint is not set")
 	}
 
-	ghcli, err := pbuild.GetGitHub(context.Background())
+	ghcli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

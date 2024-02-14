@@ -75,7 +75,7 @@ func NewRestRuleDataIngest(
 
 	method := util.HttpMethodFromString(restCfg.Method, http.MethodGet)
 
-	cli, err := pbuild.GetHTTP(context.Background())
+	cli, err := pbuild.GetHTTP()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}

@@ -36,7 +36,7 @@ func NewInvisibleCharactersEvaluator(pbuild *providers.ProviderBuilder) (*Invisi
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	ghClient, err := pbuild.GetGitHub(context.Background())
+	ghClient, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch GitHub client: %w", err)
 	}

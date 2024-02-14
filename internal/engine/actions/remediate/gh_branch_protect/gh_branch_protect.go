@@ -64,7 +64,7 @@ func NewGhBranchProtectRemediator(
 		return nil, fmt.Errorf("cannot parse patch template: %w", err)
 	}
 
-	cli, err := pbuild.GetGitHub(context.Background())
+	cli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}
