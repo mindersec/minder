@@ -27,7 +27,7 @@ test-silent: clean init-examples ## run tests in a silent mode (errors only outp
 
 .PHONY: cover
 cover: init-examples ## display test coverage
-	go test -v -race $(shell go list ./... | grep -v /vendor/) -v -coverprofile=coverage.out
+	go test -v -race  -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
 .PHONY: lint
