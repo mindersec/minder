@@ -1,6 +1,6 @@
 ![minder logo](./docs/docs/images/Minder_darkMode.png)
 
-[![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
+[![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/stacklok/minder/badge.svg?branch=main)](https://coveralls.io/github/stacklok/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
 ---
 
 [Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
