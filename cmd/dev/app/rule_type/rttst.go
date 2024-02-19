@@ -117,7 +117,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// TODO: Read this from a providers file instead so we can make it pluggable
-	eng, err := engine.NewRuleTypeEngine(p, rt, providers.NewProviderBuilder(
+	eng, err := engine.NewRuleTypeEngine(context.Background(), p, rt, providers.NewProviderBuilder(
 		&db.Provider{
 			Name:    "test",
 			Version: "v1",

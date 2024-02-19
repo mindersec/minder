@@ -18,7 +18,9 @@
 package eval
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/stacklok/minder/internal/engine/eval/jq"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
@@ -30,7 +32,11 @@ import (
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
-func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Evaluator, error) {
+func NewRuleEvaluator(
+	ctx context.Context,
+	rt *pb.RuleType,
+	cli *providers.ProviderBuilder,
+) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")
@@ -48,7 +54,7 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 	case vulncheck.VulncheckEvalType:
 		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
 	case trusty.TrustyEvalType:
-		return trusty.NewTrustyEvaluator(cli)
+		return trusty.NewTrustyEvaluator(ctx, cli)
 	case application.HomoglyphsEvalType:
 		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), cli)
 	default:

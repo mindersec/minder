@@ -311,7 +311,7 @@ func (e *Executor) getEvaluator(
 	params.RuleType = rt
 
 	// Create the rule type engine
-	rte, err := NewRuleTypeEngine(profile, rt, cli)
+	rte, err := NewRuleTypeEngine(ctx, profile, rt, cli)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
