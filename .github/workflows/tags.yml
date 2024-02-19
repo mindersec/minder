@@ -28,6 +28,13 @@ jobs:
   license-check:
     uses: ./.github/workflows/license-check.yml
   lint:
+    permissions: # needed for golangci-lint
+      # Required: allow read access to the content for analysis.
+      contents: read
+      # Optional: allow read access to pull request. Use with `only-new-issues` option.
+      pull-requests: read
+      # Optional: Allow write access to checks to allow the action to annotate code in the PR.
+      checks: write
     uses: ./.github/workflows/lint.yml
   build:
     uses: ./.github/workflows/build.yml
