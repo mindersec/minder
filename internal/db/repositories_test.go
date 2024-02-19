@@ -42,8 +42,8 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		IsPrivate:  false,
 		IsFork:     false,
 		WebhookID:  sql.NullInt32{Int32: int32(rand.RandomInt(0, 1000, seed)), Valid: true},
-		WebhookUrl: rand.RandomURL(seed),
-		DeployUrl:  rand.RandomURL(seed),
+		WebhookUrl: randomURL(seed),
+		DeployUrl:  randomURL(seed),
 	}
 	// Allow arbitrary fixups to the Repository
 	for _, o := range opts {
@@ -273,4 +273,8 @@ func TestDeleteRepository(t *testing.T) {
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, repo2)
+}
+
+func randomURL(seed int64) string {
+	return "http://" + rand.RandomString(10, seed) + ".com"
 }

@@ -42,17 +42,6 @@ func TestRandomString(t *testing.T) {
 	require.Len(t, randomString, 10)
 }
 
-func TestRandomEmail(t *testing.T) {
-	t.Parallel()
-
-	seed := int64(12345)
-	email := rand.RandomEmail(seed)
-	require.NotEmpty(t, email)
-	require.Contains(t, email, "@")
-	require.Contains(t, email, ".")
-	require.Len(t, email, 22)
-}
-
 func TestRandomName(t *testing.T) {
 	t.Parallel()
 

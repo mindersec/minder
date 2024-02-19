@@ -19,14 +19,8 @@
 package rand
 
 import (
-	crand "crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"math/rand"
 	"net"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 )
 
@@ -56,147 +50,9 @@ func RandomString(n int, seed int64) string {
 	return string(s)
 }
 
-// RandomEmail returns a random email address.
-func RandomEmail(seed int64) string {
-	return RandomString(10, seed) + "@example.com"
-}
-
 // RandomName returns a random name.
 func RandomName(seed int64) string {
 	return RandomString(10, seed)
-}
-
-// RandomURL returns a random URL.
-func RandomURL(seed int64) string {
-	return "http://" + RandomString(10, seed) + ".com"
-}
-
-// RandomPassword returns a random password.
-func RandomPassword(length int, seed int64) string {
-	// Define character pools
-	upperChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	lowerChars := "abcdefghijklmnopqrstuvwxyz"
-	numberChars := "0123456789"
-	specialChars := "_.;?&@"
-
-	r := NewRand(seed)
-
-	// Create a slice to hold the password characters
-	password := make([]byte, length)
-
-	// Determine the number of characters needed from each pool
-	numUpper := 1
-	numLower := 1
-	numNumber := 1
-	numSpecial := 1
-	numRemaining := length - numUpper - numLower - numNumber - numSpecial
-
-	// Fill the password with random characters
-	fillPasswordChars(r, password, upperChars, numUpper)
-	fillPasswordChars(r, password, lowerChars, numLower)
-	fillPasswordChars(r, password, numberChars, numNumber)
-	fillPasswordChars(r, password, specialChars, numSpecial)
-	fillPasswordChars(r, password, upperChars+lowerChars+numberChars+specialChars, numRemaining)
-
-	// Shuffle the password characters
-	r.Shuffle(length, func(i, j int) {
-		password[i], password[j] = password[j], password[i]
-	})
-
-	return string(password)
-}
-
-func fillPasswordChars(r *rand.Rand, password []byte, charset string, count int) {
-	for i := 0; i < count; i++ {
-		randomIndex := r.Intn(len(password))
-		for password[randomIndex] != 0 {
-			randomIndex = r.Intn(len(password))
-		}
-		password[randomIndex] = getRandomChar(r, charset)
-	}
-}
-
-func getRandomChar(r *rand.Rand, charset string) byte {
-	return charset[r.Intn(len(charset))]
-}
-
-// RandomKeypair returns a random RSA keypair
-func RandomKeypair(length int) (*rsa.PrivateKey, *rsa.PublicKey) {
-	privateKey, err := rsa.GenerateKey(crand.Reader, length)
-	if err != nil {
-		return nil, nil
-	}
-	publicKey := &privateKey.PublicKey
-
-	return privateKey, publicKey
-}
-
-// RandomKeypairFile generates a random RSA keypair and writes it to files
-func RandomKeypairFile(length int, privateFilePath string, publicFilePath string) error {
-	filePriv, err := os.Create(filepath.Clean(privateFilePath))
-	if err != nil {
-		return err
-	}
-	defer filePriv.Close()
-
-	filePub, err := os.Create(filepath.Clean(publicFilePath))
-	if err != nil {
-		return err
-	}
-	defer filePub.Close()
-
-	privateKey, err := rsa.GenerateKey(crand.Reader, length)
-	if err != nil {
-		return err
-	}
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	pemBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	}
-
-	err = pem.Encode(filePriv, pemBlock)
-	if err != nil {
-		return err
-	}
-
-	publicKey := &privateKey.PublicKey
-	publicKeyPEM := &pem.Block{
-		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(publicKey),
-	}
-
-	err = pem.Encode(filePub, publicKeyPEM)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// RandomPrivateKeyFile generates a random RSA private key and writes it to a file
-func RandomPrivateKeyFile(length int, filePath string) error {
-	privateKey, err := rsa.GenerateKey(crand.Reader, length)
-	if err != nil {
-		return err
-	}
-	file, err := os.Create(filepath.Clean(filePath))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
-	pemBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: privateKeyBytes,
-	}
-
-	err = pem.Encode(file, pemBlock)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // GetRandomPort returns a random port number.
