@@ -100,12 +100,249 @@ func TestSanitizingInterceptor(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, ret)
-
-			// test nil error
-			st := status.Convert(err)
-			nicest := util.FromRpcError(st)
-			require.Equal(t, codes.OK, nicest.Code)
-			require.Equal(t, "OK", nicest.Name)
 		})
 	}
+}
+
+func TestNiceStatusFromRpcError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		s    *status.Status
+		want *util.NiceStatus
+	}{
+		{
+			name: "OK",
+			s:    status.New(codes.OK, "OK"),
+			want: &util.NiceStatus{
+				Code:        codes.OK,
+				Name:        "OK",
+				Description: "OK",
+			},
+		},
+		{
+			name: "CANCELLED",
+			s:    status.New(codes.Canceled, "Cancelled"),
+			want: &util.NiceStatus{
+				Code:        codes.Canceled,
+				Name:        "CANCELLED",
+				Description: "Cancelled",
+			},
+		},
+		{
+			name: "UNKNOWN",
+			s:    status.New(codes.Unknown, ""),
+			want: &util.NiceStatus{
+				Code:        codes.Unknown,
+				Name:        "UNKNOWN",
+				Description: "Unknown",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ns := util.FromRpcError(tt.s)
+			require.Equal(t, tt.want.Code, ns.Code)
+			require.Equal(t, tt.want.Name, ns.Name)
+			require.Equal(t, tt.want.Description, ns.Description)
+		})
+	}
+}
+
+func TestSetCode(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		code    codes.Code
+		results util.NiceStatus
+	}{
+		{
+			name: "OK",
+			code: codes.OK,
+			results: util.NiceStatus{
+				Code:        codes.OK,
+				Name:        "OK",
+				Description: "OK",
+				// NOTE: let's not test the details here, as it's a bit too verbose
+			},
+		},
+		{
+			name: "CANCELLED",
+			code: codes.Canceled,
+			results: util.NiceStatus{
+				Code:        codes.Canceled,
+				Name:        "CANCELLED",
+				Description: "Cancelled",
+			},
+		},
+		{
+			name: "UNKNOWN",
+			code: codes.Unknown,
+			results: util.NiceStatus{
+				Code:        codes.Unknown,
+				Name:        "UNKNOWN",
+				Description: "Unknown",
+			},
+		},
+		{
+			name: "INVALID_ARGUMENT",
+			code: codes.InvalidArgument,
+			results: util.NiceStatus{
+				Code:        codes.InvalidArgument,
+				Name:        "INVALID_ARGUMENT",
+				Description: "Invalid argument",
+			},
+		},
+		{
+			name: "DEADLINE_EXCEEDED",
+			code: codes.DeadlineExceeded,
+			results: util.NiceStatus{
+				Code:        codes.DeadlineExceeded,
+				Name:        "DEADLINE_EXCEEDED",
+				Description: "Deadline exceeded",
+			},
+		},
+		{
+			name: "NOT_FOUND",
+			code: codes.NotFound,
+			results: util.NiceStatus{
+				Code:        codes.NotFound,
+				Name:        "NOT_FOUND",
+				Description: "Not found",
+			},
+		},
+		{
+			name: "ALREADY_EXISTS",
+			code: codes.AlreadyExists,
+			results: util.NiceStatus{
+				Code:        codes.AlreadyExists,
+				Name:        "ALREADY_EXISTS",
+				Description: "Already exists",
+			},
+		},
+		{
+			name: "PERMISSION_DENIED",
+			code: codes.PermissionDenied,
+			results: util.NiceStatus{
+				Code:        codes.PermissionDenied,
+				Name:        "PERMISSION_DENIED",
+				Description: "Permission denied",
+			},
+		},
+		{
+			name: "RESOURCE_EXHAUSTED",
+			code: codes.ResourceExhausted,
+			results: util.NiceStatus{
+				Code:        codes.ResourceExhausted,
+				Name:        "RESOURCE_EXHAUSTED",
+				Description: "Resource exhausted",
+			},
+		},
+		{
+			name: "FAILED_PRECONDITION",
+			code: codes.FailedPrecondition,
+			results: util.NiceStatus{
+				Code:        codes.FailedPrecondition,
+				Name:        "FAILED_PRECONDITION",
+				Description: "Failed precondition",
+			},
+		},
+		{
+			name: "ABORTED",
+			code: codes.Aborted,
+			results: util.NiceStatus{
+				Code:        codes.Aborted,
+				Name:        "ABORTED",
+				Description: "Aborted",
+			},
+		},
+		{
+			name: "OUT_OF_RANGE",
+			code: codes.OutOfRange,
+			results: util.NiceStatus{
+				Code:        codes.OutOfRange,
+				Name:        "OUT_OF_RANGE",
+				Description: "Out of range",
+			},
+		},
+		{
+			name: "UNIMPLEMENTED",
+			code: codes.Unimplemented,
+			results: util.NiceStatus{
+				Code:        codes.Unimplemented,
+				Name:        "UNIMPLEMENTED",
+				Description: "Unimplemented",
+			},
+		},
+		{
+			name: "INTERNAL",
+			code: codes.Internal,
+			results: util.NiceStatus{
+				Code:        codes.Internal,
+				Name:        "INTERNAL",
+				Description: "Server error",
+			},
+		},
+		{
+			name: "UNAVAILABLE",
+			code: codes.Unavailable,
+			results: util.NiceStatus{
+				Code:        codes.Unavailable,
+				Name:        "UNAVAILABLE",
+				Description: "Unavailable",
+			},
+		},
+		{
+			name: "DATA_LOSS",
+			code: codes.DataLoss,
+			results: util.NiceStatus{
+				Code:        codes.DataLoss,
+				Name:        "DATA_LOSS",
+				Description: "Data loss",
+			},
+		},
+		{
+			name: "UNAUTHENTICATED",
+			code: codes.Unauthenticated,
+			results: util.NiceStatus{
+				Code:        codes.Unauthenticated,
+				Name:        "UNAUTHENTICATED",
+				Description: "Unauthenticated",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			s := util.GetNiceStatus(tt.code)
+			require.Equal(t, tt.results.Code, s.Code)
+			require.Equal(t, tt.results.Name, s.Name)
+			require.Equal(t, tt.results.Description, s.Description)
+		})
+	}
+}
+
+func TestNilNiceStatusReturnsNilGRPCStatus(t *testing.T) {
+	t.Parallel()
+
+	var ns *util.NiceStatus
+	require.Nil(t, ns.GRPCStatus())
+}
+
+func TestNilNiceStatusReturnsOKError(t *testing.T) {
+	t.Parallel()
+
+	var ns *util.NiceStatus
+	require.Equal(t, "OK", ns.Error())
 }
