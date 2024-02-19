@@ -17,6 +17,8 @@
 package auth
 
 import (
+	crand "crypto/rand"
+	"crypto/rsa"
 	"testing"
 	"time"
 
@@ -28,14 +30,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func TestParseAndValidate(t *testing.T) {
 	t.Parallel()
 
 	jwks := jwk.NewSet()
-	privateKey, publicKey := rand.RandomKeypair(2048)
+	privateKey, publicKey := randomKeypair(2048)
 	privateJwk, _ := jwk.FromRaw(privateKey)
 	err := privateJwk.Set(jwk.KeyIDKey, `mykey`)
 	require.NoError(t, err, "failed to setup private key ID")
@@ -83,7 +84,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Invalid signature",
 			buildToken: func() string {
-				otherKey, _ := rand.RandomKeypair(2048)
+				otherKey, _ := randomKeypair(2048)
 				otherJwk, _ := jwk.FromRaw(otherKey)
 				err = otherJwk.Set(jwk.KeyIDKey, `otherKey`)
 				require.NoError(t, err, "failed to setup signing key ID")
@@ -139,4 +140,15 @@ func TestParseAndValidate(t *testing.T) {
 			tc.checkError(t, err)
 		})
 	}
+}
+
+// RandomKeypair returns a random RSA keypair
+func randomKeypair(length int) (*rsa.PrivateKey, *rsa.PublicKey) {
+	privateKey, err := rsa.GenerateKey(crand.Reader, length)
+	if err != nil {
+		return nil, nil
+	}
+	publicKey := &privateKey.PublicKey
+
+	return privateKey, publicKey
 }
