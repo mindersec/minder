@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -119,7 +118,7 @@ func populateEntityContext(
 	in HasProtoContext,
 ) (context.Context, error) {
 	if in.GetContext() == nil {
-		return ctx, fmt.Errorf("context cannot be nil")
+		return ctx, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
 	}
 
 	projectID, err := getProjectFromRequestOrDefault(ctx, store, authzClient, in)
