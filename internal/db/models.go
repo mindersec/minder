@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 type ActionType string
@@ -290,17 +289,6 @@ type Artifact struct {
 	ArtifactVisibility string    `json:"artifact_visibility"`
 	CreatedAt          time.Time `json:"created_at"`
 	UpdatedAt          time.Time `json:"updated_at"`
-}
-
-type ArtifactVersion struct {
-	ID                    uuid.UUID             `json:"id"`
-	ArtifactID            uuid.UUID             `json:"artifact_id"`
-	Version               int64                 `json:"version"`
-	Tags                  sql.NullString        `json:"tags"`
-	Sha                   string                `json:"sha"`
-	SignatureVerification pqtype.NullRawMessage `json:"signature_verification"`
-	GithubWorkflow        pqtype.NullRawMessage `json:"github_workflow"`
-	CreatedAt             time.Time             `json:"created_at"`
 }
 
 type Entitlement struct {
