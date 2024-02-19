@@ -24,10 +24,12 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	mockdb "github.com/stacklok/minder/database/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
@@ -75,7 +77,7 @@ func TestAggregator(t *testing.T) {
 	evt.Register(rateLimitedMessageTopic, rateLimitedMessages.Add, aggr.AggregateMiddleware)
 
 	// This tests that flushing works as expected
-	evt.Register(events.FlushEntityEventTopic, aggr.FlushMessageHandler)
+	aggr.Register(evt)
 
 	// This tests that flushing sends messages to the executor engine
 	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
@@ -167,6 +169,194 @@ func createNeededEntities(ctx context.Context, t *testing.T) (projID uuid.UUID, 
 	require.NoError(t, err, "expected no error when creating repo")
 
 	return proj.ID, repo.ID
+}
+
+func TestFlushAll(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		mockDBSetup func(context.Context, *mockdb.MockStore)
+	}{
+		{
+			name: "flushes one repo",
+			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
+				repoID := uuid.New()
+				projectID := uuid.New()
+
+				mockStore.EXPECT().ListFlushCache(ctx).
+					Return([]db.FlushCache{
+						{
+							ID:           uuid.New(),
+							Entity:       db.EntitiesRepository,
+							RepositoryID: repoID,
+							QueuedAt:     time.Now(),
+						},
+					}, nil)
+
+				// 1 - fetch repo info for repo
+				// base repo info
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+				// subsequent repo fetch for protobuf conversion
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+
+				// There should be one flush in the end
+				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+		},
+		{
+			name: "flushes one artifact",
+			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
+				repoID := uuid.New()
+				artID := uuid.New()
+				projectID := uuid.New()
+
+				mockStore.EXPECT().ListFlushCache(ctx).
+					Return([]db.FlushCache{
+						{
+							ID:           uuid.New(),
+							Entity:       db.EntitiesArtifact,
+							RepositoryID: repoID,
+							ArtifactID: uuid.NullUUID{
+								UUID:  artID,
+								Valid: true,
+							},
+							QueuedAt: time.Now(),
+						},
+					}, nil)
+
+				// 1 - fetch repo info for repo
+				// base repo info
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+				// subsequent artifact fetch for protobuf conversion
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+				mockStore.EXPECT().GetArtifactByID(ctx, artID).
+					Return(db.GetArtifactByIDRow{
+						ID:        artID,
+						ProjectID: projectID,
+					}, nil)
+
+				// There should be one flush in the end
+				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+		},
+		{
+			name: "flushes one PR",
+			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
+				repoID := uuid.New()
+				prID := uuid.New()
+				projectID := uuid.New()
+
+				mockStore.EXPECT().ListFlushCache(ctx).
+					Return([]db.FlushCache{
+						{
+							ID:           uuid.New(),
+							Entity:       db.EntitiesPullRequest,
+							RepositoryID: repoID,
+							PullRequestID: uuid.NullUUID{
+								UUID:  prID,
+								Valid: true,
+							},
+							QueuedAt: time.Now(),
+						},
+					}, nil)
+
+				// 1 - fetch repo info for repo
+				// base repo info
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+				// subsequent artifact fetch for protobuf conversion
+				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+					Return(db.Repository{
+						ID:        repoID,
+						ProjectID: projectID,
+						Provider:  providerName,
+					}, nil)
+				mockStore.EXPECT().GetPullRequestByID(ctx, prID).
+					Return(db.PullRequest{
+						ID: prID,
+					}, nil)
+
+				// There should be one flush in the end
+				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+
+			evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err)
+
+			flushedMessages := newTestPubSub()
+			evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+
+			go func() {
+				t.Log("Running eventer")
+				err := evt.Run(ctx)
+				assert.NoError(t, err, "expected no error when running eventer")
+			}()
+
+			<-evt.Running()
+
+			// minimum wait
+			var eventThreshold int64 = 1
+			aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
+				LockInterval: eventThreshold,
+			})
+
+			tt.mockDBSetup(ctx, mockStore)
+
+			go func() {
+				t.Log("Flushing all")
+				require.NoError(t, aggr.FlushAll(ctx), "expected no error")
+			}()
+
+			t.Log("Waiting for flush")
+			flushedMessages.Wait()
+
+			assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected one message")
+		})
+	}
 }
 
 type testPubSub struct {
