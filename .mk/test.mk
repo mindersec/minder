@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# exclude auto-generated DB code as well as mocks
+# in future, we may want to parse these from a file instead of hardcoding them
+# in the Makefile
+COVERAGE_EXCLUSIONS="internal/db\|/mock/"
+COVERAGE_PACKAGES=./internal/...,./cmd/...
+
 .PHONY: clean
 clean: ## clean up environment
 	rm -rf dist/* & rm -rf bin/*
@@ -27,7 +33,9 @@ test-silent: clean init-examples ## run tests in a silent mode (errors only outp
 
 .PHONY: cover
 cover: init-examples ## display test coverage
-	go test -v -coverprofile=coverage.out -race ./...
+	go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
+	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
+	rm coverage.out.tmp
 	go tool cover -func=coverage.out
 
 .PHONY: lint
