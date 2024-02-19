@@ -18,6 +18,7 @@ package trusty
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -32,7 +33,9 @@ import (
 
 const (
 	// TrustyEvalType is the type of the trusty evaluator
-	TrustyEvalType = "trusty"
+	TrustyEvalType       = "trusty"
+	TrustyEndpointURL    = "https://trusty.stacklok.dev"
+	TrustyEndpointEnvVar = "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
 )
 
 // Evaluator is the trusty evaluator
@@ -42,16 +45,16 @@ type Evaluator struct {
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
-func NewTrustyEvaluator(
-	pie *pb.RuleType_Definition_Eval_Trusty,
-	pbuild *providers.ProviderBuilder,
-) (*Evaluator, error) {
+func NewTrustyEvaluator(pbuild *providers.ProviderBuilder) (*Evaluator, error) {
 	if pbuild == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	if pie.GetEndpoint() == "" {
-		return nil, fmt.Errorf("endpoint is not set")
+	// Read the trusty endpoint from the environment
+	trustyEndpoint := os.Getenv(TrustyEndpointEnvVar)
+	// If the environment variable is not set, use the default endpoint
+	if trustyEndpoint == "" {
+		trustyEndpoint = TrustyEndpointURL
 	}
 
 	ghcli, err := pbuild.GetGitHub(context.Background())
@@ -61,7 +64,7 @@ func NewTrustyEvaluator(
 
 	return &Evaluator{
 		cli:      ghcli,
-		endpoint: pie.GetEndpoint(),
+		endpoint: trustyEndpoint,
 	}, nil
 }
 

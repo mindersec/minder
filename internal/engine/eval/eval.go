@@ -19,8 +19,6 @@ package eval
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/stacklok/minder/internal/engine/eval/jq"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
@@ -44,21 +42,13 @@ func NewRuleEvaluator(rt *pb.RuleType, cli *providers.ProviderBuilder) (engif.Ev
 		if rt.Def.Eval.GetJq() == nil {
 			return nil, fmt.Errorf("rule type engine missing jq configuration")
 		}
-
 		return jq.NewJQEvaluator(e.GetJq())
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
 		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
 	case trusty.TrustyEvalType:
-		trustyEvalConfig := e.GetTrusty()
-		if trustyEvalConfig == nil {
-			return nil, fmt.Errorf("rule type engine missing trusty configuration")
-		}
-		if trustyEvalConfig.GetEndpoint() == "" {
-			trustyEvalConfig.Endpoint = os.Getenv("MINDER_UNSTABLE_TRUSTY_ENDPOINT")
-		}
-		return trusty.NewTrustyEvaluator(trustyEvalConfig, cli)
+		return trusty.NewTrustyEvaluator(cli)
 	case application.HomoglyphsEvalType:
 		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), cli)
 	default:

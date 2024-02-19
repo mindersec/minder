@@ -58,7 +58,7 @@ services:
       - MINDER_AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
       - MINDER_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
       - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
-      - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://api.trustypkg.dev
+      - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://trusty.stacklok.dev
     networks:
       - app_net
     depends_on:
