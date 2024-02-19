@@ -1360,7 +1360,7 @@ This is used to fetch data from a REST endpoint.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [string](#string) | optional | ID of the claims mapping |
+| id | [string](#string) |  | ID of the claims mapping |
 | claims_to_match | [google.protobuf.Struct](#google-protobuf-Struct) |  | claims_to_match is the claims that must match for the role to be assigned. |
 
 

@@ -40,11 +40,10 @@ func init() {
 }
 
 func structtoYAMLOrEmpty(m *structpb.Struct) string {
-	if m == nil {
+	mmap := m.AsMap()
+	if len(mmap) == 0 {
 		return ""
 	}
-
-	mmap := m.AsMap()
 
 	yamlText, err := yaml.Marshal(mmap)
 	if err != nil {

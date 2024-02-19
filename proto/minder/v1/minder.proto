@@ -1560,7 +1560,7 @@ message RoleAssignment {
 
     message Mapping {
         // ID of the claims mapping
-        optional string id = 1;
+        string id = 1;
 
         // claims_to_match is the claims that must match for the role to be assigned.
         google.protobuf.Struct claims_to_match = 2;

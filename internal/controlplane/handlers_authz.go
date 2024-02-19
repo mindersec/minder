@@ -241,10 +241,8 @@ func (s *Server) mergeMatchedRoleMappingstoAssignments(
 	assignmentsToMerge []*minder.RoleAssignment,
 ) ([]*minder.RoleAssignment, error) {
 	res, err := s.store.ListResolvedMappedRoleGrantsForProject(ctx, projectID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
 		return nil, err
-	} else if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return assignmentsToMerge, nil
 	}
 
 	for idx := range assignmentsToMerge {
@@ -254,7 +252,6 @@ func (s *Server) mergeMatchedRoleMappingstoAssignments(
 
 		for idx, r := range res {
 			if aToM.Role == r.Role && aToM.Subject == r.ResolvedSubject.String {
-				mID := r.ID.String()
 				ctom := &structpb.Struct{}
 
 				if err := json.Unmarshal(r.ClaimMappings, ctom); err != nil {
@@ -264,7 +261,7 @@ func (s *Server) mergeMatchedRoleMappingstoAssignments(
 				}
 
 				aToM.Mapping = &minder.RoleAssignment_Mapping{
-					Id:            &mID,
+					Id:            r.ID.String(),
 					ClaimsToMatch: ctom,
 				}
 
@@ -393,13 +390,12 @@ func (s *Server) createMappingForAssignment(
 	}
 
 	respProj := projectID.String()
-	mrgID := mrg.ID.String()
 	return &minder.AssignRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
 			Role:    authzrole.String(),
 			Project: &respProj,
 			Mapping: &minder.RoleAssignment_Mapping{
-				Id:            &mrgID,
+				Id:            mrg.ID.String(),
 				ClaimsToMatch: claimsToMatch,
 			},
 		},
