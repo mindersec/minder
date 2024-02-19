@@ -18,6 +18,7 @@ package util
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	htmltemplate "html/template"
 	"net/url"
@@ -68,6 +69,16 @@ func ParseNewHtmlTemplate(tmpl *string, name string) (*htmltemplate.Template, er
 // GenerateCurlCommand generates a curl command from a method, apiBaseURL, endpoint, and body
 // this is useful to provide a dry-run for remediations
 func GenerateCurlCommand(method, apiBaseURL, endpoint, body string) (string, error) {
+	if len(method) == 0 {
+		return "", errors.New("method cannot be empty")
+	}
+
+	if len(apiBaseURL) == 0 {
+		return "", errors.New("apiBaseURL cannot be empty")
+	}
+
+	// TODO: add support for headers
+	// TODO: add toggle for token header
 	const tmplStr = `curl -L -X {{ .Method }} \
  -H "Accept: application/vnd.github+json" \
  -H "Authorization: Bearer $TOKEN" \
