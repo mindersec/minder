@@ -90,6 +90,14 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			expectedContext: engine.EntityContext{},
 		},
 		{
+			name:     "invalid request with nil context",
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			req: &request{
+				Context: nil,
+			},
+			rpcErr: util.UserVisibleError(codes.InvalidArgument, "context cannot be nil"),
+		},
+		{
 			name: "malformed project ID",
 			req: &request{
 				Context: &minder.Context{
