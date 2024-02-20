@@ -1535,9 +1535,6 @@ definitions:
       vulncheck:
         $ref: '#/definitions/EvalVulncheck'
         description: vulncheck is only used if the `vulncheck` type is selected.
-      trusty:
-        $ref: '#/definitions/EvalTrusty'
-        description: trusty is only used if the `trusty` type is selected.
       homoglyphs:
         $ref: '#/definitions/EvalHomoglyphs'
         description: homoglyphs is only used if the `homoglyphs` type is selected.
@@ -1631,12 +1628,6 @@ definitions:
           `constraints` type is selected. The default is `text`
           which returns human-readable text. The other option is
           `json` which returns a JSON array containing the violations.
-  EvalTrusty:
-    type: object
-    properties:
-      endpoint:
-        type: string
-        title: e.g. https://api.trustypkg.dev/
   EvalVulncheck:
     type: object
     title: no configuration for now
