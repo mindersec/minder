@@ -42,16 +42,6 @@ type GRPCClientConfig struct {
 	Insecure bool `mapstructure:"insecure" default:"false"`
 }
 
-// ReadConfigFromViper reads the client configuration from the given Viper instance.
-// Client Configuration is set while initializing minder-cli by binding PFlags to Viper.
-func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
-
 // RegisterMinderClientFlags registers the flags for the minder cli
 func RegisterMinderClientFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	if err := registerGRPCClientConfigFlags(v, flags); err != nil {

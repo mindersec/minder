@@ -177,3 +177,13 @@ func GetKeysWithNullValueFromYAML(data interface{}, currentPath string) []string
 
 	return keysWithNullValue
 }
+
+// ReadConfigFromViper reads the configuration from the given Viper instance.
+// This will return the already-parsed and validated configuration, or an error.
+func ReadConfigFromViper[CFG any](v *viper.Viper) (*CFG, error) {
+	var cfg CFG
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}

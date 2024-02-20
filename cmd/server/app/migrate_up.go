@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/authz"
+	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/logger"
 )
@@ -40,7 +41,7 @@ var upCmd = &cobra.Command{
 	Short: "migrate the database to the latest version",
 	Long:  `Command to upgrade database`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
+		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}

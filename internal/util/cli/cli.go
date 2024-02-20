@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli/useragent"
@@ -72,7 +73,7 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
-	clientConfig, err := clientconfig.ReadConfigFromViper(v)
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}

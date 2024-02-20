@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -36,7 +37,7 @@ var logoutCmd = &cobra.Command{
 			return cli.MessageAndError("Error removing credentials", err)
 		}
 
-		clientConfig, err := clientconfig.ReadConfigFromViper(viper.GetViper())
+		clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 		if err != nil {
 			return cli.MessageAndError("Unable to read config", err)
 		}

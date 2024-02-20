@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 )
 
@@ -46,7 +47,7 @@ identity:
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := clientconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "127.0.0.1", cfg.GRPCClientConfig.Host)
@@ -64,7 +65,7 @@ func TestReadClientConfigWithDefaults(t *testing.T) {
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	require.NoError(t, clientconfig.RegisterMinderClientFlags(v, flags), "Unexpected error")
 
-	cfg, err := clientconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "api.stacklok.com", cfg.GRPCClientConfig.Host)
@@ -94,7 +95,7 @@ identity:
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	require.NoError(t, clientconfig.RegisterMinderClientFlags(v, flags), "Unexpected error")
 
-	cfg, err := clientconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "192.168.1.7", cfg.GRPCClientConfig.Host)
@@ -115,7 +116,7 @@ func TestReadClientConfigWithCmdLineArgs(t *testing.T) {
 	require.NoError(t, flags.Parse([]string{"--grpc-host=192.168.1.7", "--grpc-port=1234", "--identity-url=http://localhost:1654"}))
 	t.Logf("Viper Configuration: %+v", v.AllSettings())
 
-	cfg, err := clientconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 	t.Logf("Read Configuration: %+v", cfg)
 
@@ -148,7 +149,7 @@ identity:
 
 	require.NoError(t, flags.Parse([]string{"--grpc-host=192.168.1.7", "--grpc-port=1234", "--identity-url=http://localhost:1654"}))
 
-	cfg, err := clientconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "192.168.1.7", cfg.GRPCClientConfig.Host)
