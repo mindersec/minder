@@ -20,6 +20,6 @@ yarn build
 
 Serve the docs
 ```
-yarn serve
+yarn serve -p 3001
 ```
-Visit http://localhost:3000/ to view the docs.
+Visit http://localhost:3001/ to view the docs.
