@@ -46,7 +46,7 @@ func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *pro
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	ghcli, err := pbuild.GetGitHub(context.Background())
+	ghcli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

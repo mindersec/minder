@@ -99,7 +99,7 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
 
-	ghCli, err := pbuild.GetGitHub(context.Background())
+	ghCli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

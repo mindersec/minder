@@ -226,7 +226,7 @@ func (s *Server) registerWebhookForRepository(
 		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
 	}
 
-	client, err := pbuild.GetGitHub(ctx)
+	client, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("error creating github provider: %w", err)
 	}
@@ -349,13 +349,14 @@ func (s *Server) deleteWebhookFromRepository(
 ) error {
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
 	}
 	providerBuilder, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
 
-	client, err := providerBuilder.GetGitHub(ctx)
+	client, err := providerBuilder.GetGitHub()
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
@@ -408,6 +409,7 @@ func (s *Server) parseGithubEventForProcessing(
 
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
 	}
 	provBuilder, err := providers.GetProviderBuilder(ctx, prov, dbRepo.ProjectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
@@ -471,7 +473,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	cli, err := prov.GetGitHub(ctx)
+	cli, err := prov.GetGitHub()
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return err
@@ -523,7 +525,7 @@ func parsePullRequestModEvent(
 		return nil
 	}
 
-	cli, err := prov.GetGitHub(ctx)
+	cli, err := prov.GetGitHub()
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return nil

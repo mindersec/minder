@@ -59,7 +59,7 @@ func NewDiffIngester(
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	cli, err := pbuild.GetGitHub(context.Background())
+	cli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

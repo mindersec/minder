@@ -60,7 +60,7 @@ func NewTrustyEvaluator(ctx context.Context, pbuild *providers.ProviderBuilder) 
 		zerolog.Ctx(ctx).Info().Str("trusty-endpoint", trustyEndpoint).Msg("using trusty endpoint from environment")
 	}
 
-	ghcli, err := pbuild.GetGitHub(context.Background())
+	ghcli, err := pbuild.GetGitHub()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

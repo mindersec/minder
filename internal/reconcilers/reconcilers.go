@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
@@ -33,10 +34,11 @@ const (
 
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
-	store    db.Store
-	evt      *events.Eventer
-	crypteng *crypto.Engine
-	provMt   providertelemetry.ProviderMetrics
+	store           db.Store
+	evt             *events.Eventer
+	crypteng        *crypto.Engine
+	restClientCache ratecache.RestClientCache
+	provMt          providertelemetry.ProviderMetrics
 }
 
 // ReconcilerOption is a function that modifies a reconciler
@@ -46,6 +48,13 @@ type ReconcilerOption func(*Reconciler)
 func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption {
 	return func(r *Reconciler) {
 		r.provMt = mt
+	}
+}
+
+// WithRestClientCache sets the rest client cache for the reconciler
+func WithRestClientCache(cache ratecache.RestClientCache) ReconcilerOption {
+	return func(r *Reconciler) {
+		r.restClientCache = cache
 	}
 }
 

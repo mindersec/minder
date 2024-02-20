@@ -18,14 +18,19 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
+	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/google/go-github/v56/github"
+	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -34,6 +39,12 @@ import (
 const (
 	// ExpensiveRestCallTimeout is the timeout for expensive REST calls
 	ExpensiveRestCallTimeout = 15 * time.Second
+	// MaxRateLimitWait is the maximum time to wait for a rate limit to reset
+	MaxRateLimitWait = 5 * time.Minute
+	// MaxRateLimitRetries is the maximum number of retries for rate limit errors after waiting
+	MaxRateLimitRetries = 1
+	// DefaultRateLimitWaitTime is the default time to wait for a rate limit to reset
+	DefaultRateLimitWaitTime = 1 * time.Minute
 )
 
 // Github is the string that represents the GitHub provider
@@ -52,6 +63,7 @@ type RestClient struct {
 	client *github.Client
 	token  string
 	owner  string
+	cache  ratecache.RestClientCache
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -62,9 +74,9 @@ var _ provifv1.GitHub = (*RestClient)(nil)
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
 func NewRestClient(
-	ctx context.Context,
 	config *minderv1.GitHubProviderConfig,
 	metrics telemetry.HttpClientMetrics,
+	restClientCache ratecache.RestClientCache,
 	token string,
 	owner string,
 ) (*RestClient, error) {
@@ -73,7 +85,13 @@ func NewRestClient(
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	tc := oauth2.NewClient(ctx, ts)
+
+	tc := &http.Client{
+		Transport: &oauth2.Transport{
+			Base:   http.DefaultClient.Transport,
+			Source: oauth2.ReuseTokenSource(nil, ts),
+		},
+	}
 
 	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
 	if err != nil {
@@ -94,6 +112,7 @@ func NewRestClient(
 		client: ghClient,
 		token:  token,
 		owner:  owner,
+		cache:  restClientCache,
 	}, nil
 }
 
@@ -114,4 +133,137 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, erro
 	}
 
 	return w.GitHub, nil
+}
+
+// setAsRateLimited adds the RestClient to the cache as rate limited.
+// An optimistic concurrency control mechanism is used to ensure that every request doesn't need
+// synchronization. RestClient only adds itself to the cache if it's not already there. It doesn't
+// remove itself from the cache when the rate limit is reset. This approach leverages the high
+// likelihood of the client or token being rate-limited again. By keeping the client in the cache,
+// we can reuse client's rateLimits map, which holds rate limits for different endpoints.
+// This reuse of cached rate limits helps avoid unnecessary GitHub API requests when the client
+// is rate-limited. Every cache entry has an expiration time, so the cache will eventually evict
+// the rate-limited client.
+func (c *RestClient) setAsRateLimited() {
+	if c.cache != nil {
+		c.cache.Set(c.owner, c.token, db.ProviderTypeGithub, c)
+	}
+}
+
+// waitForRateLimitReset waits for token wait limit to reset. Returns error if wait time is more
+// than MaxRateLimitWait or requests' context is cancelled.
+func (c *RestClient) waitForRateLimitReset(ctx context.Context, err error) error {
+	var rateLimitError *github.RateLimitError
+	isRateLimitErr := errors.As(err, &rateLimitError)
+
+	if isRateLimitErr {
+		return c.processPrimaryRateLimitErr(ctx, rateLimitError)
+	}
+
+	var abuseRateLimitError *github.AbuseRateLimitError
+	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
+
+	if isAbuseRateLimitErr {
+		return c.processAbuseRateLimitErr(ctx, abuseRateLimitError)
+	}
+
+	return nil
+}
+
+func (c *RestClient) processPrimaryRateLimitErr(ctx context.Context, err *github.RateLimitError) error {
+	logger := zerolog.Ctx(ctx)
+	rate := err.Rate
+	if rate.Remaining == 0 {
+		c.setAsRateLimited()
+
+		waitTime := DefaultRateLimitWaitTime
+		resetTime := rate.Reset.Time
+		if !resetTime.IsZero() {
+			waitTime = time.Until(resetTime)
+		}
+
+		logRateLimitError(logger, "RateLimitError", waitTime, c.owner, err.Response)
+
+		if waitTime > MaxRateLimitWait {
+			logger.Debug().Msgf("rate limit reset time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
+			return err
+		}
+
+		// Wait for the rate limit to reset
+		select {
+		case <-time.After(waitTime):
+			return nil
+		case <-ctx.Done():
+			logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *RestClient) processAbuseRateLimitErr(ctx context.Context, err *github.AbuseRateLimitError) error {
+	logger := zerolog.Ctx(ctx)
+	c.setAsRateLimited()
+
+	retryAfter := err.RetryAfter
+	waitTime := DefaultRateLimitWaitTime
+	if retryAfter != nil && *retryAfter > 0 {
+		waitTime = *retryAfter
+	}
+
+	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.owner, err.Response)
+
+	if waitTime > MaxRateLimitWait {
+		logger.Debug().Msgf("abuse rate limit wait time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
+		return err
+	}
+
+	// Wait for the rate limit to reset
+	select {
+	case <-time.After(waitTime):
+		return nil
+	case <-ctx.Done():
+		logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
+		return err
+	}
+}
+
+func logRateLimitError(logger *zerolog.Logger, errType string, waitTime time.Duration, owner string, resp *http.Response) {
+	var method, path string
+	if resp != nil && resp.Request != nil {
+		method = resp.Request.Method
+		path = resp.Request.URL.Path
+	}
+
+	event := logger.Debug().
+		Str("owner", owner).
+		Str("wait_time", waitTime.String()).
+		Str("error_type", errType)
+
+	if method != "" {
+		event = event.Str("method", method)
+	}
+
+	if path != "" {
+		event = event.Str("path", path)
+	}
+
+	event.Msg("rate limit exceeded")
+}
+
+func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData[T]) (T, error) {
+	exponentialBackOff := backoffv4.NewExponentialBackOff()
+	maxRetriesBackoff := backoffv4.WithMaxRetries(exponentialBackOff, MaxRateLimitRetries)
+	return backoffv4.RetryWithData(op, backoffv4.WithContext(maxRetriesBackoff, ctx))
+}
+
+func isRateLimitError(err error) bool {
+	var rateLimitError *github.RateLimitError
+	isRateLimitErr := errors.As(err, &rateLimitError)
+
+	var abuseRateLimitError *github.AbuseRateLimitError
+	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
+
+	return isRateLimitErr || isAbuseRateLimitErr
 }
