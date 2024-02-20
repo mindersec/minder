@@ -215,10 +215,6 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 func (e *EEA) FlushAll(ctx context.Context) error {
 	caches, err := e.querier.ListFlushCache(ctx)
 	if err != nil {
-		// No rows to flush, this is fine.
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
 		return fmt.Errorf("error listing flush cache: %w", err)
 	}
 
