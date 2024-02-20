@@ -17,7 +17,9 @@ package eea_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -357,6 +359,139 @@ func TestFlushAll(t *testing.T) {
 			assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected one message")
 		})
 	}
+}
+
+func TestFlushAllListFlushIsEmpty(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err)
+
+	// we'll wait 1 second for the lock to be available
+	var eventThreshold int64 = 1
+	// use in-memory postgres for this test
+	aggr := eea.NewEEA(testQueries, evt, &serverconfig.AggregatorConfig{
+		LockInterval: eventThreshold,
+	})
+
+	flushedMessages := newTestPubSub()
+
+	// This tests that flushing sends messages to the executor engine
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+
+	t.Log("Flushing all")
+	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
+
+	assert.Equal(t, int32(0), flushedMessages.count.Load(), "expected no messages")
+}
+
+func TestFlushAllListFlushFails(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	flushedMessages := newTestPubSub()
+
+	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err)
+
+	// This tests that flushing sends messages to the executor engine
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+
+	go func() {
+		t.Log("Running eventer")
+		err := evt.Run(ctx)
+		assert.NoError(t, err, "expected no error when running eventer")
+	}()
+
+	// we'll wait 1 second for the lock to be available
+	var eventThreshold int64 = 1
+	aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
+		LockInterval: eventThreshold,
+	})
+
+	mockStore.EXPECT().ListFlushCache(ctx).
+		Return(nil, fmt.Errorf("expected error"))
+
+	t.Log("Flushing all")
+	require.ErrorContains(t, aggr.FlushAll(ctx), "expected error")
+
+	assert.Equal(t, int32(0), flushedMessages.count.Load(), "expected no messages")
+}
+
+// This scenario represents the case where the `ListFlushCache` has
+// returned a repository that has been deleted. This should not cause
+// the flush to fail and should just skip the flush for that repository.
+func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	flushedMessages := newTestPubSub()
+
+	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err)
+
+	// This tests that flushing sends messages to the executor engine
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+
+	go func() {
+		t.Log("Running eventer")
+		err := evt.Run(ctx)
+		assert.NoError(t, err, "expected no error when running eventer")
+	}()
+
+	// we'll wait 1 second for the lock to be available
+	var eventThreshold int64 = 1
+	aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
+		LockInterval: eventThreshold,
+	})
+
+	repoID := uuid.New()
+
+	// initial list flush
+	mockStore.EXPECT().ListFlushCache(ctx).
+		Return([]db.FlushCache{
+			{
+				ID:           uuid.New(),
+				Entity:       db.EntitiesRepository,
+				RepositoryID: repoID,
+				QueuedAt:     time.Now(),
+			},
+		}, nil)
+
+	// repo does not exist
+	mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+		Return(db.Repository{}, sql.ErrNoRows)
+
+	t.Log("Flushing all")
+	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
+
+	assert.Equal(t, int32(0), flushedMessages.count.Load(), "expected no messages")
 }
 
 type testPubSub struct {
