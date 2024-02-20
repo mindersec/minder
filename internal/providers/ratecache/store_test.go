@@ -36,6 +36,7 @@ func TestRestClientCache_GetSet(t *testing.T) {
 
 	restClient := mockgh.NewMockREST(gomock.NewController(t))
 	cache := newTestRestClientCache(context.Background(), t, 10*time.Minute)
+	defer cache.Close()
 
 	cache.Set("owner", "token", db.ProviderTypeGithub, restClient)
 
@@ -60,6 +61,7 @@ func TestRestClientCache_evictExpiredEntriesRoutine(t *testing.T) {
 
 	restClient := mockgh.NewMockREST(gomock.NewController(t))
 	cache := newTestRestClientCache(context.Background(), t, 10*time.Millisecond)
+	defer cache.Close()
 
 	owner := "owner"
 	token := "token"
@@ -82,6 +84,7 @@ func TestRestClientCache_evictMultipleExpiredEntries(t *testing.T) {
 
 	restClient := mockgh.NewMockREST(gomock.NewController(t))
 	cache := newTestRestClientCache(context.Background(), t, 10*time.Millisecond)
+	defer cache.Close()
 
 	op := func() error {
 		size := cache.cache.Size()
@@ -117,7 +120,7 @@ func TestRestClientCache_contextCancellation(t *testing.T) {
 	_, ok := cache.Get(owner, token, db.ProviderTypeGithub)
 	require.True(t, ok)
 
-	// cancel the context, which would stop the eviction routine
+	// cancel the context, which would stop the eviction routine and close the store
 	cancel()
 
 	owner2 := "owner2-a"
@@ -126,19 +129,61 @@ func TestRestClientCache_contextCancellation(t *testing.T) {
 	_, ok = cache.Get(owner2, token2, db.ProviderTypeGithub)
 	require.False(t, ok)
 	require.Equal(t, 1, cache.cache.Size())
+}
 
-	cache.Wait()
+func TestRestClientCache_Close(t *testing.T) {
+	t.Parallel()
+
+	restClient := mockgh.NewMockREST(gomock.NewController(t))
+
+	evictionTime := 10 * time.Minute
+	cache := &restClientCache{
+		cache:          xsyncv3.NewMapOf[string, cacheEntry](),
+		evictionTime:   evictionTime,
+		ctx:            context.Background(),
+		evictionTicker: time.NewTicker(evictionTime / 2),
+		closeChan:      make(chan struct{}),
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		cache.evictExpiredEntriesRoutine(cache.ctx)
+	}()
+
+	cache.Set("owner", "token", db.ProviderTypeGithub, restClient)
+	cache.Close()
+
+	// Ensure that the eviction routine has stopped
+	wg.Wait()
+
+	owner := "owner-a"
+	token := "token-a"
+	cache.Set(owner, token, db.ProviderTypeGithub, restClient)
+	_, ok := cache.Get(owner, token, db.ProviderTypeGithub)
+
+	// Assert that setting a value after the cache has been closed does not work (non context cancellation)
+	require.False(t, ok)
+
+	// Assert that the cache has not been cleared
+	require.Equal(t, 1, cache.cache.Size())
+
+	// Assert that the cache has been stopped (closeChan has been closed)
+	require.Equal(t, struct{}{}, <-cache.closeChan)
 }
 
 func newTestRestClientCache(ctx context.Context, t *testing.T, evictionTime time.Duration) *restClientCache {
 	t.Helper()
+	evictionDuration := evictionTime / 2
 	c := &restClientCache{
-		cache:        xsyncv3.NewMapOf[string, cacheEntry](),
-		evictionTime: evictionTime,
-		ctx:          ctx,
+		cache:          xsyncv3.NewMapOf[string, cacheEntry](),
+		evictionTime:   evictionTime,
+		ctx:            ctx,
+		evictionTicker: time.NewTicker(evictionDuration),
+		closeChan:      make(chan struct{}),
 	}
 
-	c.wgBackgroundEviction.Add(1)
 	go c.evictExpiredEntriesRoutine(ctx)
 	return c
 }
