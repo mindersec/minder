@@ -42,7 +42,7 @@ https://docs.stacklok.com/minder`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// Print a warning if the build is not pointing to the production environment
-			cfg, _ := clientconfig.ReadConfigFromViper(viper.GetViper())
+			cfg, _ := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 
 			if cfg == nil || cfg.GRPCClientConfig.Host != constants.MinderGRPCHost {
 				fmt.Fprintf(

@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -42,7 +43,7 @@ var deleteCmd = &cobra.Command{
 func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
 
-	clientConfig, err := clientconfig.ReadConfigFromViper(viper.GetViper())
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
 	}

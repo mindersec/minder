@@ -52,7 +52,7 @@ metric_server:
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := serverconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "myhost", cfg.HTTPServer.Host)
@@ -82,7 +82,7 @@ metric_server:
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := serverconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "", cfg.HTTPServer.Host)
@@ -120,7 +120,7 @@ metric_server:
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
 
-	cfg, err := serverconfig.ReadConfigFromViper(v)
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
 	require.Equal(t, "foo", cfg.HTTPServer.Host)

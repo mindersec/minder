@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/logger"
 )
@@ -35,7 +36,7 @@ var downCmd = &cobra.Command{
 	Short: "migrate a down a database version",
 	Long:  `Command to downgrade database`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
+		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}

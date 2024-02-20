@@ -30,6 +30,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
+	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
 	"github.com/stacklok/minder/internal/db"
@@ -51,7 +52,7 @@ var serveCmd = &cobra.Command{
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()
 
-		cfg, err := serverconfig.ReadConfigFromViper(viper.GetViper())
+		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 		if err != nil {
 			return fmt.Errorf("unable to read config: %w", err)
 		}

@@ -25,6 +25,8 @@ import (
 	"unicode"
 
 	"github.com/spf13/viper"
+
+	"github.com/stacklok/minder/internal/config"
 )
 
 // Config is the top-level configuration structure.
@@ -48,21 +50,11 @@ type Config struct {
 func DefaultConfigForTest() *Config {
 	v := viper.New()
 	SetViperDefaults(v)
-	c, err := ReadConfigFromViper(v)
+	c, err := config.ReadConfigFromViper[Config](v)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to read default config: %v", err))
 	}
 	return c
-}
-
-// ReadConfigFromViper reads the configuration from the given Viper instance.
-// This will return the already-parsed and validated configuration, or an error.
-func ReadConfigFromViper(v *viper.Viper) (*Config, error) {
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
 }
 
 // SetViperDefaults sets the default values for the configuration to be picked
