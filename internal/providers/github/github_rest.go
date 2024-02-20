@@ -417,11 +417,11 @@ func (c *RestClient) UpdateReview(
 	return review, nil
 }
 
-// ListComments is a wrapper for the GitHub API to get all comments in a review
-func (c *RestClient) ListComments(
-	ctx context.Context, owner, repo string, number int, opts *github.PullRequestListCommentsOptions,
-) ([]*github.PullRequestComment, error) {
-	comments, _, err := c.client.PullRequests.ListComments(ctx, owner, repo, number, opts)
+// ListIssueComments is a wrapper for the GitHub API to get all comments in a review
+func (c *RestClient) ListIssueComments(
+	ctx context.Context, owner, repo string, number int, opts *github.IssueListCommentsOptions,
+) ([]*github.IssueComment, error) {
+	comments, _, err := c.client.Issues.ListComments(ctx, owner, repo, number, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of comments: %w", err)
 	}
@@ -657,8 +657,10 @@ func (c *RestClient) ListPullRequests(
 	return prs, nil
 }
 
-// CreateComment creates a comment on a pull request or an issue
-func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error) {
+// CreateIssueComment creates a comment on a pull request or an issue
+func (c *RestClient) CreateIssueComment(
+	ctx context.Context, owner, repo string, number int, comment string,
+) (*github.IssueComment, error) {
 	var issueComment *github.IssueComment
 
 	op := func() (any, error) {
@@ -682,8 +684,8 @@ func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, numb
 	return issueComment, retryErr
 }
 
-// UpdateComment updates a comment on a pull request or an issue
-func (c *RestClient) UpdateComment(ctx context.Context, owner, repo string, number int64, comment string) error {
+// UpdateIssueComment updates a comment on a pull request or an issue
+func (c *RestClient) UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error {
 	_, _, err := c.client.Issues.EditComment(ctx, owner, repo, number, &github.IssueComment{
 		Body: &comment,
 	})

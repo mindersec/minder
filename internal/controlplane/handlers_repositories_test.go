@@ -300,11 +300,6 @@ func (*StubGitHub) CloseSecurityAdvisory(context.Context, string, string, string
 	panic("unimplemented")
 }
 
-// CreateComment implements v1.GitHub.
-func (*StubGitHub) CreateComment(context.Context, string, string, int, string) error {
-	panic("unimplemented")
-}
-
 // CreateHook implements v1.GitHub.
 func (_ *StubGitHub) CreateHook(_ context.Context, _ string, _ string, _ *github.Hook) (*github.Hook, error) {
 	panic("unimplemented")
@@ -377,6 +372,22 @@ func (*StubGitHub) GetPackageVersions(context.Context, bool, string, string, str
 
 // GetPullRequest implements v1.GitHub.
 func (*StubGitHub) GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error) {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) CreateIssueComment(context.Context, string, string, int, string) (*github.IssueComment, error) {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) ListIssueComments(context.Context, string, string, int, *github.IssueListCommentsOptions) ([]*github.IssueComment, error) {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) UpdateIssueComment(context.Context, string, string, int64, string) error {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) UpdateReview(context.Context, string, string, int, int64, string) (*github.PullRequestReview, error) {
 	panic("unimplemented")
 }
 

@@ -107,8 +107,7 @@ type reviewPrHandler struct {
 	trackedDeps []dependencyVulnerabilities
 
 	authorizedUser     int64
-	minderReview       *github.PullRequestReview
-	minderStatusReport *github.PullRequestComment
+	minderStatusReport *github.IssueComment
 	comments           []*github.DraftReviewComment
 
 	status     *string
@@ -224,39 +223,26 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 }
 
 func (ra *reviewPrHandler) submit(ctx context.Context) error {
-
 	if err := ra.findPreviousStatusComment(ctx); err != nil {
 		return fmt.Errorf("could not find previous status comment: %w", err)
 	}
 
 	ra.setStatus()
 
-	// If no status comment exists, post one immediately
-	if err := ra.updateStatusReportComment(ctx); err != nil {
-		return fmt.Errorf("could not create status report: %w", err)
-	}
+	mci := ra.getMagicCommentInfo()
 
-	if err := ra.findPreviousReview(ctx); err != nil {
-		return fmt.Errorf("could not find previous review: %w", err)
-	}
-
-	// if the previous review was on the same commit, keep it
-	if ra.minderReview != nil && ra.minderReview.GetCommitID() == ra.pr.GetCommitSha() {
-		ra.logger.Debug().
-			Int64("review-id", ra.minderReview.GetID()).
-			Msg("previous review was on the same commit, will keep it")
-		return nil
-	}
-
-	if err := ra.dismissReview(ctx); err != nil {
-		return fmt.Errorf("could not dismiss previous review: %w", err)
-	}
-
-	if err := ra.submitReview(ctx); err != nil {
+	var err error
+	mci.ReviewID, err = ra.submitReview(ctx, mci)
+	if err != nil {
+		// this should be fatal. In case we can't submit the review, we can't proceed
 		return fmt.Errorf("could not submit review: %w", err)
 	}
-
 	ra.logger.Debug().Msg("submitted review")
+
+	// If no status comment exists, post one immediately
+	if err := ra.updateStatusReportComment(ctx, mci); err != nil {
+		return fmt.Errorf("could not create status report: %w", err)
+	}
 
 	return nil
 }
@@ -277,34 +263,11 @@ func (ra *reviewPrHandler) setStatus() {
 	ra.logger.Debug().Str("status", *ra.status).Msg("will set review status")
 }
 
-func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
-	reviews, err := ra.cli.ListReviews(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number), nil)
-	if err != nil {
-		return fmt.Errorf("could not list reviews: %w", err)
-	}
-
-	// reviews are received from earliest to latest. Minder should therefore
-	// read the latest review first to incorrectly assign old review as
-	// most recent.
-	ra.minderReview = nil
-	for i := len(reviews) - 1; i >= 0; i-- {
-		review := reviews[i]
-		isMinder := review.GetUser().GetID() == ra.authorizedUser
-		if isMinder && strings.HasPrefix(review.GetBody(), reviewBodyMagicComment) && review.GetState() != "DISMISS" {
-			ra.minderReview = review
-			break
-		}
-
-	}
-
-	return nil
-}
-
 func (ra *reviewPrHandler) findPreviousStatusComment(ctx context.Context) error {
-	comments, err := ra.cli.ListComments(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number),
-		&github.PullRequestListCommentsOptions{
-			Sort:      "updated",
-			Direction: "asc",
+	comments, err := ra.cli.ListIssueComments(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number),
+		&github.IssueListCommentsOptions{
+			Sort:      github.String("updated"),
+			Direction: github.String("asc"),
 		})
 	if err != nil {
 		return fmt.Errorf("could not list comments: %w", err)
@@ -313,38 +276,59 @@ func (ra *reviewPrHandler) findPreviousStatusComment(ctx context.Context) error 
 	ra.minderStatusReport = nil
 	for _, comment := range comments {
 		isMinder := comment.GetUser().GetID() == ra.authorizedUser
-		if isMinder && strings.HasPrefix(comment.GetBody(), statusBodyMagicComment) {
+		if isMinder && strings.HasPrefix(comment.GetBody(), statusBodyMagicCommentPrefix) {
 			ra.minderStatusReport = comment
 			break
 		}
-
 	}
 
 	return nil
 }
 
-func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
-	if len(ra.comments) == 0 {
-		return nil
+func (ra *reviewPrHandler) getMagicCommentInfo() magicCommentInfo {
+	if ra.minderStatusReport == nil {
+		return magicCommentInfo{}
 	}
 
-	report := &reviewReport{
-		TrackedDependencies: ra.trackedDeps,
-	}
-
-	reviewBody, err := report.render()
+	mci, err := extractContentShaAndReviewID(ra.minderStatusReport.GetBody())
 	if err != nil {
-		return fmt.Errorf("failed to render review from templates: %w", err)
+		ra.logger.Warn().Msg("could not extract content sha and review id from previous status comment")
+		// non-fatal error, we can still post the status report
+		// and worst case we will add a duplicate comment
+	}
+	return mci
+}
+
+func (ra *reviewPrHandler) submitReview(ctx context.Context, mci magicCommentInfo) (int64, error) {
+	// if the previous review was on the same commit, keep it
+	if mci.ContentSha == ra.pr.GetCommitSha() {
+		ra.logger.Debug().
+			Int64("review-id", mci.ReviewID).
+			Msg("previous review was on the same commit, will keep it")
+		return 0, nil
+	}
+
+	if err := ra.dismissReview(ctx, mci); err != nil {
+		ra.logger.Warn().Msg("could not dismiss previous review")
+	}
+
+	return ra.createReview(ctx)
+}
+
+func (ra *reviewPrHandler) createReview(ctx context.Context) (int64, error) {
+	var err error
+
+	if len(ra.comments) == 0 {
+		return 0, nil
 	}
 
 	review := &github.PullRequestReviewRequest{
 		CommitID: github.String(ra.pr.CommitSha),
 		Event:    ra.status,
 		Comments: ra.comments,
-		Body:     github.String(reviewBody),
 	}
 
-	ra.minderReview, err = ra.cli.CreateReview(
+	r, err := ra.cli.CreateReview(
 		ctx,
 		ra.pr.RepoOwner,
 		ra.pr.RepoName,
@@ -352,14 +336,15 @@ func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
 		review,
 	)
 	if err != nil {
-		return fmt.Errorf("could not create review: %w", err)
+		return 0, fmt.Errorf("could not create review: %w", err)
 	}
 
-	return nil
+	return r.GetID(), nil
 }
 
-func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
-	if ra.minderReview == nil {
+func (ra *reviewPrHandler) dismissReview(ctx context.Context, mci magicCommentInfo) error {
+	if mci.ReviewID == 0 {
+		ra.logger.Debug().Msg("no previous review to dismiss")
 		return nil
 	}
 
@@ -377,7 +362,7 @@ func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
 		ra.pr.RepoOwner,
 		ra.pr.RepoName,
 		int(ra.pr.Number),
-		ra.minderReview.GetID(),
+		mci.ReviewID,
 		dismissReview)
 	if err != nil {
 		return fmt.Errorf("could not dismiss review: %w", err)
@@ -385,12 +370,12 @@ func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
 	return nil
 }
 
-func (ra *reviewPrHandler) updateStatusReportComment(ctx context.Context) error {
-
+func (ra *reviewPrHandler) updateStatusReportComment(ctx context.Context, mci magicCommentInfo) error {
 	report := &statusReport{
 		StatusText:          *ra.text,
 		CommitSHA:           ra.pr.CommitSha,
 		TrackedDependencies: ra.trackedDeps,
+		ReviewID:            mci.ReviewID,
 	}
 
 	statusBody, err := report.render()
@@ -399,7 +384,7 @@ func (ra *reviewPrHandler) updateStatusReportComment(ctx context.Context) error 
 	}
 
 	if ra.minderStatusReport == nil {
-		if ra.minderStatusReport, err = ra.cli.CreateComment(
+		if ra.minderStatusReport, err = ra.cli.CreateIssueComment(
 			ctx,
 			ra.pr.RepoOwner,
 			ra.pr.RepoName,
@@ -412,8 +397,8 @@ func (ra *reviewPrHandler) updateStatusReportComment(ctx context.Context) error 
 		return nil
 	}
 
-	if ra.minderStatusReport.GetCommitID() != ra.pr.GetCommitSha() {
-		if err := ra.cli.UpdateComment(
+	if mci.ContentSha != ra.pr.GetCommitSha() {
+		if err := ra.cli.UpdateIssueComment(
 			ctx,
 			ra.pr.RepoOwner,
 			ra.pr.RepoName,
@@ -457,7 +442,9 @@ func newCommitStatusPrHandler(
 func (csh *commitStatusPrHandler) submit(ctx context.Context) error {
 	// first submit the review, we force the status to be COMMENT to not block
 	if err := csh.reviewPrHandler.submit(ctx); err != nil {
-		return fmt.Errorf("could not submit review: %w", err)
+		csh.logger.Error().Err(err).Msg("could not submit review")
+		// since in this case the mechanism that blocks the PR is the commit status,
+		// we should not return an error here but try to set the commit status anyway
 	}
 
 	// next either pass or fail the commit status to eventually block the PR
@@ -522,7 +509,7 @@ func (sph *summaryPrHandler) trackVulnerableDep(
 }
 
 func (sph *summaryPrHandler) submit(ctx context.Context) error {
-	report := &reviewReport{
+	report := &vulnSummaryReport{
 		TrackedDependencies: sph.trackedDeps,
 	}
 
@@ -531,7 +518,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 		return fmt.Errorf("could not generate summary: %w", err)
 	}
 
-	_, err = sph.cli.CreateComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
+	_, err = sph.cli.CreateIssueComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
 	if err != nil {
 		return fmt.Errorf("could not create comment: %w", err)
 	}

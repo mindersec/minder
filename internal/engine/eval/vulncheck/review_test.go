@@ -40,7 +40,8 @@ const (
 	minderReviewID  = 987654321
 	minderReviewUrl = "https://github.com/repos/jakubtestorg/bad-npm/pulls/43#pullrequestreview-987654321"
 
-	commitSHA = "27d6810b861c81e8c61e09c651875f5a976781d1"
+	commitSHA        = "27d6810b861c81e8c61e09c651875f5a976781d1"
+	anotherCommitSha = "27d6810b861c81e8c61e09c651875f5a976781d2"
 )
 
 func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
@@ -64,23 +65,19 @@ func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	report := createStatusReport(noVulsFoundText, commitSHA)
+	report := createStatusReport(noVulsFoundText, commitSHA, 0)
 
 	expBody, err := report.render()
 	require.NoError(t, err)
 	require.NotNil(t, expBody)
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{}, nil)
-
-	mockClient.EXPECT().
-		CreateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return(&github.PullRequestComment{ID: github.Int64(123)}, nil)
+		CreateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return(&github.IssueComment{ID: github.Int64(123)}, nil)
 
 	err = handler.submit(context.Background())
 	require.NoError(t, err)
@@ -156,23 +153,12 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, patchPackage)
 	require.NoError(t, err)
 
-	reviewReport := createReviewReport(dependencyVulnerabilities{
+	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
 		Dependency:      dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "0.6.0",
 	},
 	)
-
-	statusReport := createStatusReport(vulnsFoundText, commitSHA, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
-		Vulnerabilities: vulnResp.Vulns,
-		PatchVersion:    "0.6.0",
-	},
-	)
-
-	expReviewBody, err := reviewReport.render()
-	require.NoError(t, err)
-	require.NotEmpty(t, expReviewBody)
 
 	expStatusBody, err := statusReport.render()
 	require.NoError(t, err)
@@ -181,14 +167,9 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
-
-	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
 			Event:    github.String("REQUEST_CHANGES"),
-			Body:     github.String(expReviewBody),
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
@@ -200,13 +181,13 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
 			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusBodyMagicComment)},
 		}, nil)
 
 	mockClient.EXPECT().
-		UpdateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
+		UpdateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
 		Return(nil)
 
 	err = handler.submit(context.Background())
@@ -273,23 +254,12 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, patchPackage)
 	require.NoError(t, err)
 
-	reviewReport := createReviewReport(dependencyVulnerabilities{
+	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
 		Dependency:      dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "",
 	},
 	)
-
-	statusReport := createStatusReport(vulnsFoundText, commitSHA, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
-		Vulnerabilities: vulnResp.Vulns,
-		PatchVersion:    "",
-	},
-	)
-
-	expReviewBody, err := reviewReport.render()
-	require.NoError(t, err)
-	require.NotEmpty(t, expReviewBody)
 
 	expStatusBody, err := statusReport.render()
 	require.NoError(t, err)
@@ -298,14 +268,9 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	expCommentBody := vulnFoundWithNoPatch
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
-
-	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
 			Event:    github.String("REQUEST_CHANGES"),
-			Body:     github.String(expReviewBody),
 			Comments: []*github.DraftReviewComment{
 				{
 					Path: github.String(dep.File.Name),
@@ -316,13 +281,13 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
 			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusBodyMagicComment)},
 		}, nil)
 
 	mockClient.EXPECT().
-		UpdateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
+		UpdateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
 		Return(nil)
 
 	err = handler.submit(context.Background())
@@ -345,13 +310,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-<<<<<<< HEAD
-	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubSubmitterID), nil)
-=======
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
->>>>>>> 03dc7218f (Create single status comment and correctly dismiss reviews)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(minderReviewID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -393,35 +352,21 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
 		}, nil)
 
-	reviewReport := createReviewReport(dependencyVulnerabilities{
-		Dependency:      dep.GetDep(),
-		Vulnerabilities: vulnResp.Vulns,
-		PatchVersion:    "",
-	},
-	)
-	statusReport := createStatusReport(vulnsFoundText, commitSHA, dependencyVulnerabilities{
+	statusReport := createStatusReport(vulnsFoundText, commitSHA, minderReviewID, dependencyVulnerabilities{
 		Dependency:      dep.GetDep(),
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "",
 	})
 
-	expReviewBody, err := reviewReport.render()
+	statusComment, err := render(minderTemplateMagicCommentName, statusBodyMagicComment, magicCommentInfo{
+		ContentSha: anotherCommitSha,
+		ReviewID:   minderReviewID,
+	})
 	require.NoError(t, err)
-	require.NotEmpty(t, expReviewBody)
 
 	expStatusBody, err := statusReport.render()
 	require.NoError(t, err)
 	require.NotEmpty(t, expStatusBody)
-
-	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{
-			{
-				ID:   github.Int64(minderReviewID),
-				Body: github.String(reviewBodyMagicComment),
-				User: &github.User{ID: github.Int64(githubMinderID)},
-			},
-		}, nil)
 
 	mockClient.EXPECT().DismissReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), int64(minderReviewID),
 		&github.PullRequestReviewDismissalRequest{
@@ -432,23 +377,26 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
 			Event:    github.String("REQUEST_CHANGES"),
-			Body:     github.String(expReviewBody),
 			Comments: []*github.DraftReviewComment{
 				{
 					Path: github.String(dep.File.Name),
 					Line: github.Int(1),
 					Body: github.String(vulnFoundWithNoPatch),
 				},
-			}}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
-
-	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
-			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusBodyMagicComment)},
+			}}).Return(
+		&github.PullRequestReview{
+			HTMLURL: github.String(minderReviewUrl),
+			ID:      github.Int64(minderReviewID),
 		}, nil)
 
 	mockClient.EXPECT().
-		UpdateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
+			ID: github.Int64(12345), User: &github.User{ID: github.Int64(minderReviewID)}, Body: github.String(statusComment)},
+		}, nil)
+
+	mockClient.EXPECT().
+		UpdateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), expStatusBody).
 		Return(nil)
 
 	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, patchPackage)
@@ -479,23 +427,19 @@ func TestCommitStatusHandlerNoVulnerabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	report := createStatusReport(noVulsFoundText, commitSHA)
+	report := createStatusReport(noVulsFoundText, commitSHA, 0)
 
 	expBody, err := report.render()
 	require.NoError(t, err)
 	require.NotNil(t, expBody)
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{}, nil)
-
-	mockClient.EXPECT().
-		CreateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), expBody).
-		Return(&github.PullRequestComment{ID: github.Int64(123)}, nil)
+		CreateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), expBody).
+		Return(&github.IssueComment{ID: github.Int64(123)}, nil)
 
 	mockClient.EXPECT().SetCommitStatus(gomock.Any(), pr.RepoOwner, pr.RepoName, commitSHA, &github.RepoStatus{
 		State:       github.String("success"),
@@ -577,21 +521,11 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, patchPackage)
 	require.NoError(t, err)
 
-	reviewReport := createReviewReport(dependencyVulnerabilities{
-		Dependency:      dep.GetDep(),
-		Vulnerabilities: vulnResp.Vulns,
-		PatchVersion:    "0.6.0",
-	},
-	)
-	statusReport := createStatusReport(vulnsFoundText, commitSHA, dependencyVulnerabilities{
+	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
 		Dependency:      dep.GetDep(),
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "0.6.0",
 	})
-
-	expReviewBody, err := reviewReport.render()
-	require.NoError(t, err)
-	require.NotEmpty(t, expReviewBody)
 
 	expStatusBody, err := statusReport.render()
 	require.NoError(t, err)
@@ -600,14 +534,9 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
-
-	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
 			Event:    github.String("COMMENT"),
-			Body:     github.String(expReviewBody),
 			Comments: []*github.DraftReviewComment{
 				{
 					Path:      github.String(dep.File.Name),
@@ -619,12 +548,12 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{}, nil)
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{}, nil)
 
 	mockClient.EXPECT().
-		CreateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), expStatusBody).
-		Return(&github.PullRequestComment{ID: github.Int64(123)}, nil)
+		CreateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), expStatusBody).
+		Return(&github.IssueComment{ID: github.Int64(123)}, nil)
 
 	mockClient.EXPECT().SetCommitStatus(gomock.Any(), pr.RepoOwner, pr.RepoName, commitSHA, &github.RepoStatus{
 		State:       github.String("failure"),
@@ -652,53 +581,35 @@ func TestReviewPrHandlerReviewPriorReview(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
-
-	createPrReviewWithSHA := func(review, sha string, user int64) *github.PullRequestReview {
-		return &github.PullRequestReview{
-			ID:       github.Int64(minderReviewID),
-			Body:     github.String(review),
-			CommitID: github.String(sha),
-			State:    github.String("COMMENTED"),
-			User:     &github.User{ID: github.Int64(user)},
-		}
-	}
-
-	latestReviewOnPR := createPrReviewWithSHA(reviewBodyMagicComment, "latestCommitSHA", githubMinderID)
-	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{
-			createPrReviewWithSHA(statusBodyMagicComment, "94ea8a313784de6d65dccbe0fc815335bf417633", githubMinderID),
-			createPrReviewWithSHA("test-review", "0105b620f68582a3e20da211c20d72798ef40d77", 12345),
-			createPrReviewWithSHA("test-review", "3410b66b103cbf1ed777462c7ebba8b249b74dce", 54321),
-			createPrReviewWithSHA(reviewBodyMagicComment, "277a82af28ffdbe3ab3c1209e27ddcc0774d3da7", githubMinderID),
-			createPrReviewWithSHA("test-review", "5e26642d64aec7bae43167d8ad20cb090d33141a", 56789),
-			latestReviewOnPR, // review for latest SHA on PR
-		}, nil)
 
 	mockClient.EXPECT().DismissReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), int64(minderReviewID),
 		&github.PullRequestReviewDismissalRequest{
 			Message: github.String(reviewBodyDismissCommentText),
 		})
 
+	statusComment, err := render(minderTemplateMagicCommentName, statusBodyMagicComment, magicCommentInfo{
+		ContentSha: anotherCommitSha,
+		ReviewID:   minderReviewID,
+	})
+	require.NoError(t, err)
+
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
-			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusBodyMagicComment)},
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
+			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusComment)},
 		}, nil)
 
 	mockClient.EXPECT().
-		UpdateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), gomock.Any()).
+		UpdateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), gomock.Any()).
 		Return(nil)
 
 	err = handler.submit(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, handler.minderReview, latestReviewOnPR)
+	//require.Equal(t, handler., latestReviewOnPR)
 }
 
 func TestReviewPrHandlerVulnerabilitiesAndNoPriorReview(t *testing.T) {
@@ -717,9 +628,7 @@ func TestReviewPrHandlerVulnerabilitiesAndNoPriorReview(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -730,21 +639,17 @@ func TestReviewPrHandlerVulnerabilitiesAndNoPriorReview(t *testing.T) {
 	}}
 
 	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{}, nil)
-
-	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
 		Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
 			ID: github.Int64(12345), User: &github.User{ID: github.Int64(githubMinderID)}, Body: github.String(statusBodyMagicComment)},
 		}, nil)
 
 	mockClient.EXPECT().
-		UpdateComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), gomock.Any()).
+		UpdateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int64(12345), gomock.Any()).
 		Return(nil)
 
 	err = handler.submit(context.Background())
@@ -767,61 +672,37 @@ func TestReviewPrHandlerReviewAlreadyExistsOnSHA(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
 
-	createPrReviewWithSHA := func(review, sha string, user int64) *github.PullRequestReview {
-		return &github.PullRequestReview{
-			ID:       github.Int64(minderReviewID),
-			Body:     github.String(review),
-			CommitID: github.String(sha),
-			State:    github.String("COMMENTED"),
-			User:     &github.User{ID: github.Int64(user)},
-		}
-	}
-
-	latestReviewOnPR := createPrReviewWithSHA(reviewBodyMagicComment, commitSHA, githubMinderID)
-	mockClient.EXPECT().
-		ListReviews(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), nil).
-		Return([]*github.PullRequestReview{
-			createPrReviewWithSHA(statusBodyMagicComment, "94ea8a313784de6d65dccbe0fc815335bf417633", githubMinderID),
-			createPrReviewWithSHA("test-review", "0105b620f68582a3e20da211c20d72798ef40d77", 12345),
-			createPrReviewWithSHA("test-review", "3410b66b103cbf1ed777462c7ebba8b249b74dce", 54321),
-			createPrReviewWithSHA(reviewBodyMagicComment, "277a82af28ffdbe3ab3c1209e27ddcc0774d3da7", githubMinderID),
-			createPrReviewWithSHA("test-review", "5e26642d64aec7bae43167d8ad20cb090d33141a", 56789),
-			latestReviewOnPR, // review for latest SHA on PR
-		}, nil)
+	statusComment, err := render(minderTemplateMagicCommentName, statusBodyMagicComment, magicCommentInfo{
+		ContentSha: commitSHA,
+		ReviewID:   minderReviewID,
+	})
+	require.NoError(t, err)
 
 	mockClient.EXPECT().
-		ListComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
-		Return([]*github.PullRequestComment{{
-			ID:       github.Int64(12345),
-			User:     &github.User{ID: github.Int64(githubMinderID)},
-			Body:     github.String(statusBodyMagicComment),
-			CommitID: github.String(commitSHA),
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{{
+			ID:   github.Int64(12345),
+			User: &github.User{ID: github.Int64(githubMinderID)},
+			Body: github.String(statusComment),
 		},
 		}, nil)
 
 	err = handler.submit(context.Background())
 	require.NoError(t, err)
-	require.Equal(t, handler.minderReview, latestReviewOnPR)
+	require.Contains(t, handler.minderStatusReport.GetBody(), commitSHA)
 }
 
 //nolint:unparam
-func createStatusReport(reviewText, sha string, deps ...dependencyVulnerabilities) vulnerabilityReport {
+func createStatusReport(reviewText, sha string, reviewID int64, deps ...dependencyVulnerabilities) vulnerabilityReport {
 	return &statusReport{
 		StatusText:          reviewText,
 		TrackedDependencies: deps,
 		CommitSHA:           sha,
-	}
-}
-
-func createReviewReport(deps ...dependencyVulnerabilities) vulnerabilityReport {
-	return &reviewReport{
-		TrackedDependencies: deps,
+		ReviewID:            reviewID,
 	}
 }

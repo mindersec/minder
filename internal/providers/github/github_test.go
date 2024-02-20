@@ -145,7 +145,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), token, "mockOwner")
 	require.NoError(t, err)
 
-	err = client.CreateComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
+	_, err = client.CreateIssueComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
 	require.NoError(t, err)
 
 	// Ensure that the second request was made after the rate limit reset
@@ -189,7 +189,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 		client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, token, owner)
 		require.NoError(t, err)
 
-		err = client.CreateComment(context.Background(), owner, "mockRepo", 1, "Test Comment")
+		_, err = client.CreateIssueComment(context.Background(), owner, "mockRepo", 1, "Test Comment")
 		var rateLimitErr *github.RateLimitError
 		require.ErrorAs(t, err, &rateLimitErr)
 	}()
@@ -210,7 +210,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 			ghClient, ok := client.(*RestClient)
 			require.True(t, ok)
 
-			err := ghClient.CreateComment(ctx, owner, "mockRepo", 1, "Test Comment")
+			_, err := ghClient.CreateIssueComment(ctx, owner, "mockRepo", 1, "Test Comment")
 			var rateLimitErr *github.RateLimitError
 			require.ErrorAs(t, err, &rateLimitErr)
 		}()

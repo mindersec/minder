@@ -18,8 +18,11 @@ package vulncheck
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	htmltemplate "html/template"
+	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -61,14 +64,13 @@ const (
 )
 
 const (
-	reviewBodyMagicComment = "<!-- minder: pr-review-body -->"
-	statusBodyMagicComment = "<!-- minder: pr-status-body -->"
+	minderTemplateMagicCommentName = "minderCommentBody"
+	//nolint:lll
+	statusBodyMagicComment       = `<!-- minder: pr-status-body: { "ContentSha": "{{.ContentSha}}", "ReviewID": "{{.ReviewID}}" } -->`
+	statusBodyMagicCommentPrefix = "<!-- minder: pr-status-body: "
 
 	minderTemplateName   = "minderCommentBody"
-	minderTemplateString = "{{ .MagicComment }}\n\n{{ .Body }}{{ .Footer }}"
-
-	minderMetadataTemplateName   = "Metadata"
-	minderMetadataTemplateString = "<!--{ {{.}} }-->"
+	minderTemplateString = "{{ .MagicComment }}\n\n{{ .Body }}"
 )
 
 const (
@@ -110,11 +112,11 @@ Minder found the following vulnerabilities in this PR:
 	tableVulnerabilitiesFooter = "</table>"
 )
 
-type reviewReport struct {
+type vulnSummaryReport struct {
 	TrackedDependencies []dependencyVulnerabilities
 }
 
-func (r *reviewReport) render() (string, error) {
+func (r *vulnSummaryReport) render() (string, error) {
 	headerTmpl, err := htmltemplate.New(tableVulnerabilitiesHeaderName).Parse(tableVulnerabilitiesHeader)
 	if err != nil {
 		return "", fmt.Errorf("could not parse dependency template: %w", err)
@@ -156,16 +158,7 @@ func (r *reviewReport) render() (string, error) {
 	}
 	summary.WriteString(tableVulnerabilitiesFooter)
 
-	reviewBody, err := render(minderTemplateName, minderTemplateString, minderTemplateData{
-		MagicComment: reviewBodyMagicComment,
-		Body:         summary.String(),
-		Footer:       contactString,
-	})
-	if err != nil {
-		return "", fmt.Errorf("could not create review body: %w", err)
-	}
-
-	return reviewBody, nil
+	return summary.String(), nil
 }
 
 const (
@@ -190,21 +183,19 @@ const (
 <h3>Vulnerability scan of <code>{{slice .Report.CommitSHA 0 8 }}:</code></h3>
 {{- if .Report.ReviewUrl }}<a href=" {{ .Report.ReviewUrl }}">{{ .Symbols.review }} <b>View Full Review</b></a>{{ end -}}
 <ul>
-	<li>{{ .Symbols.bug }} <b>vulnerabilities:</b> <code>{{ $vulnerabilityCount }}</code></li>
-	<li>{{ .Symbols.fix }} <b>fixes:</b> <code>{{ $remediationCount }}</code></li>
+	<li>{{ .Symbols.bug }} <b>vulnerable packages:</b> <code>{{ $vulnerabilityCount }}</code></li>
+	<li>{{ .Symbols.fix }} <b>fixes available for:</b> <code>{{ $remediationCount }}</code></li>
 </ul>
 </blockquote>
 {{- if .Report.TrackedDependencies }}
 <table>
-	<th>
-		<tr>
-			<th>Package</th>
-			<th>Version</th>
-			<th>#Vulnerabilities</th>
-			<th>#Fixes</th>
-			<th>Patch</th>
-	  	</tr>
-	</th>
+	<tr>
+		 <th>Package</th>
+		 <th>Version</th>
+		 <th>#Vulnerabilities</th>
+		 <th>#Fixes</th>
+		 <th>Patch</th>
+	</tr>
 	{{- range .Report.TrackedDependencies }}
 	<tr>
 		<td>{{.Dependency.Name}}</td>
@@ -224,6 +215,7 @@ type statusReport struct {
 	CommitSHA           string
 	ReviewUrl           string
 	TrackedDependencies []dependencyVulnerabilities
+	ReviewID            int64
 }
 
 func counter(condition func(dep dependencyVulnerabilities) bool) func(deps []dependencyVulnerabilities) int {
@@ -239,7 +231,6 @@ func counter(condition func(dep dependencyVulnerabilities) bool) func(deps []dep
 }
 
 func (s *statusReport) render() (string, error) {
-
 	countVulnsWithFix := func(vulns []Vulnerability) int {
 		count := 0
 		for _, vuln := range vulns {
@@ -275,21 +266,27 @@ func (s *statusReport) render() (string, error) {
 		return "", fmt.Errorf("could not create report body: %w", err)
 	}
 
-	// Convert the object to JSON
-	metadata, err := json.Marshal(wrappedReport.Metadata)
-	if err != nil {
-		return "", fmt.Errorf("could not convert Metadata to JSON: %w", err)
+	if len(s.TrackedDependencies) > 0 {
+		vulnSummary := &vulnSummaryReport{TrackedDependencies: s.TrackedDependencies}
+		vulnSummaryBody, err := vulnSummary.render()
+		if err != nil {
+			return "", fmt.Errorf("could not create vulnerability summary: %w", err)
+		}
+
+		status += "\n" + vulnSummaryBody
 	}
 
-	MetadataText, err := render(minderMetadataTemplateName, minderMetadataTemplateString, string(metadata))
+	magicComment, err := render(minderTemplateMagicCommentName, statusBodyMagicComment, magicCommentInfo{
+		ContentSha: s.CommitSHA,
+		ReviewID:   s.ReviewID,
+	})
 	if err != nil {
-		return "", fmt.Errorf("could not create Metadata text: %w", err)
+		return "", fmt.Errorf("could not create magic comment: %w", err)
 	}
 
 	reviewBody, err := render(minderTemplateName, minderTemplateString, minderTemplateData{
-		MagicComment: statusBodyMagicComment,
+		MagicComment: magicComment,
 		Body:         status,
-		Metadata:     MetadataText,
 		Footer:       contactString,
 	})
 	if err != nil {
@@ -315,14 +312,48 @@ func (s *statusReport) generateMetadata() reportMetadata {
 func render(templateName, templateString string, object interface{}) (string, error) {
 	tmpl, err := template.New(templateName).Option("missingkey=error").Parse(templateString)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not create template: %w", err)
 	}
 
 	// Execute the template
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, object); err != nil {
-		return "", err
+		return "", fmt.Errorf("could not execute template: %w", err)
 	}
 
 	return buf.String(), nil
+}
+
+type magicCommentInfo struct {
+	ContentSha string `json:"ContentSha"`
+	ReviewID   int64  `json:"ReviewID"`
+}
+
+func extractContentShaAndReviewID(input string) (magicCommentInfo, error) {
+	re := regexp.MustCompile(fmt.Sprintf("%s(\\{.*?\\}) -->", statusBodyMagicCommentPrefix))
+
+	matches := re.FindStringSubmatch(input)
+	if len(matches) != 2 {
+		return magicCommentInfo{}, errors.New("no match found")
+	}
+
+	jsonPart := matches[1]
+
+	var strMagicCommentInfo struct {
+		ContentSha string `json:"ContentSha"`
+		ReviewID   string `json:"ReviewID"` // Assuming you're handling ReviewID as a string
+	}
+	err := json.Unmarshal([]byte(jsonPart), &strMagicCommentInfo)
+	if err != nil {
+		return magicCommentInfo{}, fmt.Errorf("error unmarshalling JSON: %w", err)
+	}
+
+	var contentInfo magicCommentInfo
+	contentInfo.ContentSha = strMagicCommentInfo.ContentSha
+	contentInfo.ReviewID, err = strconv.ParseInt(strMagicCommentInfo.ReviewID, 10, 64)
+	if err != nil {
+		return magicCommentInfo{}, fmt.Errorf("error parsing ReviewID: %w", err)
+	}
+
+	return contentInfo, nil
 }
