@@ -35,15 +35,18 @@ type RestClientCache interface {
 	Get(owner, token string, provider db.ProviderType) (provinfv1.REST, bool)
 	Set(owner, token string, provider db.ProviderType, rest provinfv1.REST)
 
-	// Wait waits for the background eviction routine to finish
-	Wait()
+	// Close stops the eviction routine and disallows setting new entries
+	// cache is not cleared, getting existing entries is still allowed
+	Close()
 }
 
 type restClientCache struct {
-	cache                *xsyncv3.MapOf[string, cacheEntry]
-	evictionTime         time.Duration
-	ctx                  context.Context
-	wgBackgroundEviction sync.WaitGroup
+	cache          *xsyncv3.MapOf[string, cacheEntry]
+	evictionTime   time.Duration
+	ctx            context.Context
+	evictionTicker *time.Ticker
+	closeChan      chan struct{}
+	closeOnce      sync.Once
 }
 
 type cacheEntry struct {
@@ -55,13 +58,16 @@ var _ RestClientCache = (*restClientCache)(nil)
 
 // NewRestClientCache creates a new REST client cache
 func NewRestClientCache(ctx context.Context) RestClientCache {
+	// We check for expired entries every half of the eviction time
+	evictionDuration := defaultCacheExpiration / 2
 	c := &restClientCache{
-		cache:        xsyncv3.NewMapOf[string, cacheEntry](),
-		evictionTime: defaultCacheExpiration,
-		ctx:          ctx,
+		cache:          xsyncv3.NewMapOf[string, cacheEntry](),
+		evictionTime:   defaultCacheExpiration,
+		ctx:            ctx,
+		evictionTicker: time.NewTicker(evictionDuration),
+		closeChan:      make(chan struct{}),
 	}
 
-	c.wgBackgroundEviction.Add(1)
 	go c.evictExpiredEntriesRoutine(ctx)
 	return c
 }
@@ -77,9 +83,12 @@ func (r *restClientCache) Get(owner, token string, provider db.ProviderType) (pr
 }
 
 func (r *restClientCache) Set(owner, token string, provider db.ProviderType, rest provinfv1.REST) {
-	// If the context has been cancelled, don't allow setting new entries
-	if r.ctx.Err() != nil {
+	select {
+	case <-r.ctx.Done():
 		return
+	case <-r.closeChan:
+		return
+	default:
 	}
 
 	key := r.getKey(owner, token, provider)
@@ -89,8 +98,11 @@ func (r *restClientCache) Set(owner, token string, provider db.ProviderType, res
 	})
 }
 
-func (r *restClientCache) Wait() {
-	r.wgBackgroundEviction.Wait()
+func (r *restClientCache) Close() {
+	r.closeOnce.Do(func() {
+		defer r.evictionTicker.Stop()
+		close(r.closeChan)
+	})
 }
 
 func (_ *restClientCache) getKey(owner, token string, provider db.ProviderType) string {
@@ -108,17 +120,16 @@ func (r *restClientCache) evictExpiredEntries() {
 }
 
 func (r *restClientCache) evictExpiredEntriesRoutine(ctx context.Context) {
-	defer r.wgBackgroundEviction.Done()
-
-	// We check for expired entries every half of the eviction time
-	evictionDuration := r.evictionTime / 2
-	ticker := time.NewTicker(evictionDuration)
-	defer ticker.Stop()
+	defer r.Close()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		// If ctx is not done but the ticker has expired, this would allow the goroutine to stop
+		// Stopping the ticker does not close the C channel, so we need to check for the closeChan
+		case <-r.closeChan:
+			return
+		case <-r.evictionTicker.C:
 			r.evictExpiredEntries()
 		}
 	}

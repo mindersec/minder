@@ -124,6 +124,7 @@ var serveCmd = &cobra.Command{
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
+		defer restClientCache.Close()
 
 		s, err := controlplane.NewServer(
 			store, evt, serverMetrics, cfg, vldtr,
@@ -182,9 +183,6 @@ var serveCmd = &cobra.Command{
 
 		// Wait for all entity events to be executed
 		exec.Wait()
-
-		// Wait for the client cache background routine to finish
-		restClientCache.Wait()
 
 		return errg.Wait()
 	},
