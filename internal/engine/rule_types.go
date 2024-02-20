@@ -177,6 +177,7 @@ type RuleTypeEngine struct {
 
 // NewRuleTypeEngine creates a new rule type engine
 func NewRuleTypeEngine(
+	ctx context.Context,
 	p *minderv1.Profile,
 	rt *minderv1.RuleType,
 	cli *providers.ProviderBuilder,
@@ -191,7 +192,7 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	reval, err := eval.NewRuleEvaluator(rt, cli)
+	reval, err := eval.NewRuleEvaluator(ctx, rt, cli)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}

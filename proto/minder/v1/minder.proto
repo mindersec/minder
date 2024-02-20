@@ -1312,11 +1312,6 @@ message RuleType {
                 // no configuration for now
             }
 
-            message Trusty {
-                // e.g. https://api.trustypkg.dev/
-                string endpoint = 1;
-            }
-
             message Homoglyphs {
                 string type = 1;
             }
@@ -1332,11 +1327,10 @@ message RuleType {
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
 
-            // trusty is only used if the `trusty` type is selected.
-            optional Trusty trusty = 5;
-
             // homoglyphs is only used if the `homoglyphs` type is selected.
             optional Homoglyphs homoglyphs = 6;
+
+            reserved 5; // deprecated optional trusty
         }
         Eval eval = 5;
 
