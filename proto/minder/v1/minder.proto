@@ -1312,6 +1312,12 @@ message RuleType {
                 // no configuration for now
             }
 
+            message Trusty {
+                // This is no longer used, but is still here for backwards
+                // compatibility with existing stored rules
+                string endpoint = 1;
+            }
+
             message Homoglyphs {
                 string type = 1;
             }
@@ -1327,10 +1333,12 @@ message RuleType {
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
 
+            // The trusty type is no longer used, but is still here for backwards
+            // compatibility with existing stored rules
+            optional Trusty trusty = 5;
+
             // homoglyphs is only used if the `homoglyphs` type is selected.
             optional Homoglyphs homoglyphs = 6;
-
-            reserved 5; // deprecated optional trusty
         }
         Eval eval = 5;
 
