@@ -18,13 +18,10 @@ package auth
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
-
-	"github.com/stacklok/minder/internal/util"
 )
 
 // JwtValidator provides the functions to validate a JWT
@@ -118,36 +115,4 @@ func GetUserSubjectFromContext(ctx context.Context) string {
 // WithUserSubjectContext stores the specified user subject in the context.
 func WithUserSubjectContext(ctx context.Context, subject string) context.Context {
 	return context.WithValue(ctx, userSubjectContextKey, subject)
-}
-
-// UserDetails is a helper struct for getting user details
-type UserDetails struct {
-	Name  string
-	Email string
-}
-
-// GetUserDetails is a helper for getting user details such as name and email from the jwt token
-func GetUserDetails(ctx context.Context, issuerUrl, clientId string) (*UserDetails, error) {
-	t, err := util.GetToken(issuerUrl, clientId)
-	if err != nil {
-		return nil, err
-	}
-	parsedURL, err := url.Parse(issuerUrl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse issuer URL: %w\n", err)
-	}
-	jwksUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/certs")
-	vldtr, err := NewJwtValidator(ctx, jwksUrl.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
-	}
-	token, err := vldtr.ParseAndValidate(t)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse and validate token: %w\n", err)
-	}
-
-	return &UserDetails{
-		Email: token.Email(),
-		Name:  fmt.Sprintf("%s %s", token.GivenName(), token.FamilyName()),
-	}, nil
 }
