@@ -19,13 +19,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -42,26 +41,26 @@ var deleteCmd = &cobra.Command{
 // deleteCommand is the account deletion subcommand
 func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
-
-	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
-	if err != nil {
-		return cli.MessageAndError("Unable to read config", err)
-	}
-
-	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
-	clientId := clientConfig.Identity.CLI.ClientId
 	yesFlag := viper.GetBool("yes-delete-my-account")
 
 	// Ensure the user already exists in the local database
-	_, _, err = userRegistered(ctx, client)
+	_, _, err := userRegistered(ctx, client)
 	if err != nil {
 		return cli.MessageAndError("Error checking if user exists", err)
 	}
 
-	// Get user details - name, email from the jwt token
-	userDetails, err := auth.GetUserDetails(ctx, issuerUrl, clientId)
+	// We read name and email from the JWT.  We don't need to validate it here.
+	creds, err := util.LoadCredentials()
 	if err != nil {
-		return cli.MessageAndError("Error fetching user details", err)
+		return cli.MessageAndError("Error loading credentials from file", err)
+	}
+	accessToken, err := jwt.ParseString(creds.AccessToken, jwt.WithVerify(false), jwt.WithToken(openid.New()))
+	if err != nil {
+		return cli.MessageAndError("Error parsing token", err)
+	}
+	token, ok := accessToken.(openid.Token)
+	if !ok {
+		return cli.MessageAndError("Error parsing token", fmt.Errorf("provided token was not an OpenID token"))
 	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
@@ -73,8 +72,8 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		yes := cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf(
 				"You are about to permanently delete your account. \n\nName: %s\nEmail: %s",
-				userDetails.Name,
-				userDetails.Email,
+				fmt.Sprintf("%s %s", token.GivenName(), token.FamilyName()),
+				token.Email(),
 			),
 			"Are you sure?",
 			"Delete account operation cancelled.",
