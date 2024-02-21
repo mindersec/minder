@@ -181,20 +181,30 @@ func (p *Profile) Validate() error {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}
 
+	repoRuleCount := len(p.Repository)
+	buildEnvRuleCount := len(p.BuildEnvironment)
+	artifactRuleCount := len(p.Artifact)
+	pullRequestRuleCount := len(p.PullRequest)
+	totalRuleCount := repoRuleCount + buildEnvRuleCount + artifactRuleCount + pullRequestRuleCount
+
+	if totalRuleCount == 0 {
+		return fmt.Errorf("%w: profile must have at least one rule", ErrValidationFailed)
+	}
+
 	// If the profile is nil or empty, we don't need to validate it
-	if p.Repository != nil && len(p.Repository) > 0 {
+	if p.Repository != nil && repoRuleCount > 0 {
 		return validateEntity(p.Repository)
 	}
 
-	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
+	if p.BuildEnvironment != nil && buildEnvRuleCount > 0 {
 		return validateEntity(p.BuildEnvironment)
 	}
 
-	if p.Artifact != nil && len(p.Artifact) > 0 {
+	if p.Artifact != nil && artifactRuleCount > 0 {
 		return validateEntity(p.Artifact)
 	}
 
-	if p.PullRequest != nil && len(p.PullRequest) > 0 {
+	if p.PullRequest != nil && pullRequestRuleCount > 0 {
 		return validateEntity(p.PullRequest)
 	}
 
