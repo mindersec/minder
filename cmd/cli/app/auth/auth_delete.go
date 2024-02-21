@@ -54,7 +54,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	if err != nil {
 		return cli.MessageAndError("Error loading credentials from file", err)
 	}
-	accessToken, err := jwt.ParseString(creds.AccessToken)
+	accessToken, err := jwt.ParseString(creds.AccessToken, jwt.WithVerify(false), jwt.WithToken(openid.New()))
 	if err != nil {
 		return cli.MessageAndError("Error parsing token", err)
 	}
