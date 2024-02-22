@@ -23,6 +23,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -64,20 +65,13 @@ func New(trustedRoot string, authOpts ...container.AuthMethod) (*Sigstore, error
 		return nil, err
 	}
 
-	err = seedRootJson(trustedRoot, cacheDir)
-	if err != nil {
-		return nil, err
+	if err := seedRootJson(trustedRoot, cacheDir); err != nil {
+		return nil, fmt.Errorf("seeding root: %w", err)
 	}
 
-	// init sigstore's verifier
-	trustedrootJSON, err := tuf.GetTrustedrootJSON(trustedRoot, cacheDir)
+	trustedMaterial, err := readTrustedRoot(trustedRoot, cacheDir)
 	if err != nil {
-		return nil, err
-	}
-
-	trustedMaterial, err := root.NewTrustedRootFromJSON(trustedrootJSON)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading root: %w", err)
 	}
 
 	opts, err := verifierOptions(trustedRoot)
@@ -96,6 +90,48 @@ func New(trustedRoot string, authOpts ...container.AuthMethod) (*Sigstore, error
 		authOpts: authOpts,
 		cacheDir: cacheDir,
 	}, nil
+}
+
+// readTrustedRoot reads a trusted tuf root stored in rootSource. If a cache
+// directory is specified, the function will check the directory for a precached
+// copy.
+func readTrustedRoot(rootSource, cacheDir string) (*root.TrustedRoot, error) {
+	var cached []byte
+	var err error
+
+	if cacheDir != "" {
+		cached, err = readRootJson(rootSource, cacheDir)
+		if err != nil {
+			return nil, fmt.Errorf("checking cache: %s", err)
+		}
+	}
+
+	if cached != nil {
+		rt, err := root.NewTrustedRootFromJSON(cached)
+		if err != nil {
+			return nil, fmt.Errorf("creating new root from cached json: %w", err)
+		}
+		return rt, nil
+	}
+
+	tufOpts := tuf.DefaultOptions()
+
+	// Our module keeps its own cache, so we disable
+	// the sigstore built in
+	tufOpts.DisableLocalCache = true
+
+	if rootSource != "" {
+		tufOpts.RepositoryBaseURL = "https://" + rootSource
+	}
+
+	trustedMaterial, err := root.FetchTrustedRootWithOptions(tufOpts)
+	if err != nil {
+		return nil, fmt.Errorf("fetching root: %w", err)
+	}
+
+	// (TODO) write the new material to cache
+
+	return trustedMaterial, nil
 }
 
 func verifierOptions(trustedRoot string) ([]verify.VerifierOption, error) {
@@ -191,6 +227,39 @@ func embeddedRootJson(tufRootURL string) ([]byte, error) {
 	return embeddedTufRoots.ReadFile(embeddedRootPath)
 }
 
+// readRootJson reads a cached root from the cache. returns nil
+// if there is no match.
+func readRootJson(tufRepo, cacheDir string) ([]byte, error) {
+	// Don't cache the empty string, this delegates the default
+	// to the sigstore-go client
+	if tufRepo == "" {
+		return nil, nil
+	}
+
+	cachedPath := filepath.Join(cacheDir, tufRepo, rootTUFPath)
+	cachedPath = filepath.Clean(cachedPath)
+	if !strings.HasPrefix(cachedPath, cacheDir) {
+		return nil, fmt.Errorf("unsafe cache path when reading")
+	}
+
+	_, err := os.Stat(cachedPath)
+
+	// (TODO) Handle cache invalidation here
+	if err == nil {
+		data, err := os.ReadFile(cachedPath)
+		if err != nil {
+			return nil, fmt.Errorf("reading cached file: %w", err)
+		}
+		return data, nil
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("checking local root cache for %q: %s", tufRepo, err)
+	}
+
+	return nil, nil
+}
+
 func writeRootJson(tufRepo, cacheDir string, rootJson []byte) error {
 	const (
 		newFilePerms = os.FileMode(0600)
@@ -215,7 +284,7 @@ func writeRootJson(tufRepo, cacheDir string, rootJson []byte) error {
 		}
 	}
 
-	rootPath := path.Join(tufPath, tuf.RootTUFPath)
+	rootPath := path.Join(tufPath, rootTUFPath)
 	return os.WriteFile(rootPath, rootJson, newFilePerms)
 }
 
