@@ -1,0 +1,33 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [ opened, edited, reopened ]
+
+jobs:
+  check-pr-content:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - name: Check PR for Change Type Selection
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            if (!pr) {
+              console.log('This action must be run on a pull request event.');
+              core.setFailed('No pull request data found.');
+              return;
+            }
+            
+            const prNumber = pr.number;
+            const body = pr.body;
+            
+            console.log(`Processing PR #${prNumber}`);
+            
+            const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation)/;
+            
+            if (!changeTypeRegex.test(body)) {
+              core.setFailed("You must select at least one Change Type.");
+            }
