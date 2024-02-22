@@ -186,7 +186,3 @@ func embeddedRootJson(tufRootURL string) ([]byte, error) {
 
 	return embeddedTufRoots.ReadFile(embeddedRootPath)
 }
-
-// ClearCache clears the sigstore cache
-func (_ *Sigstore) ClearCache() {
-}
