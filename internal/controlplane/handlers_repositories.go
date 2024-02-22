@@ -33,6 +33,7 @@ import (
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
+	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -156,7 +157,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	reqRepoCursor, err := NewRepoCursor(in.GetCursor())
+	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
@@ -201,10 +202,10 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, r)
 	}
 
-	var respRepoCursor *RepoCursor
+	var respRepoCursor *cursorutil.RepoCursor
 	if limit.Valid && len(repos) == int(limit.Int32) {
 		lastRepo := repos[len(repos)-1]
-		respRepoCursor = &RepoCursor{
+		respRepoCursor = &cursorutil.RepoCursor{
 			ProjectId: projectID.String(),
 			Provider:  provider.Name,
 			RepoId:    lastRepo.RepoID,
