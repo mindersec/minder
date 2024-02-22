@@ -35,18 +35,6 @@ func (m *MockArtifactVerifier) EXPECT() *MockArtifactVerifierMockRecorder {
 	return m.recorder
 }
 
-// ClearCache mocks base method.
-func (m *MockArtifactVerifier) ClearCache() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ClearCache")
-}
-
-// ClearCache indicates an expected call of ClearCache.
-func (mr *MockArtifactVerifierMockRecorder) ClearCache() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearCache", reflect.TypeOf((*MockArtifactVerifier)(nil).ClearCache))
-}
-
 // Verify mocks base method.
 func (m *MockArtifactVerifier) Verify(arg0 context.Context, arg1 verifyif.ArtifactType, arg2 verifyif.ArtifactRegistry, arg3, arg4, arg5 string) ([]verifyif.Result, error) {
 	m.ctrl.T.Helper()
