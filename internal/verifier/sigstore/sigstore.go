@@ -18,15 +18,11 @@ package sigstore
 import (
 	"context"
 	"embed"
-	"errors"
 	"fmt"
-	"io/fs"
-	"os"
+	"net/url"
 	"path"
-	"path/filepath"
 	"strings"
 
-	"github.com/rs/zerolog/log"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"github.com/sigstore/sigstore-go/pkg/verify"
@@ -53,28 +49,20 @@ const (
 type Sigstore struct {
 	verifier *verify.SignedEntityVerifier
 	authOpts []container.AuthMethod
-	cacheDir string
 }
 
 var _ verifyif.ArtifactVerifier = (*Sigstore)(nil)
 
 // New creates a new Sigstore verifier
-func New(trustedRoot string, authOpts ...container.AuthMethod) (*Sigstore, error) {
-	cacheDir, err := createTmpDir(LocalCacheDir, "sigstore")
+func New(sigstoreTUFRepoURL string, authOpts ...container.AuthMethod) (*Sigstore, error) {
+	// Get the sigstore options for the TUF client and the verifier
+	tufOpts, opts, err := getSigstoreOptions(sigstoreTUFRepoURL)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := seedRootJson(trustedRoot, cacheDir); err != nil {
-		return nil, fmt.Errorf("seeding root: %w", err)
-	}
-
-	trustedMaterial, err := readTrustedRoot(trustedRoot, cacheDir)
-	if err != nil {
-		return nil, fmt.Errorf("reading root: %w", err)
-	}
-
-	opts, err := verifierOptions(trustedRoot)
+	// Get the trusted material - sigstore's trusted_root.json
+	trustedMaterial, err := root.FetchTrustedRootWithOptions(tufOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -88,50 +76,58 @@ func New(trustedRoot string, authOpts ...container.AuthMethod) (*Sigstore, error
 	return &Sigstore{
 		verifier: sev,
 		authOpts: authOpts,
-		cacheDir: cacheDir,
 	}, nil
 }
 
-// readTrustedRoot reads a trusted tuf root stored in rootSource. If a cache
-// directory is specified, the function will check the directory for a precached
-// copy.
-func readTrustedRoot(rootSource, cacheDir string) (*root.TrustedRoot, error) {
-	var cached []byte
-	var err error
-
-	if cacheDir != "" {
-		cached, err = readRootJson(rootSource, cacheDir)
-		if err != nil {
-			return nil, fmt.Errorf("checking cache: %s", err)
-		}
+func getSigstoreOptions(sigstoreTUFRepoURL string) (*tuf.Options, []verify.VerifierOption, error) {
+	// Default the sigstoreTUFRepoURL to the sigstore public trusted root repo if not provided
+	if sigstoreTUFRepoURL == "" {
+		sigstoreTUFRepoURL = SigstorePublicTrustedRootRepo
 	}
 
-	if cached != nil {
-		rt, err := root.NewTrustedRootFromJSON(cached)
-		if err != nil {
-			return nil, fmt.Errorf("creating new root from cached json: %w", err)
-		}
-		return rt, nil
+	// Get the Sigstore TUF client options
+	tufOpts, err := getTUFOptions(sigstoreTUFRepoURL)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	// Get the Sigstore verifier options
+	opts, err := verifierOptions(sigstoreTUFRepoURL)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// All good
+	return tufOpts, opts, nil
+}
+
+func getTUFOptions(sigstoreTUFRepoURL string) (*tuf.Options, error) {
+	// Default the TUF options
 	tufOpts := tuf.DefaultOptions()
-
-	// Our module keeps its own cache, so we disable
-	// the sigstore built in
 	tufOpts.DisableLocalCache = true
 
-	if rootSource != "" {
-		tufOpts.RepositoryBaseURL = "https://" + rootSource
-	}
-
-	trustedMaterial, err := root.FetchTrustedRootWithOptions(tufOpts)
+	// Set the repository base URL, fix the scheme if not provided
+	tufURL, err := url.Parse(sigstoreTUFRepoURL)
 	if err != nil {
-		return nil, fmt.Errorf("fetching root: %w", err)
+		return nil, fmt.Errorf("error parsing sigstore TUF repo URL: %w", err)
+	}
+	if tufURL.Scheme == "" {
+		tufURL.Scheme = "https"
+	}
+	tufOpts.RepositoryBaseURL = tufURL.String()
+
+	// sigstore-go has a copy of the root.json for the public sigstore instance embedded. Nothing to do.
+	if sigstoreTUFRepoURL != SigstorePublicTrustedRootRepo {
+		// Look up and set the embedded root.json for the given TUF repository
+		rootJson, err := embeddedRootJson(sigstoreTUFRepoURL)
+		if err != nil {
+			return nil, fmt.Errorf("error getting embedded root.json for %s: %w", sigstoreTUFRepoURL, err)
+		}
+		tufOpts.Root = rootJson
 	}
 
-	// (TODO) write the new material to cache
-
-	return trustedMaterial, nil
+	// All good
+	return tufOpts, nil
 }
 
 func verifierOptions(trustedRoot string) ([]verify.VerifierOption, error) {
@@ -175,27 +171,6 @@ func (s *Sigstore) VerifyContainer(ctx context.Context, registry, owner, artifac
 	return container.Verify(ctx, s.verifier, registry, owner, artifact, version, s.authOpts...)
 }
 
-// ClearCache clears the sigstore cache
-func (s *Sigstore) ClearCache() {
-	if err := os.RemoveAll(s.cacheDir); err != nil {
-		log.Err(err).Msg("error deleting temporary sigstore cache directory")
-	}
-}
-
-func createTmpDir(basePath, prefix string) (string, error) {
-	// ensure the path exists
-	err := os.MkdirAll(basePath, os.ModePerm)
-	if err != nil {
-		return "", fmt.Errorf("failed to ensure path for temporary sigstore cache directory: %w", err)
-	}
-	// create the temporary directory
-	tmpDir, err := os.MkdirTemp(basePath, prefix)
-	if err != nil {
-		return "", fmt.Errorf("failed to create temporary sigstore cache directory: %w", err)
-	}
-	return tmpDir, nil
-}
-
 // sanitizeInput sanitizes the input parameters
 func sanitizeInput(registry *verifyif.ArtifactRegistry, owner *string) {
 	// Default the registry to GHCR for the time being
@@ -206,109 +181,12 @@ func sanitizeInput(registry *verifyif.ArtifactRegistry, owner *string) {
 	*owner = strings.ToLower(*owner)
 }
 
-func seedRootJson(tufRepo, cacheDir string) error {
-	// sigstore-go has a copy of the root.json for the public sigstore
-	// instance embedded. Nothing to do.
-	if tufRepo == SigstorePublicTrustedRootRepo {
-		return nil
-	}
-
-	// check if the repo is one of the well-known embedded TUF repositories
-	rootJson, err := embeddedRootJson(tufRepo)
-	if err != nil {
-		return fmt.Errorf("error getting embedded root.json for %s: %w", tufRepo, err)
-	}
-	return writeRootJson(tufRepo, cacheDir, rootJson)
-}
-
 func embeddedRootJson(tufRootURL string) ([]byte, error) {
 	embeddedRootPath := path.Join("tufroots", tufRootURL, rootTUFPath)
 
 	return embeddedTufRoots.ReadFile(embeddedRootPath)
 }
 
-// readRootJson reads a cached root from the cache. returns nil
-// if there is no match.
-func readRootJson(tufRepo, cacheDir string) ([]byte, error) {
-	// Don't cache the empty string, this delegates the default
-	// to the sigstore-go client
-	if tufRepo == "" {
-		return nil, nil
-	}
-
-	cachedPath := filepath.Join(cacheDir, tufRepo, rootTUFPath)
-	cachedPath = filepath.Clean(cachedPath)
-	if !strings.HasPrefix(cachedPath, cacheDir) {
-		return nil, fmt.Errorf("unsafe cache path when reading")
-	}
-
-	_, err := os.Stat(cachedPath)
-
-	// (TODO) Handle cache invalidation here
-	if err == nil {
-		data, err := os.ReadFile(cachedPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading cached file: %w", err)
-		}
-		return data, nil
-	}
-
-	if !errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("checking local root cache for %q: %s", tufRepo, err)
-	}
-
-	return nil, nil
-}
-
-func writeRootJson(tufRepo, cacheDir string, rootJson []byte) error {
-	const (
-		newFilePerms = os.FileMode(0600)
-		newDirPerms  = os.FileMode(0750)
-	)
-
-	tufPath := path.Join(cacheDir, tufRepo)
-	fi, err := os.Stat(tufPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		if err = os.MkdirAll(tufPath, newDirPerms); err != nil {
-			return fmt.Errorf("error creating directory for metadata cache: %w", err)
-		}
-	} else if err != nil {
-		return fmt.Errorf("error getting FileInfo for %s: %w", tufPath, err)
-	} else {
-		if !fi.IsDir() {
-			return fmt.Errorf("can not open %s, not a directory", tufPath)
-		}
-		// Verify file mode is not too permissive.
-		if err = ensureMaxPermissions(fi, newDirPerms); err != nil {
-			return err
-		}
-	}
-
-	rootPath := path.Join(tufPath, rootTUFPath)
-	return os.WriteFile(rootPath, rootJson, newFilePerms)
-}
-
-// taken from go-tuf/internal/fsutil/perm.go
-//
-// EnsureMaxPermissions tests the provided file info, returning an error if the
-// file's permission bits contain excess permissions not set in maxPerms.
-//
-// For example, a file with permissions -rw------- will successfully validate
-// with maxPerms -rw-r--r-- or -rw-rw-r--, but will not validate with maxPerms
-// -r-------- (due to excess --w------- permission) or --w------- (due to
-// excess -r-------- permission).
-//
-// Only permission bits of the file modes are considered.
-func ensureMaxPermissions(fi os.FileInfo, maxPerms os.FileMode) error {
-	gotPerm := fi.Mode().Perm()
-	forbiddenPerms := (^maxPerms).Perm()
-	excessPerms := gotPerm & forbiddenPerms
-
-	if excessPerms != 0 {
-		return fmt.Errorf(
-			"permission bits for file %v failed validation: want at most %v, got %v with excess perms %v",
-			fi.Name(), maxPerms.Perm(), gotPerm, excessPerms)
-	}
-
-	return nil
+// ClearCache clears the sigstore cache
+func (_ *Sigstore) ClearCache() {
 }
