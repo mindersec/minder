@@ -20,9 +20,6 @@ deps:
 breaking:
   use:
     - WIRE_JSON
-  # Temporary maneuver for #2395, remove in a followup PR
-  except:
-    - RESERVED_MESSAGE_NO_DELETE
 lint:
   use:
     - DEFAULT
