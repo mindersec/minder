@@ -5,7 +5,7 @@ on:
 jobs:
   check-pr-content:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'stacklokbot[bot]' }}
+    if: ${{ github.actor != 'dependabot[bot]' && github.actor != 'stacklokbot' }}
     steps:
       - name: Check PR for Change Type Selection
         uses: actions/github-script@5c56fde4671bc2d3592fb0f2c5b5bab9ddae03b1 # v7
