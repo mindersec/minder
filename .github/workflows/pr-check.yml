@@ -31,5 +31,3 @@ jobs:
             if (!changeTypeRegex.test(body)) {
               core.setFailed("You must select at least one Change Type.");
             }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
