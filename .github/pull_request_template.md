@@ -14,6 +14,7 @@ Fixes #(related issue)
 - [ ] Feature (adds new functionality without breaking changes)
 - [ ] Breaking change (may impact existing functionalities or require documentation updates)
 - [ ] Documentation (updates or additions to documentation)
+- [ ] Refactoring or test improvements (no bug fixes or new functionality)
 
 # Testing
 
