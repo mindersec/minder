@@ -12,18 +12,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { pull_request } = github.context.payload;
+            const payload = github.event.pull_request;
             
-            if (!pull_request) {
-              console.log('The event payload does not include pull_request data.');
+            if (!payload) {
+              console.log('This action must be run on a pull request event.');
+              core.setFailed('No pull request data found.');
               return;
             }
             
-            const prNumber = pull_request.number;
+            const prNumber = payload.number;
+            const body = payload.body;
             
             console.log(`Processing PR #${prNumber}`);
             
-            const body = pull_request.body;
             const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation)/;
             
             if (!changeTypeRegex.test(body)) {
