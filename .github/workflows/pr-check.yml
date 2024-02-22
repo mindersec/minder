@@ -8,28 +8,26 @@ jobs:
   check-pr-content:
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR for Change Type selection
+      - name: Check PR for Change Type Selection
         uses: actions/github-script@v7
         with:
           script: |
-            const { pull_request: { number: prNumber }, repository: { owner: { login: owner }, name: repo } } = context.payload;            
-            const token = process.env.GITHUB_TOKEN;
-            const octokit = github.getOctokit(token);
+            const { pull_request } = github.context.payload;
             
-            octokit.rest.pulls.get({
-              owner,
-              repo,
-              pull_number: prNumber,
-            }).then(({data}) => {
-              const body = data.body;
+            if (!pull_request) {
+              console.log('The event payload does not include pull_request data.');
+              return;
+            }
             
-              // Check for Change Type
-              const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation)/;
-              if (!changeTypeRegex.test(body)) {
-                core.setFailed("You must select at least one Change Type.");
-              }
-            }).catch(error => {
-              core.setFailed(`An error occurred: ${error.message}`);
-            });
+            const prNumber = pull_request.number;
+            
+            console.log(`Processing PR #${prNumber}`);
+            
+            const body = pull_request.body;
+            const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation)/;
+            
+            if (!changeTypeRegex.test(body)) {
+              core.setFailed("You must select at least one Change Type.");
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
