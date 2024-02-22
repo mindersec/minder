@@ -12,14 +12,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { issue: { number: issueNumber }, repository: { owner: { login: owner }, name: repo } } = context.payload;
+            const { pull_request: { number: prNumber }, repository: { owner: { login: owner }, name: repo } } = context.payload;            
             const token = process.env.GITHUB_TOKEN;
             const octokit = github.getOctokit(token);
             
             octokit.rest.pulls.get({
               owner,
               repo,
-              pull_number: issueNumber,
+              pull_number: prNumber,
             }).then(({data}) => {
               const body = data.body;
             
