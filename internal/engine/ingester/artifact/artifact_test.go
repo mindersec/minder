@@ -104,7 +104,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -153,7 +152,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -319,7 +317,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -375,7 +372,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -414,7 +410,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",
@@ -454,7 +449,6 @@ func TestArtifactIngestMatching(t *testing.T) {
 							IsVerified: false,
 						},
 					}, nil)
-				mockVerifier.EXPECT().ClearCache()
 			},
 			artifact: &pb.Artifact{
 				Type:  "container",

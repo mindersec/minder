@@ -34,9 +34,7 @@ services:
       # "--github-client-secret-file=/secrets/github_client_secret",
     ]
     restart: always # keep the server running
-    tmpfs:
-      - /tmp
-    # read_only: true
+    read_only: true
     ports:
       - "8080:8080"
       - "8090:8090"

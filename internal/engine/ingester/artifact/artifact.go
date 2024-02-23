@@ -174,7 +174,6 @@ func (i *Ingest) getVerificationResult(
 	if err != nil {
 		return nil, fmt.Errorf("error getting verifier: %w", err)
 	}
-	defer artifactVerifier.ClearCache()
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
 	for _, artifactVersion := range versions {
