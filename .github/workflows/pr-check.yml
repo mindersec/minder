@@ -24,7 +24,7 @@ jobs:
 
             console.log(`Processing PR #${prNumber}`);
 
-            const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation)/;
+            const changeTypeRegex = /\- \[[xX]\] (Bug fix|Feature|Breaking change|Documentation|Refactoring)/;
 
             if (!changeTypeRegex.test(body)) {
               core.setFailed("You must select at least one Change Type.");
