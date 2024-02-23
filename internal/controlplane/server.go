@@ -53,6 +53,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util"
@@ -80,6 +81,10 @@ type Server struct {
 	authzClient     authz.Client
 	cryptoEngine    *crypto.Engine
 	restClientCache ratecache.RestClientCache
+	// We may want to start breaking up the server struct if we use it to
+	// inject more entity-specific interfaces. For example, we may want to
+	// consider having a struct per grpc service
+	profileValidator *profiles.Validator
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -130,13 +135,14 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	s := &Server{
-		store:        store,
-		cfg:          cfg,
-		evt:          evt,
-		cryptoEngine: eng,
-		vldtr:        vldtr,
-		mt:           cpm,
-		provMt:       provtelemetry.NewNoopMetrics(),
+		store:            store,
+		cfg:              cfg,
+		evt:              evt,
+		cryptoEngine:     eng,
+		vldtr:            vldtr,
+		mt:               cpm,
+		provMt:           provtelemetry.NewNoopMetrics(),
+		profileValidator: profiles.NewValidator(store),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

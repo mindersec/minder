@@ -52,7 +52,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().String("config", "", "config file (default is $PWD/server-config.yaml)")
-	if err := serverconfig.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
+	if err := config.RegisterDatabaseFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {
 		log.Fatal().Err(err).Msg("Error registering database flags")
 	}
 	if err := auth.RegisterOAuthFlags(viper.GetViper(), RootCmd.PersistentFlags()); err != nil {

@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
+	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -41,7 +42,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 	}
 
 	if req.Cursor != "" {
-		cursor, err := NewProviderCursor(req.Cursor)
+		cursor, err := cursorutil.NewProviderCursor(req.Cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +93,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 
 	cursor := ""
 	if len(list) > 0 {
-		c := ProviderCursor{
+		c := cursorutil.ProviderCursor{
 			CreatedAt: list[len(list)-1].CreatedAt,
 		}
 		cursor = c.String()
