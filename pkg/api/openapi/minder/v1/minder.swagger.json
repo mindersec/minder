@@ -1902,10 +1902,11 @@
           },
           {
             "name": "repository.repoId",
+            "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input.",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "int64"
           },
           {
             "name": "context.provider",
@@ -3369,8 +3370,8 @@
           "type": "string"
         },
         "repoId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64"
         },
         "hookId": {
           "type": "string",
@@ -3629,8 +3630,9 @@
           "type": "string"
         },
         "repoId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64",
+          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
         }
       }
     },

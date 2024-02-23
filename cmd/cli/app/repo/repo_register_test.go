@@ -165,14 +165,14 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 	tests := []struct {
 		name                  string
 		inputRepositories     []string
-		repoIDs               map[string]int32
+		repoIDs               map[string]int64
 		expectedSelectedRepos []string
 		expectedWarnings      []string
 	}{
 		{
 			name:              "All input repositories are selected",
 			inputRepositories: []string{"owner1/repo1", "owner2/repo2"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},
@@ -182,7 +182,7 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 		{
 			name:              "Some input repositories are not found",
 			inputRepositories: []string{"owner1/repo1", "owner3/repo3"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},
@@ -192,7 +192,7 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 		{
 			name:              "No input repositories are found",
 			inputRepositories: []string{"owner3/repo3", "owner4/repo4"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},

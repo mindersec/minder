@@ -47,11 +47,11 @@ type RepoReconcilerEvent struct {
 	// Project is the project that the event is relevant to
 	Project uuid.UUID `json:"project"`
 	// Repository is the repository to be reconciled
-	Repository int32 `json:"repository" validate:"gte=0"`
+	Repository int64 `json:"repository" validate:"gte=0"`
 }
 
 // NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(provider string, repoID int32, projectID uuid.UUID) (*message.Message, error) {
+func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID) (*message.Message, error) {
 	evt := &RepoReconcilerEvent{
 		Repository: repoID,
 		Project:    projectID,

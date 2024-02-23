@@ -408,7 +408,7 @@ type Repository struct {
 	ProjectID     uuid.UUID      `json:"project_id"`
 	RepoOwner     string         `json:"repo_owner"`
 	RepoName      string         `json:"repo_name"`
-	RepoID        int32          `json:"repo_id"`
+	RepoID        int64          `json:"repo_id"`
 	IsPrivate     bool           `json:"is_private"`
 	IsFork        bool           `json:"is_fork"`
 	WebhookID     sql.NullInt32  `json:"webhook_id"`

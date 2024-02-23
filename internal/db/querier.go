@@ -81,7 +81,7 @@ type Querier interface {
 	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
 	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
-	GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error)
+	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRootProjects(ctx context.Context) ([]Project, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)

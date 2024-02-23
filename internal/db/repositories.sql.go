@@ -44,7 +44,7 @@ type CreateRepositoryParams struct {
 	ProjectID     uuid.UUID      `json:"project_id"`
 	RepoOwner     string         `json:"repo_owner"`
 	RepoName      string         `json:"repo_name"`
-	RepoID        int32          `json:"repo_id"`
+	RepoID        int64          `json:"repo_id"`
 	IsPrivate     bool           `json:"is_private"`
 	IsFork        bool           `json:"is_fork"`
 	WebhookID     sql.NullInt32  `json:"webhook_id"`
@@ -133,7 +133,7 @@ SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_
 
 type GetRepositoryByIDAndProjectParams struct {
 	Provider  string    `json:"provider"`
-	RepoID    int32     `json:"repo_id"`
+	RepoID    int64     `json:"repo_id"`
 	ProjectID uuid.UUID `json:"project_id"`
 }
 
@@ -164,7 +164,7 @@ const getRepositoryByRepoID = `-- name: GetRepositoryByRepoID :one
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE repo_id = $1
 `
 
-func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int32) (Repository, error) {
+func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error) {
 	row := q.db.QueryRowContext(ctx, getRepositoryByRepoID, repoID)
 	var i Repository
 	err := row.Scan(
@@ -384,7 +384,7 @@ LIMIT $4
 type ListRepositoriesByProjectIDParams struct {
 	Provider  string        `json:"provider"`
 	ProjectID uuid.UUID     `json:"project_id"`
-	RepoID    sql.NullInt32 `json:"repo_id"`
+	RepoID    sql.NullInt64 `json:"repo_id"`
 	Limit     sql.NullInt32 `json:"limit"`
 }
 
@@ -455,7 +455,7 @@ type UpdateRepositoryParams struct {
 	ProjectID     uuid.UUID      `json:"project_id"`
 	RepoOwner     string         `json:"repo_owner"`
 	RepoName      string         `json:"repo_name"`
-	RepoID        int32          `json:"repo_id"`
+	RepoID        int64          `json:"repo_id"`
 	IsPrivate     bool           `json:"is_private"`
 	IsFork        bool           `json:"is_fork"`
 	WebhookID     sql.NullInt32  `json:"webhook_id"`
@@ -522,7 +522,7 @@ WHERE repo_id = $1 RETURNING id, provider, project_id, repo_owner, repo_name, re
 `
 
 type UpdateRepositoryByIDParams struct {
-	RepoID        int32          `json:"repo_id"`
+	RepoID        int64          `json:"repo_id"`
 	ProjectID     uuid.UUID      `json:"project_id"`
 	RepoOwner     string         `json:"repo_owner"`
 	RepoName      string         `json:"repo_name"`
