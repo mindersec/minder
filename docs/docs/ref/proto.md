@@ -45,7 +45,6 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#minder-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#minder-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#minder-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
 | StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
@@ -443,21 +442,6 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-<a name="minder-v1-ExchangeCodeForTokenCLIRequest"></a>
-
-#### ExchangeCodeForTokenCLIRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| code | [string](#string) |  |  |
-| state | [string](#string) |  |  |
-| redirect_uri | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
 <a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest
@@ -518,6 +502,7 @@ DiffType defines the diff data ingester.
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
+| redirect_url | [string](#string) | optional |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>

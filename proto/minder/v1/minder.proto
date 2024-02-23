@@ -19,8 +19,6 @@ import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
-import "google/api/httpbody.proto";
-
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -273,19 +271,6 @@ service OAuthService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROVIDER_UPDATE
-        };
-    }
-    // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
-        option (google.api.http) = {
-            get: "/api/v1/auth/callback/{provider}/cli"
-            additional_bindings {
-                get: "/api/v1/auth/callback/cli"
-            }
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_NONE  // Don't need token auth for code exchange
         };
     }
 
@@ -670,22 +655,13 @@ message GetAuthorizationURLRequest {
     int32  port = 4;
     optional string owner = 5;
     Context context = 6;
+    optional string redirect_url = 7;
 
     reserved 1, 2; // deprecated provider and project_id
 }
 
 message GetAuthorizationURLResponse {
     string url = 1;
-}
-
-message ExchangeCodeForTokenCLIRequest {
-    string provider = 1 [deprecated=true];
-    string code = 3;
-    string state = 4;
-    string redirect_uri = 5;
-    Context context = 6;
-
-    reserved 2; // deprecated project_id
 }
 
 message StoreProviderTokenRequest {

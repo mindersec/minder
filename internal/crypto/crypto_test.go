@@ -82,3 +82,18 @@ func TestIsNonceValid(t *testing.T) {
 		t.Errorf("Expected nonce to be invalid, got valid")
 	}
 }
+
+func TestEncryptDecryptString(t *testing.T) {
+	t.Parallel()
+
+	engine := Engine{
+		encryptionKey: "test",
+	}
+
+	originalString := "testString"
+	encrypted, err := engine.EncryptString(originalString)
+	assert.Nil(t, err)
+	decrypted, err := engine.DecryptString(encrypted)
+	assert.Nil(t, err)
+	assert.Equal(t, originalString, decrypted)
+}
