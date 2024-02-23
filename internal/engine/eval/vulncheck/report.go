@@ -179,7 +179,6 @@ const (
 <p>{{ .Report.StatusText }}</p>
 <blockquote>
 <h3>Vulnerability scan of <code>{{slice .Report.CommitSHA 0 8 }}:</code></h3>
-{{- if .Report.ReviewUrl }}<a href=" {{ .Report.ReviewUrl }}">{{ .Symbols.review }} <b>View Full Review</b></a>{{ end -}}
 <ul>
 	<li>{{ .Symbols.bug }} <b>vulnerable packages:</b> <code>{{ $vulnerabilityCount }}</code></li>
 	<li>{{ .Symbols.fix }} <b>fixes available for:</b> <code>{{ $remediationCount }}</code></li>
@@ -211,7 +210,6 @@ const (
 type statusReport struct {
 	StatusText          string
 	CommitSHA           string
-	ReviewUrl           string
 	TrackedDependencies []dependencyVulnerabilities
 	ReviewID            int64
 }
