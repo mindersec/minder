@@ -51,5 +51,4 @@ type ArtifactVerifier interface {
 		owner, name, version string) ([]Result, error)
 	VerifyContainer(ctx context.Context,
 		registry, owner, artifact, version string) ([]Result, error)
-	ClearCache()
 }

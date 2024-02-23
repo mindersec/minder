@@ -42,16 +42,9 @@ func NewVerifier(verifier Type, verifierURL string, containerAuth ...container.A
 	var err error
 	var v verifyif.ArtifactVerifier
 
-	if verifierURL == "" {
-		verifierURL = sigstore.SigstorePublicTrustedRootRepo
-	}
 	// create the verifier
 	switch verifier {
 	case VerifierSigstore:
-		// Default the verifier URL to the sigstore public trusted root repo
-		if verifierURL == "" {
-			verifierURL = sigstore.SigstorePublicTrustedRootRepo
-		}
 		v, err = sigstore.New(verifierURL, containerAuth...)
 		if err != nil {
 			return nil, fmt.Errorf("error creating sigstore verifier: %w", err)

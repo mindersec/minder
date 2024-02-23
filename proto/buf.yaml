@@ -19,7 +19,7 @@ deps:
   - buf.build/googleapis/googleapis
 breaking:
   use:
-    - WIRE
+    - WIRE_JSON
 lint:
   use:
     - DEFAULT
