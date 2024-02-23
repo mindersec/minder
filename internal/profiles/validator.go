@@ -19,6 +19,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog/log"
+	"github.com/stacklok/minder/internal/util"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,7 +51,6 @@ func (v *Validator) ValidateAndExtractRules(
 
 	// ensure that the profile has all required fields
 	if err := profile.Validate(); err != nil {
-		// TODO: fix
 		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
@@ -61,7 +62,15 @@ func (v *Validator) ValidateAndExtractRules(
 	// validate that the parameters for the rules match the expected schema
 	rulesInProf, err := v.validateRuleParams(ctx, profile, &entityCtx)
 	if err != nil {
-		return nil, err
+		var violation *engine.RuleValidationError
+		if errors.As(err, &violation) {
+			log.Printf("error validating rule: %v", violation)
+			return nil, util.UserVisibleError(codes.InvalidArgument,
+				"profile contained invalid rule '%s': %s", violation.RuleType, violation.Err)
+		}
+
+		log.Printf("error getting rule type: %v", err)
+		return nil, status.Errorf(codes.Internal, "error creating profile")
 	}
 
 	// once validated, return the list of all rules for this profile

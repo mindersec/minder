@@ -77,17 +77,9 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
-	rulesInProf, err := s.validateProfile(ctx, in, entityCtx)
+	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
 	if err != nil {
-		var violation *engine.RuleValidationError
-		if errors.As(err, &violation) {
-			log.Printf("error validating rule: %v", violation)
-			return nil, util.UserVisibleError(codes.InvalidArgument,
-				"profile contained invalid rule '%s': %s", violation.RuleType, violation.Err)
-		}
-
-		log.Printf("error getting rule type: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
+		return nil, err
 	}
 
 	// Adds default rule names, if not present
@@ -600,7 +592,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	// Previously, this validation was called later in this method. There does
 	// not seem to be reason why it can't happen earlier, and it provides an
 	// additional layer of validation before beginning the DB transaction.
-	rules, err := s.validateProfile(ctx, in, entityCtx)
+	rules, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -973,26 +965,4 @@ func deleteRuleStatusesForProfile(
 	}
 
 	return nil
-}
-
-// This wrapper method exists to map errors from the business logic to grpc
-// status codes.
-func (s *Server) validateProfile(
-	ctx context.Context,
-	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
-) (prof.RuleMapping, error) {
-	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, profile, entityCtx)
-	if err != nil {
-		var violation *engine.RuleValidationError
-		if errors.As(err, &violation) {
-			log.Printf("error validating rule: %v", violation)
-			return nil, util.UserVisibleError(codes.InvalidArgument,
-				"profile contained invalid rule '%s': %s", violation.RuleType, violation.Err)
-		}
-
-		log.Printf("error getting rule type: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-	return rulesInProf, nil
 }
