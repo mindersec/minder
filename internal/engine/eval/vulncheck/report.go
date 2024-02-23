@@ -57,10 +57,8 @@ const (
 	noVulsFoundText = `
 	Minder analyzed this PR and found no vulnerable dependencies.
 	`
-	reviewBodyDismissCommentText = `
-	Previous Minder review was dismissed because the PR was updated.
-	`
-	vulnFoundWithNoPatch = "Vulnerability found, but no patched version exists yet."
+	reviewBodyDismissCommentText = "Previous Minder review was dismissed because the PR was updated"
+	vulnFoundWithNoPatch         = "Vulnerability found, but no patched version exists yet."
 )
 
 const (
