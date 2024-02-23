@@ -15,6 +15,8 @@
 
 package server
 
+import "github.com/stacklok/minder/internal/config"
+
 // EventConfig is the configuration for minder's eventing system.
 type EventConfig struct {
 	// Driver is the driver used to store events
@@ -44,8 +46,8 @@ type GoChannelEventConfig struct {
 // SQLEventConfig is the configuration for the database event driver
 type SQLEventConfig struct {
 	// InitSchema is whether or not to initialize the schema
-	InitSchema bool           `mapstructure:"init_schema" default:"true"`
-	Connection DatabaseConfig `mapstructure:"connection" default:"{}"`
+	InitSchema bool                  `mapstructure:"init_schema" default:"true"`
+	Connection config.DatabaseConfig `mapstructure:"connection" default:"{}"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware

@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controlplane
+// Package cursor provides a way to encode and decode cursors for paginated queries
+package cursor
 
 import (
 	"encoding/base64"
