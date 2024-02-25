@@ -723,7 +723,9 @@ message ListRemoteRepositoriesFromProviderResponse {
 message UpstreamRepositoryRef {
     string owner = 1;
     string name = 2;
-    int32 repo_id = 3;
+    // The upstream identity of the repository, as an integer.
+    // This is only set on output, and is ignored on input.
+    int64 repo_id = 3;
 }
 
 message Repository {
@@ -731,7 +733,7 @@ message Repository {
     optional Context context = 2;
     string owner = 3;
     string name = 4;
-    int32 repo_id = 5;
+    int64 repo_id = 5;
     int64 hook_id = 6;
     string hook_url = 7;
     string deploy_url = 8;

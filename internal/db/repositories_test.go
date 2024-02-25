@@ -38,7 +38,7 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		ProjectID:  project,
 		RepoOwner:  rand.RandomName(seed),
 		RepoName:   rand.RandomName(seed),
-		RepoID:     int32(rand.RandomInt(0, 5000, seed)),
+		RepoID:     rand.RandomInt(0, 5000, seed),
 		IsPrivate:  false,
 		IsFork:     false,
 		WebhookID:  sql.NullInt32{Int32: int32(rand.RandomInt(0, 1000, seed)), Valid: true},
@@ -56,7 +56,7 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		_, err := testQueries.GetRepositoryByRepoID(context.Background(), arg.RepoID)
 		if err != sql.ErrNoRows {
 			seed++
-			arg.RepoID = int32(rand.RandomInt(0, 5000, seed))
+			arg.RepoID = rand.RandomInt(0, 5000, seed)
 		} else {
 			break
 		}
@@ -156,9 +156,9 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	prov := createRandomProvider(t, project.ID)
 	createRandomRepository(t, project.ID, prov.Name)
 
-	for i := int32(1001); i < 1020; i++ {
+	for i := 1001; i < 1020; i++ {
 		createRandomRepository(t, project.ID, prov.Name, func(r *CreateRepositoryParams) {
-			r.RepoID = int32(i)
+			r.RepoID = int64(i)
 		})
 	}
 

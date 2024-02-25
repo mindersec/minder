@@ -165,7 +165,7 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 	repoNames := make([]string, len(repoList))
 
 	// Map of repo names to IDs
-	repoIDs := make(map[string]int32)
+	repoIDs := make(map[string]int64)
 
 	// Populate the repoNames slice and repoIDs map
 	for i, repo := range repoList {
@@ -259,7 +259,7 @@ func printRepoRegistrationStatus(results []*minderv1.RegisterRepoResult) {
 	t.Render()
 }
 
-func getSelectedInputRepositories(inputRepositories []string, repoIDs map[string]int32) (selectedInputRepo, warnings []string) {
+func getSelectedInputRepositories(inputRepositories []string, repoIDs map[string]int64) (selectedInputRepo, warnings []string) {
 	for _, repo := range inputRepositories {
 		if _, ok := repoIDs[repo]; !ok {
 			warnings = append(warnings, fmt.Sprintf("Repository %s not found", repo))

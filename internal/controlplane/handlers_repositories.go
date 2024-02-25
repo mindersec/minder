@@ -162,9 +162,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	repoId := sql.NullInt32{Valid: false, Int32: 0}
+	repoId := sql.NullInt64{}
 	if reqRepoCursor.ProjectId == projectID.String() && reqRepoCursor.Provider == provider.Name {
-		repoId = sql.NullInt32{Valid: true, Int32: reqRepoCursor.RepoId}
+		repoId = sql.NullInt64{Valid: true, Int64: reqRepoCursor.RepoId}
 	}
 
 	limit := sql.NullInt32{Valid: false, Int32: 0}

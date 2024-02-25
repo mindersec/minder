@@ -1209,7 +1209,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | context | [Context](#minder-v1-Context) | optional |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
+| repo_id | [int64](#int64) |  |  |
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
@@ -1622,7 +1622,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
+| repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
 
 
 <a name="minder-v1-UserRecord"></a>

@@ -838,19 +838,17 @@ func getRepoInformationFromPayload(
 	return dbrepo, nil
 }
 
-func parseRepoID(repoID any) (int32, error) {
+func parseRepoID(repoID any) (int64, error) {
 	switch v := repoID.(type) {
 	case int32:
+		return int64(v), nil
+	case int64:
 		return v, nil
 	case float64:
-		return int32(v), nil
+		return int64(v), nil
 	case string:
 		// convert string to int
-		asInt32, err := strconv.ParseInt(v, 10, 16)
-		if err != nil {
-			return 0, fmt.Errorf("error converting string to int: %w", err)
-		}
-		return int32(asInt32), nil
+		return strconv.ParseInt(v, 10, 64)
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}

@@ -69,7 +69,7 @@ func convertRepository(repo *github.Repository) *minderv1.Repository {
 	return &minderv1.Repository{
 		Name:      repo.GetName(),
 		Owner:     repo.GetOwner().GetLogin(),
-		RepoId:    int32(repo.GetID()), // FIXME this is a 64 bit int
+		RepoId:    repo.GetID(),
 		HookUrl:   repo.GetHooksURL(),
 		DeployUrl: repo.GetDeploymentsURL(),
 		CloneUrl:  repo.GetCloneURL(),

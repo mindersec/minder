@@ -1056,7 +1056,7 @@ func (mr *MockStoreMockRecorder) GetRepositoryByIDAndProject(arg0, arg1 interfac
 }
 
 // GetRepositoryByRepoID mocks base method.
-func (m *MockStore) GetRepositoryByRepoID(arg0 context.Context, arg1 int32) (db.Repository, error) {
+func (m *MockStore) GetRepositoryByRepoID(arg0 context.Context, arg1 int64) (db.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRepositoryByRepoID", arg0, arg1)
 	ret0, _ := ret[0].(db.Repository)

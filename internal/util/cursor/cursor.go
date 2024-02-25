@@ -30,7 +30,7 @@ const cursorDelimiter = ","
 type RepoCursor struct {
 	ProjectId string
 	Provider  string
-	RepoId    int32
+	RepoId    int64
 }
 
 func (c *RepoCursor) String() string {
@@ -56,7 +56,7 @@ func NewRepoCursor(encodedCursor string) (*RepoCursor, error) {
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("invalid cursor: %s", encodedCursor)
 	}
-	parsedRepoId, err := strconv.ParseInt(parts[2], 10, 32)
+	parsedRepoId, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func NewRepoCursor(encodedCursor string) (*RepoCursor, error) {
 	return &RepoCursor{
 		ProjectId: parts[0],
 		Provider:  parts[1],
-		RepoId:    int32(parsedRepoId),
+		RepoId:    parsedRepoId,
 	}, nil
 }
 
