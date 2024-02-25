@@ -317,18 +317,12 @@ type goModPackage struct {
 	DependencyHash string `json:"dependency_hash"`
 }
 
-func (gmp *goModPackage) IndentedString(_ int, _ string, _ *pb.Dependency) string {
-	return fmt.Sprintf("%s %s %s\n%s %s/go.mod %s",
-		gmp.Name, gmp.Version, gmp.ModuleHash,
-		gmp.Name, gmp.Version, gmp.DependencyHash)
+func (gmp *goModPackage) IndentedString(indent int, _ string, _ *pb.Dependency) string {
+	return fmt.Sprintf("%s%s %s", strings.Repeat(" ", indent), gmp.Name, gmp.Version)
 }
 
 func (gmp *goModPackage) LineHasDependency(line string) bool {
-	parts := strings.Split(line, " ")
-	if len(parts) != 3 {
-		return false
-	}
-	return parts[0] == gmp.Name && parts[1] == gmp.oldVersion
+	return strings.Contains(line, gmp.Name) && strings.Contains(line, gmp.oldVersion)
 }
 
 func (gmp *goModPackage) HasPatchedVersion() bool {

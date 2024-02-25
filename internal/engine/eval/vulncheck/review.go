@@ -56,6 +56,10 @@ const (
 	reviewTmplStr      = "{{.MagicComment}}\n\n{{.ReviewText}}"
 )
 
+const (
+	tabSize = 8
+)
+
 type reviewTemplateData struct {
 	MagicComment string
 	ReviewText   string
@@ -92,7 +96,11 @@ type reviewLocation struct {
 func countLeadingWhitespace(line string) int {
 	count := 0
 	for _, ch := range line {
-		if ch != ' ' && ch != '\t' {
+		if ch == '\t' {
+			count += tabSize
+			continue
+		}
+		if ch != ' ' {
 			return count
 		}
 		count++
