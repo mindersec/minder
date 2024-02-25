@@ -18,8 +18,6 @@ package container
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
-	"encoding/asn1"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -40,7 +38,6 @@ import (
 	protocommon "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	protorekor "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
 	"github.com/sigstore/sigstore-go/pkg/bundle"
-	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -135,29 +132,20 @@ func getVerifiedResults(
 
 	// Verify each bundle we've constructed
 	for _, b := range bundles {
-		// Create a new verification result - IsVerified and IsSigned flags are explicitly false for better visibility.
+		// Create a new verification result - IsVerified and IsSigned flags are set explicitly for better visibility.
+		// At this point, we managed to extract a bundle, so we can set the IsSigned flag to true
+		// This doesn't mean the bundle is verified though, just that it exists
 		res := verifyif.Result{
-			IsSigned:   false,
+			IsSigned:   true,
 			IsVerified: false,
 		}
 
-		// Get the certificate identity
-		certID, err := verify.NewShortCertificateIdentity(b.certIssuer, "", "", b.certIdentity)
-		if err != nil {
-			// Log the error and continue to the next bundle, this one is considered signed but not verified
-			logger.Err(err).Msg("error getting certificate identity")
-			results = append(results, res)
-			continue
-		}
-
-		// At this point, we managed to extract a bundle, so we can set the IsSigned flag to true
-		// This doesn't mean the bundle is verified though, just that it exists
-		res.IsSigned = true
-
 		// Verify the artifact using the bundle
+		// Note that we verify the identity in the next step (evaluation) where we check it against what was set by the
+		// user in their Minder profile (e.g., repository, cert. issuer, etc.)
 		verificationResult, err := sev.Verify(b.bundle, verify.NewPolicy(
 			verify.WithArtifactDigest(b.digestAlgo, b.digestBytes),
-			verify.WithCertificateIdentity(certID),
+			verify.WithoutIdentitiesUnsafe(),
 		))
 		if err != nil {
 			// The bundle we provided failed verification
@@ -224,12 +212,6 @@ func bundleFromGHAttestationEndpoint(
 			continue
 		}
 
-		cs, err := getCerfificateSummaryFromBundle(protobufBundle)
-		if err != nil {
-			logger.Err(err).Msg("error getting certificate summary from bundle")
-			continue
-		}
-
 		digest, err := getDigestFromVersion(version)
 		if err != nil {
 			logger.Err(err).Msg("error getting digest from version")
@@ -238,11 +220,9 @@ func bundleFromGHAttestationEndpoint(
 
 		// Store the bundle and the certificate identity we extracted from the attestation
 		bundles = append(bundles, sigstoreBundle{
-			bundle:       protobufBundle,
-			certIssuer:   cs.Issuer,
-			certIdentity: cs.BuildSignerURI,
-			digestBytes:  digest,
-			digestAlgo:   containerdigest.Canonical.String(),
+			bundle:      protobufBundle,
+			digestBytes: digest,
+			digestAlgo:  containerdigest.Canonical.String(),
 		})
 	}
 
@@ -298,25 +278,6 @@ func unmarhsalAttestationReply(attestation *Attestation) (*bundle.ProtobufBundle
 	return protobufBundle, nil
 }
 
-func getCerfificateSummaryFromBundle(protobufBundle *bundle.ProtobufBundle) (*certificate.Summary, error) {
-	vc, err := protobufBundle.VerificationContent()
-	if err != nil {
-		return nil, fmt.Errorf("error getting verification content: %w", err)
-	}
-
-	leaf, ok := vc.HasCertificate()
-	if !ok {
-		return nil, fmt.Errorf("expected verification content to be a certificate chain")
-	}
-
-	cs, err := certificate.SummarizeCertificate(&leaf)
-	if err != nil {
-		return nil, fmt.Errorf("error summarizing certificate: %w", err)
-	}
-
-	return &cs, nil
-}
-
 func getDigestFromVersion(version string) ([]byte, error) {
 	algoPrefix := containerdigest.Canonical.String() + ":"
 	if !strings.HasPrefix(version, algoPrefix) {
@@ -349,22 +310,23 @@ func bundleFromOCIImage(ctx context.Context,
 	}
 
 	// Parse the manifest and return a list of all simple signing layers we managed to extract
-	ssLayers, err := getSimpleSigningLayersFromSignatureManifest(ctx, signatureRef, auth)
+	simpleSigningLayers, err := getSimpleSigningLayersFromSignatureManifest(signatureRef, auth)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrProvenanceNotFoundOrIncomplete, err.Error())
 	}
 
+	// Loop through each and build the sigstore bundles
 	var bundles []sigstoreBundle
-	for _, simpleSigningLayer := range ssLayers {
+	for _, layer := range simpleSigningLayers {
 		// Build the verification material for the bundle
-		verificationMaterial, err := getBundleVerificationMaterial(simpleSigningLayer.layer)
+		verificationMaterial, err := getBundleVerificationMaterial(layer)
 		if err != nil {
 			logger.Err(err).Msg("error getting bundle verification material")
 			continue
 		}
 
 		// Build the message signature for the bundle
-		msgSignature, err := getBundleMsgSignature(simpleSigningLayer.layer)
+		msgSignature, err := getBundleMsgSignature(layer)
 		if err != nil {
 			logger.Err(err).Msg("error getting bundle message signature")
 			continue
@@ -383,7 +345,7 @@ func bundleFromOCIImage(ctx context.Context,
 		}
 
 		// Collect the digest of the simple signing layer (this is what is signed)
-		digestBytes, err := hex.DecodeString(simpleSigningLayer.layer.Digest.Hex)
+		digestBytes, err := hex.DecodeString(layer.Digest.Hex)
 		if err != nil {
 			logger.Err(err).Msg("error decoding the simplesigning layer digest")
 			continue
@@ -391,11 +353,9 @@ func bundleFromOCIImage(ctx context.Context,
 
 		// Store the bundle and the certificate identity we extracted from the simple signing layer
 		bundles = append(bundles, sigstoreBundle{
-			bundle:       bun,
-			certIdentity: simpleSigningLayer.certIdentity,
-			certIssuer:   simpleSigningLayer.certIssuer,
-			digestAlgo:   simpleSigningLayer.layer.Digest.Algorithm,
-			digestBytes:  digestBytes,
+			bundle:      bun,
+			digestAlgo:  layer.Digest.Algorithm,
+			digestBytes: digestBytes,
 		})
 	}
 
@@ -441,9 +401,7 @@ func getSignatureReferenceFromOCIImage(imageRef string, auth githubAuthenticator
 }
 
 // getSimpleSigningLayersFromSignatureManifest returns the identity and issuer from the certificate
-func getSimpleSigningLayersFromSignatureManifest(ctx context.Context,
-	manifestRef string, auth githubAuthenticator) ([]simpleSigningLayerInfo, error) {
-	logger := zerolog.Ctx(ctx)
+func getSimpleSigningLayersFromSignatureManifest(manifestRef string, auth githubAuthenticator) ([]v1.Descriptor, error) {
 	craneOpts := []crane.Option{crane.WithAuth(auth)}
 
 	// Get the manifest of the signature
@@ -452,67 +410,21 @@ func getSimpleSigningLayersFromSignatureManifest(ctx context.Context,
 		return nil, fmt.Errorf("error getting signature manifest: %w", err)
 	}
 
+	// Parse the manifest
 	manifest, err := v1.ParseManifest(bytes.NewReader(mf))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing signature manifest: %w", err)
 	}
-	var results []simpleSigningLayerInfo
+
+	// Loop through its layers and extract the simple signing layers
+	var results []v1.Descriptor
 	for _, layer := range manifest.Layers {
 		if layer.MediaType == "application/vnd.dev.cosign.simplesigning.v1+json" {
 			// We found a simple signing layer, store and return it even if we may fail to parse it later
-			res := simpleSigningLayerInfo{
-				layer: layer,
-			}
-
-			// Get the certificate from the annotations
-			cert, ok := layer.Annotations["dev.sigstore.cosign/certificate"]
-			if !ok {
-				// Should we enforce that a signature must contain a certificate?
-				logger.Debug().Msg("signature manifest has no dev.sigstore.cosign/certificate")
-				results = append(results, res)
-				continue
-			}
-
-			// Decode the PEM-encoded certificate
-			pemBlock, _ := pem.Decode([]byte(cert))
-			if pemBlock == nil || pemBlock.Type != "CERTIFICATE" {
-				logger.Debug().Msg("failed to decode PEM dev.sigstore.cosign/certificate")
-				results = append(results, res)
-				continue
-			}
-
-			// Parse the X.509 certificate
-			certObj, err := x509.ParseCertificate(pemBlock.Bytes)
-			if err != nil {
-				logger.Err(err).Msg("failed to parse dev.sigstore.cosign/certificate")
-				results = append(results, res)
-				continue
-			}
-
-			// Get the certificate identity
-			for _, uri := range certObj.URIs {
-				res.certIdentity = uri.String()
-				break
-			}
-
-			// Parse the certificate extensions and get the certificate issuer
-			customOID := asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 57264, 1, 1} // sigstore OID, certIssuer
-			for _, ext := range certObj.Extensions {
-				if ext.Id.Equal(customOID) {
-					res.certIssuer = string(ext.Value)
-					break
-				}
-			}
-
-			// Log a debug message if we didn't find the certificate issuer OID or the certificate identity
-			if res.certIssuer == "" || res.certIdentity == "" {
-				logger.Debug().Msg("dev.sigstore.cosign/certificate has no certificate issuer OID or identity")
-			}
-
-			// Store the information we got so far from this simple signing layer
-			results = append(results, res)
+			results = append(results, layer)
 		}
 	}
+
 	// Return the results - we may not have found any simple signing layers, but we still return the results
 	return results, nil
 }
@@ -525,6 +437,7 @@ func getBundleVerificationMaterial(manifestLayer v1.Descriptor) (
 	if err != nil {
 		return nil, fmt.Errorf("error getting signing certificate: %w", err)
 	}
+
 	// 2. Get the transparency log entries
 	tlogEntries, err := getVerificationMaterialTlogEntries(manifestLayer)
 	if err != nil {
@@ -691,15 +604,7 @@ func BuildImageRef(registry, owner, artifact, version string) string {
 }
 
 type sigstoreBundle struct {
-	bundle       *bundle.ProtobufBundle
-	certIssuer   string
-	certIdentity string
-	digestBytes  []byte
-	digestAlgo   string
-}
-
-type simpleSigningLayerInfo struct {
-	certIdentity string
-	certIssuer   string
-	layer        v1.Descriptor
+	bundle      *bundle.ProtobufBundle
+	digestBytes []byte
+	digestAlgo  string
 }
