@@ -1262,10 +1262,13 @@ paths:
           required: false
           type: string
         - name: repository.repoId
+          description: |-
+            The upstream identity of the repository, as an integer.
+            This is only set on output, and is ignored on input.
           in: query
           required: false
-          type: integer
-          format: int32
+          type: string
+          format: int64
         - name: context.provider
           description: name of the provider
           in: query
@@ -2584,8 +2587,8 @@ definitions:
       name:
         type: string
       repoId:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       hookId:
         type: string
         format: int64
@@ -2788,8 +2791,11 @@ definitions:
       name:
         type: string
       repoId:
-        type: integer
-        format: int32
+        type: string
+        format: int64
+        description: |-
+          The upstream identity of the repository, as an integer.
+          This is only set on output, and is ignored on input.
   v1UserRecord:
     type: object
     properties:
