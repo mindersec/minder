@@ -1,6 +1,7 @@
 module github.com/stacklok/minder/tools
 
 go 1.21.5
+toolchain go1.22.0
 
 require (
 	github.com/bufbuild/buf v1.29.0
@@ -9,7 +10,7 @@ require (
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
-	github.com/norwoodj/helm-docs v1.12.0
+	github.com/norwoodj/helm-docs v1.13.0
 	github.com/openfga/cli v0.2.5
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.25.0
