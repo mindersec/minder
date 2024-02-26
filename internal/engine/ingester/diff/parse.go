@@ -141,50 +141,65 @@ func goParse(patch string) ([]*pb.Dependency, error) {
 	var deps []*pb.Dependency
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 
+	// Iterate over the lines of the go.mod patch and parse the dependencies
 	for scanner.Scan() {
-		line := scanner.Text()
-		// Look for lines that add dependencies.
-		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
-			// Extract the part after the '+' sign.
-			lineContent := line[1:]
-			fields := strings.Fields(lineContent)
-			if len(fields) < 2 {
-				continue
+		// Parse the line and extract a dependency
+		dep := extractGoDepFromPatchLine(scanner.Text())
+
+		// If we failed to extract a dependency, or if it's already in the slice, skip it
+		if dep == nil || slices.ContainsFunc(deps, func(n *pb.Dependency) bool {
+			if n.Name == dep.Name && n.Version == dep.Version {
+				return true
 			}
-			dep := &pb.Dependency{
-				Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-			}
-			if fields[0] == "require" && fields[1] != "(" {
-				dep.Name = fields[1]
-				dep.Version = fields[2]
-			} else if strings.HasPrefix(lineContent, "\t") {
-				dep.Name = fields[0]
-				dep.Version = fields[1]
-			} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
-				// For lines with version replacements, the new version is after the "=>"
-				// Assuming format is module path version => newModulePath newVersion
-				dep.Name = fields[3]
-				dep.Version = fields[4]
-			} else {
-				continue
-			}
-			// If the dependency is already in the slice, we don't want to add it again
-			if slices.ContainsFunc(deps, func(n *pb.Dependency) bool {
-				if n.Name == dep.Name && n.Version == dep.Version {
-					return true
-				}
-				return false
-			}) {
-				continue
-			}
-			// Add the dependency to the slice
-			deps = append(deps, dep)
+			return false
+		}) {
+			continue
 		}
+
+		// Add the dependency to the slice
+		deps = append(deps, dep)
 	}
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
 	return deps, nil
+}
+
+func extractGoDepFromPatchLine(line string) *pb.Dependency {
+	// Look for lines that add dependencies.
+	// We ignore lines that contain "// indirect" because they are transitive dependencies, and therefore
+	// not actionable.
+	if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") && !strings.Contains(line, "// indirect") {
+		// Extract the part after the '+' sign.
+		lineContent := line[1:]
+		fields := strings.Fields(lineContent)
+		if len(fields) < 2 {
+			// No match
+			return nil
+		}
+		dep := &pb.Dependency{
+			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
+		}
+		if fields[0] == "require" && fields[1] != "(" {
+			dep.Name = fields[1]
+			dep.Version = fields[2]
+		} else if strings.HasPrefix(lineContent, "\t") {
+			dep.Name = fields[0]
+			dep.Version = fields[1]
+		} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
+			// For lines with version replacements, the new version is after the "=>"
+			// Assuming format is module path version => newModulePath newVersion
+			dep.Name = fields[3]
+			dep.Version = fields[4]
+		} else {
+			// No match
+			return nil
+		}
+		// Return the dependency
+		return dep
+	}
+	// No match
+	return nil
 }
 
 func npmParse(patch string) ([]*pb.Dependency, error) {
