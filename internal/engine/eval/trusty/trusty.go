@@ -34,7 +34,7 @@ import (
 const (
 	// TrustyEvalType is the type of the trusty evaluator
 	TrustyEvalType       = "trusty"
-	trustyEndpointURL    = "https://trusty.stacklok.dev"
+	trustyEndpointURL    = "https://api.trustypkg.dev"
 	trustyEndpointEnvVar = "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
 )
 
