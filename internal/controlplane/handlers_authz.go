@@ -168,7 +168,7 @@ func getProjectFromRequestOrDefault(
 	}
 	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
-		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user")
+		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user: %v", err)
 	}
 
 	if len(projects) == 0 {
