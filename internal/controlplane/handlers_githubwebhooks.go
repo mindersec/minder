@@ -326,7 +326,7 @@ func (s *Server) registerWebhookForRepository(
 	regResult.Repository = &pb.Repository{
 		Name:          repoGet.GetName(),
 		Owner:         repoGet.GetOwner().GetLogin(),
-		RepoId:        int32(repoGet.GetID()),
+		RepoId:        repoGet.GetID(),
 		HookId:        mhook.GetID(),
 		HookUrl:       mhook.GetURL(),
 		DeployUrl:     repoGet.GetDeploymentsURL(),
