@@ -112,9 +112,8 @@ func TestServer_RegisterRepository(t *testing.T) {
 			req: &pb.RegisterRepositoryRequest{
 				Provider: "github",
 				Repository: &pb.UpstreamRepositoryRef{
-					Owner:  "test",
-					Name:   "b-test",
-					RepoId: 0,
+					Owner: "test",
+					Name:  "b-test",
 				},
 				Context: &pb.Context{
 					Provider: proto.String("github"),
@@ -127,8 +126,8 @@ func TestServer_RegisterRepository(t *testing.T) {
 					// NOTE: the client as of v0.0.31 expects that the Repository
 					// field is always non-null, even if the repo doesn't exist.
 					Repository: &pb.Repository{
-						Owner:  "test",
-						Name:   "b-test",
+						Owner: "test",
+						Name:  "b-test",
 					},
 					Status: &pb.RegisterRepoResult_Status{
 						Error: proto.String("Repo not found"),
