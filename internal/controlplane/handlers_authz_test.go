@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -232,7 +233,9 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 					ID: projectID,
 				},
 			},
-			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to perform this operation"),
+			rpcErr: util.UserVisibleError(
+				codes.PermissionDenied,
+				fmt.Sprintf("user is not authorized to perform this operation on project %q", projectID)),
 		},
 		{
 			name:     "authorized on project",
