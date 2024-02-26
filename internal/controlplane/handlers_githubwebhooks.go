@@ -236,6 +236,12 @@ func (s *Server) registerWebhookForRepository(
 	secret := s.cfg.WebhookConfig.WebhookSecret
 
 	regResult := &pb.RegisterRepoResult{
+		// We will overwrite this later when we've looked it up from the provider,
+		// but existing clients expect a message here, so let's add one.
+		Repository: &pb.Repository{
+			Name:  repo.Name,  // Not normalized, from client
+			Owner: repo.Owner, // Not normalized, from client
+		},
 		Status: &pb.RegisterRepoResult_Status{
 			Success: false,
 		},
