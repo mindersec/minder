@@ -70,7 +70,7 @@ var (
 type Server struct {
 	store           db.Store
 	cfg             *serverconfig.Config
-	evt             *events.Eventer
+	evt             events.Interface
 	mt              *metrics
 	provMt          provtelemetry.ProviderMetrics
 	grpcServer      *grpc.Server

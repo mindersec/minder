@@ -158,7 +158,7 @@ func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
 }
 
 // GetGitHub returns a github client for the provider.
-func (pb *ProviderBuilder) GetGitHub() (*ghclient.RestClient, error) {
+func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	if !pb.Implements(db.ProviderTypeGithub) {
 		return nil, fmt.Errorf("provider does not implement github")
 	}
@@ -170,7 +170,7 @@ func (pb *ProviderBuilder) GetGitHub() (*ghclient.RestClient, error) {
 	if pb.restClientCache != nil {
 		client, ok := pb.restClientCache.Get(pb.tokenInf.OwnerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
 		if ok {
-			return client.(*ghclient.RestClient), nil
+			return client.(provinfv1.GitHub), nil
 		}
 	}
 

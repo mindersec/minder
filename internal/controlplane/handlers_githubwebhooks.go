@@ -236,11 +236,6 @@ func (s *Server) registerWebhookForRepository(
 	secret := s.cfg.WebhookConfig.WebhookSecret
 
 	regResult := &pb.RegisterRepoResult{
-		Repository: &pb.Repository{
-			Name:   repo.Name,
-			Owner:  repo.Owner,
-			RepoId: repo.RepoId,
-		},
 		Status: &pb.RegisterRepoResult_Status{
 			Success: false,
 		},
@@ -327,16 +322,22 @@ func (s *Server) registerWebhookForRepository(
 	}
 
 	regResult.Status.Success = true
-	regResult.Repository.HookId = mhook.GetID()
-	regResult.Repository.HookUrl = mhook.GetURL()
-	regResult.Repository.DeployUrl = webhookUrl
-	regResult.Repository.CloneUrl = *repoGet.CloneURL
-	regResult.Repository.HookType = mhook.GetType()
-	regResult.Repository.HookName = mhook.GetName()
-	regResult.Repository.HookUuid = urlUUID
-	regResult.Repository.IsPrivate = repoGet.GetPrivate()
-	regResult.Repository.IsFork = repoGet.GetFork()
-	regResult.Repository.DefaultBranch = repoGet.GetDefaultBranch()
+
+	regResult.Repository = &pb.Repository{
+		Name:          repoGet.GetName(),
+		Owner:         repoGet.GetOwner().GetLogin(),
+		RepoId:        int32(repoGet.GetID()),
+		HookId:        mhook.GetID(),
+		HookUrl:       mhook.GetURL(),
+		DeployUrl:     repoGet.GetDeploymentsURL(),
+		CloneUrl:      repoGet.GetCloneURL(),
+		HookType:      mhook.GetType(),
+		HookName:      mhook.GetName(),
+		HookUuid:      urlUUID,
+		IsPrivate:     repoGet.GetPrivate(),
+		IsFork:        repoGet.GetFork(),
+		DefaultBranch: repoGet.GetDefaultBranch(),
+	}
 
 	return regResult, nil
 }
