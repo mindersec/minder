@@ -82,7 +82,7 @@ func (ra *GhReviewPrHandler) SubmitReview(ctx context.Context, reviewText string
 // Hydrate hydrates the handler with a pull request
 func (ra *GhReviewPrHandler) Hydrate(ctx context.Context, pr *pb.PullRequest) {
 	logger := zerolog.Ctx(ctx).With().
-		Int32("pull-number", pr.Number).
+		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()

@@ -206,15 +206,15 @@ message GetArtifactByNameResponse {
 
 message PullRequest {
     string url = 1;         // The full URL to the PR
-    string commit_sha = 2;   // Commit SHA of the PR HEAD. Will be useful to submit a review
-    int32 number = 3;       // The sequential PR number (not the DB PK!)
+    string commit_sha = 2;  // Commit SHA of the PR HEAD. Will be useful to submit a review
+    int64 number = 3;       // The sequential PR number (not the DB PK!)
 
-    string repo_owner = 4;   // The owner of the repo, will be used to submit a review
-    string repo_name = 5;    // The name of the repo, will be used to submit a review
+    string repo_owner = 4;  // The owner of the repo, will be used to submit a review
+    string repo_name = 5;   // The name of the repo, will be used to submit a review
 
     int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
 
-    string action = 7;       // The action that triggered the webhook
+    string action = 7;      // The action that triggered the webhook
 }
 
 enum DepEcosystem {
@@ -253,7 +253,7 @@ message PrContents {
         repeated Line patch_lines = 3;
 
         message Line {
-            int32 line_number = 1;
+            int64 line_number = 1;
             string content = 2;
         }
     }

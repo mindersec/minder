@@ -92,7 +92,7 @@ func (di *Diff) Ingest(
 	}
 
 	logger := zerolog.Ctx(ctx).With().
-		Int32("pull-number", pr.Number).
+		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()
@@ -216,7 +216,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_Fil
 		} else if strings.HasPrefix(line, "+") {
 			result = append(result, &pb.PrContents_File_Line{
 				Content:    line[1:],
-				LineNumber: int32(currentLineNumber),
+				LineNumber: currentLineNumber,
 			})
 
 			currentLineNumber++
