@@ -97,8 +97,8 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		RepoID:    r.RepoId,
 		IsPrivate: r.IsPrivate,
 		IsFork:    r.IsFork,
-		WebhookID: sql.NullInt32{
-			Int32: int32(r.HookId),
+		WebhookID: sql.NullInt64{
+			Int64: r.HookId,
 			Valid: true,
 		},
 		CloneUrl:   r.CloneUrl,
