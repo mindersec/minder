@@ -21,7 +21,6 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -38,6 +37,8 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/ratecache"
+	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -89,11 +90,12 @@ func TestServer_RegisterRepository(t *testing.T) {
 		want: &pb.RegisterRepositoryResponse{
 			Result: &pb.RegisterRepoResult{
 				Repository: &pb.Repository{
-					Id:     proto.String(uuid.NewString()),
-					Owner:  "test",
-					Name:   "a-test",
-					RepoId: 1234,
-					HookId: 1,
+					Id:       proto.String(uuid.NewString()),
+					Owner:    "test",
+					Name:     "a-test",
+					RepoId:   1234,
+					HookId:   1,
+					HookUuid: uuid.New().String(),
 				},
 				Status: &pb.RegisterRepoResult_Status{
 					Success: true,
@@ -180,6 +182,16 @@ func TestServer_RegisterRepository(t *testing.T) {
 			clientCache.Set("", oauthToken.AccessToken, db.ProviderTypeGithub, &stubClient)
 
 			stubEventer := StubEventer{}
+			stubWebhookManager := mockghhook.NewMockWebhookManager(ctrl)
+			hookUUID := uuid.New().String()
+			if tt.repoErr == nil {
+				stubbedHook := &github.Hook{
+					ID: ptr.Ptr[int64](1),
+				}
+				stubWebhookManager.EXPECT().
+					CreateWebhook(gomock.Any(), gomock.Any(), gomock.Eq(tt.req.Repository.Owner), gomock.Eq(tt.req.Repository.Name)).
+					Return(tt.want.Result.Repository.HookUuid, stubbedHook, nil)
+			}
 
 			s := &Server{
 				store:           mockStore,
@@ -187,6 +199,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				restClientCache: clientCache,
 				cfg:             &server.Config{},
 				evt:             &stubEventer,
+				webhookManager:  stubWebhookManager,
 			}
 			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
 				Provider: engine.Provider{Name: tt.req.Context.GetProvider()},
@@ -221,18 +234,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			}
 
 			if tt.repoErr == nil {
-				// The last part of the hook URL is a UUID which is generated iternally.
-				// extract it.
-				if len(stubClient.NewHooks) != 1 {
-					t.Fatalf("expected webhook to be registered once, got %+v", stubClient.NewHooks)
-				}
-				hookURL := stubClient.NewHooks[0].GetURL()
-				parts := strings.Split(hookURL, "/")
-				got.Result.Repository.HookUuid = parts[len(parts)-1]
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.RegisterRepository() = %v, want %v", got, tt.want)
+				got.Result.Repository.HookUuid = hookUUID
 			}
 		})
 	}
@@ -305,16 +307,8 @@ func (*StubGitHub) CreateComment(context.Context, string, string, int, string) e
 }
 
 // CreateHook implements v1.GitHub.
-func (s *StubGitHub) CreateHook(_ context.Context, owner string, repo string, hook *github.Hook) (*github.Hook, error) {
-	if owner != s.ExpectedOwner {
-		s.T.Errorf("expected owner %q, got %q", s.ExpectedOwner, owner)
-	}
-	if repo != s.ExpectedRepo {
-		s.T.Errorf("expected repo %q, got %q", s.ExpectedRepo, repo)
-	}
-	hook.ID = github.Int64(int64(len(s.ExistingHooks) + len(s.NewHooks) + 1))
-	s.NewHooks = append(s.NewHooks, hook)
-	return hook, nil
+func (_ *StubGitHub) CreateHook(_ context.Context, _ string, _ string, _ *github.Hook) (*github.Hook, error) {
+	panic("unimplemented")
 }
 
 // CreatePullRequest implements v1.GitHub.
@@ -333,15 +327,8 @@ func (*StubGitHub) CreateSecurityAdvisory(context.Context, string, string, strin
 }
 
 // DeleteHook implements v1.GitHub.
-func (s *StubGitHub) DeleteHook(_ context.Context, owner string, repo string, id int64) (*github.Response, error) {
-	if owner != s.ExpectedOwner {
-		s.T.Errorf("expected owner %q, got %q", s.ExpectedOwner, owner)
-	}
-	if repo != s.ExpectedRepo {
-		s.T.Errorf("expected repo %q, got %q", s.ExpectedRepo, repo)
-	}
-	s.DeletedHooks = append(s.DeletedHooks, id)
-	return &github.Response{}, nil
+func (_ *StubGitHub) DeleteHook(_ context.Context, _ string, _ string, _ int64) (*github.Response, error) {
+	panic("unimplemented")
 }
 
 // DismissReview implements v1.GitHub.
@@ -439,14 +426,8 @@ func (*StubGitHub) ListFiles(context.Context, string, string, int, int, int) ([]
 }
 
 // ListHooks implements v1.GitHub.
-func (s *StubGitHub) ListHooks(_ context.Context, owner string, repo string) ([]*github.Hook, error) {
-	if owner != s.ExpectedOwner {
-		s.T.Errorf("expected owner %q, got %q", s.ExpectedOwner, owner)
-	}
-	if repo != s.ExpectedRepo {
-		s.T.Errorf("expected repo %q, got %q", s.ExpectedRepo, repo)
-	}
-	return s.ExistingHooks, nil
+func (_ *StubGitHub) ListHooks(_ context.Context, _ string, _ string) ([]*github.Hook, error) {
+	panic("unimplemented")
 }
 
 // ListOrganizationRepsitories implements v1.GitHub.

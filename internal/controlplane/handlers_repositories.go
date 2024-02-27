@@ -70,9 +70,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	repo := in.GetRepository()
 
-	allEvents := []string{"*"}
-	result, err := s.registerWebhookForRepository(
-		ctx, p, projectID, repo, allEvents)
+	result, err := s.registerWebhookForRepository(ctx, p, projectID, repo)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
 	}
