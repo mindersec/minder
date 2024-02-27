@@ -19,7 +19,7 @@
 -- all within range; if not, this migration will fail and need manual intervention.
 
 BEGIN;
--- repo_id column is NOT NULL, so this will *fail* and abort transaction.
+-- webhook_id column is NOT NULL, so this will *fail* and abort transaction.
 UPDATE repositories SET webhook_id = NULL WHERE webhook_id > 2147483647;
 ALTER TABLE repositories ALTER COLUMN webhook_id TYPE INTEGER;
 COMMIT;
