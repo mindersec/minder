@@ -41,7 +41,7 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov string, opts .
 		RepoID:     rand.RandomInt(0, 5000, seed),
 		IsPrivate:  false,
 		IsFork:     false,
-		WebhookID:  sql.NullInt32{Int32: int32(rand.RandomInt(0, 1000, seed)), Valid: true},
+		WebhookID:  sql.NullInt64{Int64: rand.RandomInt(0, 1000, seed), Valid: true},
 		WebhookUrl: randomURL(seed),
 		DeployUrl:  randomURL(seed),
 	}
@@ -194,7 +194,7 @@ func TestUpdateRepository(t *testing.T) {
 		RepoID:     repo1.RepoID,
 		IsPrivate:  repo1.IsPrivate,
 		IsFork:     repo1.IsFork,
-		WebhookID:  sql.NullInt32{Int32: 1234, Valid: true},
+		WebhookID:  sql.NullInt64{Int64: 1234, Valid: true},
 		WebhookUrl: repo1.WebhookUrl,
 		DeployUrl:  repo1.DeployUrl,
 	}
@@ -234,7 +234,7 @@ func TestUpdateRepositoryByRepoId(t *testing.T) {
 		RepoName:   repo1.RepoName,
 		IsPrivate:  repo1.IsPrivate,
 		IsFork:     repo1.IsFork,
-		WebhookID:  sql.NullInt32{Int32: 1234, Valid: true},
+		WebhookID:  sql.NullInt64{Int64: 1234, Valid: true},
 		WebhookUrl: repo1.WebhookUrl,
 		DeployUrl:  repo1.DeployUrl,
 	}

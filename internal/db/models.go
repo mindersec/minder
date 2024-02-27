@@ -411,7 +411,7 @@ type Repository struct {
 	RepoID        int64          `json:"repo_id"`
 	IsPrivate     bool           `json:"is_private"`
 	IsFork        bool           `json:"is_fork"`
-	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookID     sql.NullInt64  `json:"webhook_id"`
 	WebhookUrl    string         `json:"webhook_url"`
 	DeployUrl     string         `json:"deploy_url"`
 	CloneUrl      string         `json:"clone_url"`

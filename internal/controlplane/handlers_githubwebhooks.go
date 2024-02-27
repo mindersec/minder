@@ -370,7 +370,7 @@ func (s *Server) deleteWebhookFromRepository(
 
 	webhookId := dbrepo.WebhookID
 	if webhookId.Valid {
-		resp, err := client.DeleteHook(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int64(webhookId.Int32))
+		resp, err := client.DeleteHook(ctx, dbrepo.RepoOwner, dbrepo.RepoName, webhookId.Int64)
 		if err != nil {
 			if resp != nil && resp.StatusCode == http.StatusNotFound {
 				// if the hook is not found, we can ignore the error, user might have deleted it manually
