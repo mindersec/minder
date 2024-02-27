@@ -395,7 +395,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "profile status not found")
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", in.Name)
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", err)
 	}
@@ -411,7 +411,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		dbEntity = &db.NullEntities{}
 	} else if e := in.GetEntity(); e != nil {
 		if !e.GetType().IsValid() {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, util.UserVisibleError(codes.InvalidArgument,
 				"invalid entity type %s, please use one of %s",
 				e.GetType(), entities.KnownTypesCSV())
 		}
