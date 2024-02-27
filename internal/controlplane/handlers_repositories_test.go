@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
@@ -60,6 +61,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 		name    string
 		req     *pb.RegisterRepositoryRequest
 		repo    github.Repository
+		repoErr error
 		want    *pb.RegisterRepositoryResponse
 		events  []message.Message
 		wantErr bool
@@ -104,7 +106,35 @@ func TestServer_RegisterRepository(t *testing.T) {
 			},
 			Payload: []byte(`{"repository":1234}`),
 		}},
-	}}
+	},
+		{
+			name: "repo not found",
+			req: &pb.RegisterRepositoryRequest{
+				Provider: "github",
+				Repository: &pb.UpstreamRepositoryRef{
+					Owner: "test",
+					Name:  "b-test",
+				},
+				Context: &pb.Context{
+					Provider: proto.String("github"),
+					Project:  proto.String(uuid.NewString()),
+				},
+			},
+			repoErr: errors.New("Repo not found"),
+			want: &pb.RegisterRepositoryResponse{
+				Result: &pb.RegisterRepoResult{
+					// NOTE: the client as of v0.0.31 expects that the Repository
+					// field is always non-null, even if the repo doesn't exist.
+					Repository: &pb.Repository{
+						Owner: "test",
+						Name:  "b-test",
+					},
+					Status: &pb.RegisterRepoResult_Status{
+						Error: proto.String("Repo not found"),
+					},
+				},
+			},
+		}}
 	for _, tc := range tests {
 		tt := tc
 		t.Run(tt.name, func(t *testing.T) {
@@ -120,6 +150,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				ExpectedRepo:  tt.req.Repository.GetName(),
 				T:             t,
 				Repo:          &tt.repo,
+				RepoErr:       tt.repoErr,
 			}
 
 			mockStore.EXPECT().
@@ -135,11 +166,13 @@ func TestServer_RegisterRepository(t *testing.T) {
 				Return(db.ProviderAccessToken{
 					EncryptedToken: encryptedToken,
 				}, nil)
-			mockStore.EXPECT().
-				CreateRepository(gomock.Any(), gomock.Any()).
-				Return(db.Repository{
-					ID: uuid.MustParse(tt.want.Result.Repository.GetId()),
-				}, nil)
+			if tt.repoErr == nil {
+				mockStore.EXPECT().
+					CreateRepository(gomock.Any(), gomock.Any()).
+					Return(db.Repository{
+						ID: uuid.MustParse(tt.want.Result.Repository.GetId()),
+					}, nil)
+			}
 
 			cancelable, cancel := context.WithCancel(context.Background())
 			clientCache := ratecache.NewRestClientCache(cancelable)
@@ -166,19 +199,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 				return
 			}
 
-			// The last part of the hook URL is a UUID which is generated iternally.
-			// extract it.
-			if len(stubClient.NewHooks) != 1 {
-				t.Fatalf("expected webhook to be registered once, got %+v", stubClient.NewHooks)
-			}
-			hookURL := stubClient.NewHooks[0].GetURL()
-			parts := strings.Split(hookURL, "/")
-			got.Result.Repository.HookUuid = parts[len(parts)-1]
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.RegisterRepository() = %v, want %v", got, tt.want)
-			}
-
 			if len(tt.events) != len(stubEventer.Sent) {
 				t.Fatalf("expected %d events, got %d", len(tt.events), len(stubEventer.Sent))
 			}
@@ -198,6 +218,21 @@ func TestServer_RegisterRepository(t *testing.T) {
 				if !reflect.DeepEqual(gotPayload.Repository, wantPayload.Repository) {
 					t.Errorf("event %d.Payload = %q, want %q", i, string(got.Payload), string(want.Payload))
 				}
+			}
+
+			if tt.repoErr == nil {
+				// The last part of the hook URL is a UUID which is generated iternally.
+				// extract it.
+				if len(stubClient.NewHooks) != 1 {
+					t.Fatalf("expected webhook to be registered once, got %+v", stubClient.NewHooks)
+				}
+				hookURL := stubClient.NewHooks[0].GetURL()
+				parts := strings.Split(hookURL, "/")
+				got.Result.Repository.HookUuid = parts[len(parts)-1]
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Server.RegisterRepository() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -250,6 +285,7 @@ type StubGitHub struct {
 	ExpectedRepo  string
 	T             *testing.T
 	Repo          *github.Repository
+	RepoErr       error
 	ExistingHooks []*github.Hook
 	DeletedHooks  []int64
 	NewHooks      []*github.Hook
@@ -370,6 +406,9 @@ func (s *StubGitHub) GetRepository(_ context.Context, owner string, repo string)
 	}
 	if repo != s.ExpectedRepo {
 		s.T.Errorf("expected repo %q, got %q", s.ExpectedRepo, repo)
+	}
+	if s.RepoErr != nil {
+		return nil, s.RepoErr
 	}
 	return s.Repo, nil
 }
