@@ -735,7 +735,7 @@ func getPullRequestInfoFromPayload(
 
 	return &pb.PullRequest{
 		Url:      prUrl,
-		Number:   int32(prNumber),
+		Number:   int64(prNumber),
 		AuthorId: int64(prAuthorId),
 		Action:   action,
 	}, nil

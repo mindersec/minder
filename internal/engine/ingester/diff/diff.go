@@ -92,7 +92,7 @@ func (di *Diff) Ingest(
 	}
 
 	logger := zerolog.Ctx(ctx).With().
-		Int32("pull-number", pr.Number).
+		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()
