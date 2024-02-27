@@ -498,7 +498,7 @@ func GetPullRequest(
 
 	// TODO: Do we need extra columns in the pull request table?
 	return &minderv1.PullRequest{
-		Number:    dbpr.PrNumber, // TODO: this should be int64
+		Number:    dbpr.PrNumber,
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,
 	}, nil
