@@ -253,7 +253,7 @@ message PrContents {
         repeated Line patch_lines = 3;
 
         message Line {
-            int32 line_number = 1;
+            int64 line_number = 1;
             string content = 2;
         }
     }

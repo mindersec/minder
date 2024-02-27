@@ -979,7 +979,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| line_number | [int32](#int32) |  |  |
+| line_number | [int64](#int64) |  |  |
 | content | [string](#string) |  |  |
 
 

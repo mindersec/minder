@@ -216,7 +216,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_Fil
 		} else if strings.HasPrefix(line, "+") {
 			result = append(result, &pb.PrContents_File_Line{
 				Content:    line[1:],
-				LineNumber: int32(currentLineNumber),
+				LineNumber: currentLineNumber,
 			})
 
 			currentLineNumber++
