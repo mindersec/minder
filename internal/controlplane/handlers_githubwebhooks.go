@@ -754,7 +754,7 @@ func reconcilePrWithDb(
 	case "opened", "synchronize":
 		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
-			PrNumber:     int64(prEvalInfo.Number),
+			PrNumber:     prEvalInfo.Number,
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -766,7 +766,7 @@ func reconcilePrWithDb(
 	case "closed":
 		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: dbrepo.ID,
-			PrNumber:     int64(prEvalInfo.Number),
+			PrNumber:     prEvalInfo.Number,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("cannot delete PR record %d in repo %s/%s",
