@@ -979,7 +979,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| line_number | [int32](#int32) |  |  |
+| line_number | [int32](#int32) |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
 | content | [string](#string) |  |  |
 
 
@@ -1108,7 +1108,7 @@ Project API Objects
 | ----- | ---- | ----- | ----------- |
 | url | [string](#string) |  | The full URL to the PR |
 | commit_sha | [string](#string) |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
-| number | [int32](#int32) |  | The sequential PR number (not the DB PK!) |
+| number | [int64](#int64) |  | The sequential PR number (not the DB PK!) |
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |

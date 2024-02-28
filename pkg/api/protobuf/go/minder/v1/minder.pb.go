@@ -1027,7 +1027,7 @@ type PullRequest struct {
 
 	Url       string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`                              // The full URL to the PR
 	CommitSha string `protobuf:"bytes,2,opt,name=commit_sha,json=commitSha,proto3" json:"commit_sha,omitempty"` // Commit SHA of the PR HEAD. Will be useful to submit a review
-	Number    int32  `protobuf:"varint,3,opt,name=number,proto3" json:"number,omitempty"`                       // The sequential PR number (not the DB PK!)
+	Number    int64  `protobuf:"varint,3,opt,name=number,proto3" json:"number,omitempty"`                       // The sequential PR number (not the DB PK!)
 	RepoOwner string `protobuf:"bytes,4,opt,name=repo_owner,json=repoOwner,proto3" json:"repo_owner,omitempty"` // The owner of the repo, will be used to submit a review
 	RepoName  string `protobuf:"bytes,5,opt,name=repo_name,json=repoName,proto3" json:"repo_name,omitempty"`    // The name of the repo, will be used to submit a review
 	AuthorId  int64  `protobuf:"varint,6,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`   // The author of the PR, will be used to check if we can request changes
@@ -1080,7 +1080,7 @@ func (x *PullRequest) GetCommitSha() string {
 	return ""
 }
 
-func (x *PullRequest) GetNumber() int32 {
+func (x *PullRequest) GetNumber() int64 {
 	if x != nil {
 		return x.Number
 	}
@@ -6607,6 +6607,8 @@ type PrContents_File_Line struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Deliberately left as an int32: a diff with more than 2^31 lines
+	// could lead to various problems while processing.
 	LineNumber int32  `protobuf:"varint,1,opt,name=line_number,json=lineNumber,proto3" json:"line_number,omitempty"`
 	Content    string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
 }
@@ -8151,7 +8153,7 @@ var file_minder_v1_minder_proto_rawDesc = []byte{
 	0x03, 0x75, 0x72, 0x6c, 0x12, 0x1d, 0x0a, 0x0a, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74, 0x5f, 0x73,
 	0x68, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x63, 0x6f, 0x6d, 0x6d, 0x69, 0x74,
 	0x53, 0x68, 0x61, 0x12, 0x16, 0x0a, 0x06, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x06, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x72,
+	0x01, 0x28, 0x03, 0x52, 0x06, 0x6e, 0x75, 0x6d, 0x62, 0x65, 0x72, 0x12, 0x1d, 0x0a, 0x0a, 0x72,
 	0x65, 0x70, 0x6f, 0x5f, 0x6f, 0x77, 0x6e, 0x65, 0x72, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x09, 0x72, 0x65, 0x70, 0x6f, 0x4f, 0x77, 0x6e, 0x65, 0x72, 0x12, 0x1b, 0x0a, 0x09, 0x72, 0x65,
 	0x70, 0x6f, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72,
