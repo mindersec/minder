@@ -20,15 +20,20 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
 
 	"github.com/google/uuid"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
-	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/auth"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -92,6 +97,17 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		owner = sql.NullString{Valid: true, String: *req.Owner}
 	}
 
+	var redirectUrl sql.NullString
+	if req.RedirectUrl == nil {
+		redirectUrl = sql.NullString{Valid: false}
+	} else {
+		encryptedRedirectUrl, err := s.cryptoEngine.EncryptString(*req.RedirectUrl)
+		if err != nil {
+			return nil, status.Errorf(codes.Unknown, "error encrypting redirect URL: %s", err)
+		}
+		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl}
+	}
+
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
@@ -100,6 +116,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		Port:         port,
 		SessionState: state,
 		OwnerFilter:  owner,
+		RedirectUrl:  redirectUrl,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
@@ -115,55 +132,98 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}, nil
 }
 
-// ExchangeCodeForTokenCLI exchanges an OAuth2 code for a token
-// This function gathers the state from the database and compares it to the state
-// passed in. If they match, the code is exchanged for a token.
-// This function is used by the CLI client.
-func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
-	in *pb.ExchangeCodeForTokenCLIRequest) (*httpbody.HttpBody, error) {
+// HandleProviderCallback handles the OAuth 2.0 authorization code callback from the enrolled
+// provider. This function gathers the state from the database and compares it to the state
+// passed in. If they match, the provider code is exchanged for a provider token.
+// note: this is an HTTP only (not RPC) handler
+func (s *Server) HandleProviderCallback() runtime.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		ctx := r.Context()
+
+		if err := s.processCallback(ctx, w, r, pathParams); err != nil {
+			log.Printf("error handling provider callback: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *http.Request,
+	pathParams map[string]string) error {
+	state := r.URL.Query().Get("state")
+	code := r.URL.Query().Get("code")
 
 	// Configure tracing
 	span := trace.SpanFromContext(ctx)
-	span.SetName("server.ExchangeCodeForTokenCLI")
-	span.SetAttributes(attribute.Key("code").String(in.Code))
+	span.SetName("server.HandleProviderCallback")
+	span.SetAttributes(attribute.Key("code").String(code))
 	defer span.End()
 
-	// Check the nonce to make sure it's valid
-	valid, err := mcrypto.IsNonceValid(in.State, s.cfg.Auth.NoncePeriod)
-
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "error checking nonce: %s", err)
+	provider := pathParams["provider"]
+	if !app.IsProviderSupported(provider) {
+		return fmt.Errorf("provider %s is not supported yet", provider)
 	}
 
+	// Check the nonce to make sure it's valid
+	valid, err := mcrypto.IsNonceValid(state, s.cfg.Auth.NoncePeriod)
+	if err != nil {
+		return fmt.Errorf("error checking nonce: %w", err)
+	}
 	if !valid {
-		return nil, status.Error(codes.InvalidArgument, "invalid nonce")
+		return errors.New("invalid nonce")
 	}
 
 	// get projectID from session along with state nonce from the database
-	stateData, err := s.store.GetProjectIDPortBySessionState(ctx, in.State)
+	stateData, err := s.store.GetProjectIDPortBySessionState(ctx, state)
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "error getting project ID by session state: %s", err)
+		return fmt.Errorf("error getting project ID by session state: %w", err)
 	}
 
-	// get provider
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, stateData.ProjectID)
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider
+	logger.BusinessRecord(ctx).Project = stateData.ProjectID
+
+	err = s.generateOAuthToken(ctx, provider, code, stateData)
 	if err != nil {
-		return nil, providerError(err)
+		return err
 	}
 
+	if stateData.RedirectUrl.Valid {
+		redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
+		if err != nil {
+			return fmt.Errorf("error decrypting redirect URL: %w", err)
+		}
+		parsedURL, err := url.Parse(redirectUrl)
+		if err != nil {
+			return fmt.Errorf("error parsing redirect URL: %w", err)
+		}
+		http.Redirect(w, r, parsedURL.String(), http.StatusTemporaryRedirect)
+		return nil
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, err = w.Write(auth.OAuthSuccessHtml)
+	if err != nil {
+		return fmt.Errorf("error writing OAuth success page: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Server) generateOAuthToken(ctx context.Context, provider string, code string,
+	stateData db.GetProjectIDPortBySessionStateRow) error {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(provider.Name, true)
+	oauthConfig, err := auth.NewOAuthConfig(provider, true)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error creating OAuth config: %w", err)
 	}
-
 	if oauthConfig == nil {
-		return nil, status.Error(codes.Unknown, "oauth2.Config is nil")
+		return errors.New("oauth2.Config is nil")
 	}
 
-	token, err := oauthConfig.Exchange(ctx, in.Code)
+	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
 	ftoken := &oauth2.Token{
@@ -175,22 +235,24 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	// Convert token to JSON
 	jsonData, err := json.Marshal(ftoken)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error marshaling token: %w", err)
 	}
 
 	// encode token
 	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("error encoding token: %w", err)
 	}
 
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// delete token if it exists
 	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{
-		Provider: provider.Name, ProjectID: stateData.ProjectID})
+		Provider:  provider,
+		ProjectID: stateData.ProjectID,
+	})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "error deleting access token: %s", err)
+		return fmt.Errorf("error deleting access token: %w", err)
 	}
 
 	var owner sql.NullString
@@ -199,24 +261,17 @@ func (s *Server) ExchangeCodeForTokenCLI(ctx context.Context,
 	} else {
 		owner = sql.NullString{Valid: false}
 	}
+
 	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
 		ProjectID:      stateData.ProjectID,
-		Provider:       provider.Name,
+		Provider:       provider,
 		EncryptedToken: encodedToken,
 		OwnerFilter:    owner,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "error inserting access token: %s", err)
+		return fmt.Errorf("error inserting access token: %w", err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
-	logger.BusinessRecord(ctx).Project = stateData.ProjectID
-
-	return &httpbody.HttpBody{
-		ContentType: "text/html",
-		Data:        auth.OAuthSuccessHtml,
-	}, nil
+	return nil
 }
 
 // getProviderAccessToken returns the access token for providers
