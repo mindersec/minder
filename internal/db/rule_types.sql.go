@@ -19,16 +19,18 @@ INSERT INTO rule_type (
     project_id,
     description,
     guidance,
-    definition) VALUES ($1, $2, $3, $4, $5, $6::jsonb) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at
+    definition,
+    severity_value) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value
 `
 
 type CreateRuleTypeParams struct {
-	Name        string          `json:"name"`
-	Provider    string          `json:"provider"`
-	ProjectID   uuid.UUID       `json:"project_id"`
-	Description string          `json:"description"`
-	Guidance    string          `json:"guidance"`
-	Definition  json.RawMessage `json:"definition"`
+	Name          string          `json:"name"`
+	Provider      string          `json:"provider"`
+	ProjectID     uuid.UUID       `json:"project_id"`
+	Description   string          `json:"description"`
+	Guidance      string          `json:"guidance"`
+	Definition    json.RawMessage `json:"definition"`
+	SeverityValue Severity        `json:"severity_value"`
 }
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
@@ -39,6 +41,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		arg.Description,
 		arg.Guidance,
 		arg.Definition,
+		arg.SeverityValue,
 	)
 	var i RuleType
 	err := row.Scan(
@@ -51,6 +54,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SeverityValue,
 	)
 	return i, err
 }
@@ -65,7 +69,7 @@ func (q *Queries) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRuleTypeByID = `-- name: GetRuleTypeByID :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at FROM rule_type WHERE id = $1
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE id = $1
 `
 
 func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error) {
@@ -81,12 +85,13 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SeverityValue,
 	)
 	return i, err
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3
 `
 
 type GetRuleTypeByNameParams struct {
@@ -108,12 +113,13 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SeverityValue,
 	)
 	return i, err
 }
 
 const listRuleTypesByProviderAndProject = `-- name: ListRuleTypesByProviderAndProject :many
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at FROM rule_type WHERE provider = $1 AND project_id = $2
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE provider = $1 AND project_id = $2
 `
 
 type ListRuleTypesByProviderAndProjectParams struct {
@@ -140,6 +146,7 @@ func (q *Queries) ListRuleTypesByProviderAndProject(ctx context.Context, arg Lis
 			&i.Definition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SeverityValue,
 		); err != nil {
 			return nil, err
 		}
@@ -155,16 +162,22 @@ func (q *Queries) ListRuleTypesByProviderAndProject(ctx context.Context, arg Lis
 }
 
 const updateRuleType = `-- name: UpdateRuleType :exec
-UPDATE rule_type SET description = $2, definition = $3::jsonb WHERE id = $1
+UPDATE rule_type SET description = $2, definition = $3::jsonb, severity_value = $4 WHERE id = $1
 `
 
 type UpdateRuleTypeParams struct {
-	ID          uuid.UUID       `json:"id"`
-	Description string          `json:"description"`
-	Definition  json.RawMessage `json:"definition"`
+	ID            uuid.UUID       `json:"id"`
+	Description   string          `json:"description"`
+	Definition    json.RawMessage `json:"definition"`
+	SeverityValue Severity        `json:"severity_value"`
 }
 
 func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error {
-	_, err := q.db.ExecContext(ctx, updateRuleType, arg.ID, arg.Description, arg.Definition)
+	_, err := q.db.ExecContext(ctx, updateRuleType,
+		arg.ID,
+		arg.Description,
+		arg.Definition,
+		arg.SeverityValue,
+	)
 	return err
 }
