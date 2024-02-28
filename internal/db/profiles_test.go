@@ -41,12 +41,13 @@ func createRandomRuleType(t *testing.T, provName string, projectID uuid.UUID) Ru
 	seed := time.Now().UnixNano()
 
 	arg := CreateRuleTypeParams{
-		Name:        rand.RandomName(seed),
-		Provider:    provName,
-		ProjectID:   projectID,
-		Description: rand.RandomString(64, seed),
-		Guidance:    rand.RandomString(64, seed),
-		Definition:  json.RawMessage(`{"key": "value"}`),
+		Name:          rand.RandomName(seed),
+		Provider:      provName,
+		ProjectID:     projectID,
+		Description:   rand.RandomString(64, seed),
+		Guidance:      rand.RandomString(64, seed),
+		Definition:    json.RawMessage(`{"key": "value"}`),
+		SeverityValue: SeverityHigh,
 	}
 
 	ruleType, err := testQueries.CreateRuleType(context.Background(), arg)

@@ -188,13 +188,21 @@ func (s *Server) CreateRuleType(
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
 	}
 
+	sev := in.GetSeverity().InitializedStringValue()
+	var seval db.Severity
+
+	if err := seval.Scan(sev); err != nil {
+		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
+	}
+
 	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:        in.GetName(),
-		Provider:    entityCtx.Provider.Name,
-		ProjectID:   entityCtx.Project.ID,
-		Description: in.GetDescription(),
-		Definition:  def,
-		Guidance:    in.GetGuidance(),
+		Name:          in.GetName(),
+		Provider:      entityCtx.Provider.Name,
+		ProjectID:     entityCtx.Project.ID,
+		Description:   in.GetDescription(),
+		Definition:    def,
+		Guidance:      in.GetGuidance(),
+		SeverityValue: seval,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
@@ -278,10 +286,18 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
 	}
 
+	sev := in.GetSeverity().InitializedStringValue()
+	var seval db.Severity
+
+	if err := seval.Scan(sev); err != nil {
+		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
+	}
+
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:          rtdb.ID,
-		Description: in.GetDescription(),
-		Definition:  def,
+		ID:            rtdb.ID,
+		Description:   in.GetDescription(),
+		Definition:    def,
+		SeverityValue: seval,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
