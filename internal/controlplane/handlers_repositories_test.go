@@ -37,7 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	//mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
+	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
