@@ -5,7 +5,8 @@ INSERT INTO rule_type (
     project_id,
     description,
     guidance,
-    definition) VALUES ($1, $2, $3, $4, $5, sqlc.arg(definition)::jsonb) RETURNING *;
+    definition,
+    severity_value) VALUES ($1, $2, $3, $4, $5, sqlc.arg(definition)::jsonb, sqlc.arg(severity_value)) RETURNING *;
 
 -- name: ListRuleTypesByProviderAndProject :many
 SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2;
@@ -20,4 +21,4 @@ SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3;
 DELETE FROM rule_type WHERE id = $1;
 
 -- name: UpdateRuleType :exec
-UPDATE rule_type SET description = $2, definition = sqlc.arg(definition)::jsonb WHERE id = $1;
+UPDATE rule_type SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value) WHERE id = $1;

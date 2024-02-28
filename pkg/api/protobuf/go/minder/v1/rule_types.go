@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 )
 
@@ -66,4 +68,79 @@ func (r *UpdateRuleTypeRequest) GetContext() *Context {
 		return r.RuleType.Context
 	}
 	return nil
+}
+
+// InitializedStringValue returns the string value of the severity
+// with initialization done.
+func (s *Severity) InitializedStringValue() string {
+	return s.EnsureDefault().GetValue().Enum().AsString()
+}
+
+// EnsureDefault ensures the rule type has a default value
+func (s *Severity) EnsureDefault() *Severity {
+	if s == nil {
+		s = &Severity{}
+	}
+
+	if s.Value == Severity_VALUE_UNSPECIFIED {
+		s.Value = Severity_VALUE_UNKNOWN
+	}
+
+	return s
+}
+
+// AsString returns a human-readable string for the severity value
+func (s *Severity_Value) AsString() string {
+	if s == nil {
+		return "unknown"
+	}
+
+	v := s.Descriptor().Values().ByNumber(s.Number())
+	if v == nil {
+		return ""
+	}
+	extension := proto.GetExtension(v.Options(), E_Name)
+	n, ok := extension.(string)
+	if !ok {
+		return ""
+	}
+
+	return n
+}
+
+// FromString sets the severity value from a string
+func (s *Severity_Value) FromString(str string) error {
+	vals := s.Descriptor().Values()
+	for i := 0; i < vals.Len(); i++ {
+		v := vals.Get(i)
+		extension := proto.GetExtension(v.Options(), E_Name)
+		n, ok := extension.(string)
+		if !ok {
+			continue
+		}
+
+		if n == str {
+			num := v.Number()
+			*s = Severity_Value(num)
+
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unknown severity value: %s", str)
+}
+
+// MarshalJSON marshals the severity value to a JSON string
+func (s *Severity_Value) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.AsString())
+}
+
+// UnmarshalJSON unmarshals the severity value from a JSON string
+func (s *Severity_Value) UnmarshalJSON(b []byte) error {
+	var str string
+	if err := json.Unmarshal(b, &str); err != nil {
+		return err
+	}
+
+	return s.FromString(str)
 }
