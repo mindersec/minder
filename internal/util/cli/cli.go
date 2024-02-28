@@ -175,6 +175,16 @@ func ExitNicelyOnError(err error, userMsg string) {
 		// Exit with the right code
 		os.Exit(exitCode)
 	}
+	// Print the message, if any
+	if message != "" {
+		fmt.Fprintf(os.Stderr, "Message: %s\n", message)
+	}
+	// Print the details, if any
+	if details != "" {
+		fmt.Fprintf(os.Stderr, "Details: %s\n", details)
+	}
+	// Exit with the right code
+	os.Exit(exitCode)
 }
 
 // GetRepositoryName returns the repository name in the format owner/name
