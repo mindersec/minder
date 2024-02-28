@@ -36,7 +36,7 @@ require (
 	github.com/openfga/go-sdk v0.3.5
 	github.com/openfga/openfga v1.4.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/prometheus/client_golang v1.18.0
+	github.com/prometheus/client_golang v1.19.0
 	github.com/puzpuzpuz/xsync/v3 v3.1.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.32.0
@@ -113,7 +113,6 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
-	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
@@ -232,7 +231,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.45.0 // indirect
+	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect

@@ -39,7 +39,7 @@ jobs:
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@b1ddad2c994a25fbc81a28b3ec0e368bb2021c50 # v5
+        uses: peter-evans/create-pull-request@a4f52f8033a6168103c2538976c07b467e8163bc # v5
         with:
           commit-message: Update helm documentation
           committer: GitHub <noreply@github.com>

@@ -42,7 +42,7 @@ func KnownTypesCSV() string {
 	}
 
 	slices.Sort(keys)
-	return strings.Join(keys, ",")
+	return strings.Join(keys, ", ")
 }
 
 // EntityTypeFromDB returns the entity type from the database entity
