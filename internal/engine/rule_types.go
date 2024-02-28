@@ -305,6 +305,12 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	id := rt.ID.String()
 	project := rt.ProjectID.String()
 
+	var seval minderv1.Severity_Value
+
+	if err := seval.FromString(string(rt.SeverityValue)); err != nil {
+		seval = minderv1.Severity_VALUE_UNKNOWN
+	}
+
 	return &minderv1.RuleType{
 		Id:   &id,
 		Name: rt.Name,
@@ -315,6 +321,9 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 		Description: rt.Description,
 		Guidance:    rt.Guidance,
 		Def:         def,
+		Severity: &minderv1.Severity{
+			Value: seval,
+		},
 	}, nil
 }
 

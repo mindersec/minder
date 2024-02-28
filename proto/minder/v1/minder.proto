@@ -19,8 +19,6 @@ import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
-import "google/api/httpbody.proto";
-
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -273,19 +271,6 @@ service OAuthService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROVIDER_UPDATE
-        };
-    }
-    // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
-        option (google.api.http) = {
-            get: "/api/v1/auth/callback/{provider}/cli"
-            additional_bindings {
-                get: "/api/v1/auth/callback/cli"
-            }
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_NONE  // Don't need token auth for code exchange
         };
     }
 
@@ -670,22 +655,13 @@ message GetAuthorizationURLRequest {
     int32  port = 4;
     optional string owner = 5;
     Context context = 6;
+    optional string redirect_url = 7;
 
     reserved 1, 2; // deprecated provider and project_id
 }
 
 message GetAuthorizationURLResponse {
     string url = 1;
-}
-
-message ExchangeCodeForTokenCLIRequest {
-    string provider = 1 [deprecated=true];
-    string code = 3;
-    string state = 4;
-    string redirect_uri = 5;
-    Context context = 6;
-
-    reserved 2; // deprecated project_id
 }
 
 message StoreProviderTokenRequest {
@@ -1221,6 +1197,35 @@ message DiffType {
     string type = 2;
 }
 
+// Severity defines the severity of the rule.
+message Severity {
+    // Value enumerates the severity values.
+    enum Value {
+        VALUE_UNSPECIFIED = 0;
+        // unknown severity means that the severity is unknown or hasn't
+        // been set.
+        VALUE_UNKNOWN = 1 [(name) = "unknown"];
+        // info severity means that the severity is informational and
+        // does not incur risk.
+        VALUE_INFO = 2 [(name) = "info"];
+        // low severity means that the severity is low and does not
+        // incur significant risk.
+        VALUE_LOW = 3 [(name) = "low"];
+        // medium severity means that the severity is medium and may
+        // incur some risk.
+        VALUE_MEDIUM = 4 [(name) = "medium"];
+        // high severity means that the severity is high and may incur
+        // significant risk.
+        VALUE_HIGH = 5 [(name) = "high"];
+        // critical severity means that the severity is critical and
+        // requires immediate attention.
+        VALUE_CRITICAL = 6 [(name) = "critical"];
+    }
+
+    // value is the severity value.
+    Value value = 1;
+}
+
 // RuleType defines rules that may or may not be user defined.
 // The version is assumed from the folder's version.
 message RuleType {
@@ -1416,6 +1421,9 @@ message RuleType {
 
     // guidance are instructions we give the user in case a rule fails.
     string guidance = 6;
+
+    // severity is the severity of the rule type.
+    Severity severity = 7;
 }
 
 // Profile defines a profile that is user defined.

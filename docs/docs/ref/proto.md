@@ -45,7 +45,6 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#minder-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#minder-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#minder-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
 | StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
@@ -443,21 +442,6 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-<a name="minder-v1-ExchangeCodeForTokenCLIRequest"></a>
-
-#### ExchangeCodeForTokenCLIRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| code | [string](#string) |  |  |
-| state | [string](#string) |  |  |
-| redirect_uri | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
 <a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest
@@ -518,6 +502,7 @@ DiffType defines the diff data ingester.
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
+| redirect_url | [string](#string) | optional |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -1343,6 +1328,7 @@ The version is assumed from the folder's version.
 | def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
 | guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
+| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule type. |
 
 
 <a name="minder-v1-RuleType-Definition"></a>
@@ -1546,6 +1532,17 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | action | [string](#string) |  | how to patch the file. For now, only replace is supported |
 | content | [string](#string) |  | the content of the file |
 | mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
+
+
+<a name="minder-v1-Severity"></a>
+
+#### Severity
+Severity defines the severity of the rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [Severity.Value](#minder-v1-Severity-Value) |  | value is the severity value. |
 
 
 <a name="minder-v1-StoreProviderTokenRequest"></a>
@@ -1769,6 +1766,22 @@ ProviderType is the type of the provider.
 | RELATION_PROFILE_DELETE | 32 |  |
 | RELATION_PROFILE_STATUS_GET | 33 |  |
 | RELATION_REMOTE_REPO_GET | 34 |  |
+
+
+<a name="minder-v1-Severity-Value"></a>
+
+### Severity.Value
+Value enumerates the severity values.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VALUE_UNSPECIFIED | 0 |  |
+| VALUE_UNKNOWN | 1 | unknown severity means that the severity is unknown or hasn't been set. |
+| VALUE_INFO | 2 | info severity means that the severity is informational and does not incur risk. |
+| VALUE_LOW | 3 | low severity means that the severity is low and does not incur significant risk. |
+| VALUE_MEDIUM | 4 | medium severity means that the severity is medium and may incur some risk. |
+| VALUE_HIGH | 5 | high severity means that the severity is high and may incur significant risk. |
+| VALUE_CRITICAL | 6 | critical severity means that the severity is critical and requires immediate attention. |
 
 
 <a name="minder-v1-TargetResource"></a>
