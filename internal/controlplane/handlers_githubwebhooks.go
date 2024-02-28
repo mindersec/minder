@@ -30,12 +30,9 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -44,6 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -210,6 +208,7 @@ func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
 	return state
 }
 
+<<<<<<< HEAD
 // registerWebhookForRepository registers a set repository and sets up the webhook for each of them
 // and returns the registration result for each repository.
 // If an error occurs, the registration is aborted and the error is returned.
@@ -332,6 +331,8 @@ func (s *Server) deleteWebhookFromRepository(
 	return nil
 }
 
+=======
+>>>>>>> c6d0682c (Move repo creation/deletion into separate interface)
 func (s *Server) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
@@ -790,7 +791,11 @@ func getRepoInformationFromPayload(
 	// ignore processing webhooks for private repositories
 	isPrivate, ok := repoInfo["private"].(bool)
 	if ok {
+<<<<<<< HEAD
 		if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
+=======
+		if isPrivate && !repositories.ProjectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
+>>>>>>> c6d0682c (Move repo creation/deletion into separate interface)
 			return db.Repository{}, errRepoIsPrivate
 		}
 	}

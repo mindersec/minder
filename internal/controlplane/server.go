@@ -57,6 +57,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	ghrepos "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -87,7 +88,7 @@ type Server struct {
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
 	profileValidator *profiles.Validator
-	webhookManager   webhooks.WebhookManager
+	repoService      ghrepos.RepositoryService
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -145,6 +146,10 @@ func NewServer(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
+
+	webhookManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
+	repoService := ghrepos.NewRepositoryService(webhookManager, store, evt)
+
 	s := &Server{
 		store:            store,
 		cfg:              cfg,
@@ -154,7 +159,8 @@ func NewServer(
 		mt:               metrics.NewNoopMetrics(),
 		provMt:           provtelemetry.NewNoopMetrics(),
 		profileValidator: profiles.NewValidator(store),
-		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
+		repoService:      repoService,
+
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

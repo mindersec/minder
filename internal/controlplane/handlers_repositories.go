@@ -29,13 +29,14 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
-	github "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/reconcilers"
+	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // maxFetchLimit is the maximum number of repositories that can be fetched from the database in one call
@@ -45,106 +46,41 @@ const maxFetchLimit = 100
 // Once a user had enrolled in a project (they have a valid token), they can register
 // repositories to be monitored by the minder by provisioning a webhook on the
 // repository(ies).
-func (s *Server) RegisterRepository(ctx context.Context,
-	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
-
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+func (s *Server) RegisterRepository(
+	ctx context.Context,
+	in *pb.RegisterRepositoryRequest,
+) (*pb.RegisterRepositoryResponse, error) {
+	projectID, client, err := s.getProjectIDAndClient(ctx, in)
 	if err != nil {
-		return nil, providerError(err)
+		return nil, err
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
+	// Validate that the Repository struct in the request
+	repoReference := in.GetRepository()
+	if repoReference == nil || repoReference.Name == "" || repoReference.Owner == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository owner and/or name")
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	// Unmarshal the in.GetRepositories() into a struct Repository
-	if in.GetRepository() == nil || in.GetRepository().Name == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "no repository provided")
-	}
-
-	repo := in.GetRepository()
-
-	result, err := s.registerWebhookForRepository(ctx, p, projectID, repo)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
-	}
-
-	r := result.Repository
 
 	response := &pb.RegisterRepositoryResponse{
-		Result: result,
+		Result: &pb.RegisterRepoResult{
+			Status: &pb.RegisterRepoResult_Status{
+				Success: false,
+			},
+		},
 	}
 
-	// Convert each result to a pb.Repository object
-	if result.Status.Error != nil {
-		return response, nil
-	}
-
-	// update the database
-	dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
-		Provider:   provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-		RepoOwner:  r.Owner,
-		RepoName:   r.Name,
-		RepoID:     r.RepoId,
-		IsPrivate:  r.IsPrivate,
-		IsFork:     r.IsFork,
-		WebhookID: sql.NullInt64{
-			Int64: r.HookId,
-			Valid: true,
-		},
-		CloneUrl:   r.CloneUrl,
-		WebhookUrl: r.HookUrl,
-		DeployUrl:  r.DeployUrl,
-		DefaultBranch: sql.NullString{
-			String: r.DefaultBranch,
-			Valid:  true,
-		},
-		License: sql.NullString{
-			String: r.License,
-			Valid:  true,
-		},
-	})
-	// even if we set the webhook, if we couldn't create it in the database, we'll return an error
+	// To be backwards compatible with the existing implementation, we return
+	// an 200-type response with any errors inside the response body once we
+	// validate the response body
+	newRepo, err := s.repoService.CreateRepository(ctx, client, projectID, repoReference)
 	if err != nil {
-		log.Printf("error creating repository '%s/%s' in database: %v", r.Owner, r.Name, err)
-
-		result.Status.Success = false
-		errorStr := "error creating repository in database"
-		result.Status.Error = &errorStr
+		log.Printf("error while registering repository: %v", err)
+		response.Result.Status.Error = ptr.Ptr(err.Error())
 		return response, nil
 	}
 
-	repoDBID := dbRepo.ID.String()
-	r.Id = &repoDBID
-
-	// publish a reconciling event for the registered repositories
-	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
-
-	msg, err := reconcilers.NewRepoReconcilerMessage(provider.Name, r.RepoId, projectID)
-	if err != nil {
-		log.Printf("error creating reconciler event: %v", err)
-		return response, nil
-	}
-
-	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
-	logger.BusinessRecord(ctx).Project = projectID
-	logger.BusinessRecord(ctx).Repository = dbRepo.ID
-
+	response.Result.Status.Success = true
+	response.Result.Repository = newRepo
 	return response, nil
 }
 
@@ -230,16 +166,19 @@ func (s *Server) ListRepositories(ctx context.Context,
 }
 
 // GetRepositoryById returns a repository for a given repository id
-func (s *Server) GetRepositoryById(ctx context.Context,
-	in *pb.GetRepositoryByIdRequest) (*pb.GetRepositoryByIdResponse, error) {
+func (s *Server) GetRepositoryById(
+	ctx context.Context,
+	in *pb.GetRepositoryByIdRequest,
+) (*pb.GetRepositoryByIdResponse, error) {
+	projectID := getProjectID(ctx)
 	parsedRepositoryID, err := uuid.Parse(in.RepositoryId)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
-	projectID := getProjectID(ctx)
 
 	// read the repository
 	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		Provider:  ghprovider.Github,
 		ID:        parsedRepositoryID,
 		ProjectID: projectID,
 	})
@@ -268,16 +207,16 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 // This function will typically be called by the client to get a
 // repository which is already registered and present in the minder database
 // The API is called with a project id
-func (s *Server) GetRepositoryByName(ctx context.Context,
-	in *pb.GetRepositoryByNameRequest) (*pb.GetRepositoryByNameResponse, error) {
+func (s *Server) GetRepositoryByName(
+	ctx context.Context,
+	in *pb.GetRepositoryByNameRequest,
+) (*pb.GetRepositoryByNameResponse, error) {
+	projectID := getProjectID(ctx)
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
-
-	entityCtx := engine.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
 
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
@@ -312,40 +251,22 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	return &pb.GetRepositoryByNameResponse{Repository: r}, nil
 }
 
-// DeleteRepositoryById deletes a repository by name
-func (s *Server) DeleteRepositoryById(ctx context.Context,
-	in *pb.DeleteRepositoryByIdRequest) (*pb.DeleteRepositoryByIdResponse, error) {
+// DeleteRepositoryById deletes a repository by its UUID
+func (s *Server) DeleteRepositoryById(
+	ctx context.Context,
+	in *pb.DeleteRepositoryByIdRequest,
+) (*pb.DeleteRepositoryByIdResponse, error) {
 	parsedRepositoryID, err := uuid.Parse(in.RepositoryId)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
-	projectID := getProjectID(ctx)
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
-
-	// read the repository
-	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        parsedRepositoryID,
-		ProjectID: projectID,
+	err = s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
+		return s.repoService.DeleteRepositoryByID(ctx, client, projectID, parsedRepositoryID)
 	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
-	}
-
-	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the id of the deleted repository
 	return &pb.DeleteRepositoryByIdResponse{
@@ -354,41 +275,22 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 }
 
 // DeleteRepositoryByName deletes a repository by name
-func (s *Server) DeleteRepositoryByName(ctx context.Context,
-	in *pb.DeleteRepositoryByNameRequest) (*pb.DeleteRepositoryByNameResponse, error) {
+func (s *Server) DeleteRepositoryByName(
+	ctx context.Context,
+	in *pb.DeleteRepositoryByNameRequest,
+) (*pb.DeleteRepositoryByNameResponse, error) {
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID := getProjectID(ctx)
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
-
-	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  provider.Name,
-		RepoOwner: fragments[0],
-		RepoName:  fragments[1],
-		ProjectID: projectID,
+	err := s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
+		return s.repoService.DeleteRepositoryByName(ctx, client, projectID, fragments[0], fragments[1])
 	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return nil, err
-	}
-	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the name of the deleted repository
 	return &pb.DeleteRepositoryByNameResponse{
@@ -415,7 +317,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Msg("listing repositories")
 
 	// FIXME: this is a hack to get the owner filter from the request
-	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, provider.ProjectID)
+	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID)
 
 	if err != nil {
 		return nil, util.UserVisibleError(codes.PermissionDenied,
@@ -426,7 +328,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -440,7 +342,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
 
-	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
+	tmoutCtx, cancel := context.WithTimeout(ctx, ghprovider.ExpensiveRestCallTimeout)
 	defer cancel()
 
 	var remoteRepos []*pb.Repository
@@ -463,7 +365,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
 	}
 
-	allowsPrivateRepos := features.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
+	allowsPrivateRepos := repositories.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
 	if !allowsPrivateRepos {
 		zerolog.Ctx(ctx).Info().Msg("filtering out private repositories")
 	} else {
@@ -491,28 +393,62 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	return out, nil
 }
 
-func (s *Server) deleteRepositoryAndWebhook(
+// TODO: this probably can probably be used elsewhere
+// returns project ID and github client - this flow of code exists in multiple
+// places
+func (s *Server) getProjectIDAndClient(
 	ctx context.Context,
-	repo db.Repository,
-	provider db.Provider,
-) error {
-	tx, err := s.store.BeginTransaction()
+	request HasProtoContext,
+) (uuid.UUID, v1.GitHub, error) {
+	projectID := getProjectID(ctx)
+
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, request, projectID)
 	if err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository")
-	}
-	defer s.store.Rollback(tx)
-
-	qtx := s.store.GetQuerierWithTransaction(tx)
-	if err := qtx.DeleteRepository(ctx, repo.ID); err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository: %v", err)
+		return uuid.Nil, nil, providerError(err)
 	}
 
-	if err := s.deleteWebhookFromRepository(ctx, provider, repo); err != nil {
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+
+	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
+	if err != nil {
+		return uuid.Nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	if !p.Implements(db.ProviderTypeGithub) {
+		return uuid.Nil, nil, util.UserVisibleError(
+			codes.InvalidArgument,
+			"provider %s is not supported for github webhook",
+			p.GetName(),
+		)
+	}
+
+	client, err := p.GetGitHub()
+	if err != nil {
+		return uuid.Nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
+	}
+
+	return projectID, client, nil
+}
+
+// covers the common logic for the two varieties of repo deletion
+func (s *Server) deleteRepository(
+	ctx context.Context,
+	request HasProtoContext,
+	deletionMethod func(v1.GitHub, uuid.UUID) error,
+) error {
+	projectID, client, err := s.getProjectIDAndClient(ctx, request)
+	if err != nil {
 		return err
 	}
 
-	if err := s.store.Commit(tx); err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository")
+	err = deletionMethod(client, projectID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
 	return nil
@@ -520,5 +456,6 @@ func (s *Server) deleteRepositoryAndWebhook(
 
 func getProjectID(ctx context.Context) uuid.UUID {
 	entityCtx := engine.EntityFromContext(ctx)
+	log.Printf("project id is %s", entityCtx.Project.ID.String())
 	return entityCtx.Project.ID
 }
