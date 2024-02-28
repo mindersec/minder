@@ -26,10 +26,10 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"

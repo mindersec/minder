@@ -25,9 +25,9 @@ import (
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/proto"
 

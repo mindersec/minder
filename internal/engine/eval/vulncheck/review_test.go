@@ -24,10 +24,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v56/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"

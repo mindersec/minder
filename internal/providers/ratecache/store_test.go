@@ -22,10 +22,10 @@ import (
 	"time"
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
-	"github.com/golang/mock/gomock"
 	xsyncv3 "github.com/puzpuzpuz/xsync/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
