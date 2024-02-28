@@ -17,18 +17,17 @@ package webhooks_test
 import (
 	"context"
 	"errors"
-	"github.com/google/uuid"
+	"go.uber.org/mock/gomock"
 	"net/http"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v56/github"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/config/server"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
-	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
 )
 

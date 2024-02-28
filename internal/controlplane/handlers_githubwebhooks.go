@@ -287,9 +287,6 @@ func (s *Server) registerWebhookForRepository(
 	return regResult, nil
 }
 
-// TODO: needs more refactoring, we probably want some helper function around
-// getting instances of the github provider since the same boiler plate logic
-// is repeated in several places
 func (s *Server) deleteWebhookFromRepository(
 	ctx context.Context,
 	provider db.Provider,
