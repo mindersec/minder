@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config"
@@ -133,28 +134,46 @@ func MessageAndError(msg string, err error) error {
 }
 
 // ExitNicelyOnError print a message and exit with the right code
-func ExitNicelyOnError(err error, message string) {
+func ExitNicelyOnError(err error, userMsg string) {
+	var message string
+	var details string
+	exitCode := 1 // Default to 1
 	if err != nil {
-		if message != "" {
-			fmt.Fprintf(os.Stderr, "Message: %s\n", message)
+		if userMsg != "" {
+			// This handles the case where we want to print an explicit message before processing the error
+			fmt.Fprintf(os.Stderr, "Message: %s\n", userMsg)
 		}
 		// Check if the error is wrapped
 		var wrappedErr *ErrWrappedCLIError
 		if errors.As(err, &wrappedErr) {
 			// Print the wrapped message
-			fmt.Fprintf(os.Stderr, "Message: %s\n", wrappedErr.Message)
+			message = wrappedErr.Message
 			// Continue processing the wrapped error
 			err = wrappedErr.Err
 		}
 		// Check if the error is a grpc status
 		if rpcStatus, ok := status.FromError(err); ok {
 			nice := util.FromRpcError(rpcStatus)
-			fmt.Fprintf(os.Stderr, "Details: %s\n", nice.Details)
-			os.Exit(int(nice.Code))
+			// If the error is unauthenticated, we want to print a helpful message and exit, no need to print details
+			if rpcStatus.Code() == codes.Unauthenticated {
+				message = "It seems you are logged out. Please run \"minder auth login\" first."
+			} else {
+				details = nice.Details
+			}
+			exitCode = int(nice.Code)
 		} else {
-			fmt.Fprintf(os.Stderr, "Details: %s\n", err)
-			os.Exit(1)
+			details = err.Error()
 		}
+		// Print the message, if any
+		if message != "" {
+			fmt.Fprintf(os.Stderr, "Message: %s\n", message)
+		}
+		// Print the details, if any
+		if details != "" {
+			fmt.Fprintf(os.Stderr, "Details: %s\n", details)
+		}
+		// Exit with the right code
+		os.Exit(exitCode)
 	}
 }
 
