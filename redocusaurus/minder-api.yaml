@@ -2754,9 +2754,45 @@ definitions:
       guidance:
         type: string
         description: guidance are instructions we give the user in case a rule fails.
+      severity:
+        $ref: '#/definitions/v1Severity'
+        description: severity is the severity of the rule type.
     description: |-
       RuleType defines rules that may or may not be user defined.
       The version is assumed from the folder's version.
+  v1Severity:
+    type: object
+    properties:
+      value:
+        $ref: '#/definitions/v1SeverityValue'
+        description: value is the severity value.
+    description: Severity defines the severity of the rule.
+  v1SeverityValue:
+    type: string
+    enum:
+      - VALUE_UNSPECIFIED
+      - VALUE_UNKNOWN
+      - VALUE_INFO
+      - VALUE_LOW
+      - VALUE_MEDIUM
+      - VALUE_HIGH
+      - VALUE_CRITICAL
+    default: VALUE_UNSPECIFIED
+    description: |-
+      Value enumerates the severity values.
+
+       - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't
+      been set.
+       - VALUE_INFO: info severity means that the severity is informational and
+      does not incur risk.
+       - VALUE_LOW: low severity means that the severity is low and does not
+      incur significant risk.
+       - VALUE_MEDIUM: medium severity means that the severity is medium and may
+      incur some risk.
+       - VALUE_HIGH: high severity means that the severity is high and may incur
+      significant risk.
+       - VALUE_CRITICAL: critical severity means that the severity is critical and
+      requires immediate attention.
   v1StoreProviderTokenResponse:
     type: object
   v1UpdateProfileRequest:
