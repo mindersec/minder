@@ -66,7 +66,8 @@ bootstrap: ## install build deps
 			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/sqlc-dev/sqlc \
 			github.com/norwoodj/helm-docs/cmd/helm-docs \
-			github.com/openfga/cli
+			github.com/openfga/cli \
+			go.uber.org/mock/mockgen
 	# check if `cli` binary exists, and if it does, move it to be fga instead
 	# Check if cli usage prints the help message, if it does, then it's the cli binary
 	which cli && cli | grep -q "Usage:" && mv $$(which cli) $$(dirname $$(which cli))/fga || true
