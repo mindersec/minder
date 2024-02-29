@@ -523,6 +523,7 @@ type SessionStore struct {
 	OwnerFilter  sql.NullString `json:"owner_filter"`
 	SessionState string         `json:"session_state"`
 	CreatedAt    time.Time      `json:"created_at"`
+	RedirectUrl  sql.NullString `json:"redirect_url"`
 }
 
 type User struct {

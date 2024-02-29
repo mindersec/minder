@@ -319,6 +319,16 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	mw := otelhttp.NewMiddleware("webhook")
 
+	// Explicitly handle HTTP only requests
+	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleProviderCallback())
+	if err != nil {
+		return fmt.Errorf("failed to register provider callback handler: %w", err)
+	}
+	err = gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/web", s.HandleProviderCallback())
+	if err != nil {
+		return fmt.Errorf("failed to register provider callback handler: %w", err)
+	}
+
 	mux.Handle("/", gwmux)
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
 	mux.Handle("/static/", fs)
