@@ -96,6 +96,12 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			ExpectedError: "error listing hooks",
 		},
 		{
+			Name:          "CreateWebhook returns error when webhook config cannot be parsed",
+			ClientSetup:   newClient(withMalformedList),
+			ShouldSucceed: false,
+			ExpectedError: "unexpected hook config structure",
+		},
+		{
 			Name:          "CreateWebhook returns error when stale hook deletion fails",
 			ClientSetup:   newClient(withSuccessfulList, withFailedDeletion),
 			ShouldSucceed: false,

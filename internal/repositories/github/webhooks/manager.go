@@ -163,7 +163,10 @@ func (w *webhookManager) cleanupStaleHooks(
 }
 
 func isMinderHook(hook *github.Hook, hostURL string) (bool, error) {
-	configURL := hook.Config["url"].(string)
+	configURL, ok := hook.Config["url"].(string)
+	if !ok {
+		return false, fmt.Errorf("unexpected hook config structure: %v", hook.Config)
+	}
 	if configURL != "" {
 		parsedURL, err := url.Parse(configURL)
 		if err != nil {
