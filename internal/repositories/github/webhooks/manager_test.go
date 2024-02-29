@@ -97,30 +97,35 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 		},
 		{
 			Name:          "CreateWebhook returns error when webhook config cannot be parsed",
-			ClientSetup:   newClient(withMalformedList),
+			ClientSetup:   newClient(withSuccessfulList("")),
 			ShouldSucceed: false,
 			ExpectedError: "unexpected hook config structure",
 		},
 		{
 			Name:          "CreateWebhook returns error when stale hook deletion fails",
-			ClientSetup:   newClient(withSuccessfulList, withFailedDeletion),
+			ClientSetup:   newClient(withSuccessfulList(webhookURL), withFailedDeletion),
 			ShouldSucceed: false,
 			ExpectedError: "error deleting hook",
 		},
 		{
 			Name:          "CreateWebhook returns error when creation request fails",
-			ClientSetup:   newClient(withSuccessfulList, withSuccessfulDeletion, withFailedCreation),
+			ClientSetup:   newClient(withSuccessfulList(webhookURL), withSuccessfulDeletion, withFailedCreation),
 			ShouldSucceed: false,
 			ExpectedError: "error creating hook",
 		},
 		{
-			Name:          "CreateWebhook successfully creates a new webhook",
+			Name:          "CreateWebhook successfully creates a new webhook for repo with no previous webhooks",
 			ClientSetup:   newClient(withNotFoundList, withSuccessfulCreation),
 			ShouldSucceed: true,
 		},
 		{
+			Name:          "CreateWebhook successfully creates a new webhook, ignoring other projects' webhooks",
+			ClientSetup:   newClient(withSuccessfulList("http://hook.foo.com/67890"), withSuccessfulCreation),
+			ShouldSucceed: true,
+		},
+		{
 			Name:          "CreateWebhook successfully creates a new webhook, and deletes stale hook",
-			ClientSetup:   newClient(withSuccessfulList, withSuccessfulDeletion, withSuccessfulCreation),
+			ClientSetup:   newClient(withSuccessfulList(webhookURL), withSuccessfulDeletion, withSuccessfulCreation),
 			ShouldSucceed: true,
 		},
 	}
@@ -169,10 +174,8 @@ var (
 		ExternalPingURL:    "https://example.com/api/v1/health",
 		WebhookSecret:      "",
 	}
-	hookConfig = map[string]any{
-		"url": webhookConfig.ExternalWebhookURL + "/12345",
-	}
-	result = &github.Hook{ID: ptr.Ptr[int64](hookID)}
+	result     = &github.Hook{ID: ptr.Ptr[int64](hookID)}
+	webhookURL = webhookConfig.ExternalWebhookURL + "/12345"
 )
 
 func newClient(opts ...func(clientMock)) mockBuilder {
@@ -208,14 +211,19 @@ func stubDelete(mock clientMock, resp *github.Response, err error) {
 		Return(resp, err)
 }
 
-func withSuccessfulList(mock clientMock) {
+func withSuccessfulList(url string) func(clientMock) {
+	hookConfig := map[string]any{
+		"url": url,
+	}
 	hooks := []*github.Hook{
 		{
 			ID:     ptr.Ptr(hookID),
 			Config: hookConfig,
 		},
 	}
-	stubList(mock, hooks, nil)
+	return func(mock clientMock) {
+		stubList(mock, hooks, nil)
+	}
 }
 
 func withMalformedList(mock clientMock) {
