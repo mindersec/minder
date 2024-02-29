@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"sync"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/puzpuzpuz/xsync/v3"
 )
 
 // Identity represents a particular user's identity in a particular trust domain
@@ -41,7 +41,8 @@ type Identity struct {
 	// enroll the "alexsmith" handle.  If you are storing data, you want UserID,
 	// not HumanName.  If you are presenting data, you probably want HumanName.
 	//
-	// For KeyCloak, this is `preferred_username`.
+	// For KeyCloak, this is `preferred_username`.  For some other providers,
+	// this might be an email address.
 	HumanName string
 	// Provider is the identity provider that vended this identity.  Note that
 	// UserID and HumanName are only unique within the context of a single
@@ -114,8 +115,7 @@ type IdentityProvider interface {
 // IdentityProviders.
 type IdentityClient struct {
 	// This map is a bit overloaded; it maps both short provider names
-	providers map[string]IdentityProvider
-	lock      sync.RWMutex
+	providers xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
 }
 
 var _ Resolver = (*IdentityClient)(nil)
@@ -123,20 +123,19 @@ var _ Resolver = (*IdentityClient)(nil)
 // NewIdentityClient creates a new IdentityClient with the supplied providers.
 func NewIdentityClient(providers ...IdentityProvider) (*IdentityClient, error) {
 	c := &IdentityClient{
-		providers: make(map[string]IdentityProvider, len(providers)),
+		providers: xsync.NewMapOfPresized(len(providers) * 2),
 	}
 	for _, p := range providers {
-		if c.providers[p.String()] != nil {
-			// This is a configuration error.
-			return nil, fmt.Errorf("duplicate provider %q", p.String())
+		prev, ok := c.providers.LoadOrStore(p.String(), p)
+		if ok { // We had an existing value, this is a configuration error.
+			return nil, fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), p.URL(), prev.URL())
 		}
-		c.providers[p.String()] = p
+
 		u := p.URL() // URL's String has a pointer receiver
-		if c.providers[u.String()] != nil {
-			// This is a configuration error.
-			return nil, fmt.Errorf("duplicate provider URL %q", u.String())
+		prev, ok = c.providers.LoadOrStore(u.String(), p)
+		if ok { // We had an existing value, this is a configuration error.
+			return nil, fmt.Errorf("duplicate provider for URL %s, new %q, old %q", u.String(), p.String(), prev.String())
 		}
-		c.providers[u.String()] = p
 	}
 	return c, nil
 }
@@ -146,19 +145,18 @@ func (c *IdentityClient) Register(p IdentityProvider) error {
 	if c == nil {
 		return errors.New("cannot register with a nil IdentityClient")
 	}
-	c.lock.Lock()
-	defer c.lock.Unlock()
-	if c.providers[p.String()] != nil {
-		// This is a configuration error.
-		return fmt.Errorf("duplicate provider %q", p.String())
+
+	prev, ok := c.providers.LoadOrStore(p.String(), p)
+	if ok { // We had an existing value, this is a configuration error.
+		return fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), p.URL(), prev.URL())
 	}
+
 	u := p.URL() // URL's String has a pointer receiver
-	if c.providers[u.String()] != nil {
-		// This is a configuration error.
-		return fmt.Errorf("duplicate provider URL %q", u.String())
+	prev, ok = c.providers.LoadOrStore(u.String(), p)
+	if ok { // We had an existing value, this is a configuration error.
+		return fmt.Errorf("duplicate provider for URL %s, new %q, old %q", u.String(), p.String(), prev.String())
 	}
-	c.providers[p.String()] = p
-	c.providers[u.String()] = p
+
 	return nil
 }
 
@@ -170,9 +168,7 @@ func (c *IdentityClient) Resolve(ctx context.Context, id string) (*Identity, err
 		providerName = id[:slash]
 		id = id[slash+1:]
 	}
-	c.lock.RLock()
-	provider, ok := c.providers[providerName]
-	c.lock.RUnlock()
+	provider, ok := c.providers.Load(providerName)
 	if !ok || provider == nil {
 		return nil, fmt.Errorf("unknown provider %q", providerName)
 	}
@@ -186,9 +182,7 @@ func (c *IdentityClient) Validate(ctx context.Context, token jwt.Token) (*Identi
 	if iss == "" {
 		return nil, errors.New("token has no issuer")
 	}
-	c.lock.RLock()
-	provider, ok := c.providers[iss]
-	c.lock.RUnlock()
+	provider, ok := c.providers.Load(iss)
 	if !ok || provider == nil {
 		return nil, fmt.Errorf("unknown provider %q", iss)
 	}
