@@ -27,7 +27,7 @@ package tools
 //go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
 //go:generate go install github.com/bufbuild/buf/cmd/buf
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
-//go:generate go install github.com/openfga/cli
+//go:generate go install github.com/openfga/cli/cmd/fga
 
 // nolint
 
@@ -40,7 +40,7 @@ import (
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	_ "github.com/norwoodj/helm-docs/cmd/helm-docs"
-	_ "github.com/openfga/cli"
+	_ "github.com/openfga/cli/cmd/fga"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 	_ "golang.org/x/lint/golint"
