@@ -50,11 +50,11 @@ var loginCmd = &cobra.Command{
 	Short: "Login to Minder",
 	Long: `The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
 $XDG_CONFIG_HOME/minder/credentials.json`,
-	RunE: loginCommand,
+	RunE: LoginCommand,
 }
 
-// loginCommand is the login subcommand
-func loginCommand(cmd *cobra.Command, _ []string) error {
+// LoginCommand is the login subcommand
+func LoginCommand(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
