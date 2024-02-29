@@ -183,7 +183,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 
 			stubEventer := StubEventer{}
 			stubWebhookManager := mockghhook.NewMockWebhookManager(ctrl)
-			hookUUID := uuid.New().String()
 			if tt.repoErr == nil {
 				stubbedHook := &github.Hook{
 					ID: ptr.Ptr[int64](1),
@@ -233,8 +232,8 @@ func TestServer_RegisterRepository(t *testing.T) {
 				}
 			}
 
-			if tt.repoErr == nil {
-				got.Result.Repository.HookUuid = hookUUID
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Server.RegisterRepository() = %v, want %v", got, tt.want)
 			}
 		})
 	}
