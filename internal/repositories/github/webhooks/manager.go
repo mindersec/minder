@@ -72,11 +72,6 @@ func (w *webhookManager) CreateWebhook(
 	repoOwner string,
 	repoName string,
 ) (string, *github.Hook, error) {
-	logger := zerolog.Ctx(ctx).With().
-		Str("repoName", repoName).
-		Str("repoOwner", repoOwner).Logger()
-	ctx = logger.WithContext(ctx)
-
 	// generate unique URL for this webhook
 	baseURL := w.webhookConfig.ExternalWebhookURL
 	hookUUID := uuid.New().String()
@@ -106,8 +101,7 @@ func (w *webhookManager) CreateWebhook(
 
 	webhook, err := client.CreateHook(ctx, repoOwner, repoName, newHook)
 	if err != nil {
-		logger.Error().Msg("error creating hook")
-		return "", nil, err
+		return "", nil, fmt.Errorf("error creating hook: %w", err)
 	}
 
 	return hookUUID, webhook, nil
@@ -128,7 +122,7 @@ func (_ *webhookManager) DeleteWebhook(
 			// if the hook is not found, we can ignore the error, user might have deleted it manually
 			return nil
 		}
-		return err
+		return fmt.Errorf("error deleting hook: %w", err)
 	}
 
 	return nil
@@ -141,14 +135,16 @@ func (w *webhookManager) cleanupStaleHooks(
 	repoName string,
 	webhookHost string,
 ) error {
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).With().
+		Str("repoName", repoName).
+		Str("repoOwner", repoOwner).Logger()
+
 	hooks, err := client.ListHooks(ctx, repoOwner, repoName)
 	if errors.Is(err, ghprovider.ErrNotFound) {
 		logger.Debug().Msg("no hooks found")
 		return nil
 	} else if err != nil {
-		logger.Error().Msg("error listing hooks")
-		return err
+		return fmt.Errorf("error listing hooks: %w", err)
 	}
 
 	for _, hook := range hooks {
@@ -159,8 +155,7 @@ func (w *webhookManager) cleanupStaleHooks(
 			err = w.DeleteWebhook(ctx, client, repoOwner, repoName, hook.GetID())
 		}
 		if err != nil {
-			logger.Error().Msg("error deleting hook")
-			return err
+			return fmt.Errorf("error deleting hook: %w", err)
 		}
 	}
 
