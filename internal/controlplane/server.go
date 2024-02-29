@@ -80,6 +80,7 @@ type Server struct {
 	authzClient     authz.Client
 	cryptoEngine    *crypto.Engine
 	restClientCache ratecache.RestClientCache
+	idClient        *auth.IdentityClient
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -116,6 +117,12 @@ func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
 	}
 }
 
+func WithIdentityClient(c *auth.IdentityClient) ServerOption {
+	return func(s *Server) {
+		s.idClient = c
+	}
+}
+
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
@@ -140,6 +147,7 @@ func NewServer(
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
+		idClient:    &auth.IdentityClient{},
 	}
 
 	for _, opt := range opts {

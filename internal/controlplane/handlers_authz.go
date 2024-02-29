@@ -215,6 +215,13 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
+	for i := range as {
+		identity := s.idClient.Resolve(ctx, as[i].Subject)
+		// Make the subjects human-readable on output, even though we store them
+		// as stable identifiers.
+		as[i].Subject = identity.Human
+	}
+
 	return &minder.ListRoleAssignmentsResponse{
 		RoleAssignments: as,
 	}, nil
@@ -237,8 +244,17 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+	// We may be given a human-readable identifier which can vary over time.  Resolve
+	// it to an IDP-specific stable identifier so that we can support subject renames.
+	identity := s.idClient.Resolve(ctx, sub)
+
+	// Verify if user exists.
+	// TODO: this assumes we store all users in the database, and that we don't
+	// need to namespace identity providers.  We should revisit these assumptions.
+	//
+	// Note: We could use identity.String() here, relying on Keycloak being registered
+	// as the default with Provider.String() == "".
+	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -249,7 +265,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	if err := s.authzClient.Write(ctx, sub, authzrole, projectID); err != nil {
+	if err := s.authzClient.Write(ctx, identity.String(), authzrole, projectID); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 
@@ -257,7 +273,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	return &minder.AssignRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
 			Role:    role,
-			Subject: sub,
+			Subject: identity.Human(),
 			Project: &respProj,
 		},
 	}, nil
@@ -280,8 +296,12 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
+	// We may be given a human-readable identifier which can vary over time.  Resolve
+	// it to an IDP-specific stable identifier so that we can support subject renames.
+	identity := s.idClient.Resolve(ctx, sub)
+
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, sub); err != nil {
+	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -292,7 +312,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	if err := s.authzClient.Delete(ctx, sub, authzrole, projectID); err != nil {
+	if err := s.authzClient.Delete(ctx, identity.String(), authzrole, projectID); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 
@@ -300,7 +320,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	return &minder.RemoveRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
 			Role:    role,
-			Subject: sub,
+			Subject: identity.Human(),
 			Project: &respProj,
 		},
 	}, nil

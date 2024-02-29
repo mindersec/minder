@@ -29,6 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/keycloak"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -121,6 +122,11 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
 
+		idClient, err := auth.NewIdentityClient(keycloak.NewKeyCloak("", cfg.Identity.Server.IssuerUrl))
+		if err != nil {
+			return fmt.Errorf("unable to create identity client: %w", err)
+		}
+
 		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
@@ -131,6 +137,7 @@ var serveCmd = &cobra.Command{
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
 			controlplane.WithRestClientCache(restClientCache),
+			controlplane.WithIdentityClient()
 		)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
