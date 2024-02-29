@@ -39,11 +39,13 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 		Name          string
 		ClientSetup   mockBuilder
 		ShouldSucceed bool
+		ExpectedError string
 	}{
 		{
 			Name:          "DeleteWebhook returns error when deletion request fails",
 			ClientSetup:   newClient(withFailedDeletion),
 			ShouldSucceed: false,
+			ExpectedError: "error deleting hook",
 		},
 		{
 			Name:          "DeleteWebhook skips webhooks which cannot be found",
@@ -72,7 +74,7 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 			if scenario.ShouldSucceed {
 				require.NoError(t, err)
 			} else {
-				require.Error(t, err)
+				require.ErrorContains(t, err, scenario.ExpectedError)
 			}
 		})
 	}
@@ -85,21 +87,25 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 		Name          string
 		ClientSetup   mockBuilder
 		ShouldSucceed bool
+		ExpectedError string
 	}{
 		{
 			Name:          "CreateWebhook returns error when listing request fails",
 			ClientSetup:   newClient(withFailedList),
 			ShouldSucceed: false,
+			ExpectedError: "error listing hooks",
 		},
 		{
-			Name:          "CreateWebhook returns error when deletion request fails",
+			Name:          "CreateWebhook returns error when stale hook deletion fails",
 			ClientSetup:   newClient(withSuccessfulList, withFailedDeletion),
 			ShouldSucceed: false,
+			ExpectedError: "error deleting hook",
 		},
 		{
 			Name:          "CreateWebhook returns error when creation request fails",
 			ClientSetup:   newClient(withSuccessfulList, withSuccessfulDeletion, withFailedCreation),
 			ShouldSucceed: false,
+			ExpectedError: "error creating hook",
 		},
 		{
 			Name:          "CreateWebhook successfully creates a new webhook",
@@ -135,7 +141,7 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			} else {
 				require.Equal(t, "", resultID)
 				require.Nil(t, hook)
-				require.Equal(t, errTest, err)
+				require.ErrorContains(t, err, scenario.ExpectedError)
 			}
 		})
 	}
@@ -201,6 +207,15 @@ func withSuccessfulList(mock clientMock) {
 		{
 			ID:     ptr.Ptr(hookID),
 			Config: hookConfig,
+		},
+	}
+	stubList(mock, hooks, nil)
+}
+
+func withMalformedList(mock clientMock) {
+	hooks := []*github.Hook{
+		{
+			ID: ptr.Ptr(hookID),
 		},
 	}
 	stubList(mock, hooks, nil)
