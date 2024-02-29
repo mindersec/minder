@@ -64,6 +64,8 @@ var (
 // CreateWebhook creates a Minder-managed webhook in the specified GitHub repo
 // Note that this method will delete any previous Minder-managed webhooks
 // before attempting to make a new one.
+// Returns the UUID of this webhook, along with the API response from GitHub
+// with details of the new webhook
 func (w *webhookManager) CreateWebhook(
 	ctx context.Context,
 	client GitHubWebhookClient,
