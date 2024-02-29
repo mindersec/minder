@@ -25,7 +25,7 @@ var (
 	ErrValidationFailed = fmt.Errorf("validation failed")
 
 	// Starts with a letter/digit, then a string of letter/digit and hypen or underscore
-	dnsStyleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9][-_a-zA-Z0-9]{0,62}$`)
+	dnsStyleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
 )
 
 // Validator is an interface which allows for the validation of a struct.

@@ -223,11 +223,19 @@ func (s *Server) CreateRuleType(
 }
 
 // UpdateRuleType is a method to update a rule type
+//golint:nocyclo
 func (s *Server) UpdateRuleType(
 	ctx context.Context,
 	urt *minderv1.UpdateRuleTypeRequest,
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
+	// First we validate that the incoming rule is valid
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
+		}
+		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
+	}
 
 	entityCtx := engine.EntityFromContext(ctx)
 
@@ -251,14 +259,6 @@ func (s *Server) UpdateRuleType(
 	oldrt, err := engine.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot convert rule type %s to pb: %v", in.GetName(), err)
-	}
-
-	// First we validate that the incoming rule is valid
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
-		}
-		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
 	}
 
 	_, err = s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)

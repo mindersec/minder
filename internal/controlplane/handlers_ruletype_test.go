@@ -96,10 +96,10 @@ func TestCreateRuleType(t *testing.T) {
 			RuleType: &minderv1.RuleType{
 				Name: "rule_type_1",
 				Def: &minderv1.RuleType_Definition{
-					InEntity: string(minderv1.RepositoryEntity),
+					InEntity:   string(minderv1.RepositoryEntity),
 					RuleSchema: &structpb.Struct{},
-					Ingest: &minderv1.RuleType_Definition_Ingest{},
-					Eval: &minderv1.RuleType_Definition_Eval{},
+					Ingest:     &minderv1.RuleType_Definition_Ingest{},
+					Eval:       &minderv1.RuleType_Definition_Eval{},
 				},
 			},
 		},
@@ -107,10 +107,10 @@ func TestCreateRuleType(t *testing.T) {
 			RuleType: &minderv1.RuleType{
 				Name: "rule_type_1",
 				Def: &minderv1.RuleType_Definition{
-					InEntity: string(minderv1.RepositoryEntity),
+					InEntity:   string(minderv1.RepositoryEntity),
 					RuleSchema: &structpb.Struct{},
-					Ingest: &minderv1.RuleType_Definition_Ingest{},
-					Eval: &minderv1.RuleType_Definition_Eval{},
+					Ingest:     &minderv1.RuleType_Definition_Ingest{},
+					Eval:       &minderv1.RuleType_Definition_Eval{},
 				},
 				Severity: &minderv1.Severity{
 					Value: minderv1.Severity_VALUE_UNKNOWN,
@@ -125,8 +125,6 @@ func TestCreateRuleType(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := context.Background()
-
 			if tc.ruletype.GetContext() == nil {
 				tc.ruletype.RuleType.Context = &minderv1.Context{
 					Project:  proto.String(dbproj.ID.String()),
@@ -137,7 +135,7 @@ func TestCreateRuleType(t *testing.T) {
 				}
 			}
 
-			ctx = engine.WithEntityContext(context.Background(), &engine.EntityContext{
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})

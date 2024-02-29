@@ -201,6 +201,7 @@ func TestGetUnusedOldRuleStatuses(t *testing.T) {
 	}
 }
 
+//nolint:gocyclo
 func TestCreateProfile(t *testing.T) {
 	t.Parallel()
 
@@ -301,8 +302,6 @@ func TestCreateProfile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := context.Background()
-
 			if tc.profile.GetContext() == nil {
 				tc.profile.Profile.Context = &minderv1.Context{
 					Project:  proto.String(dbproj.ID.String()),
@@ -313,7 +312,7 @@ func TestCreateProfile(t *testing.T) {
 				}
 			}
 
-			ctx = engine.WithEntityContext(context.Background(), &engine.EntityContext{
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})

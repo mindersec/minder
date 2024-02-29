@@ -29,6 +29,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 )
 
+// CancelFunc is a function that can be called to clean up resources.
+// Pass this to t.Cleanup.
 type CancelFunc func()
 
 // GetFakeStore returns a new embedded Postgres database and a cancel function
@@ -61,6 +63,12 @@ func GetFakeStore() (db.Store, CancelFunc, error) {
 		cleanupDir()
 	}
 	sqlDB, err := sql.Open("postgres", cfg.GetConnectionURL()+"?sslmode=disable")
+	if err != nil {
+		return nil, cancel, err
+	}
+	if err := sqlDB.Ping(); err != nil {
+		return nil, cancel, err
+	}
 
 	configpath := "file://../../database/migrations"
 	mig, err := migrate.New(configpath, cfg.GetConnectionURL()+"?sslmode=disable")
