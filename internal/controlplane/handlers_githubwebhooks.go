@@ -134,7 +134,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		rawWBPayload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
 		if err != nil {
-			fmt.Printf("Error validating webhook payload: %v", err)
+			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -261,6 +261,7 @@ func (s *Server) registerWebhookForRepository(
 
 	hookUUID, githubHook, err := s.webhookManager.CreateWebhook(ctx, client, repo.Owner, repo.Name)
 	if err != nil {
+		log.Printf("error while creating webhook: %v", err)
 		errorStr := err.Error()
 		regResult.Status.Error = &errorStr
 		return regResult, nil
