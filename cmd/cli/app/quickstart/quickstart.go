@@ -153,10 +153,8 @@ var cmd = &cobra.Command{
 // quickstartCommand is the quickstart command
 //
 //nolint:gocyclo
-func quickstartCommand(_ context.Context, cmd *cobra.Command, inConn *grpc.ClientConn) error {
+func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	var err error
-	var conn *grpc.ClientConn
-	conn = inConn
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
 
