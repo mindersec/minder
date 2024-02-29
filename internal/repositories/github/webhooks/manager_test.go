@@ -226,15 +226,6 @@ func withSuccessfulList(url string) func(clientMock) {
 	}
 }
 
-func withMalformedList(mock clientMock) {
-	hooks := []*github.Hook{
-		{
-			ID: ptr.Ptr(hookID),
-		},
-	}
-	stubList(mock, hooks, nil)
-}
-
 func withFailedList(mock clientMock) {
 	stubList(mock, []*github.Hook{}, errTest)
 }
