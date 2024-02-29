@@ -223,7 +223,6 @@ func (s *Server) CreateRuleType(
 }
 
 // UpdateRuleType is a method to update a rule type
-//golint:nocyclo
 func (s *Server) UpdateRuleType(
 	ctx context.Context,
 	urt *minderv1.UpdateRuleTypeRequest,
@@ -234,7 +233,7 @@ func (s *Server) UpdateRuleType(
 		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
 		}
-		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
@@ -262,22 +261,21 @@ func (s *Server) UpdateRuleType(
 	}
 
 	_, err = s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
+	if err != nil {
+		// We don't need to worry about sql.ErrNoRows, because that only applies for single-row queries
+		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
+	}
 	// We have profiles that use this rule type, so we need to
 	// validate that the incoming rule is valid against the old rule
-	if err == nil {
-		// Then we validate that the incoming rule is valid against the old rule
-		if err := schemaupdate.ValidateSchemaUpdate(
-			oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
-			return nil, util.UserVisibleError(
-				codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
-		}
-		if err := schemaupdate.ValidateSchemaUpdate(
-			oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
-			return nil, util.UserVisibleError(
-				codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
-		}
-	} else if !errors.Is(err, sql.ErrNoRows) {
-		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
+	if err := schemaupdate.ValidateSchemaUpdate(
+		oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
+	}
+	if err := schemaupdate.ValidateSchemaUpdate(
+		oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
 	}
 
 	def, err := util.GetBytesFromProto(in.GetDef())
