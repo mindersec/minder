@@ -127,7 +127,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := s.store.Commit(tx); err != nil {
 		log.Printf("error committing transaction: %v", err)
 		return nil, status.Errorf(codes.Internal, "error creating profile")
 	}
@@ -676,7 +676,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := s.store.Commit(tx); err != nil {
 		log.Printf("error committing transaction: %v", err)
 		return nil, status.Errorf(codes.Internal, "error updating profile")
 	}
