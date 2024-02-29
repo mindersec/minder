@@ -16,17 +16,31 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"time"
 
+	"github.com/gorilla/securecookie"
+	"github.com/pkg/browser"
+	"github.com/spf13/cobra"
+	"github.com/zitadel/oidc/v2/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/v2/pkg/http"
+	"github.com/zitadel/oidc/v2/pkg/oidc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/cmd/cli/app"
+	clientconfig "github.com/stacklok/minder/internal/config/client"
+	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -101,4 +115,118 @@ func getProjectTableRows(projects []*minderv1.Project) [][]string {
 		rows = append(rows, []string{projectKey, projectVal})
 	}
 	return rows
+}
+
+// login is a helper function to handle the login process
+// and return the access token
+func login(
+	ctx context.Context,
+	cmd *cobra.Command,
+	cfg *clientconfig.Config,
+	extraScopes []string,
+) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
+	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
+	clientID := cfg.Identity.CLI.ClientId
+
+	parsedURL, err := url.Parse(issuerUrlStr)
+	if err != nil {
+		return nil, cli.MessageAndError("Error parsing issuer URL", err)
+	}
+
+	issuerUrl := parsedURL.JoinPath("realms/stacklok")
+	scopes := []string{"openid"}
+
+	if len(extraScopes) > 0 {
+		scopes = append(scopes, extraScopes...)
+	}
+
+	callbackPath := "/auth/callback"
+
+	// create encrypted cookie handler to mitigate CSRF attacks
+	hashKey := securecookie.GenerateRandomKey(32)
+	encryptKey := securecookie.GenerateRandomKey(32)
+	cookieHandler := httphelper.NewCookieHandler(hashKey, encryptKey, httphelper.WithUnsecure(),
+		httphelper.WithSameSite(http.SameSiteLaxMode))
+	options := []rp.Option{
+		rp.WithCookieHandler(cookieHandler),
+		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
+		rp.WithPKCE(cookieHandler),
+	}
+
+	// Get random port
+	port, err := rand.GetRandomPort()
+	if err != nil {
+		return nil, cli.MessageAndError("Error getting random port", err)
+	}
+
+	parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
+	if err != nil {
+		return nil, cli.MessageAndError("Error parsing callback URL", err)
+	}
+	redirectURI := parsedURL.JoinPath(callbackPath)
+
+	provider, err := rp.NewRelyingPartyOIDC(issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
+	if err != nil {
+		return nil, cli.MessageAndError("Error creating relying party", err)
+	}
+
+	stateFn := func() string {
+		state, err := mcrypto.GenerateNonce()
+		if err != nil {
+			cmd.PrintErrln("error generating state for login")
+			os.Exit(1)
+		}
+		return state
+	}
+
+	tokenChan := make(chan *oidc.Tokens[*oidc.IDTokenClaims])
+
+	callback := func(w http.ResponseWriter, _ *http.Request,
+		tokens *oidc.Tokens[*oidc.IDTokenClaims], _ string, _ rp.RelyingParty) {
+
+		tokenChan <- tokens
+		// send a success message to the browser
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, err := w.Write(loginSuccessHtml)
+		if err != nil {
+			// if we cannot display the success page, just print a success message
+			cmd.Println("Authentication Successful")
+		}
+	}
+	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
+	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
+
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		ReadHeaderTimeout: time.Second * 10,
+	}
+	// Start the server in a goroutine
+	go func() {
+		err := server.ListenAndServe()
+		// ignore error if it's just a graceful shutdown
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			cmd.Printf("Error starting server: %v\n", err)
+		}
+	}()
+
+	defer server.Shutdown(ctx)
+
+	// get the OAuth authorization URL
+	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
+
+	// Redirect user to provider to log in
+	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
+	cmd.Println("Please follow the instructions on the page to log in.")
+
+	// open user's browser to login page
+	if err := browser.OpenURL(loginUrl); err != nil {
+		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+	}
+
+	cmd.Println("Waiting for token...")
+
+	// wait for the token to be received
+	token := <-tokenChan
+
+	return token, nil
 }

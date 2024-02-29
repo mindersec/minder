@@ -291,6 +291,44 @@ func LoadCredentials() (OpenIdCredentials, error) {
 	return creds, nil
 }
 
+// RevokeOfflineToken revokes the given offline token using OAuth2.0's Token Revocation endpoint
+// from RFC 7009.
+func RevokeOfflineToken(token string, issuerUrl string, clientId string) error {
+	return RevokeToken(token, issuerUrl, clientId, "refresh_token")
+}
+
+// RevokeToken revokes the given token using OAuth2.0's Token Revocation endpoint
+// from RFC 7009. The tokenHint is the type of token being revoked, such as
+// "access_token" or "refresh_token". In the case of an offline token, the
+// tokenHint should be "refresh_token".
+func RevokeToken(token string, issuerUrl string, clientId string, tokenHint string) error {
+	parsedURL, err := url.Parse(issuerUrl)
+	if err != nil {
+		return fmt.Errorf("error parsing issuer URL: %v", err)
+	}
+	logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/revoke")
+
+	data := url.Values{}
+	data.Set("client_id", clientId)
+	data.Set("token", token)
+	data.Set("token_type_hint", tokenHint)
+
+	req, err := http.NewRequest("POST", logoutUrl.String(), strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("error creating: %v", err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error revoking token: %v", err)
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
 func getProtoMarshalOptions() protojson.MarshalOptions {
 	return protojson.MarshalOptions{
 		Multiline: true,
