@@ -155,6 +155,12 @@ func (s *Server) CreateRuleType(
 	crt *minderv1.CreateRuleTypeRequest,
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+	}
 
 	entityCtx := engine.EntityFromContext(ctx)
 
@@ -174,13 +180,6 @@ func (s *Server) CreateRuleType(
 
 	if !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
-	}
-
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
 	}
 
 	def, err := util.GetBytesFromProto(in.GetDef())
@@ -256,7 +255,7 @@ func (s *Server) UpdateRuleType(
 
 	// First we validate that the incoming rule is valid
 	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) {
+		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
 		}
 		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)

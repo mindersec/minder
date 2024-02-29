@@ -15,13 +15,22 @@
 package controlplane
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/db/embedded"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -188,6 +197,162 @@ func TestGetUnusedOldRuleStatuses(t *testing.T) {
 
 			gotUnusedRules := getUnusedOldRuleStatuses(test.newRules, test.oldRules)
 			require.True(t, reflect.DeepEqual(test.wantUnusedRules, gotUnusedRules))
+		})
+	}
+}
+
+func TestCreateProfile(t *testing.T) {
+	t.Parallel()
+
+	// We can't use mockdb.NewMockStore because BeginTransaction returns a *sql.Tx,
+	// which is not an interface and can't be mocked.
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	if err != nil {
+		t.Fatalf("Error creating fake store: %v", err)
+	}
+
+	// Common database setup
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating project: %v", err)
+	}
+	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       "github",
+		ProjectID:  dbproj.ID,
+		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		Definition: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating provider: %v", err)
+	}
+	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
+		Name:          "rule_type_1",
+		Provider:      provider.Name,
+		ProjectID:     dbproj.ID,
+		Definition:    []byte(`{"ruleSchema":{}}`),
+		SeverityValue: db.SeverityLow,
+	})
+	if err != nil {
+		t.Fatalf("Error creating rule type: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		profile *minderv1.CreateProfileRequest
+		wantErr string
+		result  *minderv1.CreateProfileResponse
+	}{{
+		name: "Create profile with empty name",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile name cannot be empty`,
+	}, {
+		name: "Create profile with invalid name",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "colon:invalid",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+	}, {
+		name: "Create profile with no rules",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "test",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
+	}, {
+		name: "Create profile with valid name and rules",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "test",
+				Repository: []*minderv1.Profile_Rule{{
+					Type: "rule_type_1",
+					Def:  &structpb.Struct{},
+				}},
+			},
+		},
+		result: &minderv1.CreateProfileResponse{
+			Profile: &minderv1.Profile{
+				Name: "test",
+				Repository: []*minderv1.Profile_Rule{{
+					Type: "rule_type_1",
+					Name: "rule_type_1",
+					Def:  &structpb.Struct{},
+				}},
+			},
+		},
+	}}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+
+			if tc.profile.GetContext() == nil {
+				tc.profile.Profile.Context = &minderv1.Context{
+					Project:  proto.String(dbproj.ID.String()),
+					Provider: proto.String("github"),
+				}
+				if tc.result != nil {
+					tc.result.GetProfile().Context = tc.profile.GetContext()
+				}
+			}
+
+			ctx = engine.WithEntityContext(context.Background(), &engine.EntityContext{
+				Project:  engine.Project{ID: dbproj.ID},
+				Provider: engine.Provider{Name: "github"},
+			})
+			s := &Server{
+				store:            dbStore,
+				profileValidator: profiles.NewValidator(dbStore),
+				evt:              &StubEventer{},
+			}
+
+			res, err := s.CreateProfile(ctx, tc.profile)
+			if tc.wantErr != "" {
+				niceErr, ok := err.(*util.NiceStatus)
+				if !ok {
+					t.Fatalf("Unexpected error type from CreateProfile: %v", err)
+				}
+				if niceErr.Details != tc.wantErr {
+					t.Errorf("CreateProfile() error = %q, wantErr %q", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Unexpected error from CreateProfile: %v", err)
+			}
+
+			profile, err := dbStore.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
+				Name:      tc.profile.GetProfile().GetName(),
+				ProjectID: dbproj.ID,
+			})
+			if err != nil {
+				t.Fatalf("Error getting profile: %v", err)
+			}
+
+			if tc.result.GetProfile().GetId() == "" {
+				tc.result.GetProfile().Id = proto.String(profile.ID.String())
+			}
+			// For some reason, comparing these protos directly doesn't seem to work...
+			if !proto.Equal(res, tc.result) {
+				t.Errorf("CreateProfile() got = %v, want %v", res, tc.result)
+			}
 		})
 	}
 }

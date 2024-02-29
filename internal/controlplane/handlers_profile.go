@@ -58,6 +58,12 @@ func validateActionType(r string) db.NullActionType {
 func (s *Server) CreateProfile(ctx context.Context,
 	cpr *minderv1.CreateProfileRequest) (*minderv1.CreateProfileResponse, error) {
 	in := cpr.GetProfile()
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, minderv1.ErrValidationFailed) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create profile: %s", err)
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
+	}
 
 	entityCtx := engine.EntityFromContext(ctx)
 	err := entityCtx.Validate(ctx, s.store)
@@ -71,10 +77,6 @@ func (s *Server) CreateProfile(ctx context.Context,
 		ProjectID: entityCtx.Project.ID})
 	if err != nil {
 		return nil, providerError(err)
-	}
-
-	if err := in.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
 	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
