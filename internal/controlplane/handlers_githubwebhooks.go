@@ -222,6 +222,11 @@ func (s *Server) registerWebhookForRepository(
 	projectID uuid.UUID,
 	repo *pb.UpstreamRepositoryRef,
 ) (*pb.RegisterRepoResult, error) {
+	logger := zerolog.Ctx(ctx).With().
+		Str("repoName", repo.Name).
+		Str("repoOwner", repo.Owner).
+		Logger()
+	ctx = logger.WithContext(ctx)
 
 	if !pbuild.Implements(db.ProviderTypeGithub) {
 		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
@@ -261,7 +266,7 @@ func (s *Server) registerWebhookForRepository(
 
 	hookUUID, githubHook, err := s.webhookManager.CreateWebhook(ctx, client, repo.Owner, repo.Name)
 	if err != nil {
-		log.Printf("error while creating webhook: %v", err)
+		logger.Error().Msgf("error while creating webhook: %v", err)
 		errorStr := err.Error()
 		regResult.Status.Error = &errorStr
 		return regResult, nil

@@ -135,10 +135,7 @@ func (w *webhookManager) cleanupStaleHooks(
 	repoName string,
 	webhookHost string,
 ) error {
-	logger := zerolog.Ctx(ctx).With().
-		Str("repoName", repoName).
-		Str("repoOwner", repoOwner).Logger()
-
+	logger := zerolog.Ctx(ctx)
 	hooks, err := client.ListHooks(ctx, repoOwner, repoName)
 	if errors.Is(err, ghprovider.ErrNotFound) {
 		logger.Debug().Msg("no hooks found")
