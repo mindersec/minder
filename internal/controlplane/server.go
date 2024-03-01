@@ -56,6 +56,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -85,6 +86,7 @@ type Server struct {
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
 	profileValidator *profiles.Validator
+	webhookManager   webhooks.WebhookManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -143,6 +145,7 @@ func NewServer(
 		mt:               cpm,
 		provMt:           provtelemetry.NewNoopMetrics(),
 		profileValidator: profiles.NewValidator(store),
+		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

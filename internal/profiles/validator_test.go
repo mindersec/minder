@@ -45,7 +45,7 @@ func TestValidatorScenarios(t *testing.T) {
 	}
 	dbReturnsRuleType := dbMockWithRuleType(rawRuleDefinition)
 
-	var validatorTestScenarios = []struct {
+	validatorTestScenarios := []struct {
 		Name           string
 		Profile        *minderv1.Profile
 		DBSetup        func(store *mockdb.MockStore)
