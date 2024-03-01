@@ -26,6 +26,16 @@ toc_max_heading_level: 4
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
 
 
+<a name="minder-v1-EvalResultsService"></a>
+
+#### EvalResultsService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListEvaluationResults | [ListEvaluationResultsRequest](#minder-v1-ListEvaluationResultsRequest) | [ListEvaluationResultsResponse](#minder-v1-ListEvaluationResultsResponse) |  |
+
+
 <a name="minder-v1-HealthService"></a>
 
 #### HealthService
@@ -442,6 +452,20 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
+<a name="minder-v1-EntityTypedId"></a>
+
+#### EntityTypedId
+EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+such as (repo, 1), (artifact, 2), ...
+if the struct is reused in other messages, it should be moved to a top-level definition
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
+| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
+
+
 <a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest
@@ -549,25 +573,11 @@ get profile by id
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | name | [string](#string) |  | name is the name of the profile to get |
-| entity | [GetProfileStatusByNameRequest.EntityTypedId](#minder-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 | rule | [string](#string) |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
 | rule_type | [string](#string) |  |  |
 | rule_name | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
-
-#### GetProfileStatusByNameRequest.EntityTypedId
-EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
-such as (repo, 1), (artifact, 2), ...
-if the struct is reused in other messages, it should be moved to a top-level definition
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
-| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
 <a name="minder-v1-GetProfileStatusByNameResponse"></a>
@@ -769,6 +779,34 @@ GitType defines the git data ingester.
 | results | [Artifact](#minder-v1-Artifact) | repeated |  |
 
 
+<a name="minder-v1-ListEvaluationResultsRequest"></a>
+
+#### ListEvaluationResultsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the evaluation results are evaluated. |
+| profile | [string](#string) |  | ID can contain either a profile name or an ID |
+| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+
+The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+| rule_name | [string](#string) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse"></a>
+
+#### ListEvaluationResultsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | evaluation_results is the list of evaluation results. Results will typically be grouped by profile and project. |
+
+
 <a name="minder-v1-ListProfilesRequest"></a>
 
 #### ListProfilesRequest
@@ -778,6 +816,9 @@ list profiles
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
+| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+
+The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 
 
 <a name="minder-v1-ListProfilesResponse"></a>
@@ -1015,6 +1056,7 @@ Profile defines a profile that is user defined.
 | context | [Context](#minder-v1-Context) |  | context is the context in which the profile is evaluated. |
 | id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the profile instance. |
+| labels | [string](#string) | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles. |
 | repository | [Profile.Rule](#minder-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
 | build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |

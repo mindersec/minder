@@ -154,7 +154,7 @@ func artifactEvalStatus(
 				Project:  &project,
 			},
 			Name: profile.GetName(),
-			Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
+			Entity: &minderv1.EntityTypedId{
 				Id:   artifact.ArtifactPk,
 				Type: minderv1.Entity_ENTITY_ARTIFACTS,
 			},

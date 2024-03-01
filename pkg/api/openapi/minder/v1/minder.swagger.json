@@ -24,6 +24,9 @@
       "name": "ProfileService"
     },
     {
+      "name": "EvalResultsService"
+    },
+    {
       "name": "PermissionsService"
     },
     {
@@ -1082,6 +1085,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "labelFilter",
+            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1800,6 +1810,75 @@
         ]
       }
     },
+    "/api/v1/results": {
+      "get": {
+        "operationId": "EvalResultsService_ListEvaluationResults",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListEvaluationResultsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile",
+            "description": "ID can contain either a profile name or an ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "labelFilter",
+            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleName",
+            "description": "If set, only return evaluation results for the named rules.\nIf empty, return evaluation results for all rules",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "EvalResultsService"
+        ]
+      }
+    },
     "/api/v1/rule_type": {
       "post": {
         "operationId": "ProfileService_CreateRuleType",
@@ -2297,20 +2376,6 @@
       "type": "object",
       "title": "no configuration for now"
     },
-    "GetProfileStatusByNameRequestEntityTypedId": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/v1Entity",
-          "title": "entity is the entity to get status for. Incompatible with `all`"
-        },
-        "id": {
-          "type": "string",
-          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
-        }
-      },
-      "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
-    },
     "JQComparisonOperator": {
       "type": "object",
       "properties": {
@@ -2758,6 +2823,20 @@
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
     },
+    "v1EntityTypedId": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1Entity",
+          "title": "entity is the entity to get status for. Incompatible with `all`"
+        },
+        "id": {
+          "type": "string",
+          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
+        }
+      },
+      "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
+    },
     "v1GetArtifactByIdResponse": {
       "type": "object",
       "properties": {
@@ -2911,6 +2990,19 @@
         }
       }
     },
+    "v1ListEvaluationResultsResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "description": "evaluation_results is the list of evaluation results.\nResults will typically be grouped by profile and project."
+        }
+      }
+    },
     "v1ListProfilesResponse": {
       "type": "object",
       "properties": {
@@ -3019,6 +3111,13 @@
         "name": {
           "type": "string",
           "description": "name is the name of the profile instance."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "labels are a set of system-provided attributes which can be used to\nfilter profiles and status results.  Labels cannot be set by the user,\nbut are returned in ListProfiles."
         },
         "repository": {
           "type": "array",

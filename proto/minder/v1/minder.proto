@@ -582,6 +582,22 @@ service ProfileService {
     }
 }
 
+service EvalResultsService {
+    rpc ListEvaluationResults(ListEvaluationResultsRequest) returns (ListEvaluationResultsResponse) {
+        option (google.api.http) = {
+            // TODO: use
+            // get: "/api/v1/projects/{Context.project}/results"
+            // If we can promote Context.project to not be optional
+            get: "/api/v1/results"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+}
+
 service PermissionsService {
     rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
         option (google.api.http) = {
@@ -900,6 +916,12 @@ message DeleteProfileResponse {
 message ListProfilesRequest {
     // context is the context which contains the profiles
     Context context = 1;
+    // Filter profiles to only those matching the specified labels.
+    // 
+    // The default is to return all user-created profiles; the string "*" can
+    // be used to select all profiles, including system profiles.  This syntax
+    // may be expanded in the future.
+    string label_filter = 2;
 }
 
 message ListProfilesResponse {
@@ -962,21 +984,20 @@ message RuleEvaluationStatus {
     string rule_description_name = 14;
 }
 
+// EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+// such as (repo, 1), (artifact, 2), ...
+message EntityTypedId {
+    // entity is the entity to get status for. Incompatible with `all`
+    Entity type = 1;
+    // id is the ID of the entity to get status for. Incompatible with `all`
+    string id = 2;
+}
+
 message GetProfileStatusByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // name is the name of the profile to get
     string name = 2;
-
-    // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
-    // such as (repo, 1), (artifact, 2), ...
-    // if the struct is reused in other messages, it should be moved to a top-level definition
-    message EntityTypedId {
-        // entity is the entity to get status for. Incompatible with `all`
-        Entity type = 1;
-        // id is the ID of the entity to get status for. Incompatible with `all`
-        string id = 2;
-    }
 
     EntityTypedId entity = 3;
     bool all = 4;
@@ -1127,6 +1148,45 @@ message DeleteRuleTypeResponse {
 }
 
 // --- END RuleType CRUD definitions
+
+// --- START EvaluationResults definitions
+
+message ListEvaluationResultsRequest{
+    // context is the context in which the evaluation results are evaluated.
+    Context context = 1;
+
+    // profile is the profile name or ID to retrieve results for.
+    // If empty, return evaluation results for profiles selected by
+    // an empty label_filter.
+    oneof profile_selector {
+        // ID can contain either a profile name or an ID
+        string profile = 2;
+        // Filter profiles to only those matching the specified labels.
+        // 
+        // The default is to return all user-created profiles; the string "*" can
+        // be used to select all profiles, including system profiles.  This syntax
+        // may be expanded in the future.
+        string label_filter = 3;
+    }
+
+    // If set, only return evaluation results for the named rules.
+    // If empty, return evaluation results for all rules
+    repeated EntityTypedId entity = 4;
+
+    // If set, only return evaluation results for the named rules.
+    // If empty, return evaluation results for all rules
+    repeated string rule_name = 5;
+}
+
+message ListEvaluationResultsResponse {
+    // status is the list of evaluation results.
+    // Results will typically be grouped by profile and project.
+    repeated RuleEvaluationStatus status = 1;
+}
+
+// --- END EvaluationResults definitions
+
+
 
 // RestType defines the rest data evaluation.
 // This is used to fetch data from a REST endpoint.
@@ -1437,6 +1497,11 @@ message Profile {
 
     // name is the name of the profile instance.
     string name = 3;
+
+    // labels are a set of system-provided attributes which can be used to
+    // filter profiles and status results.  Labels cannot be set by the user,
+    // but are returned in ListProfiles.
+    repeated string labels = 12;
 
     // Rule defines the individual call of a certain rule type.
     message Rule {
