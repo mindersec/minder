@@ -215,6 +215,9 @@ type refreshTokenResponse struct {
 	AccessToken          string `json:"access_token"`
 	RefreshToken         string `json:"refresh_token"`
 	AccessTokenExpiresIn int    `json:"expires_in"`
+	// These will be present if there's an error
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
@@ -248,6 +251,10 @@ func RefreshCredentials(refreshToken string, issuerUrl string, clientId string) 
 	err = json.NewDecoder(resp.Body).Decode(&tokens)
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
+	}
+
+	if tokens.Error != "" {
+		return OpenIdCredentials{}, fmt.Errorf("error refreshing credentials: %s: %s", tokens.Error, tokens.ErrorDescription)
 	}
 
 	updatedCredentials := OpenIdCredentials{
