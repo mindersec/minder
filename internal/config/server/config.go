@@ -108,6 +108,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			defaultValue, err = strconv.ParseFloat(value, 64)
 		case reflect.Bool:
 			defaultValue, err = strconv.ParseBool(value)
+		case reflect.Slice:
+			defaultValue = nil
 		default:
 			err = fmt.Errorf("unhandled type %s", fieldType)
 		}

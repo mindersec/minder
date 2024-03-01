@@ -23,6 +23,7 @@ require (
 	github.com/google/go-containerregistry v0.19.0
 	github.com/google/go-github/v56 v56.0.0
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/securecookie v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
