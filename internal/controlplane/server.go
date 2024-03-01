@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
@@ -329,7 +330,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register provider callback handler: %w", err)
 	}
 
-	mux.Handle("/", gwmux)
+	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
 	mux.Handle("/static/", fs)
 
@@ -371,6 +372,31 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 		return server.Shutdown(shutdownCtx)
 	}
+}
+
+func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
+	if s.cfg.HTTPServer.CORS.Enabled {
+		var opts []handlers.CORSOption
+		if len(s.cfg.HTTPServer.CORS.AllowOrigins) > 0 {
+			opts = append(opts, handlers.AllowedOrigins(s.cfg.HTTPServer.CORS.AllowOrigins))
+		}
+		if len(s.cfg.HTTPServer.CORS.AllowMethods) > 0 {
+			opts = append(opts, handlers.AllowedMethods(s.cfg.HTTPServer.CORS.AllowMethods))
+		}
+		if len(s.cfg.HTTPServer.CORS.AllowHeaders) > 0 {
+			opts = append(opts, handlers.AllowedHeaders(s.cfg.HTTPServer.CORS.AllowHeaders))
+		}
+		if len(s.cfg.HTTPServer.CORS.ExposeHeaders) > 0 {
+			opts = append(opts, handlers.ExposedHeaders(s.cfg.HTTPServer.CORS.ExposeHeaders))
+		}
+		if s.cfg.HTTPServer.CORS.AllowCredentials {
+			opts = append(opts, handlers.AllowCredentials())
+		}
+
+		return handlers.CORS(opts...)(h)
+	}
+
+	return h
 }
 
 // startMetricServer starts a Prometheus metrics server and blocks while serving
