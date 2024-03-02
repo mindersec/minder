@@ -888,7 +888,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  | **Deprecated.**  |
-| limit | [int32](#int32) |  |  |
+| limit | [int64](#int64) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | cursor | [string](#string) |  |  |
 

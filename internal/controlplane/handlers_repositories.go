@@ -165,13 +165,13 @@ func (s *Server) ListRepositories(ctx context.Context,
 		repoId = sql.NullInt64{Valid: true, Int64: reqRepoCursor.RepoId}
 	}
 
-	limit := sql.NullInt32{Valid: false, Int32: 0}
+	limit := sql.NullInt64{Valid: false, Int64: 0}
 	reqLimit := in.GetLimit()
 	if reqLimit > 0 {
 		if reqLimit > maxFetchLimit {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "limit too high, max is %d", maxFetchLimit)
 		}
-		limit = sql.NullInt32{Valid: true, Int32: reqLimit + 1}
+		limit = sql.NullInt64{Valid: true, Int64: reqLimit + 1}
 	}
 
 	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
@@ -201,7 +201,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	var respRepoCursor *cursorutil.RepoCursor
-	if limit.Valid && len(repos) == int(limit.Int32) {
+	if limit.Valid && int64(len(repos)) == limit.Int64 {
 		lastRepo := repos[len(repos)-1]
 		respRepoCursor = &cursorutil.RepoCursor{
 			ProjectId: projectID.String(),

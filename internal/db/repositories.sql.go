@@ -281,14 +281,14 @@ SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_
 WHERE provider = $1 AND project_id = $2
   AND (repo_id >= $3 OR $3 IS NULL)
 ORDER BY project_id, provider, repo_id
-LIMIT $4
+LIMIT $4::bigint
 `
 
 type ListRepositoriesByProjectIDParams struct {
 	Provider  string        `json:"provider"`
 	ProjectID uuid.UUID     `json:"project_id"`
 	RepoID    sql.NullInt64 `json:"repo_id"`
-	Limit     sql.NullInt32 `json:"limit"`
+	Limit     sql.NullInt64 `json:"limit"`
 }
 
 func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error) {

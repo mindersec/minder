@@ -30,7 +30,7 @@ SELECT * FROM repositories
 WHERE provider = $1 AND project_id = $2
   AND (repo_id >= sqlc.narg('repo_id') OR sqlc.narg('repo_id') IS NULL)
 ORDER BY project_id, provider, repo_id
-LIMIT sqlc.narg('limit');
+LIMIT sqlc.narg('limit')::bigint;
 
 -- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories
