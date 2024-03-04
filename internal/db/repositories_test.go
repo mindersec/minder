@@ -181,47 +181,6 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	}
 }
 
-func TestUpdateRepository(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-	repo1 := createRandomRepository(t, project.ID, prov.Name)
-
-	arg := UpdateRepositoryParams{
-		ID:         repo1.ID,
-		Provider:   repo1.Provider,
-		ProjectID:  repo1.ProjectID,
-		RepoOwner:  repo1.RepoOwner,
-		RepoName:   repo1.RepoName,
-		RepoID:     repo1.RepoID,
-		IsPrivate:  repo1.IsPrivate,
-		IsFork:     repo1.IsFork,
-		WebhookID:  sql.NullInt64{Int64: 1234, Valid: true},
-		WebhookUrl: repo1.WebhookUrl,
-		DeployUrl:  repo1.DeployUrl,
-	}
-
-	repo2, err := testQueries.UpdateRepository(context.Background(), arg)
-	require.NoError(t, err)
-	require.NotEmpty(t, repo2)
-
-	require.Equal(t, repo1.ID, repo2.ID)
-	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
-	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
-	require.Equal(t, repo1.RepoName, repo2.RepoName)
-	require.Equal(t, repo1.RepoID, repo2.RepoID)
-	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
-	require.Equal(t, repo1.IsFork, repo2.IsFork)
-	require.Equal(t, arg.WebhookID, repo2.WebhookID)
-	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
-	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
-	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
-	require.NotEqual(t, repo1.UpdatedAt, repo2.UpdatedAt)
-}
-
 func TestDeleteRepository(t *testing.T) {
 	t.Parallel()
 

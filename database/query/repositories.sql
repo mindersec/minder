@@ -37,25 +37,6 @@ SELECT * FROM repositories
 WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
 ORDER BY repo_name;
 
--- name: UpdateRepository :one
-UPDATE repositories 
-SET project_id = $2,
-repo_owner = $3,
-repo_name = $4,
-repo_id = $5,
-is_private = $6,
-is_fork = $7,
-webhook_id = $8,
-webhook_url = $9,
-deploy_url = $10, 
-provider = $11,
--- set clone_url if the value is not an empty string
-clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
-updated_at = NOW(),
-default_branch = sqlc.arg(default_branch)
-WHERE id = $1 RETURNING *;
-
-
 -- name: DeleteRepository :exec
 DELETE FROM repositories
 WHERE id = $1;

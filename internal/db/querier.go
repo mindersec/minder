@@ -124,8 +124,6 @@ type Querier interface {
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
-	// set clone_url if the value is not an empty string
-	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)

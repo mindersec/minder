@@ -1522,21 +1522,6 @@ func (mr *MockStoreMockRecorder) UpdateProfile(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockStore)(nil).UpdateProfile), arg0, arg1)
 }
 
-// UpdateRepository mocks base method.
-func (m *MockStore) UpdateRepository(arg0 context.Context, arg1 db.UpdateRepositoryParams) (db.Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRepository", arg0, arg1)
-	ret0, _ := ret[0].(db.Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateRepository indicates an expected call of UpdateRepository.
-func (mr *MockStoreMockRecorder) UpdateRepository(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockStore)(nil).UpdateRepository), arg0, arg1)
-}
-
 // UpdateRuleType mocks base method.
 func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeParams) error {
 	m.ctrl.T.Helper()
