@@ -146,21 +146,6 @@ func (mr *MockStoreMockRecorder) CountUsers(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), arg0)
 }
 
-// CreateAccessToken mocks base method.
-func (m *MockStore) CreateAccessToken(arg0 context.Context, arg1 db.CreateAccessTokenParams) (db.ProviderAccessToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAccessToken", arg0, arg1)
-	ret0, _ := ret[0].(db.ProviderAccessToken)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateAccessToken indicates an expected call of CreateAccessToken.
-func (mr *MockStoreMockRecorder) CreateAccessToken(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccessToken", reflect.TypeOf((*MockStore)(nil).CreateAccessToken), arg0, arg1)
-}
-
 // CreateArtifact mocks base method.
 func (m *MockStore) CreateArtifact(arg0 context.Context, arg1 db.CreateArtifactParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
@@ -339,20 +324,6 @@ func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (
 func (mr *MockStoreMockRecorder) CreateUser(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), arg0, arg1)
-}
-
-// DeleteAccessToken mocks base method.
-func (m *MockStore) DeleteAccessToken(arg0 context.Context, arg1 db.DeleteAccessTokenParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccessToken", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteAccessToken indicates an expected call of DeleteAccessToken.
-func (mr *MockStoreMockRecorder) DeleteAccessToken(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccessToken", reflect.TypeOf((*MockStore)(nil).DeleteAccessToken), arg0, arg1)
 }
 
 // DeleteArtifact mocks base method.
@@ -1463,21 +1434,6 @@ func (mr *MockStoreMockRecorder) Rollback(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), arg0)
 }
 
-// UpdateAccessToken mocks base method.
-func (m *MockStore) UpdateAccessToken(arg0 context.Context, arg1 db.UpdateAccessTokenParams) (db.ProviderAccessToken, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAccessToken", arg0, arg1)
-	ret0, _ := ret[0].(db.ProviderAccessToken)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateAccessToken indicates an expected call of UpdateAccessToken.
-func (mr *MockStoreMockRecorder) UpdateAccessToken(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccessToken", reflect.TypeOf((*MockStore)(nil).UpdateAccessToken), arg0, arg1)
-}
-
 // UpdateLease mocks base method.
 func (m *MockStore) UpdateLease(arg0 context.Context, arg1 db.UpdateLeaseParams) error {
 	m.ctrl.T.Helper()
@@ -1534,6 +1490,21 @@ func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeP
 func (mr *MockStoreMockRecorder) UpdateRuleType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleType", reflect.TypeOf((*MockStore)(nil).UpdateRuleType), arg0, arg1)
+}
+
+// UpsertAccessToken mocks base method.
+func (m *MockStore) UpsertAccessToken(arg0 context.Context, arg1 db.UpsertAccessTokenParams) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertAccessToken", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertAccessToken indicates an expected call of UpsertAccessToken.
+func (mr *MockStoreMockRecorder) UpsertAccessToken(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAccessToken", reflect.TypeOf((*MockStore)(nil).UpsertAccessToken), arg0, arg1)
 }
 
 // UpsertArtifact mocks base method.
