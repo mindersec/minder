@@ -91,7 +91,6 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
-	ListAllRepositories(ctx context.Context, provider string) ([]Repository, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
@@ -106,7 +105,6 @@ type Querier interface {
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
-	ListRepositoriesByOwner(ctx context.Context, arg ListRepositoriesByOwnerParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
@@ -128,7 +126,6 @@ type Querier interface {
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	// set clone_url if the value is not an empty string
 	UpdateRepository(ctx context.Context, arg UpdateRepositoryParams) (Repository, error)
-	UpdateRepositoryByID(ctx context.Context, arg UpdateRepositoryByIDParams) (Repository, error)
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)

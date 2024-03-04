@@ -1225,21 +1225,6 @@ func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProviders", reflect.TypeOf((*MockStore)(nil).GlobalListProviders), arg0)
 }
 
-// ListAllRepositories mocks base method.
-func (m *MockStore) ListAllRepositories(arg0 context.Context, arg1 string) ([]db.Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllRepositories", arg0, arg1)
-	ret0, _ := ret[0].([]db.Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListAllRepositories indicates an expected call of ListAllRepositories.
-func (mr *MockStoreMockRecorder) ListAllRepositories(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockStore)(nil).ListAllRepositories), arg0, arg1)
-}
-
 // ListArtifactsByRepoID mocks base method.
 func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
@@ -1358,21 +1343,6 @@ func (m *MockStore) ListRegisteredRepositoriesByProjectIDAndProvider(arg0 contex
 func (mr *MockStoreMockRecorder) ListRegisteredRepositoriesByProjectIDAndProvider(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRegisteredRepositoriesByProjectIDAndProvider", reflect.TypeOf((*MockStore)(nil).ListRegisteredRepositoriesByProjectIDAndProvider), arg0, arg1)
-}
-
-// ListRepositoriesByOwner mocks base method.
-func (m *MockStore) ListRepositoriesByOwner(arg0 context.Context, arg1 db.ListRepositoriesByOwnerParams) ([]db.Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRepositoriesByOwner", arg0, arg1)
-	ret0, _ := ret[0].([]db.Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListRepositoriesByOwner indicates an expected call of ListRepositoriesByOwner.
-func (mr *MockStoreMockRecorder) ListRepositoriesByOwner(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesByOwner", reflect.TypeOf((*MockStore)(nil).ListRepositoriesByOwner), arg0, arg1)
 }
 
 // ListRepositoriesByProjectID mocks base method.
@@ -1565,21 +1535,6 @@ func (m *MockStore) UpdateRepository(arg0 context.Context, arg1 db.UpdateReposit
 func (mr *MockStoreMockRecorder) UpdateRepository(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockStore)(nil).UpdateRepository), arg0, arg1)
-}
-
-// UpdateRepositoryByID mocks base method.
-func (m *MockStore) UpdateRepositoryByID(arg0 context.Context, arg1 db.UpdateRepositoryByIDParams) (db.Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRepositoryByID", arg0, arg1)
-	ret0, _ := ret[0].(db.Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateRepositoryByID indicates an expected call of UpdateRepositoryByID.
-func (mr *MockStoreMockRecorder) UpdateRepositoryByID(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepositoryByID", reflect.TypeOf((*MockStore)(nil).UpdateRepositoryByID), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.

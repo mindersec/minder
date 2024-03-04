@@ -37,18 +37,6 @@ SELECT * FROM repositories
 WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
 ORDER BY repo_name;
 
--- name: ListRepositoriesByOwner :many
-SELECT * FROM repositories
-WHERE provider = $1 AND repo_owner = $2
-ORDER BY repo_name
-LIMIT $3
-OFFSET $4;
-
--- name: ListAllRepositories :many
-SELECT * FROM repositories WHERE provider = $1
-ORDER BY repo_name;
-
-
 -- name: UpdateRepository :one
 UPDATE repositories 
 SET project_id = $2,
@@ -66,22 +54,6 @@ clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.ar
 updated_at = NOW(),
 default_branch = sqlc.arg(default_branch)
 WHERE id = $1 RETURNING *;
-
--- name: UpdateRepositoryByID :one
-UPDATE repositories 
-SET project_id = $2,
-repo_owner = $3,
-repo_name = $4,
-is_private = $5,
-is_fork = $6,
-webhook_id = $7,
-webhook_url = $8,
-deploy_url = $9, 
-provider = $10,
-clone_url = CASE WHEN sqlc.arg(clone_url)::text = '' THEN clone_url ELSE sqlc.arg(clone_url)::text END,
-updated_at = NOW(),
-default_branch = sqlc.arg(default_branch)
-WHERE repo_id = $1 RETURNING *;
 
 
 -- name: DeleteRepository :exec
