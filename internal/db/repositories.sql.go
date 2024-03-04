@@ -188,17 +188,23 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repo
 }
 
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3 AND project_id = $4
 `
 
 type GetRepositoryByRepoNameParams struct {
-	Provider  string `json:"provider"`
-	RepoOwner string `json:"repo_owner"`
-	RepoName  string `json:"repo_name"`
+	Provider  string    `json:"provider"`
+	RepoOwner string    `json:"repo_owner"`
+	RepoName  string    `json:"repo_name"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error) {
-	row := q.db.QueryRowContext(ctx, getRepositoryByRepoName, arg.Provider, arg.RepoOwner, arg.RepoName)
+	row := q.db.QueryRowContext(ctx, getRepositoryByRepoName,
+		arg.Provider,
+		arg.RepoOwner,
+		arg.RepoName,
+		arg.ProjectID,
+	)
 	var i Repository
 	err := row.Scan(
 		&i.ID,

@@ -71,10 +71,14 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact name user repoOwner/repoName/artifactName")
 	}
 
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
 	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
 		Provider:  in.GetContext().GetProvider(),
 		RepoOwner: nameParts[0],
 		RepoName:  nameParts[1],
+		ProjectID: projectID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

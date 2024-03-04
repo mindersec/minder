@@ -129,7 +129,11 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	repo1 := createRandomRepository(t, project.ID, prov.Name)
 
 	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
-		Provider: repo1.Provider, RepoOwner: repo1.RepoOwner, RepoName: repo1.RepoName})
+		Provider:  repo1.Provider,
+		RepoOwner: repo1.RepoOwner,
+		RepoName:  repo1.RepoName,
+		ProjectID: project.ID,
+	})
 	require.NoError(t, err)
 	require.NotEmpty(t, repo2)
 

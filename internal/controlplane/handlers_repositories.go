@@ -274,8 +274,12 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	repo, err := s.store.GetRepositoryByRepoName(ctx,
-		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
+		Provider:  provider.Name,
+		RepoOwner: fragments[0],
+		RepoName:  fragments[1],
+		ProjectID: projectID,
+	})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
@@ -352,8 +356,12 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	repo, err := s.store.GetRepositoryByRepoName(ctx,
-		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
+		Provider:  provider.Name,
+		RepoOwner: fragments[0],
+		RepoName:  fragments[1],
+		ProjectID: projectID,
+	})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
