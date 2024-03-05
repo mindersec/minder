@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -547,4 +548,22 @@ func GetPullRequest(
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,
 	}, nil
+}
+
+// ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level
+func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
+	switch viperLogLevel {
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	default:
+		return zerolog.InfoLevel // Default to info level if the mapping is not found
+	}
 }

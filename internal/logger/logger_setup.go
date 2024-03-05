@@ -23,13 +23,14 @@ import (
 	"github.com/rs/zerolog/log"
 
 	config "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/util"
 )
 
 // FromFlags configures logging and returns a logger with settings matching
 // the supplied cfg.  It also performs some global initialization, because
 // that's how zerolog works.
 func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
-	zlevel := viperLogLevelToZerologLevel(cfg.Level)
+	zlevel := util.ViperLogLevelToZerologLevel(cfg.Level)
 	zerolog.SetGlobalLevel(zlevel)
 
 	loggers := []io.Writer{}
