@@ -1226,6 +1226,21 @@ func (mr *MockStoreMockRecorder) ListFlushCache(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlushCache", reflect.TypeOf((*MockStore)(nil).ListFlushCache), arg0)
 }
 
+// ListOldestRuleEvaluationsByRepositoryId mocks base method.
+func (m *MockStore) ListOldestRuleEvaluationsByRepositoryId(arg0 context.Context, arg1 []uuid.UUID) ([]db.ListOldestRuleEvaluationsByRepositoryIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOldestRuleEvaluationsByRepositoryId", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListOldestRuleEvaluationsByRepositoryIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOldestRuleEvaluationsByRepositoryId indicates an expected call of ListOldestRuleEvaluationsByRepositoryId.
+func (mr *MockStoreMockRecorder) ListOldestRuleEvaluationsByRepositoryId(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldestRuleEvaluationsByRepositoryId", reflect.TypeOf((*MockStore)(nil).ListOldestRuleEvaluationsByRepositoryId), arg0, arg1)
+}
+
 // ListOrganizations mocks base method.
 func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganizationsParams) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1269,6 +1284,21 @@ func (m *MockStore) ListProfilesInstantiatingRuleType(arg0 context.Context, arg1
 func (mr *MockStoreMockRecorder) ListProfilesInstantiatingRuleType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesInstantiatingRuleType", reflect.TypeOf((*MockStore)(nil).ListProfilesInstantiatingRuleType), arg0, arg1)
+}
+
+// ListProjects mocks base method.
+func (m *MockStore) ListProjects(arg0 context.Context, arg1 db.ListProjectsParams) ([]db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProjects", arg0, arg1)
+	ret0, _ := ret[0].([]db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProjects indicates an expected call of ListProjects.
+func (mr *MockStoreMockRecorder) ListProjects(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockStore)(nil).ListProjects), arg0, arg1)
 }
 
 // ListProvidersByProjectID mocks base method.

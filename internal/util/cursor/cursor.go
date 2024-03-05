@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // cursorDelimiter is the delimiter used to encode/decode cursors
@@ -115,4 +117,38 @@ func (c *ProviderCursor) String() string {
 		return ""
 	}
 	return EncodeValue(c.CreatedAt.Format(time.RFC3339Nano))
+}
+
+// ProjectCursor is a cursor for listing projects
+type ProjectCursor struct {
+	// Id is the id of the project
+	Id uuid.UUID
+}
+
+// NewProjectCursor creates a new ProjectCursor from an encoded cursor
+func NewProjectCursor(encodedCursor string) (*ProjectCursor, error) {
+	if encodedCursor == "" {
+		return &ProjectCursor{}, nil
+	}
+
+	cursor, err := DecodeValue(encodedCursor)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedId, err := uuid.Parse(cursor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProjectCursor{
+		Id: parsedId,
+	}, nil
+}
+
+func (c *ProjectCursor) String() string {
+	if c == nil {
+		return ""
+	}
+	return EncodeValue(c.Id.String())
 }

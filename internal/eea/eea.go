@@ -54,7 +54,7 @@ func NewEEA(querier db.Store, evt *events.Eventer, cfg *serverconfig.AggregatorC
 
 // Register implements the Consumer interface.
 func (e *EEA) Register(r events.Registrar) {
-	r.Register(events.FlushEntityEventTopic, e.FlushMessageHandler)
+	r.Register(events.FlushEntityEventTopic, e.FlushMessageHandler, events.WebhookSubscriber)
 }
 
 // AggregateMiddleware will pass on the event to the executor engine

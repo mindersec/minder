@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/reminderprocessor"
 )
 
 var serveCmd = &cobra.Command{
@@ -163,6 +164,11 @@ var serveCmd = &cobra.Command{
 		}
 
 		s.ConsumeEvents(rec)
+
+		if cfg.Events.ReminderSubscriber.Enabled {
+			reminderProcessor := reminderprocessor.NewReminderProcessor(evt)
+			s.ConsumeEvents(reminderProcessor)
+		}
 
 		// Start the gRPC and HTTP server in separate goroutines
 		errg.Go(func() error {

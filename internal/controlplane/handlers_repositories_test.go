@@ -265,7 +265,7 @@ func (s *StubEventer) Publish(_ string, messages ...*message.Message) error {
 }
 
 // Register implements events.Interface.
-func (*StubEventer) Register(string, message.NoPublishHandlerFunc, ...message.HandlerMiddleware) {
+func (*StubEventer) Register(string, message.NoPublishHandlerFunc, events.SubscriberType, ...message.HandlerMiddleware) {
 	panic("unimplemented")
 }
 

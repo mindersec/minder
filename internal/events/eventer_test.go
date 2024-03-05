@@ -53,7 +53,7 @@ func driverConfig() *serverconfig.EventConfig {
 
 func (f *fakeConsumer) Register(r events.Registrar) {
 	for _, t := range f.topics {
-		r.Register(t, f.makeHandler(t, f.out))
+		r.Register(t, f.makeHandler(t, f.out), events.WebhookSubscriber)
 	}
 }
 

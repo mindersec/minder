@@ -20,7 +20,9 @@ RUN_DOCKER_NO_TEARDOWN?=false
 YQ_BUILD_REPLACE_STRING := 'del(.services.minder.build) | \
 .services.minder.image |= "ko://github.com/stacklok/minder/cmd/server" | \
 del(.services.migrate.build) | \
-.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server"'
+.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server" | \
+del(.services.reminder.build) | \
+.services.reminder.image |= "ko://github.com/stacklok/minder/cmd/reminder"'
 
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments

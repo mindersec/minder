@@ -89,3 +89,10 @@ WITH RECURSIVE get_children AS (
 DELETE FROM projects
 WHERE id IN (SELECT id FROM get_children)
 RETURNING id, name, metadata, created_at, updated_at, parent_id;
+
+-- name: ListProjects :many
+SELECT *
+FROM projects
+WHERE (id >= sqlc.narg('id') OR sqlc.narg('id') IS NULL)
+ORDER BY id
+LIMIT sqlc.narg('limit')::bigint;

@@ -91,12 +91,18 @@ type Querier interface {
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
+	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
+	// repository_id may be null, but the nature of query ensures null columns are not selected (ANY ($1::uuid[])) part.
+	// MIN cast is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	// TODO: Add project, provider to the query?
+	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, dollar_1 []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Project, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
 	// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
 	// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
 	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error)
+	ListProjects(ctx context.Context, arg ListProjectsParams) ([]Project, error)
 	// ListProvidersByProjectID allows us to lits all providers for a given project.
 	ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error)
 	// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project

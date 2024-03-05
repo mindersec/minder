@@ -86,6 +86,6 @@ func NewReconciler(
 
 // Register implements the Consumer interface.
 func (e *Reconciler) Register(r events.Registrar) {
-	r.Register(InternalReconcilerEventTopic, e.handleRepoReconcilerEvent)
-	r.Register(InternalProfileInitEventTopic, e.handleProfileInitEvent)
+	r.Register(InternalReconcilerEventTopic, e.handleRepoReconcilerEvent, events.WebhookSubscriber)
+	r.Register(InternalProfileInitEventTopic, e.handleProfileInitEvent, events.WebhookSubscriber)
 }

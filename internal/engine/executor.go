@@ -115,7 +115,7 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
+	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, events.WebhookSubscriber, e.mdws...)
 }
 
 // Wait waits for all the entity executions to finish.

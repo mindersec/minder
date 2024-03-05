@@ -29,6 +29,8 @@ type EventConfig struct {
 	SQLPubSub SQLEventConfig `mapstructure:"sql" default:"{}"`
 	// Aggregator is the configuration for the event aggregator middleware
 	Aggregator AggregatorConfig `mapstructure:"aggregator" default:"{}"`
+	// ReminderSubscriber is the configuration for the reminder subscriber
+	ReminderSubscriber ReminderSubscriber `mapstructure:"reminder_subscriber" default:"{}"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
@@ -55,4 +57,10 @@ type AggregatorConfig struct {
 	// LockInterval is the interval for locking events in seconds.
 	// This is the threshold between rule evaluations + actions.
 	LockInterval int64 `mapstructure:"lock_interval" default:"30"`
+}
+
+// ReminderSubscriber is the configuration for the reminder subscriber to connect to the event queue
+type ReminderSubscriber struct {
+	Enabled    bool                  `mapstructure:"enabled" default:"false"`
+	Connection config.DatabaseConfig `mapstructure:"connection" default:"{}"`
 }

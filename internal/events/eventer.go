@@ -72,6 +72,16 @@ const (
 // detail we don't want to expose.
 type Handler = message.NoPublishHandlerFunc
 
+// SubscriberType is an enum for the type of subscriber
+type SubscriberType string
+
+const (
+	// WebhookSubscriber is the subscriber type for the webhook
+	WebhookSubscriber SubscriberType = "webhook"
+	// ReminderSubscriber is the subscriber type for the reminder
+	ReminderSubscriber SubscriberType = "reminder"
+)
+
 // Registrar provides an interface which allows an event router to expose
 // itself to event consumers.
 type Registrar interface {
@@ -80,7 +90,8 @@ type Registrar interface {
 	// functions, or to call Register multiple times with different topics and the same
 	// handler function.  It's allowed to call Register with both argument the same, but
 	// then events will be delivered twice to the handler, which is probably not what you want.
-	Register(topic string, handler Handler, mdw ...message.HandlerMiddleware)
+	Register(topic string, handler Handler, subscriberType SubscriberType,
+		mdw ...message.HandlerMiddleware)
 
 	// HandleAll registers all the consumers with the registrar
 	// TODO: should this be a different interface?
@@ -108,7 +119,8 @@ type Interface interface {
 	Publish(topic string, messages ...*message.Message) error
 
 	// Register subscribes to a topic and handles incoming messages
-	Register(topic string, handler message.NoPublishHandlerFunc, mdw ...message.HandlerMiddleware)
+	Register(topic string, handler message.NoPublishHandlerFunc, subscriberType SubscriberType,
+		mdw ...message.HandlerMiddleware)
 
 	// ConsumeEvents allows registration of multiple consumers easily
 	ConsumeEvents(consumers ...Consumer)
@@ -130,6 +142,8 @@ type Eventer struct {
 	webhookPublisher message.Publisher
 	// webhookSubscriber will subscribe to the webhook topic and handle incoming events
 	webhookSubscriber message.Subscriber
+	// reminderSubscriber will subscribe to the reminder topic and handle incoming events
+	reminderSubscriber message.Subscriber
 	// TODO: We'll have a Final publisher that will publish to the final topic
 	msgInstruments *messageInstruments
 
@@ -179,6 +193,16 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
+	var reminderSub message.Subscriber
+	var reminderCl driverCloser
+
+	if cfg.ReminderSubscriber.Enabled {
+		reminderSub, reminderCl, err = createReminderSubscriber(ctx, cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create reminder driver: %w", err)
+		}
+	}
+
 	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
@@ -207,9 +231,10 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 	}
 
 	return &Eventer{
-		router:            router,
-		webhookPublisher:  pubWithMetrics,
-		webhookSubscriber: subWithMetrics,
+		router:             router,
+		webhookPublisher:   pubWithMetrics,
+		webhookSubscriber:  subWithMetrics,
+		reminderSubscriber: reminderSub,
 		closer: func() {
 			//nolint:gosec // It's fine if there's an error as long as we close the router
 			pubWithMetrics.Close()
@@ -217,6 +242,12 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (*Eventer, error)
 			subWithMetrics.Close()
 			// driver close
 			cl()
+			if cfg.ReminderSubscriber.Enabled {
+				//nolint:gosec // It's fine if there's an error as long as we close the router
+				reminderSub.Close()
+				// driver close
+				reminderCl()
+			}
 		},
 		msgInstruments: metricInstruments,
 	}, nil
@@ -316,6 +347,33 @@ func buildPostgreSQLDriver(
 	}, nil
 }
 
+func createReminderSubscriber(ctx context.Context, cfg *serverconfig.EventConfig) (message.Subscriber, driverCloser, error) {
+	db, _, err := cfg.ReminderSubscriber.Connection.GetDBConnection(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to connect to events database: %w", err)
+	}
+
+	subscriber, err := watermillsql.NewSubscriber(
+		db,
+		watermillsql.SubscriberConfig{
+			SchemaAdapter:    watermillsql.DefaultPostgreSQLSchema{},
+			OffsetsAdapter:   watermillsql.DefaultPostgreSQLOffsetsAdapter{},
+			InitializeSchema: true,
+		},
+		watermill.NewStdLogger(false, false),
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create SQL subscriber: %w", err)
+	}
+
+	return subscriber, func() {
+		err := db.Close()
+		if err != nil {
+			log.Printf("error closing events database connection: %v", err)
+		}
+	}, nil
+}
+
 // Close closes the router
 func (e *Eventer) Close() error {
 	e.closer()
@@ -358,14 +416,25 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 func (e *Eventer) Register(
 	topic string,
 	handler message.NoPublishHandlerFunc,
+	subscriberType SubscriberType,
 	mdw ...message.HandlerMiddleware,
 ) {
 	// From https://stackoverflow.com/questions/7052693/how-to-get-the-name-of-a-function-in-go
 	funcName := fmt.Sprintf("%s-%s", runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), topic)
+	var subscriber message.Subscriber
+	switch subscriberType {
+	case WebhookSubscriber:
+		subscriber = e.webhookSubscriber
+	case ReminderSubscriber:
+		subscriber = e.reminderSubscriber
+	default:
+		subscriber = e.webhookSubscriber
+	}
+
 	hand := e.router.AddNoPublisherHandler(
 		funcName,
 		topic,
-		e.webhookSubscriber,
+		subscriber,
 		func(msg *message.Message) error {
 			if err := handler(msg); err != nil {
 				e.router.Logger().Error("Found error handling message", err, watermill.LogFields{

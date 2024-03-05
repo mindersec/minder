@@ -54,7 +54,7 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 
 	go func() {
 		t.Log("Running eventer")
-		evt.Register("test-topic", pq.Pass, mdw.TelemetryStoreMiddleware)
+		evt.Register("test-topic", pq.Pass, events.WebhookSubscriber, mdw.TelemetryStoreMiddleware)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()

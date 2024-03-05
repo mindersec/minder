@@ -81,13 +81,13 @@ func TestAggregator(t *testing.T) {
 	rateLimitedMessageTopic := t.Name()
 
 	// This tests that the middleware works as expected
-	evt.Register(rateLimitedMessageTopic, rateLimitedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(rateLimitedMessageTopic, rateLimitedMessages.Add, events.WebhookSubscriber, aggr.AggregateMiddleware)
 
 	// This tests that flushing works as expected
 	aggr.Register(evt)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, events.WebhookSubscriber, aggr.AggregateMiddleware)
 
 	go func() {
 		t.Log("Running eventer")
@@ -335,7 +335,7 @@ func TestFlushAll(t *testing.T) {
 			require.NoError(t, err)
 
 			flushedMessages := newTestPubSub()
-			evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+			evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, events.WebhookSubscriber)
 
 			go func() {
 				t.Log("Running eventer")
@@ -392,7 +392,7 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 	flushedMessages := newTestPubSub()
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, events.WebhookSubscriber, aggr.AggregateMiddleware)
 
 	t.Log("Flushing all")
 	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
@@ -420,7 +420,7 @@ func TestFlushAllListFlushFails(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, events.WebhookSubscriber)
 
 	go func() {
 		t.Log("Running eventer")
@@ -466,7 +466,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, events.WebhookSubscriber)
 
 	go func() {
 		t.Log("Running eventer")

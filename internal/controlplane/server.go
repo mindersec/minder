@@ -188,8 +188,9 @@ func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 }
 
 // Register implements events.Registrar
-func (s *Server) Register(topic string, handler events.Handler, mdw ...message.HandlerMiddleware) {
-	s.evt.Register(topic, handler, mdw...)
+func (s *Server) Register(topic string, handler events.Handler,
+	subscriberType events.SubscriberType, mdw ...message.HandlerMiddleware) {
+	s.evt.Register(topic, handler, subscriberType, mdw...)
 }
 
 // ConsumeEvents implements events.Registrar

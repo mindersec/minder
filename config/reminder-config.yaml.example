@@ -1,0 +1,40 @@
+#
+# Copyright 2024 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+recurrence:
+  interval: "1h"
+  batch_size: 100
+  max_per_project: 10
+  min_project_fetch_limit: 10
+  min_elapsed: "1h"
+
+database:
+  dbhost: "postgres"
+  dbport: 5432
+  dbuser: postgres
+  dbpass: postgres
+  dbname: minder
+  sslmode: disable
+
+cursor_file: "/tmp/reminder-cursor"
+
+events:
+  sql_connection:
+    dbhost: "reminder-event-postgres"
+    dbport: 5432
+    dbuser: postgres
+    dbpass: postgres
+    dbname: reminder
+    sslmode: disable

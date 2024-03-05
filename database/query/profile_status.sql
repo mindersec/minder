@@ -72,6 +72,19 @@ SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
 WHERE p.project_id = $1;
 
+-- ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
+-- repository_id may be null, but the nature of query ensures null columns are not selected (ANY ($1::uuid[])) part.
+-- MIN cast is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+
+-- TODO: Add project, provider to the query?
+
+-- name: ListOldestRuleEvaluationsByRepositoryId :many
+SELECT re.repository_id::uuid AS repository_id, MIN(rde.last_updated)::timestamp AS oldest_last_updated
+FROM rule_evaluations re
+       INNER JOIN rule_details_eval rde ON re.id = rde.rule_eval_id
+WHERE re.repository_id = ANY ($1::uuid[])
+GROUP BY re.repository_id;
+
 -- DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
 -- but locks the table before doing so.
 

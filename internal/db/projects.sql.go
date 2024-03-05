@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"time"
 
@@ -322,6 +323,50 @@ WHERE parent_id IS NULL
 
 func (q *Queries) GetRootProjects(ctx context.Context) ([]Project, error) {
 	rows, err := q.db.QueryContext(ctx, getRootProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsOrganization,
+			&i.Metadata,
+			&i.ParentID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProjects = `-- name: ListProjects :many
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at
+FROM projects
+WHERE (id >= $1 OR $1 IS NULL)
+ORDER BY id
+LIMIT $2::bigint
+`
+
+type ListProjectsParams struct {
+	ID    uuid.NullUUID `json:"id"`
+	Limit sql.NullInt64 `json:"limit"`
+}
+
+func (q *Queries) ListProjects(ctx context.Context, arg ListProjectsParams) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, listProjects, arg.ID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
