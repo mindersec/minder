@@ -70,6 +70,7 @@ func CmdTest() *cobra.Command {
 	}
 	// bind environment variable
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 	return testCmd
 }
 
