@@ -2835,7 +2835,7 @@
           "title": "id is the ID of the entity to get status for. Incompatible with `all`"
         }
       },
-      "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -2999,7 +2999,7 @@
             "type": "object",
             "$ref": "#/definitions/v1RuleEvaluationStatus"
           },
-          "description": "evaluation_results is the list of evaluation results.\nResults will typically be grouped by profile and project."
+          "description": "status is the list of evaluation results.\nResults will typically be grouped by profile and project."
         }
       }
     },
@@ -3117,7 +3117,7 @@
           "items": {
             "type": "string"
           },
-          "description": "labels are a set of system-provided attributes which can be used to\nfilter profiles and status results.  Labels cannot be set by the user,\nbut are returned in ListProfiles."
+          "description": "labels are a set of system-provided attributes which can be used to\nfilter profiles and status results.  Labels cannot be set by the user,\nbut are returned in ListProfiles.\n\nLabels use DNS label constraints, with a possible namespace prefix\nseparated by a colon (:).  They are intended to allow filtering, but\nnot to store arbitrary metadata.\nDNS labels are 1-63 character alphanumeric strings with internal hyphens.\nAn RE2-style validation regex would be:\n\nDNS_STR = \"[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?\"\n($DNS_STR:)?$DNS_STR"
         },
         "repository": {
           "type": "array",

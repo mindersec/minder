@@ -1169,8 +1169,8 @@ message ListEvaluationResultsRequest{
         string label_filter = 3;
     }
 
-    // If set, only return evaluation results for the named rules.
-    // If empty, return evaluation results for all rules
+    // If set, only return evaluation results for the named entities.
+    // If empty, return evaluation results for all entities
     repeated EntityTypedId entity = 4;
 
     // If set, only return evaluation results for the named rules.
@@ -1501,6 +1501,15 @@ message Profile {
     // labels are a set of system-provided attributes which can be used to
     // filter profiles and status results.  Labels cannot be set by the user,
     // but are returned in ListProfiles.
+    //
+    // Labels use DNS label constraints, with a possible namespace prefix
+    // separated by a colon (:).  They are intended to allow filtering, but
+    // not to store arbitrary metadata.
+    // DNS labels are 1-63 character alphanumeric strings with internal hyphens.
+    // An RE2-style validation regex would be:
+    //
+    // DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?"
+    // ($DNS_STR:)?$DNS_STR
     repeated string labels = 12;
 
     // Rule defines the individual call of a certain rule type.

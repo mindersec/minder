@@ -457,7 +457,6 @@ DiffType defines the diff data ingester.
 #### EntityTypedId
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
-if the struct is reused in other messages, it should be moved to a top-level definition
 
 
 | Field | Type | Label | Description |
@@ -792,7 +791,7 @@ GitType defines the git data ingester.
 | label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
-| entity | [EntityTypedId](#minder-v1-EntityTypedId) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
 | rule_name | [string](#string) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
 
 
@@ -804,7 +803,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | evaluation_results is the list of evaluation results. Results will typically be grouped by profile and project. |
+| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | status is the list of evaluation results. Results will typically be grouped by profile and project. |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -1056,7 +1055,11 @@ Profile defines a profile that is user defined.
 | context | [Context](#minder-v1-Context) |  | context is the context in which the profile is evaluated. |
 | id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the profile instance. |
-| labels | [string](#string) | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles. |
+| labels | [string](#string) | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles.
+
+Labels use DNS label constraints, with a possible namespace prefix separated by a colon (:). They are intended to allow filtering, but not to store arbitrary metadata. DNS labels are 1-63 character alphanumeric strings with internal hyphens. An RE2-style validation regex would be:
+
+DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | repository | [Profile.Rule](#minder-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
 | build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |

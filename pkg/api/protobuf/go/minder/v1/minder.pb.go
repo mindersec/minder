@@ -4144,7 +4144,6 @@ func (x *RuleEvaluationStatus) GetRuleDescriptionName() string {
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 // such as (repo, 1), (artifact, 2), ...
-// if the struct is reused in other messages, it should be moved to a top-level definition
 type EntityTypedId struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -5248,8 +5247,8 @@ type ListEvaluationResultsRequest struct {
 	//	*ListEvaluationResultsRequest_Profile
 	//	*ListEvaluationResultsRequest_LabelFilter
 	ProfileSelector isListEvaluationResultsRequest_ProfileSelector `protobuf_oneof:"profile_selector"`
-	// If set, only return evaluation results for the named rules.
-	// If empty, return evaluation results for all rules
+	// If set, only return evaluation results for the named entities.
+	// If empty, return evaluation results for all entities
 	Entity []*EntityTypedId `protobuf:"bytes,4,rep,name=entity,proto3" json:"entity,omitempty"`
 	// If set, only return evaluation results for the named rules.
 	// If empty, return evaluation results for all rules
@@ -5357,7 +5356,7 @@ type ListEvaluationResultsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// evaluation_results is the list of evaluation results.
+	// status is the list of evaluation results.
 	// Results will typically be grouped by profile and project.
 	Status []*RuleEvaluationStatus `protobuf:"bytes,1,rep,name=status,proto3" json:"status,omitempty"`
 }
@@ -5877,6 +5876,15 @@ type Profile struct {
 	// labels are a set of system-provided attributes which can be used to
 	// filter profiles and status results.  Labels cannot be set by the user,
 	// but are returned in ListProfiles.
+	//
+	// Labels use DNS label constraints, with a possible namespace prefix
+	// separated by a colon (:).  They are intended to allow filtering, but
+	// not to store arbitrary metadata.
+	// DNS labels are 1-63 character alphanumeric strings with internal hyphens.
+	// An RE2-style validation regex would be:
+	//
+	// DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?"
+	// ($DNS_STR:)?$DNS_STR
 	Labels []string `protobuf:"bytes,12,rep,name=labels,proto3" json:"labels,omitempty"`
 	// These are the entities that one could set in the profile.
 	Repository       []*Profile_Rule `protobuf:"bytes,4,rep,name=repository,proto3" json:"repository,omitempty"`
