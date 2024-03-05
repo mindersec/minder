@@ -276,5 +276,3 @@ require (
 	k8s.io/klog/v2 v2.120.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.12 // indirect
