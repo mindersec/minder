@@ -78,3 +78,8 @@ bootstrap: ## install build deps
 	openssl rand -base64 32 > .ssh/token_key_passphrase
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
+
+.PHONY: lint-fix
+lint-fix: ## fix all linting issues which can be automatically fixed
+	golangci-lint run --fix
+
