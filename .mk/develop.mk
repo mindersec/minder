@@ -17,6 +17,11 @@ DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
 RUN_DOCKER_NO_TEARDOWN?=false
 
+YQ_BUILD_REPLACE_STRING := 'del(.services.minder.build) | \
+.services.minder.image |= "ko://github.com/stacklok/minder/cmd/server" | \
+del(.services.migrate.build) | \
+.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server"'
+
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
@@ -42,7 +47,7 @@ run-docker: run-docker-teardown ## run the app under docker-compose
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	@# We also need to remove the build: directives to use ko builds
 	@# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	@sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	@yq e $(YQ_BUILD_REPLACE_STRING) docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@$(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	@rm .resolved-compose.yaml*
 
@@ -67,7 +72,8 @@ bootstrap: ## install build deps
 			github.com/sqlc-dev/sqlc \
 			github.com/norwoodj/helm-docs/cmd/helm-docs \
 			github.com/openfga/cli/cmd/fga \
-			go.uber.org/mock/mockgen
+			go.uber.org/mock/mockgen \
+			github.com/mikefarah/yq/v4
 	# Create a config.yaml and server-config.yaml if they don't exist
 	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
