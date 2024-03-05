@@ -91,7 +91,7 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 		return nil, fmt.Errorf("could not get clone url")
 	}
 
-	branch := gi.getBranch(userCfg)
+	branch := gi.getBranch(ent, userCfg)
 
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is
@@ -118,7 +118,7 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 	}, nil
 }
 
-func (gi *Git) getBranch(userCfg *IngesterConfig) string {
+func (gi *Git) getBranch(ent protoreflect.ProtoMessage, userCfg *IngesterConfig) string {
 	// If the user has specified a branch, use that
 	if userCfg.Branch != "" {
 		return userCfg.Branch
@@ -128,6 +128,14 @@ func (gi *Git) getBranch(userCfg *IngesterConfig) string {
 	// configuration, use that
 	if gi.cfg.Branch != "" {
 		return gi.cfg.Branch
+	}
+
+	// If the entity is a repository get it from the entity
+	// else, use the default
+	if repo, ok := ent.(*pb.Repository); ok {
+		if repo.GetDefaultBranch() != "" {
+			return repo.GetDefaultBranch()
+		}
 	}
 
 	// If the branch is not provided in the rule-type
