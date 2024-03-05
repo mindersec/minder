@@ -16,7 +16,6 @@ type Querier interface {
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
-	CreateAccessToken(ctx context.Context, arg CreateAccessTokenParams) (ProviderAccessToken, error)
 	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
 	CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Project, error)
 	CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error)
@@ -29,7 +28,6 @@ type Querier interface {
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	DeleteAccessToken(ctx context.Context, arg DeleteAccessTokenParams) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteOrganization(ctx context.Context, id uuid.UUID) error
@@ -120,11 +118,11 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
-	UpdateAccessToken(ctx context.Context, arg UpdateAccessTokenParams) (ProviderAccessToken, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Project, error)
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
+	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
