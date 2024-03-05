@@ -39,5 +39,12 @@ cover: init-examples ## display test coverage
 	go tool cover -func=coverage.out
 
 .PHONY: lint
-lint: ## lint go files
+lint: lint-go lint-buf ## lint
+
+.PHONY: lint-go
+lint-go:
 	golangci-lint run
+
+.PHONY: lint-buf
+lint-buf:
+	buf lint
