@@ -1,23 +1,28 @@
 ---
-title: minder auth
+title: minder auth offline-token get
 ---
-## minder auth
+## minder auth offline-token get
 
-Authorize and manage accounts within a minder control plane
+Retrieve an offline token
 
 ### Synopsis
 
-The minder auth command project lets you create accounts and grant or revoke
-authorization to existing accounts within a minder control plane.
+The minder auth offline-token get command project lets you retrieve an offline token
+for the minder control plane.
+
+Offline tokens are used to authenticate to the minder control plane without
+requiring the user's presence. This is useful for long-running processes
+that need to authenticate to the control plane.
 
 ```
-minder auth [flags]
+minder auth offline-token get [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for auth
+  -f, --file string   The file to write the offline token to (default "offline.token")
+  -h, --help          help for get
 ```
 
 ### Options inherited from parent commands
@@ -33,10 +38,5 @@ minder auth [flags]
 
 ### SEE ALSO
 
-* [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder auth delete](minder_auth_delete.md)	 - Permanently delete account
-* [minder auth login](minder_auth_login.md)	 - Login to Minder
-* [minder auth logout](minder_auth_logout.md)	 - Logout from minder control plane.
 * [minder auth offline-token](minder_auth_offline-token.md)	 - Manage offline tokens
-* [minder auth whoami](minder_auth_whoami.md)	 - whoami for current user
 

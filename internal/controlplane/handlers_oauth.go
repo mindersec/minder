@@ -39,7 +39,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -246,15 +245,6 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
-	// delete token if it exists
-	err = s.store.DeleteAccessToken(ctx, db.DeleteAccessTokenParams{
-		Provider:  provider,
-		ProjectID: stateData.ProjectID,
-	})
-	if err != nil {
-		return fmt.Errorf("error deleting access token: %w", err)
-	}
-
 	var owner sql.NullString
 	if stateData.OwnerFilter.Valid {
 		owner = sql.NullString{Valid: true, String: stateData.OwnerFilter.String}
@@ -262,7 +252,7 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 		owner = sql.NullString{Valid: false}
 	}
 
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{
+	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
 		ProjectID:      stateData.ProjectID,
 		Provider:       provider,
 		EncryptedToken: encodedToken,
@@ -337,12 +327,13 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		owner = sql.NullString{String: *in.Owner, Valid: true}
 	}
 
-	_, err = s.store.CreateAccessToken(ctx, db.CreateAccessTokenParams{ProjectID: projectID, Provider: provider.Name,
-		EncryptedToken: encodedToken, OwnerFilter: owner})
-
-	if db.ErrIsUniqueViolation(err) {
-		return nil, util.UserVisibleError(codes.AlreadyExists, "token already exists")
-	} else if err != nil {
+	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
+		ProjectID:      projectID,
+		Provider:       provider.Name,
+		EncryptedToken: encodedToken,
+		OwnerFilter:    owner,
+	})
+	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
 	}
 
@@ -366,7 +357,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 
 	// check if a token has been created since timestamp
 	_, err = s.store.GetAccessTokenSinceDate(ctx,
-		db.GetAccessTokenSinceDateParams{Provider: provider.Name, ProjectID: projectID, CreatedAt: in.Timestamp.AsTime()})
+		db.GetAccessTokenSinceDateParams{Provider: provider.Name, ProjectID: projectID, UpdatedAt: in.Timestamp.AsTime()})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil

@@ -147,6 +147,46 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 	require.Contains(t, buf.String(), "Hello World", "expected README.md to contain Hello World")
 }
 
+func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
+	t.Parallel()
+
+	gi, err := gitengine.NewGitIngester(&pb.GitType{},
+		providers.NewProviderBuilder(
+			&db.Provider{
+				Name:    "github",
+				Version: provifv1.V1,
+				Implements: []db.ProviderType{
+					"git",
+					"rest",
+					"github",
+				},
+			},
+			db.ProviderAccessToken{},
+			"",
+		))
+	require.NoError(t, err, "expected no error")
+
+	got, err := gi.Ingest(context.Background(), &pb.Repository{
+		DefaultBranch: "master",
+	}, map[string]any{
+		"clone_url": "https://github.com/octocat/Hello-World.git",
+	})
+	require.NoError(t, err, "expected no error")
+	require.NotNil(t, got, "expected non-nil result")
+	require.NotNil(t, got.Fs, "expected non-nil fs")
+
+	fs := got.Fs
+	f, err := fs.Open("README")
+	require.NoError(t, err, "expected no error")
+
+	// should contain hello world
+	buf := bytes.Buffer{}
+	_, err = buf.ReadFrom(f)
+	require.NoError(t, err, "expected no error")
+
+	require.Contains(t, buf.String(), "Hello World", "expected README.md to contain Hello World")
+}
+
 func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 	t.Parallel()
 

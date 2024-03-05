@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/styrainc/regal/pkg/linter"
@@ -62,6 +64,12 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 
 	if err := rt.Validate(); err != nil {
 		return fmt.Errorf("error validating rule type: %w", err)
+	}
+
+	// get file name without extension
+	ruleName := strings.TrimSuffix(filepath.Base(rtpathStr), filepath.Ext(rtpathStr))
+	if rt.Name != ruleName {
+		return fmt.Errorf("rule type name does not match file name: %s != %s", rt.Name, ruleName)
 	}
 
 	if rt.Def.Eval.Type == rego.RegoEvalType {

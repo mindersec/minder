@@ -64,6 +64,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_healthy
+      openfga:
+        condition: service_healthy
   migrate:
     container_name: minder_migrate_up
     build: .
@@ -138,7 +140,7 @@ services:
 
   openfga:
     container_name: openfga
-    image: openfga/openfga:v1.4.3
+    image: openfga/openfga:v1.5.0
     command:
       - "run"
     healthcheck:
