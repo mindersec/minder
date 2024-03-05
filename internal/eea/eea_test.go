@@ -155,7 +155,7 @@ func createNeededEntities(ctx context.Context, t *testing.T) (projID uuid.UUID, 
 	_, err = testQueries.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       providerName,
 		ProjectID:  proj.ID,
-		Implements: []db.ProviderType{db.ProviderTypeRest},
+		Implements: []db.ProviderTrait{db.ProviderTraitRest},
 		Definition: json.RawMessage(`{}`),
 	})
 	require.NoError(t, err, "expected no error when creating provider")

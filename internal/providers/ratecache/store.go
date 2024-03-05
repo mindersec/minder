@@ -32,8 +32,8 @@ const (
 
 // RestClientCache is the interface for the REST client cache
 type RestClientCache interface {
-	Get(owner, token string, provider db.ProviderType) (provinfv1.REST, bool)
-	Set(owner, token string, provider db.ProviderType, rest provinfv1.REST)
+	Get(owner, token string, provider db.ProviderTrait) (provinfv1.REST, bool)
+	Set(owner, token string, provider db.ProviderTrait, rest provinfv1.REST)
 
 	// Close stops the eviction routine and disallows setting new entries
 	// cache is not cleared, getting existing entries is still allowed
@@ -72,7 +72,7 @@ func NewRestClientCache(ctx context.Context) RestClientCache {
 	return c
 }
 
-func (r *restClientCache) Get(owner, token string, provider db.ProviderType) (provinfv1.REST, bool) {
+func (r *restClientCache) Get(owner, token string, provider db.ProviderTrait) (provinfv1.REST, bool) {
 	key := r.getKey(owner, token, provider)
 	entry, ok := r.cache.Load(key)
 	if !ok || time.Now().After(entry.expiration) {
@@ -82,7 +82,7 @@ func (r *restClientCache) Get(owner, token string, provider db.ProviderType) (pr
 	return entry.value, true
 }
 
-func (r *restClientCache) Set(owner, token string, provider db.ProviderType, rest provinfv1.REST) {
+func (r *restClientCache) Set(owner, token string, provider db.ProviderTrait, rest provinfv1.REST) {
 	select {
 	case <-r.ctx.Done():
 		return
@@ -105,7 +105,7 @@ func (r *restClientCache) Close() {
 	})
 }
 
-func (_ *restClientCache) getKey(owner, token string, provider db.ProviderType) string {
+func (_ *restClientCache) getKey(owner, token string, provider db.ProviderTrait) string {
 	return owner + token + string(provider)
 }
 

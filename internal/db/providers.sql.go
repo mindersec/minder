@@ -25,7 +25,7 @@ INSERT INTO providers (
 type CreateProviderParams struct {
 	Name       string          `json:"name"`
 	ProjectID  uuid.UUID       `json:"project_id"`
-	Implements []ProviderType  `json:"implements"`
+	Implements []ProviderTrait `json:"implements"`
 	Definition json.RawMessage `json:"definition"`
 }
 

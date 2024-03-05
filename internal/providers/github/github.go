@@ -51,11 +51,11 @@ const (
 const Github = "github"
 
 // Implements is the list of provider types that the GitHub provider implements
-var Implements = []db.ProviderType{
-	db.ProviderTypeGithub,
-	db.ProviderTypeGit,
-	db.ProviderTypeRest,
-	db.ProviderTypeRepoLister,
+var Implements = []db.ProviderTrait{
+	db.ProviderTraitGithub,
+	db.ProviderTraitGit,
+	db.ProviderTraitRest,
+	db.ProviderTraitRepoLister,
 }
 
 // RestClient is the struct that contains the GitHub REST API client
@@ -93,7 +93,7 @@ func NewRestClient(
 		},
 	}
 
-	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTraitGithub)
 	if err != nil {
 		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
 	}
@@ -146,7 +146,7 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, erro
 // the rate-limited client.
 func (c *RestClient) setAsRateLimited() {
 	if c.cache != nil {
-		c.cache.Set(c.owner, c.token, db.ProviderTypeGithub, c)
+		c.cache.Set(c.owner, c.token, db.ProviderTraitGithub, c)
 	}
 }
 

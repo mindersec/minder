@@ -111,7 +111,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 		&db.Provider{
 			Name:    "test",
 			Version: "v1",
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"rest",
 				"git",
 				"github",

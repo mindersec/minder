@@ -107,7 +107,7 @@ func NewProviderBuilder(
 }
 
 // Implements returns true if the provider implements the given type.
-func (pb *ProviderBuilder) Implements(impl db.ProviderType) bool {
+func (pb *ProviderBuilder) Implements(impl db.ProviderTrait) bool {
 	return slices.Contains(pb.p.Implements, impl)
 }
 
@@ -124,7 +124,7 @@ func (pb *ProviderBuilder) GetToken() string {
 
 // GetGit returns a git client for the provider.
 func (pb *ProviderBuilder) GetGit() (*gitclient.Git, error) {
-	if !pb.Implements(db.ProviderTypeGit) {
+	if !pb.Implements(db.ProviderTraitGit) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}
 
@@ -133,14 +133,14 @@ func (pb *ProviderBuilder) GetGit() (*gitclient.Git, error) {
 
 // GetHTTP returns a github client for the provider.
 func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
-	if !pb.Implements(db.ProviderTypeRest) {
+	if !pb.Implements(db.ProviderTraitRest) {
 		return nil, fmt.Errorf("provider does not implement rest")
 	}
 
 	// We can re-use the GitHub provider in case it also implements GitHub.
 	// The client gives us the ability to handle rate limiting and other
 	// things.
-	if pb.Implements(db.ProviderTypeGithub) {
+	if pb.Implements(db.ProviderTraitGithub) {
 		return pb.GetGitHub()
 	}
 
@@ -159,7 +159,7 @@ func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
 
 // GetGitHub returns a github client for the provider.
 func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
-	if !pb.Implements(db.ProviderTypeGithub) {
+	if !pb.Implements(db.ProviderTraitGithub) {
 		return nil, fmt.Errorf("provider does not implement github")
 	}
 
@@ -168,7 +168,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	}
 
 	if pb.restClientCache != nil {
-		client, ok := pb.restClientCache.Get(pb.tokenInf.OwnerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
+		client, ok := pb.restClientCache.Get(pb.tokenInf.OwnerFilter.String, pb.GetToken(), db.ProviderTraitGithub)
 		if ok {
 			return client.(provinfv1.GitHub), nil
 		}
@@ -190,7 +190,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 
 // GetRepoLister returns a repo lister for the provider.
 func (pb *ProviderBuilder) GetRepoLister() (provinfv1.RepoLister, error) {
-	if !pb.Implements(db.ProviderTypeRepoLister) {
+	if !pb.Implements(db.ProviderTraitRepoLister) {
 		return nil, fmt.Errorf("provider does not implement repo lister")
 	}
 
@@ -198,7 +198,7 @@ func (pb *ProviderBuilder) GetRepoLister() (provinfv1.RepoLister, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	if pb.Implements(db.ProviderTypeGithub) {
+	if pb.Implements(db.ProviderTraitGithub) {
 		return pb.GetGitHub()
 	}
 
@@ -207,17 +207,17 @@ func (pb *ProviderBuilder) GetRepoLister() (provinfv1.RepoLister, error) {
 }
 
 // DBToPBType converts a database provider type to a protobuf provider type.
-func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
+func DBToPBType(t db.ProviderTrait) (minderv1.ProviderType, bool) {
 	switch t {
-	case db.ProviderTypeGit:
+	case db.ProviderTraitGit:
 		return minderv1.ProviderType_PROVIDER_TYPE_GIT, true
-	case db.ProviderTypeGithub:
+	case db.ProviderTraitGithub:
 		return minderv1.ProviderType_PROVIDER_TYPE_GITHUB, true
-	case db.ProviderTypeRest:
+	case db.ProviderTraitRest:
 		return minderv1.ProviderType_PROVIDER_TYPE_REST, true
-	case db.ProviderTypeRepoLister:
+	case db.ProviderTraitRepoLister:
 		return minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER, true
-	case db.ProviderTypeOci:
+	case db.ProviderTraitOci:
 		return minderv1.ProviderType_PROVIDER_TYPE_OCI, true
 	default:
 		return minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED, false

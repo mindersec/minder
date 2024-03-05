@@ -204,7 +204,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			client, ok := restClientCache.Get(owner, token, db.ProviderTypeGithub)
+			client, ok := restClientCache.Get(owner, token, db.ProviderTraitGithub)
 			require.True(t, ok)
 
 			ghClient, ok := client.(*RestClient)

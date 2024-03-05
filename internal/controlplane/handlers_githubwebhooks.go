@@ -149,7 +149,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
-		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
+		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTraitGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
 		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
@@ -228,7 +228,7 @@ func (s *Server) registerWebhookForRepository(
 		Logger()
 	ctx = logger.WithContext(ctx)
 
-	if !pbuild.Implements(db.ProviderTypeGithub) {
+	if !pbuild.Implements(db.ProviderTraitGithub) {
 		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
 	}
 
@@ -422,7 +422,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	}
 
 	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
+	if !prov.Implements(db.ProviderTraitGithub) {
 		log.Printf("provider %s is not supported for github webhook", prov.GetName())
 		return nil
 	}
@@ -474,7 +474,7 @@ func parsePullRequestModEvent(
 	prov *providers.ProviderBuilder,
 ) error {
 	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
+	if !prov.Implements(db.ProviderTraitGithub) {
 		log.Printf("provider %s is not supported for github webhook", prov.GetName())
 		return nil
 	}

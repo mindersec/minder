@@ -162,7 +162,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 				&db.Provider{
 					Name:    "github",
 					Version: provifv1.V1,
-					Implements: []db.ProviderType{
+					Implements: []db.ProviderTrait{
 						"rest",
 						"git",
 						"github",

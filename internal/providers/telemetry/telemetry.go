@@ -74,11 +74,11 @@ var _ HttpClientMetrics = (*httpClientMetrics)(nil)
 type httpClientMetrics struct {
 	providersMeter metric.Meter
 
-	httpProviderHistograms *xsync.MapOf[db.ProviderType, metric.Int64Histogram]
+	httpProviderHistograms *xsync.MapOf[db.ProviderTrait, metric.Int64Histogram]
 }
 
-func newProviderMapOf[V any]() *xsync.MapOf[db.ProviderType, V] {
-	return xsync.NewMapOf[db.ProviderType, V]()
+func newProviderMapOf[V any]() *xsync.MapOf[db.ProviderTrait, V] {
+	return xsync.NewMapOf[db.ProviderTrait, V]()
 }
 
 // newHttpClientMetrics creates a new http provider metrics instance.
@@ -89,7 +89,7 @@ func newHttpClientMetrics() *httpClientMetrics {
 	}
 }
 
-func (m *httpClientMetrics) createProviderHistogram(providerType db.ProviderType) (metric.Int64Histogram, error) {
+func (m *httpClientMetrics) createProviderHistogram(providerType db.ProviderTrait) (metric.Int64Histogram, error) {
 	histogramName := fmt.Sprintf("%s.http.roundtrip.duration", providerType)
 	return m.providersMeter.Int64Histogram(histogramName,
 		metric.WithDescription("HTTP roundtrip duration for provider"),
@@ -97,7 +97,7 @@ func (m *httpClientMetrics) createProviderHistogram(providerType db.ProviderType
 	)
 }
 
-func (m *httpClientMetrics) getHistogramForProvider(providerType db.ProviderType) metric.Int64Histogram {
+func (m *httpClientMetrics) getHistogramForProvider(providerType db.ProviderTrait) metric.Int64Histogram {
 	histogram, _ := m.httpProviderHistograms.LoadOrCompute(providerType, func() metric.Int64Histogram {
 		newHistogram, err := m.createProviderHistogram(providerType)
 		if err != nil {
@@ -111,7 +111,7 @@ func (m *httpClientMetrics) getHistogramForProvider(providerType db.ProviderType
 
 func (m *httpClientMetrics) NewDurationRoundTripper(
 	wrapped http.RoundTripper,
-	providerType db.ProviderType,
+	providerType db.ProviderTrait,
 ) (http.RoundTripper, error) {
 	histogram := m.getHistogramForProvider(providerType)
 	if histogram == nil {

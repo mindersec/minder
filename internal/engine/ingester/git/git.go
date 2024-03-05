@@ -50,7 +50,7 @@ func NewGitIngester(cfg *pb.GitType, pbuild *providers.ProviderBuilder) (*Git, e
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	if !pbuild.Implements(db.ProviderTypeGit) {
+	if !pbuild.Implements(db.ProviderTraitGit) {
 		return nil, fmt.Errorf("provider builder does not implement git")
 	}
 

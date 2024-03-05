@@ -191,49 +191,49 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 	return string(ns.EvalStatusTypes), nil
 }
 
-type ProviderType string
+type ProviderTrait string
 
 const (
-	ProviderTypeGithub     ProviderType = "github"
-	ProviderTypeRest       ProviderType = "rest"
-	ProviderTypeGit        ProviderType = "git"
-	ProviderTypeOci        ProviderType = "oci"
-	ProviderTypeRepoLister ProviderType = "repo-lister"
+	ProviderTraitGithub     ProviderTrait = "github"
+	ProviderTraitRest       ProviderTrait = "rest"
+	ProviderTraitGit        ProviderTrait = "git"
+	ProviderTraitOci        ProviderTrait = "oci"
+	ProviderTraitRepoLister ProviderTrait = "repo-lister"
 )
 
-func (e *ProviderType) Scan(src interface{}) error {
+func (e *ProviderTrait) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = ProviderType(s)
+		*e = ProviderTrait(s)
 	case string:
-		*e = ProviderType(s)
+		*e = ProviderTrait(s)
 	default:
-		return fmt.Errorf("unsupported scan type for ProviderType: %T", src)
+		return fmt.Errorf("unsupported scan type for ProviderTrait: %T", src)
 	}
 	return nil
 }
 
-type NullProviderType struct {
-	ProviderType ProviderType `json:"provider_type"`
-	Valid        bool         `json:"valid"` // Valid is true if ProviderType is not NULL
+type NullProviderTrait struct {
+	ProviderTrait ProviderTrait `json:"provider_trait"`
+	Valid         bool          `json:"valid"` // Valid is true if ProviderTrait is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullProviderType) Scan(value interface{}) error {
+func (ns *NullProviderTrait) Scan(value interface{}) error {
 	if value == nil {
-		ns.ProviderType, ns.Valid = "", false
+		ns.ProviderTrait, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.ProviderType.Scan(value)
+	return ns.ProviderTrait.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullProviderType) Value() (driver.Value, error) {
+func (ns NullProviderTrait) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.ProviderType), nil
+	return string(ns.ProviderTrait), nil
 }
 
 type RemediationStatusTypes string
@@ -423,7 +423,7 @@ type Provider struct {
 	Name       string          `json:"name"`
 	Version    string          `json:"version"`
 	ProjectID  uuid.UUID       `json:"project_id"`
-	Implements []ProviderType  `json:"implements"`
+	Implements []ProviderTrait `json:"implements"`
 	Definition json.RawMessage `json:"definition"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`

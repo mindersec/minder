@@ -38,7 +38,7 @@ func TestRestClientCache_GetSet(t *testing.T) {
 	cache := newTestRestClientCache(context.Background(), t, 10*time.Minute)
 	defer cache.Close()
 
-	cache.Set("owner", "token", db.ProviderTypeGithub, restClient)
+	cache.Set("owner", "token", db.ProviderTraitGithub, restClient)
 
 	numOfGoroutines := 50
 	var wg sync.WaitGroup
@@ -47,7 +47,7 @@ func TestRestClientCache_GetSet(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			recdRestClient, ok := cache.Get("owner", "token", db.ProviderTypeGithub)
+			recdRestClient, ok := cache.Get("owner", "token", db.ProviderTraitGithub)
 			assert.True(t, ok)
 			assert.Equal(t, restClient, recdRestClient)
 		}()
@@ -65,10 +65,10 @@ func TestRestClientCache_evictExpiredEntriesRoutine(t *testing.T) {
 
 	owner := "owner"
 	token := "token"
-	cache.Set(owner, token, db.ProviderTypeGithub, restClient)
+	cache.Set(owner, token, db.ProviderTraitGithub, restClient)
 
 	op := func() error {
-		_, ok := cache.Get(owner, token, db.ProviderTypeGithub)
+		_, ok := cache.Get(owner, token, db.ProviderTraitGithub)
 		if ok {
 			return fmt.Errorf("entry not evicted")
 		}
@@ -96,12 +96,12 @@ func TestRestClientCache_evictMultipleExpiredEntries(t *testing.T) {
 
 	owner := "owner"
 	token := "token"
-	cache.Set(owner, token, db.ProviderTypeGithub, restClient)
+	cache.Set(owner, token, db.ProviderTraitGithub, restClient)
 	require.NoError(t, backoffv4.Retry(op, getBackoffPolicy(t)))
 
 	owner2 := "owner2"
 	token2 := "token2"
-	cache.Set(owner2, token2, db.ProviderTypeGithub, restClient)
+	cache.Set(owner2, token2, db.ProviderTraitGithub, restClient)
 	require.NoError(t, backoffv4.Retry(op, getBackoffPolicy(t)))
 }
 
@@ -116,8 +116,8 @@ func TestRestClientCache_contextCancellation(t *testing.T) {
 
 	owner := "owner-a"
 	token := "token-a"
-	cache.Set(owner, token, db.ProviderTypeGithub, restClient)
-	_, ok := cache.Get(owner, token, db.ProviderTypeGithub)
+	cache.Set(owner, token, db.ProviderTraitGithub, restClient)
+	_, ok := cache.Get(owner, token, db.ProviderTraitGithub)
 	require.True(t, ok)
 
 	// cancel the context, which would stop the eviction routine and close the store
@@ -125,8 +125,8 @@ func TestRestClientCache_contextCancellation(t *testing.T) {
 
 	owner2 := "owner2-a"
 	token2 := "token2-a"
-	cache.Set(owner2, token2, db.ProviderTypeGithub, restClient)
-	_, ok = cache.Get(owner2, token2, db.ProviderTypeGithub)
+	cache.Set(owner2, token2, db.ProviderTraitGithub, restClient)
+	_, ok = cache.Get(owner2, token2, db.ProviderTraitGithub)
 	require.False(t, ok)
 	require.Equal(t, 1, cache.cache.Size())
 }
@@ -152,7 +152,7 @@ func TestRestClientCache_Close(t *testing.T) {
 		cache.evictExpiredEntriesRoutine(cache.ctx)
 	}()
 
-	cache.Set("owner", "token", db.ProviderTypeGithub, restClient)
+	cache.Set("owner", "token", db.ProviderTraitGithub, restClient)
 	cache.Close()
 
 	// Ensure that the eviction routine has stopped
@@ -160,8 +160,8 @@ func TestRestClientCache_Close(t *testing.T) {
 
 	owner := "owner-a"
 	token := "token-a"
-	cache.Set(owner, token, db.ProviderTypeGithub, restClient)
-	_, ok := cache.Get(owner, token, db.ProviderTypeGithub)
+	cache.Set(owner, token, db.ProviderTraitGithub, restClient)
+	_, ok := cache.Get(owner, token, db.ProviderTraitGithub)
 
 	// Assert that setting a value after the cache has been closed does not work (non context cancellation)
 	require.False(t, ok)

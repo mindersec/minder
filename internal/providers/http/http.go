@@ -59,7 +59,7 @@ func NewREST(
 		cli = &http.Client{}
 	}
 
-	cli.Transport, err = metrics.NewDurationRoundTripper(cli.Transport, db.ProviderTypeRest)
+	cli.Transport, err = metrics.NewDurationRoundTripper(cli.Transport, db.ProviderTraitRest)
 	if err != nil {
 		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
 	}

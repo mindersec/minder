@@ -121,7 +121,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		&db.Provider{
 			Name:    "test",
 			Version: "v1",
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"rest",
 				"git",
 				"github",

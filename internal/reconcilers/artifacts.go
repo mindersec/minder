@@ -128,7 +128,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error publishing message: %w", err)
 	}
 
-	if !p.Implements(db.ProviderTypeGithub) {
+	if !p.Implements(db.ProviderTraitGithub) {
 		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
 		return nil
 	}

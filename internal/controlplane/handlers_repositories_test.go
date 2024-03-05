@@ -160,7 +160,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				Return([]db.Provider{{
 					ID:         uuid.New(),
 					Name:       "github",
-					Implements: []db.ProviderType{db.ProviderTypeGithub},
+					Implements: []db.ProviderTrait{db.ProviderTraitGithub},
 					Version:    provinfv1.V1,
 				}}, nil)
 			mockStore.EXPECT().
@@ -179,7 +179,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			cancelable, cancel := context.WithCancel(context.Background())
 			clientCache := ratecache.NewRestClientCache(cancelable)
 			defer cancel()
-			clientCache.Set("", oauthToken.AccessToken, db.ProviderTypeGithub, &stubClient)
+			clientCache.Set("", oauthToken.AccessToken, db.ProviderTraitGithub, &stubClient)
 
 			stubEventer := StubEventer{}
 			stubWebhookManager := mockghhook.NewMockWebhookManager(ctrl)

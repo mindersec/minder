@@ -419,7 +419,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
 
-	if !p.Implements(db.ProviderTypeRepoLister) {
+	if !p.Implements(db.ProviderTraitRepoLister) {
 		return nil, util.UserVisibleError(codes.Unimplemented, "provider does not implement repository listing")
 	}
 

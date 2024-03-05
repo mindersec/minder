@@ -24,7 +24,7 @@ import (
 
 // HttpClientMetrics provides the httpClientMetrics for http clients
 type HttpClientMetrics interface {
-	NewDurationRoundTripper(wrapped http.RoundTripper, providerType db.ProviderType) (http.RoundTripper, error)
+	NewDurationRoundTripper(wrapped http.RoundTripper, providerType db.ProviderTrait) (http.RoundTripper, error)
 }
 
 // ProviderMetrics provides the httpClientMetrics for providers

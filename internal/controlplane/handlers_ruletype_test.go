@@ -54,7 +54,7 @@ func TestCreateRuleType(t *testing.T) {
 	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       "github",
 		ProjectID:  dbproj.ID,
-		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		Implements: []db.ProviderTrait{db.ProviderTraitGithub},
 		Definition: []byte(`{}`),
 	})
 	if err != nil {

@@ -56,7 +56,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 						Definition: json.RawMessage(`{
@@ -81,7 +81,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 						Definition: json.RawMessage(`{
@@ -106,7 +106,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 						Definition: json.RawMessage(`{
@@ -131,7 +131,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 					},
@@ -151,7 +151,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 						Definition: json.RawMessage(`{
@@ -176,7 +176,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					&db.Provider{
 						Name:    "osv",
 						Version: provifv1.V1,
-						Implements: []db.ProviderType{
+						Implements: []db.ProviderTrait{
 							"rest",
 						},
 						Definition: json.RawMessage(`{
@@ -225,7 +225,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		&db.Provider{
 			Name:       "github",
 			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
+			Implements: []db.ProviderTrait{db.ProviderTraitGithub, db.ProviderTraitRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
 		db.ProviderAccessToken{},

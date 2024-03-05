@@ -38,7 +38,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",
@@ -77,7 +77,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",
@@ -116,7 +116,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",
@@ -155,7 +155,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 			&db.Provider{
 				Name:    "github",
 				Version: provifv1.V1,
-				Implements: []db.ProviderType{
+				Implements: []db.ProviderTrait{
 					"git",
 					"rest",
 					"github",
@@ -196,7 +196,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",
@@ -226,7 +226,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",
@@ -253,7 +253,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 		&db.Provider{
 			Name:    "github",
 			Version: provifv1.V1,
-			Implements: []db.ProviderType{
+			Implements: []db.ProviderTrait{
 				"git",
 				"rest",
 				"github",

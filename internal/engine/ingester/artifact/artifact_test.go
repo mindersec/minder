@@ -52,7 +52,7 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 		&db.Provider{
 			Name:       "github",
 			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
+			Implements: []db.ProviderTrait{db.ProviderTraitGithub, db.ProviderTraitRest, db.ProviderTraitGit},
 			Definition: json.RawMessage(definitionJSON),
 		},
 		db.ProviderAccessToken{},
