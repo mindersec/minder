@@ -17,7 +17,7 @@ minder profile status get [flags]
 
 ```
   -e, --entity string        Entity ID to get profile status for
-  -t, --entity-type string   the entity type to get profile status for (one of artifact,build_environment,repository)
+  -t, --entity-type string   the entity type to get profile status for (one of artifact, build_environment, repository)
   -h, --help                 help for get
 ```
 

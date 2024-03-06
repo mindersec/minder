@@ -116,6 +116,39 @@ func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	return decryptedToken, nil
 }
 
+// EncryptString encrypts a string
+func (e *Engine) EncryptString(data string) (string, error) {
+	var encoded string
+
+	encrypted, err := EncryptBytes(e.encryptionKey, []byte(data))
+	if err != nil {
+		return encoded, err
+	}
+
+	encoded = base64.StdEncoding.EncodeToString(encrypted)
+
+	return encoded, nil
+}
+
+// DecryptString decrypts an encrypted string
+func (e *Engine) DecryptString(encData string) (string, error) {
+	var decrypted string
+
+	// base64 decode the string
+	decodeToken, err := base64.StdEncoding.DecodeString(encData)
+	if err != nil {
+		return decrypted, err
+	}
+
+	// decrypt the string
+	token, err := decryptBytes(e.encryptionKey, decodeToken)
+	if err != nil {
+		return decrypted, err
+	}
+
+	return string(token), nil
+}
+
 // decryptBytes decrypts a row of data
 func decryptBytes(key string, ciphertext []byte) ([]byte, error) {
 	block, err := aes.NewCipher(deriveKey(key))

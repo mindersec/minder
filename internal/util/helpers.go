@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -215,6 +216,9 @@ type refreshTokenResponse struct {
 	AccessToken          string `json:"access_token"`
 	RefreshToken         string `json:"refresh_token"`
 	AccessTokenExpiresIn int    `json:"expires_in"`
+	// These will be present if there's an error
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
@@ -250,6 +254,10 @@ func RefreshCredentials(refreshToken string, issuerUrl string, clientId string) 
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 
+	if tokens.Error != "" {
+		return OpenIdCredentials{}, fmt.Errorf("error refreshing credentials: %s: %s", tokens.Error, tokens.ErrorDescription)
+	}
+
 	updatedCredentials := OpenIdCredentials{
 		AccessToken:          tokens.AccessToken,
 		RefreshToken:         tokens.RefreshToken,
@@ -282,6 +290,44 @@ func LoadCredentials() (OpenIdCredentials, error) {
 		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
 	}
 	return creds, nil
+}
+
+// RevokeOfflineToken revokes the given offline token using OAuth2.0's Token Revocation endpoint
+// from RFC 7009.
+func RevokeOfflineToken(token string, issuerUrl string, clientId string) error {
+	return RevokeToken(token, issuerUrl, clientId, "refresh_token")
+}
+
+// RevokeToken revokes the given token using OAuth2.0's Token Revocation endpoint
+// from RFC 7009. The tokenHint is the type of token being revoked, such as
+// "access_token" or "refresh_token". In the case of an offline token, the
+// tokenHint should be "refresh_token".
+func RevokeToken(token string, issuerUrl string, clientId string, tokenHint string) error {
+	parsedURL, err := url.Parse(issuerUrl)
+	if err != nil {
+		return fmt.Errorf("error parsing issuer URL: %v", err)
+	}
+	logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/revoke")
+
+	data := url.Values{}
+	data.Set("client_id", clientId)
+	data.Set("token", token)
+	data.Set("token_type_hint", tokenHint)
+
+	req, err := http.NewRequest("POST", logoutUrl.String(), strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("error creating: %v", err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error revoking token: %v", err)
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
 
 func getProtoMarshalOptions() protojson.MarshalOptions {
@@ -498,8 +544,26 @@ func GetPullRequest(
 
 	// TODO: Do we need extra columns in the pull request table?
 	return &minderv1.PullRequest{
-		Number:    int32(dbpr.PrNumber), // TODO: this should be int64
+		Number:    dbpr.PrNumber,
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,
 	}, nil
+}
+
+// ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level
+func ViperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
+	switch viperLogLevel {
+	case "debug":
+		return zerolog.DebugLevel
+	case "info":
+		return zerolog.InfoLevel
+	case "warn":
+		return zerolog.WarnLevel
+	case "error":
+		return zerolog.ErrorLevel
+	case "fatal":
+		return zerolog.FatalLevel
+	default:
+		return zerolog.InfoLevel // Default to info level if the mapping is not found
+	}
 }

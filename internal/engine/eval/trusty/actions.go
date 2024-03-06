@@ -29,7 +29,8 @@ import (
 )
 
 const (
-	noLowScoresText = "Minder analyzed this PR and found no low scores for any of the dependencies."
+	// nolint:lll
+	noLowScoresText = "Minder analyzed this PR with <a href=\"https://www.trustypkg.dev/\">Trusty</a> and found no dependencies scored lower than your profile threshold."
 
 	tableHeaderTmplName = "alternativesTableHeader"
 	tableTemplateHeader = `### Summary of packages with low scores
@@ -52,7 +53,7 @@ Minder profiles. Below is a summary of the packages with low scores and their al
 {{ range .Alternatives }}
   <tr>
 	<td>{{ $.Ecosystem }}</td>
-	<td>{{ $.Name }}</td>
+	<td><a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ $.NameURL }}">{{ $.Name }}</a></td>
 	<td>{{ $.Score }}</td>
 	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageNameURL }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
 	<td>{{ if .PackageName }}{{ .Score }}{{ else }}-{{ end }}</td>
@@ -132,15 +133,18 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			})
 		}
 
+		// Populate the Trusty alternatives row template
 		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
 			Ecosystem    string
 			Name         string
+			NameURL      string
 			Score        float64
 			Alternatives []Alternative
 			BaseUrl      string
 		}{
 			Ecosystem:    strings.ToLower(sph.trackedAlternatives[i].Dependency.Ecosystem.AsString()),
 			Name:         sph.trackedAlternatives[i].Dependency.Name,
+			NameURL:      url.PathEscape(sph.trackedAlternatives[i].Dependency.Name),
 			Score:        sph.trackedAlternatives[i].trustyReply.Summary.Score,
 			Alternatives: higherScoringAlternatives,
 			BaseUrl:      constants.TrustyHttpURL,

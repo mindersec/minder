@@ -18,26 +18,14 @@ package auth
 import (
 	"context"
 	_ "embed"
-	"fmt"
-	"net/http"
-	"net/url"
-	"os"
-	"time"
 
-	"github.com/gorilla/securecookie"
-	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/v2/pkg/http"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
 
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
-	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -50,11 +38,11 @@ var loginCmd = &cobra.Command{
 	Short: "Login to Minder",
 	Long: `The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
 $XDG_CONFIG_HOME/minder/credentials.json`,
-	RunE: loginCommand,
+	RunE: LoginCommand,
 }
 
-// loginCommand is the login subcommand
-func loginCommand(cmd *cobra.Command, _ []string) error {
+// LoginCommand is the login subcommand
+func LoginCommand(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
@@ -62,100 +50,15 @@ func loginCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Unable to read config", err)
 	}
 
-	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
-	clientID := clientConfig.Identity.CLI.ClientId
-
-	parsedURL, err := url.Parse(issuerUrlStr)
-	if err != nil {
-		return cli.MessageAndError("Error parsing issuer URL", err)
-	}
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	issuerUrl := parsedURL.JoinPath("realms/stacklok")
-	scopes := []string{"openid"}
-	callbackPath := "/auth/callback"
-
-	// create encrypted cookie handler to mitigate CSRF attacks
-	hashKey := securecookie.GenerateRandomKey(32)
-	encryptKey := securecookie.GenerateRandomKey(32)
-	cookieHandler := httphelper.NewCookieHandler(hashKey, encryptKey, httphelper.WithUnsecure(),
-		httphelper.WithSameSite(http.SameSiteLaxMode))
-	options := []rp.Option{
-		rp.WithCookieHandler(cookieHandler),
-		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
-		rp.WithPKCE(cookieHandler),
-	}
-
-	// Get random port
-	port, err := rand.GetRandomPort()
-	if err != nil {
-		return cli.MessageAndError("Error getting random port", err)
-	}
-
-	parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
-	if err != nil {
-		return cli.MessageAndError("Error parsing callback URL", err)
-	}
-	redirectURI := parsedURL.JoinPath(callbackPath)
-
-	provider, err := rp.NewRelyingPartyOIDC(issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
-	if err != nil {
-		return cli.MessageAndError("Error creating relying party", err)
-	}
-
-	stateFn := func() string {
-		state, err := mcrypto.GenerateNonce()
-		if err != nil {
-			cmd.PrintErrln("error generating state for login")
-			os.Exit(1)
-		}
-		return state
-	}
-
-	tokenChan := make(chan *oidc.Tokens[*oidc.IDTokenClaims])
-
-	callback := func(w http.ResponseWriter, _ *http.Request,
-		tokens *oidc.Tokens[*oidc.IDTokenClaims], _ string, _ rp.RelyingParty) {
-
-		tokenChan <- tokens
-		// send a success message to the browser
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, err := w.Write(loginSuccessHtml)
-		if err != nil {
-			// if we cannot display the success page, just print a success message
-			cmd.Println("Authentication Successful")
-		}
-	}
-	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
-	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
-
-	server := &http.Server{
-		Addr:              fmt.Sprintf(":%d", port),
-		ReadHeaderTimeout: time.Second * 10,
-	}
-	// Start the server in a goroutine
-	go func() {
-		_ = server.ListenAndServe()
-	}()
-	// get the OAuth authorization URL
-	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
-
-	// Redirect user to provider to log in
-	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
-	cmd.Println("Please follow the instructions on the page to log in.")
-
-	// open user's browser to login page
-	if err := browser.OpenURL(loginUrl); err != nil {
-		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
-	}
-
-	cmd.Println("Waiting for token...")
-
 	// wait for the token to be received
-	token := <-tokenChan
+	token, err := login(ctx, cmd, clientConfig, nil)
+	if err != nil {
+		return err
+	}
 
 	// save credentials
 	filePath, err := util.SaveCredentials(util.OpenIdCredentials{
@@ -205,10 +108,7 @@ func loginCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	cmd.Printf("Your access credentials have been saved to %s\n", filePath)
-
-	// shut down the HTTP server
-	// TODO: should this use the app context?
-	return server.Shutdown(context.Background())
+	return nil
 }
 
 func init() {

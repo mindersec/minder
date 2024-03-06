@@ -102,6 +102,26 @@ type AggregatorMiddleware interface {
 
 type driverCloser func()
 
+// Interface provides an abstract interface over Eventer (and mocks)
+type Interface interface {
+	// Publish implements message.Publisher
+	Publish(topic string, messages ...*message.Message) error
+
+	// Register subscribes to a topic and handles incoming messages
+	Register(topic string, handler message.NoPublishHandlerFunc, mdw ...message.HandlerMiddleware)
+
+	// ConsumeEvents allows registration of multiple consumers easily
+	ConsumeEvents(consumers ...Consumer)
+	// Close closes the router
+	Close() error
+	// Run runs the router, blocks until the router is closed
+	Run(ctx context.Context) error
+
+	// Running returns a channel which allows you to wait until the
+	// event router has started.
+	Running() chan struct{}
+}
+
 // Eventer is a wrapper over the relevant eventing objects in such
 // a way that they can be easily accessible and configurable.
 type Eventer struct {
@@ -115,6 +135,8 @@ type Eventer struct {
 
 	closer driverCloser
 }
+
+var _ Interface = (*Eventer)(nil)
 
 type messageInstruments struct {
 	// message processing time duration histogram

@@ -30,6 +30,27 @@ type HTTPServerConfig struct {
 	Host string `mapstructure:"host" default:"127.0.0.1"`
 	// Port is the port to bind to
 	Port int `mapstructure:"port" default:"8080"`
+
+	// CORS is the configuration for CORS
+	CORS CORSConfig `mapstructure:"cors"`
+}
+
+// CORSConfig is the configuration for the CORS middleware
+// that can be used with the HTTP server. Note that this
+// is not applicable to the gRPC server.
+type CORSConfig struct {
+	// Enabled is the flag to enable CORS
+	Enabled bool `mapstructure:"enabled" default:"false"`
+	// AllowOrigins is the list of allowed origins
+	AllowOrigins []string `mapstructure:"allow_origins"`
+	// AllowMethods is the list of allowed methods
+	AllowMethods []string `mapstructure:"allow_methods"`
+	// AllowHeaders is the list of allowed headers
+	AllowHeaders []string `mapstructure:"allow_headers"`
+	// ExposeHeaders is the list of exposed headers
+	ExposeHeaders []string `mapstructure:"expose_headers"`
+	// AllowCredentials is the flag to allow credentials
+	AllowCredentials bool `mapstructure:"allow_credentials" default:"false"`
 }
 
 // GetAddress returns the address to bind to

@@ -69,7 +69,7 @@ func convertRepository(repo *github.Repository) *minderv1.Repository {
 	return &minderv1.Repository{
 		Name:      repo.GetName(),
 		Owner:     repo.GetOwner().GetLogin(),
-		RepoId:    int32(repo.GetID()), // FIXME this is a 64 bit int
+		RepoId:    repo.GetID(),
 		HookUrl:   repo.GetHooksURL(),
 		DeployUrl: repo.GetDeploymentsURL(),
 		CloneUrl:  repo.GetCloneURL(),
@@ -475,15 +475,6 @@ func (c *RestClient) UpdateBranchProtection(
 	return err
 }
 
-// GetAuthenticatedUser returns the authenticated user
-func (c *RestClient) GetAuthenticatedUser(ctx context.Context) (*github.User, error) {
-	user, _, err := c.client.Users.Get(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
 // GetBaseURL returns the base URL for the REST API.
 func (c *RestClient) GetBaseURL() string {
 	return c.client.BaseURL.String()
@@ -665,11 +656,40 @@ func (c *RestClient) CreateComment(ctx context.Context, owner, repo string, numb
 	return err
 }
 
-// ListEmails lists all emails for the authenticated user.
-func (c *RestClient) ListEmails(ctx context.Context, opts *github.ListOptions) ([]*github.UserEmail, error) {
-	emails, _, err := c.client.Users.ListEmails(ctx, opts)
+// GetUserId returns the user id for the authenticated user
+func (c *RestClient) GetUserId(ctx context.Context) (int64, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	return emails, nil
+	return user.GetID(), nil
+}
+
+// GetUsername returns the username for the authenticated user
+func (c *RestClient) GetUsername(ctx context.Context) (string, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return "", err
+	}
+	return user.GetName(), nil
+}
+
+// GetPrimaryEmail returns the primary email for the authenticated user.
+func (c *RestClient) GetPrimaryEmail(ctx context.Context) (string, error) {
+	emails, _, err := c.client.Users.ListEmails(ctx, &github.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("cannot get email: %w", err)
+	}
+
+	fallback := ""
+	for _, email := range emails {
+		if fallback == "" {
+			fallback = email.GetEmail()
+		}
+		if email.GetPrimary() {
+			return email.GetEmail(), nil
+		}
+	}
+
+	return fallback, nil
 }

@@ -66,10 +66,8 @@ bootstrap: ## install build deps
 			github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc \
 			github.com/sqlc-dev/sqlc \
 			github.com/norwoodj/helm-docs/cmd/helm-docs \
-			github.com/openfga/cli
-	# check if `cli` binary exists, and if it does, move it to be fga instead
-	# Check if cli usage prints the help message, if it does, then it's the cli binary
-	which cli && cli | grep -q "Usage:" && mv $$(which cli) $$(dirname $$(which cli))/fga || true
+			github.com/openfga/cli/cmd/fga \
+			go.uber.org/mock/mockgen
 	# Create a config.yaml and server-config.yaml if they don't exist
 	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"
@@ -80,3 +78,8 @@ bootstrap: ## install build deps
 	openssl rand -base64 32 > .ssh/token_key_passphrase
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
+
+.PHONY: lint-fix
+lint-fix: ## fix all linting issues which can be automatically fixed
+	golangci-lint run --fix
+

@@ -17,11 +17,15 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 var (
 	// ErrValidationFailed is returned when a profile fails validation
 	ErrValidationFailed = fmt.Errorf("validation failed")
+
+	// Starts with a letter/digit, then a string of letter/digit and hypen or underscore
+	dnsStyleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
 )
 
 // Validator is an interface which allows for the validation of a struct.
@@ -84,6 +88,13 @@ var _ Validator = (*RuleType)(nil)
 func (rt *RuleType) Validate() error {
 	if rt == nil {
 		return fmt.Errorf("%w: rule type is nil", ErrInvalidRuleType)
+	}
+
+	if rt.Name == "" {
+		return fmt.Errorf("%w: rule type name is empty", ErrInvalidRuleType)
+	}
+	if !dnsStyleNameRegex.MatchString(rt.Name) {
+		return fmt.Errorf("%w: rule type name may only contain letters, numbers, hyphens and underscores", ErrInvalidRuleType)
 	}
 
 	if rt.Def == nil {
@@ -177,42 +188,45 @@ func (p *Profile) Validate() error {
 		return fmt.Errorf("%w: profile version is invalid: %s", ErrValidationFailed, p.Version)
 	}
 
-	if p.Name == "" {
+	if p.GetName() == "" {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
+	}
+	if !dnsStyleNameRegex.MatchString(p.GetName()) {
+		return fmt.Errorf("%w: profile names may only contain letters, numbers, hyphens and underscores", ErrValidationFailed)
+	}
+
+	repoRuleCount := len(p.GetRepository())
+	buildEnvRuleCount := len(p.GetBuildEnvironment())
+	artifactRuleCount := len(p.GetArtifact())
+	pullRequestRuleCount := len(p.GetPullRequest())
+	totalRuleCount := repoRuleCount + buildEnvRuleCount + artifactRuleCount + pullRequestRuleCount
+
+	if totalRuleCount == 0 {
+		return fmt.Errorf("%w: profile must have at least one rule", ErrValidationFailed)
 	}
 
 	// If the profile is nil or empty, we don't need to validate it
-	if p.Repository != nil && len(p.Repository) > 0 {
-		return validateEntity(p.Repository)
-	}
-
-	if p.BuildEnvironment != nil && len(p.BuildEnvironment) > 0 {
-		return validateEntity(p.BuildEnvironment)
-	}
-
-	if p.Artifact != nil && len(p.Artifact) > 0 {
-		return validateEntity(p.Artifact)
-	}
-
-	if p.PullRequest != nil && len(p.PullRequest) > 0 {
-		return validateEntity(p.PullRequest)
-	}
-
-	return nil
-}
-
-func validateEntity(e []*Profile_Rule) error {
-	if len(e) == 0 {
-		return fmt.Errorf("%w: entity rules cannot be empty", ErrValidationFailed)
-	}
-
-	for _, r := range e {
-		if r == nil {
-			return fmt.Errorf("%w: entity contextual rules cannot be nil", ErrValidationFailed)
-		}
-
+	for i, r := range p.GetRepository() {
 		if err := validateRule(r); err != nil {
-			return err
+			return fmt.Errorf("repository rule %d is invalid: %w", i, err)
+		}
+	}
+
+	for i, b := range p.GetBuildEnvironment() {
+		if err := validateRule(b); err != nil {
+			return fmt.Errorf("build environment rule %d is invalid: %w", i, err)
+		}
+	}
+
+	for i, a := range p.GetArtifact() {
+		if err := validateRule(a); err != nil {
+			return fmt.Errorf("artifact rule %d is invalid: %w", i, err)
+		}
+	}
+
+	for i, pr := range p.GetPullRequest() {
+		if err := validateRule(pr); err != nil {
+			return fmt.Errorf("pull request rule %d is invalid: %w", i, err)
 		}
 	}
 
@@ -220,11 +234,12 @@ func validateEntity(e []*Profile_Rule) error {
 }
 
 func validateRule(r *Profile_Rule) error {
-	if r.Type == "" {
+	if r.GetType() == "" {
 		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
 	}
 
-	if r.Def == nil {
+	// TODO: can we omit this if the rule doesn't have values?
+	if r.GetDef() == nil {
 		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
 	}
 

@@ -33,6 +33,7 @@ import (
 	github "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
+	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -69,9 +70,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	repo := in.GetRepository()
 
-	allEvents := []string{"*"}
-	result, err := s.registerWebhookForRepository(
-		ctx, p, projectID, repo, allEvents)
+	result, err := s.registerWebhookForRepository(ctx, p, projectID, repo)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
 	}
@@ -96,8 +95,8 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		RepoID:    r.RepoId,
 		IsPrivate: r.IsPrivate,
 		IsFork:    r.IsFork,
-		WebhookID: sql.NullInt32{
-			Int32: int32(r.HookId),
+		WebhookID: sql.NullInt64{
+			Int64: r.HookId,
 			Valid: true,
 		},
 		CloneUrl:   r.CloneUrl,
@@ -156,14 +155,14 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	reqRepoCursor, err := NewRepoCursor(in.GetCursor())
+	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	repoId := sql.NullInt32{Valid: false, Int32: 0}
+	repoId := sql.NullInt64{}
 	if reqRepoCursor.ProjectId == projectID.String() && reqRepoCursor.Provider == provider.Name {
-		repoId = sql.NullInt32{Valid: true, Int32: reqRepoCursor.RepoId}
+		repoId = sql.NullInt64{Valid: true, Int64: reqRepoCursor.RepoId}
 	}
 
 	limit := sql.NullInt32{Valid: false, Int32: 0}
@@ -201,10 +200,10 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, r)
 	}
 
-	var respRepoCursor *RepoCursor
+	var respRepoCursor *cursorutil.RepoCursor
 	if limit.Valid && len(repos) == int(limit.Int32) {
 		lastRepo := repos[len(repos)-1]
-		respRepoCursor = &RepoCursor{
+		respRepoCursor = &cursorutil.RepoCursor{
 			ProjectId: projectID.String(),
 			Provider:  provider.Name,
 			RepoId:    lastRepo.RepoID,
@@ -275,8 +274,12 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	repo, err := s.store.GetRepositoryByRepoName(ctx,
-		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
+		Provider:  provider.Name,
+		RepoOwner: fragments[0],
+		RepoName:  fragments[1],
+		ProjectID: projectID,
+	})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
@@ -353,8 +356,12 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	repo, err := s.store.GetRepositoryByRepoName(ctx,
-		db.GetRepositoryByRepoNameParams{Provider: provider.Name, RepoOwner: fragments[0], RepoName: fragments[1]})
+	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
+		Provider:  provider.Name,
+		RepoOwner: fragments[0],
+		RepoName:  fragments[1],
+		ProjectID: projectID,
+	})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")

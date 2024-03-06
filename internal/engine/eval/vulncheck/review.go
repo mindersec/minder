@@ -56,6 +56,10 @@ const (
 	reviewTmplStr      = "{{.MagicComment}}\n\n{{.ReviewText}}"
 )
 
+const (
+	tabSize = 8
+)
+
 type reviewTemplateData struct {
 	MagicComment string
 	ReviewText   string
@@ -92,7 +96,11 @@ type reviewLocation struct {
 func countLeadingWhitespace(line string) int {
 	count := 0
 	for _, ch := range line {
-		if ch != ' ' && ch != '\t' {
+		if ch == '\t' {
+			count += tabSize
+			continue
+		}
+		if ch != ' ' {
 			return count
 		}
 		count++
@@ -177,12 +185,11 @@ func newReviewPrHandler(
 	}
 
 	logger := zerolog.Ctx(ctx).With().
-		Int32("pull-number", pr.Number).
+		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()
-
-	cliUser, err := cli.GetAuthenticatedUser(ctx)
+	cliUserId, err := cli.GetUserId(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not get authenticated user: %w", err)
 	}
@@ -190,7 +197,7 @@ func newReviewPrHandler(
 	// if the user wants minder to request changes on a pull request, they need to
 	// be different identities
 	var failStatus *string
-	if pr.AuthorId == cliUser.GetID() {
+	if pr.AuthorId == cliUserId {
 		failStatus = github.String("COMMENT")
 		logger.Debug().Msg("author is the same as the authenticated user, can only comment")
 	} else {
@@ -552,7 +559,7 @@ func newSummaryPrHandler(
 	cli provifv1.GitHub,
 ) (prStatusHandler, error) {
 	logger := zerolog.Ctx(ctx).With().
-		Int32("pull-number", pr.Number).
+		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()

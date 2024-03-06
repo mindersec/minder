@@ -19,8 +19,6 @@ import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
-import "google/api/httpbody.proto";
-
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -206,15 +204,15 @@ message GetArtifactByNameResponse {
 
 message PullRequest {
     string url = 1;         // The full URL to the PR
-    string commit_sha = 2;   // Commit SHA of the PR HEAD. Will be useful to submit a review
-    int32 number = 3;       // The sequential PR number (not the DB PK!)
+    string commit_sha = 2;  // Commit SHA of the PR HEAD. Will be useful to submit a review
+    int64 number = 3;       // The sequential PR number (not the DB PK!)
 
-    string repo_owner = 4;   // The owner of the repo, will be used to submit a review
-    string repo_name = 5;    // The name of the repo, will be used to submit a review
+    string repo_owner = 4;  // The owner of the repo, will be used to submit a review
+    string repo_name = 5;   // The name of the repo, will be used to submit a review
 
     int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
 
-    string action = 7;       // The action that triggered the webhook
+    string action = 7;      // The action that triggered the webhook
 }
 
 enum DepEcosystem {
@@ -253,6 +251,8 @@ message PrContents {
         repeated Line patch_lines = 3;
 
         message Line {
+            // Deliberately left as an int32: a diff with more than 2^31 lines
+            // could lead to various problems while processing.
             int32 line_number = 1;
             string content = 2;
         }
@@ -271,19 +271,6 @@ service OAuthService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROVIDER_UPDATE
-        };
-    }
-    // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-    rpc ExchangeCodeForTokenCLI (ExchangeCodeForTokenCLIRequest) returns (google.api.HttpBody) {  // protolint:disable:this
-        option (google.api.http) = {
-            get: "/api/v1/auth/callback/{provider}/cli"
-            additional_bindings {
-                get: "/api/v1/auth/callback/cli"
-            }
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_NONE  // Don't need token auth for code exchange
         };
     }
 
@@ -595,6 +582,22 @@ service ProfileService {
     }
 }
 
+service EvalResultsService {
+    rpc ListEvaluationResults(ListEvaluationResultsRequest) returns (ListEvaluationResultsResponse) {
+        option (google.api.http) = {
+            // TODO: use
+            // get: "/api/v1/projects/{Context.project}/results"
+            // If we can promote Context.project to not be optional
+            get: "/api/v1/results"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+}
+
 service PermissionsService {
     rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
         option (google.api.http) = {
@@ -668,22 +671,13 @@ message GetAuthorizationURLRequest {
     int32  port = 4;
     optional string owner = 5;
     Context context = 6;
+    optional string redirect_url = 7;
 
     reserved 1, 2; // deprecated provider and project_id
 }
 
 message GetAuthorizationURLResponse {
     string url = 1;
-}
-
-message ExchangeCodeForTokenCLIRequest {
-    string provider = 1 [deprecated=true];
-    string code = 3;
-    string state = 4;
-    string redirect_uri = 5;
-    Context context = 6;
-
-    reserved 2; // deprecated project_id
 }
 
 message StoreProviderTokenRequest {
@@ -723,7 +717,9 @@ message ListRemoteRepositoriesFromProviderResponse {
 message UpstreamRepositoryRef {
     string owner = 1;
     string name = 2;
-    int32 repo_id = 3;
+    // The upstream identity of the repository, as an integer.
+    // This is only set on output, and is ignored on input.
+    int64 repo_id = 3;
 }
 
 message Repository {
@@ -731,7 +727,7 @@ message Repository {
     optional Context context = 2;
     string owner = 3;
     string name = 4;
-    int32 repo_id = 5;
+    int64 repo_id = 5;
     int64 hook_id = 6;
     string hook_url = 7;
     string deploy_url = 8;
@@ -920,6 +916,12 @@ message DeleteProfileResponse {
 message ListProfilesRequest {
     // context is the context which contains the profiles
     Context context = 1;
+    // Filter profiles to only those matching the specified labels.
+    // 
+    // The default is to return all user-created profiles; the string "*" can
+    // be used to select all profiles, including system profiles.  This syntax
+    // may be expanded in the future.
+    string label_filter = 2;
 }
 
 message ListProfilesResponse {
@@ -982,21 +984,20 @@ message RuleEvaluationStatus {
     string rule_description_name = 14;
 }
 
+// EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+// such as (repo, 1), (artifact, 2), ...
+message EntityTypedId {
+    // entity is the entity to get status for. Incompatible with `all`
+    Entity type = 1;
+    // id is the ID of the entity to get status for. Incompatible with `all`
+    string id = 2;
+}
+
 message GetProfileStatusByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // name is the name of the profile to get
     string name = 2;
-
-    // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
-    // such as (repo, 1), (artifact, 2), ...
-    // if the struct is reused in other messages, it should be moved to a top-level definition
-    message EntityTypedId {
-        // entity is the entity to get status for. Incompatible with `all`
-        Entity type = 1;
-        // id is the ID of the entity to get status for. Incompatible with `all`
-        string id = 2;
-    }
 
     EntityTypedId entity = 3;
     bool all = 4;
@@ -1148,6 +1149,45 @@ message DeleteRuleTypeResponse {
 
 // --- END RuleType CRUD definitions
 
+// --- START EvaluationResults definitions
+
+message ListEvaluationResultsRequest{
+    // context is the context in which the evaluation results are evaluated.
+    Context context = 1;
+
+    // profile is the profile name or ID to retrieve results for.
+    // If empty, return evaluation results for profiles selected by
+    // an empty label_filter.
+    oneof profile_selector {
+        // ID can contain either a profile name or an ID
+        string profile = 2;
+        // Filter profiles to only those matching the specified labels.
+        // 
+        // The default is to return all user-created profiles; the string "*" can
+        // be used to select all profiles, including system profiles.  This syntax
+        // may be expanded in the future.
+        string label_filter = 3;
+    }
+
+    // If set, only return evaluation results for the named entities.
+    // If empty, return evaluation results for all entities
+    repeated EntityTypedId entity = 4;
+
+    // If set, only return evaluation results for the named rules.
+    // If empty, return evaluation results for all rules
+    repeated string rule_name = 5;
+}
+
+message ListEvaluationResultsResponse {
+    // status is the list of evaluation results.
+    // Results will typically be grouped by profile and project.
+    repeated RuleEvaluationStatus status = 1;
+}
+
+// --- END EvaluationResults definitions
+
+
+
 // RestType defines the rest data evaluation.
 // This is used to fetch data from a REST endpoint.
 message RestType {
@@ -1215,6 +1255,35 @@ message DiffType {
     // The default is "dep" which will leverage
     // the ecosystems array.
     string type = 2;
+}
+
+// Severity defines the severity of the rule.
+message Severity {
+    // Value enumerates the severity values.
+    enum Value {
+        VALUE_UNSPECIFIED = 0;
+        // unknown severity means that the severity is unknown or hasn't
+        // been set.
+        VALUE_UNKNOWN = 1 [(name) = "unknown"];
+        // info severity means that the severity is informational and
+        // does not incur risk.
+        VALUE_INFO = 2 [(name) = "info"];
+        // low severity means that the severity is low and does not
+        // incur significant risk.
+        VALUE_LOW = 3 [(name) = "low"];
+        // medium severity means that the severity is medium and may
+        // incur some risk.
+        VALUE_MEDIUM = 4 [(name) = "medium"];
+        // high severity means that the severity is high and may incur
+        // significant risk.
+        VALUE_HIGH = 5 [(name) = "high"];
+        // critical severity means that the severity is critical and
+        // requires immediate attention.
+        VALUE_CRITICAL = 6 [(name) = "critical"];
+    }
+
+    // value is the severity value.
+    Value value = 1;
 }
 
 // RuleType defines rules that may or may not be user defined.
@@ -1312,6 +1381,12 @@ message RuleType {
                 // no configuration for now
             }
 
+            message Trusty {
+                // This is no longer used, but is still here for backwards
+                // compatibility with existing stored rules
+                string endpoint = 1;
+            }
+
             message Homoglyphs {
                 string type = 1;
             }
@@ -1327,10 +1402,12 @@ message RuleType {
             // vulncheck is only used if the `vulncheck` type is selected.
             optional Vulncheck vulncheck = 4;
 
+            // The trusty type is no longer used, but is still here for backwards
+            // compatibility with existing stored rules
+            optional Trusty trusty = 5;
+
             // homoglyphs is only used if the `homoglyphs` type is selected.
             optional Homoglyphs homoglyphs = 6;
-
-            reserved 5; // deprecated optional trusty
         }
         Eval eval = 5;
 
@@ -1404,6 +1481,9 @@ message RuleType {
 
     // guidance are instructions we give the user in case a rule fails.
     string guidance = 6;
+
+    // severity is the severity of the rule type.
+    Severity severity = 7;
 }
 
 // Profile defines a profile that is user defined.
@@ -1417,6 +1497,20 @@ message Profile {
 
     // name is the name of the profile instance.
     string name = 3;
+
+    // labels are a set of system-provided attributes which can be used to
+    // filter profiles and status results.  Labels cannot be set by the user,
+    // but are returned in ListProfiles.
+    //
+    // Labels use DNS label constraints, with a possible namespace prefix
+    // separated by a colon (:).  They are intended to allow filtering, but
+    // not to store arbitrary metadata.
+    // DNS labels are 1-63 character alphanumeric strings with internal hyphens.
+    // An RE2-style validation regex would be:
+    //
+    // DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?"
+    // ($DNS_STR:)?$DNS_STR
+    repeated string labels = 12;
 
     // Rule defines the individual call of a certain rule type.
     message Rule {

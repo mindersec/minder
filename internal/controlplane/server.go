@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
@@ -49,12 +50,15 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -69,8 +73,8 @@ var (
 type Server struct {
 	store           db.Store
 	cfg             *serverconfig.Config
-	evt             *events.Eventer
-	mt              *metrics
+	evt             events.Interface
+	mt              metrics.Metrics
 	provMt          provtelemetry.ProviderMetrics
 	grpcServer      *grpc.Server
 	vldtr           auth.JwtValidator
@@ -81,6 +85,11 @@ type Server struct {
 	cryptoEngine    *crypto.Engine
 	restClientCache ratecache.RestClientCache
 	idClient        *auth.IdentityClient
+	// We may want to start breaking up the server struct if we use it to
+	// inject more entity-specific interfaces. For example, we may want to
+	// consider having a struct per grpc service
+	profileValidator *profiles.Validator
+	webhookManager   webhooks.WebhookManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -123,11 +132,17 @@ func WithIdentityClient(c *auth.IdentityClient) ServerOption {
 	}
 }
 
+// WithServerMetrics sets the server metrics for the server
+func WithServerMetrics(mt metrics.Metrics) ServerOption {
+	return func(s *Server) {
+		s.mt = mt
+	}
+}
+
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
 	evt *events.Eventer,
-	cpm *metrics,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,
@@ -137,13 +152,15 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	s := &Server{
-		store:        store,
-		cfg:          cfg,
-		evt:          evt,
-		cryptoEngine: eng,
-		vldtr:        vldtr,
-		mt:           cpm,
-		provMt:       provtelemetry.NewNoopMetrics(),
+		store:            store,
+		cfg:              cfg,
+		evt:              evt,
+		cryptoEngine:     eng,
+		vldtr:            vldtr,
+		mt:               metrics.NewNoopMetrics(),
+		provMt:           provtelemetry.NewNoopMetrics(),
+		profileValidator: profiles.NewValidator(store),
+		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
@@ -318,7 +335,17 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	mw := otelhttp.NewMiddleware("webhook")
 
-	mux.Handle("/", gwmux)
+	// Explicitly handle HTTP only requests
+	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleProviderCallback())
+	if err != nil {
+		return fmt.Errorf("failed to register provider callback handler: %w", err)
+	}
+	err = gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/web", s.HandleProviderCallback())
+	if err != nil {
+		return fmt.Errorf("failed to register provider callback handler: %w", err)
+	}
+
+	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
 	mux.Handle("/static/", fs)
 
@@ -362,6 +389,31 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 }
 
+func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
+	if s.cfg.HTTPServer.CORS.Enabled {
+		var opts []handlers.CORSOption
+		if len(s.cfg.HTTPServer.CORS.AllowOrigins) > 0 {
+			opts = append(opts, handlers.AllowedOrigins(s.cfg.HTTPServer.CORS.AllowOrigins))
+		}
+		if len(s.cfg.HTTPServer.CORS.AllowMethods) > 0 {
+			opts = append(opts, handlers.AllowedMethods(s.cfg.HTTPServer.CORS.AllowMethods))
+		}
+		if len(s.cfg.HTTPServer.CORS.AllowHeaders) > 0 {
+			opts = append(opts, handlers.AllowedHeaders(s.cfg.HTTPServer.CORS.AllowHeaders))
+		}
+		if len(s.cfg.HTTPServer.CORS.ExposeHeaders) > 0 {
+			opts = append(opts, handlers.ExposedHeaders(s.cfg.HTTPServer.CORS.ExposeHeaders))
+		}
+		if s.cfg.HTTPServer.CORS.AllowCredentials {
+			opts = append(opts, handlers.AllowCredentials())
+		}
+
+		return handlers.CORS(opts...)(h)
+	}
+
+	return h
+}
+
 // startMetricServer starts a Prometheus metrics server and blocks while serving
 func (s *Server) startMetricServer(ctx context.Context) error {
 	// pull-based Prometheus exporter
@@ -377,7 +429,7 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 		return mp.Shutdown(ctx)
 	})
 
-	err = s.mt.initInstruments(s.store)
+	err = s.mt.Init(s.store)
 	if err != nil {
 		return fmt.Errorf("could not initialize instruments: %w", err)
 	}

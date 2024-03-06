@@ -78,7 +78,6 @@ type GitHub interface {
 	RepoLister
 	REST
 
-	GetAuthenticatedUser(context.Context) (*github.User, error)
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
@@ -107,7 +106,9 @@ type GitHub interface {
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
 	CreateComment(ctx context.Context, owner, repo string, number int, comment string) error
-	ListEmails(ctx context.Context, opts *github.ListOptions) ([]*github.UserEmail, error)
+	GetUserId(ctx context.Context) (int64, error)
+	GetUsername(ctx context.Context) (string, error)
+	GetPrimaryEmail(ctx context.Context) (string, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

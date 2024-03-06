@@ -18,7 +18,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"

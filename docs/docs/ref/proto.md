@@ -26,6 +26,16 @@ toc_max_heading_level: 4
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
 
 
+<a name="minder-v1-EvalResultsService"></a>
+
+#### EvalResultsService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListEvaluationResults | [ListEvaluationResultsRequest](#minder-v1-ListEvaluationResultsRequest) | [ListEvaluationResultsResponse](#minder-v1-ListEvaluationResultsResponse) |  |
+
+
 <a name="minder-v1-HealthService"></a>
 
 #### HealthService
@@ -45,7 +55,6 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#minder-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#minder-v1-GetAuthorizationURLResponse) |  |
-| ExchangeCodeForTokenCLI | [ExchangeCodeForTokenCLIRequest](#minder-v1-ExchangeCodeForTokenCLIRequest) | [.google.api.HttpBody](#google-api-HttpBody) | buf:lint:ignore RPC_RESPONSE_STANDARD_NAME  protolint:disable:this |
 | StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
 
@@ -443,19 +452,17 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-<a name="minder-v1-ExchangeCodeForTokenCLIRequest"></a>
+<a name="minder-v1-EntityTypedId"></a>
 
-#### ExchangeCodeForTokenCLIRequest
-
+#### EntityTypedId
+EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+such as (repo, 1), (artifact, 2), ...
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| code | [string](#string) |  |  |
-| state | [string](#string) |  |  |
-| redirect_uri | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
+| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
 <a name="minder-v1-GetArtifactByIdRequest"></a>
@@ -518,6 +525,7 @@ DiffType defines the diff data ingester.
 | port | [int32](#int32) |  |  |
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
+| redirect_url | [string](#string) | optional |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -564,25 +572,11 @@ get profile by id
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
 | name | [string](#string) |  | name is the name of the profile to get |
-| entity | [GetProfileStatusByNameRequest.EntityTypedId](#minder-v1-GetProfileStatusByNameRequest-EntityTypedId) |  |  |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
 | all | [bool](#bool) |  |  |
 | rule | [string](#string) |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
 | rule_type | [string](#string) |  |  |
 | rule_name | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetProfileStatusByNameRequest-EntityTypedId"></a>
-
-#### GetProfileStatusByNameRequest.EntityTypedId
-EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
-such as (repo, 1), (artifact, 2), ...
-if the struct is reused in other messages, it should be moved to a top-level definition
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
-| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
 <a name="minder-v1-GetProfileStatusByNameResponse"></a>
@@ -784,6 +778,34 @@ GitType defines the git data ingester.
 | results | [Artifact](#minder-v1-Artifact) | repeated |  |
 
 
+<a name="minder-v1-ListEvaluationResultsRequest"></a>
+
+#### ListEvaluationResultsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the evaluation results are evaluated. |
+| profile | [string](#string) |  | ID can contain either a profile name or an ID |
+| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+
+The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
+| rule_name | [string](#string) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse"></a>
+
+#### ListEvaluationResultsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | status is the list of evaluation results. Results will typically be grouped by profile and project. |
+
+
 <a name="minder-v1-ListProfilesRequest"></a>
 
 #### ListProfilesRequest
@@ -793,6 +815,9 @@ list profiles
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
+| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+
+The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 
 
 <a name="minder-v1-ListProfilesResponse"></a>
@@ -979,7 +1004,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| line_number | [int32](#int32) |  |  |
+| line_number | [int32](#int32) |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
 | content | [string](#string) |  |  |
 
 
@@ -1030,6 +1055,11 @@ Profile defines a profile that is user defined.
 | context | [Context](#minder-v1-Context) |  | context is the context in which the profile is evaluated. |
 | id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
 | name | [string](#string) |  | name is the name of the profile instance. |
+| labels | [string](#string) | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles.
+
+Labels use DNS label constraints, with a possible namespace prefix separated by a colon (:). They are intended to allow filtering, but not to store arbitrary metadata. DNS labels are 1-63 character alphanumeric strings with internal hyphens. An RE2-style validation regex would be:
+
+DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | repository | [Profile.Rule](#minder-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
 | build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
@@ -1108,7 +1138,7 @@ Project API Objects
 | ----- | ---- | ----- | ----------- |
 | url | [string](#string) |  | The full URL to the PR |
 | commit_sha | [string](#string) |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
-| number | [int32](#int32) |  | The sequential PR number (not the DB PK!) |
+| number | [int64](#int64) |  | The sequential PR number (not the DB PK!) |
 | repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
@@ -1209,7 +1239,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | context | [Context](#minder-v1-Context) | optional |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
+| repo_id | [int64](#int64) |  |  |
 | hook_id | [int64](#int64) |  |  |
 | hook_url | [string](#string) |  |  |
 | deploy_url | [string](#string) |  |  |
@@ -1343,6 +1373,7 @@ The version is assumed from the folder's version.
 | def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
 | guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
+| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule type. |
 
 
 <a name="minder-v1-RuleType-Definition"></a>
@@ -1399,6 +1430,7 @@ endpoint and how we compare it to the rule.
 | jq | [RuleType.Definition.Eval.JQComparison](#minder-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
+| trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | The trusty type is no longer used, but is still here for backwards compatibility with existing stored rules |
 | homoglyphs | [RuleType.Definition.Eval.Homoglyphs](#minder-v1-RuleType-Definition-Eval-Homoglyphs) | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
 
 
@@ -1447,6 +1479,17 @@ endpoint and how we compare it to the rule.
 | type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
 | def | [string](#string) |  | def is the definition of the rego profile. |
 | violation_format | [string](#string) | optional | how are violations reported. This is only used if the `constraints` type is selected. The default is `text` which returns human-readable text. The other option is `json` which returns a JSON array containing the violations. |
+
+
+<a name="minder-v1-RuleType-Definition-Eval-Trusty"></a>
+
+#### RuleType.Definition.Eval.Trusty
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | This is no longer used, but is still here for backwards compatibility with existing stored rules |
 
 
 <a name="minder-v1-RuleType-Definition-Eval-Vulncheck"></a>
@@ -1536,6 +1579,17 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
 
 
+<a name="minder-v1-Severity"></a>
+
+#### Severity
+Severity defines the severity of the rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [Severity.Value](#minder-v1-Severity-Value) |  | value is the severity value. |
+
+
 <a name="minder-v1-StoreProviderTokenRequest"></a>
 
 #### StoreProviderTokenRequest
@@ -1610,7 +1664,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | ----- | ---- | ----- | ----------- |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
-| repo_id | [int32](#int32) |  |  |
+| repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
 
 
 <a name="minder-v1-UserRecord"></a>
@@ -1757,6 +1811,22 @@ ProviderType is the type of the provider.
 | RELATION_PROFILE_DELETE | 32 |  |
 | RELATION_PROFILE_STATUS_GET | 33 |  |
 | RELATION_REMOTE_REPO_GET | 34 |  |
+
+
+<a name="minder-v1-Severity-Value"></a>
+
+### Severity.Value
+Value enumerates the severity values.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VALUE_UNSPECIFIED | 0 |  |
+| VALUE_UNKNOWN | 1 | unknown severity means that the severity is unknown or hasn't been set. |
+| VALUE_INFO | 2 | info severity means that the severity is informational and does not incur risk. |
+| VALUE_LOW | 3 | low severity means that the severity is low and does not incur significant risk. |
+| VALUE_MEDIUM | 4 | medium severity means that the severity is medium and may incur some risk. |
+| VALUE_HIGH | 5 | high severity means that the severity is high and may incur significant risk. |
+| VALUE_CRITICAL | 6 | critical severity means that the severity is critical and requires immediate attention. |
 
 
 <a name="minder-v1-TargetResource"></a>

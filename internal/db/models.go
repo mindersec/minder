@@ -281,6 +281,52 @@ func (ns NullRemediationStatusTypes) Value() (driver.Value, error) {
 	return string(ns.RemediationStatusTypes), nil
 }
 
+type Severity string
+
+const (
+	SeverityUnknown  Severity = "unknown"
+	SeverityInfo     Severity = "info"
+	SeverityLow      Severity = "low"
+	SeverityMedium   Severity = "medium"
+	SeverityHigh     Severity = "high"
+	SeverityCritical Severity = "critical"
+)
+
+func (e *Severity) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Severity(s)
+	case string:
+		*e = Severity(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Severity: %T", src)
+	}
+	return nil
+}
+
+type NullSeverity struct {
+	Severity Severity `json:"severity"`
+	Valid    bool     `json:"valid"` // Valid is true if Severity is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSeverity) Scan(value interface{}) error {
+	if value == nil {
+		ns.Severity, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Severity.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSeverity) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Severity), nil
+}
+
 type Artifact struct {
 	ID                 uuid.UUID `json:"id"`
 	RepositoryID       uuid.UUID `json:"repository_id"`
@@ -408,10 +454,10 @@ type Repository struct {
 	ProjectID     uuid.UUID      `json:"project_id"`
 	RepoOwner     string         `json:"repo_owner"`
 	RepoName      string         `json:"repo_name"`
-	RepoID        int32          `json:"repo_id"`
+	RepoID        int64          `json:"repo_id"`
 	IsPrivate     bool           `json:"is_private"`
 	IsFork        bool           `json:"is_fork"`
-	WebhookID     sql.NullInt32  `json:"webhook_id"`
+	WebhookID     sql.NullInt64  `json:"webhook_id"`
 	WebhookUrl    string         `json:"webhook_url"`
 	DeployUrl     string         `json:"deploy_url"`
 	CloneUrl      string         `json:"clone_url"`
@@ -457,15 +503,16 @@ type RuleEvaluation struct {
 }
 
 type RuleType struct {
-	ID          uuid.UUID       `json:"id"`
-	Name        string          `json:"name"`
-	Provider    string          `json:"provider"`
-	ProjectID   uuid.UUID       `json:"project_id"`
-	Description string          `json:"description"`
-	Guidance    string          `json:"guidance"`
-	Definition  json.RawMessage `json:"definition"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID            uuid.UUID       `json:"id"`
+	Name          string          `json:"name"`
+	Provider      string          `json:"provider"`
+	ProjectID     uuid.UUID       `json:"project_id"`
+	Description   string          `json:"description"`
+	Guidance      string          `json:"guidance"`
+	Definition    json.RawMessage `json:"definition"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
+	SeverityValue Severity        `json:"severity_value"`
 }
 
 type SessionStore struct {
@@ -476,6 +523,7 @@ type SessionStore struct {
 	OwnerFilter  sql.NullString `json:"owner_filter"`
 	SessionState string         `json:"session_state"`
 	CreatedAt    time.Time      `json:"created_at"`
+	RedirectUrl  sql.NullString `json:"redirect_url"`
 }
 
 type User struct {

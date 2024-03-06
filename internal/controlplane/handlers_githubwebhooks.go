@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	urlparser "net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,11 +38,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
-	githubprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -117,13 +116,13 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 // for more information.
 func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wes := webhookEventState{
-			typ:      "unknown",
-			accepted: false,
-			error:    true,
+		wes := &metrics.WebhookEventState{
+			Typ:      "unknown",
+			Accepted: false,
+			Error:    true,
 		}
 		defer func() {
-			s.mt.webhookEventTypeCount(r.Context(), wes)
+			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
 		}()
 
 		// Validate the payload signature. This is required for security reasons.
@@ -136,15 +135,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		rawWBPayload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
 		if err != nil {
-			fmt.Printf("Error validating webhook payload: %v", err)
+			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		wes.typ = github.WebHookType(r)
-		if wes.typ == "ping" {
+		wes.Typ = github.WebHookType(r)
+		if wes.Typ == "ping" {
 			log.Printf("ping received")
-			wes.error = false
+			wes.Error = false
 			return
 		}
 
@@ -153,15 +152,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.typ)
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			wes = handleParseError(wes.typ, err)
-			if wes.error {
+			wes = handleParseError(wes.Typ, err)
+			if wes.Error {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusOK)
@@ -169,39 +168,39 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			return
 		}
 
-		wes.accepted = true
+		wes.Accepted = true
 
 		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
-			wes.error = true
+			wes.Error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		wes.error = false
+		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func handleParseError(typ string, parseErr error) webhookEventState {
-	state := webhookEventState{typ: typ, accepted: false, error: true}
+func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
+	state := &metrics.WebhookEventState{Typ: typ, Accepted: false, Error: true}
 
 	var logMsg string
 	switch {
 	case errors.Is(parseErr, errRepoNotFound):
-		state.error = false
+		state.Error = false
 		logMsg = "repository not found"
 	case errors.Is(parseErr, errArtifactNotFound):
-		state.error = false
+		state.Error = false
 		logMsg = "artifact not found"
 	case errors.Is(parseErr, errRepoIsPrivate):
-		state.error = false
+		state.Error = false
 		logMsg = "repository is private"
 	case errors.Is(parseErr, errNotHandled):
-		state.error = false
+		state.Error = false
 		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
 	case errors.Is(parseErr, errArtifactVersionSkipped):
-		state.error = false
+		state.Error = false
 		logMsg = "artifact version skipped, has no tags"
 	default:
 		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
@@ -214,13 +213,21 @@ func handleParseError(typ string, parseErr error) webhookEventState {
 // and returns the registration result for each repository.
 // If an error occurs, the registration is aborted and the error is returned.
 // https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
+
+// The actual logic for webhook creation lives in the WebhookManager interface
+// TODO: the remaining logic should be refactored into a repository
+// registration interface
 func (s *Server) registerWebhookForRepository(
 	ctx context.Context,
 	pbuild *providers.ProviderBuilder,
 	projectID uuid.UUID,
 	repo *pb.UpstreamRepositoryRef,
-	ghEvents []string,
 ) (*pb.RegisterRepoResult, error) {
+	logger := zerolog.Ctx(ctx).With().
+		Str("repoName", repo.Name).
+		Str("repoOwner", repo.Owner).
+		Logger()
+	ctx = logger.WithContext(ctx)
 
 	if !pbuild.Implements(db.ProviderTypeGithub) {
 		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
@@ -231,24 +238,17 @@ func (s *Server) registerWebhookForRepository(
 		return nil, fmt.Errorf("error creating github provider: %w", err)
 	}
 
-	url := s.cfg.WebhookConfig.ExternalWebhookURL
-	ping := s.cfg.WebhookConfig.ExternalPingURL
-	secret := s.cfg.WebhookConfig.WebhookSecret
-
 	regResult := &pb.RegisterRepoResult{
+		// We will overwrite this later when we've looked it up from the provider,
+		// but existing clients expect a message here, so let's add one.
 		Repository: &pb.Repository{
-			Name:   repo.Name,
-			Owner:  repo.Owner,
-			RepoId: repo.RepoId,
+			Name:  repo.Name,  // Not normalized, from client
+			Owner: repo.Owner, // Not normalized, from client
 		},
 		Status: &pb.RegisterRepoResult_Status{
 			Success: false,
 		},
 	}
-
-	logger := zerolog.Ctx(ctx).With().
-		Str("repoName", repo.Name).
-		Str("repoOwner", repo.Owner).Logger()
 
 	// let's verify that the repository actually exists.
 	repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
@@ -265,78 +265,31 @@ func (s *Server) registerWebhookForRepository(
 		return regResult, nil
 	}
 
-	urlUUID := uuid.New().String()
-
-	webhookUrl := fmt.Sprintf("%s/%s", url, urlUUID)
-	parsedOriginalURL, err := urlparser.Parse(webhookUrl)
+	hookUUID, githubHook, err := s.webhookManager.CreateWebhook(ctx, client, repo.Owner, repo.Name)
 	if err != nil {
-		errStr := err.Error()
-		regResult.Status.Error = &errStr
-		return regResult, nil
-	}
-
-	hook := &github.Hook{
-		Config: map[string]interface{}{
-			"url":          webhookUrl,
-			"content_type": "json",
-			"ping_url":     ping,
-			"secret":       secret,
-		},
-		Events: ghEvents,
-	}
-
-	// if we have an existing hook for same repo, delete it
-	hooks, err := client.ListHooks(ctx, repo.Owner, repo.Name)
-	if errors.Is(err, githubprovider.ErrNotFound) {
-		logger.Debug().Msg("no hooks found")
-	} else if err != nil {
+		logger.Error().Msgf("error while creating webhook: %v", err)
 		errorStr := err.Error()
 		regResult.Status.Error = &errorStr
-		logger.Error().Msg("error listing hooks")
-		return regResult, nil
-	}
-	for _, h := range hooks {
-		config_url := h.Config["url"].(string)
-		if config_url != "" {
-			parsedURL, err := urlparser.Parse(config_url)
-			if err != nil {
-				errorStr := err.Error()
-				regResult.Status.Error = &errorStr
-				return regResult, nil
-			}
-			if parsedURL.Host == parsedOriginalURL.Host {
-				// it is our hook, we can remove it
-				_, err = client.DeleteHook(ctx, repo.Owner, repo.Name, h.GetID())
-				if err != nil {
-					errorStr := err.Error()
-					regResult.Status.Error = &errorStr
-					logger.Error().Msg("error deleting hook")
-					return regResult, nil
-				}
-			}
-		}
-	}
-
-	// Attempt to register webhook
-	mhook, err := client.CreateHook(ctx, repo.Owner, repo.Name, hook)
-	if err != nil {
-		errorStr := err.Error()
-		regResult.Status.Error = &errorStr
-		logger.Error().Msg("error creating hook")
 		return regResult, nil
 	}
 
 	regResult.Status.Success = true
-	regResult.Repository.HookId = mhook.GetID()
-	regResult.Repository.HookUrl = mhook.GetURL()
-	regResult.Repository.DeployUrl = webhookUrl
-	regResult.Repository.CloneUrl = *repoGet.CloneURL
-	regResult.Repository.HookType = mhook.GetType()
-	regResult.Repository.HookName = mhook.GetName()
-	regResult.Repository.HookUuid = urlUUID
-	regResult.Repository.IsPrivate = repoGet.GetPrivate()
-	regResult.Repository.IsFork = repoGet.GetFork()
-	regResult.Repository.DefaultBranch = repoGet.GetDefaultBranch()
+
+	regResult.Repository = &pb.Repository{
+		Name:          repoGet.GetName(),
+		Owner:         repoGet.GetOwner().GetLogin(),
+		RepoId:        repoGet.GetID(),
+		HookId:        githubHook.GetID(),
+		HookUrl:       githubHook.GetURL(),
+		DeployUrl:     repoGet.GetDeploymentsURL(),
+		CloneUrl:      repoGet.GetCloneURL(),
+		HookType:      githubHook.GetType(),
+		HookName:      githubHook.GetName(),
+		HookUuid:      hookUUID,
+		IsPrivate:     repoGet.GetPrivate(),
+		IsFork:        repoGet.GetFork(),
+		DefaultBranch: repoGet.GetDefaultBranch(),
+	}
 
 	return regResult, nil
 }
@@ -361,15 +314,17 @@ func (s *Server) deleteWebhookFromRepository(
 		return status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
 
-	webhookId := dbrepo.WebhookID
-	if webhookId.Valid {
-		resp, err := client.DeleteHook(ctx, dbrepo.RepoOwner, dbrepo.RepoName, int64(webhookId.Int32))
+	webhookID := dbrepo.WebhookID
+	if webhookID.Valid {
+		err = s.webhookManager.DeleteWebhook(
+			ctx,
+			client,
+			dbrepo.RepoOwner,
+			dbrepo.RepoName,
+			webhookID.Int64,
+		)
 		if err != nil {
-			if resp != nil && resp.StatusCode == http.StatusNotFound {
-				// if the hook is not found, we can ignore the error, user might have deleted it manually
-				return nil
-			}
-			return status.Errorf(codes.Internal, "cannot delete webhook: %v", err)
+			return status.Errorf(codes.Internal, "cannot delete hook: %v", err)
 		}
 	}
 
@@ -728,7 +683,7 @@ func getPullRequestInfoFromPayload(
 
 	return &pb.PullRequest{
 		Url:      prUrl,
-		Number:   int32(prNumber),
+		Number:   int64(prNumber),
 		AuthorId: int64(prAuthorId),
 		Action:   action,
 	}, nil
@@ -747,7 +702,7 @@ func reconcilePrWithDb(
 	case "opened", "synchronize":
 		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
-			PrNumber:     int64(prEvalInfo.Number),
+			PrNumber:     prEvalInfo.Number,
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -759,7 +714,7 @@ func reconcilePrWithDb(
 	case "closed":
 		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: dbrepo.ID,
-			PrNumber:     int64(prEvalInfo.Number),
+			PrNumber:     prEvalInfo.Number,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("cannot delete PR record %d in repo %s/%s",
@@ -775,6 +730,7 @@ func reconcilePrWithDb(
 
 	return retPr, retErr
 }
+
 func updatePullRequestInfoFromProvider(
 	ctx context.Context,
 	cli provifv1.GitHub,
@@ -838,19 +794,17 @@ func getRepoInformationFromPayload(
 	return dbrepo, nil
 }
 
-func parseRepoID(repoID any) (int32, error) {
+func parseRepoID(repoID any) (int64, error) {
 	switch v := repoID.(type) {
 	case int32:
+		return int64(v), nil
+	case int64:
 		return v, nil
 	case float64:
-		return int32(v), nil
+		return int64(v), nil
 	case string:
 		// convert string to int
-		asInt32, err := strconv.ParseInt(v, 10, 16)
-		if err != nil {
-			return 0, fmt.Errorf("error converting string to int: %w", err)
-		}
-		return int32(asInt32), nil
+		return strconv.ParseInt(v, 10, 64)
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}

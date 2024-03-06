@@ -61,25 +61,32 @@ func TestGoParse(t *testing.T) {
 		{
 			description: "Mixed additions and removals",
 			content: `
-+	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
++	go.opentelemetry.io/proto/otlp v1.0.0
 +	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
 -	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
-			expectedCount: 2,
+			expectedCount: 1,
 			expectedDependencies: []*pb.Dependency{
 				{
 					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
 					Name:      "go.opentelemetry.io/proto/otlp",
 					Version:   "v1.0.0",
 				},
-				{
-					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
-					Name:      "go.uber.org/mock",
-					Version:   "v0.4.0",
-				},
 			},
+		},
+		{
+			description: "Indirect addition",
+			content: `
++	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
++	go.uber.org/mock v0.4.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
+-	gotest.tools/v3 v3.4.0 // indirect
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
+			expectedCount:        0,
+			expectedDependencies: []*pb.Dependency{},
 		},
 		{
 			description: "Replace",
@@ -88,7 +95,7 @@ func TestGoParse(t *testing.T) {
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 +
-+replace github.com/opencontainers/runc => github.com/stacklok/runc v1.1.12 // indirect`,
++replace github.com/opencontainers/runc => github.com/stacklok/runc v1.1.12`,
 			expectedCount: 1,
 			expectedDependencies: []*pb.Dependency{
 				{

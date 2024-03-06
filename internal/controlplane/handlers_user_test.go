@@ -23,11 +23,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -226,7 +226,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), &serverconfig.Config{
+			server, err := NewServer(mockStore, evt, &serverconfig.Config{
 				Auth: serverconfig.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
@@ -410,7 +410,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, NewMetrics(), &serverconfig.Config{
+			server, err := NewServer(mockStore, evt, &serverconfig.Config{
 				Auth: serverconfig.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},

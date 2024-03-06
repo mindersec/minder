@@ -222,7 +222,7 @@ func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
 	cfg.Log.Level = "error"
 	cfg.Datastore.Engine = "memory"
 
-	loggr := logger.MustNewLogger("text", "error")
+	loggr := logger.MustNewLogger("text", "error", "ISO8601")
 	serverCtx := &run.ServerContext{Logger: loggr}
 
 	ctx, cancel := context.WithCancel(context.Background())

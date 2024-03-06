@@ -1,5 +1,5 @@
 //
-// Copyright 2023 Stacklok, Inc.
+// Copyright 2024 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controlplane
+// Package metrics defines the primitives available for the controlplane metrics
+package metrics
 
 import (
 	"context"
@@ -27,7 +28,26 @@ import (
 	"github.com/stacklok/minder/internal/db"
 )
 
-type metrics struct {
+// WebhookEventState represents the state of a webhook event
+type WebhookEventState struct {
+	// Typ is the type of the event, e.g. pull_request, repository, workflow_run, ...
+	Typ string
+	// Accepted is whether the event was accepted by engine or filtered out
+	Accepted bool
+	// Error is whether there was an error processing the event
+	Error bool
+}
+
+// Metrics implements metrics management for the control plane
+type Metrics interface {
+	// Initialize metrics engine
+	Init(db.Store) error
+
+	// AddWebhookEventTypeCount adds a count to the webhook event type counter
+	AddWebhookEventTypeCount(context.Context, *WebhookEventState)
+}
+
+type metricsImpl struct {
 	meter           metric.Meter
 	instrumentsOnce sync.Once
 
@@ -38,13 +58,14 @@ type metrics struct {
 }
 
 // NewMetrics creates a new controlplane metrics instance.
-func NewMetrics() *metrics {
-	return &metrics{
+func NewMetrics() Metrics {
+	return &metricsImpl{
 		meter: otel.Meter("controlplane"),
 	}
 }
 
-func (m *metrics) initInstruments(store db.Store) error {
+// Init initializes the metrics engine
+func (m *metricsImpl) Init(store db.Store) error {
 	var err error
 	m.instrumentsOnce.Do(func() {
 		err = m.initInstrumentsOnce(store)
@@ -52,7 +73,7 @@ func (m *metrics) initInstruments(store db.Store) error {
 	return err
 }
 
-func (m *metrics) initInstrumentsOnce(store db.Store) error {
+func (m *metricsImpl) initInstrumentsOnce(store db.Store) error {
 	_, err := m.meter.Int64ObservableGauge("user.count",
 		metric.WithDescription("Number of users in the database"),
 		metric.WithUnit("users"),
@@ -142,24 +163,16 @@ func (m *metrics) initInstrumentsOnce(store db.Store) error {
 	return nil
 }
 
-type webhookEventState struct {
-	// the type of the event, e.g. pull_request, repository, workflow_run, ...
-	typ string
-	// whether the event was accepted by engine or filtered out
-	accepted bool
-	// whether there was an error processing the event
-	error bool
-}
-
-func (m *metrics) webhookEventTypeCount(ctx context.Context, state webhookEventState) {
+// AddWebhookEventTypeCount adds a count to the webhook event type counter
+func (m *metricsImpl) AddWebhookEventTypeCount(ctx context.Context, state *WebhookEventState) {
 	if m.webhookEventTypeCounter == nil {
 		return
 	}
 
 	labels := []attribute.KeyValue{
-		attribute.String("webhook_event.type", state.typ),
-		attribute.Bool("webhook_event.accepted", state.accepted),
-		attribute.Bool("webhook_event.error", state.error),
+		attribute.String("webhook_event.type", state.Typ),
+		attribute.Bool("webhook_event.accepted", state.Accepted),
+		attribute.Bool("webhook_event.error", state.Error),
 	}
 	m.webhookEventTypeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 }

@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 
@@ -87,7 +87,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, NewMetrics(), c, mockJwt)
+	server, err := NewServer(mockStore, evt, c, mockJwt)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

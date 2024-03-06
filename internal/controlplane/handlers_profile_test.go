@@ -15,206 +15,71 @@
 package controlplane
 
 import (
-	"errors"
-	"fmt"
+	"context"
 	"reflect"
 	"testing"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func TestValidateRuleNameAndType(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		entity     minderv1.Entity
-		rules      []*minderv1.Profile_Rule
-		wantErrMsg string
-	}{
-		{
-			name:   "Valid rule names and types",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "rule1", Type: "type1"},
-				{Name: "rule2", Type: "type2"},
-			},
-		},
-		{
-			name:   "Duplicate rule names with different types",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "rule1", Type: "type1"},
-				{Name: "rule1", Type: "type2"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type2': rule name 'rule1' conflicts with rule name of type 'type1' in entity 'repository', assign unique names to rules",
-		},
-		{
-			name:   "Rule with same name as it's rule type",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "rule1", Type: "type1"},
-				{Name: "type1", Type: "type1"},
-			},
-		},
-		{
-			name:   "Rule with same name as it's rule type and other rule with no name, same type",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "type1", Type: "type1"},
-				{Name: "", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': rule name 'type1' conflicts with default rule name of unnamed rule in entity 'repository', assign unique names to rules",
-		},
-		{
-			name:   "Duplicate rule names with same types",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "rule1", Type: "type1"},
-				{Name: "rule1", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': multiple rules of same type with same name 'rule1' in entity 'repository', assign unique names to rules",
-		},
-		{
-			name:   "Empty rule names with same types",
-			entity: minderv1.Entity_ENTITY_REPOSITORIES,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': multiple rules with empty name and same type in entity 'repository', add unique names to rules",
-		},
-		{
-			name:   "Multiple rules with empty names and different types",
-			entity: minderv1.Entity_ENTITY_ARTIFACTS,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "", Type: "type2"},
-				{Name: "some name", Type: "type2"},
-				{Name: "", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': multiple rules with empty name and same type in entity 'artifact', add unique names to rules",
-		},
-		{
-			name:   "Multiple rules with empty names and same types",
-			entity: minderv1.Entity_ENTITY_ARTIFACTS,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "some name 1", Type: "type1"},
-				{Name: "some name 2", Type: "type1"},
-				{Name: "some name 3", Type: "type1"},
-				{Name: "", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': multiple rules with empty name and same type in entity 'artifact', add unique names to rules",
-		},
-		{
-			name:   "Multiple rules of same type but different names",
-			entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "rule1", Type: "type1"},
-				{Name: "rule2", Type: "type1"},
-				{Name: "rule3", Type: "type1"},
-				{Name: "", Type: "type1"},
-				{Name: "", Type: "type2"},
-				{Name: "", Type: "type3"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': multiple rules with empty name and same type in entity 'build_environment', add unique names to rules",
-		},
-		{
-			name:   "Rule with name same as other rule type",
-			entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "", Type: "type2"},
-				{Name: "type1", Type: "type3"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type3': rule name 'type1' conflicts with a rule type in entity 'build_environment', rule name cannot match other rule types",
-		},
-		{
-			name:   "Rule name same as default rule name",
-			entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
-			rules: []*minderv1.Profile_Rule{
-				{Name: "", Type: "type1"},
-				{Name: "", Type: "type2"},
-				{Name: "rule1", Type: "type3"},
-				{Name: "type1", Type: "type1"},
-			},
-			wantErrMsg: "profile contained invalid rule 'type1': rule name 'type1' conflicts with default rule name of unnamed rule in entity 'build_environment', assign unique names to rules",
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			err := validateRuleNameAndType(test.entity, test.rules)
-
-			if test.wantErrMsg != "" {
-				require.Error(t, err)
-
-				var v *engine.RuleValidationError
-				require.True(t, errors.As(err, &v))
-				errMsg := fmt.Sprintf("profile contained invalid rule '%s': %s", v.RuleType, v.Err)
-				require.Equal(t, test.wantErrMsg, errMsg)
-			} else {
-				require.NoError(t, err)
-			}
-		})
-	}
-}
 
 func TestGetUnusedOldRuleTypes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name       string
-		newRules   map[ruleTypeAndNamePair]entityAndRuleTuple
-		oldRules   map[ruleTypeAndNamePair]entityAndRuleTuple
-		wantUnused []entityAndRuleTuple
+		newRules   profiles.RuleMapping
+		oldRules   profiles.RuleMapping
+		wantUnused []profiles.EntityAndRuleTuple
 	}{
 		{
 			name: "Unused rule in oldRules",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 			},
-			wantUnused: []entityAndRuleTuple{
+			wantUnused: []profiles.EntityAndRuleTuple{
 				{Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 			},
 		},
 		{
 			name: "Multiple unused rules in oldRules",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 				{RuleType: "Type4", RuleName: "Name4"}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type4", "Name4")},
 			},
-			wantUnused: []entityAndRuleTuple{
+			wantUnused: []profiles.EntityAndRuleTuple{
 				{Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 				{Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type4", "Name4")},
 			},
 		},
 		{
 			name: "No unused rules in oldRules",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
@@ -222,11 +87,11 @@ func TestGetUnusedOldRuleTypes(t *testing.T) {
 		},
 		{
 			name: "Unused rules with same rule type",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
 			},
@@ -235,11 +100,11 @@ func TestGetUnusedOldRuleTypes(t *testing.T) {
 		},
 		{
 			name: "Unused rules with same rule type but different entity types",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
 			},
@@ -264,60 +129,60 @@ func TestGetUnusedOldRuleStatuses(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		newRules        map[ruleTypeAndNamePair]entityAndRuleTuple
-		oldRules        map[ruleTypeAndNamePair]entityAndRuleTuple
-		wantUnusedRules map[ruleTypeAndNamePair]entityAndRuleTuple
+		newRules        profiles.RuleMapping
+		oldRules        profiles.RuleMapping
+		wantUnusedRules profiles.RuleMapping
 	}{
 		{
 			name: "Unused rule in oldRules",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 			},
-			wantUnusedRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			wantUnusedRules: profiles.RuleMapping{
 				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
 			},
 		},
 		{
 			name: "No unused rules in oldRules",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
 			},
-			wantUnusedRules: map[ruleTypeAndNamePair]entityAndRuleTuple{},
+			wantUnusedRules: profiles.RuleMapping{},
 		},
 		{
 			name: "Unused rules with same rule type",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
 			},
-			wantUnusedRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			wantUnusedRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
 			},
 		},
 		{
 			name: "Unused old rules statuses with empty name",
-			newRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			newRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
 				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
 			},
-			oldRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			oldRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
 				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
 			},
-			wantUnusedRules: map[ruleTypeAndNamePair]entityAndRuleTuple{
+			wantUnusedRules: profiles.RuleMapping{
 				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
 				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
 			},
@@ -332,6 +197,161 @@ func TestGetUnusedOldRuleStatuses(t *testing.T) {
 
 			gotUnusedRules := getUnusedOldRuleStatuses(test.newRules, test.oldRules)
 			require.True(t, reflect.DeepEqual(test.wantUnusedRules, gotUnusedRules))
+		})
+	}
+}
+
+//nolint:gocyclo
+func TestCreateProfile(t *testing.T) {
+	t.Parallel()
+
+	// We can't use mockdb.NewMockStore because BeginTransaction returns a *sql.Tx,
+	// which is not an interface and can't be mocked.
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	if err != nil {
+		t.Fatalf("Error creating fake store: %v", err)
+	}
+
+	// Common database setup
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating project: %v", err)
+	}
+	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       "github",
+		ProjectID:  dbproj.ID,
+		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		Definition: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating provider: %v", err)
+	}
+	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
+		Name:          "rule_type_1",
+		Provider:      provider.Name,
+		ProjectID:     dbproj.ID,
+		Definition:    []byte(`{"ruleSchema":{}}`),
+		SeverityValue: db.SeverityLow,
+	})
+	if err != nil {
+		t.Fatalf("Error creating rule type: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		profile *minderv1.CreateProfileRequest
+		wantErr string
+		result  *minderv1.CreateProfileResponse
+	}{{
+		name: "Create profile with empty name",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile name cannot be empty`,
+	}, {
+		name: "Create profile with invalid name",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "colon:invalid",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+	}, {
+		name: "Create profile with no rules",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "test",
+			},
+		},
+		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
+	}, {
+		name: "Create profile with valid name and rules",
+		profile: &minderv1.CreateProfileRequest{
+			Profile: &minderv1.Profile{
+				Name: "test",
+				Repository: []*minderv1.Profile_Rule{{
+					Type: "rule_type_1",
+					Def:  &structpb.Struct{},
+				}},
+			},
+		},
+		result: &minderv1.CreateProfileResponse{
+			Profile: &minderv1.Profile{
+				Name: "test",
+				Repository: []*minderv1.Profile_Rule{{
+					Type: "rule_type_1",
+					Name: "rule_type_1",
+					Def:  &structpb.Struct{},
+				}},
+			},
+		},
+	}}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tc.profile.GetContext() == nil {
+				tc.profile.Profile.Context = &minderv1.Context{
+					Project:  proto.String(dbproj.ID.String()),
+					Provider: proto.String("github"),
+				}
+				if tc.result != nil {
+					tc.result.GetProfile().Context = tc.profile.GetContext()
+				}
+			}
+
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
+				Project:  engine.Project{ID: dbproj.ID},
+				Provider: engine.Provider{Name: "github"},
+			})
+			s := &Server{
+				store:            dbStore,
+				profileValidator: profiles.NewValidator(dbStore),
+				evt:              &StubEventer{},
+			}
+
+			res, err := s.CreateProfile(ctx, tc.profile)
+			if tc.wantErr != "" {
+				niceErr, ok := err.(*util.NiceStatus)
+				if !ok {
+					t.Fatalf("Unexpected error type from CreateProfile: %v", err)
+				}
+				if niceErr.Details != tc.wantErr {
+					t.Errorf("CreateProfile() error = %q, wantErr %q", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Unexpected error from CreateProfile: %v", err)
+			}
+
+			profile, err := dbStore.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
+				Name:      tc.profile.GetProfile().GetName(),
+				ProjectID: dbproj.ID,
+			})
+			if err != nil {
+				t.Fatalf("Error getting profile: %v", err)
+			}
+
+			if tc.result.GetProfile().GetId() == "" {
+				tc.result.GetProfile().Id = proto.String(profile.ID.String())
+			}
+			// For some reason, comparing these protos directly doesn't seem to work...
+			if !proto.Equal(res, tc.result) {
+				t.Errorf("CreateProfile() got = %v, want %v", res, tc.result)
+			}
 		})
 	}
 }

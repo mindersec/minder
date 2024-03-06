@@ -256,13 +256,13 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get worktree: %w", err)
 	}
 
-	logger.Debug().Msg("Getting authenticated user")
-	u, err := r.ghCli.GetAuthenticatedUser(ctx)
+	logger.Debug().Msg("Getting authenticated user details")
+	username, err := r.ghCli.GetUsername(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get authenticated user: %w", err)
+		return fmt.Errorf("cannot get username: %w", err)
 	}
 
-	email, err := getPrimaryEmail(ctx, r.ghCli)
+	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot get primary email: %w", err)
 	}
@@ -302,7 +302,7 @@ func (r *Remediator) runGit(
 	logger.Debug().Msg("Committing changes")
 	_, err = wt.Commit(title, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  u.GetName(),
+			Name:  username,
 			Email: email,
 			When:  time.Now(),
 		},
@@ -324,7 +324,7 @@ func (r *Remediator) runGit(
 				),
 			},
 			Auth: &githttp.BasicAuth{
-				Username: u.GetName(),
+				Username: username,
 				Password: r.ghCli.GetToken(),
 			},
 			Progress: &b,
@@ -498,25 +498,6 @@ func prFromBranchAlreadyExists(
 	}
 
 	return len(openPrs) > 0, nil
-}
-
-func getPrimaryEmail(ctx context.Context, cli provifv1.GitHub) (string, error) {
-	emails, err := cli.ListEmails(ctx, &github.ListOptions{})
-	if err != nil {
-		return "", fmt.Errorf("cannot get email: %w", err)
-	}
-
-	fallback := ""
-	for _, email := range emails {
-		if fallback == "" {
-			fallback = email.GetEmail()
-		}
-		if email.GetPrimary() {
-			return email.GetEmail(), nil
-		}
-	}
-
-	return fallback, nil
 }
 
 func checkoutToOriginallyFetchedBranch(

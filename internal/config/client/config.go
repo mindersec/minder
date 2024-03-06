@@ -26,47 +26,17 @@ import (
 
 // Config is the configuration for the minder cli
 type Config struct {
-	GRPCClientConfig GRPCClientConfig      `mapstructure:"grpc_server"`
-	Identity         IdentityConfigWrapper `mapstructure:"identity"`
-}
-
-// GRPCClientConfig is the configuration for the minder cli to connect to gRPC server
-type GRPCClientConfig struct {
-	// Host is the host to connect to
-	Host string `mapstructure:"host" default:"api.stacklok.com"`
-
-	// Port is the port to connect to
-	Port int `mapstructure:"port" default:"443"`
-
-	// Insecure is whether to allow establishing insecure connections
-	Insecure bool `mapstructure:"insecure" default:"false"`
+	GRPCClientConfig config.GRPCClientConfig `mapstructure:"grpc_server"`
+	Identity         IdentityConfigWrapper   `mapstructure:"identity"`
 }
 
 // RegisterMinderClientFlags registers the flags for the minder cli
 func RegisterMinderClientFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	if err := registerGRPCClientConfigFlags(v, flags); err != nil {
+	if err := config.RegisterGRPCClientConfigFlags(v, flags); err != nil {
 		return err
 	}
 
 	return registerClientIdentityConfigFlags(v, flags)
-}
-
-// registerGRPCClientConfigFlags registers the flags for the gRPC client
-func registerGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	err := config.BindConfigFlag(v, flags, "grpc_server.host", "grpc-host", constants.MinderGRPCHost,
-		"Server host", flags.String)
-	if err != nil {
-		return err
-	}
-
-	err = config.BindConfigFlag(v, flags, "grpc_server.port", "grpc-port", 443,
-		"Server port", flags.Int)
-	if err != nil {
-		return err
-	}
-
-	return config.BindConfigFlag(v, flags, "grpc_server.insecure", "grpc-insecure", false,
-		"Allow establishing insecure connections", flags.Bool)
 }
 
 // registerClientIdentityConfigFlags registers the flags for the client identity

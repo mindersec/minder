@@ -19,8 +19,8 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"

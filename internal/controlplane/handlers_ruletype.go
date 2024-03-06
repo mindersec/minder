@@ -155,6 +155,12 @@ func (s *Server) CreateRuleType(
 	crt *minderv1.CreateRuleTypeRequest,
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	in := crt.GetRuleType()
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
+	}
 
 	entityCtx := engine.EntityFromContext(ctx)
 
@@ -176,25 +182,26 @@ func (s *Server) CreateRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
-	}
-
 	def, err := util.GetBytesFromProto(in.GetDef())
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
 	}
 
+	sev := in.GetSeverity().InitializedStringValue()
+	var seval db.Severity
+
+	if err := seval.Scan(sev); err != nil {
+		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
+	}
+
 	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:        in.GetName(),
-		Provider:    entityCtx.Provider.Name,
-		ProjectID:   entityCtx.Project.ID,
-		Description: in.GetDescription(),
-		Definition:  def,
-		Guidance:    in.GetGuidance(),
+		Name:          in.GetName(),
+		Provider:      entityCtx.Provider.Name,
+		ProjectID:     entityCtx.Project.ID,
+		Description:   in.GetDescription(),
+		Definition:    def,
+		Guidance:      in.GetGuidance(),
+		SeverityValue: seval,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
@@ -221,6 +228,13 @@ func (s *Server) UpdateRuleType(
 	urt *minderv1.UpdateRuleTypeRequest,
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	in := urt.GetRuleType()
+	// First we validate that the incoming rule is valid
+	if err := in.Validate(); err != nil {
+		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
+	}
 
 	entityCtx := engine.EntityFromContext(ctx)
 
@@ -246,31 +260,22 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Internal, "cannot convert rule type %s to pb: %v", in.GetName(), err)
 	}
 
-	// First we validate that the incoming rule is valid
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
-		}
-		return nil, status.Errorf(codes.Unavailable, "invalid rule type definition: %s", err)
-	}
-
 	_, err = s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
+	if err != nil {
+		// We don't need to worry about sql.ErrNoRows, because that only applies for single-row queries
+		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
+	}
 	// We have profiles that use this rule type, so we need to
 	// validate that the incoming rule is valid against the old rule
-	if err == nil {
-		// Then we validate that the incoming rule is valid against the old rule
-		if err := schemaupdate.ValidateSchemaUpdate(
-			oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
-			return nil, util.UserVisibleError(
-				codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
-		}
-		if err := schemaupdate.ValidateSchemaUpdate(
-			oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
-			return nil, util.UserVisibleError(
-				codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
-		}
-	} else if !errors.Is(err, sql.ErrNoRows) {
-		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
+	if err := schemaupdate.ValidateSchemaUpdate(
+		oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
+	}
+	if err := schemaupdate.ValidateSchemaUpdate(
+		oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
 	}
 
 	def, err := util.GetBytesFromProto(in.GetDef())
@@ -278,10 +283,18 @@ func (s *Server) UpdateRuleType(
 		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
 	}
 
+	sev := in.GetSeverity().InitializedStringValue()
+	var seval db.Severity
+
+	if err := seval.Scan(sev); err != nil {
+		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
+	}
+
 	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:          rtdb.ID,
-		Description: in.GetDescription(),
-		Definition:  def,
+		ID:            rtdb.ID,
+		Description:   in.GetDescription(),
+		Definition:    def,
+		SeverityValue: seval,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)

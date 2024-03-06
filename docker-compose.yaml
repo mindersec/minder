@@ -34,9 +34,7 @@ services:
       # "--github-client-secret-file=/secrets/github_client_secret",
     ]
     restart: always # keep the server running
-    tmpfs:
-      - /tmp
-    # read_only: true
+    read_only: true
     ports:
       - "8080:8080"
       - "8090:8090"
@@ -58,13 +56,15 @@ services:
       - MINDER_AUTH_REFRESH_TOKEN_PRIVATE_KEY=/app/.ssh/refresh_token_rsa
       - MINDER_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
       - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
-      - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://trusty.stacklok.dev
+      - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://api.trustypkg.dev
     networks:
       - app_net
     depends_on:
       postgres:
         condition: service_healthy
       keycloak:
+        condition: service_healthy
+      openfga:
         condition: service_healthy
   migrate:
     container_name: minder_migrate_up
@@ -140,7 +140,7 @@ services:
 
   openfga:
     container_name: openfga
-    image: openfga/openfga:v1.4.3
+    image: openfga/openfga:v1.5.0
     command:
       - "run"
     healthcheck:

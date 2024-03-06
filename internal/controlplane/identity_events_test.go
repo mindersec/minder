@@ -22,8 +22,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"

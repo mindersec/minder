@@ -32,9 +32,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/golang/mock/gomock"
 	"github.com/google/go-github/v56/github"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -196,17 +196,9 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
-		GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		Email: github.String("test@stacklok.com"),
-		Login: github.String("stacklok-bot"),
-	}, nil)
+		GetUsername(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
-		ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
-		{
-			Email:   github.String("test@stacklok.com"),
-			Primary: github.Bool(true),
-		},
-	}, nil)
+		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
 		GetToken().Return("token")
 	mockGitHub.EXPECT().
@@ -467,18 +459,10 @@ func TestPullRequestRemediate(t *testing.T) {
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 				// we need to get the user information and update the branch
 				mockGitHub.EXPECT().
-					GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-					Email: github.String("test@stacklok.com"),
-					Login: github.String("stacklok-bot"),
-				}, nil)
+					GetUsername(gomock.Any()).Return("stacklok-bot", nil)
 				// likewise we need to update the branch with a valid e-mail
 				mockGitHub.EXPECT().
-					ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
-					{
-						Email:   github.String("test@stacklok.com"),
-						Primary: github.Bool(true),
-					},
-				}, nil)
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 				mockGitHub.EXPECT().
 					GetToken().Return("token")
 				// this is the last call we expect to make. It returns existing PRs from this branch, so we

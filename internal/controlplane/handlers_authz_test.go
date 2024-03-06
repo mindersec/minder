@@ -16,12 +16,13 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -232,7 +233,9 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 					ID: projectID,
 				},
 			},
-			rpcErr: util.UserVisibleError(codes.PermissionDenied, "user is not authorized to perform this operation"),
+			rpcErr: util.UserVisibleError(
+				codes.PermissionDenied,
+				fmt.Sprintf("user is not authorized to perform this operation on project %q", projectID)),
 		},
 		{
 			name:     "authorized on project",

@@ -37,7 +37,7 @@ type Config struct {
 	LoggingConfig LoggingConfig         `mapstructure:"logging"`
 	Tracing       TracingConfig         `mapstructure:"tracing"`
 	Metrics       MetricsConfig         `mapstructure:"metrics"`
-	Database      DatabaseConfig        `mapstructure:"database"`
+	Database      config.DatabaseConfig `mapstructure:"database"`
 	Identity      IdentityConfigWrapper `mapstructure:"identity"`
 	Auth          AuthConfig            `mapstructure:"auth"`
 	WebhookConfig WebhookConfig         `mapstructure:"webhook-config"`
@@ -108,6 +108,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			defaultValue, err = strconv.ParseFloat(value, 64)
 		case reflect.Bool:
 			defaultValue, err = strconv.ParseBool(value)
+		case reflect.Slice:
+			defaultValue = nil
 		default:
 			err = fmt.Errorf("unhandled type %s", fieldType)
 		}

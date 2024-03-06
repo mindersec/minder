@@ -19,10 +19,28 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/encoding/protojson"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+func TestMessageJsonEncoding(t *testing.T) {
+	t.Parallel()
+	jsonMessage := `{
+		"repository":{"owner":"test","name":"a-test","repoId":4000000000},
+		"context":{"provider":"github","project":"1234"}
+	}`
+
+	protoMessage := minderv1.RegisterRepositoryRequest{}
+	if err := protojson.Unmarshal([]byte(jsonMessage), &protoMessage); err != nil {
+		t.Fatalf("Failed to unmarshal json message: %v", err)
+	}
+
+	if protoMessage.GetRepository().GetRepoId() != 4000000000 {
+		t.Fatalf("Failed to unmarshal repoId, got %d", protoMessage.GetRepository().GetRepoId())
+	}
+}
 
 func TestGetUnregisteredInputRepos(t *testing.T) {
 	t.Parallel()
@@ -165,14 +183,14 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 	tests := []struct {
 		name                  string
 		inputRepositories     []string
-		repoIDs               map[string]int32
+		repoIDs               map[string]int64
 		expectedSelectedRepos []string
 		expectedWarnings      []string
 	}{
 		{
 			name:              "All input repositories are selected",
 			inputRepositories: []string{"owner1/repo1", "owner2/repo2"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},
@@ -182,7 +200,7 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 		{
 			name:              "Some input repositories are not found",
 			inputRepositories: []string{"owner1/repo1", "owner3/repo3"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},
@@ -192,7 +210,7 @@ func TestGetSelectedInputRepositories(t *testing.T) {
 		{
 			name:              "No input repositories are found",
 			inputRepositories: []string{"owner3/repo3", "owner4/repo4"},
-			repoIDs: map[string]int32{
+			repoIDs: map[string]int64{
 				"owner1/repo1": 1,
 				"owner2/repo2": 2,
 			},

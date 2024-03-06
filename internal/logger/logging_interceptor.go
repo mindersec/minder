@@ -51,23 +51,6 @@ func commonAttributes(ctx context.Context, res *status.Status, duration time.Dur
 	return data
 }
 
-func viperLogLevelToZerologLevel(viperLogLevel string) zerolog.Level {
-	switch viperLogLevel {
-	case "debug":
-		return zerolog.DebugLevel
-	case "info":
-		return zerolog.InfoLevel
-	case "warn":
-		return zerolog.WarnLevel
-	case "error":
-		return zerolog.ErrorLevel
-	case "fatal":
-		return zerolog.FatalLevel
-	default:
-		return zerolog.InfoLevel // Default to info level if the mapping is not found
-	}
-}
-
 // Interceptor creates a gRPC unary server interceptor that logs incoming
 // requests and their responses using the Zerolog logger attached to the
 // context.Context.  Successful requests are logged at the info level and

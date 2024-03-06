@@ -103,7 +103,8 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 	server := info.Server.(*Server)
 
 	if err := server.authzClient.Check(ctx, relationName, entityCtx.Project.ID); err != nil {
-		return nil, util.UserVisibleError(codes.PermissionDenied, "user is not authorized to perform this operation")
+		return nil, util.UserVisibleError(
+			codes.PermissionDenied, "user is not authorized to perform this operation on project %q", entityCtx.Project.ID)
 	}
 
 	return handler(ctx, req)
@@ -168,7 +169,7 @@ func getProjectFromRequestOrDefault(
 	}
 	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
-		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user")
+		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user: %v", err)
 	}
 
 	if len(projects) == 0 {

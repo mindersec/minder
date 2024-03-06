@@ -24,6 +24,9 @@
       "name": "ProfileService"
     },
     {
+      "name": "EvalResultsService"
+    },
+    {
       "name": "PermissionsService"
     },
     {
@@ -249,146 +252,6 @@
         ]
       }
     },
-    "/api/v1/auth/callback/cli": {
-      "get": {
-        "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
-        "description": "protolint:disable:this",
-        "operationId": "OAuthService_ExchangeCodeForTokenCLI2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/apiHttpBody"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "state",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "redirectUri",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "OAuthService"
-        ]
-      }
-    },
-    "/api/v1/auth/callback/{provider}/cli": {
-      "get": {
-        "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
-        "description": "protolint:disable:this",
-        "operationId": "OAuthService_ExchangeCodeForTokenCLI",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/apiHttpBody"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "provider",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "code",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "state",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "redirectUri",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "OAuthService"
-        ]
-      }
-    },
     "/api/v1/auth/token": {
       "post": {
         "operationId": "OAuthService_StoreProviderToken2",
@@ -504,6 +367,12 @@
           },
           {
             "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "redirectUrl",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1216,6 +1085,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "labelFilter",
+            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1902,10 +1778,11 @@
           },
           {
             "name": "repository.repoId",
+            "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input.",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "int64"
           },
           {
             "name": "context.provider",
@@ -1930,6 +1807,75 @@
         ],
         "tags": [
           "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/results": {
+      "get": {
+        "operationId": "EvalResultsService_ListEvaluationResults",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListEvaluationResultsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile",
+            "description": "ID can contain either a profile name or an ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "labelFilter",
+            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleName",
+            "description": "If set, only return evaluation results for the named rules.\nIf empty, return evaluation results for all rules",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "EvalResultsService"
         ]
       }
     },
@@ -2308,6 +2254,10 @@
           "$ref": "#/definitions/EvalVulncheck",
           "description": "vulncheck is only used if the `vulncheck` type is selected."
         },
+        "trusty": {
+          "$ref": "#/definitions/EvalTrusty",
+          "title": "The trusty type is no longer used, but is still here for backwards\ncompatibility with existing stored rules"
+        },
         "homoglyphs": {
           "$ref": "#/definitions/EvalHomoglyphs",
           "description": "homoglyphs is only used if the `homoglyphs` type is selected."
@@ -2413,23 +2363,18 @@
         }
       }
     },
+    "EvalTrusty": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "title": "This is no longer used, but is still here for backwards\ncompatibility with existing stored rules"
+        }
+      }
+    },
     "EvalVulncheck": {
       "type": "object",
       "title": "no configuration for now"
-    },
-    "GetProfileStatusByNameRequestEntityTypedId": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "$ref": "#/definitions/v1Entity",
-          "title": "entity is the entity to get status for. Incompatible with `all`"
-        },
-        "id": {
-          "type": "string",
-          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
-        }
-      },
-      "title": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...\nif the struct is reused in other messages, it should be moved to a top-level definition"
     },
     "JQComparisonOperator": {
       "type": "object",
@@ -2598,29 +2543,6 @@
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
-    "apiHttpBody": {
-      "type": "object",
-      "properties": {
-        "contentType": {
-          "type": "string",
-          "description": "The HTTP Content-Type header value specifying the content type of the body."
-        },
-        "data": {
-          "type": "string",
-          "format": "byte",
-          "description": "The HTTP request/response body as raw binary."
-        },
-        "extensions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          },
-          "description": "Application specific response metadata. Must be set in the first response\nfor streaming APIs."
-        }
-      },
-      "description": "Message that represents an arbitrary HTTP body. It should only be used for\npayload formats that can't be represented as JSON, such as raw binary or\nan HTML page.\n\n\nThis message can be used both in streaming and non-streaming API methods in\nthe request as well as the response.\n\nIt can be used as a top-level request field, which is convenient if one\nwants to extract parameters from either the URL or HTTP template into the\nrequest fields and also want access to the raw HTTP body.\n\nExample:\n\n    message GetResourceRequest {\n      // A unique request id.\n      string request_id = 1;\n\n      // The raw HTTP body is bound to this field.\n      google.api.HttpBody http_body = 2;\n\n    }\n\n    service ResourceService {\n      rpc GetResource(GetResourceRequest)\n        returns (google.api.HttpBody);\n      rpc UpdateResource(google.api.HttpBody)\n        returns (google.protobuf.Empty);\n\n    }\n\nExample with streaming methods:\n\n    service CaldavService {\n      rpc GetCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n      rpc UpdateCalendar(stream google.api.HttpBody)\n        returns (stream google.api.HttpBody);\n\n    }\n\nUse of this type only changes how the request and response bodies are\nhandled, all other features will continue to work unchanged."
-    },
     "googlerpcStatus": {
       "type": "object",
       "properties": {
@@ -2644,12 +2566,10 @@
       "type": "object",
       "properties": {
         "@type": {
-          "type": "string",
-          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+          "type": "string"
         }
       },
-      "additionalProperties": {},
-      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+      "additionalProperties": {}
     },
     "protobufNullValue": {
       "type": "string",
@@ -2903,6 +2823,20 @@
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
     },
+    "v1EntityTypedId": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1Entity",
+          "title": "entity is the entity to get status for. Incompatible with `all`"
+        },
+        "id": {
+          "type": "string",
+          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
+        }
+      },
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+    },
     "v1GetArtifactByIdResponse": {
       "type": "object",
       "properties": {
@@ -3056,6 +2990,19 @@
         }
       }
     },
+    "v1ListEvaluationResultsResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "description": "status is the list of evaluation results.\nResults will typically be grouped by profile and project."
+        }
+      }
+    },
     "v1ListProfilesResponse": {
       "type": "object",
       "properties": {
@@ -3164,6 +3111,13 @@
         "name": {
           "type": "string",
           "description": "name is the name of the profile instance."
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "labels are a set of system-provided attributes which can be used to\nfilter profiles and status results.  Labels cannot be set by the user,\nbut are returned in ListProfiles.\n\nLabels use DNS label constraints, with a possible namespace prefix\nseparated by a colon (:).  They are intended to allow filtering, but\nnot to store arbitrary metadata.\nDNS labels are 1-63 character alphanumeric strings with internal hyphens.\nAn RE2-style validation regex would be:\n\nDNS_STR = \"[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?\"\n($DNS_STR:)?$DNS_STR"
         },
         "repository": {
           "type": "array",
@@ -3356,8 +3310,8 @@
           "type": "string"
         },
         "repoId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64"
         },
         "hookId": {
           "type": "string",
@@ -3563,9 +3517,37 @@
         "guidance": {
           "type": "string",
           "description": "guidance are instructions we give the user in case a rule fails."
+        },
+        "severity": {
+          "$ref": "#/definitions/v1Severity",
+          "description": "severity is the severity of the rule type."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+    },
+    "v1Severity": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "$ref": "#/definitions/v1SeverityValue",
+          "description": "value is the severity value."
+        }
+      },
+      "description": "Severity defines the severity of the rule."
+    },
+    "v1SeverityValue": {
+      "type": "string",
+      "enum": [
+        "VALUE_UNSPECIFIED",
+        "VALUE_UNKNOWN",
+        "VALUE_INFO",
+        "VALUE_LOW",
+        "VALUE_MEDIUM",
+        "VALUE_HIGH",
+        "VALUE_CRITICAL"
+      ],
+      "default": "VALUE_UNSPECIFIED",
+      "description": "Value enumerates the severity values.\n\n - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't\nbeen set.\n - VALUE_INFO: info severity means that the severity is informational and\ndoes not incur risk.\n - VALUE_LOW: low severity means that the severity is low and does not\nincur significant risk.\n - VALUE_MEDIUM: medium severity means that the severity is medium and may\nincur some risk.\n - VALUE_HIGH: high severity means that the severity is high and may incur\nsignificant risk.\n - VALUE_CRITICAL: critical severity means that the severity is critical and\nrequires immediate attention."
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
@@ -3616,8 +3598,9 @@
           "type": "string"
         },
         "repoId": {
-          "type": "integer",
-          "format": "int32"
+          "type": "string",
+          "format": "int64",
+          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
         }
       }
     },
