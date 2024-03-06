@@ -2050,6 +2050,42 @@ func local_request_ProfileService_DeleteRuleType_0(ctx context.Context, marshale
 }
 
 var (
+	filter_EvalResultsService_ListEvaluationResults_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
+func request_EvalResultsService_ListEvaluationResults_0(ctx context.Context, marshaler runtime.Marshaler, client EvalResultsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListEvaluationResultsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_EvalResultsService_ListEvaluationResults_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ListEvaluationResults(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_EvalResultsService_ListEvaluationResults_0(ctx context.Context, marshaler runtime.Marshaler, server EvalResultsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListEvaluationResultsRequest
+	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_EvalResultsService_ListEvaluationResults_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ListEvaluationResults(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+var (
 	filter_PermissionsService_ListRoles_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
@@ -3271,6 +3307,40 @@ func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 
 		forward_ProfileService_DeleteRuleType_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+// RegisterEvalResultsServiceHandlerServer registers the http handlers for service EvalResultsService to "mux".
+// UnaryRPC     :call EvalResultsServiceServer directly.
+// StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterEvalResultsServiceHandlerFromEndpoint instead.
+func RegisterEvalResultsServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server EvalResultsServiceServer) error {
+
+	mux.Handle("GET", pattern_EvalResultsService_ListEvaluationResults_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.EvalResultsService/ListEvaluationResults", runtime.WithHTTPPathPattern("/api/v1/results"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_EvalResultsService_ListEvaluationResults_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_EvalResultsService_ListEvaluationResults_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -4676,6 +4746,77 @@ var (
 	forward_ProfileService_UpdateRuleType_0 = runtime.ForwardResponseMessage
 
 	forward_ProfileService_DeleteRuleType_0 = runtime.ForwardResponseMessage
+)
+
+// RegisterEvalResultsServiceHandlerFromEndpoint is same as RegisterEvalResultsServiceHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterEvalResultsServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.DialContext(ctx, endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterEvalResultsServiceHandler(ctx, mux, conn)
+}
+
+// RegisterEvalResultsServiceHandler registers the http handlers for service EvalResultsService to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterEvalResultsServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterEvalResultsServiceHandlerClient(ctx, mux, NewEvalResultsServiceClient(conn))
+}
+
+// RegisterEvalResultsServiceHandlerClient registers the http handlers for service EvalResultsService
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "EvalResultsServiceClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "EvalResultsServiceClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "EvalResultsServiceClient" to call the correct interceptors.
+func RegisterEvalResultsServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client EvalResultsServiceClient) error {
+
+	mux.Handle("GET", pattern_EvalResultsService_ListEvaluationResults_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.EvalResultsService/ListEvaluationResults", runtime.WithHTTPPathPattern("/api/v1/results"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_EvalResultsService_ListEvaluationResults_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_EvalResultsService_ListEvaluationResults_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	return nil
+}
+
+var (
+	pattern_EvalResultsService_ListEvaluationResults_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "results"}, ""))
+)
+
+var (
+	forward_EvalResultsService_ListEvaluationResults_0 = runtime.ForwardResponseMessage
 )
 
 // RegisterPermissionsServiceHandlerFromEndpoint is same as RegisterPermissionsServiceHandler but

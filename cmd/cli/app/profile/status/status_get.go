@@ -63,7 +63,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
 		Name:    profileName,
-		Entity: &minderv1.GetProfileStatusByNameRequest_EntityTypedId{
+		Entity: &minderv1.EntityTypedId{
 			Id:   entityId,
 			Type: minderv1.EntityFromString(entityType),
 		},

@@ -1464,6 +1464,96 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	EvalResultsService_ListEvaluationResults_FullMethodName = "/minder.v1.EvalResultsService/ListEvaluationResults"
+)
+
+// EvalResultsServiceClient is the client API for EvalResultsService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type EvalResultsServiceClient interface {
+	ListEvaluationResults(ctx context.Context, in *ListEvaluationResultsRequest, opts ...grpc.CallOption) (*ListEvaluationResultsResponse, error)
+}
+
+type evalResultsServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewEvalResultsServiceClient(cc grpc.ClientConnInterface) EvalResultsServiceClient {
+	return &evalResultsServiceClient{cc}
+}
+
+func (c *evalResultsServiceClient) ListEvaluationResults(ctx context.Context, in *ListEvaluationResultsRequest, opts ...grpc.CallOption) (*ListEvaluationResultsResponse, error) {
+	out := new(ListEvaluationResultsResponse)
+	err := c.cc.Invoke(ctx, EvalResultsService_ListEvaluationResults_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// EvalResultsServiceServer is the server API for EvalResultsService service.
+// All implementations must embed UnimplementedEvalResultsServiceServer
+// for forward compatibility
+type EvalResultsServiceServer interface {
+	ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error)
+	mustEmbedUnimplementedEvalResultsServiceServer()
+}
+
+// UnimplementedEvalResultsServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedEvalResultsServiceServer struct {
+}
+
+func (UnimplementedEvalResultsServiceServer) ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEvaluationResults not implemented")
+}
+func (UnimplementedEvalResultsServiceServer) mustEmbedUnimplementedEvalResultsServiceServer() {}
+
+// UnsafeEvalResultsServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EvalResultsServiceServer will
+// result in compilation errors.
+type UnsafeEvalResultsServiceServer interface {
+	mustEmbedUnimplementedEvalResultsServiceServer()
+}
+
+func RegisterEvalResultsServiceServer(s grpc.ServiceRegistrar, srv EvalResultsServiceServer) {
+	s.RegisterService(&EvalResultsService_ServiceDesc, srv)
+}
+
+func _EvalResultsService_ListEvaluationResults_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEvaluationResultsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EvalResultsServiceServer).ListEvaluationResults(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EvalResultsService_ListEvaluationResults_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EvalResultsServiceServer).ListEvaluationResults(ctx, req.(*ListEvaluationResultsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// EvalResultsService_ServiceDesc is the grpc.ServiceDesc for EvalResultsService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var EvalResultsService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.EvalResultsService",
+	HandlerType: (*EvalResultsServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListEvaluationResults",
+			Handler:    _EvalResultsService_ListEvaluationResults_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
+
+const (
 	PermissionsService_ListRoles_FullMethodName           = "/minder.v1.PermissionsService/ListRoles"
 	PermissionsService_ListRoleAssignments_FullMethodName = "/minder.v1.PermissionsService/ListRoleAssignments"
 	PermissionsService_AssignRole_FullMethodName          = "/minder.v1.PermissionsService/AssignRole"
