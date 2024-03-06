@@ -473,6 +473,7 @@ func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
 		DeployUrl:     dbrepo.DeployUrl,
 		CloneUrl:      dbrepo.CloneUrl,
 		DefaultBranch: dbrepo.DefaultBranch.String,
+		License:       dbrepo.License.String,
 		CreatedAt:     timestamppb.New(dbrepo.CreatedAt),
 		UpdatedAt:     timestamppb.New(dbrepo.UpdatedAt),
 	}

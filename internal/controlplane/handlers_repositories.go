@@ -106,6 +106,10 @@ func (s *Server) RegisterRepository(ctx context.Context,
 			String: r.DefaultBranch,
 			Valid:  true,
 		},
+		License: sql.NullString{
+			String: r.License,
+			Valid:  true,
+		},
 	})
 	// even if we set the webhook, if we couldn't create it in the database, we'll return an error
 	if err != nil {

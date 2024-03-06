@@ -289,6 +289,7 @@ func (s *Server) registerWebhookForRepository(
 		IsPrivate:     repoGet.GetPrivate(),
 		IsFork:        repoGet.GetFork(),
 		DefaultBranch: repoGet.GetDefaultBranch(),
+		License:       repoGet.GetLicense().GetSPDXID(),
 	}
 
 	return regResult, nil

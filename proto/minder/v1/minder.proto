@@ -741,6 +741,7 @@ message Repository {
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;
+    string license = 19;
 }
 
 message RegisterRepositoryRequest {
