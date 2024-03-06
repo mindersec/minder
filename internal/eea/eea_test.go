@@ -34,6 +34,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
@@ -50,9 +51,13 @@ func TestAggregator(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	testQueries, td, err := embedded.GetFakeStore()
+	require.NoError(t, err, "expected no error when creating embedded store")
+	t.Cleanup(td)
+
 	var concurrentEvents int64 = 100
 
-	projectID, repoID := createNeededEntities(ctx, t)
+	projectID, repoID := createNeededEntities(ctx, t, testQueries)
 
 	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
 		Driver: "go-channel",
@@ -141,7 +146,7 @@ func TestAggregator(t *testing.T) {
 	assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected only one message to be published")
 }
 
-func createNeededEntities(ctx context.Context, t *testing.T) (projID uuid.UUID, repoID uuid.UUID) {
+func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Store) (projID uuid.UUID, repoID uuid.UUID) {
 	t.Helper()
 
 	// setup project
@@ -366,6 +371,10 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	testQueries, td, err := embedded.GetFakeStore()
+	require.NoError(t, err, "expected no error when creating embedded store")
+	t.Cleanup(td)
 
 	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
 		Driver:    "go-channel",
