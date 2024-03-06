@@ -107,6 +107,35 @@ type ActionsError struct {
 	AlertMeta     json.RawMessage
 }
 
+// AsRemediationStatus returs the remediation status from the actions error
+func (ae ActionsError) AsRemediationStatus() db.RemediationStatusTypes {
+	if ae.RemediateErr != nil {
+		return ErrorAsRemediationStatus(ae.RemediateErr)
+	}
+
+	// If there is no metadata, we return success as there are no errors
+	if ae.RemediateMeta == nil {
+		return db.RemediationStatusTypesSuccess
+	}
+
+	remMetaData := map[string]any{}
+
+	// If we can't parse the metadata, we return success as we have no error
+	if err := json.Unmarshal(ae.RemediateMeta, &remMetaData); err != nil {
+		return db.RemediationStatusTypesUnknown
+	}
+
+	// Bingo, status found. Use it.
+	if _, ok := remMetaData["status"]; ok {
+		if sv, ok := remMetaData["status"].(string); ok {
+			return db.RemediationStatusTypes(sv)
+		}
+		return db.RemediationStatusTypesUnknown
+	}
+
+	return db.RemediationStatusTypesSuccess
+}
+
 // ErrorAsEvalStatus returns the evaluation status for a given error
 func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
 	if errors.Is(err, ErrEvaluationFailed) {
