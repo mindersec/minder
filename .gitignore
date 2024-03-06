@@ -64,3 +64,6 @@ examples/rules-and-profiles
 
 # Generated goreleaser artifacts
 /dist
+
+# Ignore generated sigstore artifacts while running this locally
+tuf-repo-cdn.sigstore.dev.json
