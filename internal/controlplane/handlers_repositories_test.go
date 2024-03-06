@@ -340,11 +340,6 @@ func (*StubGitHub) Do(context.Context, *http.Request) (*http.Response, error) {
 	panic("unimplemented")
 }
 
-// GetAuthenticatedUser implements v1.GitHub.
-func (*StubGitHub) GetAuthenticatedUser(context.Context) (*github.User, error) {
-	panic("unimplemented")
-}
-
 // GetBaseURL implements v1.GitHub.
 func (*StubGitHub) GetBaseURL() string {
 	panic("unimplemented")
@@ -414,11 +409,6 @@ func (*StubGitHub) ListAllRepositories(context.Context, bool, string) ([]*github
 	panic("unimplemented")
 }
 
-// ListEmails implements v1.GitHub.
-func (*StubGitHub) ListEmails(context.Context, *github.ListOptions) ([]*github.UserEmail, error) {
-	panic("unimplemented")
-}
-
 // ListFiles implements v1.GitHub.
 func (*StubGitHub) ListFiles(context.Context, string, string, int, int, int) ([]*github.CommitFile, *github.Response, error) {
 	panic("unimplemented")
@@ -466,5 +456,20 @@ func (*StubGitHub) SetCommitStatus(context.Context, string, string, string, *git
 
 // UpdateBranchProtection implements v1.GitHub.
 func (*StubGitHub) UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error {
+	panic("unimplemented")
+}
+
+// GetUserId implements v1.GitHub.
+func (*StubGitHub) GetUserId(context.Context) (int64, error) {
+	panic("unimplemented")
+}
+
+// GetUsername implements v1.GitHub.
+func (*StubGitHub) GetUsername(context.Context) (string, error) {
+	panic("unimplemented")
+}
+
+// GetPrimaryEmail implements v1.GitHub.
+func (*StubGitHub) GetPrimaryEmail(context.Context) (string, error) {
 	panic("unimplemented")
 }

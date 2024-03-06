@@ -196,17 +196,9 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
-		GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		Email: github.String("test@stacklok.com"),
-		Login: github.String("stacklok-bot"),
-	}, nil)
+		GetUsername(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
-		ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
-		{
-			Email:   github.String("test@stacklok.com"),
-			Primary: github.Bool(true),
-		},
-	}, nil)
+		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
 		GetToken().Return("token")
 	mockGitHub.EXPECT().
@@ -467,18 +459,10 @@ func TestPullRequestRemediate(t *testing.T) {
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 				// we need to get the user information and update the branch
 				mockGitHub.EXPECT().
-					GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-					Email: github.String("test@stacklok.com"),
-					Login: github.String("stacklok-bot"),
-				}, nil)
+					GetUsername(gomock.Any()).Return("stacklok-bot", nil)
 				// likewise we need to update the branch with a valid e-mail
 				mockGitHub.EXPECT().
-					ListEmails(gomock.Any(), gomock.Any()).Return([]*github.UserEmail{
-					{
-						Email:   github.String("test@stacklok.com"),
-						Primary: github.Bool(true),
-					},
-				}, nil)
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 				mockGitHub.EXPECT().
 					GetToken().Return("token")
 				// this is the last call we expect to make. It returns existing PRs from this branch, so we
