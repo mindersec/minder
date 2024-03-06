@@ -427,7 +427,7 @@ func logEval(
 	// log remediation
 	logger.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
 		Str("action", "remediate").
-		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
+		Str("action_status", string(params.GetActionsErr().AsRemediationStatus())).
 		Msg("result - action")
 
 	// log alert

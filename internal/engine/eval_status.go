@@ -162,7 +162,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	// Upsert remediation details
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
 		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr),
+		Status:     params.GetActionsErr().AsRemediationStatus(),
 		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
 	})
 	if err != nil {
