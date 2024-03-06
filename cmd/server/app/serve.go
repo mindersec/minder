@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
+	cpmetrics "github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
@@ -121,13 +122,13 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
 
-		serverMetrics := controlplane.NewMetrics()
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
 
 		s, err := controlplane.NewServer(
-			store, evt, serverMetrics, cfg, vldtr,
+			store, evt, cfg, vldtr,
+			controlplane.WithServerMetrics(cpmetrics.NewMetrics()),
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
 			controlplane.WithRestClientCache(restClientCache),

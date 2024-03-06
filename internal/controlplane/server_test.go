@@ -87,7 +87,7 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, NewMetrics(), c, mockJwt)
+	server, err := NewServer(mockStore, evt, c, mockJwt)
 	require.NoError(t, err, "failed to create server")
 	return server
 }

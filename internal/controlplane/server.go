@@ -50,6 +50,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
@@ -73,7 +74,7 @@ type Server struct {
 	store           db.Store
 	cfg             *serverconfig.Config
 	evt             events.Interface
-	mt              *metrics
+	mt              metrics.Metrics
 	provMt          provtelemetry.ProviderMetrics
 	grpcServer      *grpc.Server
 	vldtr           auth.JwtValidator
@@ -124,11 +125,17 @@ func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
 	}
 }
 
+// WithServerMetrics sets the server metrics for the server
+func WithServerMetrics(mt metrics.Metrics) ServerOption {
+	return func(s *Server) {
+		s.mt = mt
+	}
+}
+
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
 	evt *events.Eventer,
-	cpm *metrics,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,
@@ -143,7 +150,7 @@ func NewServer(
 		evt:              evt,
 		cryptoEngine:     eng,
 		vldtr:            vldtr,
-		mt:               cpm,
+		mt:               metrics.NewNoopMetrics(),
 		provMt:           provtelemetry.NewNoopMetrics(),
 		profileValidator: profiles.NewValidator(store),
 		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
@@ -414,7 +421,7 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 		return mp.Shutdown(ctx)
 	})
 
-	err = s.mt.initInstruments(s.store)
+	err = s.mt.Init(s.store)
 	if err != nil {
 		return fmt.Errorf("could not initialize instruments: %w", err)
 	}
