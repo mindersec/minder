@@ -289,6 +289,7 @@ const (
 	RemediationStatusTypesSkipped      RemediationStatusTypes = "skipped"
 	RemediationStatusTypesNotAvailable RemediationStatusTypes = "not_available"
 	RemediationStatusTypesPending      RemediationStatusTypes = "pending"
+	RemediationStatusTypesUnknown      RemediationStatusTypes = "unknown"
 )
 
 func (e *RemediationStatusTypes) Scan(src interface{}) error {
