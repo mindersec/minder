@@ -38,6 +38,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
@@ -115,13 +116,13 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 // for more information.
 func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wes := webhookEventState{
-			typ:      "unknown",
-			accepted: false,
-			error:    true,
+		wes := &metrics.WebhookEventState{
+			Typ:      "unknown",
+			Accepted: false,
+			Error:    true,
 		}
 		defer func() {
-			s.mt.webhookEventTypeCount(r.Context(), wes)
+			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
 		}()
 
 		// Validate the payload signature. This is required for security reasons.
@@ -139,10 +140,10 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			return
 		}
 
-		wes.typ = github.WebHookType(r)
-		if wes.typ == "ping" {
+		wes.Typ = github.WebHookType(r)
+		if wes.Typ == "ping" {
 			log.Printf("ping received")
-			wes.error = false
+			wes.Error = false
 			return
 		}
 
@@ -151,15 +152,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.typ)
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
 		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
 		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
 		log.Printf("publishing of type: %s", m.Metadata["type"])
 
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			wes = handleParseError(wes.typ, err)
-			if wes.error {
+			wes = handleParseError(wes.Typ, err)
+			if wes.Error {
 				w.WriteHeader(http.StatusInternalServerError)
 			} else {
 				w.WriteHeader(http.StatusOK)
@@ -167,39 +168,39 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			return
 		}
 
-		wes.accepted = true
+		wes.Accepted = true
 
 		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
-			wes.error = true
+			wes.Error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		wes.error = false
+		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func handleParseError(typ string, parseErr error) webhookEventState {
-	state := webhookEventState{typ: typ, accepted: false, error: true}
+func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
+	state := &metrics.WebhookEventState{Typ: typ, Accepted: false, Error: true}
 
 	var logMsg string
 	switch {
 	case errors.Is(parseErr, errRepoNotFound):
-		state.error = false
+		state.Error = false
 		logMsg = "repository not found"
 	case errors.Is(parseErr, errArtifactNotFound):
-		state.error = false
+		state.Error = false
 		logMsg = "artifact not found"
 	case errors.Is(parseErr, errRepoIsPrivate):
-		state.error = false
+		state.Error = false
 		logMsg = "repository is private"
 	case errors.Is(parseErr, errNotHandled):
-		state.error = false
+		state.Error = false
 		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
 	case errors.Is(parseErr, errArtifactVersionSkipped):
-		state.error = false
+		state.Error = false
 		logMsg = "artifact version skipped, has no tags"
 	default:
 		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
