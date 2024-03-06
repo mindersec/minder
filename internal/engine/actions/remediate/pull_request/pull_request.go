@@ -23,6 +23,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -75,6 +76,38 @@ type Remediator struct {
 
 	titleTemplate *htmltemplate.Template
 	bodyTemplate  *htmltemplate.Template
+}
+
+// prSlug is a string that identifies a pull request. It is a string formatted
+// as "organization/repository#number", for example:
+//
+//	github:stacklok/minder#12345
+type prSlug string
+
+var prSlugRe = regexp.MustCompile(`^(?i)([a-z0-9][-_a-z0-9\.]*)+:(?:([-_a-z0-9\.]+))?(?:\/([-_a-z0-9\.]+))?(?:\#(\d+))?$`)
+
+// MarshalJSON marshals the slug bits into a json struct
+func (s prSlug) MarshalJSON() ([]byte, error) {
+	p := s.Parse()
+	return json.Marshal(struct {
+		Provider     string
+		Organization string
+		Repository   string
+		Number       string
+	}{
+		Provider:     p[0],
+		Organization: p[1],
+		Repository:   p[2],
+		Number:       p[3],
+	})
+}
+
+// Parse returns parses the pr slug and returns its components:
+// provider, org, repository and PR number.
+func (s prSlug) Parse() []string {
+	parts := prSlugRe.FindStringSubmatch(string(s))
+	parts = append(parts, make([]string, 5-len(parts))...)
+	return parts[1:]
 }
 
 // NewPullRequestRemediate creates a new PR remediation engine
@@ -143,6 +176,8 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 }
 
 // Do performs the remediation
+//
+//nolint:gocyclo
 func (r *Remediator) Do(
 	ctx context.Context,
 	_ interfaces.ActionCmd,
@@ -200,13 +235,20 @@ func (r *Remediator) Do(
 	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		alreadyExists, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
+		slug, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
-		if alreadyExists {
+		if slug != "" {
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			return nil, nil
+			data := struct {
+				Status string
+				Data   any
+			}{
+				Status: "",
+				Data:   slug,
+			}
+			return json.Marshal(data)
 		}
 		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
@@ -454,24 +496,26 @@ func createReviewBody(prText, magicComment string) (string, error) {
 	return buf.String(), nil
 }
 
-// returns true if an open PR with the magic comment already exists
+// prWithContentAlreadyExists returns a slug identifying the PR with the magic comment
+// when it is already open or an empty string when the PR is not found.
 func prWithContentAlreadyExists(
 	ctx context.Context,
 	cli provifv1.GitHub,
 	repo *pb.Repository,
 	magicComment string,
-) (bool, error) {
+) (prSlug, error) {
 	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), &github.PullRequestListOptions{})
 	if err != nil {
-		return false, fmt.Errorf("cannot list pull requests: %w", err)
+		return "", fmt.Errorf("cannot list pull requests: %w", err)
 	}
 
 	for _, pr := range openPrs {
 		if strings.Contains(pr.GetBody(), magicComment) {
-			return true, nil
+			stub := fmt.Sprintf("github:%s/%s#%d", repo.GetOwner(), repo.GetName(), pr.GetNumber())
+			return prSlug(stub), nil
 		}
 	}
-	return false, nil
+	return "", nil
 }
 
 func prFromBranchAlreadyExists(

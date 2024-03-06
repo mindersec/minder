@@ -626,3 +626,40 @@ func TestPullRequestRemediate(t *testing.T) {
 		})
 	}
 }
+
+func TestRepoSlug(t *testing.T) {
+	t.Parallel()
+	const (
+		example = "example"
+		repo    = "repo"
+		githubs = "github"
+	)
+	for _, tc := range []struct {
+		name      string
+		sut       prSlug
+		eProvider string
+		eOrg      string
+		eRepo     string
+		eNumber   string
+	}{
+		{"normal", prSlug("github:example/repo#34"), githubs, example, repo, "34"},
+		{"one_char", prSlug("github:e/r#34"), githubs, "e", "r", "34"},
+		{"uppercase", prSlug("github:eXamPle/REPO#34"), githubs, "eXamPle", "REPO", "34"},
+		{"no_number", prSlug("github:example/repo"), githubs, example, repo, ""},
+		{"numbers", prSlug("github:example1234567890zzz/repo1234567890#123"), githubs, "example1234567890zzz", "repo1234567890", "123"},
+		{"org_only", prSlug("github:example"), githubs, example, "", ""},
+		{"no_repo", prSlug("github:example/#123"), "", "", "", ""},
+		{"no_org", prSlug("github:/repo#123"), "github", "", "repo", "123"},
+		{"not_github", prSlug("gitlab:example/repo#123"), "gitlab", example, repo, "123"},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			parts := tc.sut.Parse()
+			require.Equal(t, tc.eProvider, parts[0])
+			require.Equal(t, tc.eOrg, parts[1])
+			require.Equal(t, tc.eRepo, parts[2])
+			require.Equal(t, tc.eNumber, parts[3])
+		})
+	}
+}
