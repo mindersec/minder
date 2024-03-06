@@ -26,7 +26,7 @@ type Querier interface {
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteProfile(ctx context.Context, id uuid.UUID) error
@@ -108,7 +108,6 @@ type Querier interface {
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
-	ListUsersByOrganization(ctx context.Context, arg ListUsersByOrganizationParams) ([]User, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
 	// attempt to insert or update the entity_execution_lock table only if the
 	// last_lock_time is older than the threshold. If the lock is successful, it

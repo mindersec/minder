@@ -35,8 +35,6 @@ import (
 )
 
 // CreateUser is a service for user self registration
-//
-//gocyclo:ignore
 func (s *Server) CreateUser(ctx context.Context,
 	_ *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
@@ -75,13 +73,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	}
 
 	userProject = uuid.MustParse(orgProject.ProjectId)
-	user, err := qtx.CreateUser(ctx, db.CreateUserParams{
-		// NOTE: We're setting the organization ID to the project ID
-		//       to satisfy the constraint. This is a temporary solution
-		//       until we completely remove the organization concept.
-		OrganizationID:  userProject,
-		IdentitySubject: subject,
-	})
+	user, err := qtx.CreateUser(ctx, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}

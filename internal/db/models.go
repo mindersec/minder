@@ -528,7 +528,6 @@ type SessionStore struct {
 
 type User struct {
 	ID              int32     `json:"id"`
-	OrganizationID  uuid.UUID `json:"organization_id"`
 	IdentitySubject string    `json:"identity_subject"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`

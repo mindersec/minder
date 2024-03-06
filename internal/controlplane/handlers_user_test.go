@@ -69,7 +69,6 @@ func TestCreateUserDBMock(t *testing.T) {
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				returnedUser := db.User{
 					ID:              1,
-					OrganizationID:  projectID,
 					IdentitySubject: "subject1",
 					CreatedAt:       time.Now(),
 					UpdatedAt:       time.Now(),
@@ -85,8 +84,7 @@ func TestCreateUserDBMock(t *testing.T) {
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
-					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: projectID,
-						IdentitySubject: "subject1"}).
+					CreateUser(gomock.Any(), "subject1").
 					Return(returnedUser, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
@@ -166,10 +164,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
-						ID:             1,
-						OrganizationID: projectID,
-						CreatedAt:      time.Now(),
-						UpdatedAt:      time.Now(),
+						ID:        1,
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
 				store.EXPECT().Commit(gomock.Any())
@@ -237,8 +234,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	request := &pb.DeleteUserRequest{}
 
-	orgID := uuid.New()
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
 		"authorization": "bearer some-access-token",
@@ -275,9 +270,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "subject1").
-		Return(db.User{
-			OrganizationID: orgID,
-		}, nil)
+		Return(db.User{IdentitySubject: "subject1"}, nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
@@ -308,8 +301,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
-
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
@@ -330,7 +321,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					GetUserBySubject(gomock.Any(), "subject1").
 					Return(db.User{
-						OrganizationID: orgID,
+						IdentitySubject: "subject1",
 					}, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())

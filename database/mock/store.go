@@ -297,7 +297,7 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 any) *gomock.Call
 }
 
 // CreateUser mocks base method.
-func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
+func (m *MockStore) CreateUser(arg0 context.Context, arg1 string) (db.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
 	ret0, _ := ret[0].(db.User)
@@ -1300,21 +1300,6 @@ func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]
 func (mr *MockStoreMockRecorder) ListUsers(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockStore)(nil).ListUsers), arg0, arg1)
-}
-
-// ListUsersByOrganization mocks base method.
-func (m *MockStore) ListUsersByOrganization(arg0 context.Context, arg1 db.ListUsersByOrganizationParams) ([]db.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsersByOrganization", arg0, arg1)
-	ret0, _ := ret[0].([]db.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListUsersByOrganization indicates an expected call of ListUsersByOrganization.
-func (mr *MockStoreMockRecorder) ListUsersByOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByOrganization", reflect.TypeOf((*MockStore)(nil).ListUsersByOrganization), arg0, arg1)
 }
 
 // LockIfThresholdNotExceeded mocks base method.

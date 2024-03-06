@@ -22,7 +22,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 
@@ -52,15 +51,13 @@ func TestHandleEvents(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 
-	orgID := uuid.New()
-
 	tx := sql.Tx{}
 	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "existingUserId").
 		Return(db.User{
-			OrganizationID: orgID,
+			IdentitySubject: "existingUserId",
 		}, nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
