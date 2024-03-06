@@ -189,8 +189,7 @@ func newReviewPrHandler(
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()
-
-	cliUser, err := cli.GetAuthenticatedUser(ctx)
+	cliUserId, err := cli.GetUserId(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not get authenticated user: %w", err)
 	}
@@ -198,7 +197,7 @@ func newReviewPrHandler(
 	// if the user wants minder to request changes on a pull request, they need to
 	// be different identities
 	var failStatus *string
-	if pr.AuthorId == cliUser.GetID() {
+	if pr.AuthorId == cliUserId {
 		failStatus = github.String("COMMENT")
 		logger.Debug().Msg("author is the same as the authenticated user, can only comment")
 	} else {

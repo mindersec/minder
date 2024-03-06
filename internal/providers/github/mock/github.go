@@ -413,21 +413,6 @@ func (mr *MockGitHubMockRecorder) Do(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockGitHub)(nil).Do), ctx, req)
 }
 
-// GetAuthenticatedUser mocks base method.
-func (m *MockGitHub) GetAuthenticatedUser(arg0 context.Context) (*github.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAuthenticatedUser", arg0)
-	ret0, _ := ret[0].(*github.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAuthenticatedUser indicates an expected call of GetAuthenticatedUser.
-func (mr *MockGitHubMockRecorder) GetAuthenticatedUser(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticatedUser", reflect.TypeOf((*MockGitHub)(nil).GetAuthenticatedUser), arg0)
-}
-
 // GetBaseURL mocks base method.
 func (m *MockGitHub) GetBaseURL() string {
 	m.ctrl.T.Helper()
@@ -531,6 +516,21 @@ func (mr *MockGitHubMockRecorder) GetPackageVersions(arg0, arg1, arg2, arg3, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersions", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersions), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetPrimaryEmail mocks base method.
+func (m *MockGitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrimaryEmail", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPrimaryEmail indicates an expected call of GetPrimaryEmail.
+func (mr *MockGitHubMockRecorder) GetPrimaryEmail(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrimaryEmail", reflect.TypeOf((*MockGitHub)(nil).GetPrimaryEmail), ctx)
+}
+
 // GetPullRequest mocks base method.
 func (m *MockGitHub) GetPullRequest(arg0 context.Context, arg1, arg2 string, arg3 int) (*github.PullRequest, error) {
 	m.ctrl.T.Helper()
@@ -575,6 +575,36 @@ func (mr *MockGitHubMockRecorder) GetToken() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetToken", reflect.TypeOf((*MockGitHub)(nil).GetToken))
 }
 
+// GetUserId mocks base method.
+func (m *MockGitHub) GetUserId(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserId", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserId indicates an expected call of GetUserId.
+func (mr *MockGitHubMockRecorder) GetUserId(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserId", reflect.TypeOf((*MockGitHub)(nil).GetUserId), ctx)
+}
+
+// GetUsername mocks base method.
+func (m *MockGitHub) GetUsername(ctx context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsername", ctx)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsername indicates an expected call of GetUsername.
+func (mr *MockGitHubMockRecorder) GetUsername(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsername", reflect.TypeOf((*MockGitHub)(nil).GetUsername), ctx)
+}
+
 // ListAllPackages mocks base method.
 func (m *MockGitHub) ListAllPackages(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4, arg5 int) ([]*github.Package, error) {
 	m.ctrl.T.Helper()
@@ -603,21 +633,6 @@ func (m *MockGitHub) ListAllRepositories(arg0 context.Context, arg1 bool, arg2 s
 func (mr *MockGitHubMockRecorder) ListAllRepositories(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockGitHub)(nil).ListAllRepositories), arg0, arg1, arg2)
-}
-
-// ListEmails mocks base method.
-func (m *MockGitHub) ListEmails(ctx context.Context, opts *github.ListOptions) ([]*github.UserEmail, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEmails", ctx, opts)
-	ret0, _ := ret[0].([]*github.UserEmail)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListEmails indicates an expected call of ListEmails.
-func (mr *MockGitHubMockRecorder) ListEmails(ctx, opts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmails", reflect.TypeOf((*MockGitHub)(nil).ListEmails), ctx, opts)
 }
 
 // ListFiles mocks base method.

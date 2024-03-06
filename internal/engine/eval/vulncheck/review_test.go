@@ -58,9 +58,7 @@ func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubSubmitterID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubSubmitterID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -98,9 +96,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -191,9 +187,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -273,9 +267,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubSubmitterID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubSubmitterID), nil)
 	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -324,9 +316,7 @@ func TestCommitStatusHandlerNoVulnerabilities(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubSubmitterID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubSubmitterID), nil)
 	handler, err := newCommitStatusPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
@@ -371,9 +361,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 		AuthorId:  githubSubmitterID,
 	}
 
-	mockClient.EXPECT().GetAuthenticatedUser(gomock.Any()).Return(&github.User{
-		ID: github.Int64(githubMinderID),
-	}, nil)
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
 	handler, err := newCommitStatusPrHandler(context.TODO(), pr, mockClient)
 	require.NoError(t, err)
 	require.NotNil(t, handler)
