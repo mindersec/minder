@@ -148,10 +148,14 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 	defer store.Rollback(tx)
 	qtx := store.GetQuerierWithTransaction(tx)
 
-	_, err = qtx.GetUserBySubject(ctx, userId)
+	var userDBID *int32
+
+	usr, err := qtx.GetUserBySubject(ctx, userId)
 	// If the user doesn't exist, we still want to clean up any associated data
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("error retrieving user %v", err)
+	} else if err == nil {
+		userDBID = &usr.ID
 	}
 
 	// Fetching the projects for user before the deletion was made.
@@ -165,6 +169,13 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 	// We delete the user from the authorization system first
 	if err := authzClient.DeleteUser(ctx, userId); err != nil {
 		return fmt.Errorf("error deleting authorization tuple %v", err)
+	}
+
+	// We only delete the user if it still exists in the database
+	if userDBID != nil {
+		if err := qtx.DeleteUser(ctx, *userDBID); err != nil {
+			return fmt.Errorf("error deleting user %v", err)
+		}
 	}
 
 	for _, proj := range projects {
@@ -186,8 +197,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 
 	// organizations will be cleaned up in a migration after this change
 
-	err = store.Commit(tx)
-	if err != nil {
+	if err = store.Commit(tx); err != nil {
 		return fmt.Errorf("error committing account deletion %w", err)
 	}
 	return nil

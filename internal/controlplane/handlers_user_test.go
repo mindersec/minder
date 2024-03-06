@@ -271,6 +271,9 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "subject1").
 		Return(db.User{IdentitySubject: "subject1"}, nil)
+	mockStore.EXPECT().
+		DeleteUser(gomock.Any(), gomock.Any()).
+		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
@@ -323,6 +326,9 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					Return(db.User{
 						IdentitySubject: "subject1",
 					}, nil)
+				store.EXPECT().
+					DeleteUser(gomock.Any(), gomock.Any()).
+					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 			},
