@@ -294,20 +294,6 @@ func (mr *MockGitHubMockRecorder) CloseSecurityAdvisory(ctx, owner, repo, id any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CloseSecurityAdvisory", reflect.TypeOf((*MockGitHub)(nil).CloseSecurityAdvisory), ctx, owner, repo, id)
 }
 
-// CreateComment mocks base method.
-func (m *MockGitHub) CreateComment(ctx context.Context, owner, repo string, number int, comment string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateComment", ctx, owner, repo, number, comment)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateComment indicates an expected call of CreateComment.
-func (mr *MockGitHubMockRecorder) CreateComment(ctx, owner, repo, number, comment any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateComment", reflect.TypeOf((*MockGitHub)(nil).CreateComment), ctx, owner, repo, number, comment)
-}
-
 // CreateHook mocks base method.
 func (m *MockGitHub) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 	m.ctrl.T.Helper()
@@ -321,6 +307,21 @@ func (m *MockGitHub) CreateHook(ctx context.Context, owner, repo string, hook *g
 func (mr *MockGitHubMockRecorder) CreateHook(ctx, owner, repo, hook any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateHook", reflect.TypeOf((*MockGitHub)(nil).CreateHook), ctx, owner, repo, hook)
+}
+
+// CreateIssueComment mocks base method.
+func (m *MockGitHub) CreateIssueComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateIssueComment", ctx, owner, repo, number, comment)
+	ret0, _ := ret[0].(*github.IssueComment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateIssueComment indicates an expected call of CreateIssueComment.
+func (mr *MockGitHubMockRecorder) CreateIssueComment(ctx, owner, repo, number, comment any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateIssueComment", reflect.TypeOf((*MockGitHub)(nil).CreateIssueComment), ctx, owner, repo, number, comment)
 }
 
 // CreatePullRequest mocks base method.
@@ -666,6 +667,21 @@ func (mr *MockGitHubMockRecorder) ListHooks(ctx, owner, repo any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHooks", reflect.TypeOf((*MockGitHub)(nil).ListHooks), ctx, owner, repo)
 }
 
+// ListIssueComments mocks base method.
+func (m *MockGitHub) ListIssueComments(ctx context.Context, owner, repo string, number int, opts *github.IssueListCommentsOptions) ([]*github.IssueComment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListIssueComments", ctx, owner, repo, number, opts)
+	ret0, _ := ret[0].([]*github.IssueComment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListIssueComments indicates an expected call of ListIssueComments.
+func (mr *MockGitHubMockRecorder) ListIssueComments(ctx, owner, repo, number, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListIssueComments", reflect.TypeOf((*MockGitHub)(nil).ListIssueComments), ctx, owner, repo, number, opts)
+}
+
 // ListOrganizationRepsitories mocks base method.
 func (m *MockGitHub) ListOrganizationRepsitories(arg0 context.Context, arg1 string) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
@@ -783,4 +799,33 @@ func (m *MockGitHub) UpdateBranchProtection(arg0 context.Context, arg1, arg2, ar
 func (mr *MockGitHubMockRecorder) UpdateBranchProtection(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBranchProtection", reflect.TypeOf((*MockGitHub)(nil).UpdateBranchProtection), arg0, arg1, arg2, arg3, arg4)
+}
+
+// UpdateIssueComment mocks base method.
+func (m *MockGitHub) UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateIssueComment", ctx, owner, repo, number, comment)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateIssueComment indicates an expected call of UpdateIssueComment.
+func (mr *MockGitHubMockRecorder) UpdateIssueComment(ctx, owner, repo, number, comment any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateIssueComment", reflect.TypeOf((*MockGitHub)(nil).UpdateIssueComment), ctx, owner, repo, number, comment)
+}
+
+// UpdateReview mocks base method.
+func (m *MockGitHub) UpdateReview(arg0 context.Context, arg1, arg2 string, arg3 int, arg4 int64, arg5 string) (*github.PullRequestReview, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateReview", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(*github.PullRequestReview)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateReview indicates an expected call of UpdateReview.
+func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReview", reflect.TypeOf((*MockGitHub)(nil).UpdateReview), arg0, arg1, arg2, arg3, arg4, arg5)
 }

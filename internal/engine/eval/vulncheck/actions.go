@@ -52,7 +52,7 @@ func newPrStatusHandler(
 	case pr_actions.ActionProfileOnly:
 		return newProfileOnlyPrHandler(), nil
 	case pr_actions.ActionSummary:
-		return newSummaryPrHandler(ctx, pr, client)
+		return newSummaryPrHandler(ctx, pr, client), nil
 	default:
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}
