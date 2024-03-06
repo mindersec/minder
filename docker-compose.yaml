@@ -17,7 +17,9 @@ version: '3.2'
 services:
   minder:
     container_name: minder_server
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/minder/Dockerfile
     image: minder:latest
 
     command: [
@@ -68,7 +70,9 @@ services:
         condition: service_healthy
   migrate:
     container_name: minder_migrate_up
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/minder/Dockerfile
     image: minder:latest
 
     command: [
