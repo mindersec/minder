@@ -47,6 +47,6 @@ func (r *RuleMethods) GetMethod(mName string) (reflect.Value, error) {
 }
 
 // Passthrough is a method that passes the entity through, just marshalling it
-func (_ *RuleMethods) Passthrough(_ context.Context, _ string, ent protoreflect.ProtoMessage) (json.RawMessage, error) {
+func (_ *RuleMethods) Passthrough(_ context.Context, ent protoreflect.ProtoMessage) (json.RawMessage, error) {
 	return protojson.Marshal(ent)
 }

@@ -45,17 +45,15 @@ type BuiltinRuleDataIngest struct {
 	builtinCfg  *pb.BuiltinType
 	ruleMethods rule_methods.Methods
 	method      string
-	accessToken string
 }
 
 // NewBuiltinRuleDataIngest creates a new builtin rule data ingest engine
 func NewBuiltinRuleDataIngest(
 	builtinCfg *pb.BuiltinType,
-	pbuild *providers.ProviderBuilder,
+	_ *providers.ProviderBuilder,
 ) (*BuiltinRuleDataIngest, error) {
 	return &BuiltinRuleDataIngest{
 		builtinCfg:  builtinCfg,
-		accessToken: pbuild.GetToken(),
 		method:      builtinCfg.GetMethod(),
 		ruleMethods: &rule_methods.RuleMethods{},
 	}, nil
@@ -98,8 +96,7 @@ func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.P
 
 	// call method
 	// Call the method (empty parameter list)
-	result := method.Call([]reflect.Value{reflect.ValueOf(ctx),
-		reflect.ValueOf(idi.accessToken), reflect.ValueOf(ent)})
+	result := method.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(ent)})
 	if len(result) != 2 {
 		return nil, fmt.Errorf("rule method should return 3 values")
 	}
