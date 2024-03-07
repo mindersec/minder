@@ -28,7 +28,6 @@ package tools
 //go:generate go install github.com/bufbuild/buf/cmd/buf
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
 //go:generate go install github.com/openfga/cli/cmd/fga
-//go:generate go install github.com/mikefarah/yq/v4
 
 // nolint
 
@@ -40,7 +39,6 @@ import (
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
-	_ "github.com/mikefarah/yq/v4"
 	_ "github.com/norwoodj/helm-docs/cmd/helm-docs"
 	_ "github.com/openfga/cli/cmd/fga"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"

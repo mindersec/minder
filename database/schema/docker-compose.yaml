@@ -35,7 +35,7 @@ services:
   migration:
     build:
       context: ../../
-      dockerfile: ./docker/minder/Dockerfile
+      dockerfile: ./Dockerfile
     command:
       [
         "migrate",

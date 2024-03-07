@@ -152,8 +152,6 @@ To build and run `minder-server`, you will also need [ko](https://ko.build/insta
 
 To run the test suite via `make test`, you will need [gotestfmt](https://github.com/GoTestTools/gotestfmt#installing) and [helm](https://github.com/helm/helm/releases).
 
-To invoke the `run-docker` make target, you will need [yq](https://github.com/mikefarah/yq).
-
 ### Clone the repository
 
 ```bash
