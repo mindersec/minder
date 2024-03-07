@@ -838,19 +838,19 @@ func (mr *MockStoreMockRecorder) GetProjectByName(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectByName", reflect.TypeOf((*MockStore)(nil).GetProjectByName), arg0, arg1)
 }
 
-// GetProjectIDPortBySessionState mocks base method.
-func (m *MockStore) GetProjectIDPortBySessionState(arg0 context.Context, arg1 string) (db.GetProjectIDPortBySessionStateRow, error) {
+// GetProjectIDBySessionState mocks base method.
+func (m *MockStore) GetProjectIDBySessionState(arg0 context.Context, arg1 string) (db.GetProjectIDBySessionStateRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProjectIDPortBySessionState", arg0, arg1)
-	ret0, _ := ret[0].(db.GetProjectIDPortBySessionStateRow)
+	ret := m.ctrl.Call(m, "GetProjectIDBySessionState", arg0, arg1)
+	ret0, _ := ret[0].(db.GetProjectIDBySessionStateRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetProjectIDPortBySessionState indicates an expected call of GetProjectIDPortBySessionState.
-func (mr *MockStoreMockRecorder) GetProjectIDPortBySessionState(arg0, arg1 any) *gomock.Call {
+// GetProjectIDBySessionState indicates an expected call of GetProjectIDBySessionState.
+func (mr *MockStoreMockRecorder) GetProjectIDBySessionState(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectIDPortBySessionState", reflect.TypeOf((*MockStore)(nil).GetProjectIDPortBySessionState), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectIDBySessionState", reflect.TypeOf((*MockStore)(nil).GetProjectIDBySessionState), arg0, arg1)
 }
 
 // GetProviderByID mocks base method.

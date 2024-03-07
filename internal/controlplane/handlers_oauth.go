@@ -75,12 +75,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, err
 	}
 
-	// Format the port number
-	port := sql.NullInt32{
-		Int32: req.Port,
-		Valid: true,
-	}
-
 	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
 		Provider:  provider.Name,
@@ -112,7 +106,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     provider.Name,
 		ProjectID:    projectID,
-		Port:         port,
 		SessionState: state,
 		OwnerFilter:  owner,
 		RedirectUrl:  redirectUrl,
@@ -173,7 +166,7 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	// get projectID from session along with state nonce from the database
-	stateData, err := s.store.GetProjectIDPortBySessionState(ctx, state)
+	stateData, err := s.store.GetProjectIDBySessionState(ctx, state)
 	if err != nil {
 		return fmt.Errorf("error getting project ID by session state: %w", err)
 	}
@@ -210,7 +203,7 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 }
 
 func (s *Server) generateOAuthToken(ctx context.Context, provider string, code string,
-	stateData db.GetProjectIDPortBySessionStateRow) error {
+	stateData db.GetProjectIDBySessionStateRow) error {
 	// generate a new OAuth2 config for the given provider
 	oauthConfig, err := auth.NewOAuthConfig(provider, true)
 	if err != nil {
