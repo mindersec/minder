@@ -108,7 +108,7 @@ require (
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.4 // indirect
+	github.com/lestrrat-go/httprc v1.0.5 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -208,7 +208,7 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.0.20
+	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/letsencrypt/boulder v0.0.0-20231030195133-fdaab3e21ab0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
