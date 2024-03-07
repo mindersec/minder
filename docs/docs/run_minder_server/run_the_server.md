@@ -16,7 +16,7 @@ PostgreSQL is used as the database.
 Keycloak is used as the identity provider.
 
 There are two methods to get started with Minder, either by downloading the
-latest release, building from source or (quickest) using the provided `docker-compose`
+latest release, building from source or (quickest) using the provided `docker-compose.yaml`
 file.
 
 ## Prerequisites
@@ -72,10 +72,10 @@ database:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 ### Create the database
@@ -120,10 +120,10 @@ identity:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d keycloak
+docker compose up -d keycloak
 ```
 
 ### Social login
@@ -167,10 +167,10 @@ authz:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d openfga
+docker compose up -d openfga
 ```
 
 ### Create the model
