@@ -30,7 +30,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-policy-agent/opa v0.62.0
+	github.com/open-policy-agent/opa v0.62.1
 	github.com/openfga/go-sdk v0.3.5
 	github.com/openfga/openfga v1.5.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
