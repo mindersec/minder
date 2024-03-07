@@ -27,16 +27,19 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/openfga/go-sdk/oauth2"
 	"github.com/openfga/go-sdk/oauth2/clientcredentials"
+
 	"github.com/stacklok/minder/internal/auth"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
+// KeyCloak is an implementation of the auth.IdentityProvider interface.
 type KeyCloak struct {
 	name string
 	url  url.URL
 	cfg  serverconfig.IdentityConfig
 }
 
+// NewKeyCloak creates a new KeyCloak identity provider.
 func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) *KeyCloak {
 	return &KeyCloak{
 		name: name,
@@ -61,27 +64,24 @@ func (k *KeyCloak) URL() url.URL {
 
 // Resolve implements auth.IdentityProvider.
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
-	return nil, fmt.Errorf("not implemented")
-	/*
-		remoteUser, err := k.lookupUser(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("unable to resolve user: %w", err)
-		}
-		if remoteUser != nil {
-			return remoteUser, nil
-		}
+	remoteUser, err := k.lookupUser(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("unable to resolve user: %w", err)
+	}
+	if remoteUser != nil {
+		return remoteUser, nil
+	}
 
-		// The user doesn't already existing in Keycloak, try to create a user
-		// based on GitHub metadata.  When the user logs in, they should end up
-		// using the pre-created Keycloak identity.
-		ghUser, err := k.lookupGithubUser(ctx, id)
-		if err != nil {
-			// TODO: how to signal GH user does not exist separate from lookup error?
-			return nil, fmt.Errorf("unable to resolve github user: %w", err)
-		}
+	// The user doesn't already existing in Keycloak, try to create a user
+	// based on GitHub metadata.  When the user logs in, they should end up
+	// using the pre-created Keycloak identity.
+	ghUser, err := k.lookupGithubUser(ctx, id)
+	if err != nil {
+		// TODO: how to signal GH user does not exist separate from lookup error?
+		return nil, fmt.Errorf("unable to resolve github user: %w", err)
+	}
 
-		return k.createKeycloakUser(ctx, ghUser)
-	*/
+	return k.createKeycloakUser(ctx, ghUser)
 }
 
 // Validate implements auth.IdentityProvider.
@@ -121,7 +121,7 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 	// next, look up by github id
 	ghIdUrl := k.url.JoinPath("realms", "stacklok", "users")
 	ghIdUrl.RawQuery = fmt.Sprintf("q=gh_id:%s", escapedId)
-	if res, err := res, err = client.Get(ghIdUrl.String()); err == nil {
+	if res, err := client.Get(ghIdUrl.String()); err == nil {
 		id, err := k.parseUsersResponse(res)
 		if !errors.Is(err, errNotFound) {
 			return id, err
@@ -174,7 +174,7 @@ type keycloakUser struct {
 	} `json:"attributes"`
 }
 
-func (k *KeyCloak)parseUserResponse(res *http.Response) (*auth.Identity, error) {
+func (k *KeyCloak) parseUserResponse(res *http.Response) (*auth.Identity, error) {
 	user := keycloakUser{}
 	if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
 		return nil, fmt.Errorf("failed to decode user response: %w", err)
