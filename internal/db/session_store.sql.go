@@ -13,13 +13,12 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, project_id, port, session_state, owner_filter, redirect_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url
+INSERT INTO session_store (provider, project_id, session_state, owner_filter, redirect_url) VALUES ($1, $2, $3, $4, $5) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url
 `
 
 type CreateSessionStateParams struct {
 	Provider     string         `json:"provider"`
 	ProjectID    uuid.UUID      `json:"project_id"`
-	Port         sql.NullInt32  `json:"port"`
 	SessionState string         `json:"session_state"`
 	OwnerFilter  sql.NullString `json:"owner_filter"`
 	RedirectUrl  sql.NullString `json:"redirect_url"`
@@ -29,7 +28,6 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 	row := q.db.QueryRowContext(ctx, createSessionState,
 		arg.Provider,
 		arg.ProjectID,
-		arg.Port,
 		arg.SessionState,
 		arg.OwnerFilter,
 		arg.RedirectUrl,
@@ -80,25 +78,23 @@ func (q *Queries) DeleteSessionStateByProjectID(ctx context.Context, arg DeleteS
 	return err
 }
 
-const getProjectIDPortBySessionState = `-- name: GetProjectIDPortBySessionState :one
-SELECT provider, project_id, port, owner_filter, redirect_url FROM session_store WHERE session_state = $1
+const getProjectIDBySessionState = `-- name: GetProjectIDBySessionState :one
+SELECT provider, project_id, owner_filter, redirect_url FROM session_store WHERE session_state = $1
 `
 
-type GetProjectIDPortBySessionStateRow struct {
+type GetProjectIDBySessionStateRow struct {
 	Provider    string         `json:"provider"`
 	ProjectID   uuid.UUID      `json:"project_id"`
-	Port        sql.NullInt32  `json:"port"`
 	OwnerFilter sql.NullString `json:"owner_filter"`
 	RedirectUrl sql.NullString `json:"redirect_url"`
 }
 
-func (q *Queries) GetProjectIDPortBySessionState(ctx context.Context, sessionState string) (GetProjectIDPortBySessionStateRow, error) {
-	row := q.db.QueryRowContext(ctx, getProjectIDPortBySessionState, sessionState)
-	var i GetProjectIDPortBySessionStateRow
+func (q *Queries) GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error) {
+	row := q.db.QueryRowContext(ctx, getProjectIDBySessionState, sessionState)
+	var i GetProjectIDBySessionStateRow
 	err := row.Scan(
 		&i.Provider,
 		&i.ProjectID,
-		&i.Port,
 		&i.OwnerFilter,
 		&i.RedirectUrl,
 	)

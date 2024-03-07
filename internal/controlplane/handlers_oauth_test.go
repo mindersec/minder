@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
 	"github.com/google/uuid"
@@ -84,9 +83,7 @@ func TestNewOAuthConfig(t *testing.T) {
 func TestGetAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
-	state := "test"
 	projectID := uuid.New()
-	port := sql.NullInt32{Int32: 8080, Valid: true}
 	providerID := uuid.New()
 	providerName := "github"
 	projectIdStr := projectID.String()
@@ -117,11 +114,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), gomock.Any()).
-					Return(db.SessionStore{
-						ProjectID:    projectID,
-						Port:         port,
-						SessionState: state,
-					}, nil)
+					Return(db.SessionStore{}, nil)
 				store.EXPECT().
 					DeleteSessionStateByProjectID(gomock.Any(), gomock.Any()).
 					Return(nil)

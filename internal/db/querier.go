@@ -67,7 +67,7 @@ type Querier interface {
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)
-	GetProjectIDPortBySessionState(ctx context.Context, sessionState string) (GetProjectIDPortBySessionStateRow, error)
+	GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error)
 	GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error)
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
