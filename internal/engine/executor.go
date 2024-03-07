@@ -49,7 +49,7 @@ const (
 type Executor struct {
 	querier                db.Store
 	evt                    *events.Eventer
-	crypteng               *crypto.Engine
+	crypteng               crypto.Engine
 	provMt                 providertelemetry.ProviderMetrics
 	mdws                   []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup

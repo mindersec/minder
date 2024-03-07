@@ -36,7 +36,7 @@ import (
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
+	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -120,7 +120,7 @@ func TestCreateUserDBMock(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
-			crypeng := crypto.NewEngine("test")
+			crypeng := mockcrypto.NewMockEngine(ctrl)
 
 			server := &Server{
 				store:        mockStore,
@@ -277,7 +277,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
 
-	crypeng := crypto.NewEngine("test")
+	crypeng := mockcrypto.NewMockEngine(ctrl)
 
 	server := &Server{
 		store: mockStore,

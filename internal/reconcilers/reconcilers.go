@@ -36,7 +36,7 @@ const (
 type Reconciler struct {
 	store           db.Store
 	evt             *events.Eventer
-	crypteng        *crypto.Engine
+	crypteng        crypto.Engine
 	restClientCache ratecache.RestClientCache
 	provMt          providertelemetry.ProviderMetrics
 }
