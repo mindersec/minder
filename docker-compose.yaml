@@ -141,17 +141,19 @@ services:
   openfga:
     container_name: openfga
     image: openfga/openfga:v1.5.0
-    command:
-      - "run"
+    command: [
+      "run",
+      "--playground-port=8085"
+    ]
     healthcheck:
       test:
         - CMD
         - grpc_health_probe
         - "-addr=:8081"
     ports:
-      - 3000:3000
       - 8082:8080
       - 8083:8081
+      - 8085:8085
     networks:
       - app_net
 networks:
