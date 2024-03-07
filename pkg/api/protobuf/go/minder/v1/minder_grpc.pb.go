@@ -1755,6 +1755,96 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ProjectsService_ListProjects_FullMethodName = "/minder.v1.ProjectsService/ListProjects"
+)
+
+// ProjectsServiceClient is the client API for ProjectsService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ProjectsServiceClient interface {
+	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
+}
+
+type projectsServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewProjectsServiceClient(cc grpc.ClientConnInterface) ProjectsServiceClient {
+	return &projectsServiceClient{cc}
+}
+
+func (c *projectsServiceClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
+	out := new(ListProjectsResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_ListProjects_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ProjectsServiceServer is the server API for ProjectsService service.
+// All implementations must embed UnimplementedProjectsServiceServer
+// for forward compatibility
+type ProjectsServiceServer interface {
+	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
+	mustEmbedUnimplementedProjectsServiceServer()
+}
+
+// UnimplementedProjectsServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProjectsServiceServer struct {
+}
+
+func (UnimplementedProjectsServiceServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
+}
+func (UnimplementedProjectsServiceServer) mustEmbedUnimplementedProjectsServiceServer() {}
+
+// UnsafeProjectsServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProjectsServiceServer will
+// result in compilation errors.
+type UnsafeProjectsServiceServer interface {
+	mustEmbedUnimplementedProjectsServiceServer()
+}
+
+func RegisterProjectsServiceServer(s grpc.ServiceRegistrar, srv ProjectsServiceServer) {
+	s.RegisterService(&ProjectsService_ServiceDesc, srv)
+}
+
+func _ProjectsService_ListProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).ListProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_ListProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).ListProjects(ctx, req.(*ListProjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ProjectsService_ServiceDesc is the grpc.ServiceDesc for ProjectsService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ProjectsService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.ProjectsService",
+	HandlerType: (*ProjectsServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListProjects",
+			Handler:    _ProjectsService_ListProjects_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
+
+const (
 	ProvidersService_ListProviders_FullMethodName = "/minder.v1.ProvidersService/ListProviders"
 )
 

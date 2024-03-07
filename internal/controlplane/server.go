@@ -95,6 +95,7 @@ type Server struct {
 	pb.UnimplementedOAuthServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
+	pb.UnimplementedProjectsServiceServer
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer

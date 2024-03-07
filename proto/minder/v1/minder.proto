@@ -646,6 +646,21 @@ service PermissionsService {
     }
 }
 
+service ProjectsService {
+
+    rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/projects"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_USER
+            relation: RELATION_GET
+        };
+    }
+
+}
+
 service ProvidersService {
     rpc ListProviders (ListProvidersRequest) returns (ListProvidersResponse) {
         option (google.api.http) = {
@@ -1549,6 +1564,14 @@ message Profile {
 
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11;
+}
+
+message ListProjectsRequest {
+
+}
+
+message ListProjectsResponse {
+    repeated Project projects = 1;
 }
 
 message ListRolesRequest {
