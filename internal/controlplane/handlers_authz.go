@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
@@ -306,39 +305,4 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 			Project: &respProj,
 		},
 	}, nil
-}
-
-// TODO: move this to a projects service-specific file
-
-// ListProjects returns the list of projects for the current user
-func (s *Server) ListProjects(
-	ctx context.Context,
-	_ *minder.ListProjectsRequest,
-) (*minder.ListProjectsResponse, error) {
-	userInfo, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
-	}
-
-	projects, err := s.authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting projects for user: %v", err)
-	}
-
-	resp := minder.ListProjectsResponse{}
-
-	for _, projectID := range projects {
-		project, err := s.store.GetProjectByID(ctx, projectID)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
-		}
-		resp.Projects = append(resp.Projects, &minder.Project{
-			ProjectId:   project.ID.String(),
-			Name:        project.Name,
-			Description: "",
-			CreatedAt:   timestamppb.New(project.CreatedAt),
-			UpdatedAt:   timestamppb.New(project.UpdatedAt),
-		})
-	}
-	return &resp, nil
 }

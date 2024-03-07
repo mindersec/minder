@@ -280,35 +280,3 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 		})
 	}
 }
-
-func TestListProjects(t *testing.T) {
-	t.Parallel()
-
-	user := "testuser"
-
-	authzClient := &mock.SimpleClient{
-		Allowed: []uuid.UUID{uuid.New()},
-	}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user).Return(db.User{ID: 1}, nil)
-	mockStore.EXPECT().GetProjectByID(gomock.Any(), authzClient.Allowed[0]).Return(
-		db.Project{ID: authzClient.Allowed[0]}, nil)
-
-	server := Server{
-		store:       mockStore,
-		authzClient: authzClient,
-	}
-
-	ctx := context.Background()
-	ctx = auth.WithUserSubjectContext(ctx, user)
-
-	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
-	assert.NoError(t, err)
-
-	assert.Len(t, resp.Projects, 1)
-	assert.Equal(t, authzClient.Allowed[0].String(), resp.Projects[0].ProjectId)
-}

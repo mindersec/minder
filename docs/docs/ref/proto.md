@@ -102,10 +102,6 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
-| ListRoles | [ListRolesRequest](#minder-v1-ListRolesRequest) | [ListRolesResponse](#minder-v1-ListRolesResponse) |  |
-| ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
-| AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
-| RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
 
 
 <a name="minder-v1-ProvidersService"></a>

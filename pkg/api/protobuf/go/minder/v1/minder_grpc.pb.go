@@ -1755,11 +1755,7 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProjectsService_ListProjects_FullMethodName        = "/minder.v1.ProjectsService/ListProjects"
-	ProjectsService_ListRoles_FullMethodName           = "/minder.v1.ProjectsService/ListRoles"
-	ProjectsService_ListRoleAssignments_FullMethodName = "/minder.v1.ProjectsService/ListRoleAssignments"
-	ProjectsService_AssignRole_FullMethodName          = "/minder.v1.ProjectsService/AssignRole"
-	ProjectsService_RemoveRole_FullMethodName          = "/minder.v1.ProjectsService/RemoveRole"
+	ProjectsService_ListProjects_FullMethodName = "/minder.v1.ProjectsService/ListProjects"
 )
 
 // ProjectsServiceClient is the client API for ProjectsService service.
@@ -1767,10 +1763,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProjectsServiceClient interface {
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
-	ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error)
-	ListRoleAssignments(ctx context.Context, in *ListRoleAssignmentsRequest, opts ...grpc.CallOption) (*ListRoleAssignmentsResponse, error)
-	AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error)
-	RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error)
 }
 
 type projectsServiceClient struct {
@@ -1790,51 +1782,11 @@ func (c *projectsServiceClient) ListProjects(ctx context.Context, in *ListProjec
 	return out, nil
 }
 
-func (c *projectsServiceClient) ListRoles(ctx context.Context, in *ListRolesRequest, opts ...grpc.CallOption) (*ListRolesResponse, error) {
-	out := new(ListRolesResponse)
-	err := c.cc.Invoke(ctx, ProjectsService_ListRoles_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *projectsServiceClient) ListRoleAssignments(ctx context.Context, in *ListRoleAssignmentsRequest, opts ...grpc.CallOption) (*ListRoleAssignmentsResponse, error) {
-	out := new(ListRoleAssignmentsResponse)
-	err := c.cc.Invoke(ctx, ProjectsService_ListRoleAssignments_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *projectsServiceClient) AssignRole(ctx context.Context, in *AssignRoleRequest, opts ...grpc.CallOption) (*AssignRoleResponse, error) {
-	out := new(AssignRoleResponse)
-	err := c.cc.Invoke(ctx, ProjectsService_AssignRole_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *projectsServiceClient) RemoveRole(ctx context.Context, in *RemoveRoleRequest, opts ...grpc.CallOption) (*RemoveRoleResponse, error) {
-	out := new(RemoveRoleResponse)
-	err := c.cc.Invoke(ctx, ProjectsService_RemoveRole_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ProjectsServiceServer is the server API for ProjectsService service.
 // All implementations must embed UnimplementedProjectsServiceServer
 // for forward compatibility
 type ProjectsServiceServer interface {
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
-	ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error)
-	ListRoleAssignments(context.Context, *ListRoleAssignmentsRequest) (*ListRoleAssignmentsResponse, error)
-	AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error)
-	RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error)
 	mustEmbedUnimplementedProjectsServiceServer()
 }
 
@@ -1844,18 +1796,6 @@ type UnimplementedProjectsServiceServer struct {
 
 func (UnimplementedProjectsServiceServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
-}
-func (UnimplementedProjectsServiceServer) ListRoles(context.Context, *ListRolesRequest) (*ListRolesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListRoles not implemented")
-}
-func (UnimplementedProjectsServiceServer) ListRoleAssignments(context.Context, *ListRoleAssignmentsRequest) (*ListRoleAssignmentsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListRoleAssignments not implemented")
-}
-func (UnimplementedProjectsServiceServer) AssignRole(context.Context, *AssignRoleRequest) (*AssignRoleResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AssignRole not implemented")
-}
-func (UnimplementedProjectsServiceServer) RemoveRole(context.Context, *RemoveRoleRequest) (*RemoveRoleResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveRole not implemented")
 }
 func (UnimplementedProjectsServiceServer) mustEmbedUnimplementedProjectsServiceServer() {}
 
@@ -1888,78 +1828,6 @@ func _ProjectsService_ListProjects_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProjectsService_ListRoles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRolesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProjectsServiceServer).ListRoles(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProjectsService_ListRoles_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectsServiceServer).ListRoles(ctx, req.(*ListRolesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProjectsService_ListRoleAssignments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRoleAssignmentsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProjectsServiceServer).ListRoleAssignments(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProjectsService_ListRoleAssignments_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectsServiceServer).ListRoleAssignments(ctx, req.(*ListRoleAssignmentsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProjectsService_AssignRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AssignRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProjectsServiceServer).AssignRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProjectsService_AssignRole_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectsServiceServer).AssignRole(ctx, req.(*AssignRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProjectsService_RemoveRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveRoleRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProjectsServiceServer).RemoveRole(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProjectsService_RemoveRole_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProjectsServiceServer).RemoveRole(ctx, req.(*RemoveRoleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ProjectsService_ServiceDesc is the grpc.ServiceDesc for ProjectsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1970,22 +1838,6 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProjects",
 			Handler:    _ProjectsService_ListProjects_Handler,
-		},
-		{
-			MethodName: "ListRoles",
-			Handler:    _ProjectsService_ListRoles_Handler,
-		},
-		{
-			MethodName: "ListRoleAssignments",
-			Handler:    _ProjectsService_ListRoleAssignments_Handler,
-		},
-		{
-			MethodName: "AssignRole",
-			Handler:    _ProjectsService_AssignRole_Handler,
-		},
-		{
-			MethodName: "RemoveRole",
-			Handler:    _ProjectsService_RemoveRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

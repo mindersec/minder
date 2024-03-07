@@ -659,54 +659,6 @@ service ProjectsService {
         };
     }
 
-    rpc ListRoles (ListRolesRequest) returns (ListRolesResponse) {
-        option (google.api.http) = {
-            // Note: we wouldlike to use {context.project} here, but is
-            // marked "optional" and fails with the error:
-            // > grpc-gateway: optional field not allowed in field path: project in context.project
-            get: "/api/v1/projects/availableRoles"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_ROLE_LIST
-        };
-    }
-
-    rpc ListRoleAssignments (ListRoleAssignmentsRequest) returns (ListRoleAssignmentsResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/projects/roles"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_ROLE_ASSIGNMENT_LIST
-        };
-    }
-
-    rpc AssignRole (AssignRoleRequest) returns (AssignRoleResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/projects/roles"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_ROLE_ASSIGNMENT_CREATE
-        };
-    }
-
-    rpc RemoveRole (RemoveRoleRequest) returns (RemoveRoleResponse) {
-        // The role name comes from the name field in the role object
-        option (google.api.http) = {
-            delete: "/api/v1/projects/roles/{role_assignment.subject}"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_ROLE_ASSIGNMENT_REMOVE
-        };
-    }
 }
 
 service ProvidersService {
