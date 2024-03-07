@@ -2409,6 +2409,45 @@
         }
       }
     },
+    "ListEvaluationResultsResponseEntityList": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityStatus"
+          }
+        }
+      },
+      "title": "EntityList is a list of entities"
+    },
+    "ListEvaluationResultsResponseEntityStatus": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ListEvaluationResultsResponseRuleEvaluationsList"
+          },
+          "title": "status is the status of the entity"
+        }
+      },
+      "description": "EntityStatus is a map of entities and their evaluation results."
+    },
+    "ListEvaluationResultsResponseRuleEvaluationsList": {
+      "type": "object",
+      "properties": {
+        "evaluationResults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "rule_evaluation_status is the status of the rules"
+        }
+      }
+    },
     "OAuthServiceStoreProviderTokenBody": {
       "type": "object",
       "properties": {
@@ -3018,13 +3057,12 @@
     "v1ListEvaluationResultsResponse": {
       "type": "object",
       "properties": {
-        "status": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RuleEvaluationStatus"
+        "results": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityList"
           },
-          "description": "status is the list of evaluation results.\nResults will typically be grouped by profile and project."
+          "description": "results is a map of entity types to entities and their evaluation results.\nresults are grouped by entity, i.e. repository, build_environment, artifact."
         }
       }
     },
@@ -3527,6 +3565,26 @@
         "ruleDescriptionName": {
           "type": "string",
           "title": "rule_description_name is the name to describe the rule"
+        },
+        "alertStatus": {
+          "type": "string",
+          "title": "alert_status is the status of the alert"
+        },
+        "alertLastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "alert_last_updated is the last time the alert was performed or attempted"
+        },
+        "alertDetails": {
+          "type": "string",
+          "title": "alert_details is the description of the alert attempt if any"
+        },
+        "alertMetadata": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "alert_metadata is the metadata of the alert"
         }
       },
       "title": "get the status of the rules for a given profile"

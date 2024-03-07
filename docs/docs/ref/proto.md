@@ -813,7 +813,64 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | status is the list of evaluation results. Results will typically be grouped by profile and project. |
+| results | [ListEvaluationResultsResponse.ResultsEntry](#minder-v1-ListEvaluationResultsResponse-ResultsEntry) | repeated | results is a map of entity types to entities and their evaluation results. results are grouped by entity, i.e. repository, build_environment, artifact. |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityList"></a>
+
+#### ListEvaluationResultsResponse.EntityList
+EntityList is a list of entities
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [ListEvaluationResultsResponse.EntityStatus](#minder-v1-ListEvaluationResultsResponse-EntityStatus) | repeated |  |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityStatus"></a>
+
+#### ListEvaluationResultsResponse.EntityStatus
+EntityStatus is a map of entities and their evaluation results.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [ListEvaluationResultsResponse.EntityStatus.StatusEntry](#minder-v1-ListEvaluationResultsResponse-EntityStatus-StatusEntry) | repeated | status is the status of the entity |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityStatus-StatusEntry"></a>
+
+#### ListEvaluationResultsResponse.EntityStatus.StatusEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [ListEvaluationResultsResponse.RuleEvaluationsList](#minder-v1-ListEvaluationResultsResponse-RuleEvaluationsList) |  |  |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-ResultsEntry"></a>
+
+#### ListEvaluationResultsResponse.ResultsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [ListEvaluationResultsResponse.EntityList](#minder-v1-ListEvaluationResultsResponse-EntityList) |  |  |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-RuleEvaluationsList"></a>
+
+#### ListEvaluationResultsResponse.RuleEvaluationsList
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| evaluation_results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -1372,6 +1429,22 @@ get the status of the rules for a given profile
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 | rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
 | rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
+| alert_status | [string](#string) |  | alert_status is the status of the alert |
+| alert_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | alert_last_updated is the last time the alert was performed or attempted |
+| alert_details | [string](#string) |  | alert_details is the description of the alert attempt if any |
+| alert_metadata | [RuleEvaluationStatus.AlertMetadataEntry](#minder-v1-RuleEvaluationStatus-AlertMetadataEntry) | repeated | alert_metadata is the metadata of the alert |
+
+
+<a name="minder-v1-RuleEvaluationStatus-AlertMetadataEntry"></a>
+
+#### RuleEvaluationStatus.AlertMetadataEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>

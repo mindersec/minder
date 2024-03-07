@@ -1000,6 +1000,14 @@ message RuleEvaluationStatus {
     string rule_type_name = 13;
     // rule_description_name is the name to describe the rule
     string rule_description_name = 14;
+    // alert_status is the status of the alert
+    string alert_status = 15;
+    // alert_last_updated is the last time the alert was performed or attempted
+    optional google.protobuf.Timestamp alert_last_updated = 16;
+    // alert_details is the description of the alert attempt if any
+    string alert_details = 17;
+    // alert_metadata is the metadata of the alert
+    map<string, string> alert_metadata = 18;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -1199,7 +1207,28 @@ message ListEvaluationResultsRequest{
 message ListEvaluationResultsResponse {
     // status is the list of evaluation results.
     // Results will typically be grouped by profile and project.
-    repeated RuleEvaluationStatus status = 1;
+    reserved 1; // deprecated status
+    reserved "status";
+
+    message RuleEvaluationsList {
+        // rule_evaluation_status is the status of the rules
+        repeated RuleEvaluationStatus evaluation_results = 1;
+    }
+
+    // EntityStatus is a map of entities and their evaluation results.
+    message EntityStatus {
+        // status is the status of the entity
+        map<string, RuleEvaluationsList> status = 1;
+    }
+
+    // EntityList is a list of entities
+    message EntityList {
+        repeated EntityStatus entity = 1;
+    }
+
+    // results is a map of entity types to entities and their evaluation results.
+    // results are grouped by entity, i.e. repository, build_environment, artifact.
+    map<string, EntityList> results = 2;
 }
 
 // --- END EvaluationResults definitions

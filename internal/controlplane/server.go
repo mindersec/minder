@@ -100,6 +100,7 @@ type Server struct {
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
+	pb.UnimplementedEvalResultsServiceServer
 }
 
 // ServerOption is a function that modifies a server
