@@ -82,7 +82,7 @@ type Server struct {
 	ClientID        string
 	ClientSecret    string
 	authzClient     authz.Client
-	cryptoEngine    *crypto.Engine
+	cryptoEngine    crypto.Engine
 	restClientCache ratecache.RestClientCache
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to

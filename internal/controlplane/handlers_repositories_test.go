@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -32,7 +31,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
+	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
@@ -45,18 +44,8 @@ import (
 
 func TestServer_RegisterRepository(t *testing.T) {
 	t.Parallel()
-	oauthToken := oauth2.Token{AccessToken: "AUTH"}
 
-	jsonToken, err := json.Marshal(oauthToken)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cryptoEngine := crypto.NewEngine("test")
-	encryptedBinaryToken, err := cryptoEngine.EncryptOAuthToken(jsonToken)
-	if err != nil {
-		t.Fatal(err)
-	}
-	encryptedToken := base64.StdEncoding.EncodeToString(encryptedBinaryToken)
+	accessToken := "AUTH"
 
 	tests := []struct {
 		name    string
@@ -166,7 +155,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			mockStore.EXPECT().
 				GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 				Return(db.ProviderAccessToken{
-					EncryptedToken: encryptedToken,
+					EncryptedToken: "encryptedToken",
 				}, nil)
 			if tt.repoErr == nil {
 				mockStore.EXPECT().
@@ -179,7 +168,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			cancelable, cancel := context.WithCancel(context.Background())
 			clientCache := ratecache.NewRestClientCache(cancelable)
 			defer cancel()
-			clientCache.Set("", oauthToken.AccessToken, db.ProviderTypeGithub, &stubClient)
+			clientCache.Set("", accessToken, db.ProviderTypeGithub, &stubClient)
 
 			stubEventer := StubEventer{}
 			stubWebhookManager := mockghhook.NewMockWebhookManager(ctrl)
@@ -192,9 +181,12 @@ func TestServer_RegisterRepository(t *testing.T) {
 					Return(tt.want.Result.Repository.HookUuid, stubbedHook, nil)
 			}
 
+			mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
+			mockCryptoEngine.EXPECT().DecryptOAuthToken(gomock.Any()).Return(oauth2.Token{AccessToken: accessToken}, nil).AnyTimes()
+
 			s := &Server{
 				store:           mockStore,
-				cryptoEngine:    cryptoEngine,
+				cryptoEngine:    mockCryptoEngine,
 				restClientCache: clientCache,
 				cfg:             &server.Config{},
 				evt:             &stubEventer,

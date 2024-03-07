@@ -41,7 +41,7 @@ func GetProviderBuilder(
 	prov db.Provider,
 	projectID uuid.UUID,
 	store db.Store,
-	crypteng *crypto.Engine,
+	crypteng crypto.Engine,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	encToken, err := store.GetAccessTokenByProjectID(ctx,

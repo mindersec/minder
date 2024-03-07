@@ -36,15 +36,23 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
-// Engine is a structure that allows controller access to cryptographic functions.
+// Engine provides all functions to encrypt and decrypt data
+type Engine interface {
+	EncryptOAuthToken(data []byte) ([]byte, error)
+	DecryptOAuthToken(encToken string) (oauth2.Token, error)
+	EncryptString(data string) (string, error)
+	DecryptString(encData string) (string, error)
+}
+
+// AesCfbEngine is a structure that allows controller access to cryptographic functions.
 // The intention is that this structure will be passed to the controller on creation
 // and will validate that wrong parameters aren't passed to the functions.
-type Engine struct {
+type AesCfbEngine struct {
 	encryptionKey string
 }
 
 // EngineFromAuthConfig creates a new crypto engine from an auth config
-func EngineFromAuthConfig(authConfig *serverconfig.AuthConfig) (*Engine, error) {
+func EngineFromAuthConfig(authConfig *serverconfig.AuthConfig) (Engine, error) {
 	if authConfig == nil {
 		return nil, errors.New("auth config is nil")
 	}
@@ -58,8 +66,8 @@ func EngineFromAuthConfig(authConfig *serverconfig.AuthConfig) (*Engine, error) 
 }
 
 // NewEngine creates a new crypto engine
-func NewEngine(tokenKey string) *Engine {
-	return &Engine{
+func NewEngine(tokenKey string) Engine {
+	return &AesCfbEngine{
 		encryptionKey: tokenKey,
 	}
 }
@@ -88,12 +96,12 @@ func EncryptBytes(key string, data []byte) ([]byte, error) {
 }
 
 // EncryptOAuthToken encrypts an oauth token
-func (e *Engine) EncryptOAuthToken(data []byte) ([]byte, error) {
+func (e *AesCfbEngine) EncryptOAuthToken(data []byte) ([]byte, error) {
 	return EncryptBytes(e.encryptionKey, data)
 }
 
 // DecryptOAuthToken decrypts an encrypted oauth token
-func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
+func (e *AesCfbEngine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 	var decryptedToken oauth2.Token
 
 	// base64 decode the token
@@ -117,7 +125,7 @@ func (e *Engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
 }
 
 // EncryptString encrypts a string
-func (e *Engine) EncryptString(data string) (string, error) {
+func (e *AesCfbEngine) EncryptString(data string) (string, error) {
 	var encoded string
 
 	encrypted, err := EncryptBytes(e.encryptionKey, []byte(data))
@@ -131,7 +139,7 @@ func (e *Engine) EncryptString(data string) (string, error) {
 }
 
 // DecryptString decrypts an encrypted string
-func (e *Engine) DecryptString(encData string) (string, error) {
+func (e *AesCfbEngine) DecryptString(encData string) (string, error) {
 	var decrypted string
 
 	// base64 decode the string
