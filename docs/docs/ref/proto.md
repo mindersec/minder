@@ -311,8 +311,8 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [string](#string) |  |  |
-| organizatio_name | [string](#string) |  |  |
+| organization_id | [string](#string) |  | **Deprecated.**  |
+| organizatio_name | [string](#string) |  | **Deprecated.**  |
 | project_id | [string](#string) |  |  |
 | project_name | [string](#string) |  |  |
 | identity_subject | [string](#string) |  |  |
@@ -1676,7 +1676,6 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [string](#string) |  |  |
 | identity_subject | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |

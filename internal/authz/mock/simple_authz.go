@@ -28,7 +28,8 @@ import (
 
 // SimpleClient maintains a list of authorized projects, suitable for use in tests.
 type SimpleClient struct {
-	Allowed []uuid.UUID
+	Allowed     []uuid.UUID
+	Assignments map[uuid.UUID][]*minderv1.RoleAssignment
 }
 
 var _ authz.Client = &SimpleClient{}
@@ -58,13 +59,23 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 }
 
 // DeleteUser implements authz.Client
-func (_ *SimpleClient) DeleteUser(_ context.Context, _ string) error {
+func (n *SimpleClient) DeleteUser(_ context.Context, _ string) error {
+	n.Assignments = nil
+	n.Allowed = nil
 	return nil
 }
 
 // AssignmentsToProject implements authz.Client
-func (_ *SimpleClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
-	return []*minderv1.RoleAssignment{}, nil
+func (n *SimpleClient) AssignmentsToProject(_ context.Context, p uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+	if n.Assignments == nil {
+		return nil, nil
+	}
+
+	if _, ok := n.Assignments[p]; !ok {
+		return nil, nil
+	}
+
+	return n.Assignments[p], nil
 }
 
 // ProjectsForUser implements authz.Client

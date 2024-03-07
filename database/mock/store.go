@@ -161,21 +161,6 @@ func (mr *MockStoreMockRecorder) CreateArtifact(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateArtifact", reflect.TypeOf((*MockStore)(nil).CreateArtifact), arg0, arg1)
 }
 
-// CreateOrganization mocks base method.
-func (m *MockStore) CreateOrganization(arg0 context.Context, arg1 db.CreateOrganizationParams) (db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateOrganization", arg0, arg1)
-	ret0, _ := ret[0].(db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateOrganization indicates an expected call of CreateOrganization.
-func (mr *MockStoreMockRecorder) CreateOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateOrganization", reflect.TypeOf((*MockStore)(nil).CreateOrganization), arg0, arg1)
-}
-
 // CreateProfile mocks base method.
 func (m *MockStore) CreateProfile(arg0 context.Context, arg1 db.CreateProfileParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
@@ -312,7 +297,7 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 any) *gomock.Call
 }
 
 // CreateUser mocks base method.
-func (m *MockStore) CreateUser(arg0 context.Context, arg1 db.CreateUserParams) (db.User, error) {
+func (m *MockStore) CreateUser(arg0 context.Context, arg1 string) (db.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
 	ret0, _ := ret[0].(db.User)
@@ -352,20 +337,6 @@ func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) error {
 func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredSessionStates", reflect.TypeOf((*MockStore)(nil).DeleteExpiredSessionStates), arg0)
-}
-
-// DeleteOrganization mocks base method.
-func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOrganization", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteOrganization indicates an expected call of DeleteOrganization.
-func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
 }
 
 // DeleteProfile mocks base method.
@@ -685,51 +656,6 @@ func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeature
 func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
-}
-
-// GetOrganization mocks base method.
-func (m *MockStore) GetOrganization(arg0 context.Context, arg1 uuid.UUID) (db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganization", arg0, arg1)
-	ret0, _ := ret[0].(db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrganization indicates an expected call of GetOrganization.
-func (mr *MockStoreMockRecorder) GetOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganization", reflect.TypeOf((*MockStore)(nil).GetOrganization), arg0, arg1)
-}
-
-// GetOrganizationByName mocks base method.
-func (m *MockStore) GetOrganizationByName(arg0 context.Context, arg1 string) (db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganizationByName", arg0, arg1)
-	ret0, _ := ret[0].(db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrganizationByName indicates an expected call of GetOrganizationByName.
-func (mr *MockStoreMockRecorder) GetOrganizationByName(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationByName", reflect.TypeOf((*MockStore)(nil).GetOrganizationByName), arg0, arg1)
-}
-
-// GetOrganizationForUpdate mocks base method.
-func (m *MockStore) GetOrganizationForUpdate(arg0 context.Context, arg1 string) (db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOrganizationForUpdate", arg0, arg1)
-	ret0, _ := ret[0].(db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOrganizationForUpdate indicates an expected call of GetOrganizationForUpdate.
-func (mr *MockStoreMockRecorder) GetOrganizationForUpdate(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationForUpdate", reflect.TypeOf((*MockStore)(nil).GetOrganizationForUpdate), arg0, arg1)
 }
 
 // GetParentProjects mocks base method.
@@ -1061,21 +987,6 @@ func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(arg0, arg1 any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoName), arg0, arg1)
 }
 
-// GetRootProjects mocks base method.
-func (m *MockStore) GetRootProjects(arg0 context.Context) ([]db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRootProjects", arg0)
-	ret0, _ := ret[0].([]db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRootProjects indicates an expected call of GetRootProjects.
-func (mr *MockStoreMockRecorder) GetRootProjects(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjects", reflect.TypeOf((*MockStore)(nil).GetRootProjects), arg0)
-}
-
 // GetRuleEvaluationByProfileIdAndRuleType mocks base method.
 func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 db.NullEntities, arg3 sql.NullString, arg4 uuid.NullUUID, arg5 sql.NullString) (db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
@@ -1226,19 +1137,34 @@ func (mr *MockStoreMockRecorder) ListFlushCache(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlushCache", reflect.TypeOf((*MockStore)(nil).ListFlushCache), arg0)
 }
 
-// ListOrganizations mocks base method.
-func (m *MockStore) ListOrganizations(arg0 context.Context, arg1 db.ListOrganizationsParams) ([]db.Project, error) {
+// ListNonOrgProjects mocks base method.
+func (m *MockStore) ListNonOrgProjects(arg0 context.Context) ([]db.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrganizations", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListNonOrgProjects", arg0)
 	ret0, _ := ret[0].([]db.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListOrganizations indicates an expected call of ListOrganizations.
-func (mr *MockStoreMockRecorder) ListOrganizations(arg0, arg1 any) *gomock.Call {
+// ListNonOrgProjects indicates an expected call of ListNonOrgProjects.
+func (mr *MockStoreMockRecorder) ListNonOrgProjects(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockStore)(nil).ListOrganizations), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListNonOrgProjects", reflect.TypeOf((*MockStore)(nil).ListNonOrgProjects), arg0)
+}
+
+// ListOldOrgProjects mocks base method.
+func (m *MockStore) ListOldOrgProjects(arg0 context.Context) ([]db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOldOrgProjects", arg0)
+	ret0, _ := ret[0].([]db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOldOrgProjects indicates an expected call of ListOldOrgProjects.
+func (mr *MockStoreMockRecorder) ListOldOrgProjects(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldOrgProjects", reflect.TypeOf((*MockStore)(nil).ListOldOrgProjects), arg0)
 }
 
 // ListProfilesByProjectID mocks base method.
@@ -1376,21 +1302,6 @@ func (mr *MockStoreMockRecorder) ListUsers(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockStore)(nil).ListUsers), arg0, arg1)
 }
 
-// ListUsersByOrganization mocks base method.
-func (m *MockStore) ListUsersByOrganization(arg0 context.Context, arg1 db.ListUsersByOrganizationParams) ([]db.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListUsersByOrganization", arg0, arg1)
-	ret0, _ := ret[0].([]db.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListUsersByOrganization indicates an expected call of ListUsersByOrganization.
-func (mr *MockStoreMockRecorder) ListUsersByOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByOrganization", reflect.TypeOf((*MockStore)(nil).ListUsersByOrganization), arg0, arg1)
-}
-
 // LockIfThresholdNotExceeded mocks base method.
 func (m *MockStore) LockIfThresholdNotExceeded(arg0 context.Context, arg1 db.LockIfThresholdNotExceededParams) (db.EntityExecutionLock, error) {
 	m.ctrl.T.Helper()
@@ -1404,6 +1315,21 @@ func (m *MockStore) LockIfThresholdNotExceeded(arg0 context.Context, arg1 db.Loc
 func (mr *MockStoreMockRecorder) LockIfThresholdNotExceeded(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockIfThresholdNotExceeded", reflect.TypeOf((*MockStore)(nil).LockIfThresholdNotExceeded), arg0, arg1)
+}
+
+// OrphanProject mocks base method.
+func (m *MockStore) OrphanProject(arg0 context.Context, arg1 db.OrphanProjectParams) (db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OrphanProject", arg0, arg1)
+	ret0, _ := ret[0].(db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OrphanProject indicates an expected call of OrphanProject.
+func (mr *MockStoreMockRecorder) OrphanProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OrphanProject", reflect.TypeOf((*MockStore)(nil).OrphanProject), arg0, arg1)
 }
 
 // ReleaseLock mocks base method.
@@ -1448,21 +1374,6 @@ func (mr *MockStoreMockRecorder) UpdateLease(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLease", reflect.TypeOf((*MockStore)(nil).UpdateLease), arg0, arg1)
 }
 
-// UpdateOrganization mocks base method.
-func (m *MockStore) UpdateOrganization(arg0 context.Context, arg1 db.UpdateOrganizationParams) (db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateOrganization", arg0, arg1)
-	ret0, _ := ret[0].(db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateOrganization indicates an expected call of UpdateOrganization.
-func (mr *MockStoreMockRecorder) UpdateOrganization(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockStore)(nil).UpdateOrganization), arg0, arg1)
-}
-
 // UpdateProfile mocks base method.
 func (m *MockStore) UpdateProfile(arg0 context.Context, arg1 db.UpdateProfileParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
@@ -1476,6 +1387,21 @@ func (m *MockStore) UpdateProfile(arg0 context.Context, arg1 db.UpdateProfilePar
 func (mr *MockStoreMockRecorder) UpdateProfile(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockStore)(nil).UpdateProfile), arg0, arg1)
+}
+
+// UpdateProjectMeta mocks base method.
+func (m *MockStore) UpdateProjectMeta(arg0 context.Context, arg1 db.UpdateProjectMetaParams) (db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProjectMeta", arg0, arg1)
+	ret0, _ := ret[0].(db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateProjectMeta indicates an expected call of UpdateProjectMeta.
+func (mr *MockStoreMockRecorder) UpdateProjectMeta(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProjectMeta", reflect.TypeOf((*MockStore)(nil).UpdateProjectMeta), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.

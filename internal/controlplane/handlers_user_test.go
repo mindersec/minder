@@ -50,7 +50,7 @@ const (
 func TestCreateUserDBMock(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
+	rootID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -69,27 +69,22 @@ func TestCreateUserDBMock(t *testing.T) {
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				returnedUser := db.User{
 					ID:              1,
-					OrganizationID:  orgID,
 					IdentitySubject: "subject1",
 					CreatedAt:       time.Now(),
 					UpdatedAt:       time.Now(),
 				}
 				store.EXPECT().
-					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Project{ID: orgID}, nil)
-				store.EXPECT().
 					CreateProjectWithID(gomock.Any(), gomock.Any()).
 					Return(db.Project{
 						ID: projectID,
 						ParentID: uuid.NullUUID{
-							UUID:  orgID,
+							UUID:  rootID,
 							Valid: true,
 						},
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
-					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: orgID,
-						IdentitySubject: "subject1"}).
+					CreateUser(gomock.Any(), "subject1").
 					Return(returnedUser, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
@@ -102,7 +97,6 @@ func TestCreateUserDBMock(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, orgID.String(), res.OrganizationId)
 			},
 		},
 	}
@@ -145,7 +139,6 @@ func TestCreateUserDBMock(t *testing.T) {
 func TestCreateUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -163,25 +156,17 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().
-					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Project{ID: orgID}, nil)
-				store.EXPECT().
 					CreateProjectWithID(gomock.Any(), gomock.Any()).
 					Return(db.Project{
 						ID: projectID,
-						ParentID: uuid.NullUUID{
-							UUID:  orgID,
-							Valid: true,
-						},
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
-						ID:             1,
-						OrganizationID: orgID,
-						CreatedAt:      time.Now(),
-						UpdatedAt:      time.Now(),
+						ID:        1,
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
 				store.EXPECT().Commit(gomock.Any())
@@ -194,7 +179,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, orgID.String(), res.OrganizationId)
 				assert.Equal(t, projectID.String(), res.ProjectId)
 				assert.NotNil(t, res.CreatedAt)
 			},
@@ -250,8 +234,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	request := &pb.DeleteUserRequest{}
 
-	orgID := uuid.New()
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
 		"authorization": "bearer some-access-token",
@@ -288,11 +270,9 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "subject1").
-		Return(db.User{
-			OrganizationID: orgID,
-		}, nil)
+		Return(db.User{IdentitySubject: "subject1"}, nil)
 	mockStore.EXPECT().
-		DeleteOrganization(gomock.Any(), orgID).
+		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
 	mockStore.EXPECT().Rollback(gomock.Any())
@@ -324,8 +304,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
-
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
@@ -346,10 +324,10 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					GetUserBySubject(gomock.Any(), "subject1").
 					Return(db.User{
-						OrganizationID: orgID,
+						IdentitySubject: "subject1",
 					}, nil)
 				store.EXPECT().
-					DeleteOrganization(gomock.Any(), orgID).
+					DeleteUser(gomock.Any(), gomock.Any()).
 					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())

@@ -148,26 +148,56 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 	defer store.Rollback(tx)
 	qtx := store.GetQuerierWithTransaction(tx)
 
-	user, err := qtx.GetUserBySubject(ctx, userId)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// user is already deleted
-			return nil
-		}
+	var userDBID *int32
+
+	usr, err := qtx.GetUserBySubject(ctx, userId)
+	// If the user doesn't exist, we still want to clean up any associated data
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("error retrieving user %v", err)
+	} else if err == nil {
+		userDBID = &usr.ID
 	}
 
+	// Fetching the projects for user before the deletion was made.
+	// This allows us to clean up the project from the database
+	// if there are no more role assignments for the project.
+	projects, err := authzClient.ProjectsForUser(ctx, userId)
+	if err != nil {
+		return fmt.Errorf("error getting projects for user %v", err)
+	}
+
+	// We delete the user from the authorization system first
 	if err := authzClient.DeleteUser(ctx, userId); err != nil {
 		return fmt.Errorf("error deleting authorization tuple %v", err)
 	}
 
-	err = qtx.DeleteOrganization(ctx, user.OrganizationID)
-	if err != nil {
-		return fmt.Errorf("error deleting organization %w", err)
+	// We only delete the user if it still exists in the database
+	if userDBID != nil {
+		if err := qtx.DeleteUser(ctx, *userDBID); err != nil {
+			return fmt.Errorf("error deleting user %v", err)
+		}
 	}
 
-	err = store.Commit(tx)
-	if err != nil {
+	for _, proj := range projects {
+		// Given that we've deleted the user from the authorization system,
+		// we can now check if there are any role assignments for the project.
+		as, err := authzClient.AssignmentsToProject(ctx, proj)
+		if err != nil {
+			return fmt.Errorf("error getting role assignments for project %v", err)
+		}
+
+		if len(as) == 0 {
+			// no role assignments for this project
+			// we can safely delete it.
+			if _, err := qtx.DeleteProject(ctx, proj); err != nil {
+				return fmt.Errorf("error deleting project %v", err)
+			}
+		}
+	}
+
+	// organizations will be cleaned up in a migration after this change
+
+	if err = store.Commit(tx); err != nil {
 		return fmt.Errorf("error committing account deletion %w", err)
 	}
 	return nil

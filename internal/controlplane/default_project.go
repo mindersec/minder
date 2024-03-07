@@ -18,7 +18,6 @@ package controlplane
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -28,28 +27,22 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/projects"
 	github "github.com/stacklok/minder/internal/providers/github"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// OrgMeta is the metadata associated with an organization
-type OrgMeta struct {
-	Company string `json:"company"`
-}
+// ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
+func ProvisionSelfEnrolledProject(
+	ctx context.Context,
+	authzClient authz.Client,
+	qtx db.Querier,
+	projectName string,
+	userSub string,
+) (outproj *pb.Project, projerr error) {
+	projectmeta := projects.NewSelfEnrolledMetadata()
 
-// ProjectMeta is the metadata associated with a project
-type ProjectMeta struct {
-	Description string `json:"description"`
-}
-
-// CreateDefaultRecordsForOrg creates the default records, such as projects, roles and provider for the organization
-func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
-	org db.Project, projectName string, userSub string) (outproj *pb.Project, projerr error) {
-	projectmeta := &ProjectMeta{
-		Description: fmt.Sprintf("Default admin project for %s", org.Name),
-	}
-
-	jsonmeta, err := json.Marshal(projectmeta)
+	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
 	}
@@ -60,12 +53,12 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 	// NOTE: This is only creating a tuple for the project, not the organization
 	//       We currently have no use for the organization and it might be
 	//       removed in the future.
-	if err := s.authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create authorization tuple: %v", err)
 	}
 	defer func() {
 		if outproj == nil && projerr != nil {
-			if err := s.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+			if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
 			}
 		}
@@ -73,10 +66,6 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 
 	// we need to create the default records for the organization
 	project, err := qtx.CreateProjectWithID(ctx, db.CreateProjectWithIDParams{
-		ParentID: uuid.NullUUID{
-			UUID:  org.ID,
-			Valid: true,
-		},
 		ID:       projectID,
 		Name:     projectName,
 		Metadata: jsonmeta,
@@ -94,7 +83,7 @@ func (s *Server) CreateDefaultRecordsForOrg(ctx context.Context, qtx db.Querier,
 	}
 
 	if err != nil {
-		if err := s.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+		if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
