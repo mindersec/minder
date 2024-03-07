@@ -258,13 +258,25 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 
 // Write persists the given role for the given user and project
 func (a *ClientWrapper) Write(ctx context.Context, user string, role Role, project uuid.UUID) error {
-	resp, err := a.cli.WriteTuples(ctx).Options(fgaclient.ClientWriteOptions{}).Body([]fgasdk.TupleKey{
-		{
-			User:     getUserForTuple(user),
-			Relation: role.String(),
-			Object:   getProjectForTuple(project),
-		},
-	}).Execute()
+	return a.write(ctx, fgasdk.TupleKey{
+		User:     getUserForTuple(user),
+		Relation: role.String(),
+		Object:   getProjectForTuple(project),
+	})
+}
+
+// Adopt writes a relationship between the parent and child projects
+func (a *ClientWrapper) Adopt(ctx context.Context, parent, child uuid.UUID) error {
+	return a.write(ctx, fgasdk.TupleKey{
+		User:     getProjectForTuple(parent),
+		Relation: "parent",
+		Object:   getProjectForTuple(child),
+	})
+}
+
+func (a *ClientWrapper) write(ctx context.Context, t fgasdk.TupleKey) error {
+	resp, err := a.cli.WriteTuples(ctx).Options(fgaclient.ClientWriteOptions{}).
+		Body([]fgasdk.TupleKey{t}).Execute()
 	if err != nil && strings.Contains(err.Error(), "already exists") {
 		return nil
 	} else if err != nil {
@@ -283,6 +295,11 @@ func (a *ClientWrapper) Write(ctx context.Context, user string, role Role, proje
 // Delete removes the given role for the given user and project
 func (a *ClientWrapper) Delete(ctx context.Context, user string, role Role, project uuid.UUID) error {
 	return a.doDelete(ctx, getUserForTuple(user), role.String(), getProjectForTuple(project))
+}
+
+// Orphan removes the relationship between the parent and child projects
+func (a *ClientWrapper) Orphan(ctx context.Context, parent, child uuid.UUID) error {
+	return a.doDelete(ctx, getProjectForTuple(parent), "parent", getProjectForTuple(child))
 }
 
 // doDelete wraps the OpenFGA DeleteTuples call and handles edge cases as needed. It takes
@@ -418,10 +435,52 @@ func (a *ClientWrapper) ProjectsForUser(ctx context.Context, sub string) ([]uuid
 		if err != nil {
 			continue
 		}
+
 		out = append(out, u)
+
+		children, err := a.traverseProjectsForParent(ctx, u)
+		if err != nil {
+			return nil, err
+		}
+
+		out = append(out, children...)
 	}
 
 	return out, nil
+}
+
+// traverseProjectsForParent is a recursive function that traverses the project
+// hierarchy to find all projects that the parent project has access to.
+func (a *ClientWrapper) traverseProjectsForParent(ctx context.Context, parent uuid.UUID) ([]uuid.UUID, error) {
+	projects := []uuid.UUID{}
+
+	resp, err := a.cli.ListObjects(ctx).Body(fgaclient.ClientListObjectsRequest{
+		User:     getProjectForTuple(parent),
+		Relation: "parent",
+		Type:     "project",
+	}).Execute()
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to read authorization tuples: %w", err)
+	}
+
+	for _, obj := range resp.GetObjects() {
+		u, err := uuid.Parse(getProjectFromTuple(obj))
+		if err != nil {
+			continue
+		}
+		projects = append(projects, u)
+	}
+
+	for _, proj := range projects {
+		children, err := a.traverseProjectsForParent(ctx, proj)
+		if err != nil {
+			return nil, err
+		}
+		projects = append(projects, children...)
+	}
+
+	return projects, nil
 }
 
 func getUserForTuple(user string) string {

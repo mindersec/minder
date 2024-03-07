@@ -107,4 +107,10 @@ type Client interface {
 
 	// MigrateUp runs the authz migrations
 	MigrateUp(ctx context.Context) error
+
+	// Adopt stores an authorization relationship from one project to another
+	Adopt(ctx context.Context, parent, child uuid.UUID) error
+
+	// Orphan removes an authorization relationship from one project to another
+	Orphan(ctx context.Context, parent, child uuid.UUID) error
 }
