@@ -34,19 +34,22 @@ status=0
   /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --rname default-roles-stacklok --rolename delete-account --cclientid account
 fi
 
+# Create client scope which exposes the user's GitHub ID and login
+/opt/keycloak/bin/kcadm.sh create client-scopes -r stacklok -f "$(dirname -- "${BASH_SOURCE[0]}")/scope.json"
+
 # Create client minder-cli
 if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-cli"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
 fi
 
 # Create client minder-ui
 if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-ui"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
 fi
 
 # Create client minder-server to receive account deletion events
 if ! /opt/keycloak/bin/kcadm.sh get clients -r stacklok --fields 'clientId' | grep -q "minder-server"; then
-  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MINDER_SERVER_SECRET" -s enabled=true
+  /opt/keycloak/bin/kcadm.sh create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MINDER_SERVER_SECRET" -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
 
   # Give minder-server the capability to view events
   /opt/keycloak/bin/kcadm.sh add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename view-events
