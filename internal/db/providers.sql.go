@@ -19,7 +19,7 @@ INSERT INTO providers (
     name,
     project_id,
     implements,
-    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at
+    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows
 `
 
 type CreateProviderParams struct {
@@ -46,6 +46,7 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.AuthFlows),
 	)
 	return i, err
 }
@@ -65,7 +66,7 @@ func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) 
 }
 
 const getProviderByID = `-- name: GetProviderByID :one
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE id = $1 AND project_id = $2
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE id = $1 AND project_id = $2
 `
 
 type GetProviderByIDParams struct {
@@ -85,12 +86,13 @@ func (q *Queries) GetProviderByID(ctx context.Context, arg GetProviderByIDParams
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.AuthFlows),
 	)
 	return i, err
 }
 
 const getProviderByName = `-- name: GetProviderByName :one
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE name = $1 AND project_id = $2
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1 AND project_id = $2
 `
 
 type GetProviderByNameParams struct {
@@ -110,12 +112,13 @@ func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNamePa
 		&i.Definition,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		pq.Array(&i.AuthFlows),
 	)
 	return i, err
 }
 
 const globalListProviders = `-- name: GlobalListProviders :many
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers
 `
 
 func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
@@ -136,6 +139,7 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 			&i.Definition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			pq.Array(&i.AuthFlows),
 		); err != nil {
 			return nil, err
 		}
@@ -152,7 +156,7 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 
 const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers WHERE project_id = $1
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE project_id = $1
 `
 
 // ListProvidersByProjectID allows us to lits all providers for a given project.
@@ -174,6 +178,7 @@ func (q *Queries) ListProvidersByProjectID(ctx context.Context, projectID uuid.U
 			&i.Definition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			pq.Array(&i.AuthFlows),
 		); err != nil {
 			return nil, err
 		}
@@ -190,7 +195,7 @@ func (q *Queries) ListProvidersByProjectID(ctx context.Context, projectID uuid.U
 
 const listProvidersByProjectIDPaginated = `-- name: ListProvidersByProjectIDPaginated :many
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at FROM providers
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers
 WHERE project_id = $1
     AND (created_at > $2 OR $2 IS NULL)
 ORDER BY created_at DESC, id
@@ -223,6 +228,7 @@ func (q *Queries) ListProvidersByProjectIDPaginated(ctx context.Context, arg Lis
 			&i.Definition,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			pq.Array(&i.AuthFlows),
 		); err != nil {
 			return nil, err
 		}

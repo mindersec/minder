@@ -102,6 +102,50 @@ func (ns NullAlertStatusTypes) Value() (driver.Value, error) {
 	return string(ns.AlertStatusTypes), nil
 }
 
+type AuthorizationFlow string
+
+const (
+	AuthorizationFlowUserInput                   AuthorizationFlow = "user_input"
+	AuthorizationFlowOauth2AuthorizationCodeFlow AuthorizationFlow = "oauth2_authorization_code_flow"
+	AuthorizationFlowGithubAppFlow               AuthorizationFlow = "github_app_flow"
+	AuthorizationFlowNone                        AuthorizationFlow = "none"
+)
+
+func (e *AuthorizationFlow) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AuthorizationFlow(s)
+	case string:
+		*e = AuthorizationFlow(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AuthorizationFlow: %T", src)
+	}
+	return nil
+}
+
+type NullAuthorizationFlow struct {
+	AuthorizationFlow AuthorizationFlow `json:"authorization_flow"`
+	Valid             bool              `json:"valid"` // Valid is true if AuthorizationFlow is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAuthorizationFlow) Scan(value interface{}) error {
+	if value == nil {
+		ns.AuthorizationFlow, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AuthorizationFlow.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAuthorizationFlow) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AuthorizationFlow), nil
+}
+
 type Entities string
 
 const (
@@ -419,14 +463,15 @@ type Project struct {
 }
 
 type Provider struct {
-	ID         uuid.UUID       `json:"id"`
-	Name       string          `json:"name"`
-	Version    string          `json:"version"`
-	ProjectID  uuid.UUID       `json:"project_id"`
-	Implements []ProviderType  `json:"implements"`
-	Definition json.RawMessage `json:"definition"`
-	CreatedAt  time.Time       `json:"created_at"`
-	UpdatedAt  time.Time       `json:"updated_at"`
+	ID         uuid.UUID           `json:"id"`
+	Name       string              `json:"name"`
+	Version    string              `json:"version"`
+	ProjectID  uuid.UUID           `json:"project_id"`
+	Implements []ProviderType      `json:"implements"`
+	Definition json.RawMessage     `json:"definition"`
+	CreatedAt  time.Time           `json:"created_at"`
+	UpdatedAt  time.Time           `json:"updated_at"`
+	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
 }
 
 type ProviderAccessToken struct {

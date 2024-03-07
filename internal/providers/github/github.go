@@ -58,6 +58,12 @@ var Implements = []db.ProviderType{
 	db.ProviderTypeRepoLister,
 }
 
+// AuthorizationFlows is the list of authorization flows that the GitHub provider supports
+var AuthorizationFlows = []db.AuthorizationFlow{
+	db.AuthorizationFlowUserInput,
+	db.AuthorizationFlowOauth2AuthorizationCodeFlow,
+}
+
 // RestClient is the struct that contains the GitHub REST API client
 type RestClient struct {
 	client *github.Client
