@@ -115,7 +115,7 @@ type IdentityProvider interface {
 // IdentityProviders.
 type IdentityClient struct {
 	// This map is a bit overloaded; it maps both short provider names
-	providers xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
+	providers *xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
 }
 
 var _ Resolver = (*IdentityClient)(nil)
@@ -123,7 +123,7 @@ var _ Resolver = (*IdentityClient)(nil)
 // NewIdentityClient creates a new IdentityClient with the supplied providers.
 func NewIdentityClient(providers ...IdentityProvider) (*IdentityClient, error) {
 	c := &IdentityClient{
-		providers: xsync.NewMapOfPresized(len(providers) * 2),
+		providers: xsync.NewMapOfPresized[string, IdentityProvider](len(providers) * 2),
 	}
 	for _, p := range providers {
 		prev, ok := c.providers.LoadOrStore(p.String(), p)

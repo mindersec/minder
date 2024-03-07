@@ -217,10 +217,19 @@ func (s *Server) ListRoleAssignments(
 	}
 
 	for i := range as {
-		identity := s.idClient.Resolve(ctx, as[i].Subject)
+		identity, err := s.idClient.Resolve(ctx, as[i].Subject)
+		if err != nil {
+			// If we can't resolve the subject, report a raw ID value
+			identity = &auth.Identity{
+				UserID:    as[i].Subject,
+				HumanName: as[i].Subject,
+				Provider:  nil,
+			}
+			continue
+		}
 		// Make the subjects human-readable on output, even though we store them
 		// as stable identifiers.
-		as[i].Subject = identity.Human
+		as[i].Subject = identity.Human()
 	}
 
 	return &minder.ListRoleAssignmentsResponse{
@@ -247,7 +256,11 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 
 	// We may be given a human-readable identifier which can vary over time.  Resolve
 	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity := s.idClient.Resolve(ctx, sub)
+	identity, err := s.idClient.Resolve(ctx, sub)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "Could not find identity %q", sub)
+	}
 
 	// Verify if user exists.
 	// TODO: this assumes we store all users in the database, and that we don't
@@ -299,7 +312,11 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 
 	// We may be given a human-readable identifier which can vary over time.  Resolve
 	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity := s.idClient.Resolve(ctx, sub)
+	identity, err := s.idClient.Resolve(ctx, sub)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "Could not find identity %q", sub)
+	}
 
 	// Verify if user exists
 	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {

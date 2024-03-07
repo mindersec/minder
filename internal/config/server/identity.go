@@ -17,6 +17,7 @@ package server
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -59,4 +60,12 @@ func (sic *IdentityConfig) GetClientSecret() (string, error) {
 func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	return config.BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
 		"The base URL where the identity server is running", flags.String)
+}
+
+func (ic *IdentityConfig) Issuer() url.URL {
+	u, err := url.Parse(ic.IssuerUrl)
+	if err != nil {
+		panic("invalid issuer URL")
+	}
+	return *u
 }

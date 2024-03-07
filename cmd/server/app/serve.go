@@ -123,7 +123,8 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 		}
 
-		idClient, err := auth.NewIdentityClient(keycloak.NewKeyCloak("", cfg.Identity.Server.IssuerUrl))
+
+		idClient, err := auth.NewIdentityClient(keycloak.NewKeyCloak("", cfg.Identity.Server))
 		if err != nil {
 			return fmt.Errorf("unable to create identity client: %w", err)
 		}
@@ -138,7 +139,7 @@ var serveCmd = &cobra.Command{
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
 			controlplane.WithRestClientCache(restClientCache),
-			controlplane.WithIdentityClient()
+			controlplane.WithIdentityClient(idClient),
 		)
 		if err != nil {
 			return fmt.Errorf("unable to create server: %w", err)
