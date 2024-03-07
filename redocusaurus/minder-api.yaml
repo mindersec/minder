@@ -11,6 +11,7 @@ tags:
   - name: ProfileService
   - name: EvalResultsService
   - name: PermissionsService
+  - name: ProjectsService
   - name: ProvidersService
 consumes:
   - application/json
@@ -735,6 +736,20 @@ paths:
           type: string
       tags:
         - ProfileService
+  /api/v1/projects:
+    get:
+      operationId: ProjectsService_ListProjects
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListProjectsResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      tags:
+        - ProjectsService
   /api/v1/providers:
     get:
       operationId: ProvidersService_ListProviders
@@ -2135,6 +2150,14 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Profile'
+  v1ListProjectsResponse:
+    type: object
+    properties:
+      projects:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1Project'
   v1ListProvidersResponse:
     type: object
     properties:
