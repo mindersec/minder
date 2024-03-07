@@ -1404,11 +1404,12 @@ func (mr *MockStoreMockRecorder) UpdateProvider(arg0, arg1 any) *gomock.Call {
 }
 
 // UpdateRuleType mocks base method.
-func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeParams) error {
+func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeParams) (db.RuleType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateRuleType", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(db.RuleType)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdateRuleType indicates an expected call of UpdateRuleType.

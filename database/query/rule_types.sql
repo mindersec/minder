@@ -22,5 +22,8 @@ SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3;
 -- name: DeleteRuleType :exec
 DELETE FROM rule_type WHERE id = $1;
 
--- name: UpdateRuleType :exec
-UPDATE rule_type SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value) WHERE id = $1;
+-- name: UpdateRuleType :one
+UPDATE rule_type
+    SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value)
+    WHERE id = $1
+    RETURNING *;
