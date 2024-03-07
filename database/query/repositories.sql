@@ -11,7 +11,9 @@ INSERT INTO repositories (
     webhook_url,
     deploy_url,
     clone_url,
-    default_branch) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, sqlc.arg(default_branch)) RETURNING *;
+    default_branch,
+    license
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, sqlc.arg(default_branch), sqlc.arg(license)) RETURNING *;
 
 -- name: GetRepositoryByID :one
 SELECT * FROM repositories WHERE id = $1;

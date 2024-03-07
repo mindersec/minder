@@ -1253,6 +1253,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | default_branch | [string](#string) |  |  |
+| license | [string](#string) |  |  |
 
 
 <a name="minder-v1-RestType"></a>

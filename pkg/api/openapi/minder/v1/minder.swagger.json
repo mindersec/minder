@@ -3354,6 +3354,9 @@
         },
         "defaultBranch": {
           "type": "string"
+        },
+        "license": {
+          "type": "string"
         }
       }
     },

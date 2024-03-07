@@ -464,6 +464,7 @@ type Repository struct {
 	CreatedAt     time.Time      `json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DefaultBranch sql.NullString `json:"default_branch"`
+	License       sql.NullString `json:"license"`
 }
 
 type RuleDetailsAlert struct {
