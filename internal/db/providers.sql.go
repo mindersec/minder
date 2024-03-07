@@ -197,12 +197,13 @@ func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([
 
 const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE project_id = $1
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE project_id = ANY($1::uuid[])
 `
 
-// ListProvidersByProjectID allows us to lits all providers for a given project.
-func (q *Queries) ListProvidersByProjectID(ctx context.Context, projectID uuid.UUID) ([]Provider, error) {
-	rows, err := q.db.QueryContext(ctx, listProvidersByProjectID, projectID)
+// ListProvidersByProjectID allows us to list all providers
+// for a given array of projects.
+func (q *Queries) ListProvidersByProjectID(ctx context.Context, projects []uuid.UUID) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, listProvidersByProjectID, pq.Array(projects))
 	if err != nil {
 		return nil, err
 	}

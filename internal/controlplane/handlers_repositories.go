@@ -88,13 +88,14 @@ func (s *Server) RegisterRepository(ctx context.Context,
 
 	// update the database
 	dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
-		Provider:  provider.Name,
-		ProjectID: projectID,
-		RepoOwner: r.Owner,
-		RepoName:  r.Name,
-		RepoID:    r.RepoId,
-		IsPrivate: r.IsPrivate,
-		IsFork:    r.IsFork,
+		Provider:   provider.Name,
+		ProviderID: provider.ID,
+		ProjectID:  projectID,
+		RepoOwner:  r.Owner,
+		RepoName:   r.Name,
+		RepoID:     r.RepoId,
+		IsPrivate:  r.IsPrivate,
+		IsFork:     r.IsFork,
 		WebhookID: sql.NullInt64{
 			Int64: r.HookId,
 			Valid: true,

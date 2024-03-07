@@ -13,10 +13,11 @@ SELECT * FROM providers WHERE name = $1 AND project_id = $2;
 -- name: GetProviderByID :one
 SELECT * FROM providers WHERE id = $1 AND project_id = $2;
 
--- ListProvidersByProjectID allows us to lits all providers for a given project.
+-- ListProvidersByProjectID allows us to list all providers
+-- for a given array of projects.
 
 -- name: ListProvidersByProjectID :many
-SELECT * FROM providers WHERE project_id = $1;
+SELECT * FROM providers WHERE project_id = ANY(sqlc.arg(projects)::uuid[]);
 
 -- ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
 -- with pagination taken into account. In this case, the cursor is the creation date.

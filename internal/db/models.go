@@ -510,6 +510,7 @@ type Repository struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DefaultBranch sql.NullString `json:"default_branch"`
 	License       sql.NullString `json:"license"`
+	ProviderID    uuid.UUID      `json:"provider_id"`
 }
 
 type RuleDetailsAlert struct {

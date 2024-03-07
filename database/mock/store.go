@@ -1213,7 +1213,7 @@ func (mr *MockStoreMockRecorder) ListProfilesInstantiatingRuleType(arg0, arg1 an
 }
 
 // ListProvidersByProjectID mocks base method.
-func (m *MockStore) ListProvidersByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.Provider, error) {
+func (m *MockStore) ListProvidersByProjectID(arg0 context.Context, arg1 []uuid.UUID) ([]db.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProvidersByProjectID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Provider)
