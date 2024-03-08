@@ -298,14 +298,13 @@ func (s *Server) registerWebhookForRepository(
 func (s *Server) deleteWebhookFromRepository(
 	ctx context.Context,
 	provider db.Provider,
-	projectID uuid.UUID,
 	dbrepo db.Repository,
 ) error {
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	providerBuilder, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
+	providerBuilder, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -367,7 +366,7 @@ func (s *Server) parseGithubEventForProcessing(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, prov, dbRepo.ProjectID, s.store, s.cryptoEngine, pbOpts...)
+	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

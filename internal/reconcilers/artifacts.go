@@ -110,7 +110,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, prov, e.store, e.crypteng, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

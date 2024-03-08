@@ -58,7 +58,7 @@ func (s *Server) RegisterRepository(ctx context.Context,
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -328,7 +328,7 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	err = s.deleteRepositoryAndWebhook(ctx, repo, repo.ProjectID, provider)
+	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 	} else if err != nil {
 		return nil, err
 	}
-	err = s.deleteRepositoryAndWebhook(ctx, repo, projectID, provider)
+	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Msg("listing repositories")
 
 	// FIXME: this is a hack to get the owner filter from the request
-	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, projectID)
+	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, provider.ProjectID)
 
 	if err != nil {
 		return nil, util.UserVisibleError(codes.PermissionDenied,
@@ -419,7 +419,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, projectID, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -487,7 +487,6 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 func (s *Server) deleteRepositoryAndWebhook(
 	ctx context.Context,
 	repo db.Repository,
-	projectID uuid.UUID,
 	provider db.Provider,
 ) error {
 	tx, err := s.store.BeginTransaction()
@@ -501,7 +500,7 @@ func (s *Server) deleteRepositoryAndWebhook(
 		return status.Errorf(codes.Internal, "error deleting repository: %v", err)
 	}
 
-	if err := s.deleteWebhookFromRepository(ctx, provider, projectID, repo); err != nil {
+	if err := s.deleteWebhookFromRepository(ctx, provider, repo); err != nil {
 		return err
 	}
 

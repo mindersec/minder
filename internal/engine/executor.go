@@ -200,7 +200,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, pbOpts...)
+	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
