@@ -932,6 +932,7 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ProfileService_CreateProfile_FullMethodName             = "/minder.v1.ProfileService/CreateProfile"
 	ProfileService_UpdateProfile_FullMethodName             = "/minder.v1.ProfileService/UpdateProfile"
+	ProfileService_PatchProfile_FullMethodName              = "/minder.v1.ProfileService/PatchProfile"
 	ProfileService_DeleteProfile_FullMethodName             = "/minder.v1.ProfileService/DeleteProfile"
 	ProfileService_ListProfiles_FullMethodName              = "/minder.v1.ProfileService/ListProfiles"
 	ProfileService_GetProfileById_FullMethodName            = "/minder.v1.ProfileService/GetProfileById"
@@ -951,6 +952,7 @@ const (
 type ProfileServiceClient interface {
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error)
+	PatchProfile(ctx context.Context, in *PatchProfileRequest, opts ...grpc.CallOption) (*PatchProfileResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
@@ -984,6 +986,15 @@ func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProf
 func (c *profileServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error) {
 	out := new(UpdateProfileResponse)
 	err := c.cc.Invoke(ctx, ProfileService_UpdateProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) PatchProfile(ctx context.Context, in *PatchProfileRequest, opts ...grpc.CallOption) (*PatchProfileResponse, error) {
+	out := new(PatchProfileResponse)
+	err := c.cc.Invoke(ctx, ProfileService_PatchProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1095,6 +1106,7 @@ func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRul
 type ProfileServiceServer interface {
 	CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error)
+	PatchProfile(context.Context, *PatchProfileRequest) (*PatchProfileResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
@@ -1118,6 +1130,9 @@ func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateP
 }
 func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
+}
+func (UnimplementedProfileServiceServer) PatchProfile(context.Context, *PatchProfileRequest) (*PatchProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchProfile not implemented")
 }
 func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
@@ -1197,6 +1212,24 @@ func _ProfileService_UpdateProfile_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).UpdateProfile(ctx, req.(*UpdateProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_PatchProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).PatchProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_PatchProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).PatchProfile(ctx, req.(*PatchProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1413,6 +1446,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateProfile",
 			Handler:    _ProfileService_UpdateProfile_Handler,
+		},
+		{
+			MethodName: "PatchProfile",
+			Handler:    _ProfileService_PatchProfile_Handler,
 		},
 		{
 			MethodName: "DeleteProfile",
