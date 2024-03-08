@@ -12,11 +12,14 @@ import (
 )
 
 type Querier interface {
+	BundleExists(ctx context.Context, arg BundleExistsParams) (int32, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error)
+	// Bundles --
+	CreateBundle(ctx context.Context, arg CreateBundleParams) (Bundle, error)
 	CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error)
 	CreateProfileForEntity(ctx context.Context, arg CreateProfileForEntityParams) (EntityProfile, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
@@ -26,8 +29,13 @@ type Querier interface {
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
+	// Streams --
+	CreateStream(ctx context.Context, arg CreateStreamParams) (Stream, error)
+	// Subscriptions --
+	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteBundle(ctx context.Context, arg DeleteBundleParams) error
 	DeleteExpiredSessionStates(ctx context.Context) error
 	DeleteProfile(ctx context.Context, id uuid.UUID) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
@@ -42,6 +50,7 @@ type Querier interface {
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSessionState(ctx context.Context, id int32) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
+	DeleteStream(ctx context.Context, arg DeleteStreamParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
 	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
@@ -51,6 +60,7 @@ type Querier interface {
 	GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error)
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (GetArtifactByNameRow, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	GetCurrentVersionByProjectBundle(ctx context.Context, arg GetCurrentVersionByProjectBundleParams) (string, error)
 	GetEntityProfileByProjectAndName(ctx context.Context, arg GetEntityProfileByProjectAndNameParams) ([]GetEntityProfileByProjectAndNameRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
@@ -80,6 +90,7 @@ type Querier interface {
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
 	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
 	GetSessionStateByProjectID(ctx context.Context, projectID uuid.UUID) (SessionStore, error)
+	GetSubscriptionsByBundle(ctx context.Context, arg GetSubscriptionsByBundleParams) ([]interface{}, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
@@ -120,6 +131,8 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
+	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	StreamExists(ctx context.Context, arg StreamExistsParams) (int32, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)

@@ -58,6 +58,21 @@ func (mr *MockStoreMockRecorder) BeginTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockStore)(nil).BeginTransaction))
 }
 
+// BundleExists mocks base method.
+func (m *MockStore) BundleExists(arg0 context.Context, arg1 db.BundleExistsParams) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BundleExists", arg0, arg1)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BundleExists indicates an expected call of BundleExists.
+func (mr *MockStoreMockRecorder) BundleExists(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BundleExists", reflect.TypeOf((*MockStore)(nil).BundleExists), arg0, arg1)
+}
+
 // CheckHealth mocks base method.
 func (m *MockStore) CheckHealth() error {
 	m.ctrl.T.Helper()
@@ -159,6 +174,21 @@ func (m *MockStore) CreateArtifact(arg0 context.Context, arg1 db.CreateArtifactP
 func (mr *MockStoreMockRecorder) CreateArtifact(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateArtifact", reflect.TypeOf((*MockStore)(nil).CreateArtifact), arg0, arg1)
+}
+
+// CreateBundle mocks base method.
+func (m *MockStore) CreateBundle(arg0 context.Context, arg1 db.CreateBundleParams) (db.Bundle, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBundle", arg0, arg1)
+	ret0, _ := ret[0].(db.Bundle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateBundle indicates an expected call of CreateBundle.
+func (mr *MockStoreMockRecorder) CreateBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBundle", reflect.TypeOf((*MockStore)(nil).CreateBundle), arg0, arg1)
 }
 
 // CreateProfile mocks base method.
@@ -296,6 +326,36 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionState", reflect.TypeOf((*MockStore)(nil).CreateSessionState), arg0, arg1)
 }
 
+// CreateStream mocks base method.
+func (m *MockStore) CreateStream(arg0 context.Context, arg1 db.CreateStreamParams) (db.Stream, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateStream", arg0, arg1)
+	ret0, _ := ret[0].(db.Stream)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateStream indicates an expected call of CreateStream.
+func (mr *MockStoreMockRecorder) CreateStream(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateStream", reflect.TypeOf((*MockStore)(nil).CreateStream), arg0, arg1)
+}
+
+// CreateSubscription mocks base method.
+func (m *MockStore) CreateSubscription(arg0 context.Context, arg1 db.CreateSubscriptionParams) (db.Subscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSubscription", arg0, arg1)
+	ret0, _ := ret[0].(db.Subscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSubscription indicates an expected call of CreateSubscription.
+func (mr *MockStoreMockRecorder) CreateSubscription(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscription", reflect.TypeOf((*MockStore)(nil).CreateSubscription), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 string) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -323,6 +383,20 @@ func (m *MockStore) DeleteArtifact(arg0 context.Context, arg1 uuid.UUID) error {
 func (mr *MockStoreMockRecorder) DeleteArtifact(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStore)(nil).DeleteArtifact), arg0, arg1)
+}
+
+// DeleteBundle mocks base method.
+func (m *MockStore) DeleteBundle(arg0 context.Context, arg1 db.DeleteBundleParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteBundle", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteBundle indicates an expected call of DeleteBundle.
+func (mr *MockStoreMockRecorder) DeleteBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBundle", reflect.TypeOf((*MockStore)(nil).DeleteBundle), arg0, arg1)
 }
 
 // DeleteExpiredSessionStates mocks base method.
@@ -494,6 +568,20 @@ func (mr *MockStoreMockRecorder) DeleteSessionStateByProjectID(arg0, arg1 any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).DeleteSessionStateByProjectID), arg0, arg1)
 }
 
+// DeleteStream mocks base method.
+func (m *MockStore) DeleteStream(arg0 context.Context, arg1 db.DeleteStreamParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteStream", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteStream indicates an expected call of DeleteStream.
+func (mr *MockStoreMockRecorder) DeleteStream(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStream", reflect.TypeOf((*MockStore)(nil).DeleteStream), arg0, arg1)
+}
+
 // DeleteUser mocks base method.
 func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
@@ -626,6 +714,21 @@ func (m *MockStore) GetChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([
 func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
+}
+
+// GetCurrentVersionByProjectBundle mocks base method.
+func (m *MockStore) GetCurrentVersionByProjectBundle(arg0 context.Context, arg1 db.GetCurrentVersionByProjectBundleParams) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCurrentVersionByProjectBundle", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCurrentVersionByProjectBundle indicates an expected call of GetCurrentVersionByProjectBundle.
+func (mr *MockStoreMockRecorder) GetCurrentVersionByProjectBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentVersionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetCurrentVersionByProjectBundle), arg0, arg1)
 }
 
 // GetEntityProfileByProjectAndName mocks base method.
@@ -1062,6 +1165,21 @@ func (mr *MockStoreMockRecorder) GetSessionStateByProjectID(arg0, arg1 any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).GetSessionStateByProjectID), arg0, arg1)
 }
 
+// GetSubscriptionsByBundle mocks base method.
+func (m *MockStore) GetSubscriptionsByBundle(arg0 context.Context, arg1 db.GetSubscriptionsByBundleParams) ([]any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptionsByBundle", arg0, arg1)
+	ret0, _ := ret[0].([]any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptionsByBundle indicates an expected call of GetSubscriptionsByBundle.
+func (mr *MockStoreMockRecorder) GetSubscriptionsByBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsByBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionsByBundle), arg0, arg1)
+}
+
 // GetUserByID mocks base method.
 func (m *MockStore) GetUserByID(arg0 context.Context, arg1 int32) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -1358,6 +1476,35 @@ func (m *MockStore) Rollback(arg0 *sql.Tx) error {
 func (mr *MockStoreMockRecorder) Rollback(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), arg0)
+}
+
+// SetCurrentVersion mocks base method.
+func (m *MockStore) SetCurrentVersion(arg0 context.Context, arg1 db.SetCurrentVersionParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetCurrentVersion", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetCurrentVersion indicates an expected call of SetCurrentVersion.
+func (mr *MockStoreMockRecorder) SetCurrentVersion(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), arg0, arg1)
+}
+
+// StreamExists mocks base method.
+func (m *MockStore) StreamExists(arg0 context.Context, arg1 db.StreamExistsParams) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StreamExists", arg0, arg1)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StreamExists indicates an expected call of StreamExists.
+func (mr *MockStoreMockRecorder) StreamExists(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamExists", reflect.TypeOf((*MockStore)(nil).StreamExists), arg0, arg1)
 }
 
 // UpdateLease mocks base method.

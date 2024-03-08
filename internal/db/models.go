@@ -381,6 +381,12 @@ type Artifact struct {
 	UpdatedAt          time.Time `json:"updated_at"`
 }
 
+type Bundle struct {
+	ID        uuid.UUID `json:"id"`
+	Namespace string    `json:"namespace"`
+	Name      string    `json:"name"`
+}
+
 type Entitlement struct {
 	ID        uuid.UUID `json:"id"`
 	Feature   string    `json:"feature"`
@@ -570,6 +576,18 @@ type SessionStore struct {
 	SessionState string         `json:"session_state"`
 	CreatedAt    time.Time      `json:"created_at"`
 	RedirectUrl  sql.NullString `json:"redirect_url"`
+}
+
+type Stream struct {
+	BundleID uuid.UUID `json:"bundle_id"`
+	Version  string    `json:"version"`
+}
+
+type Subscription struct {
+	ID            uuid.UUID `json:"id"`
+	ProjectID     uuid.UUID `json:"project_id"`
+	BundleID      uuid.UUID `json:"bundle_id"`
+	StreamVersion string    `json:"stream_version"`
 }
 
 type User struct {
