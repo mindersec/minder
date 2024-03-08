@@ -466,6 +466,7 @@ type Project struct {
 	ParentID       uuid.NullUUID   `json:"parent_id"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 }
 
 type Provider struct {
@@ -555,16 +556,17 @@ type RuleEvaluation struct {
 }
 
 type RuleType struct {
-	ID            uuid.UUID       `json:"id"`
-	Name          string          `json:"name"`
-	Provider      string          `json:"provider"`
-	ProjectID     uuid.UUID       `json:"project_id"`
-	Description   string          `json:"description"`
-	Guidance      string          `json:"guidance"`
-	Definition    json.RawMessage `json:"definition"`
-	CreatedAt     time.Time       `json:"created_at"`
-	UpdatedAt     time.Time       `json:"updated_at"`
-	SeverityValue Severity        `json:"severity_value"`
+	ID             uuid.UUID       `json:"id"`
+	Name           string          `json:"name"`
+	Provider       string          `json:"provider"`
+	ProjectID      uuid.UUID       `json:"project_id"`
+	Description    string          `json:"description"`
+	Guidance       string          `json:"guidance"`
+	Definition     json.RawMessage `json:"definition"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	SeverityValue  Severity        `json:"severity_value"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 }
 
 type SessionStore struct {
@@ -578,16 +580,11 @@ type SessionStore struct {
 	RedirectUrl  sql.NullString `json:"redirect_url"`
 }
 
-type Stream struct {
-	BundleID uuid.UUID `json:"bundle_id"`
-	Version  string    `json:"version"`
-}
-
 type Subscription struct {
-	ID            uuid.UUID `json:"id"`
-	ProjectID     uuid.UUID `json:"project_id"`
-	BundleID      uuid.UUID `json:"bundle_id"`
-	StreamVersion string    `json:"stream_version"`
+	ID             uuid.UUID `json:"id"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
 type User struct {

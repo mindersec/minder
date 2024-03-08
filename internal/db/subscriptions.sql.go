@@ -7,12 +7,14 @@ package db
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const bundleExists = `-- name: BundleExists :one
-SELECT 1 FROM bundles WHERE namespace = $1 AND name = $2
+SELECT bundles.id FROM bundles WHERE namespace = $1 AND name = $2
 `
 
 type BundleExistsParams struct {
@@ -20,14 +22,15 @@ type BundleExistsParams struct {
 	Name      string `json:"name"`
 }
 
-func (q *Queries) BundleExists(ctx context.Context, arg BundleExistsParams) (int32, error) {
+func (q *Queries) BundleExists(ctx context.Context, arg BundleExistsParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, bundleExists, arg.Namespace, arg.Name)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }
 
 const createBundle = `-- name: CreateBundle :one
+
 
 INSERT INTO bundles (namespace, name) VALUES ($1, $2) RETURNING id, namespace, name
 `
@@ -37,6 +40,19 @@ type CreateBundleParams struct {
 	Name      string `json:"name"`
 }
 
+// Copyright 2024 Stacklok, Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 // Bundles --
 func (q *Queries) CreateBundle(ctx context.Context, arg CreateBundleParams) (Bundle, error) {
 	row := q.db.QueryRowContext(ctx, createBundle, arg.Namespace, arg.Name)
@@ -45,46 +61,28 @@ func (q *Queries) CreateBundle(ctx context.Context, arg CreateBundleParams) (Bun
 	return i, err
 }
 
-const createStream = `-- name: CreateStream :one
-
-INSERT INTO streams (bundle_id, version) VALUES ($1, $2) RETURNING bundle_id, version
-`
-
-type CreateStreamParams struct {
-	BundleID uuid.UUID `json:"bundle_id"`
-	Version  string    `json:"version"`
-}
-
-// Streams --
-func (q *Queries) CreateStream(ctx context.Context, arg CreateStreamParams) (Stream, error) {
-	row := q.db.QueryRowContext(ctx, createStream, arg.BundleID, arg.Version)
-	var i Stream
-	err := row.Scan(&i.BundleID, &i.Version)
-	return i, err
-}
-
 const createSubscription = `-- name: CreateSubscription :one
 
-INSERT INTO subscriptions (project_id, bundle_id, stream_version)
+INSERT INTO subscriptions (project_id, bundle_id, current_version)
 VALUES ($1, $2, $3)
-RETURNING id, project_id, bundle_id, stream_version
+RETURNING id, project_id, bundle_id, current_version
 `
 
 type CreateSubscriptionParams struct {
-	ProjectID     uuid.UUID `json:"project_id"`
-	BundleID      uuid.UUID `json:"bundle_id"`
-	StreamVersion string    `json:"stream_version"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
 // Subscriptions --
 func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error) {
-	row := q.db.QueryRowContext(ctx, createSubscription, arg.ProjectID, arg.BundleID, arg.StreamVersion)
+	row := q.db.QueryRowContext(ctx, createSubscription, arg.ProjectID, arg.BundleID, arg.CurrentVersion)
 	var i Subscription
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
 		&i.BundleID,
-		&i.StreamVersion,
+		&i.CurrentVersion,
 	)
 	return i, err
 }
@@ -103,67 +101,256 @@ func (q *Queries) DeleteBundle(ctx context.Context, arg DeleteBundleParams) erro
 	return err
 }
 
-const deleteStream = `-- name: DeleteStream :exec
-DELETE FROM streams
-WHERE bundle_id IN (
-    SELECT id FROM bundles WHERE namespace = $1 AND name = $2
-)
-`
-
-type DeleteStreamParams struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-}
-
-func (q *Queries) DeleteStream(ctx context.Context, arg DeleteStreamParams) error {
-	_, err := q.db.ExecContext(ctx, deleteStream, arg.Namespace, arg.Name)
-	return err
-}
-
-const getCurrentVersionByProjectBundle = `-- name: GetCurrentVersionByProjectBundle :one
-SELECT st.version FROM subscriptions AS su
+const getSubscriptionByProjectBundle = `-- name: GetSubscriptionByProjectBundle :one
+SELECT su.id, project_id, bundle_id, current_version, bu.id, namespace, name FROM subscriptions AS su
 JOIN bundles AS bu ON bu.id = su.bundle_id
-JOIN streams AS st ON st.bundle_id = su.bundle_id AND st.version = su.current_version
 WHERE bu.namespace = $1 AND bu.name = $2 AND su.project_id = $3
 `
 
-type GetCurrentVersionByProjectBundleParams struct {
+type GetSubscriptionByProjectBundleParams struct {
 	Namespace string    `json:"namespace"`
 	Name      string    `json:"name"`
 	ProjectID uuid.UUID `json:"project_id"`
 }
 
-func (q *Queries) GetCurrentVersionByProjectBundle(ctx context.Context, arg GetCurrentVersionByProjectBundleParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getCurrentVersionByProjectBundle, arg.Namespace, arg.Name, arg.ProjectID)
-	var version string
-	err := row.Scan(&version)
-	return version, err
+type GetSubscriptionByProjectBundleRow struct {
+	ID             uuid.UUID `json:"id"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
+	ID_2           uuid.UUID `json:"id_2"`
+	Namespace      string    `json:"namespace"`
+	Name           string    `json:"name"`
 }
 
-const getSubscriptionsByBundle = `-- name: GetSubscriptionsByBundle :many
-SELECT (su.project_id, bu.namespace, bu.name)
-FROM subscriptions AS su JOIN bundles AS bu ON bu.id = su.bundle_id
-WHERE bu.namespace = $1 AND bu.name = $2
+func (q *Queries) GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (GetSubscriptionByProjectBundleRow, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionByProjectBundle, arg.Namespace, arg.Name, arg.ProjectID)
+	var i GetSubscriptionByProjectBundleRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.BundleID,
+		&i.CurrentVersion,
+		&i.ID_2,
+		&i.Namespace,
+		&i.Name,
+	)
+	return i, err
+}
+
+const getSubscriptionByProjectBundleVersion = `-- name: GetSubscriptionByProjectBundleVersion :one
+SELECT su.id, project_id, bundle_id, current_version, bu.id, namespace, name FROM subscriptions AS su
+JOIN bundles AS bu ON bu.id = su.bundle_id
+WHERE bu.namespace = $1 AND bu.name = $2 AND su.project_id = $3 AND su.current_version = $4
 `
 
-type GetSubscriptionsByBundleParams struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
+type GetSubscriptionByProjectBundleVersionParams struct {
+	Namespace      string    `json:"namespace"`
+	Name           string    `json:"name"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
-func (q *Queries) GetSubscriptionsByBundle(ctx context.Context, arg GetSubscriptionsByBundleParams) ([]interface{}, error) {
-	rows, err := q.db.QueryContext(ctx, getSubscriptionsByBundle, arg.Namespace, arg.Name)
+type GetSubscriptionByProjectBundleVersionRow struct {
+	ID             uuid.UUID `json:"id"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
+	ID_2           uuid.UUID `json:"id_2"`
+	Namespace      string    `json:"namespace"`
+	Name           string    `json:"name"`
+}
+
+func (q *Queries) GetSubscriptionByProjectBundleVersion(ctx context.Context, arg GetSubscriptionByProjectBundleVersionParams) (GetSubscriptionByProjectBundleVersionRow, error) {
+	row := q.db.QueryRowContext(ctx, getSubscriptionByProjectBundleVersion,
+		arg.Namespace,
+		arg.Name,
+		arg.ProjectID,
+		arg.CurrentVersion,
+	)
+	var i GetSubscriptionByProjectBundleVersionRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.BundleID,
+		&i.CurrentVersion,
+		&i.ID_2,
+		&i.Namespace,
+		&i.Name,
+	)
+	return i, err
+}
+
+const listSubscriptionProfilesInProject = `-- name: ListSubscriptionProfilesInProject :many
+SELECT p.id, p.name, provider, project_id, remediate, alert, created_at, updated_at, b.id, namespace, b.name FROM profiles as p
+JOIN bundles AS b ON b.id = p.subscription_id
+WHERE p.id = $1 AND b.namespace = $2 AND b.name = $3
+`
+
+type ListSubscriptionProfilesInProjectParams struct {
+	ID        uuid.UUID `json:"id"`
+	Namespace string    `json:"namespace"`
+	Name      string    `json:"name"`
+}
+
+type ListSubscriptionProfilesInProjectRow struct {
+	ID        uuid.UUID      `json:"id"`
+	Name      string         `json:"name"`
+	Provider  string         `json:"provider"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	Remediate NullActionType `json:"remediate"`
+	Alert     NullActionType `json:"alert"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	ID_2      uuid.UUID      `json:"id_2"`
+	Namespace string         `json:"namespace"`
+	Name_2    string         `json:"name_2"`
+}
+
+func (q *Queries) ListSubscriptionProfilesInProject(ctx context.Context, arg ListSubscriptionProfilesInProjectParams) ([]ListSubscriptionProfilesInProjectRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSubscriptionProfilesInProject, arg.ID, arg.Namespace, arg.Name)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []interface{}{}
+	items := []ListSubscriptionProfilesInProjectRow{}
 	for rows.Next() {
-		var column_1 interface{}
-		if err := rows.Scan(&column_1); err != nil {
+		var i ListSubscriptionProfilesInProjectRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.Alert,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ID_2,
+			&i.Namespace,
+			&i.Name_2,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, column_1)
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSubscriptionRuleTypesInProject = `-- name: ListSubscriptionRuleTypesInProject :many
+SELECT r.id, r.name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, subscription_id, b.id, namespace, b.name FROM rule_type as r
+JOIN bundles AS b ON b.id = r.subscription_id
+WHERE r.project_id = $1 AND b.namespace = $2 AND b.name = $3
+`
+
+type ListSubscriptionRuleTypesInProjectParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Namespace string    `json:"namespace"`
+	Name      string    `json:"name"`
+}
+
+type ListSubscriptionRuleTypesInProjectRow struct {
+	ID             uuid.UUID       `json:"id"`
+	Name           string          `json:"name"`
+	Provider       string          `json:"provider"`
+	ProjectID      uuid.UUID       `json:"project_id"`
+	Description    string          `json:"description"`
+	Guidance       string          `json:"guidance"`
+	Definition     json.RawMessage `json:"definition"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	SeverityValue  Severity        `json:"severity_value"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
+	ID_2           uuid.UUID       `json:"id_2"`
+	Namespace      string          `json:"namespace"`
+	Name_2         string          `json:"name_2"`
+}
+
+func (q *Queries) ListSubscriptionRuleTypesInProject(ctx context.Context, arg ListSubscriptionRuleTypesInProjectParams) ([]ListSubscriptionRuleTypesInProjectRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSubscriptionRuleTypesInProject, arg.ProjectID, arg.Namespace, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListSubscriptionRuleTypesInProjectRow{}
+	for rows.Next() {
+		var i ListSubscriptionRuleTypesInProjectRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Description,
+			&i.Guidance,
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SeverityValue,
+			&i.SubscriptionID,
+			&i.ID_2,
+			&i.Namespace,
+			&i.Name_2,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSubscriptionsByBundle = `-- name: ListSubscriptionsByBundle :many
+SELECT su.id, project_id, bundle_id, current_version, bu.id, namespace, name
+FROM subscriptions AS su JOIN bundles AS bu ON bu.id = su.bundle_id
+WHERE bu.namespace = $1 AND bu.name = $2
+`
+
+type ListSubscriptionsByBundleParams struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+type ListSubscriptionsByBundleRow struct {
+	ID             uuid.UUID `json:"id"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
+	ID_2           uuid.UUID `json:"id_2"`
+	Namespace      string    `json:"namespace"`
+	Name           string    `json:"name"`
+}
+
+func (q *Queries) ListSubscriptionsByBundle(ctx context.Context, arg ListSubscriptionsByBundleParams) ([]ListSubscriptionsByBundleRow, error) {
+	rows, err := q.db.QueryContext(ctx, listSubscriptionsByBundle, arg.Namespace, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListSubscriptionsByBundleRow{}
+	for rows.Next() {
+		var i ListSubscriptionsByBundleRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.BundleID,
+			&i.CurrentVersion,
+			&i.ID_2,
+			&i.Namespace,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -176,37 +363,18 @@ func (q *Queries) GetSubscriptionsByBundle(ctx context.Context, arg GetSubscript
 
 const setCurrentVersion = `-- name: SetCurrentVersion :exec
 UPDATE subscriptions
-SET stream_version = $1
+SET current_version = $1
 FROM subscriptions AS su
 JOIN bundles as bu ON su.bundle_id = bu.id
 WHERE su.project_id = $2 AND bu.namespace = $1 AND bu.name = $2
 `
 
 type SetCurrentVersionParams struct {
-	StreamVersion string    `json:"stream_version"`
-	ProjectID     uuid.UUID `json:"project_id"`
+	CurrentVersion string    `json:"current_version"`
+	ProjectID      uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error {
-	_, err := q.db.ExecContext(ctx, setCurrentVersion, arg.StreamVersion, arg.ProjectID)
+	_, err := q.db.ExecContext(ctx, setCurrentVersion, arg.CurrentVersion, arg.ProjectID)
 	return err
-}
-
-const streamExists = `-- name: StreamExists :one
-SELECT 1 FROM streams
-JOIN bundles ON bundles.id = streams.bundle_id
-WHERE bundles.namespace = $1 AND bundles.name = $2 AND streams.version = $3
-`
-
-type StreamExistsParams struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
-}
-
-func (q *Queries) StreamExists(ctx context.Context, arg StreamExistsParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, streamExists, arg.Namespace, arg.Name, arg.Version)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
 }

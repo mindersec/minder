@@ -20,7 +20,7 @@ INSERT INTO rule_type (
     description,
     guidance,
     definition,
-    severity_value) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value
+    severity_value) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, subscription_id
 `
 
 type CreateRuleTypeParams struct {
@@ -55,6 +55,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SeverityValue,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
@@ -69,7 +70,7 @@ func (q *Queries) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRuleTypeByID = `-- name: GetRuleTypeByID :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE id = $1
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, subscription_id FROM rule_type WHERE id = $1
 `
 
 func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error) {
@@ -86,12 +87,13 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SeverityValue,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, subscription_id FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3
 `
 
 type GetRuleTypeByNameParams struct {
@@ -114,12 +116,13 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SeverityValue,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
 
 const listRuleTypesByProviderAndProject = `-- name: ListRuleTypesByProviderAndProject :many
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value FROM rule_type WHERE provider = $1 AND project_id = $2
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, subscription_id FROM rule_type WHERE provider = $1 AND project_id = $2
 `
 
 type ListRuleTypesByProviderAndProjectParams struct {
@@ -147,6 +150,7 @@ func (q *Queries) ListRuleTypesByProviderAndProject(ctx context.Context, arg Lis
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SeverityValue,
+			&i.SubscriptionID,
 		); err != nil {
 			return nil, err
 		}

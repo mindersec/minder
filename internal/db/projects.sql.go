@@ -20,7 +20,7 @@ INSERT INTO projects (
     metadata
 ) VALUES (
     $1, $2, $3::jsonb
-) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
+) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id
 `
 
 type CreateProjectParams struct {
@@ -40,6 +40,7 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
@@ -51,7 +52,7 @@ INSERT INTO projects (
     metadata
 ) VALUES (
     $1, $2, $3::jsonb
-) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
+) RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id
 `
 
 type CreateProjectWithIDParams struct {
@@ -71,6 +72,7 @@ func (q *Queries) CreateProjectWithID(ctx context.Context, arg CreateProjectWith
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
@@ -269,7 +271,7 @@ func (q *Queries) GetParentProjectsUntil(ctx context.Context, arg GetParentProje
 }
 
 const getProjectByID = `-- name: GetProjectByID :one
-SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id FROM projects
 WHERE id = $1 AND is_organization = FALSE LIMIT 1
 `
 
@@ -284,12 +286,13 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
 
 const getProjectByName = `-- name: GetProjectByName :one
-SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id FROM projects
 WHERE name = $1 AND is_organization = FALSE LIMIT 1
 `
 
@@ -304,13 +307,14 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
 
 const listNonOrgProjects = `-- name: ListNonOrgProjects :many
 
-SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id FROM projects
 WHERE is_organization = FALSE
 `
 
@@ -334,6 +338,7 @@ func (q *Queries) ListNonOrgProjects(ctx context.Context) ([]Project, error) {
 			&i.ParentID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SubscriptionID,
 		); err != nil {
 			return nil, err
 		}
@@ -350,7 +355,7 @@ func (q *Queries) ListNonOrgProjects(ctx context.Context) ([]Project, error) {
 
 const listOldOrgProjects = `-- name: ListOldOrgProjects :many
 
-SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id FROM projects
 WHERE is_organization = TRUE
 `
 
@@ -374,6 +379,7 @@ func (q *Queries) ListOldOrgProjects(ctx context.Context) ([]Project, error) {
 			&i.ParentID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SubscriptionID,
 		); err != nil {
 			return nil, err
 		}
@@ -392,7 +398,7 @@ const orphanProject = `-- name: OrphanProject :one
 
 UPDATE projects
 SET metadata = $2, parent_id = NULL
-WHERE id = $1 RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
+WHERE id = $1 RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id
 `
 
 type OrphanProjectParams struct {
@@ -412,6 +418,7 @@ func (q *Queries) OrphanProject(ctx context.Context, arg OrphanProjectParams) (P
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }
@@ -419,7 +426,7 @@ func (q *Queries) OrphanProject(ctx context.Context, arg OrphanProjectParams) (P
 const updateProjectMeta = `-- name: UpdateProjectMeta :one
 UPDATE projects
 SET metadata = $2
-WHERE id = $1 RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at
+WHERE id = $1 RETURNING id, name, is_organization, metadata, parent_id, created_at, updated_at, subscription_id
 `
 
 type UpdateProjectMetaParams struct {
@@ -438,6 +445,7 @@ func (q *Queries) UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaPa
 		&i.ParentID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SubscriptionID,
 	)
 	return i, err
 }

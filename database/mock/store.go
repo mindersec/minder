@@ -59,10 +59,10 @@ func (mr *MockStoreMockRecorder) BeginTransaction() *gomock.Call {
 }
 
 // BundleExists mocks base method.
-func (m *MockStore) BundleExists(arg0 context.Context, arg1 db.BundleExistsParams) (int32, error) {
+func (m *MockStore) BundleExists(arg0 context.Context, arg1 db.BundleExistsParams) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BundleExists", arg0, arg1)
-	ret0, _ := ret[0].(int32)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -326,21 +326,6 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionState", reflect.TypeOf((*MockStore)(nil).CreateSessionState), arg0, arg1)
 }
 
-// CreateStream mocks base method.
-func (m *MockStore) CreateStream(arg0 context.Context, arg1 db.CreateStreamParams) (db.Stream, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateStream", arg0, arg1)
-	ret0, _ := ret[0].(db.Stream)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateStream indicates an expected call of CreateStream.
-func (mr *MockStoreMockRecorder) CreateStream(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateStream", reflect.TypeOf((*MockStore)(nil).CreateStream), arg0, arg1)
-}
-
 // CreateSubscription mocks base method.
 func (m *MockStore) CreateSubscription(arg0 context.Context, arg1 db.CreateSubscriptionParams) (db.Subscription, error) {
 	m.ctrl.T.Helper()
@@ -568,20 +553,6 @@ func (mr *MockStoreMockRecorder) DeleteSessionStateByProjectID(arg0, arg1 any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).DeleteSessionStateByProjectID), arg0, arg1)
 }
 
-// DeleteStream mocks base method.
-func (m *MockStore) DeleteStream(arg0 context.Context, arg1 db.DeleteStreamParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteStream", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteStream indicates an expected call of DeleteStream.
-func (mr *MockStoreMockRecorder) DeleteStream(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteStream", reflect.TypeOf((*MockStore)(nil).DeleteStream), arg0, arg1)
-}
-
 // DeleteUser mocks base method.
 func (m *MockStore) DeleteUser(arg0 context.Context, arg1 int32) error {
 	m.ctrl.T.Helper()
@@ -714,21 +685,6 @@ func (m *MockStore) GetChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([
 func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
-}
-
-// GetCurrentVersionByProjectBundle mocks base method.
-func (m *MockStore) GetCurrentVersionByProjectBundle(arg0 context.Context, arg1 db.GetCurrentVersionByProjectBundleParams) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentVersionByProjectBundle", arg0, arg1)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCurrentVersionByProjectBundle indicates an expected call of GetCurrentVersionByProjectBundle.
-func (mr *MockStoreMockRecorder) GetCurrentVersionByProjectBundle(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentVersionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetCurrentVersionByProjectBundle), arg0, arg1)
 }
 
 // GetEntityProfileByProjectAndName mocks base method.
@@ -1165,19 +1121,34 @@ func (mr *MockStoreMockRecorder) GetSessionStateByProjectID(arg0, arg1 any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).GetSessionStateByProjectID), arg0, arg1)
 }
 
-// GetSubscriptionsByBundle mocks base method.
-func (m *MockStore) GetSubscriptionsByBundle(arg0 context.Context, arg1 db.GetSubscriptionsByBundleParams) ([]any, error) {
+// GetSubscriptionByProjectBundle mocks base method.
+func (m *MockStore) GetSubscriptionByProjectBundle(arg0 context.Context, arg1 db.GetSubscriptionByProjectBundleParams) (db.GetSubscriptionByProjectBundleRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubscriptionsByBundle", arg0, arg1)
-	ret0, _ := ret[0].([]any)
+	ret := m.ctrl.Call(m, "GetSubscriptionByProjectBundle", arg0, arg1)
+	ret0, _ := ret[0].(db.GetSubscriptionByProjectBundleRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSubscriptionsByBundle indicates an expected call of GetSubscriptionsByBundle.
-func (mr *MockStoreMockRecorder) GetSubscriptionsByBundle(arg0, arg1 any) *gomock.Call {
+// GetSubscriptionByProjectBundle indicates an expected call of GetSubscriptionByProjectBundle.
+func (mr *MockStoreMockRecorder) GetSubscriptionByProjectBundle(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionsByBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionsByBundle), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionByProjectBundle), arg0, arg1)
+}
+
+// GetSubscriptionByProjectBundleVersion mocks base method.
+func (m *MockStore) GetSubscriptionByProjectBundleVersion(arg0 context.Context, arg1 db.GetSubscriptionByProjectBundleVersionParams) (db.GetSubscriptionByProjectBundleVersionRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptionByProjectBundleVersion", arg0, arg1)
+	ret0, _ := ret[0].(db.GetSubscriptionByProjectBundleVersionRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptionByProjectBundleVersion indicates an expected call of GetSubscriptionByProjectBundleVersion.
+func (mr *MockStoreMockRecorder) GetSubscriptionByProjectBundleVersion(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionByProjectBundleVersion", reflect.TypeOf((*MockStore)(nil).GetSubscriptionByProjectBundleVersion), arg0, arg1)
 }
 
 // GetUserByID mocks base method.
@@ -1405,6 +1376,51 @@ func (mr *MockStoreMockRecorder) ListRuleTypesByProviderAndProject(arg0, arg1 an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProviderAndProject", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProviderAndProject), arg0, arg1)
 }
 
+// ListSubscriptionProfilesInProject mocks base method.
+func (m *MockStore) ListSubscriptionProfilesInProject(arg0 context.Context, arg1 db.ListSubscriptionProfilesInProjectParams) ([]db.ListSubscriptionProfilesInProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSubscriptionProfilesInProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListSubscriptionProfilesInProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSubscriptionProfilesInProject indicates an expected call of ListSubscriptionProfilesInProject.
+func (mr *MockStoreMockRecorder) ListSubscriptionProfilesInProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubscriptionProfilesInProject", reflect.TypeOf((*MockStore)(nil).ListSubscriptionProfilesInProject), arg0, arg1)
+}
+
+// ListSubscriptionRuleTypesInProject mocks base method.
+func (m *MockStore) ListSubscriptionRuleTypesInProject(arg0 context.Context, arg1 db.ListSubscriptionRuleTypesInProjectParams) ([]db.ListSubscriptionRuleTypesInProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSubscriptionRuleTypesInProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListSubscriptionRuleTypesInProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSubscriptionRuleTypesInProject indicates an expected call of ListSubscriptionRuleTypesInProject.
+func (mr *MockStoreMockRecorder) ListSubscriptionRuleTypesInProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubscriptionRuleTypesInProject", reflect.TypeOf((*MockStore)(nil).ListSubscriptionRuleTypesInProject), arg0, arg1)
+}
+
+// ListSubscriptionsByBundle mocks base method.
+func (m *MockStore) ListSubscriptionsByBundle(arg0 context.Context, arg1 db.ListSubscriptionsByBundleParams) ([]db.ListSubscriptionsByBundleRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSubscriptionsByBundle", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListSubscriptionsByBundleRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListSubscriptionsByBundle indicates an expected call of ListSubscriptionsByBundle.
+func (mr *MockStoreMockRecorder) ListSubscriptionsByBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubscriptionsByBundle", reflect.TypeOf((*MockStore)(nil).ListSubscriptionsByBundle), arg0, arg1)
+}
+
 // ListUsers mocks base method.
 func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
@@ -1490,21 +1506,6 @@ func (m *MockStore) SetCurrentVersion(arg0 context.Context, arg1 db.SetCurrentVe
 func (mr *MockStoreMockRecorder) SetCurrentVersion(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), arg0, arg1)
-}
-
-// StreamExists mocks base method.
-func (m *MockStore) StreamExists(arg0 context.Context, arg1 db.StreamExistsParams) (int32, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StreamExists", arg0, arg1)
-	ret0, _ := ret[0].(int32)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// StreamExists indicates an expected call of StreamExists.
-func (mr *MockStoreMockRecorder) StreamExists(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StreamExists", reflect.TypeOf((*MockStore)(nil).StreamExists), arg0, arg1)
 }
 
 // UpdateLease mocks base method.

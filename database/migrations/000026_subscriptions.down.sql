@@ -12,6 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+ALTER TABLE projects DROP COLUMN subscription_id;
+ALTER TABLE rule_type DROP COLUMN subscription_id;
+
 DROP TABLE IF EXISTS subscriptions;
-DROP TABLE IF EXISTS streams;
 DROP TABLE IF EXISTS bundles;
