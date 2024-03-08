@@ -334,9 +334,14 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
+	ph, err := s.store.GetParentProjects(ctx, rtdb.ProjectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get project hierarchy: %s", err)
+	}
+
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      rtdb.Provider,
-		ProjectID: rtdb.ProjectID,
+		Name:     rtdb.Provider,
+		Projects: ph,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)

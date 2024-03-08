@@ -70,16 +70,11 @@ func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) 
 }
 
 const getProviderByID = `-- name: GetProviderByID :one
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE id = $1 AND project_id = $2
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE id = $1
 `
 
-type GetProviderByIDParams struct {
-	ID        uuid.UUID `json:"id"`
-	ProjectID uuid.UUID `json:"project_id"`
-}
-
-func (q *Queries) GetProviderByID(ctx context.Context, arg GetProviderByIDParams) (Provider, error) {
-	row := q.db.QueryRowContext(ctx, getProviderByID, arg.ID, arg.ProjectID)
+func (q *Queries) GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error) {
+	row := q.db.QueryRowContext(ctx, getProviderByID, id)
 	var i Provider
 	err := row.Scan(
 		&i.ID,
@@ -96,16 +91,22 @@ func (q *Queries) GetProviderByID(ctx context.Context, arg GetProviderByIDParams
 }
 
 const getProviderByName = `-- name: GetProviderByName :one
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1 AND project_id = $2
+
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1 AND project_id = ANY($2::uuid[])
+LIMIT 1
 `
 
 type GetProviderByNameParams struct {
-	Name      string    `json:"name"`
-	ProjectID uuid.UUID `json:"project_id"`
+	Name     string      `json:"name"`
+	Projects []uuid.UUID `json:"projects"`
 }
 
+// GetProviderByName allows us to get a provider by its name. This takes
+// into account the project hierarchy, so it will only return the provider
+// if it exists in the project or any of its ancestors. It'll return the first
+// provider that matches the name.
 func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error) {
-	row := q.db.QueryRowContext(ctx, getProviderByName, arg.Name, arg.ProjectID)
+	row := q.db.QueryRowContext(ctx, getProviderByName, arg.Name, pq.Array(arg.Projects))
 	var i Provider
 	err := row.Scan(
 		&i.ID,

@@ -353,10 +353,15 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 
+	ph, err := s.store.GetParentProjects(ctx, dbRepo.ProjectID)
+	if err != nil {
+		return fmt.Errorf("error getting project hierarchy: %w", err)
+	}
+
 	// get the provider for the repository
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      dbRepo.Provider,
-		ProjectID: dbRepo.ProjectID,
+		Name:     dbRepo.Provider,
+		Projects: ph,
 	})
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)

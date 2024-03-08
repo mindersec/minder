@@ -81,9 +81,14 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		return nil
 	}
 
+	projHierarchy, err := e.store.GetParentProjects(ctx, evt.Project)
+	if err != nil {
+		return fmt.Errorf("error getting project hierarchy: %w", err)
+	}
+
 	provInfo, err := e.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
-		Name:      prov,
-		ProjectID: evt.Project,
+		Name:     prov,
+		Projects: projHierarchy,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

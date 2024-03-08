@@ -258,9 +258,17 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		}, nil)
 
 	mockStore.EXPECT().
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{
+			projectID,
+		}, nil)
+
+	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:      providerName,
-			ProjectID: projectID,
+			Name: providerName,
+			Projects: []uuid.UUID{
+				projectID,
+			},
 		}).
 		Return(db.Provider{
 			ProjectID: projectID,

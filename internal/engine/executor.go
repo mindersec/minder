@@ -181,15 +181,15 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	projectID := inf.ProjectID
 
-	// get project info
-	project, err := e.querier.GetProjectByID(ctx, *projectID)
+	// get project hierarchy
+	ph, err := e.querier.GetParentProjects(ctx, *projectID)
 	if err != nil {
 		return fmt.Errorf("error getting project: %w", err)
 	}
 
 	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      inf.Provider,
-		ProjectID: *projectID,
+		Name:     inf.Provider,
+		Projects: ph,
 	})
 
 	if err != nil {
@@ -207,7 +207,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID: project.ID,
+			ID: *projectID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,

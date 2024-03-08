@@ -854,7 +854,7 @@ func (mr *MockStoreMockRecorder) GetProjectIDBySessionState(arg0, arg1 any) *gom
 }
 
 // GetProviderByID mocks base method.
-func (m *MockStore) GetProviderByID(arg0 context.Context, arg1 db.GetProviderByIDParams) (db.Provider, error) {
+func (m *MockStore) GetProviderByID(arg0 context.Context, arg1 uuid.UUID) (db.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProviderByID", arg0, arg1)
 	ret0, _ := ret[0].(db.Provider)

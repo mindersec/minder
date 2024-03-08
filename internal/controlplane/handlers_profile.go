@@ -66,17 +66,11 @@ func (s *Server) CreateProfile(ctx context.Context,
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// validate that project and provider are valid and exist in the db
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	// If provider doesn't exist, return error
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID})
-	if err != nil {
-		return nil, providerError(err)
 	}
 
 	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
@@ -98,7 +92,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
 	params := db.CreateProfileParams{
-		Provider:  provider.Name,
+		Provider:  entityCtx.Provider.Name,
 		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 		Remediate: validateActionType(in.GetRemediate()),
