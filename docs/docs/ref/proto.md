@@ -1400,6 +1400,7 @@ get the status of the rules for a given profile
 | alert_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | alert_last_updated is the last time the alert was performed or attempted |
 | alert_details | [string](#string) |  | alert_details is the description of the alert attempt if any |
 | alert_metadata | [RuleEvaluationStatus.AlertMetadataEntry](#minder-v1-RuleEvaluationStatus-AlertMetadataEntry) | repeated | alert_metadata is the metadata of the alert |
+| alert_severity | [Severity](#minder-v1-Severity) |  | alert_severity is the severity of the alert |
 
 
 <a name="minder-v1-RuleEvaluationStatus-AlertMetadataEntry"></a>

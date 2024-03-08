@@ -3578,6 +3578,10 @@
             "type": "string"
           },
           "title": "alert_metadata is the metadata of the alert"
+        },
+        "alertSeverity": {
+          "$ref": "#/definitions/v1Severity",
+          "title": "alert_severity is the severity of the alert"
         }
       },
       "title": "get the status of the rules for a given profile"

@@ -1008,6 +1008,8 @@ message RuleEvaluationStatus {
     string alert_details = 17;
     // alert_metadata is the metadata of the alert
     map<string, string> alert_metadata = 18;
+    // alert_severity is the severity of the alert
+    Severity alert_severity = 19;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity

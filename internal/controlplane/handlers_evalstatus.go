@@ -77,6 +77,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
 						AlertDetails:           "",
 						AlertMetadata:          map[string]string{"ghsa_id": "GHSA-1234-5678"},
+						AlertSeverity:          &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
 					},
 					{
 						ProfileId:   "a4d5589b-cf5a-42ab-a940-15d2a8c5a3e1",
@@ -150,7 +151,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 		},
 		Profiles: []*minderv1.ListEvaluationResultsResponse_EntityProfileEvaluationResults{
 			{
-				Profile: "my-profile-2",
+				Profile: "my-profile-3",
 				Results: []*minderv1.RuleEvaluationStatus{
 					{
 						ProfileId:   "c5bd9d1b-3d96-4a57-a5a0-3d6248c3b677",
@@ -197,6 +198,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
 						AlertDetails:           "",
 						AlertMetadata:          map[string]string{"ghsa_id": "GHSA-1234-5678"},
+						AlertSeverity:          &minderv1.Severity{Value: minderv1.Severity_VALUE_MEDIUM},
 					},
 				},
 			},
