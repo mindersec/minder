@@ -813,64 +813,31 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [ListEvaluationResultsResponse.ResultsEntry](#minder-v1-ListEvaluationResultsResponse-ResultsEntry) | repeated | results is a map of entity types to entities and their evaluation results. results are grouped by entity, i.e. repository, build_environment, artifact. |
+| entities | [ListEvaluationResultsResponse.EntityEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults) | repeated | Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile. |
 
 
-<a name="minder-v1-ListEvaluationResultsResponse-EntityList"></a>
+<a name="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults"></a>
 
-#### ListEvaluationResultsResponse.EntityList
-EntityList is a list of entities
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| entity | [ListEvaluationResultsResponse.EntityStatus](#minder-v1-ListEvaluationResultsResponse-EntityStatus) | repeated |  |
-
-
-<a name="minder-v1-ListEvaluationResultsResponse-EntityStatus"></a>
-
-#### ListEvaluationResultsResponse.EntityStatus
-EntityStatus is a map of entities and their evaluation results.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status | [ListEvaluationResultsResponse.EntityStatus.StatusEntry](#minder-v1-ListEvaluationResultsResponse-EntityStatus-StatusEntry) | repeated | status is the status of the entity |
-
-
-<a name="minder-v1-ListEvaluationResultsResponse-EntityStatus-StatusEntry"></a>
-
-#### ListEvaluationResultsResponse.EntityStatus.StatusEntry
+#### ListEvaluationResultsResponse.EntityEvaluationResults
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [ListEvaluationResultsResponse.RuleEvaluationsList](#minder-v1-ListEvaluationResultsResponse-RuleEvaluationsList) |  |  |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
+| profiles | [ListEvaluationResultsResponse.EntityProfileEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults) | repeated |  |
 
 
-<a name="minder-v1-ListEvaluationResultsResponse-ResultsEntry"></a>
+<a name="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults"></a>
 
-#### ListEvaluationResultsResponse.ResultsEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [ListEvaluationResultsResponse.EntityList](#minder-v1-ListEvaluationResultsResponse-EntityList) |  |  |
-
-
-<a name="minder-v1-ListEvaluationResultsResponse-RuleEvaluationsList"></a>
-
-#### ListEvaluationResultsResponse.RuleEvaluationsList
+#### ListEvaluationResultsResponse.EntityProfileEvaluationResults
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| evaluation_results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
+| profile | [string](#string) |  |  |
+| results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Not sure if we want to introduce a new type that avoids including profile_id, entity, etc |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>

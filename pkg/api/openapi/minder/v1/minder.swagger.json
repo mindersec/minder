@@ -2409,42 +2409,34 @@
         }
       }
     },
-    "ListEvaluationResultsResponseEntityList": {
+    "ListEvaluationResultsResponseEntityEvaluationResults": {
       "type": "object",
       "properties": {
         "entity": {
+          "$ref": "#/definitions/v1EntityTypedId"
+        },
+        "profiles": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ListEvaluationResultsResponseEntityStatus"
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityProfileEvaluationResults"
           }
         }
-      },
-      "title": "EntityList is a list of entities"
+      }
     },
-    "ListEvaluationResultsResponseEntityStatus": {
+    "ListEvaluationResultsResponseEntityProfileEvaluationResults": {
       "type": "object",
       "properties": {
-        "status": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/ListEvaluationResultsResponseRuleEvaluationsList"
-          },
-          "title": "status is the status of the entity"
-        }
-      },
-      "description": "EntityStatus is a map of entities and their evaluation results."
-    },
-    "ListEvaluationResultsResponseRuleEvaluationsList": {
-      "type": "object",
-      "properties": {
-        "evaluationResults": {
+        "profile": {
+          "type": "string"
+        },
+        "results": {
           "type": "array",
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1RuleEvaluationStatus"
           },
-          "title": "rule_evaluation_status is the status of the rules"
+          "title": "Not sure if we want to introduce a new type that avoids including profile_id, entity, etc"
         }
       }
     },
@@ -3057,12 +3049,13 @@
     "v1ListEvaluationResultsResponse": {
       "type": "object",
       "properties": {
-        "results": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/ListEvaluationResultsResponseEntityList"
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityEvaluationResults"
           },
-          "description": "results is a map of entity types to entities and their evaluation results.\nresults are grouped by entity, i.e. repository, build_environment, artifact."
+          "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
         }
       }
     },

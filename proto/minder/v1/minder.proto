@@ -1205,30 +1205,22 @@ message ListEvaluationResultsRequest{
 }
 
 message ListEvaluationResultsResponse {
-    // status is the list of evaluation results.
-    // Results will typically be grouped by profile and project.
     reserved 1; // deprecated status
     reserved "status";
 
-    message RuleEvaluationsList {
-        // rule_evaluation_status is the status of the rules
-        repeated RuleEvaluationStatus evaluation_results = 1;
+    message EntityProfileEvaluationResults {
+        string profile = 1;
+        // Not sure if we want to introduce a new type that avoids including profile_id, entity, etc
+        repeated RuleEvaluationStatus results = 2;
     }
 
-    // EntityStatus is a map of entities and their evaluation results.
-    message EntityStatus {
-        // status is the status of the entity
-        map<string, RuleEvaluationsList> status = 1;
+    message EntityEvaluationResults {
+        EntityTypedId entity = 1;
+        repeated EntityProfileEvaluationResults profiles = 2;
     }
 
-    // EntityList is a list of entities
-    message EntityList {
-        repeated EntityStatus entity = 1;
-    }
-
-    // results is a map of entity types to entities and their evaluation results.
-    // results are grouped by entity, i.e. repository, build_environment, artifact.
-    map<string, EntityList> results = 2;
+    // Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile.
+    repeated EntityEvaluationResults entities = 2;
 }
 
 // --- END EvaluationResults definitions
