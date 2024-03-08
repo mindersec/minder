@@ -1,5 +1,5 @@
 //
-// Copyright 2023 Stacklok, Inc.
+// Copyright 2024 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controlplane
+package projects
 
 import (
 	"context"
@@ -27,7 +27,6 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/projects"
 	github "github.com/stacklok/minder/internal/providers/github"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -40,7 +39,7 @@ func ProvisionSelfEnrolledProject(
 	projectName string,
 	userSub string,
 ) (outproj *pb.Project, projerr error) {
-	projectmeta := projects.NewSelfEnrolledMetadata()
+	projectmeta := NewSelfEnrolledMetadata()
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
@@ -80,13 +79,6 @@ func ProvisionSelfEnrolledProject(
 		Description: projectmeta.Description,
 		CreatedAt:   timestamppb.New(project.CreatedAt),
 		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}
-
-	if err != nil {
-		if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to create default project role: %v", err)
 	}
 
 	// Create GitHub provider

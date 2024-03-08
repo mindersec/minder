@@ -31,6 +31,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/projects"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -67,7 +68,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		baseName = token.PreferredUsername()
 	}
 
-	orgProject, err := ProvisionSelfEnrolledProject(ctx, s.authzClient, qtx, baseName, subject)
+	orgProject, err := projects.ProvisionSelfEnrolledProject(ctx, s.authzClient, qtx, baseName, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
@@ -161,13 +162,13 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.Project, error) {
 	// get all the projects associated with that user
-	projects, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
+	projs, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
 	if err != nil {
 		return nil, err
 	}
 
 	var projectsPB []*pb.Project
-	for _, proj := range projects {
+	for _, proj := range projs {
 		pinfo, err := s.store.GetProjectByID(ctx, proj)
 		if err != nil {
 			return nil, err
@@ -214,11 +215,11 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	projects, err := s.getUserDependencies(ctx, user)
+	projs, err := s.getUserDependencies(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
-	resp.Projects = projects
+	resp.Projects = projs
 
 	return &resp, nil
 }
