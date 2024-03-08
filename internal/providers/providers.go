@@ -123,7 +123,7 @@ func (pb *ProviderBuilder) GetToken() string {
 }
 
 // GetGit returns a git client for the provider.
-func (pb *ProviderBuilder) GetGit() (*gitclient.Git, error) {
+func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 	if !pb.Implements(db.ProviderTypeGit) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}

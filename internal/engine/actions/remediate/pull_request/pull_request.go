@@ -68,7 +68,6 @@ const (
 // Remediator is the remediation engine for the Pull Request remediation type
 type Remediator struct {
 	ghCli      provifv1.GitHub
-	gitCli     provifv1.Git
 	actionType interfaces.ActionType
 
 	prCfg                *pb.RuleType_Definition_Remediate_PullRequestRemediation
@@ -104,17 +103,11 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}
 
-	gitCli, err := pbuild.GetGit()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get git client: %w", err)
-	}
-
 	modRegistry := newModificationRegistry()
 	modRegistry.registerBuiltIn()
 
 	return &Remediator{
 		ghCli:                ghCli,
-		gitCli:               gitCli,
 		prCfg:                prCfg,
 		actionType:           actionType,
 		modificationRegistry: modRegistry,
