@@ -1,0 +1,123 @@
+# From:
+# create realms -s realm=stacklok -s loginTheme=keycloak -s eventsEnabled=true -s 'enabledEventTypes=["DELETE_ACCOUNT"]' -s eventsExpiration=604800 -s enabled=true
+realm: stacklok
+enabled: true
+loginTheme: keycloak
+eventsEnabled: true
+enabledEventTypes:
+  - DELETE_ACCOUNT
+eventsExpiration: 604800
+
+# From:
+# Add account deletion capability to stacklok realm (see https://www.keycloak.org/docs/latest/server_admin/#authentication-operations)
+# update "/authentication/required-actions/delete_account" -r stacklok -b '{ "alias" : "delete_account", "name" : "Delete Account", "providerId" : "delete_account", "enabled" : true, "defaultAction" : false, "priority" : 60, "config" : { }}'
+requiredActions:
+  - alias: delete_account
+    name: Delete Account
+    providerId: delete_account
+    enabled: true
+    defaultAction: false
+
+# From:
+# Give all users permission to delete their own account
+# add-roles -r stacklok --rname default-roles-stacklok --rolename delete-account --cclientid account
+roles:
+  realm:
+    - name: default-roles-stacklok
+      composites:
+        client:
+          account:
+            - delete-account
+            - view-profile
+            - manage-account
+
+# Collect gh_login and gh_id from GitHub and expose them in tokens
+clientScopes:
+  - name: gh-data
+    description: "Add GitHub information to tokens"
+    protocol: openid-connect
+    attributes:
+      "include.in.token.scope": "true"
+      "display.on.consent.screen": "false"
+    protocolMappers:
+      - name: gh_id
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: "true"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: "gh_id"
+          jsonType.label: "String"
+          user.attribute: "gh_id"
+      - name: gh_login
+        protocol: openid-connect
+        protocolMapper: oidc-usermodel-attribute-mapper
+        consentRequired: false
+        config:
+          userinfo.token.claim: "true"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: "gh_login"
+          jsonType.label: "String"
+          user.attribute: "gh_login"
+
+
+clients:
+  # From:
+  # create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
+  - clientId: minder-cli
+    enabled: true
+    redirectUris:
+      - "http://localhost/*"
+    publicClient: true
+    # If you set one of these, you seem to need to set both (per CLI experimentation)
+    defaultClientScopes:
+      - acr
+      - email
+      - profile
+      - roles
+      - web-origins
+      - gh-data
+    optionalClientScopes:
+      - microprofile-jwt
+      - offline_access
+  # From:
+  # create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
+  - clientId: minder-ui
+    enabled: true
+    redirectUris:
+      - "http://localhost/*"
+    publicClient: true
+    # If you set one of these, you seem to need to set both (per CLI experimentation)
+    defaultClientScopes:
+      - acr
+      - email
+      - profile
+      - roles
+      - web-origins
+      - gh-data
+    optionalClientScopes:
+      - microprofile-jwt
+      - offline_access
+  # From:
+  # create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MINDER_SERVER_SECRET" -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
+  - clientId: minder-server
+    enabled: true
+    serviceAccountsEnabled: true
+    clientAuthenticatorType: client-secret
+    secret: "$(env:KC_MINDER_SERVER_SECRET)"
+
+users:
+  - username: service-account-minder-server
+    clientRoles:
+      realm-management:
+        # From:
+        # Give minder-server the capability to view events
+        # add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename view-events
+        - view-events
+        # From:
+        # Give minder-server the capability to delete users
+        # add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename manage-users
+        - manage-users
