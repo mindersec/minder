@@ -194,9 +194,16 @@ func (s *Server) CreateRuleType(
 		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
 	}
 
+	// TODO: This will be removed once we decouple providers from rule types
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
 	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          in.GetName(),
 		Provider:      entityCtx.Provider.Name,
+		ProviderID:    provider.ID,
 		ProjectID:     entityCtx.Project.ID,
 		Description:   in.GetDescription(),
 		Definition:    def,

@@ -435,14 +435,15 @@ type MigrationProfileBackfillLog struct {
 }
 
 type Profile struct {
-	ID        uuid.UUID      `json:"id"`
-	Name      string         `json:"name"`
-	Provider  string         `json:"provider"`
-	ProjectID uuid.UUID      `json:"project_id"`
-	Remediate NullActionType `json:"remediate"`
-	Alert     NullActionType `json:"alert"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID         uuid.UUID      `json:"id"`
+	Name       string         `json:"name"`
+	Provider   string         `json:"provider"`
+	ProjectID  uuid.UUID      `json:"project_id"`
+	Remediate  NullActionType `json:"remediate"`
+	Alert      NullActionType `json:"alert"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	ProviderID uuid.UUID      `json:"provider_id"`
 }
 
 type ProfileStatus struct {
@@ -560,6 +561,7 @@ type RuleType struct {
 	CreatedAt     time.Time       `json:"created_at"`
 	UpdatedAt     time.Time       `json:"updated_at"`
 	SeverityValue Severity        `json:"severity_value"`
+	ProviderID    uuid.UUID       `json:"provider_id"`
 }
 
 type SessionStore struct {

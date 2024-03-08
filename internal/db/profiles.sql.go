@@ -65,15 +65,18 @@ INSERT INTO profiles (
     project_id,
     remediate,
     alert,
-    name) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at
+    name,
+    provider_id
+    ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
 `
 
 type CreateProfileParams struct {
-	Provider  string         `json:"provider"`
-	ProjectID uuid.UUID      `json:"project_id"`
-	Remediate NullActionType `json:"remediate"`
-	Alert     NullActionType `json:"alert"`
-	Name      string         `json:"name"`
+	Provider   string         `json:"provider"`
+	ProjectID  uuid.UUID      `json:"project_id"`
+	Remediate  NullActionType `json:"remediate"`
+	Alert      NullActionType `json:"alert"`
+	Name       string         `json:"name"`
+	ProviderID uuid.UUID      `json:"provider_id"`
 }
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error) {
@@ -83,6 +86,7 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (P
 		arg.Remediate,
 		arg.Alert,
 		arg.Name,
+		arg.ProviderID,
 	)
 	var i Profile
 	err := row.Scan(
@@ -94,6 +98,7 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (P
 		&i.Alert,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderID,
 	)
 	return i, err
 }
@@ -164,7 +169,7 @@ func (q *Queries) DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleIns
 }
 
 const getEntityProfileByProjectAndName = `-- name: GetEntityProfileByProjectAndName :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1 AND profiles.name = $2
 `
 
@@ -182,6 +187,7 @@ type GetEntityProfileByProjectAndNameRow struct {
 	Alert           NullActionType  `json:"alert"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
+	ProviderID      uuid.UUID       `json:"provider_id"`
 	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
 	ProfileID       uuid.UUID       `json:"profile_id"`
@@ -208,6 +214,7 @@ func (q *Queries) GetEntityProfileByProjectAndName(ctx context.Context, arg GetE
 			&i.Alert,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProviderID,
 			&i.ID_2,
 			&i.Entity,
 			&i.ProfileID,
@@ -229,7 +236,7 @@ func (q *Queries) GetEntityProfileByProjectAndName(ctx context.Context, arg GetE
 }
 
 const getProfileByID = `-- name: GetProfileByID :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE id = $1
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1
 `
 
 func (q *Queries) GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error) {
@@ -244,12 +251,13 @@ func (q *Queries) GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, er
 		&i.Alert,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getProfileByIDAndLock = `-- name: GetProfileByIDAndLock :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE id = $1 FOR UPDATE
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Profile, error) {
@@ -264,12 +272,13 @@ func (q *Queries) GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Prof
 		&i.Alert,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getProfileByNameAndLock = `-- name: GetProfileByNameAndLock :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE
 `
 
 type GetProfileByNameAndLockParams struct {
@@ -289,12 +298,13 @@ func (q *Queries) GetProfileByNameAndLock(ctx context.Context, arg GetProfileByN
 		&i.Alert,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getProfileByProjectAndID = `-- name: GetProfileByProjectAndID :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1 AND profiles.id = $2
 `
 
@@ -312,6 +322,7 @@ type GetProfileByProjectAndIDRow struct {
 	Alert           NullActionType  `json:"alert"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
+	ProviderID      uuid.UUID       `json:"provider_id"`
 	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
 	ProfileID       uuid.UUID       `json:"profile_id"`
@@ -338,6 +349,7 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 			&i.Alert,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProviderID,
 			&i.ID_2,
 			&i.Entity,
 			&i.ProfileID,
@@ -382,7 +394,7 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 }
 
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1
 `
 
@@ -395,6 +407,7 @@ type ListProfilesByProjectIDRow struct {
 	Alert           NullActionType  `json:"alert"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
+	ProviderID      uuid.UUID       `json:"provider_id"`
 	ID_2            uuid.UUID       `json:"id_2"`
 	Entity          Entities        `json:"entity"`
 	ProfileID       uuid.UUID       `json:"profile_id"`
@@ -421,6 +434,7 @@ func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UU
 			&i.Alert,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProviderID,
 			&i.ID_2,
 			&i.Entity,
 			&i.ProfileID,
@@ -486,7 +500,7 @@ UPDATE profiles SET
     remediate = $2,
     alert = $3,
     updated_at = NOW()
-WHERE id = $1 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at
+WHERE id = $1 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
 `
 
 type UpdateProfileParams struct {
@@ -507,6 +521,7 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (P
 		&i.Alert,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ProviderID,
 	)
 	return i, err
 }

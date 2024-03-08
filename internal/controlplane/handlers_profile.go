@@ -73,6 +73,12 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
+	// TODO: This will be removed once we decouple providers from profiles
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
 	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
 	if err != nil {
 		return nil, err
@@ -92,11 +98,12 @@ func (s *Server) CreateProfile(ctx context.Context,
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
 	params := db.CreateProfileParams{
-		Provider:  entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.GetName(),
-		Remediate: validateActionType(in.GetRemediate()),
-		Alert:     validateActionType(in.GetAlert()),
+		Provider:   entityCtx.Provider.Name,
+		ProviderID: provider.ID,
+		ProjectID:  entityCtx.Project.ID,
+		Name:       in.GetName(),
+		Remediate:  validateActionType(in.GetRemediate()),
+		Alert:      validateActionType(in.GetAlert()),
 	}
 
 	// Create profile
