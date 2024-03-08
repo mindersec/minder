@@ -77,6 +77,7 @@ type GitHub interface {
 	Provider
 	RepoLister
 	REST
+	Git
 
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)

@@ -26,9 +26,11 @@ import (
 	"strings"
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
+	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
+	gitclient "github.com/stacklok/minder/internal/providers/git"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -38,7 +40,7 @@ var (
 )
 
 // ListUserRepositories returns a list of all repositories for the authenticated user
-func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
+func (c *GitHub) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
 	repos, err := c.ListAllRepositories(ctx, false, owner)
 	if err != nil {
 		return nil, err
@@ -48,7 +50,7 @@ func (c *RestClient) ListUserRepositories(ctx context.Context, owner string) ([]
 }
 
 // ListOrganizationRepsitories returns a list of all repositories for the organization
-func (c *RestClient) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
+func (c *GitHub) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
 	repos, err := c.ListAllRepositories(ctx, true, owner)
 	if err != nil {
 		return nil, err
@@ -80,7 +82,7 @@ func convertRepository(repo *github.Repository) *minderv1.Repository {
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
+func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
 	opt := &github.RepositoryListOptions{
 		ListOptions: github.ListOptions{
 			PerPage: 100,
@@ -126,7 +128,7 @@ func (c *RestClient) ListAllRepositories(ctx context.Context, isOrg bool, owner 
 }
 
 // ListAllPackages returns a list of all packages for the authenticated user
-func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
+func (c *GitHub) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
 	pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
@@ -163,7 +165,7 @@ func (c *RestClient) ListAllPackages(ctx context.Context, isOrg bool, owner stri
 }
 
 // ListPackagesByRepository returns a list of all packages for a specific repository
-func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
+func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
 	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
@@ -209,7 +211,7 @@ func (c *RestClient) ListPackagesByRepository(ctx context.Context, isOrg bool, o
 }
 
 // GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
+func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string) ([]*github.PackageVersion, error) {
 	state := "active"
 
@@ -262,7 +264,7 @@ func (c *RestClient) GetPackageVersions(ctx context.Context, isOrg bool, owner s
 }
 
 // GetPackageVersionByTag returns a single package version for the specific tag
-func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
+func (c *GitHub) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string, tag string) (*github.PackageVersion, error) {
 
 	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
@@ -288,7 +290,7 @@ func (c *RestClient) GetPackageVersionByTag(ctx context.Context, isOrg bool, own
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org
-func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
+func (c *GitHub) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
 	package_name string) (*github.Package, error) {
 	var pkg *github.Package
 	var err error
@@ -312,7 +314,7 @@ func (c *RestClient) GetPackageByName(ctx context.Context, isOrg bool, owner str
 }
 
 // GetPackageVersionById returns a single package version for the specific id
-func (c *RestClient) GetPackageVersionById(
+func (c *GitHub) GetPackageVersionById(
 	ctx context.Context,
 	isOrg bool,
 	owner string,
@@ -341,7 +343,7 @@ func (c *RestClient) GetPackageVersionById(
 }
 
 // GetPullRequest is a wrapper for the GitHub API to get a pull request
-func (c *RestClient) GetPullRequest(
+func (c *GitHub) GetPullRequest(
 	ctx context.Context,
 	owner string,
 	repo string,
@@ -355,7 +357,7 @@ func (c *RestClient) GetPullRequest(
 }
 
 // ListFiles is a wrapper for the GitHub API to list files in a pull request
-func (c *RestClient) ListFiles(
+func (c *GitHub) ListFiles(
 	ctx context.Context,
 	owner string,
 	repo string,
@@ -396,7 +398,7 @@ func (c *RestClient) ListFiles(
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review
-func (c *RestClient) CreateReview(
+func (c *GitHub) CreateReview(
 	ctx context.Context, owner, repo string, number int, reviewRequest *github.PullRequestReviewRequest,
 ) (*github.PullRequestReview, error) {
 	review, _, err := c.client.PullRequests.CreateReview(ctx, owner, repo, number, reviewRequest)
@@ -407,7 +409,7 @@ func (c *RestClient) CreateReview(
 }
 
 // UpdateReview is a wrapper for the GitHub API to update a review
-func (c *RestClient) UpdateReview(
+func (c *GitHub) UpdateReview(
 	ctx context.Context, owner, repo string, number int, reviewId int64, body string,
 ) (*github.PullRequestReview, error) {
 	review, _, err := c.client.PullRequests.UpdateReview(ctx, owner, repo, number, reviewId, body)
@@ -418,7 +420,7 @@ func (c *RestClient) UpdateReview(
 }
 
 // ListIssueComments is a wrapper for the GitHub API to get all comments in a review
-func (c *RestClient) ListIssueComments(
+func (c *GitHub) ListIssueComments(
 	ctx context.Context, owner, repo string, number int, opts *github.IssueListCommentsOptions,
 ) ([]*github.IssueComment, error) {
 	comments, _, err := c.client.Issues.ListComments(ctx, owner, repo, number, opts)
@@ -429,7 +431,7 @@ func (c *RestClient) ListIssueComments(
 }
 
 // ListReviews is a wrapper for the GitHub API to list reviews
-func (c *RestClient) ListReviews(
+func (c *GitHub) ListReviews(
 	ctx context.Context,
 	owner, repo string,
 	number int,
@@ -443,7 +445,7 @@ func (c *RestClient) ListReviews(
 }
 
 // DismissReview is a wrapper for the GitHub API to dismiss a review
-func (c *RestClient) DismissReview(
+func (c *GitHub) DismissReview(
 	ctx context.Context,
 	owner, repo string,
 	prId int,
@@ -458,7 +460,7 @@ func (c *RestClient) DismissReview(
 }
 
 // SetCommitStatus is a wrapper for the GitHub API to set a commit status
-func (c *RestClient) SetCommitStatus(
+func (c *GitHub) SetCommitStatus(
 	ctx context.Context, owner, repo, ref string, status *github.RepoStatus,
 ) (*github.RepoStatus, error) {
 	status, _, err := c.client.Repositories.CreateStatus(ctx, owner, repo, ref, status)
@@ -469,7 +471,7 @@ func (c *RestClient) SetCommitStatus(
 }
 
 // GetRepository returns a single repository for the authenticated user
-func (c *RestClient) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
+func (c *GitHub) GetRepository(ctx context.Context, owner string, name string) (*github.Repository, error) {
 	// create a slice to hold the repositories
 	repo, _, err := c.client.Repositories.Get(ctx, owner, name)
 	if err != nil {
@@ -480,7 +482,7 @@ func (c *RestClient) GetRepository(ctx context.Context, owner string, name strin
 }
 
 // GetBranchProtection returns the branch protection for a given branch
-func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
+func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 	repo_name string, branch_name string) (*github.Protection, error) {
 	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
 	if err != nil {
@@ -490,7 +492,7 @@ func (c *RestClient) GetBranchProtection(ctx context.Context, owner string,
 }
 
 // UpdateBranchProtection updates the branch protection for a given branch
-func (c *RestClient) UpdateBranchProtection(
+func (c *GitHub) UpdateBranchProtection(
 	ctx context.Context, owner, repo, branch string, preq *github.ProtectionRequest,
 ) error {
 	_, _, err := c.client.Repositories.UpdateBranchProtection(ctx, owner, repo, branch, preq)
@@ -498,7 +500,7 @@ func (c *RestClient) UpdateBranchProtection(
 }
 
 // GetBaseURL returns the base URL for the REST API.
-func (c *RestClient) GetBaseURL() string {
+func (c *GitHub) GetBaseURL() string {
 	return c.client.BaseURL.String()
 }
 
@@ -506,12 +508,12 @@ func (c *RestClient) GetBaseURL() string {
 // which will be resolved to the BaseURL of the Client. Relative URLS should
 // always be specified without a preceding slash. If specified, the value
 // pointed to by body is JSON encoded and included as the request body.
-func (c *RestClient) NewRequest(method, requestUrl string, body any) (*http.Request, error) {
+func (c *GitHub) NewRequest(method, requestUrl string, body any) (*http.Request, error) {
 	return c.client.NewRequest(method, requestUrl, body)
 }
 
 // Do sends an API request and returns the API response.
-func (c *RestClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+func (c *GitHub) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	var buf bytes.Buffer
 
 	// The GitHub client closes the response body, so we need to capture it
@@ -528,7 +530,7 @@ func (c *RestClient) Do(ctx context.Context, req *http.Request) (*http.Response,
 }
 
 // GetToken returns the token used to authenticate with the GitHub API
-func (c *RestClient) GetToken() string {
+func (c *GitHub) GetToken() string {
 	if c.token != "" {
 		return c.token
 	}
@@ -536,7 +538,7 @@ func (c *RestClient) GetToken() string {
 }
 
 // GetOwner returns the owner of the repository
-func (c *RestClient) GetOwner() string {
+func (c *GitHub) GetOwner() string {
 	if c.owner != "" {
 		return c.owner
 	}
@@ -544,7 +546,7 @@ func (c *RestClient) GetOwner() string {
 }
 
 // ListHooks lists all Hooks for the specified repository.
-func (c *RestClient) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
+func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
 	list, resp, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
 	if err != nil && resp.StatusCode == http.StatusNotFound {
 		// return empty list so that the caller can ignore the error and iterate over the empty list
@@ -554,19 +556,19 @@ func (c *RestClient) ListHooks(ctx context.Context, owner, repo string) ([]*gith
 }
 
 // DeleteHook deletes a specified Hook.
-func (c *RestClient) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
+func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
 	resp, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
 	return resp, err
 }
 
 // CreateHook creates a new Hook.
-func (c *RestClient) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
+func (c *GitHub) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 	h, _, err := c.client.Repositories.CreateHook(ctx, owner, repo, hook)
 	return h, err
 }
 
 // CreateSecurityAdvisory creates a new security advisory
-func (c *RestClient) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
+func (c *GitHub) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 	v []*github.AdvisoryVulnerability) (string, error) {
 	u := fmt.Sprintf("repos/%v/%v/security-advisories", owner, repo)
 
@@ -602,7 +604,7 @@ func (c *RestClient) CreateSecurityAdvisory(ctx context.Context, owner, repo, se
 }
 
 // CloseSecurityAdvisory closes a security advisory
-func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
+func (c *GitHub) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
 	u := fmt.Sprintf("repos/%v/%v/security-advisories/%v", owner, repo, id)
 
 	payload := &struct {
@@ -625,7 +627,7 @@ func (c *RestClient) CloseSecurityAdvisory(ctx context.Context, owner, repo, id 
 }
 
 // CreatePullRequest creates a pull request in a repository.
-func (c *RestClient) CreatePullRequest(
+func (c *GitHub) CreatePullRequest(
 	ctx context.Context,
 	owner, repo, title, body, head, base string,
 ) (*github.PullRequest, error) {
@@ -644,7 +646,7 @@ func (c *RestClient) CreatePullRequest(
 }
 
 // ListPullRequests lists all pull requests in a repository.
-func (c *RestClient) ListPullRequests(
+func (c *GitHub) ListPullRequests(
 	ctx context.Context,
 	owner, repo string,
 	opt *github.PullRequestListOptions,
@@ -658,7 +660,7 @@ func (c *RestClient) ListPullRequests(
 }
 
 // CreateIssueComment creates a comment on a pull request or an issue
-func (c *RestClient) CreateIssueComment(
+func (c *GitHub) CreateIssueComment(
 	ctx context.Context, owner, repo string, number int, comment string,
 ) (*github.IssueComment, error) {
 	var issueComment *github.IssueComment
@@ -685,7 +687,7 @@ func (c *RestClient) CreateIssueComment(
 }
 
 // UpdateIssueComment updates a comment on a pull request or an issue
-func (c *RestClient) UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error {
+func (c *GitHub) UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error {
 	_, _, err := c.client.Issues.EditComment(ctx, owner, repo, number, &github.IssueComment{
 		Body: &comment,
 	})
@@ -693,7 +695,7 @@ func (c *RestClient) UpdateIssueComment(ctx context.Context, owner, repo string,
 }
 
 // GetUserId returns the user id for the authenticated user
-func (c *RestClient) GetUserId(ctx context.Context) (int64, error) {
+func (c *GitHub) GetUserId(ctx context.Context) (int64, error) {
 	user, _, err := c.client.Users.Get(ctx, "")
 	if err != nil {
 		return 0, err
@@ -702,7 +704,7 @@ func (c *RestClient) GetUserId(ctx context.Context) (int64, error) {
 }
 
 // GetUsername returns the username for the authenticated user
-func (c *RestClient) GetUsername(ctx context.Context) (string, error) {
+func (c *GitHub) GetUsername(ctx context.Context) (string, error) {
 	user, _, err := c.client.Users.Get(ctx, "")
 	if err != nil {
 		return "", err
@@ -711,7 +713,7 @@ func (c *RestClient) GetUsername(ctx context.Context) (string, error) {
 }
 
 // GetPrimaryEmail returns the primary email for the authenticated user.
-func (c *RestClient) GetPrimaryEmail(ctx context.Context) (string, error) {
+func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 	emails, _, err := c.client.Users.ListEmails(ctx, &github.ListOptions{})
 	if err != nil {
 		return "", fmt.Errorf("cannot get email: %w", err)
@@ -728,4 +730,10 @@ func (c *RestClient) GetPrimaryEmail(ctx context.Context) (string, error) {
 	}
 
 	return fallback, nil
+}
+
+// Clone clones a GitHub repository
+func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
+	delegator := gitclient.NewGit(c.GetToken())
+	return delegator.Clone(ctx, cloneUrl, branch)
 }
