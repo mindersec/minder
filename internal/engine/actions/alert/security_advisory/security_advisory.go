@@ -97,6 +97,7 @@ If you have any questions or believe that this evaluation is incorrect, please d
 type Alert struct {
 	actionType           interfaces.ActionType
 	cli                  provifv1.GitHub
+	sev                  *pb.Severity
 	saCfg                *pb.RuleType_Definition_Alert_AlertTypeSA
 	summaryTmpl          *htmltemplate.Template
 	descriptionTmpl      *htmltemplate.Template
@@ -130,6 +131,7 @@ type alertMetadata struct {
 // NewSecurityAdvisoryAlert creates a new security-advisory alert action
 func NewSecurityAdvisoryAlert(
 	actionType interfaces.ActionType,
+	sev *pb.Severity,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	pbuild *providers.ProviderBuilder,
 ) (*Alert, error) {
@@ -160,6 +162,7 @@ func NewSecurityAdvisoryAlert(
 	return &Alert{
 		actionType:           actionType,
 		cli:                  cli,
+		sev:                  sev,
 		saCfg:                saCfg,
 		summaryTmpl:          sumT,
 		descriptionTmpl:      descT,
@@ -341,7 +344,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	}
 	// Process the summary and description templates
 	// Get the severity
-	result.Template.Severity = alert.saCfg.Severity
+	result.Template.Severity = alert.getSeverityString()
 	// Get the guidance
 	result.Template.Guidance = params.GetRuleType().Guidance
 	// Get the rule type name
@@ -376,4 +379,16 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	}
 	result.Description = descriptionStr.String()
 	return result, nil
+}
+
+func (alert *Alert) getSeverityString() string {
+	if alert.saCfg.Severity == "" {
+		ruleSev := alert.sev.GetValue().Enum().AsString()
+		if ruleSev == "info" {
+			return "unknown"
+		}
+		return ruleSev
+	}
+
+	return alert.saCfg.Severity
 }
