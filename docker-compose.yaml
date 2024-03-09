@@ -140,10 +140,8 @@ services:
       - "8081:8080"
     volumes:
       - ./identity/themes:/opt/keycloak/themes:z
-      - ./identity/scripts:/opt/keycloak/scripts:z
     networks:
       - app_net
-    # entrypoint: ["/opt/keycloak/scripts/kc-setup.sh"]
 
   keycloak-config:
     container_name: keycloak_config

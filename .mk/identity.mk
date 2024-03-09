@@ -22,7 +22,6 @@ ifndef KC_GITHUB_CLIENT_SECRET
 	$(error KC_GITHUB_CLIENT_SECRET is not set)
 endif
 	@echo "Setting up GitHub login..."
-#	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
 # Delete the existing GitHub identity provider, if it exists.  Otherwise, ignore the error.
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh delete identity-provider/instances/github -r stacklok || true
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create identity-provider/instances -r stacklok -s alias=github -s providerId=github -s enabled=true  -s 'config.useJwksUrl="true"' -s config.clientId=$$KC_GITHUB_CLIENT_ID -s config.clientSecret=$$KC_GITHUB_CLIENT_SECRET
@@ -31,6 +30,5 @@ endif
 
 password-login:
 	@echo "Setting up password login..."
-	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create users -r stacklok -s username=testuser -s enabled=true
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh set-password -r stacklok --username testuser --new-password tester
