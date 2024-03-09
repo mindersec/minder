@@ -1032,36 +1032,6 @@ func (mr *MockStoreMockRecorder) GetRuleTypeByName(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByName", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByName), arg0, arg1)
 }
 
-// GetSessionState mocks base method.
-func (m *MockStore) GetSessionState(arg0 context.Context, arg1 int32) (db.SessionStore, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionState", arg0, arg1)
-	ret0, _ := ret[0].(db.SessionStore)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSessionState indicates an expected call of GetSessionState.
-func (mr *MockStoreMockRecorder) GetSessionState(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionState", reflect.TypeOf((*MockStore)(nil).GetSessionState), arg0, arg1)
-}
-
-// GetSessionStateByProjectID mocks base method.
-func (m *MockStore) GetSessionStateByProjectID(arg0 context.Context, arg1 uuid.UUID) (db.SessionStore, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSessionStateByProjectID", arg0, arg1)
-	ret0, _ := ret[0].(db.SessionStore)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSessionStateByProjectID indicates an expected call of GetSessionStateByProjectID.
-func (mr *MockStoreMockRecorder) GetSessionStateByProjectID(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessionStateByProjectID", reflect.TypeOf((*MockStore)(nil).GetSessionStateByProjectID), arg0, arg1)
-}
-
 // GetUserByID mocks base method.
 func (m *MockStore) GetUserByID(arg0 context.Context, arg1 int32) (db.User, error) {
 	m.ctrl.T.Helper()

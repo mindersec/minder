@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -58,7 +59,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 	malformedProjectID := "malformed"
 	//nolint:goconst
 	provider := "github"
-	subject := "subject1"
+	userJWT := openid.New()
+	userJWT.Set("sub", "subject1")
 
 	assert.NotEqual(t, projectID, defaultProjectID)
 
@@ -118,7 +120,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
 				t.Helper()
 				store.EXPECT().
-					GetUserBySubject(gomock.Any(), subject).
+					GetUserBySubject(gomock.Any(), userJWT.Subject()).
 					Return(db.User{
 						ID: 1,
 					}, nil)
@@ -174,7 +176,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			if tc.buildStubs != nil {
 				tc.buildStubs(t, mockStore)
 			}
-			ctx := auth.WithUserSubjectContext(withRpcOptions(context.Background(), rpcOptions), subject)
+			ctx := auth.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
 
 			authzClient := &mock.SimpleClient{}
 

@@ -17,6 +17,7 @@ package rule_type
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -132,7 +133,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 				"github": {}
 			}`),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		token,
 	))
 	inf := &entities.EntityInfoWrapper{

@@ -71,7 +71,8 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	ctx = auth.WithUserSubjectContext(ctx, parsedToken.Subject())
+	ctx = auth.WithAuthTokenContext(ctx, parsedToken)
+
 
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
 	loginSHA := sha256.Sum256([]byte(parsedToken.Subject()))

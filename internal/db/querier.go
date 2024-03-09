@@ -83,8 +83,6 @@ type Querier interface {
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
-	GetSessionState(ctx context.Context, id int32) (SessionStore, error)
-	GetSessionStateByProjectID(ctx context.Context, projectID uuid.UUID) (SessionStore, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)

@@ -17,6 +17,7 @@ package git_test
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -42,7 +43,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"",
 	))
 	require.NoError(t, err, "expected no error")
@@ -79,7 +80,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"",
 	))
 	require.NoError(t, err, "expected no error")
@@ -116,7 +117,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"",
 	))
 	require.NoError(t, err, "expected no error")
@@ -153,7 +154,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 					"git",
 				},
 			},
-			db.ProviderAccessToken{},
+			sql.NullString{},
 			"",
 		))
 	require.NoError(t, err, "expected no error")
@@ -192,7 +193,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"",
 	))
 	require.NoError(t, err, "expected no error")
@@ -220,7 +221,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"foobar",
 	),
 	)
@@ -245,7 +246,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 				"git",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		// No authentication is the right thing in this case.
 		"",
 	))

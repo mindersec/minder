@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -32,7 +33,8 @@ import (
 func TestListProjects(t *testing.T) {
 	t.Parallel()
 
-	user := "testuser"
+	user := openid.New()
+	user.Set("sub", "testuser")
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New()},
@@ -42,7 +44,7 @@ func TestListProjects(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user).Return(db.User{ID: 1}, nil)
+	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user.Subject()).Return(db.User{ID: 1}, nil)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), authzClient.Allowed[0]).Return(
 		db.Project{ID: authzClient.Allowed[0]}, nil)
 
@@ -52,7 +54,7 @@ func TestListProjects(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = auth.WithUserSubjectContext(ctx, user)
+	ctx = auth.WithAuthTokenContext(ctx, user)
 
 	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
 	assert.NoError(t, err)

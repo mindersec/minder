@@ -573,6 +573,7 @@ type SessionStore struct {
 	SessionState string         `json:"session_state"`
 	CreatedAt    time.Time      `json:"created_at"`
 	RedirectUrl  sql.NullString `json:"redirect_url"`
+	RemoteUser   sql.NullString `json:"remote_user"`
 }
 
 type User struct {

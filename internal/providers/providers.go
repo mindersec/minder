@@ -18,6 +18,7 @@ package providers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"golang.org/x/exp/slices"
@@ -53,14 +54,14 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, opts...), nil
+	return NewProviderBuilder(&prov, encToken.OwnerFilter, decryptedToken.AccessToken, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
 // provider clients.
 type ProviderBuilder struct {
 	p               *db.Provider
-	tokenInf        db.ProviderAccessToken
+	ownerFilter     sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
 	restClientCache ratecache.RestClientCache
 	tok             string
 	metrics         telemetry.ProviderMetrics
@@ -86,15 +87,15 @@ func WithRestClientCache(cache ratecache.RestClientCache) ProviderBuilderOption 
 // NewProviderBuilder creates a new provider builder.
 func NewProviderBuilder(
 	p *db.Provider,
-	tokenInf db.ProviderAccessToken,
+	ownerFilter sql.NullString,
 	tok string,
 	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
-		p:        p,
-		tokenInf: tokenInf,
-		tok:      tok,
-		metrics:  telemetry.NewNoopMetrics(),
+		p:           p,
+		ownerFilter: ownerFilter,
+		tok:         tok,
+		metrics:     telemetry.NewNoopMetrics(),
 	}
 
 	for _, opt := range opts {
@@ -170,7 +171,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	}
 
 	if pb.restClientCache != nil {
-		client, ok := pb.restClientCache.Get(pb.tokenInf.OwnerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
+		client, ok := pb.restClientCache.Get(pb.ownerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
 		if ok {
 			return client.(provinfv1.GitHub), nil
 		}
@@ -182,7 +183,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("error parsing github config: %w", err)
 	}
 
-	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
+	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, pb.GetToken(), pb.ownerFilter.String)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github client: %w", err)
 	}

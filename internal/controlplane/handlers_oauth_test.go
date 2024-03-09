@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2/github"
@@ -181,6 +182,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 	}
 
 	ctx := withRpcOptions(context.Background(), rpcOptions)
+
+	userJWT := openid.New()
+	userJWT.Set("sub", "testuser")
+	userJWT.Set("gh_id", "31337")
+	ctx = auth.WithAuthTokenContext(ctx, userJWT)
+
 	// Set the entity context
 	ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
 		Project: engine.Project{

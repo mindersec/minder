@@ -17,6 +17,7 @@ package gh_branch_protect
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -64,7 +65,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 }

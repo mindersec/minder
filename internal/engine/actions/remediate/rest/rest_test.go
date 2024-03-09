@@ -18,6 +18,7 @@ package rest
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -54,7 +55,7 @@ var (
 	}
 }`),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 	invalidProviderBuilder = providers.NewProviderBuilder(
@@ -69,7 +70,7 @@ var (
 		"base_url": "https://api.github.com/"
 }`),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 	TestActionTypeValid interfaces.ActionType = "remediate-test"
@@ -93,7 +94,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 }
