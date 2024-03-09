@@ -222,6 +222,11 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 				sRem := string(p.Remediate.ActionType)
 				profiles[p.Name].Remediate = &sRem
 			}
+
+			if p.Alert.Valid {
+				sAlert := string(p.Alert.ActionType)
+				profiles[p.Name].Alert = &sAlert
+			}
 		}
 		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {
 			profiles[p.Name] = pm
