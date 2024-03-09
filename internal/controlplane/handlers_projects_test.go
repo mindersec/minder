@@ -34,7 +34,7 @@ func TestListProjects(t *testing.T) {
 	t.Parallel()
 
 	user := openid.New()
-	user.Set("sub", "testuser")
+	assert.NoError(t, user.Set("sub", "testuser"))
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New()},

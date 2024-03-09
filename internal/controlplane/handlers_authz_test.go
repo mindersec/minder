@@ -60,7 +60,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 	//nolint:goconst
 	provider := "github"
 	userJWT := openid.New()
-	userJWT.Set("sub", "subject1")
+	assert.NoError(t, userJWT.Set("sub", "subject1"))
 
 	assert.NotEqual(t, projectID, defaultProjectID)
 

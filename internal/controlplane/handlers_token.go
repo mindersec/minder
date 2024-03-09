@@ -73,7 +73,6 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 
 	ctx = auth.WithAuthTokenContext(ctx, parsedToken)
 
-
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
 	loginSHA := sha256.Sum256([]byte(parsedToken.Subject()))
 	logger.BusinessRecord(ctx).LoginHash = hex.EncodeToString(loginSHA[:])

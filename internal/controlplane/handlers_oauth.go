@@ -277,7 +277,8 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 	return nil
 }
 
-func (s *Server) verifyProviderTokenIdentity(ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider string, token string) error {
+func (s *Server) verifyProviderTokenIdentity(
+	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider string, token string) error {
 	dbProvider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
 		Name:     provider,
 		Projects: []uuid.UUID{stateData.ProjectID},
@@ -285,10 +286,10 @@ func (s *Server) verifyProviderTokenIdentity(ctx context.Context, stateData db.G
 	if err != nil {
 		return fmt.Errorf("error getting provider by name: %w", err)
 	}
-	pb := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token)
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
-	ghClient, err := pb.GetGitHub()
+	ghClient, err := builder.GetGitHub()
 	if err != nil {
 		return fmt.Errorf("error creating GitHub client: %w", err)
 	}

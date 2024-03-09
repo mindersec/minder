@@ -184,8 +184,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 	ctx := withRpcOptions(context.Background(), rpcOptions)
 
 	userJWT := openid.New()
-	userJWT.Set("sub", "testuser")
-	userJWT.Set("gh_id", "31337")
+	if err := userJWT.Set("sub", "testuser"); err != nil {
+		t.Fatalf("Error setting sub: %v", err)
+	}
+	if err := userJWT.Set("gh_id", "31337"); err != nil {
+		t.Fatalf("Error setting gh_id: %v", err)
+	}
 	ctx = auth.WithAuthTokenContext(ctx, userJWT)
 
 	// Set the entity context
