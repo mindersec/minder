@@ -108,13 +108,15 @@ func GetUserSubjectFromContext(ctx context.Context) string {
 	token, ok := ctx.Value(userSubjectContextKey).(openid.Token)
 	if !ok {
 		fmt.Printf("***\n")
-		fmt.Printf("no token in context\n")
+		fmt.Printf("no token in coGntext\n")
 		fmt.Printf("***\n")
 		return ""
 	}
 	return token.Subject()
 }
 
+// GetUserClaimFromContext returns the specified claim from the user subject in
+// the context if found and of the correct type
 func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool) {
 	var ret T
 	token, ok := ctx.Value(userSubjectContextKey).(openid.Token)

@@ -104,7 +104,7 @@ func TestVerifyOneProject(t *testing.T) {
 	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to write project")
 
 	userJWT := openid.New()
-	userJWT.Set("sub", "user-1")
+	assert.NoError(t, userJWT.Set("sub", "user-1"))
 	userctx := auth.WithAuthTokenContext(ctx, userJWT)
 
 	// verify the project
@@ -158,7 +158,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj1), "failed to write project")
 
 	user1JWT := openid.New()
-	user1JWT.Set("sub", "user-1")
+	assert.NoError(t, user1JWT.Set("sub", "user-1"))
 	userctx := auth.WithAuthTokenContext(ctx, user1JWT)
 
 	// verify the project
@@ -177,7 +177,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 
 	// verify the project
 	user2JWT := openid.New()
-	user2JWT.Set("sub", "user-2")
+	assert.NoError(t, user2JWT.Set("sub", "user-2"))
 	assert.NoError(t, c.Check(auth.WithAuthTokenContext(ctx, user2JWT), "get", prj3), "failed to check project")
 
 	// verify user-1 cannot operate on project 3
