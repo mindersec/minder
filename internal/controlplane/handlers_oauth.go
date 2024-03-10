@@ -30,7 +30,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -46,6 +48,21 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+// Track how often users who register a token are correlated with the
+// GitHub user from GetAuthorizationURL
+var tokenMeter = otel.Meter("enrolled-token")
+var tokenMatches metric.Int64Counter
+
+func init() {
+	var err error
+	tokenMatches, err = tokenMeter.Int64Counter(
+		"token-checks",
+		metric.WithDescription("Number of times we check that the token userid matches the requested userid"))
+	if err != nil {
+		zerolog.Ctx(context.Background()).Error().Err(err).Msg("Failed to create token-checks counter")
+	}
+}
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
@@ -234,6 +251,9 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 	}
 
 	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
+	tokenMatches.Add(ctx, 1, metric.WithAttributes(
+		attribute.Bool("user-valid", stateData.RemoteUser.Valid),
+	))
 	if stateData.RemoteUser.Valid {
 		if err := s.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
 			// TODO: make this prettier?
