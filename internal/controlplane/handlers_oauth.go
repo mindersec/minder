@@ -74,9 +74,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	defer span.End()
 
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
-	if user == "" {
-		return nil, status.Errorf(codes.PermissionDenied, "could not determine user")
-	}
+	// If the user's token doesn't have gh_id set yet, we'll pass it through for now.
+
 	// Generate a random nonce based state
 	state, err := mcrypto.GenerateNonce()
 	if err != nil {
@@ -111,7 +110,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     provider.Name,
 		ProjectID:    projectID,
-		RemoteUser:   sql.NullString{Valid: true, String: user},
+		RemoteUser:   sql.NullString{Valid: user != "", String: user},
 		SessionState: state,
 		OwnerFilter:  owner,
 		RedirectUrl:  redirectUrl,
@@ -125,7 +124,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	logger.BusinessRecord(ctx).Project = projectID
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(provider.Name, req.Cli)
+	oauthConfig, err := s.providerAuthFactory(provider.Name, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +220,7 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 func (s *Server) generateOAuthToken(ctx context.Context, provider string, code string,
 	stateData db.GetProjectIDBySessionStateRow) error {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(provider, true)
+	oauthConfig, err := s.providerAuthFactory(provider, true)
 	if err != nil {
 		return fmt.Errorf("error creating OAuth config: %w", err)
 	}
@@ -286,7 +285,11 @@ func (s *Server) verifyProviderTokenIdentity(
 	if err != nil {
 		return fmt.Errorf("error getting provider by name: %w", err)
 	}
-	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token)
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
 	ghClient, err := builder.GetGitHub()

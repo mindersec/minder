@@ -240,6 +240,7 @@ type StubGitHub struct {
 	T             *testing.T
 	Repo          *github.Repository
 	RepoErr       error
+	UserId        int64
 	ExistingHooks []*github.Hook
 	DeletedHooks  []int64
 	NewHooks      []*github.Hook
@@ -424,8 +425,8 @@ func (*StubGitHub) UpdateBranchProtection(context.Context, string, string, strin
 }
 
 // GetUserId implements v1.GitHub.
-func (*StubGitHub) GetUserId(context.Context) (int64, error) {
-	panic("unimplemented")
+func (s *StubGitHub) GetUserId(context.Context) (int64, error) {
+	return s.UserId, nil
 }
 
 // GetUsername implements v1.GitHub.
