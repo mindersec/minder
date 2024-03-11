@@ -18,11 +18,9 @@ package profile
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // ProfileCmd is the root command for the profile subcommands
@@ -39,5 +37,5 @@ func init() {
 	app.RootCmd.AddCommand(ProfileCmd)
 	// Flags for all subcommands
 	ProfileCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
-	cli.UseProjectFlag(ProfileCmd.PersistentFlags(), viper.GetViper())
+	ProfileCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

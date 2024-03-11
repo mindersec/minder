@@ -18,11 +18,9 @@ package artifact
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // ArtifactCmd is the artifact subcommand
@@ -39,5 +37,5 @@ func init() {
 	app.RootCmd.AddCommand(ArtifactCmd)
 	// Flags for all subcommands
 	ArtifactCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
-	cli.UseProjectFlag(ArtifactCmd.PersistentFlags(), viper.GetViper())
+	ArtifactCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }
