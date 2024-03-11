@@ -176,7 +176,6 @@ func (r *repositoryService) DeleteRepositoryByID(
 	projectID uuid.UUID,
 	repoID uuid.UUID,
 ) error {
-	log.Printf("looking for %s / %s", repoID.String(), projectID.String())
 	repo, err := r.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
 		ID:        repoID,
 		ProjectID: projectID,
@@ -202,7 +201,6 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 		}
 	}
 
-	log.Printf("deleting %s / %s", repo.ID.String(), repo.ProjectID.String())
 	// then remove the entry in the DB
 	if err = r.store.DeleteRepository(ctx, repo.ID); err != nil {
 		return fmt.Errorf("error deleting repository from DB: %w", err)
