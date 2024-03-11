@@ -39,12 +39,16 @@ import (
 
 // RepositoryService encapsulates logic related to registering and deleting repos
 type RepositoryService interface {
+	// CreateRepository registers a GitHub repository, including creating
+	// a webhook in the repo in GitHub.
 	CreateRepository(
 		ctx context.Context,
 		client ghclient.GitHubRepoClient,
 		projectID uuid.UUID,
 		repo *pb.UpstreamRepositoryRef,
 	) (*pb.Repository, error)
+	// DeleteRepositoryByName removes the webhook and deletes the repo from the
+	// database. The repo is identified by its name and project.
 	DeleteRepositoryByName(
 		ctx context.Context,
 		client ghclient.GitHubRepoClient,
@@ -52,6 +56,8 @@ type RepositoryService interface {
 		repoOwner string,
 		repoName string,
 	) error
+	// DeleteRepositoryByID removes the webhook and deletes the repo from the
+	// database. The repo is identified by its database ID and project.
 	DeleteRepositoryByID(
 		ctx context.Context,
 		client ghclient.GitHubRepoClient,
