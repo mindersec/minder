@@ -2427,8 +2427,9 @@
     "ListEvaluationResultsResponseEntityProfileEvaluationResults": {
       "type": "object",
       "properties": {
-        "profile": {
-          "type": "string"
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile - id, name, status, last_updated"
         },
         "results": {
           "type": "array",
@@ -2436,7 +2437,7 @@
             "type": "object",
             "$ref": "#/definitions/v1RuleEvaluationStatus"
           },
-          "title": "Not sure if we want to introduce a new type that avoids including profile_id, entity, etc"
+          "title": "Note that some fields like profile_id and entity might be empty\nEventually we might replace this type with another one that fits the API better"
         }
       }
     },
@@ -2892,6 +2893,29 @@
         }
       },
       "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+    },
+    "v1EvalResultAlert": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "status is the status of the alert"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the alert was performed or attempted"
+        },
+        "details": {
+          "type": "string",
+          "title": "details is the description of the alert attempt if any"
+        },
+        "url": {
+          "type": "string",
+          "title": "url is the URL to the alert"
+        }
+      },
+      "title": "EvalResultAlert holds the alert details for a given rule evaluation"
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -3559,29 +3583,13 @@
           "type": "string",
           "title": "rule_description_name is the name to describe the rule"
         },
-        "alertStatus": {
-          "type": "string",
-          "title": "alert_status is the status of the alert"
+        "alert": {
+          "$ref": "#/definitions/v1EvalResultAlert",
+          "title": "alert holds the alert details if the rule generated an alert in an external system"
         },
-        "alertLastUpdated": {
-          "type": "string",
-          "format": "date-time",
-          "title": "alert_last_updated is the last time the alert was performed or attempted"
-        },
-        "alertDetails": {
-          "type": "string",
-          "title": "alert_details is the description of the alert attempt if any"
-        },
-        "alertMetadata": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "title": "alert_metadata is the metadata of the alert"
-        },
-        "alertSeverity": {
+        "severity": {
           "$ref": "#/definitions/v1Severity",
-          "title": "alert_severity is the severity of the alert"
+          "title": "severity is the severity of the rule"
         }
       },
       "title": "get the status of the rules for a given profile"

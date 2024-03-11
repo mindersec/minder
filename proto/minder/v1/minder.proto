@@ -970,6 +970,18 @@ message ProfileStatus {
     google.protobuf.Timestamp last_updated = 4;
 }
 
+// EvalResultAlert holds the alert details for a given rule evaluation
+message EvalResultAlert {
+    // status is the status of the alert
+    string status = 1;
+    // last_updated is the last time the alert was performed or attempted
+    google.protobuf.Timestamp last_updated = 2;
+    // details is the description of the alert attempt if any
+    string details = 3;
+    // url is the URL to the alert
+    string url = 4;
+}
+
 // get the status of the rules for a given profile
 message RuleEvaluationStatus {
     // profile_id is the id of the profile
@@ -1000,16 +1012,10 @@ message RuleEvaluationStatus {
     string rule_type_name = 13;
     // rule_description_name is the name to describe the rule
     string rule_description_name = 14;
-    // alert_status is the status of the alert
-    string alert_status = 15;
-    // alert_last_updated is the last time the alert was performed or attempted
-    optional google.protobuf.Timestamp alert_last_updated = 16;
-    // alert_details is the description of the alert attempt if any
-    string alert_details = 17;
-    // alert_metadata is the metadata of the alert
-    map<string, string> alert_metadata = 18;
-    // alert_severity is the severity of the alert
-    Severity alert_severity = 19;
+    // alert holds the alert details if the rule generated an alert in an external system
+    EvalResultAlert alert = 15;
+    // severity is the severity of the rule
+    Severity severity = 16;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -1211,8 +1217,11 @@ message ListEvaluationResultsResponse {
     reserved "status";
 
     message EntityProfileEvaluationResults {
-        string profile = 1;
-        // Not sure if we want to introduce a new type that avoids including profile_id, entity, etc
+        // profile_status is the status of the profile - id, name, status, last_updated
+        ProfileStatus profile_status = 1;
+
+        // Note that some fields like profile_id and entity might be empty
+        // Eventually we might replace this type with another one that fits the API better
         repeated RuleEvaluationStatus results = 2;
     }
 

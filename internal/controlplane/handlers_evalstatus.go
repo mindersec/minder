@@ -53,7 +53,12 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 		},
 		Profiles: []*minderv1.ListEvaluationResultsResponse_EntityProfileEvaluationResults{
 			{
-				Profile: "my-profile",
+				ProfileStatus: &minderv1.ProfileStatus{
+					ProfileId:     "a4d5589b-cf5a-42ab-a940-15d2a8c5a3e1",
+					ProfileName:   "my-profile",
+					LastUpdated:   &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+					ProfileStatus: "failure",
+				},
 				Results: []*minderv1.RuleEvaluationStatus{
 					{
 						ProfileId:   "a4d5589b-cf5a-42ab-a940-15d2a8c5a3e1",
@@ -73,11 +78,13 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						RemediationLastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
 						RuleTypeName:           "branch_protection_lock_branch",
 						RuleDescriptionName:    "branch_protection_lock_branch",
-						AlertStatus:            "on",
-						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
-						AlertDetails:           "",
-						AlertMetadata:          map[string]string{"ghsa_id": "GHSA-1234-5678"},
-						AlertSeverity:          &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
+						Alert: &minderv1.EvalResultAlert{
+							Status:      "on",
+							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
+							Details:     "",
+							Url:         "https://github.com/stacklok/depot/security/advisories/GHSA-cxf2-4pf8-4rgc",
+						},
+						Severity: &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
 					},
 					{
 						ProfileId:   "a4d5589b-cf5a-42ab-a940-15d2a8c5a3e1",
@@ -97,10 +104,11 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						RemediationLastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
 						RuleTypeName:           "branch_protection_lock_branch",
 						RuleDescriptionName:    "branch_protection_lock_branch",
-						AlertStatus:            "off",
-						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
-						AlertDetails:           "",
-						AlertMetadata:          map[string]string{},
+						Alert: &minderv1.EvalResultAlert{
+							Status:      "off",
+							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
+							Details:     "",
+						},
 					},
 				},
 			},
@@ -114,7 +122,12 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 		},
 		Profiles: []*minderv1.ListEvaluationResultsResponse_EntityProfileEvaluationResults{
 			{
-				Profile: "my-profile-2",
+				ProfileStatus: &minderv1.ProfileStatus{
+					ProfileId:     "ebd3f978-f2b0-4cd9-a9de-2536a2414a37",
+					ProfileName:   "my-profile-2",
+					LastUpdated:   &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
+					ProfileStatus: "failure",
+				},
 				Results: []*minderv1.RuleEvaluationStatus{
 					{
 						ProfileId:   "ebd3f978-f2b0-4cd9-a9de-2536a2414a37",
@@ -134,10 +147,11 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						RemediationLastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 200},
 						RuleTypeName:           "artifact_signature",
 						RuleDescriptionName:    "artifact_signature",
-						AlertStatus:            "off",
-						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 180},
-						AlertDetails:           "",
-						AlertMetadata:          map[string]string{},
+						Alert: &minderv1.EvalResultAlert{
+							Status:      "off",
+							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 180},
+							Details:     "",
+						},
 					},
 				},
 			},
@@ -151,7 +165,12 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 		},
 		Profiles: []*minderv1.ListEvaluationResultsResponse_EntityProfileEvaluationResults{
 			{
-				Profile: "my-profile-3",
+				ProfileStatus: &minderv1.ProfileStatus{
+					ProfileId:     "c5bd9d1b-3d96-4a57-a5a0-3d6248c3b677",
+					ProfileName:   "my-profile-3",
+					LastUpdated:   &timestamppb.Timestamp{Seconds: time.Now().Unix() - 30},
+					ProfileStatus: "error",
+				},
 				Results: []*minderv1.RuleEvaluationStatus{
 					{
 						ProfileId:   "c5bd9d1b-3d96-4a57-a5a0-3d6248c3b677",
@@ -171,10 +190,11 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						RemediationLastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 150},
 						RuleTypeName:           "dependabot_configured",
 						RuleDescriptionName:    "dependabot_configured",
-						AlertStatus:            "error",
-						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
-						AlertDetails:           "",
-						AlertMetadata:          map[string]string{},
+						Alert: &minderv1.EvalResultAlert{
+							Status:      "error",
+							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
+							Details:     "",
+						},
 					},
 					{
 						ProfileId:   "c5bd9d1b-3d96-4a57-a5a0-3d6248c3b677",
@@ -194,11 +214,13 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 						RemediationLastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 150},
 						RuleTypeName:           "automatic_branch_deletion",
 						RuleDescriptionName:    "automatic_branch_deletion",
-						AlertStatus:            "on",
-						AlertLastUpdated:       &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
-						AlertDetails:           "",
-						AlertMetadata:          map[string]string{"ghsa_id": "GHSA-1234-5678"},
-						AlertSeverity:          &minderv1.Severity{Value: minderv1.Severity_VALUE_MEDIUM},
+						Alert: &minderv1.EvalResultAlert{
+							Status:      "on",
+							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
+							Details:     "",
+							Url:         "https://github.com/stacklok/streamline/security/advisories/GHSA-cxf2-4pf8-4rgc",
+						},
+						Severity: &minderv1.Severity{Value: minderv1.Severity_VALUE_MEDIUM},
 					},
 				},
 			},
