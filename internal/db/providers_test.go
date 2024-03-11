@@ -36,6 +36,7 @@ func createRandomProvider(t *testing.T, projectID uuid.UUID) Provider {
 		Name:       rand.RandomName(seed),
 		ProjectID:  projectID,
 		Implements: []ProviderType{ProviderTypeGithub, ProviderTypeGit},
+		AuthFlows:  []AuthorizationFlow{AuthorizationFlowUserInput},
 		Definition: json.RawMessage("{}"),
 	})
 	require.NoError(t, err, "Error creating provider")

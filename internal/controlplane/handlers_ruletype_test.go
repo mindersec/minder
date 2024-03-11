@@ -55,6 +55,7 @@ func TestCreateRuleType(t *testing.T) {
 		Name:       "github",
 		ProjectID:  dbproj.ID,
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: []byte(`{}`),
 	})
 	if err != nil {

@@ -1107,6 +1107,21 @@ func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProviders", reflect.TypeOf((*MockStore)(nil).GlobalListProviders), arg0)
 }
 
+// GlobalListProvidersByName mocks base method.
+func (m *MockStore) GlobalListProvidersByName(arg0 context.Context, arg1 string) ([]db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GlobalListProvidersByName", arg0, arg1)
+	ret0, _ := ret[0].([]db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GlobalListProvidersByName indicates an expected call of GlobalListProvidersByName.
+func (mr *MockStoreMockRecorder) GlobalListProvidersByName(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByName", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByName), arg0, arg1)
+}
+
 // ListArtifactsByRepoID mocks base method.
 func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
@@ -1402,6 +1417,20 @@ func (m *MockStore) UpdateProjectMeta(arg0 context.Context, arg1 db.UpdateProjec
 func (mr *MockStoreMockRecorder) UpdateProjectMeta(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProjectMeta", reflect.TypeOf((*MockStore)(nil).UpdateProjectMeta), arg0, arg1)
+}
+
+// UpdateProvider mocks base method.
+func (m *MockStore) UpdateProvider(arg0 context.Context, arg1 db.UpdateProviderParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateProvider", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateProvider indicates an expected call of UpdateProvider.
+func (mr *MockStoreMockRecorder) UpdateProvider(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProvider", reflect.TypeOf((*MockStore)(nil).UpdateProvider), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.
