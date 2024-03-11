@@ -18,10 +18,8 @@ package role
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/cli/app/project"
-	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // RoleCmd is the root command for the project subcommands
@@ -36,5 +34,5 @@ var RoleCmd = &cobra.Command{
 
 func init() {
 	project.ProjectCmd.AddCommand(RoleCmd)
-	cli.UseProjectFlag(RoleCmd.PersistentFlags(), viper.GetViper())
+	RoleCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }
