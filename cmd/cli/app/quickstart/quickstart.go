@@ -384,7 +384,9 @@ func init() {
 	app.RootCmd.AddCommand(cmd)
 	// Flags
 	cmd.Flags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
-	cmd.Flags().StringP("project", "j", "", "ID of the project")
+
+	cli.UseProjectFlag(cmd.Flags(), viper.GetViper())
+
 	cmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
 	cmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources")
 	// Bind flags
