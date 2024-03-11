@@ -52,7 +52,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 	tests := []struct {
 		name        string
 		testHandler http.HandlerFunc
-		cliFn       func(cli *RestClient)
+		cliFn       func(cli *GitHub)
 		wantErr     bool
 	}{
 		{
@@ -61,7 +61,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *RestClient) {
+			cliFn: func(cli *GitHub) {
 				_, err := cli.GetPackageByName(context.Background(), true, "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
@@ -72,7 +72,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *RestClient) {
+			cliFn: func(cli *GitHub) {
 				_, err := cli.GetPackageVersions(context.Background(), true, "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
@@ -83,7 +83,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *RestClient) {
+			cliFn: func(cli *GitHub) {
 				_, err := cli.GetPackageVersionByTag(context.Background(), true, "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
@@ -94,7 +94,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions/123", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *RestClient) {
+			cliFn: func(cli *GitHub) {
 				_, err := cli.GetPackageVersionById(context.Background(), true, "stacklok", "container", "helm/mediator", 123)
 				assert.NoError(t, err)
 			},
@@ -207,7 +207,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 			client, ok := restClientCache.Get(owner, token, db.ProviderTypeGithub)
 			require.True(t, ok)
 
-			ghClient, ok := client.(*RestClient)
+			ghClient, ok := client.(*GitHub)
 			require.True(t, ok)
 
 			_, err := ghClient.CreateIssueComment(ctx, owner, "mockRepo", 1, "Test Comment")

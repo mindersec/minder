@@ -280,6 +280,21 @@ func (m *MockGitHub) EXPECT() *MockGitHubMockRecorder {
 	return m.recorder
 }
 
+// Clone mocks base method.
+func (m *MockGitHub) Clone(ctx context.Context, url, branch string) (*git.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Clone", ctx, url, branch)
+	ret0, _ := ret[0].(*git.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Clone indicates an expected call of Clone.
+func (mr *MockGitHubMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGitHub)(nil).Clone), ctx, url, branch)
+}
+
 // CloseSecurityAdvisory mocks base method.
 func (m *MockGitHub) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
 	m.ctrl.T.Helper()

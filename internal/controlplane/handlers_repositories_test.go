@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
@@ -474,5 +475,9 @@ func (*StubGitHub) GetUsername(context.Context) (string, error) {
 
 // GetPrimaryEmail implements v1.GitHub.
 func (*StubGitHub) GetPrimaryEmail(context.Context) (string, error) {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) Clone(context.Context, string, string) (*git.Repository, error) {
 	panic("unimplemented")
 }

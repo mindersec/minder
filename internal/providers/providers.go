@@ -128,6 +128,10 @@ func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}
 
+	if pb.Implements(db.ProviderTypeGithub) {
+		return pb.GetGitHub()
+	}
+
 	return gitclient.NewGit(pb.tok), nil
 }
 

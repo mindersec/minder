@@ -36,12 +36,10 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},
@@ -75,12 +73,10 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},
@@ -114,12 +110,10 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},
@@ -153,12 +147,10 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 	gi, err := gitengine.NewGitIngester(&pb.GitType{},
 		providers.NewProviderBuilder(
 			&db.Provider{
-				Name:    "github",
+				Name:    "git-provider",
 				Version: provifv1.V1,
 				Implements: []db.ProviderType{
 					"git",
-					"rest",
-					"github",
 				},
 			},
 			db.ProviderAccessToken{},
@@ -194,12 +186,10 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},
@@ -224,12 +214,10 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},
@@ -251,12 +239,10 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	// foobar is not a valid token
 	gi, err := gitengine.NewGitIngester(&pb.GitType{}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
 		db.ProviderAccessToken{},

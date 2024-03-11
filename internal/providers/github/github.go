@@ -64,8 +64,8 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 	db.AuthorizationFlowOauth2AuthorizationCodeFlow,
 }
 
-// RestClient is the struct that contains the GitHub REST API client
-type RestClient struct {
+// GitHub is the struct that contains the GitHub client operations
+type GitHub struct {
 	client *github.Client
 	token  string
 	owner  string
@@ -73,7 +73,7 @@ type RestClient struct {
 }
 
 // Ensure that the GitHub client implements the GitHub interface
-var _ provifv1.GitHub = (*RestClient)(nil)
+var _ provifv1.GitHub = (*GitHub)(nil)
 
 // NewRestClient creates a new GitHub REST API client
 // BaseURL defaults to the public GitHub API, if needing to use a customer domain
@@ -85,7 +85,7 @@ func NewRestClient(
 	restClientCache ratecache.RestClientCache,
 	token string,
 	owner string,
-) (*RestClient, error) {
+) (*GitHub, error) {
 	var err error
 
 	ts := oauth2.StaticTokenSource(
@@ -114,7 +114,7 @@ func NewRestClient(
 		ghClient.BaseURL = parsedURL
 	}
 
-	return &RestClient{
+	return &GitHub{
 		client: ghClient,
 		token:  token,
 		owner:  owner,
@@ -141,16 +141,16 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, erro
 	return w.GitHub, nil
 }
 
-// setAsRateLimited adds the RestClient to the cache as rate limited.
+// setAsRateLimited adds the GitHub to the cache as rate limited.
 // An optimistic concurrency control mechanism is used to ensure that every request doesn't need
-// synchronization. RestClient only adds itself to the cache if it's not already there. It doesn't
+// synchronization. GitHub only adds itself to the cache if it's not already there. It doesn't
 // remove itself from the cache when the rate limit is reset. This approach leverages the high
 // likelihood of the client or token being rate-limited again. By keeping the client in the cache,
 // we can reuse client's rateLimits map, which holds rate limits for different endpoints.
 // This reuse of cached rate limits helps avoid unnecessary GitHub API requests when the client
 // is rate-limited. Every cache entry has an expiration time, so the cache will eventually evict
 // the rate-limited client.
-func (c *RestClient) setAsRateLimited() {
+func (c *GitHub) setAsRateLimited() {
 	if c.cache != nil {
 		c.cache.Set(c.owner, c.token, db.ProviderTypeGithub, c)
 	}
@@ -158,7 +158,7 @@ func (c *RestClient) setAsRateLimited() {
 
 // waitForRateLimitReset waits for token wait limit to reset. Returns error if wait time is more
 // than MaxRateLimitWait or requests' context is cancelled.
-func (c *RestClient) waitForRateLimitReset(ctx context.Context, err error) error {
+func (c *GitHub) waitForRateLimitReset(ctx context.Context, err error) error {
 	var rateLimitError *github.RateLimitError
 	isRateLimitErr := errors.As(err, &rateLimitError)
 
@@ -176,7 +176,7 @@ func (c *RestClient) waitForRateLimitReset(ctx context.Context, err error) error
 	return nil
 }
 
-func (c *RestClient) processPrimaryRateLimitErr(ctx context.Context, err *github.RateLimitError) error {
+func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.RateLimitError) error {
 	logger := zerolog.Ctx(ctx)
 	rate := err.Rate
 	if rate.Remaining == 0 {
@@ -208,7 +208,7 @@ func (c *RestClient) processPrimaryRateLimitErr(ctx context.Context, err *github
 	return nil
 }
 
-func (c *RestClient) processAbuseRateLimitErr(ctx context.Context, err *github.AbuseRateLimitError) error {
+func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.AbuseRateLimitError) error {
 	logger := zerolog.Ctx(ctx)
 	c.setAsRateLimited()
 
