@@ -81,10 +81,6 @@ type Registrar interface {
 	// handler function.  It's allowed to call Register with both argument the same, but
 	// then events will be delivered twice to the handler, which is probably not what you want.
 	Register(topic string, handler Handler, mdw ...message.HandlerMiddleware)
-
-	// HandleAll registers all the consumers with the registrar
-	// TODO: should this be a different interface?
-	ConsumeEvents(consumers ...Consumer)
 }
 
 // Consumer is an interface implemented by components which wish to consume events.
