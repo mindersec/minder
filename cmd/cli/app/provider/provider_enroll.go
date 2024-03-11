@@ -87,7 +87,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 		}
 	}
 
-	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_WAIT + 5 * time.Second)
+	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
 
 	if token != "" {
@@ -169,9 +169,8 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, pr
 		}
 		close(done)
 	}()
-	stopServer := false
 
-	for stopServer == false {
+	for {
 		time.Sleep(time.Second)
 
 		// create a shorter lived context for any client calls
@@ -190,12 +189,12 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, pr
 		if err != nil || res.Status == "OK" {
 			cmd.Printf("Error calling server: %s\n", err)
 			done <- false
-			stopServer = true
+			break
 		}
 		if time.Now().After(openTime.Add(MAX_WAIT)) {
 			cmd.Printf("Timeout waiting for OAuth flow to complete...\n")
 			done <- false
-			stopServer = true
+			break
 		}
 	}
 }
