@@ -65,6 +65,8 @@ const (
 	AlertStatusTypesError        AlertStatusTypes = "error"
 	AlertStatusTypesSkipped      AlertStatusTypes = "skipped"
 	AlertStatusTypesNotAvailable AlertStatusTypes = "not_available"
+	AlertStatusTypesPending      AlertStatusTypes = "pending"
+	AlertStatusTypesUnknown      AlertStatusTypes = "unknown"
 )
 
 func (e *AlertStatusTypes) Scan(src interface{}) error {
