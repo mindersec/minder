@@ -58,8 +58,7 @@ type AuthMethod func(auth *containerAuth)
 
 // containerAuth is the authentication for the container
 type containerAuth struct {
-	accessToken string
-	ghClient    provifv1.GitHub
+	ghClient provifv1.GitHub
 }
 
 func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
@@ -68,13 +67,6 @@ func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
 		opt(&auth)
 	}
 	return &auth
-}
-
-// WithAccessToken sets the access token as an authentication option we want to use during verification
-func WithAccessToken(accessToken string) AuthMethod {
-	return func(auth *containerAuth) {
-		auth.accessToken = accessToken
-	}
 }
 
 // WithGitHubClient sets the GitHub client as an authentication option we want to use during verification
@@ -172,7 +164,7 @@ func getSigstoreBundles(
 ) ([]sigstoreBundle, error) {
 	imageRef := BuildImageRef(registry, owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
-	bundles, err := bundleFromOCIImage(ctx, imageRef, newGithubAuthenticator(owner, auth.accessToken))
+	bundles, err := bundleFromOCIImage(ctx, imageRef, newGithubAuthenticator(owner, auth.ghClient.GetToken()))
 	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) || errors.Is(err, ErrAuthNotProvided) {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
 		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)

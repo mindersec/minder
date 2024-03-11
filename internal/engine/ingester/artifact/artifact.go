@@ -223,7 +223,7 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		cfg.Sigstore,
-		container.WithAccessToken(i.ghCli.GetToken()), container.WithGitHubClient(i.ghCli))
+		container.WithGitHubClient(i.ghCli))
 	if err != nil {
 		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
 	}

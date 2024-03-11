@@ -91,7 +91,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		tufRoot.Value.String(),
-		container.WithAccessToken(token), container.WithGitHubClient(ghcli))
+		container.WithGitHubClient(ghcli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
