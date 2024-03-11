@@ -235,9 +235,16 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
+	projectID := getProjectID(ctx)
 
 	// read the repository
-	repo, err := s.store.GetRepositoryByID(ctx, parsedRepositoryID)
+	// assumption: everything is GitHub for now
+	// this assumption will be removed in a future PR
+	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		Provider:  github.Github,
+		ID:        parsedRepositoryID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
@@ -315,17 +322,22 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
+	projectID := getProjectID(ctx)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
 	// read the repository
-	repo, err := s.store.GetRepositoryByID(ctx, parsedRepositoryID)
+	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		Provider:  provider.Name,
+		ID:        parsedRepositoryID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
-	}
-
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, repo.ProjectID)
-	if err != nil {
-		return nil, providerError(err)
 	}
 
 	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
@@ -353,9 +365,7 @@ func (s *Server) DeleteRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
-
+	projectID := getProjectID(ctx)
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -509,4 +519,9 @@ func (s *Server) deleteRepositoryAndWebhook(
 	}
 
 	return nil
+}
+
+func getProjectID(ctx context.Context) uuid.UUID {
+	entityCtx := engine.EntityFromContext(ctx)
+	return entityCtx.Project.ID
 }
