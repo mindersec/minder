@@ -475,6 +475,20 @@ such as (repo, 1), (artifact, 2), ...
 | id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
+<a name="minder-v1-EvalResultAlert"></a>
+
+#### EvalResultAlert
+EvalResultAlert holds the alert details for a given rule evaluation
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is the status of the alert |
+| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
+| details | [string](#string) |  | details is the description of the alert attempt if any |
+| url | [string](#string) |  | url is the URL to the alert |
+
+
 <a name="minder-v1-GetArtifactByIdRequest"></a>
 
 #### GetArtifactByIdRequest
@@ -813,7 +827,31 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | status is the list of evaluation results. Results will typically be grouped by profile and project. |
+| entities | [ListEvaluationResultsResponse.EntityEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults) | repeated | Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile. |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults"></a>
+
+#### ListEvaluationResultsResponse.EntityEvaluationResults
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
+| profiles | [ListEvaluationResultsResponse.EntityProfileEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults) | repeated |  |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults"></a>
+
+#### ListEvaluationResultsResponse.EntityProfileEvaluationResults
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile - id, name, status, last_updated |
+| results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -1372,6 +1410,8 @@ get the status of the rules for a given profile
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 | rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
 | rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
+| alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
+| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
