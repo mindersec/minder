@@ -19,14 +19,17 @@ INSERT INTO providers (
     name,
     project_id,
     implements,
-    definition) VALUES ($1, $2, $3, $4::jsonb) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows
+    definition,
+    auth_flows
+    ) VALUES ($1, $2, $3, $4::jsonb, $5) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows
 `
 
 type CreateProviderParams struct {
-	Name       string          `json:"name"`
-	ProjectID  uuid.UUID       `json:"project_id"`
-	Implements []ProviderType  `json:"implements"`
-	Definition json.RawMessage `json:"definition"`
+	Name       string              `json:"name"`
+	ProjectID  uuid.UUID           `json:"project_id"`
+	Implements []ProviderType      `json:"implements"`
+	Definition json.RawMessage     `json:"definition"`
+	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
 }
 
 func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error) {
@@ -35,6 +38,7 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 		arg.ProjectID,
 		pq.Array(arg.Implements),
 		arg.Definition,
+		pq.Array(arg.AuthFlows),
 	)
 	var i Provider
 	err := row.Scan(
@@ -154,6 +158,43 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 	return items, nil
 }
 
+const globalListProvidersByName = `-- name: GlobalListProvidersByName :many
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1
+`
+
+func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, globalListProvidersByName, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Provider{}
+	for rows.Next() {
+		var i Provider
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Version,
+			&i.ProjectID,
+			pq.Array(&i.Implements),
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.AuthFlows),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
 
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE project_id = $1
@@ -241,4 +282,29 @@ func (q *Queries) ListProvidersByProjectIDPaginated(ctx context.Context, arg Lis
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProvider = `-- name: UpdateProvider :exec
+UPDATE providers
+    SET implements = $1, definition = $2::jsonb, auth_flows = $3
+    WHERE id = $4 AND project_id = $5
+`
+
+type UpdateProviderParams struct {
+	Implements []ProviderType      `json:"implements"`
+	Definition json.RawMessage     `json:"definition"`
+	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
+	ID         uuid.UUID           `json:"id"`
+	ProjectID  uuid.UUID           `json:"project_id"`
+}
+
+func (q *Queries) UpdateProvider(ctx context.Context, arg UpdateProviderParams) error {
+	_, err := q.db.ExecContext(ctx, updateProvider,
+		pq.Array(arg.Implements),
+		arg.Definition,
+		pq.Array(arg.AuthFlows),
+		arg.ID,
+		arg.ProjectID,
+	)
+	return err
 }

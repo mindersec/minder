@@ -87,6 +87,7 @@ func ProvisionSelfEnrolledProject(
 		ProjectID:  project.ID,
 		Implements: github.Implements,
 		Definition: json.RawMessage(`{"github": {}}`),
+		AuthFlows:  github.AuthorizationFlows,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)

@@ -161,6 +161,7 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 		Name:       providerName,
 		ProjectID:  proj.ID,
 		Implements: []db.ProviderType{db.ProviderTypeRest},
+		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: json.RawMessage(`{}`),
 	})
 	require.NoError(t, err, "expected no error when creating provider")

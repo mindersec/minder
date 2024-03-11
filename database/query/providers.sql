@@ -3,7 +3,9 @@ INSERT INTO providers (
     name,
     project_id,
     implements,
-    definition) VALUES ($1, $2, $3, sqlc.arg(definition)::jsonb) RETURNING *;
+    definition,
+    auth_flows
+    ) VALUES ($1, $2, $3, sqlc.arg(definition)::jsonb, sqlc.arg(auth_flows)) RETURNING *;
 
 -- name: GetProviderByName :one
 SELECT * FROM providers WHERE name = $1 AND project_id = $2;
@@ -29,6 +31,14 @@ LIMIT sqlc.arg('limit');
 
 -- name: GlobalListProviders :many
 SELECT * FROM providers;
+
+-- name: GlobalListProvidersByName :many
+SELECT * FROM providers WHERE name = $1;
+
+-- name: UpdateProvider :exec
+UPDATE providers
+    SET implements = sqlc.arg(implements), definition = sqlc.arg(definition)::jsonb, auth_flows = sqlc.arg('auth_flows')
+    WHERE id = sqlc.arg('id') AND project_id = sqlc.arg('project_id');
 
 -- name: DeleteProvider :exec
 DELETE FROM providers WHERE id = $1 AND project_id = $2;
