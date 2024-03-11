@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -167,8 +166,6 @@ func NewServer(
 	return s, nil
 }
 
-var _ (events.Registrar) = (*Server)(nil)
-
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
 	exporter, err := stdout.New(stdout.WithPrettyPrint())
@@ -186,16 +183,6 @@ func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp, nil
-}
-
-// Register implements events.Registrar
-func (s *Server) Register(topic string, handler events.Handler, mdw ...message.HandlerMiddleware) {
-	s.evt.Register(topic, handler, mdw...)
-}
-
-// ConsumeEvents implements events.Registrar
-func (s *Server) ConsumeEvents(c ...events.Consumer) {
-	s.evt.ConsumeEvents(c...)
 }
 
 func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
@@ -456,14 +443,6 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 		log.Printf("shutting down 'Metric server'")
 
 		return server.Shutdown(shutdownCtx)
-	}
-}
-
-// HandleEvents starts the event handler and blocks while handling events.
-func (s *Server) HandleEvents(ctx context.Context) func() error {
-	return func() error {
-		defer s.evt.Close()
-		return s.evt.Run(ctx)
 	}
 }
 

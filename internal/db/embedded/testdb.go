@@ -35,15 +35,15 @@ type CancelFunc func()
 
 // GetFakeStore returns a new embedded Postgres database and a cancel function
 // to clean up the database.
-func GetFakeStore() (db.Store, CancelFunc, error) {
+func GetFakeStore(migrationUrl ...string) (db.Store, CancelFunc, error) {
 	cfg := embeddedpostgres.DefaultConfig()
 	port, err := pickUnusedPort()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to pick a port: %w", err)
 	}
 	tmpName, err := os.MkdirTemp("", "minder-db-test")
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("unable to create tmpdir: %w", err)
 	}
 	cleanupDir := func() {
 		if err := os.RemoveAll(tmpName); err != nil {
@@ -54,7 +54,7 @@ func GetFakeStore() (db.Store, CancelFunc, error) {
 
 	postgres := embeddedpostgres.NewDatabase(cfg)
 	if err := postgres.Start(); err != nil {
-		return nil, cleanupDir, err
+		return nil, cleanupDir, fmt.Errorf("unable to start postgres: %w", err)
 	}
 	cancel := func() {
 		if err := postgres.Stop(); err != nil {
@@ -64,19 +64,22 @@ func GetFakeStore() (db.Store, CancelFunc, error) {
 	}
 	sqlDB, err := sql.Open("postgres", cfg.GetConnectionURL()+"?sslmode=disable")
 	if err != nil {
-		return nil, cancel, err
+		return nil, cancel, fmt.Errorf("unable to open database: %w", err)
 	}
 	if err := sqlDB.Ping(); err != nil {
-		return nil, cancel, err
+		return nil, cancel, fmt.Errorf("unable to ping database: %w", err)
 	}
 
 	configpath := "file://../../database/migrations"
+	if len(migrationUrl) > 0 {
+		configpath = migrationUrl[0]
+	}
 	mig, err := migrate.New(configpath, cfg.GetConnectionURL()+"?sslmode=disable")
 	if err != nil {
-		return nil, cancel, err
+		return nil, cancel, fmt.Errorf("unable to create migration: %w", err)
 	}
 	if err := mig.Up(); err != nil {
-		return nil, cancel, err
+		return nil, cancel, fmt.Errorf("unable to run migration: %w", err)
 	}
 
 	return db.NewStore(sqlDB), cancel, nil

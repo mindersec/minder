@@ -23,6 +23,7 @@ import (
 
 	"github.com/stacklok/minder/cmd/dev/app/container"
 	"github.com/stacklok/minder/cmd/dev/app/rule_type"
+	"github.com/stacklok/minder/cmd/dev/app/testserver"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -37,6 +38,7 @@ https://docs.stacklok.com/minder`,
 
 	cmd.AddCommand(rule_type.CmdRuleType())
 	cmd.AddCommand(container.CmdContainer())
+	cmd.AddCommand(testserver.CmdTestServer())
 
 	return cmd
 }
