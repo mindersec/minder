@@ -101,11 +101,11 @@ func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) 
 	}, nil
 }
 
-var userSubjectContextKey struct{}
+var userTokenContextKey struct{}
 
 // GetUserSubjectFromContext returns the user subject from the context, or nil
 func GetUserSubjectFromContext(ctx context.Context) string {
-	token, ok := ctx.Value(userSubjectContextKey).(openid.Token)
+	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
 	if !ok {
 		fmt.Printf("***\n")
 		fmt.Printf("no token in coGntext\n")
@@ -119,7 +119,7 @@ func GetUserSubjectFromContext(ctx context.Context) string {
 // the context if found and of the correct type
 func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool) {
 	var ret T
-	token, ok := ctx.Value(userSubjectContextKey).(openid.Token)
+	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
 	if !ok {
 		return ret, false
 	}
@@ -131,7 +131,7 @@ func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool)
 	return ret, ok
 }
 
-// WithAuthTokenContext stores the specified user subject in the context.
-func WithAuthTokenContext(ctx context.Context, subject openid.Token) context.Context {
-	return context.WithValue(ctx, userSubjectContextKey, subject)
+// WithAuthTokenContext stores the specified user-identifying token in the context.
+func WithAuthTokenContext(ctx context.Context, token openid.Token) context.Context {
+	return context.WithValue(ctx, userTokenContextKey, token)
 }
