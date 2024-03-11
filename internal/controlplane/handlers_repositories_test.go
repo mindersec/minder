@@ -146,7 +146,10 @@ func TestServer_RegisterRepository(t *testing.T) {
 			}
 
 			mockStore.EXPECT().
-				ListProvidersByProjectID(gomock.Any(), projectUUID).
+				GetParentProjects(gomock.Any(), projectUUID).
+				Return([]uuid.UUID{projectUUID}, nil)
+			mockStore.EXPECT().
+				ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectUUID}).
 				Return([]db.Provider{{
 					ID:         uuid.New(),
 					Name:       "github",

@@ -157,7 +157,7 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	require.NoError(t, err, "expected no error when creating project")
 
 	// setup provider
-	_, err = testQueries.CreateProvider(ctx, db.CreateProviderParams{
+	prov, err := testQueries.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       providerName,
 		ProjectID:  proj.ID,
 		Implements: []db.ProviderType{db.ProviderTypeRest},
@@ -168,11 +168,12 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 
 	// setup repo
 	repo, err := testQueries.CreateRepository(ctx, db.CreateRepositoryParams{
-		ProjectID: proj.ID,
-		Provider:  providerName,
-		RepoName:  "test-repo",
-		RepoOwner: "test-owner",
-		RepoID:    123,
+		ProjectID:  proj.ID,
+		Provider:   prov.Name,
+		ProviderID: prov.ID,
+		RepoName:   "test-repo",
+		RepoOwner:  "test-owner",
+		RepoID:     123,
 	})
 	require.NoError(t, err, "expected no error when creating repo")
 
