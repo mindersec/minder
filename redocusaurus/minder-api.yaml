@@ -1652,6 +1652,35 @@ definitions:
     properties:
       def:
         type: string
+  ListEvaluationResultsResponseEntityEvaluationResults:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EntityTypedId'
+      profiles:
+        type: array
+        items:
+          type: object
+          $ref: >-
+            #/definitions/ListEvaluationResultsResponseEntityProfileEvaluationResults
+  ListEvaluationResultsResponseEntityProfileEvaluationResults:
+    type: object
+    properties:
+      profileStatus:
+        $ref: '#/definitions/v1ProfileStatus'
+        title: >-
+          profile_status is the status of the profile - id, name, status,
+          last_updated
+      results:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1RuleEvaluationStatus'
+        title: >-
+          Note that some fields like profile_id and entity might be empty
+
+          Eventually we might replace this type with another one that fits the
+          API better
   OAuthServiceStoreProviderTokenBody:
     type: object
     properties:
@@ -2028,6 +2057,23 @@ definitions:
       uniquely identify an entity
 
       such as (repo, 1), (artifact, 2), ...
+  v1EvalResultAlert:
+    type: object
+    properties:
+      status:
+        type: string
+        title: status is the status of the alert
+      lastUpdated:
+        type: string
+        format: date-time
+        title: last_updated is the last time the alert was performed or attempted
+      details:
+        type: string
+        title: details is the description of the alert attempt if any
+      url:
+        type: string
+        title: url is the URL to the alert
+    title: EvalResultAlert holds the alert details for a given rule evaluation
   v1GetArtifactByIdResponse:
     type: object
     properties:
@@ -2134,14 +2180,14 @@ definitions:
   v1ListEvaluationResultsResponse:
     type: object
     properties:
-      status:
+      entities:
         type: array
         items:
           type: object
-          $ref: '#/definitions/v1RuleEvaluationStatus'
-        description: |-
-          status is the list of evaluation results.
-          Results will typically be grouped by profile and project.
+          $ref: '#/definitions/ListEvaluationResultsResponseEntityEvaluationResults'
+        description: >-
+          Each entity selected by the list request will have _single_ entry in
+          entities which contains results of all evaluations for each profile.
   v1ListProfilesResponse:
     type: object
     properties:
@@ -2546,6 +2592,14 @@ definitions:
       ruleDescriptionName:
         type: string
         title: rule_description_name is the name to describe the rule
+      alert:
+        $ref: '#/definitions/v1EvalResultAlert'
+        title: >-
+          alert holds the alert details if the rule generated an alert in an
+          external system
+      severity:
+        $ref: '#/definitions/v1Severity'
+        title: severity is the severity of the rule
     title: get the status of the rules for a given profile
   v1RuleType:
     type: object
