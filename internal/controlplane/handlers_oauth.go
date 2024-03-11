@@ -93,7 +93,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
 	// If the user's token doesn't have gh_id set yet, we'll pass it through for now.
 	tokenMatches.Add(ctx, 1, metric.WithAttributes(
-		attribute.Bool("stage", "issued")
+		attribute.String("stage", "issued"),
 		attribute.Bool("user-valid", user != ""),
 	))
 
@@ -256,7 +256,7 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 
 	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
 	tokenMatches.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("stage", "check")
+		attribute.String("stage", "check"),
 		attribute.Bool("user-valid", stateData.RemoteUser.Valid),
 	))
 	if stateData.RemoteUser.Valid {
