@@ -18,9 +18,11 @@ package repo
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // RepoCmd is the root command for the repo subcommands
@@ -37,5 +39,5 @@ func init() {
 	app.RootCmd.AddCommand(RepoCmd)
 	// Flags for all subcommands
 	RepoCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
-	RepoCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
+	cli.UseProjectFlag(RepoCmd.PersistentFlags(), viper.GetViper())
 }
