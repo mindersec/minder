@@ -19,7 +19,7 @@ jobs:
       - name: Copy server-config.yaml
         run: cp config/server-config.yaml.example server-config.yaml
       - name: Start containers
-        run: KO_DOCKER_REPO=ko.local make run-docker services="postgres migrate openfga" COMPOSE="docker compose"
+        run: KO_DOCKER_REPO=ko.local make run-docker services="postgres migrate openfga"
       - name: Wait for the migrations to complete
         timeout-minutes: 1
         run: |

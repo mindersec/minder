@@ -28,7 +28,7 @@ A new browser window will open and you will be prompted to log in to the Stacklo
 
 ## Logging in to your own Minder instance
 
-To log in to a Minder server which you are running (self-hosted), you will need to know the URL of the Minder server and of the Keycloak instance used for authentication.  If you are using [`docker-compose` to run Minder on your local machine](../run_minder_server/run_the_server.md), these addresses will be `localhost:8090` for Minder and `localhost:8081` for Keycloak.
+To log in to a Minder server which you are running (self-hosted), you will need to know the URL of the Minder server and of the Keycloak instance used for authentication.  If you are using [`docker compose` to run Minder on your local machine](../run_minder_server/run_the_server.md), these addresses will be `localhost:8090` for Minder and `localhost:8081` for Keycloak.
 
 You can log in to Minder using:
 

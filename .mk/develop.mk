@@ -26,17 +26,17 @@ run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 .PHONY: run-docker-teardown
-run-docker-teardown: ## teardown the docker-compose environment
+run-docker-teardown: ## teardown the docker compose environment
 ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
-	@echo "Running docker-compose down"
+	@echo "Running docker compose down"
 	@$(COMPOSE) down
 else
-	@echo "Skipping docker-compose down"
+	@echo "Skipping docker compose down"
 endif
 
 .PHONY: run-docker
-run-docker: run-docker-teardown ## run the app under docker-compose
-	@echo "Running docker-compose up $(services)..."
+run-docker: run-docker-teardown ## run the app under docker compose
+	@echo "Running docker compose up $(services)..."
 	@echo "Building the minder-server image (KO_DOCKER_REPO=$(KO_DOCKER_REPO))..."
 
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
@@ -47,8 +47,8 @@ run-docker: run-docker-teardown ## run the app under docker-compose
 	@rm .resolved-compose.yaml*
 
 .PHONY: stop-docker
-stop-docker: ## stop the app under docker-compose
-	@echo "Running docker-compose down $(services)..."
+stop-docker: ## stop the app under docker compose
+	@echo "Running docker compose down $(services)..."
 	@$(COMPOSE) down
 
 .PHONY: pre-commit

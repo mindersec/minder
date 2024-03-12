@@ -32,15 +32,15 @@ files with:
 make bootstrap
 ```
 
-Note that if you intend to run minder outside docker-compose, you should
+Note that if you intend to run minder outside `docker compose`, you should
 change the Keycloak and OpenFGA URLs in `server-config.yaml` to refer to
-localhost instead of the docker-compose names. There are comments inside the
+localhost instead of the `docker-compose.yaml` names. There are comments inside the
 config file which explain what needs to be changed.
 
 ## Start dependencies
 
 Note that the application requires a database to be running. This can be achieved
-using docker-compose:
+using docker compose:
 
 ```bash
 services="postgres keycloak migrate openfga" make run-docker

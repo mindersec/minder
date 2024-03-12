@@ -46,7 +46,7 @@ database:
 
 identity:
   server:
-    issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker-compose
+    issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker compose
     client_id: minder-server
     client_secret: secret
 
@@ -83,7 +83,7 @@ events:
   go-channel: {}
 
 authz:
-  api_url: http://openfga:8080 # Use http://localhost:8082 instead for running minder outside of docker-compose
+  api_url: http://openfga:8080 # Use http://localhost:8082 instead for running minder outside of docker compose
   store_name: minder
   auth:
     # Set to token for production
