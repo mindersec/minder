@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,9 +29,49 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+// GetProvider gets a given provider available in a specific project.
+func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderRequest) (*minderv1.GetProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name: req.Name,
+		// Note that this does not take the hierarchy into account in purpose.
+		// We want to get this call to be explicit for the given project.
+		Projects: []uuid.UUID{projectID},
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+	}
+
+	var cfg *structpb.Struct
+
+	if len(prov.Definition) > 0 {
+		cfg = &structpb.Struct{}
+		if err := protojson.Unmarshal(prov.Definition, cfg); err != nil {
+			return nil, status.Errorf(codes.Internal, "error unmarshalling provider definition: %v", err)
+		}
+	}
+
+	return &minderv1.GetProviderResponse{
+		Provider: &minderv1.Provider{
+			Name:       prov.Name,
+			Project:    projectID.String(),
+			Version:    prov.Version,
+			Implements: protobufProviderImplementsFromDB(ctx, prov),
+			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, prov),
+			Config:     cfg,
+		},
+	}, nil
+}
 
 // ListProviders lists the providers available in a specific project.
 func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersRequest) (*minderv1.ListProvidersResponse, error) {
@@ -87,6 +128,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			Project:    projectID.String(),
 			Version:    p.Version,
 			Implements: protobufProviderImplementsFromDB(ctx, p),
+			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, p),
 			Config:     cfg,
 		})
 	}
@@ -118,4 +160,18 @@ func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []mind
 	}
 
 	return impls
+}
+
+func protobufProviderAuthFlowFromDB(ctx context.Context, p db.Provider) []minderv1.AuthorizationFlow {
+	flows := make([]minderv1.AuthorizationFlow, 0, len(p.AuthFlows))
+	for _, a := range p.AuthFlows {
+		flow, ok := providers.DBToPBAuthFlow(a)
+		if !ok {
+			zerolog.Ctx(ctx).Error().Str("flow", string(a)).Msg("unknown authorization flow")
+			continue
+		}
+		flows = append(flows, flow)
+	}
+
+	return flows
 }

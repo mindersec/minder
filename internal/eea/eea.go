@@ -84,6 +84,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	}
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
+	projectID := inf.ProjectID
 
 	logger := zerolog.Ctx(ctx).Info()
 	logger = logger.Str("event", msg.UUID).
@@ -92,7 +93,11 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 	// We need to check that the resources still exist before attempting to lock them.
 	// TODO: consider whether we need foreign key checks on the locks.
-	if _, err := e.querier.GetRepositoryByID(ctx, repoID); err != nil {
+	_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Msg("Skipping event because repository no longer exists")
 			return nil, nil
@@ -282,7 +287,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	projID uuid.UUID,
 	provider string,
 ) (*entities.EntityInfoWrapper, error) {
-	r, err := util.GetRepository(ctx, e.querier, repoID)
+	r, err := util.GetRepository(ctx, e.querier, projID, repoID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
@@ -301,7 +306,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 	provider string,
 	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	a, err := util.GetArtifact(ctx, e.querier, repoID, artID.UUID)
+	a, err := util.GetArtifact(ctx, e.querier, projID, repoID, artID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
@@ -321,7 +326,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	provider string,
 	prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
+	pr, err := util.GetPullRequest(ctx, e.querier, projID, repoID, prID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}

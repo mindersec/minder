@@ -481,8 +481,16 @@ func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
 
 // GetRepository retrieves a repository from the database
 // and converts it to a protobuf
-func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID) (*minderv1.Repository, error) {
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+func GetRepository(
+	ctx context.Context,
+	store db.ExtendQuerier,
+	projectID uuid.UUID,
+	repoID uuid.UUID,
+) (*minderv1.Repository, error) {
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
@@ -492,9 +500,17 @@ func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID
 
 // GetArtifact retrieves an artifact and its versions from the database
 func GetArtifact(
-	ctx context.Context, store db.ExtendQuerier, repoID, artifactID uuid.UUID) (*minderv1.Artifact, error) {
+	ctx context.Context,
+	store db.ExtendQuerier,
+	projectID,
+	repoID,
+	artifactID uuid.UUID,
+) (*minderv1.Artifact, error) {
 	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("repository not found")
 	} else if err != nil {
@@ -526,10 +542,15 @@ func GetArtifact(
 func GetPullRequest(
 	ctx context.Context,
 	store db.ExtendQuerier,
-	repoID, pullRequestID uuid.UUID,
+	projectID,
+	repoID,
+	pullRequestID uuid.UUID,
 ) (*minderv1.PullRequest, error) {
 	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("repository not found")
 	} else if err != nil {

@@ -113,6 +113,7 @@ replies with OK
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| GetProvider | [GetProviderRequest](#minder-v1-GetProviderRequest) | [GetProviderResponse](#minder-v1-GetProviderResponse) |  |
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
 
 
@@ -684,6 +685,29 @@ get profile by id
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
 
 
+<a name="minder-v1-GetProviderRequest"></a>
+
+#### GetProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is evaluated. |
+| name | [string](#string) |  | name is the name of the provider to get. |
+
+
+<a name="minder-v1-GetProviderResponse"></a>
+
+#### GetProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was retrieved. |
+
+
 <a name="minder-v1-GetRepositoryByIdRequest"></a>
 
 #### GetRepositoryByIdRequest
@@ -1238,6 +1262,7 @@ Project API Objects
 | version | [string](#string) |  | version is the version of the provider. |
 | implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
+| auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1827,6 +1852,20 @@ user record to be returned
 
 
 
+
+
+<a name="minder-v1-AuthorizationFlow"></a>
+
+### AuthorizationFlow
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AUTHORIZATION_FLOW_UNSPECIFIED | 0 |  |
+| AUTHORIZATION_FLOW_NONE | 1 |  |
+| AUTHORIZATION_FLOW_USER_INPUT | 2 |  |
+| AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW | 3 |  |
+| AUTHORIZATION_FLOW_GITHUB_APP_FLOW | 4 |  |
 
 
 <a name="minder-v1-DepEcosystem"></a>
