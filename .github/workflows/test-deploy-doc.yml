@@ -2,8 +2,6 @@ name: Test documentation
 on:
   workflow_call:
   pull_request:
-    paths:
-      - "docs/**"
 jobs:
   test-deploy:
     name: Test doc deployment
