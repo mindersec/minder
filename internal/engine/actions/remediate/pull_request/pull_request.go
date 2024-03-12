@@ -306,6 +306,12 @@ func (r *Remediator) runGit(
 
 	refspec := refFromBranch(branchBaseName(title))
 
+	zerolog.Ctx(ctx).Debug().
+		Str("remote", guessRemote(repo)).
+		Str("refspec", refspec).
+		Str("token", r.ghCli.GetToken()[0:10]+"...").
+		Msg("Pushing changes")
+
 	var b bytes.Buffer
 	err = repo.PushContext(ctx,
 		&git.PushOptions{

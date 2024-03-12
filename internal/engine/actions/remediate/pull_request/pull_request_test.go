@@ -200,7 +200,9 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
-		GetToken().Return("token")
+		GetToken().Return("thisisalongtoken")
+	mockGitHub.EXPECT().
+		GetToken().Return("thisisalongtoken")
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 }
@@ -464,7 +466,9 @@ func TestPullRequestRemediate(t *testing.T) {
 				mockGitHub.EXPECT().
 					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 				mockGitHub.EXPECT().
-					GetToken().Return("token")
+					GetToken().Return("thisisalongtoken")
+				mockGitHub.EXPECT().
+					GetToken().Return("thisisalongtoken")
 				// this is the last call we expect to make. It returns existing PRs from this branch, so we
 				// stop after having updated the branch
 				mockGitHub.EXPECT().
