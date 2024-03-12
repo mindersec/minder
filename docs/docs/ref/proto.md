@@ -113,6 +113,7 @@ replies with OK
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| GetProvider | [GetProviderRequest](#minder-v1-GetProviderRequest) | [GetProviderResponse](#minder-v1-GetProviderResponse) |  |
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
 
 
@@ -682,6 +683,29 @@ get profile by id
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
+
+
+<a name="minder-v1-GetProviderRequest"></a>
+
+#### GetProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is evaluated. |
+| name | [string](#string) |  | name is the name of the provider to get. |
+
+
+<a name="minder-v1-GetProviderResponse"></a>
+
+#### GetProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was retrieved. |
 
 
 <a name="minder-v1-GetRepositoryByIdRequest"></a>
