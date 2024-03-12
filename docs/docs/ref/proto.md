@@ -102,6 +102,8 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
+| CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
+| DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
 
 
 <a name="minder-v1-ProvidersService"></a>
@@ -284,6 +286,29 @@ Profile service
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
+<a name="minder-v1-CreateProjectRequest"></a>
+
+#### CreateProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is created. |
+| name | [string](#string) |  | name is the name of the project to create. |
+
+
+<a name="minder-v1-CreateProjectResponse"></a>
+
+#### CreateProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was created. |
+
+
 <a name="minder-v1-CreateRuleTypeRequest"></a>
 
 #### CreateRuleTypeRequest
@@ -346,6 +371,28 @@ User service
 
 #### DeleteProfileResponse
 
+
+
+<a name="minder-v1-DeleteProjectRequest"></a>
+
+#### DeleteProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is deleted. |
+
+
+<a name="minder-v1-DeleteProjectResponse"></a>
+
+#### DeleteProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | project_id is the id of the project that was deleted. |
 
 
 <a name="minder-v1-DeleteRepositoryByIdRequest"></a>

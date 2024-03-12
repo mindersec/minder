@@ -659,6 +659,28 @@ service ProjectsService {
         };
     }
 
+    rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/projects"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_CREATE
+        };
+    }
+
+    rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/projects"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DELETE
+        };
+    }
 }
 
 service ProvidersService {
@@ -1604,6 +1626,29 @@ message ListProjectsRequest {
 
 message ListProjectsResponse {
     repeated Project projects = 1;
+}
+
+message CreateProjectRequest {
+    // context is the context in which the project is created.
+    Context context = 1;
+
+    // name is the name of the project to create.
+    string name = 2;
+}
+
+message CreateProjectResponse {
+    // project is the project that was created.
+    Project project = 1;
+}
+
+message DeleteProjectRequest {
+    // context is the context in which the project is deleted.
+    Context context = 1;
+}
+
+message DeleteProjectResponse {
+    // project_id is the id of the project that was deleted.
+    string project_id = 1;
 }
 
 message ListRolesRequest {
