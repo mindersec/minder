@@ -32,74 +32,72 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List the providers available in a specific project",
-	Long:  `The minder provider list command lists the providers available in a specific project.`,
-	RunE:  cli.GRPCClientWrapRunE(ListProviderCommand),
+var getCmd = &cobra.Command{
+	Use:   "get",
+	Short: "Get a given provider available in a specific project",
+	Long:  `The minder provider get command gets a given provider available in a specific project.`,
+	RunE:  cli.GRPCClientWrapRunE(GetProviderCommand),
 }
 
 func init() {
-	ProviderCmd.AddCommand(listCmd)
+	ProviderCmd.AddCommand(getCmd)
 
-	listCmd.Flags().StringP("output", "o", app.Table,
+	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
-
-	// TODO: implement pagination in CLI
+	getCmd.Flags().StringP("name", "n", "", "Name of the provider to get")
+	if err := getCmd.MarkFlagRequired("name"); err != nil {
+		panic(err)
+	}
 }
 
-// ListProviderCommand lists the providers available in a specific project
-func ListProviderCommand(ctx context.Context, _ *cobra.Command, conn *grpc.ClientConn) error {
-
+// GetProviderCommand lists the providers available in a specific project
+func GetProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProvidersServiceClient(conn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	name := viper.GetString("name")
 
-	cursor := ""
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
-	out := &minderv1.ListProvidersResponse{}
-
-	for {
-		resp, err := client.ListProviders(ctx, &minderv1.ListProvidersRequest{
-			Context: &minderv1.Context{
-				Project: &project,
-			},
-			Cursor: cursor,
-		})
-		if err != nil {
-			return err
-		}
-
-		out.Providers = append(out.Providers, resp.Providers...)
-
-		if resp.Cursor == "" {
-			break
-		}
-
-		cursor = resp.Cursor
+	out, err := client.GetProvider(ctx, &minderv1.GetProviderRequest{
+		Context: &minderv1.Context{
+			Project: &project,
+		},
+		Name: name,
+	})
+	if err != nil {
+		return cli.MessageAndError("Failed to get provider", err)
 	}
 
 	switch format {
 	case app.JSON:
-		out, err := util.GetJsonFromProto(out)
+		out, err := util.GetJsonFromProto(out.GetProvider())
 		if err != nil {
 			return err
 		}
 		fmt.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(out)
+		out, err := util.GetYamlFromProto(out.GetProvider())
 		if err != nil {
 			return err
 		}
 		fmt.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.ProviderList, nil)
-		for _, v := range out.Providers {
-			impls := getImplementsAsStrings(v)
+		t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
+		p := out.GetProvider()
 
-			t.AddRow(v.GetName(), v.GetProject(), v.GetVersion(), strings.Join(impls, ", "))
-		}
+		impls := getImplementsAsStrings(p)
+		afs := getAuthFlowsAsStrings(p)
+
+		t.AddRow("Name", p.GetName())
+		t.AddRow("Project", p.GetProject())
+		t.AddRow("Version", p.GetVersion())
+		t.AddRow("Implements", strings.Join(impls, ", "))
+		t.AddRow("Auth Flows", strings.Join(afs, ", "))
+
 		t.Render()
 		return nil
 	default:
