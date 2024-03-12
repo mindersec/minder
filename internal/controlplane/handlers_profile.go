@@ -603,7 +603,7 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, util.UserVisibleError(codes.InvalidArgument, "Malformed UUID")
 	}
 
-	params := db.UpdateProfileParams{ID: profileID}
+	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}
 
 	// we check the pointers explicitly because the zero value of a string is valid
 	// value that means "use default" and we want to distinguish that from "not set in the patch"
@@ -700,6 +700,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 
 	// Update top-level profile db object
 	profile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
+		ProjectID: entityCtx.Project.ID,
 		ID:        oldDBProfile.ID,
 		Remediate: validateActionType(in.GetRemediate()),
 		Alert:     validateActionType(in.GetAlert()),
