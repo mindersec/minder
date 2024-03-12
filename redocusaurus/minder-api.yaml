@@ -1964,6 +1964,15 @@ definitions:
       roleAssignment:
         $ref: '#/definitions/v1RoleAssignment'
         description: role_assignment is the role assignment that was created.
+  v1AuthorizationFlow:
+    type: string
+    enum:
+      - AUTHORIZATION_FLOW_UNSPECIFIED
+      - AUTHORIZATION_FLOW_NONE
+      - AUTHORIZATION_FLOW_USER_INPUT
+      - AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW
+      - AUTHORIZATION_FLOW_GITHUB_APP_FLOW
+    default: AUTHORIZATION_FLOW_UNSPECIFIED
   v1BuiltinType:
     type: object
     properties:
@@ -2466,6 +2475,13 @@ definitions:
       config:
         type: object
         description: config is the configuration of the provider.
+      authFlows:
+        type: array
+        items:
+          $ref: '#/definitions/v1AuthorizationFlow'
+        description: >-
+          auth_flows is the list of authorization flows that the provider
+          supports.
   v1ProviderType:
     type: string
     enum:
