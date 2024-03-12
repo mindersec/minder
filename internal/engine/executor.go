@@ -226,7 +226,12 @@ func (e *Executor) evalEntityEvent(
 	// this is a cache so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.
-	ingestCache := ingestcache.NewCache()
+	var ingestCache ingestcache.Cache
+	if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+		ingestCache = ingestcache.NewNoopCache()
+	} else {
+		ingestCache = ingestcache.NewCache()
+	}
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
