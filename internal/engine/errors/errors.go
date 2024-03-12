@@ -107,6 +107,13 @@ type ActionsError struct {
 	AlertMeta     json.RawMessage
 }
 
+// RemediationMetadata captures the metadata capturing the details of all
+// remediation types.
+type RemediationMetadata struct {
+	Status     db.RemediationStatusTypes
+	StatusData any
+}
+
 // AsRemediationStatus returs the remediation status from the actions error
 func (ae ActionsError) AsRemediationStatus() db.RemediationStatusTypes {
 	if ae.RemediateErr != nil {
@@ -118,19 +125,16 @@ func (ae ActionsError) AsRemediationStatus() db.RemediationStatusTypes {
 		return db.RemediationStatusTypesSuccess
 	}
 
-	remMetaData := map[string]any{}
+	metaData := RemediationMetadata{}
 
 	// If we can't parse the metadata, we return success as we have no error
-	if err := json.Unmarshal(ae.RemediateMeta, &remMetaData); err != nil {
+	if err := json.Unmarshal(ae.RemediateMeta, &metaData); err != nil {
 		return db.RemediationStatusTypesUnknown
 	}
 
 	// Bingo, status found. Use it.
-	if _, ok := remMetaData["status"]; ok {
-		if sv, ok := remMetaData["status"].(string); ok {
-			return db.RemediationStatusTypes(sv)
-		}
-		return db.RemediationStatusTypesUnknown
+	if metaData.Status != "" {
+		return metaData.Status
 	}
 
 	return db.RemediationStatusTypesSuccess
