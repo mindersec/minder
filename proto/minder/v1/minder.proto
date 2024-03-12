@@ -684,6 +684,17 @@ service ProjectsService {
 }
 
 service ProvidersService {
+    rpc GetProvider(GetProviderRequest) returns (GetProviderResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/providers/{name}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
+
     rpc ListProviders (ListProvidersRequest) returns (ListProvidersResponse) {
         option (google.api.http) = {
             get: "/api/v1/providers"
@@ -1709,6 +1720,18 @@ message RoleAssignment {
     optional string project = 4;
 
     reserved 3; // deprecated context
+}
+
+message GetProviderRequest {
+    // context is the context in which the provider is evaluated.
+    Context context = 1;
+    // name is the name of the provider to get.
+    string name = 2;
+}
+
+message GetProviderResponse {
+    // provider is the provider that was retrieved.
+    Provider provider = 1;
 }
 
 message ListProvidersRequest {

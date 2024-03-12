@@ -1255,6 +1255,57 @@
         ]
       }
     },
+    "/api/v1/providers/{name}": {
+      "get": {
+        "operationId": "ProvidersService_GetProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProviderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "name is the name of the provider to get.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/repositories": {
       "get": {
         "operationId": "RepositoryService_ListRepositories2",
@@ -3104,6 +3155,15 @@
             "$ref": "#/definitions/v1ProfileStatus"
           },
           "title": "profile_status is the status of the profile"
+        }
+      }
+    },
+    "v1GetProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider that was retrieved."
         }
       }
     },

@@ -1919,6 +1919,7 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ProvidersService_GetProvider_FullMethodName   = "/minder.v1.ProvidersService/GetProvider"
 	ProvidersService_ListProviders_FullMethodName = "/minder.v1.ProvidersService/ListProviders"
 )
 
@@ -1926,6 +1927,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProvidersServiceClient interface {
+	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error)
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
 }
 
@@ -1935,6 +1937,15 @@ type providersServiceClient struct {
 
 func NewProvidersServiceClient(cc grpc.ClientConnInterface) ProvidersServiceClient {
 	return &providersServiceClient{cc}
+}
+
+func (c *providersServiceClient) GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error) {
+	out := new(GetProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_GetProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error) {
@@ -1950,6 +1961,7 @@ func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProv
 // All implementations must embed UnimplementedProvidersServiceServer
 // for forward compatibility
 type ProvidersServiceServer interface {
+	GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error)
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
 	mustEmbedUnimplementedProvidersServiceServer()
 }
@@ -1958,6 +1970,9 @@ type ProvidersServiceServer interface {
 type UnimplementedProvidersServiceServer struct {
 }
 
+func (UnimplementedProvidersServiceServer) GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProvider not implemented")
+}
 func (UnimplementedProvidersServiceServer) ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProviders not implemented")
 }
@@ -1972,6 +1987,24 @@ type UnsafeProvidersServiceServer interface {
 
 func RegisterProvidersServiceServer(s grpc.ServiceRegistrar, srv ProvidersServiceServer) {
 	s.RegisterService(&ProvidersService_ServiceDesc, srv)
+}
+
+func _ProvidersService_GetProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).GetProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_GetProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).GetProvider(ctx, req.(*GetProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ProvidersService_ListProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1999,6 +2032,10 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "minder.v1.ProvidersService",
 	HandlerType: (*ProvidersServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetProvider",
+			Handler:    _ProvidersService_GetProvider_Handler,
+		},
 		{
 			MethodName: "ListProviders",
 			Handler:    _ProvidersService_ListProviders_Handler,
