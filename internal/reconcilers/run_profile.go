@@ -151,7 +151,7 @@ func (r *Reconciler) publishProfileInitEvents(
 		}
 	}
 
-	// after we've initialized repository profiles, let'r initialize artifacts
+	// after we've initialized repository profiles, let's initialize artifacts
 	// TODO(jakub): this should be done in an iterator of sorts
 	for i := range dbrepos {
 		pdb := &dbrepos[i]
