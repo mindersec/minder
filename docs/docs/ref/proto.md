@@ -81,6 +81,7 @@ replies with OK
 | ----------- | ------------ | ------------- | ------------|
 | CreateProfile | [CreateProfileRequest](#minder-v1-CreateProfileRequest) | [CreateProfileResponse](#minder-v1-CreateProfileResponse) |  |
 | UpdateProfile | [UpdateProfileRequest](#minder-v1-UpdateProfileRequest) | [UpdateProfileResponse](#minder-v1-UpdateProfileResponse) |  |
+| PatchProfile | [PatchProfileRequest](#minder-v1-PatchProfileRequest) | [PatchProfileResponse](#minder-v1-PatchProfileResponse) |  |
 | DeleteProfile | [DeleteProfileRequest](#minder-v1-DeleteProfileRequest) | [DeleteProfileResponse](#minder-v1-DeleteProfileResponse) |  |
 | ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
@@ -1105,6 +1106,31 @@ ListRuleTypesResponse is the response to list rule types.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
+
+
+<a name="minder-v1-PatchProfileRequest"></a>
+
+#### PatchProfileRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | The context in which the patch is applied. Provided explicitly so that the patch itself can be minimal and contain only the attribute to set, e.g. remediate=true |
+| id | [string](#string) |  | The id of the profile to patch. Same explanation about explicitness as for the context |
+| patch | [Profile](#minder-v1-Profile) |  | The patch to apply to the profile |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+
+
+<a name="minder-v1-PatchProfileResponse"></a>
+
+#### PatchProfileResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#minder-v1-Profile) |  |  |
 
 
 <a name="minder-v1-PrContents"></a>

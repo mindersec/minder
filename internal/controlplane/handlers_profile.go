@@ -230,7 +230,10 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
 	}
 
-	profile, err := s.store.GetProfileByID(ctx, parsedProfileID)
+	profile, err := s.store.GetProfileByID(ctx, db.GetProfileByIDParams{
+		ProjectID: entityCtx.Project.ID,
+		ID:        parsedProfileID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "profile not found")
@@ -238,7 +241,10 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	err = s.store.DeleteProfile(ctx, parsedProfileID)
+	err = s.store.DeleteProfile(ctx, db.DeleteProfileParams{
+		ID:        profile.ID,
+		ProjectID: entityCtx.Project.ID,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete profile: %s", err)
 	}
@@ -332,7 +338,7 @@ func getProfilePBFromDB(
 	if len(pols) == 0 {
 		return nil, fmt.Errorf("profile not found")
 	} else if len(pols) > 1 {
-		return nil, fmt.Errorf("failed to get profile: %w", err)
+		return nil, fmt.Errorf("expected only one profile, got %d", len(pols))
 	}
 
 	// This should be only one profile
@@ -578,6 +584,54 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	return res, nil
 }
 
+// PatchProfile updates a profile for a project with a partial request
+func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileRequest) (*minderv1.PatchProfileResponse, error) {
+	patch := ppr.GetPatch()
+	entityCtx := engine.EntityFromContext(ctx)
+
+	err := entityCtx.Validate(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	if ppr.GetId() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "profile ID must be specified")
+	}
+
+	profileID, err := uuid.Parse(ppr.GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "Malformed UUID")
+	}
+
+	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}
+
+	// we check the pointers explicitly because the zero value of a string is valid
+	// value that means "use default" and we want to distinguish that from "not set in the patch"
+	if patch.Remediate != nil {
+		params.Remediate = validateActionType(patch.GetRemediate())
+	}
+	if patch.Alert != nil {
+		params.Alert = validateActionType(patch.GetAlert())
+	}
+
+	// Update top-level profile db object
+	_, err = s.store.UpdateProfile(ctx, params)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.Internal, "error updating profile: %v", err)
+	}
+
+	updatedProfile, err := getProfilePBFromDB(ctx, profileID, entityCtx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
+	}
+
+	resp := &minderv1.PatchProfileResponse{
+		Profile: updatedProfile,
+	}
+
+	return resp, nil
+}
+
 // UpdateProfile updates a profile for a project
 //
 //nolint:gocyclo
@@ -646,6 +700,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 
 	// Update top-level profile db object
 	profile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
+		ProjectID: entityCtx.Project.ID,
 		ID:        oldDBProfile.ID,
 		Remediate: validateActionType(in.GetRemediate()),
 		Alert:     validateActionType(in.GetAlert()),
@@ -820,7 +875,7 @@ func getProfileFromPBForUpdateWithQuerier(
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	if profile.GetId() != "" {
-		return getProfileFromPBForUpdateByID(ctx, profile, querier)
+		return getProfileFromPBForUpdateByID(ctx, profile, entityCtx, querier)
 	}
 
 	return getProfileFromPBForUpdateByName(ctx, profile, entityCtx, querier)
@@ -829,6 +884,7 @@ func getProfileFromPBForUpdateWithQuerier(
 func getProfileFromPBForUpdateByID(
 	ctx context.Context,
 	profile *minderv1.Profile,
+	entityCtx engine.EntityContext,
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	id, err := uuid.Parse(profile.GetId())
@@ -836,7 +892,10 @@ func getProfileFromPBForUpdateByID(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
 	}
 
-	pdb, err := querier.GetProfileByIDAndLock(ctx, id)
+	pdb, err := querier.GetProfileByIDAndLock(ctx, db.GetProfileByIDAndLockParams{
+		ID:        id,
+		ProjectID: entityCtx.Project.ID,
+	})
 	if err != nil {
 		return nil, err
 	}

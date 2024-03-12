@@ -19,6 +19,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -450,6 +451,18 @@ service ProfileService {
         option (google.api.http) = {
             put: "/api/v1/profile"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_UPDATE
+        };
+    }
+
+    rpc PatchProfile (PatchProfileRequest) returns (PatchProfileResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/profile/{id}"
+            body: "patch"
         };
 
         option (rpc_options) = {
@@ -950,6 +963,25 @@ message UpdateProfileRequest {
 }
 
 message UpdateProfileResponse {
+    Profile profile = 1;
+}
+
+message PatchProfileRequest {
+    // The context in which the patch is applied. Provided explicitly
+    // so that the patch itself can be minimal and contain only
+    // the attribute to set, e.g. remediate=true
+    Context context = 1;
+    // The id of the profile to patch. Same explanation about explicitness
+    // as for the context
+    string id = 2;
+    // The patch to apply to the profile
+    Profile patch = 3;
+    // needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/
+    // is not exposed to the API user
+    google.protobuf.FieldMask update_mask = 4;
+}
+
+message PatchProfileResponse {
     Profile profile = 1;
 }
 

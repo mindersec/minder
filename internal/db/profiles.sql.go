@@ -132,11 +132,16 @@ func (q *Queries) CreateProfileForEntity(ctx context.Context, arg CreateProfileF
 
 const deleteProfile = `-- name: DeleteProfile :exec
 DELETE FROM profiles
-WHERE id = $1
+WHERE id = $1 AND project_id = $2
 `
 
-func (q *Queries) DeleteProfile(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteProfile, id)
+type DeleteProfileParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) DeleteProfile(ctx context.Context, arg DeleteProfileParams) error {
+	_, err := q.db.ExecContext(ctx, deleteProfile, arg.ID, arg.ProjectID)
 	return err
 }
 
@@ -236,11 +241,16 @@ func (q *Queries) GetEntityProfileByProjectAndName(ctx context.Context, arg GetE
 }
 
 const getProfileByID = `-- name: GetProfileByID :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1 AND project_id = $2
 `
 
-func (q *Queries) GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileByID, id)
+type GetProfileByIDParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfileByID, arg.ID, arg.ProjectID)
 	var i Profile
 	err := row.Scan(
 		&i.ID,
@@ -257,11 +267,16 @@ func (q *Queries) GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, er
 }
 
 const getProfileByIDAndLock = `-- name: GetProfileByIDAndLock :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1 FOR UPDATE
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE
 `
 
-func (q *Queries) GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileByIDAndLock, id)
+type GetProfileByIDAndLockParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDAndLockParams) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfileByIDAndLock, arg.ID, arg.ProjectID)
 	var i Profile
 	err := row.Scan(
 		&i.ID,
@@ -497,20 +512,26 @@ func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTyp
 
 const updateProfile = `-- name: UpdateProfile :one
 UPDATE profiles SET
-    remediate = $2,
-    alert = $3,
+    remediate = $3,
+    alert = $4,
     updated_at = NOW()
-WHERE id = $1 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
+WHERE id = $1 AND project_id = $2 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
 `
 
 type UpdateProfileParams struct {
 	ID        uuid.UUID      `json:"id"`
+	ProjectID uuid.UUID      `json:"project_id"`
 	Remediate NullActionType `json:"remediate"`
 	Alert     NullActionType `json:"alert"`
 }
 
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, updateProfile, arg.ID, arg.Remediate, arg.Alert)
+	row := q.db.QueryRowContext(ctx, updateProfile,
+		arg.ID,
+		arg.ProjectID,
+		arg.Remediate,
+		arg.Alert,
+	)
 	var i Profile
 	err := row.Scan(
 		&i.ID,

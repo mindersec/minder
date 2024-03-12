@@ -340,7 +340,7 @@ func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 any) *gomock.Ca
 }
 
 // DeleteProfile mocks base method.
-func (m *MockStore) DeleteProfile(arg0 context.Context, arg1 uuid.UUID) error {
+func (m *MockStore) DeleteProfile(arg0 context.Context, arg1 db.DeleteProfileParams) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteProfile", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -689,7 +689,7 @@ func (mr *MockStoreMockRecorder) GetParentProjectsUntil(arg0, arg1 any) *gomock.
 }
 
 // GetProfileByID mocks base method.
-func (m *MockStore) GetProfileByID(arg0 context.Context, arg1 uuid.UUID) (db.Profile, error) {
+func (m *MockStore) GetProfileByID(arg0 context.Context, arg1 db.GetProfileByIDParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProfileByID", arg0, arg1)
 	ret0, _ := ret[0].(db.Profile)
@@ -704,7 +704,7 @@ func (mr *MockStoreMockRecorder) GetProfileByID(arg0, arg1 any) *gomock.Call {
 }
 
 // GetProfileByIDAndLock mocks base method.
-func (m *MockStore) GetProfileByIDAndLock(arg0 context.Context, arg1 uuid.UUID) (db.Profile, error) {
+func (m *MockStore) GetProfileByIDAndLock(arg0 context.Context, arg1 db.GetProfileByIDAndLockParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProfileByIDAndLock", arg0, arg1)
 	ret0, _ := ret[0].(db.Profile)
