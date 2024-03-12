@@ -14,12 +14,21 @@
 
 package v1
 
-// ToString returns the string representation of the ProviderType
-func (provt ProviderType) ToString() string {
-	return enumToStringViaDescriptor(provt.Descriptor(), provt.Number())
-}
+import (
+	"google.golang.org/protobuf/proto"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+)
 
-// ToString returns the string representation of the AuthorizationFlow
-func (a AuthorizationFlow) ToString() string {
-	return enumToStringViaDescriptor(a.Descriptor(), a.Number())
+func enumToStringViaDescriptor(d protoreflect.EnumDescriptor, n protoreflect.EnumNumber) string {
+	implVal := d.Values().ByNumber(n)
+	if implVal == nil {
+		return ""
+	}
+	extension := proto.GetExtension(implVal.Options(), E_Name)
+	implName, ok := extension.(string)
+	if !ok {
+		return ""
+	}
+
+	return implName
 }

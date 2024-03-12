@@ -225,3 +225,19 @@ func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 		return minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
 	}
 }
+
+// DBToPBAuthFlow converts a database authorization flow to a protobuf authorization flow.
+func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
+	switch t {
+	case db.AuthorizationFlowNone:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_NONE, true
+	case db.AuthorizationFlowUserInput:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT, true
+	case db.AuthorizationFlowOauth2AuthorizationCodeFlow:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW, true
+	case db.AuthorizationFlowGithubAppFlow:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW, true
+	default:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_UNSPECIFIED, false
+	}
+}
