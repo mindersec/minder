@@ -232,7 +232,7 @@ func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
 		require.NoError(t, err)
 	}()
 
-	testutils.EnsureServiceHealthy(t, cfg.GRPC.Addr, cfg.HTTP.Addr, nil, false)
+	testutils.EnsureServiceHealthy(t, cfg.GRPC.Addr, cfg.HTTP.Addr, nil, true)
 
 	testw := zerolog.NewTestWriter(t)
 	l := zerolog.New(testw)
