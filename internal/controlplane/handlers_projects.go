@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/projects"
+	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -74,6 +75,11 @@ func (s *Server) CreateProject(
 ) (*minderv1.CreateProjectResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+
+	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, projectID) {
+		return nil, util.UserVisibleError(codes.PermissionDenied,
+			"project does not allow project hierarchy operations")
+	}
 
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
@@ -137,6 +143,11 @@ func (s *Server) DeleteProject(
 ) (*minderv1.DeleteProjectResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+
+	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, projectID) {
+		return nil, util.UserVisibleError(codes.PermissionDenied,
+			"project does not allow project hierarchy operations")
+	}
 
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
