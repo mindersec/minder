@@ -36,3 +36,6 @@ func (_ *noopMetrics) Init(_ db.Store) error {
 
 // AddWebhookEventTypeCount implements Metrics.AddWebhookEventTypeCount
 func (_ *noopMetrics) AddWebhookEventTypeCount(_ context.Context, _ *WebhookEventState) {}
+
+// AddTokenOpCount implements Metrics.AddTokenOpCount
+func (_ *noopMetrics) AddTokenOpCount(_ context.Context, _ string, _ bool) {}

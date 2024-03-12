@@ -204,7 +204,10 @@ func TestGetAuthorizationURL(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					ListProvidersByProjectID(gomock.Any(), projectID).
+					GetParentProjects(gomock.Any(), projectID).
+					Return([]uuid.UUID{projectID}, nil)
+				store.EXPECT().
+					ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
 					Return([]db.Provider{{
 						ID:   providerID,
 						Name: "github",

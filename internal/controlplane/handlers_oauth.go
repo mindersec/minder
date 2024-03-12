@@ -31,7 +31,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -47,16 +46,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func init() {
-	var err error
-	tokenMatches, err = tokenMeter.Int64Counter(
-		"token-checks",
-		metric.WithDescription("Number of times we check that the token userid matches the requested userid"))
-	if err != nil {
-		zerolog.Ctx(context.Background()).Error().Err(err).Msg("Failed to create token-checks counter")
-	}
-}
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string

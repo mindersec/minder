@@ -45,6 +45,10 @@ type Metrics interface {
 
 	// AddWebhookEventTypeCount adds a count to the webhook event type counter
 	AddWebhookEventTypeCount(context.Context, *WebhookEventState)
+
+	// AddTokenOpCount records a token operation (issued, check) and whether the
+	// github ID was present at the time of check.
+	AddTokenOpCount(context.Context, string, bool)
 }
 
 type metricsImpl struct {
@@ -188,12 +192,12 @@ func (m *metricsImpl) AddWebhookEventTypeCount(ctx context.Context, state *Webho
 	m.webhookEventTypeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
 }
 
-func (m *metricsImpl) AddTokenOpCount(ctx, stage string, hasId bool) {
+func (m *metricsImpl) AddTokenOpCount(ctx context.Context, stage string, hasId bool) {
 	if m.tokenOpCounter == nil {
 		return
 	}
 
 	m.tokenOpCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("stage", op),
+		attribute.String("stage", stage),
 		attribute.Bool("has-id", hasId)))
 }
