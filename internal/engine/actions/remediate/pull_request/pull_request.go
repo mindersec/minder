@@ -39,6 +39,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
@@ -232,32 +233,37 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
 
-	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
 		slug, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
 		if err != nil {
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
+
+		b, err := json.Marshal(map[string]any{
+			"status":      db.RemediationStatusTypesPending,
+			"status_data": slug,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("encoding remediation PR data: %w", err)
+		}
+
 		if slug != "" {
 			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			data := struct {
-				Status string
-				Data   any
-			}{
-				Status: "",
-				Data:   slug,
-			}
-			return json.Marshal(data)
+		} else if err := r.runGit(
+			ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText,
+		); err != nil {
+			return nil, err
 		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
+		return b, nil
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
-		remErr = nil
+		return nil, nil
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
-		remErr = errors.New("unexpected action")
+		return nil, errors.New("unexpected remediation action")
+	default:
+		return nil, errors.New("unknown remediation action")
 	}
-	return nil, remErr
 }
 
 func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
