@@ -211,6 +211,8 @@ func getRemediationStatusText(status string) string {
 		return "Skipped" // visually empty as we didn't have to remediate
 	case notAvailableStatus:
 		return "Not Available"
+	case pendingStatus:
+		return "Pending"
 	default:
 		return "Unknown"
 	}
