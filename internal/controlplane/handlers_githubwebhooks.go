@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -259,7 +260,7 @@ func (s *Server) registerWebhookForRepository(
 	}
 
 	// skip if we try to register a private repository
-	if repoGet.GetPrivate() && !projectAllowsPrivateRepos(ctx, s.store, projectID) {
+	if repoGet.GetPrivate() && !features.ProjectAllowsPrivateRepos(ctx, s.store, projectID) {
 		errorStr := "repository is private"
 		regResult.Status.Error = &errorStr
 		return regResult, nil
@@ -789,7 +790,7 @@ func getRepoInformationFromPayload(
 	// ignore processing webhooks for private repositories
 	isPrivate, ok := repoInfo["private"].(bool)
 	if ok {
-		if isPrivate && !projectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
+		if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
 			return db.Repository{}, errRepoIsPrivate
 		}
 	}
@@ -813,25 +814,4 @@ func parseRepoID(repoID any) (int64, error) {
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}
-}
-
-func projectAllowsPrivateRepos(ctx context.Context, store db.Store, projectID uuid.UUID) bool {
-	// we're throwing away the result because we're really not interested in what the feature
-	// sets, just that it's enabled
-	_, err := store.GetFeatureInProject(ctx, db.GetFeatureInProjectParams{
-		ProjectID: projectID,
-		Feature:   "private_repositories_enabled",
-	})
-	if errors.Is(err, sql.ErrNoRows) {
-		zerolog.Ctx(ctx).Debug().Msg("private repositories not enabled for project")
-		return false
-	} else if err != nil {
-		log.Printf("error getting features for project %s: %v", projectID, err)
-		return false
-	}
-
-	zerolog.Ctx(ctx).Debug().
-		Str("project_id", projectID.String()).
-		Msg("project allows private repositories")
-	return true
 }

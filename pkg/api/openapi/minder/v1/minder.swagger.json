@@ -1122,6 +1122,78 @@
         "tags": [
           "ProjectsService"
         ]
+      },
+      "delete": {
+        "operationId": "ProjectsService_DeleteProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectsService_CreateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
       }
     },
     "/api/v1/providers": {
@@ -2769,6 +2841,28 @@
         }
       }
     },
+    "v1CreateProjectRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the project is created."
+        },
+        "name": {
+          "type": "string",
+          "description": "name is the name of the project to create."
+        }
+      }
+    },
+    "v1CreateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was created."
+        }
+      }
+    },
     "v1CreateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -2826,6 +2920,15 @@
     },
     "v1DeleteProfileResponse": {
       "type": "object"
+    },
+    "v1DeleteProjectResponse": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "project_id is the id of the project that was deleted."
+        }
+      }
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",

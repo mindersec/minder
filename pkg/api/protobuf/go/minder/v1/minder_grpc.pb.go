@@ -1755,7 +1755,9 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProjectsService_ListProjects_FullMethodName = "/minder.v1.ProjectsService/ListProjects"
+	ProjectsService_ListProjects_FullMethodName  = "/minder.v1.ProjectsService/ListProjects"
+	ProjectsService_CreateProject_FullMethodName = "/minder.v1.ProjectsService/CreateProject"
+	ProjectsService_DeleteProject_FullMethodName = "/minder.v1.ProjectsService/DeleteProject"
 )
 
 // ProjectsServiceClient is the client API for ProjectsService service.
@@ -1763,6 +1765,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProjectsServiceClient interface {
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
+	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
 }
 
 type projectsServiceClient struct {
@@ -1782,11 +1786,31 @@ func (c *projectsServiceClient) ListProjects(ctx context.Context, in *ListProjec
 	return out, nil
 }
 
+func (c *projectsServiceClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
+	out := new(CreateProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_CreateProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error) {
+	out := new(DeleteProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_DeleteProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectsServiceServer is the server API for ProjectsService service.
 // All implementations must embed UnimplementedProjectsServiceServer
 // for forward compatibility
 type ProjectsServiceServer interface {
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
+	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
 	mustEmbedUnimplementedProjectsServiceServer()
 }
 
@@ -1796,6 +1820,12 @@ type UnimplementedProjectsServiceServer struct {
 
 func (UnimplementedProjectsServiceServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
+}
+func (UnimplementedProjectsServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
 }
 func (UnimplementedProjectsServiceServer) mustEmbedUnimplementedProjectsServiceServer() {}
 
@@ -1828,6 +1858,42 @@ func _ProjectsService_ListProjects_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectsService_CreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).CreateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_CreateProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).CreateProject(ctx, req.(*CreateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_DeleteProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).DeleteProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_DeleteProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectsService_ServiceDesc is the grpc.ServiceDesc for ProjectsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1838,6 +1904,14 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProjects",
 			Handler:    _ProjectsService_ListProjects_Handler,
+		},
+		{
+			MethodName: "CreateProject",
+			Handler:    _ProjectsService_CreateProject_Handler,
+		},
+		{
+			MethodName: "DeleteProject",
+			Handler:    _ProjectsService_DeleteProject_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/projects"
 )
 
 const (
@@ -161,7 +162,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 	// Fetching the projects for user before the deletion was made.
 	// This allows us to clean up the project from the database
 	// if there are no more role assignments for the project.
-	projects, err := authzClient.ProjectsForUser(ctx, userId)
+	projs, err := authzClient.ProjectsForUser(ctx, userId)
 	if err != nil {
 		return fmt.Errorf("error getting projects for user %v", err)
 	}
@@ -178,7 +179,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 		}
 	}
 
-	for _, proj := range projects {
+	for _, proj := range projs {
 		// Given that we've deleted the user from the authorization system,
 		// we can now check if there are any role assignments for the project.
 		as, err := authzClient.AssignmentsToProject(ctx, proj)
@@ -187,9 +188,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 		}
 
 		if len(as) == 0 {
-			// no role assignments for this project
-			// we can safely delete it.
-			if _, err := qtx.DeleteProject(ctx, proj); err != nil {
+			if err := projects.CleanUpUnmanagedProjects(ctx, proj, qtx, authzClient); err != nil {
 				return fmt.Errorf("error deleting project %v", err)
 			}
 		}
