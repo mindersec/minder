@@ -1,22 +1,23 @@
 ---
-title: minder project
+title: minder project list
 ---
-## minder project
+## minder project list
 
-Manage project within a minder control plane
+List the projects available to you within a minder control plane
 
 ### Synopsis
 
-The minder project commands manage projects within a minder control plane.
+The list command lists the projects available to you within a minder control plane.
 
 ```
-minder project [flags]
+minder project list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for project
+  -h, --help            help for list
+  -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
 ### Options inherited from parent commands
@@ -32,7 +33,5 @@ minder project [flags]
 
 ### SEE ALSO
 
-* [minder](minder.md)	 - Minder controls the hosted minder service
-* [minder project list](minder_project_list.md)	 - List the projects available to you within a minder control plane
-* [minder project role](minder_project_role.md)	 - Manage roles within a minder control plane
+* [minder project](minder_project.md)	 - Manage project within a minder control plane
 
