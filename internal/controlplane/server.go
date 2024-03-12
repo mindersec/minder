@@ -154,17 +154,18 @@ func NewServer(
 	}
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	s := &Server{
-		store:            store,
-		cfg:              cfg,
-		evt:              evt,
-		cryptoEngine:     eng,
-		vldtr:            vldtr,
-		mt:               metrics.NewNoopMetrics(),
-		provMt:           provtelemetry.NewNoopMetrics(),
-		profileValidator: profiles.NewValidator(store),
-		ruleTypes:        ruletypes.NewRuleTypeService(store),
-		repos:            github.NewRepositoryService(whManager, store, evt),
-		webhookManager:   whManager,
+		store:               store,
+		cfg:                 cfg,
+		evt:                 evt,
+		cryptoEngine:        eng,
+		vldtr:               vldtr,
+		providerAuthFactory: auth.NewOAuthConfig,
+		mt:                  metrics.NewNoopMetrics(),
+		provMt:              provtelemetry.NewNoopMetrics(),
+		profileValidator:    profiles.NewValidator(store),
+		ruleTypes:           ruletypes.NewRuleTypeService(store),
+		repos:               github.NewRepositoryService(whManager, store, evt),
+		webhookManager:      whManager,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

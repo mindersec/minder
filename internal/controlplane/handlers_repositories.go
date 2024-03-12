@@ -479,14 +479,6 @@ func (s *Server) getProjectIDAndClient(
 		return uuid.Nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
 
-	if !p.Implements(db.ProviderTypeGithub) {
-		return uuid.Nil, nil, util.UserVisibleError(
-			codes.InvalidArgument,
-			"provider %s is not supported for github webhook",
-			p.GetName(),
-		)
-	}
-
 	client, err := p.GetGitHub()
 	if err != nil {
 		return uuid.Nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
