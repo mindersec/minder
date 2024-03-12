@@ -349,14 +349,18 @@ func createServer(
 	clientCache.Set("", accessToken, db.ProviderTypeGithub, &stubGitHub{})
 
 	store := mockdb.NewMockStore(ctrl)
+	store.EXPECT().
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{projectID}, nil).
+		AnyTimes()
 
 	if providerFails {
 		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), projectID).
+			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
 			Return(nil, errDefault)
 	} else {
 		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), projectID).
+			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
 			Return([]db.Provider{{
 				ID:         uuid.New(),
 				Name:       "github",
