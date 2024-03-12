@@ -182,7 +182,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 	projectID := inf.ProjectID
 
 	// get project hierarchy
-	ph, err := e.querier.GetParentProjects(ctx, *projectID)
+	ph, err := e.querier.GetParentProjects(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("error getting project: %w", err)
 	}
@@ -207,7 +207,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID: *projectID,
+			ID: projectID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
@@ -231,7 +231,7 @@ func (e *Executor) evalEntityEvent(
 	defer e.releaseLockAndFlush(ctx, inf)
 
 	// Get profiles relevant to project
-	dbpols, err := e.querier.ListProfilesByProjectID(ctx, *inf.ProjectID)
+	dbpols, err := e.querier.ListProfilesByProjectID(ctx, inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting profiles: %w", err)
 	}

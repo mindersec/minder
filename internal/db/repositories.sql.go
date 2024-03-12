@@ -113,6 +113,7 @@ const getRepositoryByID = `-- name: GetRepositoryByID :one
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE id = $1
 `
 
+// avoid using this, where possible use GetRepositoryByIDAndProject instead
 func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error) {
 	row := q.db.QueryRowContext(ctx, getRepositoryByID, id)
 	var i Repository
@@ -139,17 +140,16 @@ func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Reposito
 }
 
 const getRepositoryByIDAndProject = `-- name: GetRepositoryByIDAndProject :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE id = $1 AND project_id = $2
 `
 
 type GetRepositoryByIDAndProjectParams struct {
-	Provider  string    `json:"provider"`
-	RepoID    int64     `json:"repo_id"`
+	ID        uuid.UUID `json:"id"`
 	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error) {
-	row := q.db.QueryRowContext(ctx, getRepositoryByIDAndProject, arg.Provider, arg.RepoID, arg.ProjectID)
+	row := q.db.QueryRowContext(ctx, getRepositoryByIDAndProject, arg.ID, arg.ProjectID)
 	var i Repository
 	err := row.Scan(
 		&i.ID,

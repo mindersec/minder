@@ -455,7 +455,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ID, dbArtifact.ID)
+	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbrepo.ID, dbArtifact.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifact with versions: %w", err)
 	}
