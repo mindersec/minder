@@ -107,9 +107,6 @@ var userTokenContextKey struct{}
 func GetUserSubjectFromContext(ctx context.Context) string {
 	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
 	if !ok {
-		fmt.Printf("***\n")
-		fmt.Printf("no token in coGntext\n")
-		fmt.Printf("***\n")
 		return ""
 	}
 	return token.Subject()

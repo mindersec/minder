@@ -30,7 +30,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
@@ -48,11 +47,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-// Track how often users who register a token are correlated with the
-// GitHub user from GetAuthorizationURL
-var tokenMeter = otel.Meter("enrolled-token")
-var tokenMatches metric.Int64Counter
 
 func init() {
 	var err error
@@ -92,10 +86,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
 	// If the user's token doesn't have gh_id set yet, we'll pass it through for now.
-	tokenMatches.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("stage", "issued"),
-		attribute.Bool("user-valid", user != ""),
-	))
+	s.mt.AddTokenOpCount(ctx, "issued", user != "")
 
 	// Generate a random nonce based state
 	state, err := mcrypto.GenerateNonce()
@@ -255,10 +246,7 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 	}
 
 	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
-	tokenMatches.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("stage", "check"),
-		attribute.Bool("user-valid", stateData.RemoteUser.Valid),
-	))
+	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
 	if stateData.RemoteUser.Valid {
 		if err := s.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
 			// TODO: make this prettier?
