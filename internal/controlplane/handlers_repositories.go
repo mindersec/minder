@@ -239,8 +239,6 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	projectID := getProjectID(ctx)
 
 	// read the repository
-	// assumption: everything is GitHub for now
-	// this assumption will be removed in a future PR
 	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
 		ID:        parsedRepositoryID,
 		ProjectID: projectID,
