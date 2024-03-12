@@ -84,22 +84,18 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	}
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
+	projectID := inf.ProjectID
 
 	logger := zerolog.Ctx(ctx).Info()
 	logger = logger.Str("event", msg.UUID).
 		Str("entity", inf.Type.ToString()).
 		Str("repository_id", repoID.String())
 
-	projectID := inf.ProjectID
-	if projectID == nil {
-		logger.Msg("Skipping event because it does not have a project ID")
-		return nil, nil
-	}
 	// We need to check that the resources still exist before attempting to lock them.
 	// TODO: consider whether we need foreign key checks on the locks.
 	_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
 		ID:        repoID,
-		ProjectID: *projectID,
+		ProjectID: projectID,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

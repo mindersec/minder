@@ -60,7 +60,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				ownership: map[string]string{RepositoryIDEventKey: repoID},
 			},
 			want: &EntityInfoWrapper{
-				ProjectID: &projectID,
+				ProjectID: projectID,
 				Entity: &pb.Repository{
 					Name:   "test",
 					RepoId: 123,
@@ -90,7 +90,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				},
 			},
 			want: &EntityInfoWrapper{
-				ProjectID: &projectID,
+				ProjectID: projectID,
 				Entity: &pb.Artifact{
 					ArtifactPk: artifactID,
 					Versions: []*pb.ArtifactVersion{
@@ -126,7 +126,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				},
 			},
 			want: &EntityInfoWrapper{
-				ProjectID: &projectID,
+				ProjectID: projectID,
 				Entity: &pb.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
