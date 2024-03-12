@@ -1005,6 +1005,64 @@
         "tags": [
           "ProfileService"
         ]
+      },
+      "patch": {
+        "operationId": "ProfileService_PatchProfile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProfileResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The id of the profile to patch. Same explanation about explicitness\nas for the context",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "patch",
+            "description": "The patch to apply to the profile",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1Profile"
+            }
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
       }
     },
     "/api/v1/profile_status": {
@@ -3362,6 +3420,14 @@
         }
       },
       "description": "ListRuleTypesResponse is the response to list rule types."
+    },
+    "v1PatchProfileResponse": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
+        }
+      }
     },
     "v1Profile": {
       "type": "object",
