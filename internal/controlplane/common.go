@@ -49,7 +49,12 @@ func getProviderFromRequestOrDefault(
 	in HasProtoContext,
 	projectId uuid.UUID,
 ) (db.Provider, error) {
-	providers, err := store.ListProvidersByProjectID(ctx, projectId)
+	// Allows us to take into account the hierarchy to find the provider
+	parents, err := store.GetParentProjects(ctx, projectId)
+	if err != nil {
+		return db.Provider{}, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
+	}
+	providers, err := store.ListProvidersByProjectID(ctx, parents)
 	if err != nil {
 		return db.Provider{}, status.Errorf(codes.InvalidArgument, "cannot retrieve providers: %s", err)
 	}

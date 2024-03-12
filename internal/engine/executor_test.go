@@ -101,16 +101,17 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// get project information
 	mockStore.EXPECT().
-		GetProjectByID(gomock.Any(), projectID).
-		Return(db.Project{
-			ID:   projectID,
-			Name: "test",
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{
+			projectID,
 		}, nil)
 
 	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:      providerName,
-			ProjectID: projectID,
+			Name: providerName,
+			Projects: []uuid.UUID{
+				projectID,
+			},
 		}).
 		Return(db.Provider{
 			ID:        providerID,

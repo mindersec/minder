@@ -37,8 +37,9 @@ INSERT INTO repositories (
     deploy_url,
     clone_url,
     default_branch,
-    license
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license
+    license,
+    provider_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id
 `
 
 type CreateRepositoryParams struct {
@@ -55,6 +56,7 @@ type CreateRepositoryParams struct {
 	CloneUrl      string         `json:"clone_url"`
 	DefaultBranch sql.NullString `json:"default_branch"`
 	License       sql.NullString `json:"license"`
+	ProviderID    uuid.UUID      `json:"provider_id"`
 }
 
 func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error) {
@@ -72,6 +74,7 @@ func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryPara
 		arg.CloneUrl,
 		arg.DefaultBranch,
 		arg.License,
+		arg.ProviderID,
 	)
 	var i Repository
 	err := row.Scan(
@@ -91,6 +94,7 @@ func (q *Queries) CreateRepository(ctx context.Context, arg CreateRepositoryPara
 		&i.UpdatedAt,
 		&i.DefaultBranch,
 		&i.License,
+		&i.ProviderID,
 	)
 	return i, err
 }
@@ -106,7 +110,7 @@ func (q *Queries) DeleteRepository(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRepositoryByID = `-- name: GetRepositoryByID :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories WHERE id = $1
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE id = $1
 `
 
 func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error) {
@@ -129,12 +133,13 @@ func (q *Queries) GetRepositoryByID(ctx context.Context, id uuid.UUID) (Reposito
 		&i.UpdatedAt,
 		&i.DefaultBranch,
 		&i.License,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getRepositoryByIDAndProject = `-- name: GetRepositoryByIDAndProject :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE provider = $1 AND repo_id = $2 AND project_id = $3
 `
 
 type GetRepositoryByIDAndProjectParams struct {
@@ -163,12 +168,13 @@ func (q *Queries) GetRepositoryByIDAndProject(ctx context.Context, arg GetReposi
 		&i.UpdatedAt,
 		&i.DefaultBranch,
 		&i.License,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getRepositoryByRepoID = `-- name: GetRepositoryByRepoID :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories WHERE repo_id = $1
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE repo_id = $1
 `
 
 func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error) {
@@ -191,12 +197,13 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repo
 		&i.UpdatedAt,
 		&i.DefaultBranch,
 		&i.License,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3 AND project_id = $4
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3 AND project_id = $4
 `
 
 type GetRepositoryByRepoNameParams struct {
@@ -231,12 +238,13 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 		&i.UpdatedAt,
 		&i.DefaultBranch,
 		&i.License,
+		&i.ProviderID,
 	)
 	return i, err
 }
 
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
 WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
 ORDER BY repo_name
 `
@@ -272,6 +280,7 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 			&i.UpdatedAt,
 			&i.DefaultBranch,
 			&i.License,
+			&i.ProviderID,
 		); err != nil {
 			return nil, err
 		}
@@ -287,7 +296,7 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 }
 
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license FROM repositories
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
 WHERE provider = $1 AND project_id = $2
   AND (repo_id >= $3 OR $3 IS NULL)
 ORDER BY project_id, provider, repo_id
@@ -332,6 +341,7 @@ func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepos
 			&i.UpdatedAt,
 			&i.DefaultBranch,
 			&i.License,
+			&i.ProviderID,
 		); err != nil {
 			return nil, err
 		}

@@ -12,8 +12,9 @@ INSERT INTO repositories (
     deploy_url,
     clone_url,
     default_branch,
-    license
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, sqlc.arg(default_branch), sqlc.arg(license)) RETURNING *;
+    license,
+    provider_id
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, sqlc.arg(default_branch), sqlc.arg(license), sqlc.arg(provider_id)) RETURNING *;
 
 -- name: GetRepositoryByID :one
 SELECT * FROM repositories WHERE id = $1;

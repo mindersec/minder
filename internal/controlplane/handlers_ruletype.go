@@ -194,9 +194,16 @@ func (s *Server) CreateRuleType(
 		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
 	}
 
+	// TODO: This will be removed once we decouple providers from rule types
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
 	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          in.GetName(),
 		Provider:      entityCtx.Provider.Name,
+		ProviderID:    provider.ID,
 		ProjectID:     entityCtx.Project.ID,
 		Description:   in.GetDescription(),
 		Definition:    def,
@@ -334,9 +341,14 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
+	ph, err := s.store.GetParentProjects(ctx, rtdb.ProjectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get project hierarchy: %s", err)
+	}
+
 	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      rtdb.Provider,
-		ProjectID: rtdb.ProjectID,
+		Name:     rtdb.Provider,
+		Projects: ph,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)

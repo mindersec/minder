@@ -55,7 +55,7 @@ func TestCreatePullRequest(t *testing.T) {
 	org := createRandomOrganization(t)
 	project := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, project.ID)
-	repo := createRandomRepository(t, project.ID, prov.Name)
+	repo := createRandomRepository(t, project.ID, prov)
 
 	pr := createRandomPullRequest(t, repo.ID)
 	require.NotEmpty(t, pr)
@@ -77,7 +77,7 @@ func TestUpsertPullRequest(t *testing.T) {
 	org := createRandomOrganization(t)
 	project := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, project.ID)
-	repo := createRandomRepository(t, project.ID, prov.Name)
+	repo := createRandomRepository(t, project.ID, prov)
 
 	pr1 := createRandomPullRequest(t, repo.ID)
 
@@ -102,7 +102,7 @@ func TestDeletePullRequest(t *testing.T) {
 	org := createRandomOrganization(t)
 	project := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, project.ID)
-	repo := createRandomRepository(t, project.ID, prov.Name)
+	repo := createRandomRepository(t, project.ID, prov)
 
 	pr1 := createRandomPullRequest(t, repo.ID)
 	require.NotEmpty(t, pr1)

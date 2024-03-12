@@ -98,10 +98,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error retrieving repository: %w", err)
 	}
 
-	prov, err := e.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      repository.Provider,
-		ProjectID: evt.Project,
-	})
+	prov, err := e.store.GetProviderByID(ctx, repository.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
@@ -110,7 +107,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, prov, e.store, e.crypteng, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

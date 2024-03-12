@@ -66,15 +66,15 @@ func (s *Server) CreateProfile(ctx context.Context,
 	}
 
 	entityCtx := engine.EntityFromContext(ctx)
+
+	// validate that project and provider are valid and exist in the db
 	err := entityCtx.Validate(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// If provider doesn't exist, return error
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID})
+	// TODO: This will be removed once we decouple providers from profiles
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -98,11 +98,12 @@ func (s *Server) CreateProfile(ctx context.Context,
 	qtx := s.store.GetQuerierWithTransaction(tx)
 
 	params := db.CreateProfileParams{
-		Provider:  provider.Name,
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.GetName(),
-		Remediate: validateActionType(in.GetRemediate()),
-		Alert:     validateActionType(in.GetAlert()),
+		Provider:   entityCtx.Provider.Name,
+		ProviderID: provider.ID,
+		ProjectID:  entityCtx.Project.ID,
+		Name:       in.GetName(),
+		Remediate:  validateActionType(in.GetRemediate()),
+		Alert:      validateActionType(in.GetAlert()),
 	}
 
 	// Create profile

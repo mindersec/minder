@@ -237,6 +237,7 @@ func TestCreateProfile(t *testing.T) {
 	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          "rule_type_1",
 		Provider:      provider.Name,
+		ProviderID:    provider.ID,
 		ProjectID:     dbproj.ID,
 		Definition:    []byte(`{"ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,

@@ -4,7 +4,9 @@ INSERT INTO profiles (
     project_id,
     remediate,
     alert,
-    name) VALUES ($1, $2, $3, $4, $5) RETURNING *;
+    name,
+    provider_id
+    ) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id)) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
