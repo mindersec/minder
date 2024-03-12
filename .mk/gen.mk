@@ -39,6 +39,7 @@ mock: ## generate mocks
 	mockgen -package mockcrypto -destination internal/crypto/mock/crypto.go github.com/stacklok/minder/internal/crypto Engine
 	mockgen -package mockevents -destination internal/events/mock/eventer.go github.com/stacklok/minder/internal/events Interface
 	mockgen -package mockghclients -destination internal/repositories/github/clients/mock/clients.go github.com/stacklok/minder/internal/repositories/github/clients GitHubRepoClient
+	mockgen -package mockghrepo -destination internal/repositories/github/mock/service.go github.com/stacklok/minder/internal/repositories/github RepositoryService
 
 .PHONY: cli-docs
 cli-docs: ## generate cli-docs

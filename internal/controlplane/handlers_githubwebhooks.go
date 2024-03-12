@@ -34,8 +34,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -299,42 +297,6 @@ func (s *Server) registerWebhookForRepository(
 	}
 
 	return regResult, nil
-}
-
-func (s *Server) deleteWebhookFromRepository(
-	ctx context.Context,
-	provider db.Provider,
-	dbrepo db.Repository,
-) error {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	providerBuilder, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	client, err := providerBuilder.GetGitHub()
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot create github client: %v", err)
-	}
-
-	webhookID := dbrepo.WebhookID
-	if webhookID.Valid {
-		err = s.webhookManager.DeleteWebhook(
-			ctx,
-			client,
-			dbrepo.RepoOwner,
-			dbrepo.RepoName,
-			webhookID.Int64,
-		)
-		if err != nil {
-			return status.Errorf(codes.Internal, "cannot delete hook: %v", err)
-		}
-	}
-
-	return nil
 }
 
 func (s *Server) parseGithubEventForProcessing(

@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/proto"
@@ -35,7 +37,10 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
+	ghrepo "github.com/stacklok/minder/internal/repositories/github"
+	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -234,6 +239,220 @@ func TestServer_RegisterRepository(t *testing.T) {
 	}
 }
 
+// lump both deletion endpoints together since they are so similar
+func TestServer_DeleteRepository(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name             string
+		RepoName         string
+		RepoID           string
+		RepoServiceSetup repoMockBuilder
+		ProviderFails    bool
+		ExpectedError    string
+	}{
+		{
+			Name:          "deletion fails when provider cannot be found",
+			RepoName:      repoOwnerAndName,
+			ProviderFails: true,
+			ExpectedError: "cannot retrieve providers",
+		},
+		{
+			Name:          "delete by name fails when name is malformed",
+			RepoName:      "I am not a repo name",
+			ExpectedError: "invalid repository name",
+		},
+		{
+			Name:          "delete by ID fails when ID is malformed",
+			RepoID:        "I am not a UUID",
+			ExpectedError: "invalid repository ID",
+		},
+		{
+			Name:             "deletion fails when repo is not found",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: newRepoService(withFailedDeleteByName(sql.ErrNoRows)),
+			ExpectedError:    "repository not found",
+		},
+		{
+			Name:             "deletion fails when repo service returns error",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: newRepoService(withFailedDeleteByName(errDefault)),
+			ExpectedError:    "unexpected error deleting repo",
+		},
+		{
+			Name:             "delete by ID fails when repo service returns error",
+			RepoID:           repoID,
+			RepoServiceSetup: newRepoService(withFailedDeleteByID(errDefault)),
+			ExpectedError:    "unexpected error deleting repo",
+		},
+		{
+			Name:             "delete by name succeeds",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: newRepoService(withSuccessfulDeleteByName),
+		},
+		{
+			Name:             "delete by ID succeeds",
+			RepoID:           repoID,
+			RepoServiceSetup: newRepoService(withSuccessfulDeleteByID),
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
+				Provider: engine.Provider{Name: ghprovider.Github},
+				Project:  engine.Project{ID: projectID},
+			})
+
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails)
+
+			var result string
+			var resultError error
+			var expectation string
+			if scenario.RepoName != "" {
+				req := &pb.DeleteRepositoryByNameRequest{
+					Name: scenario.RepoName,
+				}
+				res, err := server.DeleteRepositoryByName(ctx, req)
+				if res != nil {
+					result = res.Name
+					expectation = scenario.RepoName
+				}
+				resultError = err
+			} else {
+				req := &pb.DeleteRepositoryByIdRequest{
+					RepositoryId: scenario.RepoID,
+				}
+				res, err := server.DeleteRepositoryById(ctx, req)
+				if res != nil {
+					result = res.RepositoryId
+					expectation = scenario.RepoID
+				}
+				resultError = err
+			}
+
+			if scenario.ExpectedError == "" {
+				require.NoError(t, resultError)
+				require.Equal(t, result, expectation)
+			} else {
+				require.Empty(t, result)
+				require.ErrorContains(t, resultError, scenario.ExpectedError)
+			}
+		})
+	}
+}
+
+type (
+	repoServiceMock = *mockghrepo.MockRepositoryService
+	repoMockBuilder = func(*gomock.Controller) repoServiceMock
+)
+
+const (
+	repoOwnerAndName = "acme-corp/api-gateway"
+	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
+	accessToken      = "TOKEN"
+)
+
+var (
+	projectID  = uuid.New()
+	errDefault = errors.New("oh no")
+)
+
+func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
+	return func(ctrl *gomock.Controller) repoServiceMock {
+		mock := mockghrepo.NewMockRepositoryService(ctrl)
+		for _, opt := range opts {
+			opt(mock)
+		}
+		return mock
+	}
+}
+
+func withSuccessfulDeleteByName(mock repoServiceMock) {
+	withFailedDeleteByName(nil)(mock)
+}
+
+func withFailedDeleteByName(err error) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			DeleteRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(err)
+	}
+}
+
+func withSuccessfulDeleteByID(mock repoServiceMock) {
+	withFailedDeleteByID(nil)(mock)
+}
+
+func withFailedDeleteByID(err error) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			DeleteRepositoryByID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(err)
+	}
+}
+
+func createServer(
+	ctrl *gomock.Controller,
+	repoServiceSetup repoMockBuilder,
+	providerFails bool,
+) *Server {
+	var svc ghrepo.RepositoryService
+	if repoServiceSetup != nil {
+		svc = repoServiceSetup(ctrl)
+	}
+
+	// stubs needed for providers to work
+	// TODO: this provider logic should be better encapsulated from the controlplane
+	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
+	mockCryptoEngine.EXPECT().
+		DecryptOAuthToken(gomock.Any()).
+		Return(oauth2.Token{AccessToken: accessToken}, nil).
+		AnyTimes()
+	cancelable, cancel := context.WithCancel(context.Background())
+	clientCache := ratecache.NewRestClientCache(cancelable)
+	defer cancel()
+	clientCache.Set("", accessToken, db.ProviderTypeGithub, &StubGitHub{})
+
+	store := mockdb.NewMockStore(ctrl)
+	store.EXPECT().
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{projectID}, nil).
+		AnyTimes()
+
+	if providerFails {
+		store.EXPECT().
+			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
+			Return(nil, errDefault)
+	} else {
+		store.EXPECT().
+			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
+			Return([]db.Provider{{
+				ID:         uuid.New(),
+				Name:       "github",
+				Implements: []db.ProviderType{db.ProviderTypeGithub},
+				Version:    provinfv1.V1,
+			}}, nil).AnyTimes()
+		store.EXPECT().
+			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
+			Return(db.ProviderAccessToken{
+				EncryptedToken: "encryptedToken",
+			}, nil).AnyTimes()
+	}
+
+	return &Server{
+		store:           store,
+		repos:           svc,
+		cryptoEngine:    mockCryptoEngine,
+		restClientCache: clientCache,
+	}
+}
+
+// TODO: get rid of the need to stub out the entire GitHub client interface
 type StubGitHub struct {
 	ExpectedOwner string
 	ExpectedRepo  string
