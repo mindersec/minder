@@ -62,7 +62,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	l := zerolog.Ctx(ctx)
 	l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 
-	store, td, err := embedded.GetFakeStore("file://database/migrations")
+	store, td, err := embedded.GetFakeStore()
 	if err != nil {
 		return fmt.Errorf("unable to spawn embedded store: %w", err)
 	}

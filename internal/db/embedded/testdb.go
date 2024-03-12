@@ -22,10 +22,10 @@ import (
 	"os"
 
 	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
+	"github.com/stacklok/minder/database"
 	"github.com/stacklok/minder/internal/db"
 )
 
@@ -35,7 +35,7 @@ type CancelFunc func()
 
 // GetFakeStore returns a new embedded Postgres database and a cancel function
 // to clean up the database.
-func GetFakeStore(migrationUrl ...string) (db.Store, CancelFunc, error) {
+func GetFakeStore() (db.Store, CancelFunc, error) {
 	cfg := embeddedpostgres.DefaultConfig()
 	port, err := pickUnusedPort()
 	if err != nil {
@@ -70,11 +70,7 @@ func GetFakeStore(migrationUrl ...string) (db.Store, CancelFunc, error) {
 		return nil, cancel, fmt.Errorf("unable to ping database: %w", err)
 	}
 
-	configpath := "file://../../database/migrations"
-	if len(migrationUrl) > 0 {
-		configpath = migrationUrl[0]
-	}
-	mig, err := migrate.New(configpath, cfg.GetConnectionURL()+"?sslmode=disable")
+	mig, err := database.NewFromConnectionString(cfg.GetConnectionURL() + "?sslmode=disable")
 	if err != nil {
 		return nil, cancel, fmt.Errorf("unable to create migration: %w", err)
 	}
