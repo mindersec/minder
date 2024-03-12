@@ -28,6 +28,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
@@ -123,7 +124,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 			}`),
 		},
 		sql.NullString{},
-		token,
+		credentials.NewGitHubTokenCredential(token),
 	)
 
 	return pbuild.GetGitHub()

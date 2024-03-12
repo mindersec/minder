@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -134,7 +135,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 			}`),
 		},
 		sql.NullString{},
-		token,
+		credentials.NewGitHubTokenCredential(token),
 	))
 	inf := &entities.EntityInfoWrapper{
 		Entity: ent,

@@ -23,7 +23,6 @@ import (
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -31,22 +30,17 @@ import (
 
 // Git is the struct that contains the GitHub REST API client
 type Git struct {
-	token string
+	credential provifv1.GitCredential
 }
 
 // Ensure that the Git client implements the Git interface
 var _ provifv1.Git = (*Git)(nil)
 
 // NewGit creates a new GitHub client
-func NewGit(token string) *Git {
+func NewGit(token provifv1.GitCredential) *Git {
 	return &Git{
-		token: token,
+		credential: token,
 	}
-}
-
-// GetToken returns the token for the provider
-func (g *Git) GetToken() string {
-	return g.token
 }
 
 // Clone clones a git repository
@@ -59,13 +53,7 @@ func (g *Git) Clone(ctx context.Context, url, branch string) (*git.Repository, e
 		ReferenceName: plumbing.NewBranchReferenceName(branch),
 	}
 
-	if g.token != "" {
-		opts.Auth = &http.BasicAuth{
-			// the Username can be anything but it can't be empty
-			Username: "minder-user",
-			Password: g.token,
-		}
-	}
+	g.credential.AddToCloneOptions(opts)
 
 	if err := opts.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid clone options: %w", err)

@@ -32,6 +32,7 @@ import (
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 var (
@@ -529,12 +530,9 @@ func (c *GitHub) Do(ctx context.Context, req *http.Request) (*http.Response, err
 	return resp.Response, err
 }
 
-// GetToken returns the token used to authenticate with the GitHub API
-func (c *GitHub) GetToken() string {
-	if c.token != "" {
-		return c.token
-	}
-	return ""
+// GetCredential returns the credential used to authenticate with the GitHub API
+func (c *GitHub) GetCredential() provifv1.GitHubCredential {
+	return c.credential
 }
 
 // GetOwner returns the owner of the repository
@@ -734,6 +732,16 @@ func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 
 // Clone clones a GitHub repository
 func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
-	delegator := gitclient.NewGit(c.GetToken())
+	delegator := gitclient.NewGit(c.credential)
 	return delegator.Clone(ctx, cloneUrl, branch)
+}
+
+// AddAuthToPushOptions adds authorization to the push options
+func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.PushOptions) error {
+	username, err := c.GetUsername(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot get username: %w", err)
+	}
+	c.credential.AddToPushOptions(pushOptions, username)
+	return nil
 }
