@@ -62,7 +62,7 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 // handleProfileInitEvent handles a profile init event.
 // It is responsible for iterating over all registered repositories
 // for the project and sending a profile evaluation event for each one.
-func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
+func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	ctx := msg.Context()
 	prov := msg.Metadata.Get(events.ProviderTypeKey)
 
@@ -81,12 +81,12 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		return nil
 	}
 
-	projHierarchy, err := e.store.GetParentProjects(ctx, evt.Project)
+	projHierarchy, err := r.store.GetParentProjects(ctx, evt.Project)
 	if err != nil {
 		return fmt.Errorf("error getting project hierarchy: %w", err)
 	}
 
-	provInfo, err := e.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
+	provInfo, err := r.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
 		Name:     prov,
 		Projects: projHierarchy,
 	})
@@ -111,7 +111,7 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	}
 
 	zerolog.Ctx(ctx).Debug().Str("provider", prov).Msg("handling profile init event")
-	if err := e.publishProfileInitEvents(ctx, ectx); err != nil {
+	if err := r.publishProfileInitEvents(ctx, ectx); err != nil {
 		// We don't return an error since watermill will retry
 		// the message.
 		zerolog.Ctx(ctx).Error().Str("provider", prov).Msg("error publishing profile events")
@@ -121,11 +121,11 @@ func (e *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	return nil
 }
 
-func (s *Reconciler) publishProfileInitEvents(
+func (r *Reconciler) publishProfileInitEvents(
 	ctx context.Context,
 	ectx *engine.EntityContext,
 ) error {
-	dbrepos, err := s.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
+	dbrepos, err := r.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
 			Provider:  ectx.Provider.Name,
 			ProjectID: ectx.Project.ID,
@@ -142,7 +142,7 @@ func (s *Reconciler) publishProfileInitEvents(
 			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
-			Publish(s.evt)
+			Publish(r.evt)
 
 		// This is a non-fatal error, so we'll just log it
 		// and continue
@@ -151,11 +151,11 @@ func (s *Reconciler) publishProfileInitEvents(
 		}
 	}
 
-	// after we've initialized repository profiles, let's initialize artifacts
+	// after we've initialized repository profiles, let'r initialize artifacts
 	// TODO(jakub): this should be done in an iterator of sorts
 	for i := range dbrepos {
 		pdb := &dbrepos[i]
-		err := s.publishArtifactProfileInitEvents(ctx, ectx, pdb)
+		err := r.publishArtifactProfileInitEvents(ctx, ectx, pdb)
 		if err != nil {
 			return fmt.Errorf("publishProfileInitEvents: error publishing artifact events: %v", err)
 		}
@@ -164,12 +164,12 @@ func (s *Reconciler) publishProfileInitEvents(
 	return nil
 }
 
-func (s *Reconciler) publishArtifactProfileInitEvents(
+func (r *Reconciler) publishArtifactProfileInitEvents(
 	ctx context.Context,
 	ectx *engine.EntityContext,
 	dbrepo *db.Repository,
 ) error {
-	dbArtifacts, err := s.store.ListArtifactsByRepoID(ctx, dbrepo.ID)
+	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, dbrepo.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifacts: %w", err)
 	}
@@ -179,7 +179,7 @@ func (s *Reconciler) publishArtifactProfileInitEvents(
 	}
 	for _, dbA := range dbArtifacts {
 		// Get the artifact with all its versions as a protobuf
-		pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ID, dbA.ID)
+		pbArtifact, err := util.GetArtifact(ctx, r.store, dbrepo.ProjectID, dbrepo.ID, dbA.ID)
 		if err != nil {
 			return fmt.Errorf("error getting artifact versions: %w", err)
 		}
@@ -190,7 +190,7 @@ func (s *Reconciler) publishArtifactProfileInitEvents(
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).
 			WithArtifactID(dbA.ID).
-			Publish(s.evt)
+			Publish(r.evt)
 
 		// This is a non-fatal error, so we'll just log it
 		// and continue

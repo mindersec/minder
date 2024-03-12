@@ -241,7 +241,6 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	// assumption: everything is GitHub for now
 	// this assumption will be removed in a future PR
 	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		Provider:  github.Github,
 		ID:        parsedRepositoryID,
 		ProjectID: projectID,
 	})
@@ -330,7 +329,6 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 
 	// read the repository
 	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		Provider:  provider.Name,
 		ID:        parsedRepositoryID,
 		ProjectID: projectID,
 	})
