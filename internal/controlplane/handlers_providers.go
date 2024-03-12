@@ -87,6 +87,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			Project:    projectID.String(),
 			Version:    p.Version,
 			Implements: protobufProviderImplementsFromDB(ctx, p),
+			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, p),
 			Config:     cfg,
 		})
 	}
@@ -118,4 +119,18 @@ func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []mind
 	}
 
 	return impls
+}
+
+func protobufProviderAuthFlowFromDB(ctx context.Context, p db.Provider) []minderv1.AuthorizationFlow {
+	flows := make([]minderv1.AuthorizationFlow, 0, len(p.AuthFlows))
+	for _, a := range p.AuthFlows {
+		flow, ok := providers.DBToPBAuthFlow(a)
+		if !ok {
+			zerolog.Ctx(ctx).Error().Str("flow", string(a)).Msg("unknown authorization flow")
+			continue
+		}
+		flows = append(flows, flow)
+	}
+
+	return flows
 }
