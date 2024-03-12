@@ -240,22 +240,22 @@ func (r *Remediator) Do(
 			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
 		}
 
-		b, err := json.Marshal(map[string]any{
+		if slug == "" {
+			slug, err = r.runGit(
+				ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("creating remediation PR: %w", err)
+			}
+		} else {
+			zerolog.Ctx(ctx).Info().Msgf("PR %s already exists, won't create a new one", slug)
+		}
+
+		return json.Marshal(map[string]any{
 			"status":      db.RemediationStatusTypesPending,
 			"status_data": slug,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("encoding remediation PR data: %w", err)
-		}
 
-		if slug != "" {
-			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-		} else if err := r.runGit(
-			ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText,
-		); err != nil {
-			return nil, err
-		}
-		return b, nil
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
 		return nil, nil
@@ -284,33 +284,33 @@ func (r *Remediator) runGit(
 	modifier fsModifier,
 	pbRepo *pb.Repository,
 	title, body string,
-) error {
+) (prSlug, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
 
 	repo, err := git.Open(storer, fs)
 	if err != nil {
-		return fmt.Errorf("cannot open git repo: %w", err)
+		return "", fmt.Errorf("cannot open git repo: %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("cannot get worktree: %w", err)
+		return "", fmt.Errorf("cannot get worktree: %w", err)
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
 	username, err := r.ghCli.GetUsername(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
+		return "", fmt.Errorf("cannot get username: %w", err)
 	}
 
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get primary email: %w", err)
+		return "", fmt.Errorf("cannot get primary email: %w", err)
 	}
 
 	currentHeadReference, err := repo.Head()
 	if err != nil {
-		return fmt.Errorf("cannot get current HEAD: %w", err)
+		return "", fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
 
@@ -324,19 +324,19 @@ func (r *Remediator) runGit(
 		Create: true,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot checkout branch: %w", err)
+		return "", fmt.Errorf("cannot checkout branch: %w", err)
 	}
 
 	logger.Debug().Msg("Creating file entries")
 	changeEntries, err := modifier.modifyFs()
 	if err != nil {
-		return fmt.Errorf("cannot modifyFs: %w", err)
+		return "", fmt.Errorf("cannot modifyFs: %w", err)
 	}
 
 	logger.Debug().Msg("Staging changes")
 	for _, entry := range changeEntries {
 		if _, err := wt.Add(entry.Path); err != nil {
-			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+			return "", fmt.Errorf("cannot add file %s: %w", entry.Path, err)
 		}
 	}
 
@@ -349,7 +349,7 @@ func (r *Remediator) runGit(
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("cannot commit: %w", err)
+		return "", fmt.Errorf("cannot commit: %w", err)
 	}
 
 	refspec := refFromBranch(branchBaseName(title))
@@ -371,7 +371,7 @@ func (r *Remediator) runGit(
 			Progress: &b,
 		})
 	if err != nil {
-		return fmt.Errorf("cannot push: %w", err)
+		return "", fmt.Errorf("cannot push: %w", err)
 	}
 	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
 
@@ -380,26 +380,30 @@ func (r *Remediator) runGit(
 	// but the PR was not closed
 	prAlreadyExists, err := prFromBranchAlreadyExists(ctx, r.ghCli, pbRepo, branchBaseName(title))
 	if err != nil {
-		return fmt.Errorf("cannot check if PR from branch already exists: %w", err)
+		return "", fmt.Errorf("cannot check if PR from branch already exists: %w", err)
 	}
 
 	if prAlreadyExists {
 		zerolog.Ctx(ctx).Info().Msg("PR from branch already exists, won't create a new one")
-		return nil
+		return "", nil
 	}
 
-	_, err = r.ghCli.CreatePullRequest(
+	pr, err := r.ghCli.CreatePullRequest(
 		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
 		title, body,
 		refspec,
 		dflBranchTo,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create pull request: %w", err)
+		return "", fmt.Errorf("cannot create pull request: %w", err)
 	}
 
+	slug := prSlug(
+		fmt.Sprintf("github:%s/%s#%d", pbRepo.GetOwner(), pbRepo.GetName(), pr.GetNumber()),
+	)
+
 	zerolog.Ctx(ctx).Info().Msg("Pull request created")
-	return nil
+	return slug, nil
 }
 
 func guessRemote(gitRepo *git.Repository) string {
