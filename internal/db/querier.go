@@ -29,7 +29,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
-	DeleteProfile(ctx context.Context, id uuid.UUID) error
+	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
@@ -57,8 +57,8 @@ type Querier interface {
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
-	GetProfileByID(ctx context.Context, id uuid.UUID) (Profile, error)
-	GetProfileByIDAndLock(ctx context.Context, id uuid.UUID) (Profile, error)
+	GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error)
+	GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDAndLockParams) (Profile, error)
 	GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error)
 	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
 	GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error)

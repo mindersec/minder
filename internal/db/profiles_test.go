@@ -377,7 +377,10 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
 
-			err := testQueries.DeleteProfile(context.Background(), profile.ID)
+			err := testQueries.DeleteProfile(context.Background(), DeleteProfileParams{
+				ID:        profile.ID,
+				ProjectID: randomEntities.proj.ID,
+			})
 			require.NoError(t, err)
 		})
 	}
@@ -509,7 +512,11 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
 
-			err := testQueries.DeleteProfile(context.Background(), profile.ID)
+			err := testQueries.DeleteProfile(context.Background(), DeleteProfileParams{
+				ID:        profile.ID,
+				ProjectID: randomEntities.proj.ID,
+			})
+
 			require.NoError(t, err)
 		})
 	}

@@ -41,10 +41,10 @@ SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.pro
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one
-SELECT * FROM profiles WHERE id = $1;
+SELECT * FROM profiles WHERE id = $1 AND project_id = $2;
 
 -- name: GetProfileByIDAndLock :one
-SELECT * FROM profiles WHERE id = $1 FOR UPDATE;
+SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
 SELECT * FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE;
@@ -59,7 +59,7 @@ WHERE profiles.project_id = $1;
 
 -- name: DeleteProfile :exec
 DELETE FROM profiles
-WHERE id = $1;
+WHERE id = $1 AND project_id = $2;
 
 -- name: UpsertRuleInstantiation :one
 INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)

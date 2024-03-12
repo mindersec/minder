@@ -230,7 +230,10 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
 	}
 
-	profile, err := s.store.GetProfileByID(ctx, parsedProfileID)
+	profile, err := s.store.GetProfileByID(ctx, db.GetProfileByIDParams{
+		ProjectID: entityCtx.Project.ID,
+		ID:        parsedProfileID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Error(codes.NotFound, "profile not found")
@@ -238,7 +241,10 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	err = s.store.DeleteProfile(ctx, parsedProfileID)
+	err = s.store.DeleteProfile(ctx, db.DeleteProfileParams{
+		ID:        profile.ID,
+		ProjectID: entityCtx.Project.ID,
+	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete profile: %s", err)
 	}
@@ -820,7 +826,7 @@ func getProfileFromPBForUpdateWithQuerier(
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	if profile.GetId() != "" {
-		return getProfileFromPBForUpdateByID(ctx, profile, querier)
+		return getProfileFromPBForUpdateByID(ctx, profile, entityCtx, querier)
 	}
 
 	return getProfileFromPBForUpdateByName(ctx, profile, entityCtx, querier)
@@ -829,6 +835,7 @@ func getProfileFromPBForUpdateWithQuerier(
 func getProfileFromPBForUpdateByID(
 	ctx context.Context,
 	profile *minderv1.Profile,
+	entityCtx engine.EntityContext,
 	querier db.ExtendQuerier,
 ) (*db.Profile, error) {
 	id, err := uuid.Parse(profile.GetId())
@@ -836,7 +843,10 @@ func getProfileFromPBForUpdateByID(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
 	}
 
-	pdb, err := querier.GetProfileByIDAndLock(ctx, id)
+	pdb, err := querier.GetProfileByIDAndLock(ctx, db.GetProfileByIDAndLockParams{
+		ID:        id,
+		ProjectID: entityCtx.Project.ID,
+	})
 	if err != nil {
 		return nil, err
 	}
