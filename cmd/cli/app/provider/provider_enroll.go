@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/pkg/browser"
@@ -40,8 +39,8 @@ type Response struct {
 	Status string `json:"status"`
 }
 
-// MAX_CALLS is the maximum number of calls to the gRPC server before stopping.
-const MAX_CALLS = 300
+// MAX_WAIT is the maximum number of calls to the gRPC server before stopping.
+const MAX_WAIT = time.Duration(5 * time.Minute)
 
 var enrollCmd = &cobra.Command{
 	Use:   "enroll",
@@ -88,7 +87,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 		}
 	}
 
-	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_CALLS*time.Second)
+	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
 
 	if token != "" {
@@ -131,35 +130,30 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 		fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
 		cmd.Println("Please copy and paste the URL into a browser.")
 	}
-	openTime := time.Now().Unix()
+	openTime := time.Now()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	done := make(chan bool)
 
-	go callBackServer(oAuthCallbackCtx, cmd, provider, project, fmt.Sprintf("%d", port), &wg, client, openTime)
-	wg.Wait()
+	go callBackServer(oAuthCallbackCtx, cmd, provider, project, fmt.Sprintf("%d", port), done, client, openTime)
 
-	cmd.Println("Provider enrolled successfully")
+	success := <-done
+
+	if success {
+		cmd.Println("Provider enrolled successfully")
+	} else {
+		cmd.Println("Failed to enroll provider")
+	}
 	return nil
 }
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
 func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, project string, port string,
-	wg *sync.WaitGroup, client minderv1.OAuthServiceClient, since int64) {
+	done chan bool, client minderv1.OAuthServiceClient, openTime time.Time) {
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%s", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
 	}
-
-	go func() {
-		wg.Wait()
-		err := server.Close()
-		if err != nil {
-			// Handle the error appropriately, such as logging or returning an error message.
-			cmd.Printf("Error closing server: %s", err)
-		}
-	}()
 
 	// Start the server in a goroutine
 	cmd.Println("Listening for OAuth Login flow to complete on port", port)
@@ -167,41 +161,42 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, pr
 		_ = server.ListenAndServe()
 	}()
 
-	var stopServer bool
 	// Start a goroutine for periodic gRPC calls
-	go func() {
-		defer wg.Done()
-		calls := 0
-
-		for {
-			// Perform periodic gRPC calls
-			if stopServer {
-				// Check the stop condition and break the loop if necessary
-				break
-			}
-
-			time.Sleep(time.Second)
-			t := time.Unix(since, 0)
-			calls++
-
-			// create a shorter lived context for any client calls
-			clientCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-			defer cancel()
-
-			// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
-			res, err := client.VerifyProviderTokenFrom(clientCtx, &minderv1.VerifyProviderTokenFromRequest{
-				Context:   &minderv1.Context{Provider: &provider, Project: &project},
-				Timestamp: timestamppb.New(t),
-			})
-			if err == nil && res.Status == "OK" {
-				return
-			}
-			if err != nil || res.Status == "OK" || calls >= MAX_CALLS {
-				stopServer = true
-			}
+	defer func() {
+		if err := server.Close(); err != nil {
+			// Handle the error appropriately, such as logging or returning an error message.
+			cmd.Printf("Error closing server: %s", err)
 		}
+		close(done)
 	}()
 
+	for {
+		time.Sleep(time.Second)
+
+		// create a shorter lived context for any client calls
+		clientCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+
+		// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
+		res, err := client.VerifyProviderTokenFrom(clientCtx, &minderv1.VerifyProviderTokenFromRequest{
+			Context:   &minderv1.Context{Provider: &provider, Project: &project},
+			Timestamp: timestamppb.New(openTime),
+		})
+		if err == nil && res.Status == "OK" {
+			done <- true
+			return
+		}
+		if err != nil || res.Status == "OK" {
+			cmd.Printf("Error calling server: %s\n", err)
+			done <- false
+			break
+		}
+		if time.Now().After(openTime.Add(MAX_WAIT)) {
+			cmd.Printf("Timeout waiting for OAuth flow to complete...\n")
+			done <- false
+			break
+		}
+	}
 }
 
 func init() {
