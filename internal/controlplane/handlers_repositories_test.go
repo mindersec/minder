@@ -35,7 +35,6 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -234,48 +233,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 		})
 	}
 }
-
-type EventPayload struct {
-	Project    uuid.UUID
-	Repository int
-}
-
-type StubEventer struct {
-	Sent []*message.Message
-}
-
-// Close implements events.Interface.
-func (*StubEventer) Close() error {
-	panic("unimplemented")
-}
-
-// ConsumeEvents implements events.Interface.
-func (*StubEventer) ConsumeEvents(...events.Consumer) {
-	panic("unimplemented")
-}
-
-// Publish implements events.Interface.
-func (s *StubEventer) Publish(_ string, messages ...*message.Message) error {
-	s.Sent = append(s.Sent, messages...)
-	return nil
-}
-
-// Register implements events.Interface.
-func (*StubEventer) Register(string, message.NoPublishHandlerFunc, ...message.HandlerMiddleware) {
-	panic("unimplemented")
-}
-
-// Run implements events.Interface.
-func (*StubEventer) Run(context.Context) error {
-	panic("unimplemented")
-}
-
-// Running implements events.Interface.
-func (*StubEventer) Running() chan struct{} {
-	panic("unimplemented")
-}
-
-var _ events.Interface = (*StubEventer)(nil)
 
 type StubGitHub struct {
 	ExpectedOwner string
