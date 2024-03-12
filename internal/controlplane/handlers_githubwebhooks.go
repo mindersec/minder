@@ -39,8 +39,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -665,7 +665,7 @@ func getRepoInformationFromPayload(
 	// ignore processing webhooks for private repositories
 	isPrivate, ok := repoInfo["private"].(bool)
 	if ok {
-		if isPrivate && !repositories.ProjectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
+		if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, store, dbrepo.ProjectID) {
 			return db.Repository{}, errRepoIsPrivate
 		}
 	}

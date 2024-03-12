@@ -29,9 +29,9 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -364,7 +364,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
 	}
 
-	allowsPrivateRepos := repositories.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
+	allowsPrivateRepos := features.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
 	if !allowsPrivateRepos {
 		zerolog.Ctx(ctx).Info().Msg("filtering out private repositories")
 	} else {

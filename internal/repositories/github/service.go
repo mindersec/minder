@@ -28,9 +28,9 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/projects/features"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"
-	"github.com/stacklok/minder/internal/repositories"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -105,7 +105,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// skip if this is a private repo, and private repos are not enabled
-	if githubRepo.GetPrivate() && !repositories.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
+	if githubRepo.GetPrivate() && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
 		return nil, ErrPrivateRepoForbidden
 	}
 
