@@ -1238,6 +1238,7 @@ Project API Objects
 | version | [string](#string) |  | version is the version of the provider. |
 | implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
+| auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1827,6 +1828,20 @@ user record to be returned
 
 
 
+
+
+<a name="minder-v1-AuthorizationFlow"></a>
+
+### AuthorizationFlow
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AUTHORIZATION_FLOW_UNSPECIFIED | 0 |  |
+| AUTHORIZATION_FLOW_NONE | 1 |  |
+| AUTHORIZATION_FLOW_USER_INPUT | 2 |  |
+| AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW | 3 |  |
+| AUTHORIZATION_FLOW_GITHUB_APP_FLOW | 4 |  |
 
 
 <a name="minder-v1-DepEcosystem"></a>
