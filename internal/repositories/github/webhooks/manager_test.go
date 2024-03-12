@@ -16,20 +16,15 @@ package webhooks_test
 
 import (
 	"context"
-	"errors"
-	"net/http"
 	"testing"
 
-	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/config/server"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
-	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
-	"github.com/stacklok/minder/internal/util/ptr"
 )
 
 func TestWebhookManager_DeleteWebhook(t *testing.T) {
@@ -37,24 +32,24 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 
 	deletionScenarios := []struct {
 		Name          string
-		ClientSetup   mockBuilder
+		ClientSetup   cf.ClientMockBuilder
 		ShouldSucceed bool
 		ExpectedError string
 	}{
 		{
 			Name:          "DeleteWebhook returns error when deletion request fails",
-			ClientSetup:   newClient(withFailedDeletion),
+			ClientSetup:   cf.NewClientMock(cf.WithFailedDeletion),
 			ShouldSucceed: false,
 			ExpectedError: "error deleting hook",
 		},
 		{
 			Name:          "DeleteWebhook skips webhooks which cannot be found",
-			ClientSetup:   newClient(withNotFoundDeletion),
+			ClientSetup:   cf.NewClientMock(cf.WithNotFoundDeletion),
 			ShouldSucceed: true,
 		},
 		{
 			Name:          "DeleteWebhook successfully deletes a webhook",
-			ClientSetup:   newClient(withSuccessfulDeletion),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulDeletion),
 			ShouldSucceed: true,
 		},
 	}
@@ -69,7 +64,7 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
 			err := webhooks.NewWebhookManager(webhookConfig).
-				DeleteWebhook(ctx, client, repoOwner, repoName, hookID)
+				DeleteWebhook(ctx, client, cf.RepoOwner, cf.RepoName, cf.HookID)
 
 			if scenario.ShouldSucceed {
 				require.NoError(t, err)
@@ -85,47 +80,47 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 
 	creationScenarios := []struct {
 		Name          string
-		ClientSetup   mockBuilder
+		ClientSetup   cf.ClientMockBuilder
 		ShouldSucceed bool
 		ExpectedError string
 	}{
 		{
 			Name:          "CreateWebhook returns error when listing request fails",
-			ClientSetup:   newClient(withFailedList),
+			ClientSetup:   cf.NewClientMock(cf.WithFailedList),
 			ShouldSucceed: false,
 			ExpectedError: "error listing hooks",
 		},
 		{
 			Name:          "CreateWebhook returns error when webhook config cannot be parsed",
-			ClientSetup:   newClient(withSuccessfulList("")),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList("")),
 			ShouldSucceed: false,
 			ExpectedError: "unexpected hook config structure",
 		},
 		{
 			Name:          "CreateWebhook returns error when stale hook deletion fails",
-			ClientSetup:   newClient(withSuccessfulList(webhookURL), withFailedDeletion),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithFailedDeletion),
 			ShouldSucceed: false,
 			ExpectedError: "error deleting hook",
 		},
 		{
 			Name:          "CreateWebhook returns error when creation request fails",
-			ClientSetup:   newClient(withSuccessfulList(webhookURL), withSuccessfulDeletion, withFailedCreation),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithFailedCreation),
 			ShouldSucceed: false,
 			ExpectedError: "error creating hook",
 		},
 		{
-			Name:          "CreateWebhook successfully creates a new webhook for repo with no previous webhooks",
-			ClientSetup:   newClient(withNotFoundList, withSuccessfulCreation),
+			Name:          "CreateWebhook successfully creates a new webhook for repo cf.With no previous webhooks",
+			ClientSetup:   cf.NewClientMock(cf.WithNotFoundList, cf.WithSuccessfulCreation),
 			ShouldSucceed: true,
 		},
 		{
 			Name:          "CreateWebhook successfully creates a new webhook, ignoring other projects' webhooks",
-			ClientSetup:   newClient(withSuccessfulList("http://hook.foo.com/67890"), withSuccessfulCreation),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList("http://hook.foo.com/67890"), cf.WithSuccessfulCreation),
 			ShouldSucceed: true,
 		},
 		{
 			Name:          "CreateWebhook successfully creates a new webhook, and deletes stale hook",
-			ClientSetup:   newClient(withSuccessfulList(webhookURL), withSuccessfulDeletion, withSuccessfulCreation),
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithSuccessfulCreation),
 			ShouldSucceed: true,
 		},
 	}
@@ -140,12 +135,12 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
 			resultID, hook, err := webhooks.NewWebhookManager(webhookConfig).
-				CreateWebhook(ctx, client, repoOwner, repoName)
+				CreateWebhook(ctx, client, cf.RepoOwner, cf.RepoName)
 
 			if scenario.ShouldSucceed {
 				require.NoError(t, err)
-				require.Equal(t, result, hook)
-				// can't do much with the ID since it is a random UUID
+				require.Equal(t, cf.ResultHook, hook)
+				// can't do much cf.With the ID since it is a random UUID
 				// assert that it is in fact a string of a UUID
 				_, err := uuid.Parse(resultID)
 				require.NoError(t, err)
@@ -158,100 +153,11 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 	}
 }
 
-type clientMock = *mockghhook.MockGitHubWebhookClient
-type mockBuilder = func(*gomock.Controller) clientMock
-
-const (
-	repoOwner = "acme"
-	repoName  = "api-gateway"
-	hookID    = int64(12345)
-)
-
 var (
-	errTest       = errors.New("oh no")
 	webhookConfig = server.WebhookConfig{
 		ExternalWebhookURL: "https://example.com/api/v1/webhook/github",
 		ExternalPingURL:    "https://example.com/api/v1/health",
 		WebhookSecret:      "",
 	}
-	result     = &github.Hook{ID: ptr.Ptr[int64](hookID)}
 	webhookURL = webhookConfig.ExternalWebhookURL + "/12345"
 )
-
-func newClient(opts ...func(clientMock)) mockBuilder {
-	return func(ctrl *gomock.Controller) clientMock {
-		mock := mockghhook.NewMockGitHubWebhookClient(ctrl)
-		for _, opt := range opts {
-			opt(mock)
-		}
-		return mock
-	}
-}
-
-func withSuccessfulDeletion(mock *mockghhook.MockGitHubWebhookClient) {
-	stubDelete(mock, nil, nil)
-}
-
-func withFailedDeletion(mock clientMock) {
-	stubDelete(mock, nil, errTest)
-}
-
-func withNotFoundDeletion(mock clientMock) {
-	githubResp := &github.Response{
-		Response: &http.Response{
-			StatusCode: http.StatusNotFound,
-		},
-	}
-	stubDelete(mock, githubResp, errTest)
-}
-
-func stubDelete(mock clientMock, resp *github.Response, err error) {
-	mock.EXPECT().
-		DeleteHook(gomock.Any(), gomock.Eq(repoOwner), gomock.Eq(repoName), gomock.Eq(hookID)).
-		Return(resp, err)
-}
-
-func withSuccessfulList(url string) func(clientMock) {
-	hookConfig := map[string]any{
-		"url": url,
-	}
-	hooks := []*github.Hook{
-		{
-			ID:     ptr.Ptr(hookID),
-			Config: hookConfig,
-		},
-	}
-	return func(mock clientMock) {
-		stubList(mock, hooks, nil)
-	}
-}
-
-func withFailedList(mock clientMock) {
-	stubList(mock, []*github.Hook{}, errTest)
-}
-
-func withNotFoundList(mock clientMock) {
-	stubList(mock, []*github.Hook{}, ghprovider.ErrNotFound)
-}
-
-func stubList(mock clientMock, hooks []*github.Hook, err error) {
-	mock.EXPECT().
-		ListHooks(gomock.Any(), gomock.Eq(repoOwner), gomock.Eq(repoName)).
-		Return(hooks, err)
-}
-
-func withFailedCreation(mock clientMock) {
-	stubCreate(mock, nil, errTest)
-}
-
-func withSuccessfulCreation(mock clientMock) {
-	stubCreate(mock, result, nil)
-}
-
-func stubCreate(mock clientMock, hook *github.Hook, err error) {
-	// it would be nice to be able to make some assertions about the webhook
-	// config which gets passed here... this requires more investigation
-	mock.EXPECT().
-		CreateHook(gomock.Any(), gomock.Eq(repoOwner), gomock.Eq(repoName), gomock.Any()).
-		Return(hook, err)
-}

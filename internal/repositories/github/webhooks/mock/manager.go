@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	github "github.com/google/go-github/v56/github"
-	webhooks "github.com/stacklok/minder/internal/repositories/github/webhooks"
+	clients "github.com/stacklok/minder/internal/repositories/github/clients"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,7 +42,7 @@ func (m *MockWebhookManager) EXPECT() *MockWebhookManagerMockRecorder {
 }
 
 // CreateWebhook mocks base method.
-func (m *MockWebhookManager) CreateWebhook(arg0 context.Context, arg1 webhooks.GitHubWebhookClient, arg2, arg3 string) (string, *github.Hook, error) {
+func (m *MockWebhookManager) CreateWebhook(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2, arg3 string) (string, *github.Hook, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWebhook", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
@@ -58,7 +58,7 @@ func (mr *MockWebhookManagerMockRecorder) CreateWebhook(arg0, arg1, arg2, arg3 a
 }
 
 // DeleteWebhook mocks base method.
-func (m *MockWebhookManager) DeleteWebhook(arg0 context.Context, arg1 webhooks.GitHubWebhookClient, arg2, arg3 string, arg4 int64) error {
+func (m *MockWebhookManager) DeleteWebhook(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2, arg3 string, arg4 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteWebhook", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
