@@ -33,5 +33,8 @@ minder project [flags]
 ### SEE ALSO
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
+* [minder project create](minder_project_create.md)	 - Create a sub-project within a minder control plane
+* [minder project delete](minder_project_delete.md)	 - Delete a sub-project within a minder control plane
+* [minder project list](minder_project_list.md)	 - List the projects available to you within a minder control plane
 * [minder project role](minder_project_role.md)	 - Manage roles within a minder control plane
 
