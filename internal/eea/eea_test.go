@@ -212,7 +212,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent repo fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,
@@ -253,7 +253,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,
@@ -299,7 +299,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,
