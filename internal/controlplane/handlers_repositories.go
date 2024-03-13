@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // maxFetchLimit is the maximum number of repositories that can be fetched from the database in one call
@@ -312,40 +313,22 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	return &pb.GetRepositoryByNameResponse{Repository: r}, nil
 }
 
-// DeleteRepositoryById deletes a repository by name
-func (s *Server) DeleteRepositoryById(ctx context.Context,
-	in *pb.DeleteRepositoryByIdRequest) (*pb.DeleteRepositoryByIdResponse, error) {
+// DeleteRepositoryById deletes a repository by its UUID
+func (s *Server) DeleteRepositoryById(
+	ctx context.Context,
+	in *pb.DeleteRepositoryByIdRequest,
+) (*pb.DeleteRepositoryByIdResponse, error) {
 	parsedRepositoryID, err := uuid.Parse(in.RepositoryId)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
-	projectID := getProjectID(ctx)
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
-
-	// read the repository
-	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        parsedRepositoryID,
-		ProjectID: projectID,
+	err = s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
+		return s.repos.DeleteRepositoryByID(ctx, client, projectID, parsedRepositoryID)
 	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
-	}
-
-	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the id of the deleted repository
 	return &pb.DeleteRepositoryByIdResponse{
@@ -354,41 +337,22 @@ func (s *Server) DeleteRepositoryById(ctx context.Context,
 }
 
 // DeleteRepositoryByName deletes a repository by name
-func (s *Server) DeleteRepositoryByName(ctx context.Context,
-	in *pb.DeleteRepositoryByNameRequest) (*pb.DeleteRepositoryByNameResponse, error) {
+func (s *Server) DeleteRepositoryByName(
+	ctx context.Context,
+	in *pb.DeleteRepositoryByNameRequest,
+) (*pb.DeleteRepositoryByNameResponse, error) {
 	// split repo name in owner and name
 	fragments := strings.Split(in.Name, "/")
 	if len(fragments) != 2 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID := getProjectID(ctx)
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
-
-	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  provider.Name,
-		RepoOwner: fragments[0],
-		RepoName:  fragments[1],
-		ProjectID: projectID,
+	err := s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
+		return s.repos.DeleteRepositoryByName(ctx, client, projectID, fragments[0], fragments[1])
 	})
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return nil, err
-	}
-	err = s.deleteRepositoryAndWebhook(ctx, repo, provider)
 	if err != nil {
 		return nil, err
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	// return the response with the name of the deleted repository
 	return &pb.DeleteRepositoryByNameResponse{
@@ -491,28 +455,54 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	return out, nil
 }
 
-func (s *Server) deleteRepositoryAndWebhook(
+// TODO: this probably can probably be used elsewhere
+// returns project ID and github client - this flow of code exists in multiple
+// places
+func (s *Server) getProjectIDAndClient(
 	ctx context.Context,
-	repo db.Repository,
-	provider db.Provider,
-) error {
-	tx, err := s.store.BeginTransaction()
+	request HasProtoContext,
+) (uuid.UUID, v1.GitHub, error) {
+	projectID := getProjectID(ctx)
+
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, request, projectID)
 	if err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository")
-	}
-	defer s.store.Rollback(tx)
-
-	qtx := s.store.GetQuerierWithTransaction(tx)
-	if err := qtx.DeleteRepository(ctx, repo.ID); err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository: %v", err)
+		return uuid.Nil, nil, providerError(err)
 	}
 
-	if err := s.deleteWebhookFromRepository(ctx, provider, repo); err != nil {
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	if err != nil {
+		return uuid.Nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	client, err := p.GetGitHub()
+	if err != nil {
+		return uuid.Nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
+	}
+
+	return projectID, client, nil
+}
+
+// covers the common logic for the two varieties of repo deletion
+func (s *Server) deleteRepository(
+	ctx context.Context,
+	request HasProtoContext,
+	deletionMethod func(v1.GitHub, uuid.UUID) error,
+) error {
+	projectID, client, err := s.getProjectIDAndClient(ctx, request)
+	if err != nil {
 		return err
 	}
 
-	if err := s.store.Commit(tx); err != nil {
-		return status.Errorf(codes.Internal, "error deleting repository")
+	err = deletionMethod(client, projectID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
 	return nil
