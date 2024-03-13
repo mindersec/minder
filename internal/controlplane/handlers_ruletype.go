@@ -166,7 +166,7 @@ func (s *Server) CreateRuleType(
 		return nil, providerError(err)
 	}
 
-	newRuleType, err := s.ruleTypes.CreateRuleType(ctx, provider, crt.GetRuleType())
+	newRuleType, err := s.ruleTypes.CreateRuleType(ctx, entityCtx, provider, crt.GetRuleType())
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
@@ -198,7 +198,7 @@ func (s *Server) UpdateRuleType(
 		return nil, providerError(err)
 	}
 
-	updatedRuleType, err := s.ruleTypes.UpdateRuleType(ctx, provider, urt.GetRuleType())
+	updatedRuleType, err := s.ruleTypes.UpdateRuleType(ctx, entityCtx, provider, urt.GetRuleType())
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)

@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
+	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -155,10 +156,11 @@ func TestRuleTypeService(t *testing.T) {
 			var err error
 			var res *pb.RuleType
 			svc := ruletypes.NewRuleTypeService(store)
+			ectx := engine.EntityContext{}
 			if scenario.TestMethod == create {
-				res, err = svc.CreateRuleType(ctx, provider, scenario.RuleType)
+				res, err = svc.CreateRuleType(ctx, ectx, provider, scenario.RuleType)
 			} else if scenario.TestMethod == update {
-				res, err = svc.UpdateRuleType(ctx, provider, scenario.RuleType)
+				res, err = svc.UpdateRuleType(ctx, ectx, provider, scenario.RuleType)
 			} else {
 				t.Fatal("unexpected method value")
 			}
