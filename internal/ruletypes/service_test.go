@@ -156,9 +156,9 @@ func TestRuleTypeService(t *testing.T) {
 			var res *pb.RuleType
 			svc := ruletypes.NewRuleTypeService(store)
 			if scenario.TestMethod == create {
-				res, err = svc.CreateRuleType(ctx, provider, scenario.RuleType)
+				res, err = svc.CreateRuleType(ctx, projectID, provider, scenario.RuleType)
 			} else if scenario.TestMethod == update {
-				res, err = svc.UpdateRuleType(ctx, provider, scenario.RuleType)
+				res, err = svc.UpdateRuleType(ctx, projectID, provider, scenario.RuleType)
 			} else {
 				t.Fatal("unexpected method value")
 			}
@@ -190,6 +190,7 @@ const (
 
 var (
 	ruleTypeID = uuid.New()
+	projectID  = uuid.New()
 	provider   = db.Provider{
 		ID:   uuid.New(),
 		Name: github.Github,
