@@ -17,14 +17,12 @@ package profile
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -43,11 +41,6 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	id := viper.GetString("id")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413

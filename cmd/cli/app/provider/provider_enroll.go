@@ -28,7 +28,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -61,11 +60,6 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	token := viper.GetString("token")
 	owner := viper.GetString("owner")
 	yesFlag := viper.GetBool("yes")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413

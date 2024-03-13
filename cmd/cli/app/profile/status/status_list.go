@@ -49,11 +49,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	ruleType := viper.GetString("ruleType")
 	ruleName := viper.GetString("ruleName")
 
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
-
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))

@@ -34,7 +34,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/auth"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -159,9 +158,6 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 	defer span.End()
 
 	provider := pathParams["provider"]
-	if !app.IsProviderSupported(provider) {
-		return fmt.Errorf("provider %s is not supported yet", provider)
-	}
 
 	// Check the nonce to make sure it's valid
 	valid, err := mcrypto.IsNonceValid(state, s.cfg.Auth.NoncePeriod)

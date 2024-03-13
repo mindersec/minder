@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
@@ -49,10 +48,6 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	inputRepoList := viper.GetString("name")
-
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
