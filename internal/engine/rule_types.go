@@ -308,7 +308,7 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	var seval minderv1.Severity_Value
 
 	if err := seval.FromString(string(rt.SeverityValue)); err != nil {
-		seval = minderv1.Severity_VALUE_UNKNOWN
+		seval = minderv1.Severity_VALUE_LOW
 	}
 
 	return &minderv1.RuleType{
