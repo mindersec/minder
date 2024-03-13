@@ -17,6 +17,7 @@ package container
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -121,7 +122,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 				"github": {}
 			}`),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		token,
 	)
 

@@ -18,6 +18,7 @@
 package ingester
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
@@ -175,7 +176,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 	"github": {}
 }`),
 				},
-				db.ProviderAccessToken{},
+				sql.NullString{},
 				"token",
 			))
 			if tt.wantErr {

@@ -70,19 +70,20 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store           db.Store
-	cfg             *serverconfig.Config
-	evt             events.Interface
-	mt              metrics.Metrics
-	provMt          provtelemetry.ProviderMetrics
-	grpcServer      *grpc.Server
-	vldtr           auth.JwtValidator
-	OAuth2          *oauth2.Config
-	ClientID        string
-	ClientSecret    string
-	authzClient     authz.Client
-	cryptoEngine    crypto.Engine
-	restClientCache ratecache.RestClientCache
+	store               db.Store
+	cfg                 *serverconfig.Config
+	evt                 events.Interface
+	mt                  metrics.Metrics
+	provMt              provtelemetry.ProviderMetrics
+	grpcServer          *grpc.Server
+	vldtr               auth.JwtValidator
+	OAuth2              *oauth2.Config
+	providerAuthFactory func(string, bool) (*oauth2.Config, error)
+	ClientID            string
+	ClientSecret        string
+	authzClient         authz.Client
+	cryptoEngine        crypto.Engine
+	restClientCache     ratecache.RestClientCache
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
@@ -146,15 +147,16 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	s := &Server{
-		store:            store,
-		cfg:              cfg,
-		evt:              evt,
-		cryptoEngine:     eng,
-		vldtr:            vldtr,
-		mt:               metrics.NewNoopMetrics(),
-		provMt:           provtelemetry.NewNoopMetrics(),
-		profileValidator: profiles.NewValidator(store),
-		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
+		store:               store,
+		cfg:                 cfg,
+		evt:                 evt,
+		cryptoEngine:        eng,
+		vldtr:               vldtr,
+		providerAuthFactory: auth.NewOAuthConfig,
+		mt:                  metrics.NewNoopMetrics(),
+		provMt:              provtelemetry.NewNoopMetrics(),
+		profileValidator:    profiles.NewValidator(store),
+		webhookManager:      webhooks.NewWebhookManager(cfg.WebhookConfig),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
