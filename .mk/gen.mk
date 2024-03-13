@@ -35,9 +35,10 @@ mock: ## generate mocks
 	mockgen -package mockgh -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
 	mockgen -package auth -destination internal/auth/mock/jwtauth.go github.com/stacklok/minder/internal/auth JwtValidator,KeySetFetcher
 	mockgen -package mockverify -destination internal/verifier/mock/verify.go github.com/stacklok/minder/internal/verifier/verifyif ArtifactVerifier
-	mockgen -package mockghhook -destination internal/repositories/github/webhooks/mock/client.go github.com/stacklok/minder/internal/repositories/github/webhooks GitHubWebhookClient
 	mockgen -package mockghhook -destination internal/repositories/github/webhooks/mock/manager.go github.com/stacklok/minder/internal/repositories/github/webhooks WebhookManager
 	mockgen -package mockcrypto -destination internal/crypto/mock/crypto.go github.com/stacklok/minder/internal/crypto Engine
+	mockgen -package mockevents -destination internal/events/mock/eventer.go github.com/stacklok/minder/internal/events Interface
+	mockgen -package mockghclients -destination internal/repositories/github/clients/mock/clients.go github.com/stacklok/minder/internal/repositories/github/clients GitHubRepoClient
 
 .PHONY: cli-docs
 cli-docs: ## generate cli-docs
