@@ -50,11 +50,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	entityType := viper.GetString("entity-type")
 	format := viper.GetString("output")
 
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
-
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
