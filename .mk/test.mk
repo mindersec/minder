@@ -17,7 +17,7 @@
 # in future, we may want to parse these from a file instead of hardcoding them
 # in the Makefile
 COVERAGE_EXCLUSIONS="internal/db\|/mock/"
-COVERAGE_PACKAGES=./internal/...,./cmd/...
+COVERAGE_PACKAGES=./internal/...
 
 .PHONY: clean
 clean: ## clean up environment
@@ -33,7 +33,11 @@ test-silent: clean init-examples ## run tests in a silent mode (errors only outp
 
 .PHONY: cover
 cover: init-examples ## display test coverage
-	go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
+	# as of the time of writing, there is a bug in the new coverage logic
+	# implemented in go 1.22. The recommended workaround is to disable the new
+	# coverage logic until this is fixed.
+	# See: https://github.com/golang/go/issues/65653
+	GOEXPERIMENT=nocoverageredesign go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
 	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
 	rm coverage.out.tmp
 	go tool cover -func=coverage.out
