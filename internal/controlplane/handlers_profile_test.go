@@ -320,10 +320,11 @@ func TestCreateProfile(t *testing.T) {
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})
+			evts := &StubEventer{}
 			s := &Server{
-				store:            dbStore,
-				profileValidator: profiles.NewValidator(dbStore),
-				evt:              &StubEventer{},
+				store:    dbStore,
+				profiles: profiles.NewProfileService(dbStore, evts),
+				evt:      evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)

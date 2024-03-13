@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -33,26 +32,9 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-// validateActionType returns the appropriate remediate type or the
-// NULL DB type if the input is invalid, thus letting the server run
-// the profile with the default remediate type.
-func validateActionType(r string) db.NullActionType {
-	switch r {
-	case "on":
-		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
-	case "off":
-		return db.NullActionType{ActionType: db.ActionTypeOff, Valid: true}
-	case "dry_run":
-		return db.NullActionType{ActionType: db.ActionTypeDryRun, Valid: true}
-	}
-
-	return db.NullActionType{Valid: false}
-}
 
 // CreateProfile creates a profile for a project
 func (s *Server) CreateProfile(ctx context.Context,
@@ -79,140 +61,17 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	rulesInProf, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
+	newProfile, err := s.profiles.CreateProfile(ctx, entityCtx.Project.ID, &provider, in)
 	if err != nil {
+		// assumption: service layer is setting meaningful errors
 		return nil, err
 	}
 
-	// Adds default rule names, if not present
-	prof.PopulateRuleNames(in)
-
-	// Now that we know it's valid, let's persist it!
-	tx, err := s.store.BeginTransaction()
-	if err != nil {
-		log.Printf("error starting transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-	defer s.store.Rollback(tx)
-
-	qtx := s.store.GetQuerierWithTransaction(tx)
-
-	params := db.CreateProfileParams{
-		Provider:   entityCtx.Provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  entityCtx.Project.ID,
-		Name:       in.GetName(),
-		Remediate:  validateActionType(in.GetRemediate()),
-		Alert:      validateActionType(in.GetAlert()),
-	}
-
-	// Create profile
-	profile, err := qtx.CreateProfile(ctx, params)
-	if db.ErrIsUniqueViolation(err) {
-		log.Printf("profile already exists: %v", err)
-		return nil, util.UserVisibleError(codes.AlreadyExists, "profile already exists")
-	} else if err != nil {
-		log.Printf("error creating profile: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-
-	// Create entity rules entries
-	for ent, entRules := range map[minderv1.Entity][]*minderv1.Profile_Rule{
-		minderv1.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
-		minderv1.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
-		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
-		minderv1.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
-	} {
-		if err := createProfileRulesForEntity(ctx, ent, &profile, qtx, entRules, rulesInProf); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := s.store.Commit(tx); err != nil {
-		log.Printf("error committing transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-
-	idStr := profile.ID.String()
-	in.Id = &idStr
-	project := profile.ProjectID.String()
-	in.Context = &minderv1.Context{
-		Provider: &profile.Provider,
-		Project:  &project,
-	}
 	resp := &minderv1.CreateProfileResponse{
-		Profile: in,
+		Profile: newProfile,
 	}
-
-	msg, err := reconcilers.NewProfileInitMessage(entityCtx.Provider.Name, entityCtx.Project.ID)
-	if err != nil {
-		log.Printf("error creating reconciler event: %v", err)
-		// error is non-fatal
-		return resp, nil
-	}
-
-	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = profile.Provider
-	logger.BusinessRecord(ctx).Project = profile.ProjectID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
 
 	return resp, nil
-}
-
-func createProfileRulesForEntity(
-	ctx context.Context,
-	entity minderv1.Entity,
-	profile *db.Profile,
-	qtx db.Querier,
-	rules []*minderv1.Profile_Rule,
-	rulesInProf prof.RuleMapping,
-) error {
-	if rules == nil {
-		return nil
-	}
-
-	marshalled, err := json.Marshal(rules)
-	if err != nil {
-		log.Printf("error marshalling %s rules: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
-	}
-	entProf, err := qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
-		ProfileID:       profile.ID,
-		Entity:          entities.EntityTypeToDB(entity),
-		ContextualRules: marshalled,
-	})
-	if err != nil {
-		log.Printf("error creating profile for entity %s: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
-	}
-
-	for idx := range rulesInProf {
-		ruleRef := rulesInProf[idx]
-
-		if ruleRef.Entity != entity {
-			continue
-		}
-
-		ruleID := ruleRef.RuleID
-
-		_, err := qtx.UpsertRuleInstantiation(ctx, db.UpsertRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      ruleID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("the rule instantiation for rule already existed.")
-		} else if err != nil {
-			log.Printf("error creating rule instantiation: %v", err)
-			return status.Errorf(codes.Internal, "error creating profile")
-		}
-	}
-
-	return err
 }
 
 // DeleteProfile is a method to delete a profile
@@ -633,8 +492,6 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 }
 
 // UpdateProfile updates a profile for a project
-//
-//nolint:gocyclo
 func (s *Server) UpdateProfile(ctx context.Context,
 	cpr *minderv1.UpdateProfileRequest) (*minderv1.UpdateProfileResponse, error) {
 	in := cpr.GetProfile()
@@ -646,294 +503,21 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// Previously, this validation was called later in this method. There does
-	// not seem to be reason why it can't happen earlier, and it provides an
-	// additional layer of validation before beginning the DB transaction.
-	rules, err := s.profileValidator.ValidateAndExtractRules(ctx, in, entityCtx)
+	// TODO: This will be removed once we decouple providers from profiles
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
 	if err != nil {
+		return nil, providerError(err)
+	}
+
+	updatedProfile, err := s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, &provider, in)
+	if err != nil {
+		// assumption: service layer sets sensible errors
 		return nil, err
 	}
 
-	tx, err := s.store.BeginTransaction()
-	if err != nil {
-		log.Printf("error starting transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error updating profile")
-	}
-	defer s.store.Rollback(tx)
-
-	qtx := s.store.GetQuerierWithTransaction(tx)
-
-	// Get object and ensure we lock it for update
-	oldDBProfile, err := getProfileFromPBForUpdateWithQuerier(ctx, in, entityCtx, qtx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-
-		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
-	}
-
-	// validate update
-	if err := validateProfileUpdate(oldDBProfile, in, entityCtx); err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile update: %v", err)
-	}
-
-	// Adds default rule names, if not present
-	prof.PopulateRuleNames(in)
-
-	oldProfile, err := getProfilePBFromDB(ctx, oldDBProfile.ID, entityCtx, qtx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
-	}
-
-	oldRules, err := s.getRulesFromProfile(ctx, oldProfile, entityCtx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
-	}
-
-	// Update top-level profile db object
-	profile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
-		ProjectID: entityCtx.Project.ID,
-		ID:        oldDBProfile.ID,
-		Remediate: validateActionType(in.GetRemediate()),
-		Alert:     validateActionType(in.GetAlert()),
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
-	}
-
-	// Create entity rules entries
-	for ent, entRules := range map[minderv1.Entity][]*minderv1.Profile_Rule{
-		minderv1.Entity_ENTITY_REPOSITORIES:       in.GetRepository(),
-		minderv1.Entity_ENTITY_ARTIFACTS:          in.GetArtifact(),
-		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: in.GetBuildEnvironment(),
-		minderv1.Entity_ENTITY_PULL_REQUESTS:      in.GetPullRequest(),
-	} {
-		if err := updateProfileRulesForEntity(ctx, ent, &profile, qtx, entRules, rules); err != nil {
-			return nil, err
-		}
-	}
-
-	unusedRuleStatuses := getUnusedOldRuleStatuses(rules, oldRules)
-	unusedRuleTypes := getUnusedOldRuleTypes(rules, oldRules)
-
-	if err := deleteUnusedRulesFromProfile(ctx, &profile, unusedRuleTypes, qtx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
-	}
-
-	if err := deleteRuleStatusesForProfile(ctx, &profile, unusedRuleStatuses, qtx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
-	}
-
-	if err := s.store.Commit(tx); err != nil {
-		log.Printf("error committing transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error updating profile")
-	}
-
-	idStr := profile.ID.String()
-	in.Id = &idStr
-	project := profile.ProjectID.String()
-	in.Context = &minderv1.Context{
-		Provider: &profile.Provider,
-		Project:  &project,
-	}
-	resp := &minderv1.UpdateProfileResponse{
-		Profile: in,
-	}
-
-	// re-trigger profile evaluation
-	msg, err := reconcilers.NewProfileInitMessage(entityCtx.Provider.Name, entityCtx.Project.ID)
-	if err != nil {
-		log.Printf("error creating reconciler event: %v", err)
-		// error is non-fatal
-		return resp, nil
-	}
-
-	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = profile.Provider
-	logger.BusinessRecord(ctx).Project = profile.ProjectID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
-
-	return resp, nil
-}
-
-func (s *Server) getRulesFromProfile(
-	ctx context.Context,
-	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
-) (prof.RuleMapping, error) {
-	// We capture the rule instantiations here so we can
-	// track them in the db later.
-	rulesInProf := make(prof.RuleMapping)
-
-	err := engine.TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
-		// TODO: This will need to be updated to support
-		// the hierarchy tree once that's settled in.
-		rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  entityCtx.Provider.Name,
-			ProjectID: entityCtx.Project.ID,
-			Name:      r.GetType(),
-		})
-		if err != nil {
-			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
-		}
-
-		rtyppb, err := engine.RuleTypePBFromDB(&rtdb)
-		if err != nil {
-			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
-		}
-
-		key := prof.RuleTypeAndNamePair{
-			RuleType: r.GetType(),
-			RuleName: prof.ComputeRuleName(r),
-		}
-
-		rulesInProf[key] = prof.EntityAndRuleTuple{
-			Entity: minderv1.EntityFromString(rtyppb.Def.InEntity),
-			RuleID: rtdb.ID,
-		}
-
-		return nil
-	},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return rulesInProf, nil
-}
-
-func updateProfileRulesForEntity(
-	ctx context.Context,
-	entity minderv1.Entity,
-	profile *db.Profile,
-	qtx db.Querier,
-	rules []*minderv1.Profile_Rule,
-	rulesInProf prof.RuleMapping,
-) error {
-	if len(rules) == 0 {
-		return qtx.DeleteProfileForEntity(ctx, db.DeleteProfileForEntityParams{
-			ProfileID: profile.ID,
-			Entity:    entities.EntityTypeToDB(entity),
-		})
-	}
-
-	marshalled, err := json.Marshal(rules)
-	if err != nil {
-		log.Printf("error marshalling %s rules: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
-	}
-	entProf, err := qtx.UpsertProfileForEntity(ctx, db.UpsertProfileForEntityParams{
-		ProfileID:       profile.ID,
-		Entity:          entities.EntityTypeToDB(entity),
-		ContextualRules: marshalled,
-	})
-	if err != nil {
-		log.Printf("error updating profile for entity %s: %v", entity, err)
-		return err
-	}
-
-	for idx := range rulesInProf {
-		ruleRef := rulesInProf[idx]
-
-		if ruleRef.Entity != entity {
-			continue
-		}
-
-		_, err := qtx.UpsertRuleInstantiation(ctx, db.UpsertRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      ruleRef.RuleID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("the rule instantiation for rule already existed.")
-		} else if err != nil {
-			log.Printf("error creating rule instantiation: %v", err)
-			return status.Errorf(codes.Internal, "error updating profile")
-		}
-	}
-
-	return err
-}
-
-func getProfileFromPBForUpdateWithQuerier(
-	ctx context.Context,
-	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
-	querier db.ExtendQuerier,
-) (*db.Profile, error) {
-	if profile.GetId() != "" {
-		return getProfileFromPBForUpdateByID(ctx, profile, entityCtx, querier)
-	}
-
-	return getProfileFromPBForUpdateByName(ctx, profile, entityCtx, querier)
-}
-
-func getProfileFromPBForUpdateByID(
-	ctx context.Context,
-	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
-	querier db.ExtendQuerier,
-) (*db.Profile, error) {
-	id, err := uuid.Parse(profile.GetId())
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
-	}
-
-	pdb, err := querier.GetProfileByIDAndLock(ctx, db.GetProfileByIDAndLockParams{
-		ID:        id,
-		ProjectID: entityCtx.Project.ID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pdb, nil
-}
-
-func getProfileFromPBForUpdateByName(
-	ctx context.Context,
-	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
-	querier db.ExtendQuerier,
-) (*db.Profile, error) {
-	pdb, err := querier.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
-		Name:      profile.GetName(),
-		ProjectID: entityCtx.Project.ID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pdb, nil
-}
-
-func validateProfileUpdate(old *db.Profile, new *minderv1.Profile, entityCtx engine.EntityContext) error {
-	if old.Name != new.Name {
-		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile name")
-	}
-
-	if old.ProjectID != entityCtx.Project.ID {
-		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
-	}
-
-	if old.Provider != entityCtx.Provider.Name {
-		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
-	}
-
-	return nil
+	return &minderv1.UpdateProfileResponse{
+		Profile: updatedProfile,
+	}, nil
 }
 
 func getUnusedOldRuleStatuses(
@@ -972,59 +556,18 @@ func getUnusedOldRuleTypes(newRules, oldRules prof.RuleMapping) []prof.EntityAnd
 	return unusedRuleTypes
 }
 
-func deleteUnusedRulesFromProfile(
-	ctx context.Context,
-	profile *db.Profile,
-	unusedRules []prof.EntityAndRuleTuple,
-	querier db.ExtendQuerier,
-) error {
-	for _, rule := range unusedRules {
-		// get entity profile
-		log.Printf("getting profile for entity %s", rule.Entity)
-		entProf, err := querier.GetProfileForEntity(ctx, db.GetProfileForEntityParams{
-			ProfileID: profile.ID,
-			Entity:    entities.EntityTypeToDB(rule.Entity),
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				log.Printf("skipping rule deletion for entity %s, profile not found", rule.Entity)
-				continue
-			}
-			log.Printf("error getting profile for entity %s: %v", rule.Entity, err)
-			return fmt.Errorf("error getting profile for entity %s: %w", rule.Entity, err)
-		}
-
-		log.Printf("deleting rule instantiation for rule %s for entity profile %s", rule.RuleID, entProf.ID)
-		if err := querier.DeleteRuleInstantiation(ctx, db.DeleteRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      rule.RuleID,
-		}); err != nil {
-			log.Printf("error deleting rule instantiation: %v", err)
-			return fmt.Errorf("error deleting rule instantiation: %w", err)
-		}
+// validateActionType returns the appropriate remediate type or the
+// NULL DB type if the input is invalid, thus letting the server run
+// the profile with the default remediate type.
+func validateActionType(r string) db.NullActionType {
+	switch r {
+	case "on":
+		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
+	case "off":
+		return db.NullActionType{ActionType: db.ActionTypeOff, Valid: true}
+	case "dry_run":
+		return db.NullActionType{ActionType: db.ActionTypeDryRun, Valid: true}
 	}
 
-	return nil
-}
-
-func deleteRuleStatusesForProfile(
-	ctx context.Context,
-	profile *db.Profile,
-	unusedRuleStatuses prof.RuleMapping,
-	querier db.ExtendQuerier,
-) error {
-	for ruleTypeAndName, rule := range unusedRuleStatuses {
-		log.Printf("deleting rule evaluations for rule %s in profile %s", rule.RuleID, profile.ID)
-
-		if err := querier.DeleteRuleStatusesForProfileAndRuleType(ctx, db.DeleteRuleStatusesForProfileAndRuleTypeParams{
-			ProfileID:  profile.ID,
-			RuleTypeID: rule.RuleID,
-			RuleName:   ruleTypeAndName.RuleName,
-		}); err != nil {
-			log.Printf("error deleting rule evaluations: %v", err)
-			return fmt.Errorf("error deleting rule evaluations: %w", err)
-		}
-	}
-
-	return nil
+	return db.NullActionType{Valid: false}
 }

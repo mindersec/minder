@@ -89,9 +89,9 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	profileValidator *profiles.Validator
-	ruleTypes        ruletypes.RuleTypeService
-	repos            github.RepositoryService
+	ruleTypes ruletypes.RuleTypeService
+	repos     github.RepositoryService
+	profiles  profiles.ProfileService
 	// TODO: this will be removed from server when the create repo
 	// flow is refactored
 	webhookManager webhooks.WebhookManager
@@ -153,6 +153,7 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
+	profileSvc := profiles.NewProfileService(store, evt)
 	s := &Server{
 		store:               store,
 		cfg:                 cfg,
@@ -162,7 +163,7 @@ func NewServer(
 		providerAuthFactory: auth.NewOAuthConfig,
 		mt:                  metrics.NewNoopMetrics(),
 		provMt:              provtelemetry.NewNoopMetrics(),
-		profileValidator:    profiles.NewValidator(store),
+		profiles:            profileSvc,
 		ruleTypes:           ruletypes.NewRuleTypeService(store),
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		webhookManager:      whManager,

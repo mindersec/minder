@@ -28,7 +28,6 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
@@ -123,11 +122,6 @@ func TestValidatorScenarios(t *testing.T) {
 		},
 	}
 
-	entityCtx := engine.EntityContext{
-		Project:  engine.Project{ID: uuid.New()},
-		Provider: engine.Provider{Name: github.Github},
-	}
-
 	// some of this boilerplate can probably be shared across multiple tests
 	for i := range validatorTestScenarios {
 		testScenario := validatorTestScenarios[i]
@@ -142,7 +136,7 @@ func TestValidatorScenarios(t *testing.T) {
 			}
 
 			result, err := profiles.NewValidator(store).
-				ValidateAndExtractRules(context.Background(), testScenario.Profile, entityCtx)
+				ValidateAndExtractRules(context.Background(), projectID, github.Github, testScenario.Profile)
 
 			if testScenario.ExpectedError != "" && testScenario.ExpectedResult == nil {
 				require.Nil(t, result)
@@ -162,6 +156,7 @@ func TestValidatorScenarios(t *testing.T) {
 var ruleTypeName = "branch_protection_allow_force_pushes"
 var ruleName = "MyRule"
 var ruleUUID = uuid.New()
+var projectID = uuid.New()
 
 func withBasicProfileData(profile *minderv1.Profile) {
 	profile.Name = "MyProfile"

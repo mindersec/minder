@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -45,8 +46,9 @@ func NewValidator(store db.Store) *Validator {
 // it also returns information about the rules in the profile
 func (v *Validator) ValidateAndExtractRules(
 	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
 	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
 ) (RuleMapping, error) {
 
 	// ensure that the profile has all required fields
@@ -60,7 +62,7 @@ func (v *Validator) ValidateAndExtractRules(
 	}
 
 	// validate that the parameters for the rules match the expected schema
-	rulesInProf, err := v.validateRuleParams(ctx, profile, &entityCtx)
+	rulesInProf, err := v.validateRuleParams(ctx, profile, projectID, providerName)
 	if err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
@@ -80,7 +82,8 @@ func (v *Validator) ValidateAndExtractRules(
 func (v *Validator) validateRuleParams(
 	ctx context.Context,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	projectID uuid.UUID,
+	providerName string,
 ) (RuleMapping, error) {
 	// We capture the rule instantiations here, so we can
 	// track them in the db later.
@@ -90,8 +93,8 @@ func (v *Validator) validateRuleParams(
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  entityCtx.Provider.Name,
-			ProjectID: entityCtx.Project.ID,
+			Provider:  providerName,
+			ProjectID: projectID,
 			Name:      profileRule.GetType(),
 		})
 
