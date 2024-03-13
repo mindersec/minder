@@ -92,7 +92,7 @@ func (r *ruleTypeService) CreateRuleType(
 
 	_, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  provider.Name,
-		ProjectID: provider.ProjectID,
+		ProjectID: entityCtx.Project.ID,
 		Name:      ruleTypeName,
 	})
 	if err == nil {
