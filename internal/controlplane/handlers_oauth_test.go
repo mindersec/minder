@@ -211,6 +211,9 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Return([]db.Provider{{
 						ID:   providerID,
 						Name: "github",
+						AuthFlows: []db.AuthorizationFlow{
+							db.AuthorizationFlowOauth2AuthorizationCodeFlow,
+						},
 					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), partialDbParamsMatcher{db.CreateSessionStateParams{
