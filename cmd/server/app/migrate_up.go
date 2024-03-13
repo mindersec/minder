@@ -145,18 +145,15 @@ func ensureGitHubProvidersHaveAuthFlows(ctx context.Context, cmd *cobra.Command,
 	}
 
 	for _, p := range providers {
-		if len(p.AuthFlows) == 0 {
-			cmd.Printf("Provider %s does not have any auth flows. Adding default auth flows...\n", p.ID)
-			p.AuthFlows = []db.AuthorizationFlow{db.AuthorizationFlowUserInput}
-			if err := store.UpdateProvider(ctx, db.UpdateProviderParams{
-				Implements: p.Implements,
-				Definition: p.Definition,
-				AuthFlows:  github.AuthorizationFlows, // This is what we are adding
-				ID:         p.ID,
-				ProjectID:  p.ProjectID,
-			}); err != nil {
-				return fmt.Errorf("error while updating provider: %w", err)
-			}
+		cmd.Printf("Enforce github provider %s has default auth flows\n", p.ID)
+		if err := store.UpdateProvider(ctx, db.UpdateProviderParams{
+			Implements: p.Implements,
+			Definition: p.Definition,
+			AuthFlows:  github.AuthorizationFlows, // This is what we are adding
+			ID:         p.ID,
+			ProjectID:  p.ProjectID,
+		}); err != nil {
+			return fmt.Errorf("error while updating provider: %w", err)
 		}
 	}
 

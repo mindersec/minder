@@ -10,10 +10,10 @@ INSERT INTO profiles (
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
-    remediate = $2,
-    alert = $3,
+    remediate = $3,
+    alert = $4,
     updated_at = NOW()
-WHERE id = $1 RETURNING *;
+WHERE id = $1 AND project_id = $2 RETURNING *;
 
 -- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (

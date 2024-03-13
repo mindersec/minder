@@ -54,6 +54,7 @@ actions such as adding repositories.`,
 // EnrollProviderCommand is the command for enrolling a provider
 func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewOAuthServiceClient(conn)
+	provcli := minderv1.NewProvidersServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -87,23 +88,65 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 		}
 	}
 
-	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(context.Background(), MAX_WAIT+5*time.Second)
-	defer oAuthCancel()
+	prov, err := provcli.GetProvider(ctx, &minderv1.GetProviderRequest{
+		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Name:    provider,
+	})
+	if err != nil {
+		return cli.MessageAndError("Error getting provider", err)
+	}
 
 	if token != "" {
-		// use pat for enrollment
-		_, err := client.StoreProviderToken(context.Background(), &minderv1.StoreProviderTokenRequest{
-			Context:     &minderv1.Context{Provider: &provider, Project: &project},
-			AccessToken: token,
-			Owner:       &owner,
-		})
-		if err != nil {
-			return cli.MessageAndError("Error storing token", err)
+		if !prov.Provider.SupportsAuthFlow(minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT) {
+			return fmt.Errorf("provider %s does not support token enrollment", provider)
 		}
 
-		cmd.Println("Provider enrolled successfully")
-		return nil
+		return enrollUsingToken(ctx, cmd, client, provider, project, token, owner)
 	}
+
+	if !prov.Provider.SupportsAuthFlow(
+		minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW) {
+		return fmt.Errorf("provider %s does not support OAuth2 enrollment", provider)
+	}
+
+	// This will have a different timeout
+	enrollemntCtx := cmd.Context()
+
+	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, client, provider, project, owner)
+}
+
+func enrollUsingToken(
+	ctx context.Context,
+	cmd *cobra.Command,
+	client minderv1.OAuthServiceClient,
+	provider string,
+	project string,
+	token string,
+	owner string,
+) error {
+	_, err := client.StoreProviderToken(ctx, &minderv1.StoreProviderTokenRequest{
+		Context:     &minderv1.Context{Provider: &provider, Project: &project},
+		AccessToken: token,
+		Owner:       &owner,
+	})
+	if err != nil {
+		return cli.MessageAndError("Error storing token", err)
+	}
+
+	cmd.Println("Provider enrolled successfully")
+	return nil
+}
+
+func enrollUsingOAuth2Flow(
+	ctx context.Context,
+	cmd *cobra.Command,
+	client minderv1.OAuthServiceClient,
+	provider string,
+	project string,
+	owner string,
+) error {
+	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(ctx, MAX_WAIT+5*time.Second)
+	defer oAuthCancel()
 
 	// Get random port
 	port, err := rand.GetRandomPort()

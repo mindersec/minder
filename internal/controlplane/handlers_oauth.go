@@ -23,9 +23,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -39,6 +42,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -56,6 +61,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, providerError(err)
 	}
 
+	if !slices.Contains(provider.AuthFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"provider does not support authorization code flow")
+	}
+
 	// Configure tracing
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
@@ -63,11 +73,9 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	span.SetAttributes(attribute.Key("provider").String(provider.Name))
 	defer span.End()
 
-	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(provider.Name, req.Cli)
-	if err != nil {
-		return nil, err
-	}
+	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
+	// If the user's token doesn't have gh_id set yet, we'll pass it through for now.
+	s.mt.AddTokenOpCount(ctx, "issued", user != "")
 
 	// Generate a random nonce based state
 	state, err := mcrypto.GenerateNonce()
@@ -83,20 +91,17 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
 
-	var owner sql.NullString
-	if req.Owner == nil {
-		owner = sql.NullString{Valid: false}
-	} else {
-		owner = sql.NullString{Valid: true, String: *req.Owner}
+	owner := sql.NullString{
+		Valid:  req.GetOwner() != "",
+		String: req.GetOwner(),
 	}
 
 	var redirectUrl sql.NullString
-	if req.RedirectUrl == nil {
-		redirectUrl = sql.NullString{Valid: false}
-	} else {
+	// Empty redirect URL means null string (default condition)
+	if req.GetRedirectUrl() != "" {
 		encryptedRedirectUrl, err := s.cryptoEngine.EncryptString(*req.RedirectUrl)
 		if err != nil {
-			return nil, status.Errorf(codes.Unknown, "error encrypting redirect URL: %s", err)
+			return nil, status.Errorf(codes.Internal, "error encrypting redirect URL: %s", err)
 		}
 		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl}
 	}
@@ -106,6 +111,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     provider.Name,
 		ProjectID:    projectID,
+		RemoteUser:   sql.NullString{Valid: user != "", String: user},
 		SessionState: state,
 		OwnerFilter:  owner,
 		RedirectUrl:  redirectUrl,
@@ -117,6 +123,12 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
+
+	// Create a new OAuth2 config for the given provider
+	oauthConfig, err := s.providerAuthFactory(provider.Name, req.Cli)
+	if err != nil {
+		return nil, err
+	}
 
 	// Return the authorization URL and state
 	return &pb.GetAuthorizationURLResponse{
@@ -133,6 +145,10 @@ func (s *Server) HandleProviderCallback() runtime.HandlerFunc {
 		ctx := r.Context()
 
 		if err := s.processCallback(ctx, w, r, pathParams); err != nil {
+			if httpErr, ok := err.(*httpResponseError); ok {
+				httpErr.WriteError(w)
+				return
+			}
 			log.Printf("error handling provider callback: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -205,7 +221,7 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 func (s *Server) generateOAuthToken(ctx context.Context, provider string, code string,
 	stateData db.GetProjectIDBySessionStateRow) error {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := auth.NewOAuthConfig(provider, true)
+	oauthConfig, err := s.providerAuthFactory(provider, true)
 	if err != nil {
 		return fmt.Errorf("error creating OAuth config: %w", err)
 	}
@@ -216,6 +232,18 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
+	}
+
+	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
+	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
+	if stateData.RemoteUser.Valid {
+		if err := s.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
+			// TODO: make this prettier?
+			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
+				"The provided login token was associated with a different GitHub user.")
+		}
+	} else {
+		zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
 	}
 
 	ftoken := &oauth2.Token{
@@ -238,21 +266,44 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 
 	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
-	var owner sql.NullString
-	if stateData.OwnerFilter.Valid {
-		owner = sql.NullString{Valid: true, String: stateData.OwnerFilter.String}
-	} else {
-		owner = sql.NullString{Valid: false}
-	}
-
 	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
 		ProjectID:      stateData.ProjectID,
 		Provider:       provider,
 		EncryptedToken: encodedToken,
-		OwnerFilter:    owner,
+		OwnerFilter:    stateData.OwnerFilter,
 	})
 	if err != nil {
 		return fmt.Errorf("error inserting access token: %w", err)
+	}
+	return nil
+}
+
+func (s *Server) verifyProviderTokenIdentity(
+	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider string, token string) error {
+	dbProvider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:     provider,
+		Projects: []uuid.UUID{stateData.ProjectID},
+	})
+	if err != nil {
+		return fmt.Errorf("error getting provider by name: %w", err)
+	}
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token, pbOpts...)
+	// NOTE: this is github-specific at the moment.  We probably need to generally
+	// re-think token enrollment when we add more providers.
+	ghClient, err := builder.GetGitHub()
+	if err != nil {
+		return fmt.Errorf("error creating GitHub client: %w", err)
+	}
+	userId, err := ghClient.GetUserId(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting user ID: %w", err)
+	}
+	if strconv.FormatInt(userId, 10) != stateData.RemoteUser.String {
+		return fmt.Errorf("user ID mismatch: %d != %s", userId, stateData.RemoteUser.String)
 	}
 	return nil
 }
@@ -286,6 +337,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
+	}
+
+	if !slices.Contains(provider.AuthFlows, db.AuthorizationFlowUserInput) {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"provider does not support token enrollment")
 	}
 
 	// validate token
@@ -363,4 +419,32 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
+}
+
+type httpResponseError struct {
+	statusCode   int
+	short        string
+	pageContents string
+}
+
+func newHttpError(statusCode int, short string) *httpResponseError {
+	return &httpResponseError{
+		statusCode:   statusCode,
+		short:        short,
+		pageContents: "An unknown error occurred",
+	}
+}
+
+func (e *httpResponseError) SetContents(contents string, args ...any) *httpResponseError {
+	e.pageContents = fmt.Sprintf(contents, args...)
+	return e
+}
+
+// Error implements error
+func (e *httpResponseError) Error() string {
+	return fmt.Sprintf("HTTP error: %d %s", e.statusCode, e.short)
+}
+
+func (e *httpResponseError) WriteError(w http.ResponseWriter) {
+	http.Error(w, e.pageContents, e.statusCode)
 }

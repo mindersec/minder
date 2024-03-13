@@ -512,20 +512,26 @@ func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTyp
 
 const updateProfile = `-- name: UpdateProfile :one
 UPDATE profiles SET
-    remediate = $2,
-    alert = $3,
+    remediate = $3,
+    alert = $4,
     updated_at = NOW()
-WHERE id = $1 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
+WHERE id = $1 AND project_id = $2 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id
 `
 
 type UpdateProfileParams struct {
 	ID        uuid.UUID      `json:"id"`
+	ProjectID uuid.UUID      `json:"project_id"`
 	Remediate NullActionType `json:"remediate"`
 	Alert     NullActionType `json:"alert"`
 }
 
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, updateProfile, arg.ID, arg.Remediate, arg.Alert)
+	row := q.db.QueryRowContext(ctx, updateProfile,
+		arg.ID,
+		arg.ProjectID,
+		arg.Remediate,
+		arg.Alert,
+	)
 	var i Profile
 	err := row.Scan(
 		&i.ID,

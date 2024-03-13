@@ -18,6 +18,7 @@ package pull_request
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -107,7 +108,7 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 }

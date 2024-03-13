@@ -17,6 +17,7 @@ package rest
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -65,7 +66,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -90,7 +91,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -115,7 +116,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -135,7 +136,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 							"rest",
 						},
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -160,7 +161,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -184,7 +185,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 		"base_url": "https://api.github.com/"
 }`),
 					},
-					db.ProviderAccessToken{},
+					sql.NullString{},
 					"token",
 				),
 			},
@@ -228,7 +229,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 }

@@ -17,6 +17,7 @@
 package remediate_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
@@ -48,7 +49,7 @@ var (
 	}
 }`),
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		"token",
 	)
 )

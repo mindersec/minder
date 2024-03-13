@@ -31,6 +31,7 @@ files with:
 ```bash
 make bootstrap
 ```
+This also installs the required tools for running different make targets.
 
 Note that if you intend to run minder outside `docker compose`, you should
 change the Keycloak and OpenFGA URLs in `server-config.yaml` to refer to

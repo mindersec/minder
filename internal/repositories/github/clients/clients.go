@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package webhooks
+// Package clients defines the shared client interface used by github repo
+// management code
+package clients
 
 import (
 	"context"
@@ -20,9 +22,11 @@ import (
 	"github.com/google/go-github/v56/github"
 )
 
-// GitHubWebhookClient defines the methods from the GitHub client which we
-// need. This allows us to create a stub for testing.
-type GitHubWebhookClient interface {
+// GitHubRepoClient defines a subset of the GitHub API client which we need for
+// repo and webhook management. This allows us to create a stub which only
+// includes the methods which we care about
+type GitHubRepoClient interface {
+	GetRepository(context.Context, string, string) (*github.Repository, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)

@@ -17,7 +17,9 @@ version: '3.2'
 services:
   minder:
     container_name: minder_server
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/minder/Dockerfile
     image: minder:latest
 
     command: [
@@ -66,9 +68,15 @@ services:
         condition: service_healthy
       openfga:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      keycloak-config:
+        condition: service_completed_successfully
   migrate:
     container_name: minder_migrate_up
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/minder/Dockerfile
     image: minder:latest
 
     command: [
@@ -122,10 +130,9 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_MINDER_SERVER_SECRET: secret
       KC_HEALTH_ENABLED: "true"
     healthcheck:
-      test: ["CMD", "/opt/keycloak/bin/kcadm.sh", "get", "realms/stacklok", "--fields", "enabled"]
+      test: ["CMD", "/opt/keycloak/bin/kcadm.sh", "config", "credentials", "--server", "http://localhost:8080", "--realm", "master", "--user", "admin", "--password", "admin"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -133,10 +140,28 @@ services:
       - "8081:8080"
     volumes:
       - ./identity/themes:/opt/keycloak/themes:z
-      - ./identity/scripts:/opt/keycloak/scripts:z
     networks:
       - app_net
-    entrypoint: ["/opt/keycloak/scripts/kc-setup.sh"]
+
+  keycloak-config:
+    container_name: keycloak_config
+    image: bitnami/keycloak-config-cli:5.10.0
+    entrypoint: ["java", "-jar", "/opt/bitnami/keycloak-config-cli/keycloak-config-cli.jar"]
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+      KC_MINDER_SERVER_SECRET: secret
+      IMPORT_VARSUBSTITUTION_ENABLED: "true"
+      IMPORT_FILES_LOCATIONS: /config/*.yaml
+    volumes:
+      - ./identity/config:/config:z
+    networks:
+      - app_net
+
+    depends_on:
+      keycloak:
+        condition: service_healthy
 
   openfga:
     container_name: openfga

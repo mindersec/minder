@@ -28,20 +28,21 @@ import (
 
 	"github.com/stacklok/minder/internal/config/server"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 )
 
 // WebhookManager encapsulates logic for creating and deleting GitHub webhooks
 type WebhookManager interface {
 	CreateWebhook(
 		ctx context.Context,
-		client GitHubWebhookClient,
+		client ghclient.GitHubRepoClient,
 		repoOwner string,
 		repoName string,
 	) (string, *github.Hook, error)
 
 	DeleteWebhook(
 		ctx context.Context,
-		client GitHubWebhookClient,
+		client ghclient.GitHubRepoClient,
 		repoOwner string,
 		repoName string,
 		hookID int64,
@@ -66,9 +67,10 @@ var (
 // before attempting to make a new one.
 // Returns the UUID of this webhook, along with the API response from GitHub
 // with details of the new webhook
+// https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
 func (w *webhookManager) CreateWebhook(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 ) (string, *github.Hook, error) {
@@ -111,7 +113,7 @@ func (w *webhookManager) CreateWebhook(
 // Note that deletions of non-existent webhooks are treated as no-ops
 func (_ *webhookManager) DeleteWebhook(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 	hookID int64,
@@ -130,7 +132,7 @@ func (_ *webhookManager) DeleteWebhook(
 
 func (w *webhookManager) cleanupStaleHooks(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 	webhookHost string,

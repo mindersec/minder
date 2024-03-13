@@ -45,6 +45,10 @@ type Metrics interface {
 
 	// AddWebhookEventTypeCount adds a count to the webhook event type counter
 	AddWebhookEventTypeCount(context.Context, *WebhookEventState)
+
+	// AddTokenOpCount records a token operation (issued, check) and whether the
+	// github ID was present at the time of check.
+	AddTokenOpCount(context.Context, string, bool)
 }
 
 type metricsImpl struct {
@@ -55,6 +59,10 @@ type metricsImpl struct {
 	webhookStatusCodeCounter metric.Int64Counter
 	// webhook event type counter
 	webhookEventTypeCounter metric.Int64Counter
+
+	// Track how often users who register a token are correlated with the
+	// GitHub user from GetAuthorizationURL
+	tokenOpCounter metric.Int64Counter
 }
 
 // NewMetrics creates a new controlplane metrics instance.
@@ -160,6 +168,13 @@ func (m *metricsImpl) initInstrumentsOnce(store db.Store) error {
 		return fmt.Errorf("failed to create webhook event type counter: %w", err)
 	}
 
+	m.tokenOpCounter, err = m.meter.Int64Counter("token-checks",
+		metric.WithDescription("Number of times token URLs are issued and consumed"),
+		metric.WithUnit("ops"))
+	if err != nil {
+		return fmt.Errorf("failed to create token operations counter: %w", err)
+	}
+
 	return nil
 }
 
@@ -175,4 +190,14 @@ func (m *metricsImpl) AddWebhookEventTypeCount(ctx context.Context, state *Webho
 		attribute.Bool("webhook_event.error", state.Error),
 	}
 	m.webhookEventTypeCounter.Add(ctx, 1, metric.WithAttributes(labels...))
+}
+
+func (m *metricsImpl) AddTokenOpCount(ctx context.Context, stage string, hasId bool) {
+	if m.tokenOpCounter == nil {
+		return
+	}
+
+	m.tokenOpCounter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("stage", stage),
+		attribute.Bool("has-id", hasId)))
 }
