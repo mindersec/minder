@@ -154,11 +154,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
 		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
-		// m.Metadata.Set("subject", ghEvent.GetRepo().GetFullName())
-		// m.Metadata.Set("time", ghEvent.GetCreatedAt().String())
 
-		log.Printf("publishing of type: %s", m.Metadata["type"])
+		ctx := r.Context()
+		l := zerolog.Ctx(ctx).With().
+			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
+			Str("providertype", m.Metadata[events.ProviderTypeKey]).
+			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			Logger()
 
+		l.Debug().Msg("parsing event")
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
 			wes = handleParseError(wes.Typ, err)
 			if wes.Error {
@@ -171,6 +175,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		wes.Accepted = true
 
+		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
 		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
 			wes.Error = true
 			log.Printf("Error publishing message: %v", err)

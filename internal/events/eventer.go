@@ -337,11 +337,12 @@ func (e *Eventer) Publish(topic string, messages ...*message.Message) error {
 	if ok && details != nil {
 		for idx := range messages {
 			msg := messages[idx]
-			// TODO: This should probably be debugging info
-			e.router.Logger().Info("Publishing messages", watermill.LogFields{
+			e.router.Logger().Debug("Publishing message", watermill.LogFields{
 				"message_uuid": msg.UUID,
 				"topic":        topic,
 				"handler":      details.Name(),
+				"component":    "eventer",
+				"function":     "Publish",
 			})
 			msg.Metadata.Set(PublishedKey, time.Now().Format(time.RFC3339))
 		}
@@ -368,6 +369,7 @@ func (e *Eventer) Register(
 					"message_uuid": msg.UUID,
 					"topic":        topic,
 					"handler":      funcName,
+					"component":    "eventer",
 				})
 
 				return err
@@ -377,6 +379,7 @@ func (e *Eventer) Register(
 				"message_uuid": msg.UUID,
 				"topic":        topic,
 				"handler":      funcName,
+				"component":    "eventer",
 			})
 
 			return nil
