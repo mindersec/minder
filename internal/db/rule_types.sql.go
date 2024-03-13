@@ -169,8 +169,11 @@ func (q *Queries) ListRuleTypesByProviderAndProject(ctx context.Context, arg Lis
 	return items, nil
 }
 
-const updateRuleType = `-- name: UpdateRuleType :exec
-UPDATE rule_type SET description = $2, definition = $3::jsonb, severity_value = $4 WHERE id = $1
+const updateRuleType = `-- name: UpdateRuleType :one
+UPDATE rule_type
+    SET description = $2, definition = $3::jsonb, severity_value = $4
+    WHERE id = $1
+    RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id
 `
 
 type UpdateRuleTypeParams struct {
@@ -180,12 +183,26 @@ type UpdateRuleTypeParams struct {
 	SeverityValue Severity        `json:"severity_value"`
 }
 
-func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error {
-	_, err := q.db.ExecContext(ctx, updateRuleType,
+func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error) {
+	row := q.db.QueryRowContext(ctx, updateRuleType,
 		arg.ID,
 		arg.Description,
 		arg.Definition,
 		arg.SeverityValue,
 	)
-	return err
+	var i RuleType
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Provider,
+		&i.ProjectID,
+		&i.Description,
+		&i.Guidance,
+		&i.Definition,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SeverityValue,
+		&i.ProviderID,
+	)
+	return i, err
 }

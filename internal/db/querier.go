@@ -129,7 +129,7 @@ type Querier interface {
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
 	UpdateProvider(ctx context.Context, arg UpdateProviderParams) error
-	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) error
+	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
