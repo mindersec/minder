@@ -144,11 +144,6 @@ func (s *Server) DeleteProject(
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, projectID) {
-		return nil, util.UserVisibleError(codes.PermissionDenied,
-			"project does not allow project hierarchy operations")
-	}
-
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
@@ -167,6 +162,12 @@ func (s *Server) DeleteProject(
 
 	if !subProject.ParentID.Valid {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot delete a top-level project")
+	}
+
+	// The parent is supposed to have the feature flag, not the subproject
+	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, subProject.ParentID.UUID) {
+		return nil, util.UserVisibleError(codes.PermissionDenied,
+			"project does not allow project hierarchy operations")
 	}
 
 	if err := projects.DeleteProject(ctx, projectID, qtx, s.authzClient); err != nil {
