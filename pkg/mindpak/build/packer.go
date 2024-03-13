@@ -25,8 +25,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 
 	"github.com/stacklok/minder/pkg/mindpak"
 )
@@ -90,8 +89,8 @@ func (_ *Packer) Init(opts *InitOptions) error {
 	if err := bundle.UpdateManifest(); err != nil {
 		return fmt.Errorf("updating new bundle manifest: %w", err)
 	}
-
-	bundle.Metadata.Date = timestamppb.Now()
+	t := time.Now()
+	bundle.Metadata.Date = &t
 
 	f, err := os.Create(filepath.Join(opts.Path, mindpak.ManifestFileName))
 	if err != nil {

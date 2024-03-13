@@ -32,20 +32,6 @@ var (
 	ValidNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
 )
 
-const (
-	// PathProfiles is the name of the directory holding the profiles of a bundle
-	PathProfiles = "profiles"
-
-	// PathRuleTypes is the name of the directory holding the rule types of a bundle
-	PathRuleTypes = "rule_types"
-
-	// ManifestFileName is the defaul filename for the manifest
-	ManifestFileName = "manifest.json"
-
-	// SHA256 is the algorith name constant for the manifest and tests
-	SHA256 = "sha-256"
-)
-
 // Bundle abstracts the bundle data.
 //
 // The bundle has a manifest. The manifest is composed by reading the
@@ -135,8 +121,8 @@ func (b *Bundle) ReadSource() error {
 
 		fentry := File{
 			Name: d.Name(),
-			Hashes: map[string]string{
-				"sha-256": fmt.Sprintf("%x", h.Sum(nil)),
+			Hashes: map[HashAlgorithm]string{
+				SHA256: fmt.Sprintf("%x", h.Sum(nil)),
 			},
 		}
 

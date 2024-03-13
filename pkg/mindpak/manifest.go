@@ -21,6 +21,12 @@ import (
 	"io"
 )
 
+// Manifest abstracts the json file included in the bundle that contains its metadata
+type Manifest struct {
+	Metadata *Metadata `json:"metadata,omitempty"`
+	Files    *Files    `json:"files"`
+}
+
 // Write writes the bundle manifest to a file
 func (m *Manifest) Write(w io.Writer) error {
 	e := json.NewEncoder(w)

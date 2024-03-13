@@ -46,13 +46,13 @@ func TestReadSource(t *testing.T) {
 					Profiles: []*File{
 						{
 							Name:   "branch-protection.yaml",
-							Hashes: map[string]string{SHA256: "f3682a1cb5ab92c0cc71dd913338bf40a89ec324024f8d3f500be0e2aa4a9ae1"},
+							Hashes: map[HashAlgorithm]string{SHA256: "51437d1e5049a16513b9cc9d6d93d6b25625f51e74e0861fba837cdf1d2b5f01"},
 						},
 					},
 					RuleTypes: []*File{
 						{
 							Name:   "secret_scanning.yaml",
-							Hashes: map[string]string{SHA256: "572089a9a490d1b7d07f2a1f6845ae1f18af27a6a13a605de7cef8a910427084"},
+							Hashes: map[HashAlgorithm]string{SHA256: "fc3e782516d0de46e89610af0b0bab04783e0e6e875c6efa64c9dfb3ef127964"},
 						},
 					},
 				},
@@ -71,13 +71,13 @@ func TestReadSource(t *testing.T) {
 					Profiles: []*File{
 						{
 							Name:   "branch-protection.yaml",
-							Hashes: map[string]string{SHA256: "AAf3682a1cb5ab92c0cc71dd913338bf40a89ec324024f8d3f500be0e2aa4a9ae1"},
+							Hashes: map[HashAlgorithm]string{SHA256: "AAf3682a1cb5ab92c0cc71dd913338bf40a89ec324024f8d3f500be0e2aa4a9ae1"},
 						},
 					},
 					RuleTypes: []*File{
 						{
 							Name:   "secret_scanning.yaml",
-							Hashes: map[string]string{SHA256: "AA572089a9a490d1b7d07f2a1f6845ae1f18af27a6a13a605de7cef8a910427084"},
+							Hashes: map[HashAlgorithm]string{SHA256: "AA572089a9a490d1b7d07f2a1f6845ae1f18af27a6a13a605de7cef8a910427084"},
 						},
 					},
 				},
