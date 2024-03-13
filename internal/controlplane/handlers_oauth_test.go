@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
@@ -114,6 +115,9 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Return([]db.Provider{{
 						ID:   providerID,
 						Name: "github",
+						AuthFlows: []db.AuthorizationFlow{
+							db.AuthorizationFlowOauth2AuthorizationCodeFlow,
+						},
 					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), gomock.Any()).
@@ -136,6 +140,39 @@ func TestGetAuthorizationURL(t *testing.T) {
 			},
 
 			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "Unsupported auth flow",
+			req: &pb.GetAuthorizationURLRequest{
+				Context: &pb.Context{
+					Provider: &providerName,
+					Project:  &projectIdStr,
+				},
+				Port: 8080,
+				Cli:  true,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetParentProjects(gomock.Any(), projectID).
+					Return([]uuid.UUID{projectID}, nil)
+				store.EXPECT().
+					ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
+					Return([]db.Provider{{
+						ID:   providerID,
+						Name: "github",
+						AuthFlows: []db.AuthorizationFlow{
+							db.AuthorizationFlowNone,
+						},
+					}}, nil)
+			},
+
+			checkResponse: func(t *testing.T, _ *pb.GetAuthorizationURLResponse, err error) {
+				t.Helper()
+
+				assert.Error(t, err, "Expected error in GetAuthorizationURL")
+			},
+
+			expectedStatusCode: codes.InvalidArgument,
 		},
 	}
 

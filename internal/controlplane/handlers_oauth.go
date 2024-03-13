@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -39,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -54,6 +56,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
 	if err != nil {
 		return nil, providerError(err)
+	}
+
+	if !slices.Contains(provider.AuthFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"provider does not support authorization code flow")
 	}
 
 	// Configure tracing
@@ -286,6 +293,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
+	}
+
+	if !slices.Contains(provider.AuthFlows, db.AuthorizationFlowUserInput) {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"provider does not support token enrollment")
 	}
 
 	// validate token
