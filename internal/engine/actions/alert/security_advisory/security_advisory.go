@@ -384,8 +384,8 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 func (alert *Alert) getSeverityString() string {
 	if alert.saCfg.Severity == "" {
 		ruleSev := alert.sev.GetValue().Enum().AsString()
-		if ruleSev == "info" {
-			return "unknown"
+		if ruleSev == "info" || ruleSev == "unknown" {
+			return "low"
 		}
 		return ruleSev
 	}

@@ -109,6 +109,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 100},
 							Details:     "",
 						},
+						Severity: &minderv1.Severity{Value: minderv1.Severity_VALUE_LOW},
 					},
 				},
 			},
@@ -152,6 +153,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 180},
 							Details:     "",
 						},
+						Severity: &minderv1.Severity{Value: minderv1.Severity_VALUE_CRITICAL},
 					},
 				},
 			},
@@ -195,6 +197,7 @@ func mockListEvaluationResults() *minderv1.ListEvaluationResultsResponse {
 							LastUpdated: &timestamppb.Timestamp{Seconds: time.Now().Unix() - 120},
 							Details:     "",
 						},
+						Severity: &minderv1.Severity{Value: minderv1.Severity_VALUE_HIGH},
 					},
 					{
 						ProfileId:   "c5bd9d1b-3d96-4a57-a5a0-3d6248c3b677",
