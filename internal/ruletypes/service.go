@@ -22,6 +22,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
@@ -39,7 +41,7 @@ type RuleTypeService interface {
 	// returns the pb definition of the new rule type on success
 	CreateRuleType(
 		ctx context.Context,
-		entityCtx engine.EntityContext,
+		projectID uuid.UUID,
 		provider db.Provider,
 		ruleType *pb.RuleType,
 	) (*pb.RuleType, error)
@@ -50,7 +52,7 @@ type RuleTypeService interface {
 	// returns the pb definition of the updated rule type on success
 	UpdateRuleType(
 		ctx context.Context,
-		entityCtx engine.EntityContext,
+		projectID uuid.UUID,
 		provider db.Provider,
 		ruleType *pb.RuleType,
 	) (*pb.RuleType, error)
@@ -79,7 +81,7 @@ var (
 
 func (r *ruleTypeService) CreateRuleType(
 	ctx context.Context,
-	entityCtx engine.EntityContext,
+	projectID uuid.UUID,
 	provider db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
@@ -92,7 +94,7 @@ func (r *ruleTypeService) CreateRuleType(
 
 	_, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  provider.Name,
-		ProjectID: provider.ProjectID,
+		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})
 	if err == nil {
@@ -116,7 +118,7 @@ func (r *ruleTypeService) CreateRuleType(
 		Name:          ruleTypeName,
 		Provider:      provider.Name,
 		ProviderID:    provider.ID,
-		ProjectID:     entityCtx.Project.ID,
+		ProjectID:     projectID,
 		Description:   ruleType.GetDescription(),
 		Definition:    serializedRule,
 		Guidance:      ruleType.GetGuidance(),
@@ -141,7 +143,7 @@ func (r *ruleTypeService) CreateRuleType(
 
 func (r *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
-	entityCtx engine.EntityContext,
+	projectID uuid.UUID,
 	provider db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
@@ -154,7 +156,7 @@ func (r *ruleTypeService) UpdateRuleType(
 
 	existingRuleType, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  provider.Name,
-		ProjectID: entityCtx.Project.ID,
+		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})
 	if err != nil {
