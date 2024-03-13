@@ -36,5 +36,6 @@ minder provider [flags]
 
 * [minder](minder.md)	 - Minder controls the hosted minder service
 * [minder provider enroll](minder_provider_enroll.md)	 - Enroll a provider within the minder control plane
+* [minder provider get](minder_provider_get.md)	 - Get a given provider available in a specific project
 * [minder provider list](minder_provider_list.md)	 - List the providers available in a specific project
 
