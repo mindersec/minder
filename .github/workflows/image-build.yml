@@ -53,6 +53,6 @@ jobs:
         uses: docker/build-push-action@af5a7ed5ba88268d5278f7203fb52cd833f66d6e # v5
         with:
           context: .
-          file: Dockerfile
+          file: ./docker/minder/Dockerfile
           platforms: linux/amd64
           push: false # Only attempt to build, to verify the Dockerfile is working
