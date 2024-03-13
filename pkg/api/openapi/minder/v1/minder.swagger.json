@@ -900,12 +900,6 @@
             "schema": {
               "$ref": "#/definitions/v1PatchProfileResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
