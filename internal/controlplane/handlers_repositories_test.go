@@ -17,23 +17,18 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
-	"reflect"
 	"testing"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
-	"google.golang.org/protobuf/proto"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/config/server"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -41,8 +36,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
-	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
-	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -50,190 +43,106 @@ import (
 func TestServer_RegisterRepository(t *testing.T) {
 	t.Parallel()
 
-	accessToken := "AUTH"
-
-	tests := []struct {
-		name    string
-		req     *pb.RegisterRepositoryRequest
-		repo    github.Repository
-		repoErr error
-		want    *pb.RegisterRepositoryResponse
-		events  []message.Message
-		wantErr bool
-	}{{
-		name: "register repository, invalid upstream ID",
-		req: &pb.RegisterRepositoryRequest{
-			Provider: "github",
-			Repository: &pb.UpstreamRepositoryRef{
-				Owner:  "test",
-				Name:   "a-test",
-				RepoId: 31337,
-			},
-			Context: &pb.Context{
-				Provider: proto.String("github"),
-				Project:  proto.String(uuid.NewString()),
-			},
-		},
-		repo: github.Repository{
-			Owner: &github.User{
-				Login: github.String("test"),
-			},
-			Name: github.String("a-test"),
-			ID:   github.Int64(1234), // NOTE: does not match RPC!
-		},
-		want: &pb.RegisterRepositoryResponse{
-			Result: &pb.RegisterRepoResult{
-				Repository: &pb.Repository{
-					Id:       proto.String(uuid.NewString()),
-					Owner:    "test",
-					Name:     "a-test",
-					RepoId:   1234,
-					HookId:   1,
-					HookUuid: uuid.New().String(),
-				},
-				Status: &pb.RegisterRepoResult_Status{
-					Success: true,
-				},
-			},
-		},
-		events: []message.Message{{
-			Metadata: map[string]string{
-				"provider": "github",
-			},
-			Payload: []byte(`{"repository":1234}`),
-		}},
-	},
+	scenarios := []struct {
+		Name             string
+		RepoOwner        string
+		RepoName         string
+		RepoServiceSetup repoMockBuilder
+		ProviderFails    bool
+		ExpectedError    string
+	}{
 		{
-			name: "repo not found",
-			req: &pb.RegisterRepositoryRequest{
-				Provider: "github",
-				Repository: &pb.UpstreamRepositoryRef{
-					Owner: "test",
-					Name:  "b-test",
-				},
-				Context: &pb.Context{
-					Provider: proto.String("github"),
-					Project:  proto.String(uuid.NewString()),
-				},
-			},
-			repoErr: errors.New("Repo not found"),
-			want: &pb.RegisterRepositoryResponse{
-				Result: &pb.RegisterRepoResult{
-					// NOTE: the client as of v0.0.31 expects that the Repository
-					// field is always non-null, even if the repo doesn't exist.
-					Repository: &pb.Repository{
-						Owner: "test",
-						Name:  "b-test",
-					},
-					Status: &pb.RegisterRepoResult_Status{
-						Error: proto.String("Repo not found"),
-					},
-				},
-			},
-		}}
-	for _, tc := range tests {
-		tt := tc
-		t.Run(tt.name, func(t *testing.T) {
+			Name:          "Repo creation fails when provider cannot be found",
+			RepoOwner:     repoOwner,
+			RepoName:      repoName,
+			ProviderFails: true,
+			ExpectedError: "cannot retrieve providers",
+		},
+		{
+			Name:          "Repo creation fails when repo name is missing",
+			RepoOwner:     repoOwner,
+			RepoName:      "",
+			ExpectedError: "missing repository owner and/or name",
+		},
+		{
+			Name:          "Repo creation fails when repo owner is missing",
+			RepoOwner:     "",
+			RepoName:      repoName,
+			ExpectedError: "missing repository owner and/or name",
+		},
+		{
+			Name:             "Repo creation fails when repo does not exist in Github",
+			RepoOwner:        repoOwner,
+			RepoName:         repoName,
+			RepoServiceSetup: newRepoService(withFailedCreate(ghprovider.ErrNotFound)),
+			ExpectedError:    ghprovider.ErrNotFound.Error(),
+		},
+		{
+			Name:             "Repo creation fails repo is private, and private repos are not allowed",
+			RepoOwner:        repoOwner,
+			RepoName:         repoName,
+			RepoServiceSetup: newRepoService(withFailedCreate(ghrepo.ErrPrivateRepoForbidden)),
+			ExpectedError:    "private repos cannot be registered in this project",
+		},
+		{
+			Name:             "Repo creation on unexpected error",
+			RepoOwner:        repoOwner,
+			RepoName:         repoName,
+			RepoServiceSetup: newRepoService(withFailedCreate(errDefault)),
+			ExpectedError:    errDefault.Error(),
+		},
+		{
+			Name:             "Repo creation is successful",
+			RepoOwner:        repoOwner,
+			RepoName:         repoName,
+			RepoServiceSetup: newRepoService(withSuccessfulCreate),
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			mockStore := mockdb.NewMockStore(ctrl)
-
-			projectUUID := uuid.MustParse(tt.req.GetContext().GetProject())
-
-			stubClient := StubGitHub{
-				ExpectedOwner: tt.req.Repository.GetOwner(),
-				ExpectedRepo:  tt.req.Repository.GetName(),
-				T:             t,
-				Repo:          &tt.repo,
-				RepoErr:       tt.repoErr,
-			}
-
-			mockStore.EXPECT().
-				GetParentProjects(gomock.Any(), projectUUID).
-				Return([]uuid.UUID{projectUUID}, nil)
-			mockStore.EXPECT().
-				ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectUUID}).
-				Return([]db.Provider{{
-					ID:         uuid.New(),
-					Name:       "github",
-					Implements: []db.ProviderType{db.ProviderTypeGithub},
-					Version:    provinfv1.V1,
-				}}, nil)
-			mockStore.EXPECT().
-				GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
-				Return(db.ProviderAccessToken{
-					EncryptedToken: "encryptedToken",
-				}, nil)
-			if tt.repoErr == nil {
-				mockStore.EXPECT().
-					CreateRepository(gomock.Any(), gomock.Any()).
-					Return(db.Repository{
-						ID: uuid.MustParse(tt.want.Result.Repository.GetId()),
-					}, nil)
-			}
-
-			cancelable, cancel := context.WithCancel(context.Background())
-			clientCache := ratecache.NewRestClientCache(cancelable)
-			defer cancel()
-			clientCache.Set("", accessToken, db.ProviderTypeGithub, &stubClient)
-
-			stubEventer := StubEventer{}
-			stubWebhookManager := mockghhook.NewMockWebhookManager(ctrl)
-			if tt.repoErr == nil {
-				stubbedHook := &github.Hook{
-					ID: ptr.Ptr[int64](1),
-				}
-				stubWebhookManager.EXPECT().
-					CreateWebhook(gomock.Any(), gomock.Any(), gomock.Eq(tt.req.Repository.Owner), gomock.Eq(tt.req.Repository.Name)).
-					Return(tt.want.Result.Repository.HookUuid, stubbedHook, nil)
-			}
-
-			mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
-			mockCryptoEngine.EXPECT().DecryptOAuthToken(gomock.Any()).Return(oauth2.Token{AccessToken: accessToken}, nil).AnyTimes()
-
-			s := &Server{
-				store:           mockStore,
-				cryptoEngine:    mockCryptoEngine,
-				restClientCache: clientCache,
-				cfg:             &server.Config{},
-				evt:             &stubEventer,
-				webhookManager:  stubWebhookManager,
-			}
 			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Provider: engine.Provider{Name: tt.req.Context.GetProvider()},
-				Project:  engine.Project{ID: projectUUID},
+				Provider: engine.Provider{Name: ghprovider.Github},
+				Project:  engine.Project{ID: projectID},
 			})
 
-			got, err := s.RegisterRepository(ctx, tt.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Server.RegisterRepository() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails)
 
-			if len(tt.events) != len(stubEventer.Sent) {
-				t.Fatalf("expected %d events, got %d", len(tt.events), len(stubEventer.Sent))
+			req := &pb.RegisterRepositoryRequest{
+				Repository: &pb.UpstreamRepositoryRef{
+					Owner: scenario.RepoOwner,
+					Name:  scenario.RepoName,
+				},
 			}
-			for i := range tt.events {
-				got := stubEventer.Sent[i]
-				want := &tt.events[i]
-				if !reflect.DeepEqual(got.Metadata, want.Metadata) {
-					t.Errorf("event %d.Metadata = %+v, want %+v", i, got.Metadata, want.Metadata)
+			res, err := server.RegisterRepository(ctx, req)
+			if scenario.ExpectedError == "" {
+				expectation := &pb.RegisterRepositoryResponse{
+					Result: &pb.RegisterRepoResult{
+						Repository: creationResult,
+						Status: &pb.RegisterRepoResult_Status{
+							Success: true,
+						},
+					},
 				}
-				var gotPayload, wantPayload EventPayload
-				if err := json.Unmarshal(got.Payload, &gotPayload); err != nil {
-					t.Fatalf("failed to unmarshal event %d.Payload: %v", i, err)
+				require.NoError(t, err)
+				require.Equal(t, res, expectation)
+			} else {
+				// due to the mix of error handling styles in this endpoint, we
+				// need to do some hackery here
+				var errMsg string
+				if err != nil {
+					errMsg = err.Error()
+				} else if err == nil && res.Result.Status.Success == false && res.Result.Status.Error != nil {
+					errMsg = *res.Result.Status.Error
+				} else {
+					t.Fatal("expected error, but no error was found")
 				}
-				if err := json.Unmarshal(want.Payload, &wantPayload); err != nil {
-					t.Fatalf("failed to unmarshal event %d.Payload: %v", i, err)
-				}
-				if !reflect.DeepEqual(gotPayload.Repository, wantPayload.Repository) {
-					t.Errorf("event %d.Payload = %q, want %q", i, string(got.Payload), string(want.Payload))
-				}
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.RegisterRepository() = %v, want %v", got, tt.want)
+				require.True(t, res == nil || res.Result.Status.Success == false)
+				require.Contains(t, errMsg, scenario.ExpectedError)
 			}
 		})
 	}
@@ -352,14 +261,20 @@ type (
 )
 
 const (
+	repoOwner        = "acme-corp"
+	repoName         = "api-gateway"
 	repoOwnerAndName = "acme-corp/api-gateway"
 	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
 	accessToken      = "TOKEN"
 )
 
 var (
-	projectID  = uuid.New()
-	errDefault = errors.New("oh no")
+	projectID      = uuid.New()
+	errDefault     = errors.New("oh no")
+	creationResult = &pb.Repository{
+		Owner: repoOwner,
+		Name:  repoName,
+	}
 )
 
 func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
@@ -369,6 +284,20 @@ func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
 			opt(mock)
 		}
 		return mock
+	}
+}
+
+func withSuccessfulCreate(mock repoServiceMock) {
+	mock.EXPECT().
+		CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(creationResult, nil)
+}
+
+func withFailedCreate(err error) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, err)
 	}
 }
 
@@ -565,17 +494,8 @@ func (*StubGitHub) UpdateReview(context.Context, string, string, int, int64, str
 }
 
 // GetRepository implements v1.GitHub.
-func (s *StubGitHub) GetRepository(_ context.Context, owner string, repo string) (*github.Repository, error) {
-	if owner != s.ExpectedOwner {
-		s.T.Errorf("expected owner %q, got %q", s.ExpectedOwner, owner)
-	}
-	if repo != s.ExpectedRepo {
-		s.T.Errorf("expected repo %q, got %q", s.ExpectedRepo, repo)
-	}
-	if s.RepoErr != nil {
-		return nil, s.RepoErr
-	}
-	return s.Repo, nil
+func (*StubGitHub) GetRepository(_ context.Context, _ string, _ string) (*github.Repository, error) {
+	panic("unimplemented")
 }
 
 // GetToken implements v1.GitHub.
