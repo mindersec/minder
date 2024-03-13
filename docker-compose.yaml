@@ -152,6 +152,7 @@ services:
       KEYCLOAK_USER: admin
       KEYCLOAK_PASSWORD: admin
       KC_MINDER_SERVER_SECRET: secret
+      IMPORT_VARSUBSTITUTION_ENABLED: "true"
       IMPORT_FILES_LOCATIONS: /config/*.yaml
     volumes:
       - ./identity/config:/config:z
