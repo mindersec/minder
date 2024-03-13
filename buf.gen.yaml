@@ -31,6 +31,8 @@ plugins:
      - module=github.com/stacklok/minder
   - name: openapiv2
     out: pkg/api/openapi
+    opt:
+      - disable_default_errors=true
   - plugin: doc
     # Note: we can't use remote with a custom template:
     # https://github.com/pseudomuto/protoc-gen-doc/issues/513

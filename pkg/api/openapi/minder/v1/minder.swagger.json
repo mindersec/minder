@@ -52,12 +52,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetArtifactByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -102,12 +96,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetArtifactByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -151,12 +139,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListArtifactsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -208,12 +190,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListArtifactsResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -263,12 +239,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1StoreProviderTokenResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -325,12 +295,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetAuthorizationURLResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -396,12 +360,6 @@
             "schema": {
               "$ref": "#/definitions/v1VerifyProviderTokenFromResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -454,12 +412,6 @@
             "schema": {
               "$ref": "#/definitions/v1VerifyProviderTokenFromResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -511,12 +463,6 @@
             "schema": {
               "$ref": "#/definitions/v1StoreProviderTokenResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -549,12 +495,6 @@
             "schema": {
               "$ref": "#/definitions/v1CheckHealthResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -570,12 +510,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1AssignRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -602,12 +536,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRoleAssignmentsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -646,12 +574,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1RemoveRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -712,12 +634,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRolesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -756,12 +672,6 @@
             "schema": {
               "$ref": "#/definitions/v1CreateProfileResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -785,12 +695,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1UpdateProfileResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -817,12 +721,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetProfileStatusByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -916,12 +814,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetProfileByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -964,12 +856,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteProfileResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1016,12 +902,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetProfileStatusByProjectResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1059,12 +939,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListProfilesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1111,12 +985,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListProjectsResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -1130,12 +998,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteProjectResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1173,12 +1035,6 @@
             "schema": {
               "$ref": "#/definitions/v1CreateProjectResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1204,12 +1060,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListProvidersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1264,12 +1114,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetProviderResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1314,12 +1158,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRepositoriesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1378,12 +1216,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRepositoriesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1441,12 +1273,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRemoteRepositoriesFromProviderResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1490,12 +1316,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRemoteRepositoriesFromProviderResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1541,12 +1361,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1588,12 +1402,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1638,12 +1446,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1692,12 +1494,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1749,12 +1545,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1802,12 +1592,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1859,12 +1643,6 @@
             "schema": {
               "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1896,12 +1674,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1RegisterRepositoryResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1967,12 +1739,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListEvaluationResultsResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2036,12 +1802,6 @@
             "schema": {
               "$ref": "#/definitions/v1CreateRuleTypeResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2066,12 +1826,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1UpdateRuleTypeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2099,12 +1853,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetRuleTypeByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2151,12 +1899,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRuleTypeByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2199,12 +1941,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRuleTypeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2251,12 +1987,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRuleTypesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2295,12 +2025,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetUserResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -2315,12 +2039,6 @@
             "schema": {
               "$ref": "#/definitions/v1DeleteUserResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -2334,12 +2052,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1CreateUserResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2722,34 +2434,6 @@
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
-    },
-    "googlerpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
     },
     "protobufNullValue": {
       "type": "string",
