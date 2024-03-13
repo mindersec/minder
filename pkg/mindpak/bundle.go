@@ -47,6 +47,14 @@ type Bundle struct {
 // a bundle loaded with its contents. The bundle will have its Source filesystem
 // bound to the directory via an os.DirFS.
 func NewBundleFromDirectory(path string) (*Bundle, error) {
+	i, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("opening bundle directory: %w", err)
+	}
+	if !i.IsDir() {
+		return nil, fmt.Errorf("specified path is not a directory")
+	}
+
 	bundle := &Bundle{
 		Source: os.DirFS(path).(fs.StatFS),
 	}

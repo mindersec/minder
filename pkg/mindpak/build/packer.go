@@ -72,9 +72,17 @@ func (opts *InitOptions) Validate() error {
 	return errors.Join(errs...)
 }
 
-// Init creates a new bundle manifest in a directory with minder data in the
+// InitBundle creates a new bundle manifest in a directory with minder data in the
 // expected structure.
-func (_ *Packer) Init(opts *InitOptions) error {
+func (_ *Packer) InitBundle(opts *InitOptions) error {
+	if opts == nil {
+		return fmt.Errorf("invalid init options")
+	}
+
+	if opts.Metadata == nil {
+		opts.Metadata = &mindpak.Metadata{}
+	}
+
 	if opts.Metadata.Name == "" {
 		return fmt.Errorf("unable to initialize new bundle, no name defined")
 	}
@@ -100,7 +108,7 @@ func (_ *Packer) Init(opts *InitOptions) error {
 	if err := bundle.Manifest.Write(f); err != nil {
 		return fmt.Errorf("writing manifest data: %w", err)
 	}
-
+	fmt.Printf("wrote to %s", f.Name())
 	return nil
 }
 
