@@ -85,6 +85,10 @@ func (r *ruleTypeService) CreateRuleType(
 	provider db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	if err := ruleType.Validate(); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
@@ -128,15 +132,12 @@ func (r *ruleTypeService) CreateRuleType(
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
 	}
 
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
+
 	rt, err := engine.RuleTypePBFromDB(&newDBRecord)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", newDBRecord.Name, err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = newDBRecord.Provider
-	logger.BusinessRecord(ctx).Project = newDBRecord.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
 
 	return rt, nil
 }
@@ -147,6 +148,10 @@ func (r *ruleTypeService) UpdateRuleType(
 	provider db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	if err := ruleType.Validate(); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
@@ -193,15 +198,12 @@ func (r *ruleTypeService) UpdateRuleType(
 		return nil, fmt.Errorf("failed to update rule type: %w", err)
 	}
 
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: existingRuleType.Name, ID: existingRuleType.ID}
+
 	result, err := engine.RuleTypePBFromDB(&updatedRuleType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", existingRuleType.Name, err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = existingRuleType.Provider
-	logger.BusinessRecord(ctx).Project = existingRuleType.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: existingRuleType.Name, ID: existingRuleType.ID}
 
 	return result, nil
 }

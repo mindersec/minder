@@ -118,7 +118,7 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			}
 
 			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, scenario.EventSendFails)
-			res, err := svc.CreateRepository(ctx, ghClient, &provider, projectID, upstreamRepo)
+			res, err := svc.CreateRepository(ctx, ghClient, &provider, projectID, repoOwner, repoName)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 				// cheat here a little...
@@ -280,10 +280,6 @@ var (
 			Int64: cf.HookID,
 		},
 	}
-	upstreamRepo = ptr.Ptr(pb.UpstreamRepositoryRef{
-		Owner: repoOwner,
-		Name:  repoName,
-	})
 	webhook = &gh.Hook{
 		ID: ptr.Ptr[int64](cf.HookID),
 	}
@@ -328,25 +324,25 @@ func newWebhookMock(opts ...func(mock whMock)) whMockBuilder {
 
 func withSuccessfulWebhookCreate(mock whMock) {
 	mock.EXPECT().
-		CreateWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName).
 		Return(hookUUID, webhook, nil)
 }
 
 func withFailedWebhookCreate(mock whMock) {
 	mock.EXPECT().
-		CreateWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName).
 		Return("", nil, errDefault)
 }
 
 func withSuccessfulWebhookDelete(mock whMock) {
 	mock.EXPECT().
-		DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DeleteWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName, cf.HookID).
 		Return(nil)
 }
 
 func withFailedWebhookDelete(mock whMock) {
 	mock.EXPECT().
-		DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DeleteWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName, cf.HookID).
 		Return(errDefault)
 }
 

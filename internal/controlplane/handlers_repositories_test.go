@@ -62,13 +62,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			Name:          "Repo creation fails when repo name is missing",
 			RepoOwner:     repoOwner,
 			RepoName:      "",
-			ExpectedError: "missing repository owner and/or name",
-		},
-		{
-			Name:          "Repo creation fails when repo owner is missing",
-			RepoOwner:     "",
-			RepoName:      repoName,
-			ExpectedError: "missing repository owner and/or name",
+			ExpectedError: "missing repository name",
 		},
 		{
 			Name:             "Repo creation fails when repo does not exist in Github",
@@ -132,18 +126,8 @@ func TestServer_RegisterRepository(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, res, expectation)
 			} else {
-				// due to the mix of error handling styles in this endpoint, we
-				// need to do some hackery here
-				var errMsg string
-				if err != nil {
-					errMsg = err.Error()
-				} else if err == nil && res.Result.Status.Success == false && res.Result.Status.Error != nil {
-					errMsg = *res.Result.Status.Error
-				} else {
-					t.Fatal("expected error, but no error was found")
-				}
-				require.True(t, res == nil || res.Result.Status.Success == false)
-				require.Contains(t, errMsg, scenario.ExpectedError)
+				require.Nil(t, res)
+				require.Contains(t, err.Error(), scenario.ExpectedError)
 			}
 		})
 	}
@@ -296,14 +280,14 @@ func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
 
 func withSuccessfulCreate(mock repoServiceMock) {
 	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
 		Return(creationResult, nil)
 }
 
 func withFailedCreate(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
 			Return(nil, err)
 	}
 }
@@ -315,7 +299,7 @@ func withSuccessfulDeleteByName(mock repoServiceMock) {
 func withFailedDeleteByName(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DeleteRepositoryByName(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
 			Return(err)
 	}
 }
@@ -327,7 +311,7 @@ func withSuccessfulDeleteByID(mock repoServiceMock) {
 func withFailedDeleteByID(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepositoryByID(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			DeleteRepositoryByID(gomock.Any(), gomock.Any(), projectID, gomock.Any()).
 			Return(err)
 	}
 }

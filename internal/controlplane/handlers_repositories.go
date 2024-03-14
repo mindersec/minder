@@ -56,12 +56,22 @@ func (s *Server) RegisterRepository(
 	}
 
 	// Validate that the Repository struct in the request
-	repoReference := in.GetRepository()
-	if repoReference == nil || repoReference.Name == "" || repoReference.Owner == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository owner and/or name")
+	githubRepo := in.GetRepository()
+	// If the repo owner is missing, GitHub will assume a default value based
+	// on the user's credentials. An explicit check for owner is left out to
+	// avoid breaking backwards compatibility.
+	if githubRepo.GetName() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository name")
 	}
 
-	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, repoReference)
+	l := zerolog.Ctx(ctx).With().
+		Str("repoName", githubRepo.GetName()).
+		Str("repoOwner", githubRepo.GetOwner()).
+		Str("projectID", projectID.String()).
+		Logger()
+	ctx = l.WithContext(ctx)
+
+	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
 		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
