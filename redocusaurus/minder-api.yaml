@@ -738,6 +738,22 @@ paths:
             $ref: '#/definitions/v1CreateProjectRequest'
       tags:
         - ProjectsService
+  /api/v1/projects/entity/reconcile:
+    post:
+      operationId: ProjectsService_CreateEntityReconciliationTask
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1CreateEntityReconciliationTaskResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1CreateEntityReconciliationTaskRequest'
+      tags:
+        - ProjectsService
   /api/v1/providers:
     get:
       operationId: ProvidersService_ListProviders
@@ -1865,6 +1881,19 @@ definitions:
       Removing the 'optional' keyword from the following two fields below will
       break
        buf compatibility checks.
+  v1CreateEntityReconciliationTaskRequest:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EntityTypedId'
+        description: entity is the entity to be reconciled.
+      context:
+        $ref: '#/definitions/v1Context'
+        description: >-
+          context is the context in which the entity reconciliation task is
+          created.
+  v1CreateEntityReconciliationTaskResponse:
+    type: object
   v1CreateProfileRequest:
     type: object
     properties:
