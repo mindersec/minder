@@ -148,7 +148,7 @@ func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner
 		if isOrg {
 			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
 		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, owner, opt)
 		}
 		if err != nil {
 			if resp.StatusCode == http.StatusNotFound {
