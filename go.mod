@@ -1,6 +1,6 @@
 module github.com/stacklok/minder
 
-go 1.22.1
+go 1.22
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -139,6 +139,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.1.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
+	helm.sh/helm/v3 v3.12.2 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
 )
 
