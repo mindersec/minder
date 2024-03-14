@@ -38,5 +38,6 @@ minder repo [flags]
 * [minder repo delete](minder_repo_delete.md)	 - Delete a repository
 * [minder repo get](minder_repo_get.md)	 - Get repository details
 * [minder repo list](minder_repo_list.md)	 - List repositories
+* [minder repo reconcile](minder_repo_reconcile.md)	 - Reconcile (Sync) a repository with Minder.
 * [minder repo register](minder_repo_register.md)	 - Register a repository
 
