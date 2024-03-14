@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -50,7 +51,7 @@ var (
 }`),
 		},
 		sql.NullString{},
-		"token",
+		credentials.NewGitHubTokenCredential("token"),
 	)
 )
 

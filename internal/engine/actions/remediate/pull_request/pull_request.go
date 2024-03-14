@@ -32,7 +32,6 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage"
 	"github.com/google/go-github/v56/github"
 	"github.com/rs/zerolog"
@@ -306,26 +305,10 @@ func (r *Remediator) runGit(
 
 	refspec := refFromBranch(branchBaseName(title))
 
-	var b bytes.Buffer
-	err = repo.PushContext(ctx,
-		&git.PushOptions{
-			RemoteName: guessRemote(repo),
-			Force:      true,
-			RefSpecs: []config.RefSpec{
-				config.RefSpec(
-					fmt.Sprintf("+%s:%s", refspec, refspec),
-				),
-			},
-			Auth: &githttp.BasicAuth{
-				Username: username,
-				Password: r.ghCli.GetToken(),
-			},
-			Progress: &b,
-		})
+	err = pushBranch(ctx, repo, refspec, r.ghCli)
 	if err != nil {
-		return fmt.Errorf("cannot push: %w", err)
+		return fmt.Errorf("cannot push branch: %w", err)
 	}
-	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
 
 	// if a PR from this branch already exists, don't create a new one
 	// this handles the case where the content changed (e.g. profile changed)
@@ -351,6 +334,31 @@ func (r *Remediator) runGit(
 	}
 
 	zerolog.Ctx(ctx).Info().Msg("Pull request created")
+	return nil
+}
+
+func pushBranch(ctx context.Context, repo *git.Repository, refspec string, gh provifv1.GitHub) error {
+	var b bytes.Buffer
+	pushOptions := &git.PushOptions{
+		RemoteName: guessRemote(repo),
+		Force:      true,
+		RefSpecs: []config.RefSpec{
+			config.RefSpec(
+				fmt.Sprintf("+%s:%s", refspec, refspec),
+			),
+		},
+		Progress: &b,
+	}
+	err := gh.AddAuthToPushOptions(ctx, pushOptions)
+	if err != nil {
+		return fmt.Errorf("cannot add auth to push options: %w", err)
+	}
+
+	err = repo.PushContext(ctx, pushOptions)
+	if err != nil {
+		return fmt.Errorf("cannot push: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Msgf("Push output: %s", b.String())
 	return nil
 }
 

@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -67,7 +68,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 }`),
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: false,
@@ -92,7 +93,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 }`),
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: true,
@@ -117,7 +118,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 }`),
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: true,
@@ -137,7 +138,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 						},
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: true,
@@ -162,7 +163,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 }`),
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: true,
@@ -186,7 +187,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 }`),
 					},
 					sql.NullString{},
-					"token",
+					credentials.NewGitHubTokenCredential("token"),
 				),
 			},
 			wantErr: true,
@@ -230,7 +231,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
-		"token",
+		credentials.NewGitHubTokenCredential("token"),
 	)
 }
 

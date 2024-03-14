@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -287,7 +288,7 @@ func (s *Server) verifyProviderTokenIdentity(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, token, pbOpts...)
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token), pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
 	ghClient, err := builder.GetGitHub()

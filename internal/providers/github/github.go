@@ -66,10 +66,10 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 
 // GitHub is the struct that contains the GitHub client operations
 type GitHub struct {
-	client *github.Client
-	token  string
-	owner  string
-	cache  ratecache.RestClientCache
+	client     *github.Client
+	credential provifv1.GitHubCredential
+	owner      string
+	cache      ratecache.RestClientCache
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -83,17 +83,15 @@ func NewRestClient(
 	config *minderv1.GitHubProviderConfig,
 	metrics telemetry.HttpClientMetrics,
 	restClientCache ratecache.RestClientCache,
-	token string,
+	credential provifv1.GitHubCredential,
 	owner string,
 ) (*GitHub, error) {
 	var err error
 
 	tc := &http.Client{
 		Transport: &oauth2.Transport{
-			Base: http.DefaultClient.Transport,
-			Source: oauth2.StaticTokenSource(
-				&oauth2.Token{AccessToken: token},
-			),
+			Base:   http.DefaultClient.Transport,
+			Source: credential.GetAsOAuth2TokenSource(),
 		},
 	}
 
@@ -113,10 +111,10 @@ func NewRestClient(
 	}
 
 	return &GitHub{
-		client: ghClient,
-		token:  token,
-		owner:  owner,
-		cache:  restClientCache,
+		client:     ghClient,
+		credential: credential,
+		owner:      owner,
+		cache:      restClientCache,
 	}, nil
 }
 
@@ -150,7 +148,7 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, erro
 // the rate-limited client.
 func (c *GitHub) setAsRateLimited() {
 	if c.cache != nil {
-		c.cache.Set(c.owner, c.token, db.ProviderTypeGithub, c)
+		c.cache.Set(c.owner, c.credential.GetCacheKey(), db.ProviderTypeGithub, c)
 	}
 }
 

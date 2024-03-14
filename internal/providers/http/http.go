@@ -23,8 +23,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"golang.org/x/oauth2"
-
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -33,9 +31,9 @@ import (
 
 // REST is the interface for interacting with an REST API.
 type REST struct {
-	baseURL *url.URL
-	cli     *http.Client
-	tok     string
+	baseURL    *url.URL
+	cli        *http.Client
+	credential provifv1.RestCredential
 }
 
 // Ensure that REST implements the REST interface
@@ -45,19 +43,12 @@ var _ provifv1.REST = (*REST)(nil)
 func NewREST(
 	config *minderv1.RESTProviderConfig,
 	metrics telemetry.HttpClientMetrics,
-	tok string,
+	credential provifv1.RestCredential,
 ) (*REST, error) {
 	var cli *http.Client
 	var err error
 
-	if tok != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: tok},
-		)
-		cli = oauth2.NewClient(context.Background(), ts)
-	} else {
-		cli = &http.Client{}
-	}
+	cli = &http.Client{}
 
 	cli.Transport, err = metrics.NewDurationRoundTripper(cli.Transport, db.ProviderTypeRest)
 	if err != nil {
@@ -71,15 +62,10 @@ func NewREST(
 	}
 
 	return &REST{
-		cli:     cli,
-		baseURL: baseURL,
-		tok:     tok,
+		cli:        cli,
+		baseURL:    baseURL,
+		credential: credential,
 	}, nil
-}
-
-// GetToken returns the token for the provider
-func (h *REST) GetToken() string {
-	return h.tok
 }
 
 // GetBaseURL returns the base URL for the REST API.
@@ -105,6 +91,8 @@ func (h *REST) NewRequest(method, endpoint string, body any) (*http.Request, err
 // Do executes an HTTP request.
 func (h *REST) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
+
+	h.credential.SetAuthorizationHeader(req)
 
 	return h.cli.Do(req)
 }
