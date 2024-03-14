@@ -1104,6 +1104,32 @@
         ]
       }
     },
+    "/api/v1/projects/entity/reconcile": {
+      "post": {
+        "operationId": "ProjectsService_CreateEntityReconciliationTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      }
+    },
     "/api/v1/providers": {
       "get": {
         "operationId": "ProvidersService_ListProviders",
@@ -2621,6 +2647,22 @@
         }
       },
       "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
+    },
+    "v1CreateEntityReconciliationTaskRequest": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityTypedId",
+          "description": "entity is the entity to be reconciled."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the entity reconciliation task is created."
+        }
+      }
+    },
+    "v1CreateEntityReconciliationTaskResponse": {
+      "type": "object"
     },
     "v1CreateProfileRequest": {
       "type": "object",

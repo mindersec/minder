@@ -66,6 +66,7 @@ enum Relation {
     RELATION_PROFILE_DELETE = 32 [(name) = "profile_delete"];
     RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
+    RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -692,6 +693,18 @@ service ProjectsService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_DELETE
+        };
+    }
+
+    rpc CreateEntityReconciliationTask(CreateEntityReconciliationTaskRequest) returns (CreateEntityReconciliationTaskResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/projects/entity/reconcile"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_RECONCILIATION_TASK_CREATE
         };
     }
 }
@@ -1692,6 +1705,17 @@ message DeleteProjectRequest {
 message DeleteProjectResponse {
     // project_id is the id of the project that was deleted.
     string project_id = 1;
+}
+
+message CreateEntityReconciliationTaskRequest {
+    // entity is the entity to be reconciled.
+    EntityTypedId entity = 1;
+
+    // context is the context in which the entity reconciliation task is created.
+    Context context = 2;
+}
+
+message CreateEntityReconciliationTaskResponse {
 }
 
 message ListRolesRequest {

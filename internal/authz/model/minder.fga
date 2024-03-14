@@ -91,3 +91,5 @@ type project
     define profile_delete: editor or policy_writer
 
     define profile_status_get: viewer
+
+    define entity_reconciliation_task_create: editor

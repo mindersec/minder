@@ -1792,9 +1792,10 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProjectsService_ListProjects_FullMethodName  = "/minder.v1.ProjectsService/ListProjects"
-	ProjectsService_CreateProject_FullMethodName = "/minder.v1.ProjectsService/CreateProject"
-	ProjectsService_DeleteProject_FullMethodName = "/minder.v1.ProjectsService/DeleteProject"
+	ProjectsService_ListProjects_FullMethodName                   = "/minder.v1.ProjectsService/ListProjects"
+	ProjectsService_CreateProject_FullMethodName                  = "/minder.v1.ProjectsService/CreateProject"
+	ProjectsService_DeleteProject_FullMethodName                  = "/minder.v1.ProjectsService/DeleteProject"
+	ProjectsService_CreateEntityReconciliationTask_FullMethodName = "/minder.v1.ProjectsService/CreateEntityReconciliationTask"
 )
 
 // ProjectsServiceClient is the client API for ProjectsService service.
@@ -1804,6 +1805,7 @@ type ProjectsServiceClient interface {
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
 	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
+	CreateEntityReconciliationTask(ctx context.Context, in *CreateEntityReconciliationTaskRequest, opts ...grpc.CallOption) (*CreateEntityReconciliationTaskResponse, error)
 }
 
 type projectsServiceClient struct {
@@ -1841,6 +1843,15 @@ func (c *projectsServiceClient) DeleteProject(ctx context.Context, in *DeletePro
 	return out, nil
 }
 
+func (c *projectsServiceClient) CreateEntityReconciliationTask(ctx context.Context, in *CreateEntityReconciliationTaskRequest, opts ...grpc.CallOption) (*CreateEntityReconciliationTaskResponse, error) {
+	out := new(CreateEntityReconciliationTaskResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_CreateEntityReconciliationTask_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectsServiceServer is the server API for ProjectsService service.
 // All implementations must embed UnimplementedProjectsServiceServer
 // for forward compatibility
@@ -1848,6 +1859,7 @@ type ProjectsServiceServer interface {
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
 	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
+	CreateEntityReconciliationTask(context.Context, *CreateEntityReconciliationTaskRequest) (*CreateEntityReconciliationTaskResponse, error)
 	mustEmbedUnimplementedProjectsServiceServer()
 }
 
@@ -1863,6 +1875,9 @@ func (UnimplementedProjectsServiceServer) CreateProject(context.Context, *Create
 }
 func (UnimplementedProjectsServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) CreateEntityReconciliationTask(context.Context, *CreateEntityReconciliationTaskRequest) (*CreateEntityReconciliationTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateEntityReconciliationTask not implemented")
 }
 func (UnimplementedProjectsServiceServer) mustEmbedUnimplementedProjectsServiceServer() {}
 
@@ -1931,6 +1946,24 @@ func _ProjectsService_DeleteProject_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectsService_CreateEntityReconciliationTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateEntityReconciliationTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).CreateEntityReconciliationTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_CreateEntityReconciliationTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).CreateEntityReconciliationTask(ctx, req.(*CreateEntityReconciliationTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectsService_ServiceDesc is the grpc.ServiceDesc for ProjectsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1949,6 +1982,10 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProject",
 			Handler:    _ProjectsService_DeleteProject_Handler,
+		},
+		{
+			MethodName: "CreateEntityReconciliationTask",
+			Handler:    _ProjectsService_CreateEntityReconciliationTask_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
