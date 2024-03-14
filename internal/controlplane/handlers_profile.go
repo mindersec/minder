@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -274,7 +275,17 @@ func (s *Server) ListProfiles(ctx context.Context,
 
 	var resp minderv1.ListProfilesResponse
 	resp.Profiles = make([]*minderv1.Profile, 0, len(profiles))
-	for _, profile := range engine.MergeDatabaseListIntoProfiles(profiles) {
+	profileMap := engine.MergeDatabaseListIntoProfiles(profiles)
+
+	// Sort the profiles by name to get a consistent order. This is important for UI.
+	profileNames := make([]string, 0, len(profileMap))
+	for prfName := range profileMap {
+		profileNames = append(profileNames, prfName)
+	}
+	sort.Strings(profileNames)
+
+	for _, prfName := range profileNames {
+		profile := profileMap[prfName]
 		resp.Profiles = append(resp.Profiles, profile)
 	}
 
