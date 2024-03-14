@@ -114,6 +114,7 @@ type GitHub interface {
 	) ([]*github.IssueComment, error)
 	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
+	GetUserInfo(ctx context.Context) (*github.User, *github.Response, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
