@@ -105,6 +105,7 @@ replies with OK
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
 | CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
 | DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
+| CreateEntityReconciliationTask | [CreateEntityReconciliationTaskRequest](#minder-v1-CreateEntityReconciliationTaskRequest) | [CreateEntityReconciliationTaskResponse](#minder-v1-CreateEntityReconciliationTaskResponse) |  |
 
 
 <a name="minder-v1-ProvidersService"></a>
@@ -278,6 +279,24 @@ buf compatibility checks.
 | provider | [string](#string) | optional | name of the provider |
 | project | [string](#string) | optional | ID of the project |
 | retired_organization | [string](#string) | optional |  |
+
+
+<a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
+
+#### CreateEntityReconciliationTaskRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  | entity is the entity to be reconciled. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the entity reconciliation task is created. |
+
+
+<a name="minder-v1-CreateEntityReconciliationTaskResponse"></a>
+
+#### CreateEntityReconciliationTaskResponse
+
 
 
 <a name="minder-v1-CreateProfileRequest"></a>
@@ -2093,6 +2112,7 @@ ProviderTrait is the type of the provider.
 | RELATION_PROFILE_DELETE | 32 |  |
 | RELATION_PROFILE_STATUS_GET | 33 |  |
 | RELATION_REMOTE_REPO_GET | 34 |  |
+| RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 
 
 <a name="minder-v1-Severity-Value"></a>

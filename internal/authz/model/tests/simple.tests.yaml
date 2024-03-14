@@ -68,6 +68,7 @@ tests:
       role_assignment_list: true
       role_assignment_create: true
       role_assignment_remove: true
+      entity_reconciliation_task_create: true
   - user: user:admin1
     object: project:002
     assertions:
@@ -111,6 +112,7 @@ tests:
       role_assignment_list: false
       role_assignment_create: false
       role_assignment_remove: false
+      entity_reconciliation_task_create: false
   - user: user:nonadmin1
     object: project:002  # editor
     assertions:
@@ -120,6 +122,7 @@ tests:
       provider_create: false
       artifact_update: true
       provider_get: true
+      entity_reconciliation_task_create: true
   - user: user:nonadmin1
     object: project:003  # admin
     assertions:
@@ -143,6 +146,7 @@ tests:
       provider_create: false
       artifact_update: false
       provider_get: false
+      entity_reconciliation_task_create: false
   - user: user:otherproject
     object: project:010  # admin
     assertions:
@@ -152,6 +156,7 @@ tests:
       provider_create: true
       artifact_update: true
       provider_get: true
+      entity_reconciliation_task_create: false
   - user: user:perms-manager-global
     object: project:001
     assertions:
