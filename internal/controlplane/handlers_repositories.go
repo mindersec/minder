@@ -69,16 +69,14 @@ func (s *Server) RegisterRepository(
 		return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
 	}
 
-	response := &pb.RegisterRepositoryResponse{
+	return &pb.RegisterRepositoryResponse{
 		Result: &pb.RegisterRepoResult{
 			Status: &pb.RegisterRepoResult_Status{
 				Success: true,
 			},
 			Repository: newRepo,
 		},
-	}
-
-	return response, nil
+	}, nil
 }
 
 // ListRepositories returns a list of repositories for a given project
