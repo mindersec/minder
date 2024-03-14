@@ -578,8 +578,8 @@ func (s *StubGitHub) GetRepository(_ context.Context, owner string, repo string)
 	return s.Repo, nil
 }
 
-// GetToken implements v1.GitHub.
-func (*StubGitHub) GetToken() string {
+// GetCredential implements v1.GitHub.
+func (*StubGitHub) GetCredential() provinfv1.GitHubCredential {
 	panic("unimplemented")
 }
 
@@ -660,4 +660,9 @@ func (*StubGitHub) GetPrimaryEmail(context.Context) (string, error) {
 
 func (*StubGitHub) Clone(context.Context, string, string) (*git.Repository, error) {
 	panic("unimplemented")
+}
+
+func (*StubGitHub) AddAuthToPushOptions(context.Context, *git.PushOptions) error {
+	panic("unimplemented")
+
 }

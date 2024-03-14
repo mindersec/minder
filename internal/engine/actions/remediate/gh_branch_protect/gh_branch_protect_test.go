@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -66,7 +67,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
-		"token",
+		credentials.NewGitHubTokenCredential("token"),
 	)
 }
 

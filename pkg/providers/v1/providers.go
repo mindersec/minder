@@ -37,8 +37,6 @@ const (
 
 // Provider is the general interface for all providers
 type Provider interface {
-	// GetToken returns the token for the provider
-	GetToken() string
 }
 
 // Git is the interface for git providers
@@ -79,11 +77,11 @@ type GitHub interface {
 	REST
 	Git
 
+	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
-	ListAllPackages(context.Context, bool, string, string, int, int) ([]*github.Package, error)
 	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
@@ -115,6 +113,7 @@ type GitHub interface {
 		opts *github.IssueListCommentsOptions,
 	) ([]*github.IssueComment, error)
 	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
+	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

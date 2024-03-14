@@ -32,6 +32,7 @@ import (
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 var (
@@ -127,43 +128,6 @@ func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner stri
 	return allRepos, nil
 }
 
-// ListAllPackages returns a list of all packages for the authenticated user
-func (c *GitHub) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
-	pageNumber int, itemsPerPage int) ([]*github.Package, error) {
-	opt := &github.PackageListOptions{
-		PackageType: &artifactType,
-		ListOptions: github.ListOptions{
-			Page:    pageNumber,
-			PerPage: itemsPerPage,
-		},
-	}
-	// create a slice to hold the containers
-	var allContainers []*github.Package
-	for {
-		var artifacts []*github.Package
-		var resp *github.Response
-		var err error
-
-		if isOrg {
-			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
-		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
-		}
-		if err != nil {
-			return allContainers, err
-		}
-
-		allContainers = append(allContainers, artifacts...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	return allContainers, nil
-}
-
 // ListPackagesByRepository returns a list of all packages for a specific repository
 func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
 	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
@@ -184,7 +148,7 @@ func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner
 		if isOrg {
 			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
 		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, owner, opt)
 		}
 		if err != nil {
 			if resp.StatusCode == http.StatusNotFound {
@@ -529,12 +493,9 @@ func (c *GitHub) Do(ctx context.Context, req *http.Request) (*http.Response, err
 	return resp.Response, err
 }
 
-// GetToken returns the token used to authenticate with the GitHub API
-func (c *GitHub) GetToken() string {
-	if c.token != "" {
-		return c.token
-	}
-	return ""
+// GetCredential returns the credential used to authenticate with the GitHub API
+func (c *GitHub) GetCredential() provifv1.GitHubCredential {
+	return c.credential
 }
 
 // GetOwner returns the owner of the repository
@@ -734,6 +695,16 @@ func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 
 // Clone clones a GitHub repository
 func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
-	delegator := gitclient.NewGit(c.GetToken())
+	delegator := gitclient.NewGit(c.credential)
 	return delegator.Clone(ctx, cloneUrl, branch)
+}
+
+// AddAuthToPushOptions adds authorization to the push options
+func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.PushOptions) error {
+	username, err := c.GetUsername(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot get username: %w", err)
+	}
+	c.credential.AddToPushOptions(pushOptions, username)
+	return nil
 }

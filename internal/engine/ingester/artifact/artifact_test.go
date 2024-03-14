@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	mockverify "github.com/stacklok/minder/internal/verifier/mock"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -57,7 +58,7 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
-		"token",
+		credentials.NewGitHubTokenCredential("token"),
 	)
 }
 

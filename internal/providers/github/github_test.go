@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -40,7 +41,7 @@ func TestNewRestClient(t *testing.T) {
 		Endpoint: "https://api.github.com",
 	},
 		provtelemetry.NewNoopMetrics(),
-		nil, "token", "")
+		nil, credentials.NewGitHubTokenCredential("token"), "")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
@@ -114,7 +115,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				Endpoint: testServer.URL + "/",
 			},
 				provtelemetry.NewNoopMetrics(),
-				nil, "token", "")
+				nil, credentials.NewGitHubTokenCredential("token"), "")
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
@@ -142,7 +143,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), token, "mockOwner")
+	client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), credentials.NewGitHubTokenCredential(token), "mockOwner")
 	require.NoError(t, err)
 
 	_, err = client.CreateIssueComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
@@ -186,7 +187,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 	// Start a goroutine that will make a request to the server, rate limiting the gh client
 	go func() {
 		defer wg.Done()
-		client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, token, owner)
+		client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, credentials.NewGitHubTokenCredential(token), owner)
 		require.NoError(t, err)
 
 		_, err = client.CreateIssueComment(context.Background(), owner, "mockRepo", 1, "Test Comment")

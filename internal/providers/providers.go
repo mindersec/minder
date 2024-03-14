@@ -25,6 +25,7 @@ import (
 
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	ghclient "github.com/stacklok/minder/internal/providers/github"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
@@ -54,7 +55,8 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken.OwnerFilter, decryptedToken.AccessToken, opts...), nil
+	return NewProviderBuilder(&prov, encToken.OwnerFilter,
+		credentials.NewGitHubTokenCredential(decryptedToken.AccessToken), opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -63,7 +65,7 @@ type ProviderBuilder struct {
 	p               *db.Provider
 	ownerFilter     sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
 	restClientCache ratecache.RestClientCache
-	tok             string
+	credential      provinfv1.Credential
 	metrics         telemetry.ProviderMetrics
 }
 
@@ -88,13 +90,13 @@ func WithRestClientCache(cache ratecache.RestClientCache) ProviderBuilderOption 
 func NewProviderBuilder(
 	p *db.Provider,
 	ownerFilter sql.NullString,
-	tok string,
+	credential provinfv1.Credential,
 	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
 		p:           p,
 		ownerFilter: ownerFilter,
-		tok:         tok,
+		credential:  credential,
 		metrics:     telemetry.NewNoopMetrics(),
 	}
 
@@ -116,11 +118,6 @@ func (pb *ProviderBuilder) GetName() string {
 	return pb.p.Name
 }
 
-// GetToken returns the token for the provider.
-func (pb *ProviderBuilder) GetToken() string {
-	return pb.tok
-}
-
 // GetGit returns a git client for the provider.
 func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 	if !pb.Implements(db.ProviderTypeGit) {
@@ -131,7 +128,12 @@ func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 		return pb.GetGitHub()
 	}
 
-	return gitclient.NewGit(pb.tok), nil
+	gitCredential, ok := pb.credential.(provinfv1.GitCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential is not a git credential")
+	}
+
+	return gitclient.NewGit(gitCredential), nil
 }
 
 // GetHTTP returns a github client for the provider.
@@ -157,7 +159,12 @@ func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
 		return nil, fmt.Errorf("error parsing http config: %w", err)
 	}
 
-	return httpclient.NewREST(cfg, pb.metrics, pb.tok)
+	restCredential, ok := pb.credential.(provinfv1.RestCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential is not a rest credential")
+	}
+
+	return httpclient.NewREST(cfg, pb.metrics, restCredential)
 }
 
 // GetGitHub returns a github client for the provider.
@@ -170,8 +177,13 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
+	gitHubCredential, ok := pb.credential.(provinfv1.GitHubCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential is not a GitHub credential")
+	}
+
 	if pb.restClientCache != nil {
-		client, ok := pb.restClientCache.Get(pb.ownerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
+		client, ok := pb.restClientCache.Get(pb.ownerFilter.String, gitHubCredential.GetCacheKey(), db.ProviderTypeGithub)
 		if ok {
 			return client.(provinfv1.GitHub), nil
 		}
@@ -183,7 +195,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("error parsing github config: %w", err)
 	}
 
-	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, pb.GetToken(), pb.ownerFilter.String)
+	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github client: %w", err)
 	}
