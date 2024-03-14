@@ -1026,6 +1026,7 @@ paths:
           in: path
           required: true
           type: string
+          pattern: .+
         - name: provider
           in: query
           required: false
@@ -1058,6 +1059,7 @@ paths:
           in: path
           required: true
           type: string
+          pattern: .+
         - name: provider
           in: query
           required: false
