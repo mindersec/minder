@@ -17,11 +17,9 @@ package github_test
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"testing"
 
-	gh "github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -34,101 +32,7 @@ import (
 	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
-	"github.com/stacklok/minder/internal/util/ptr"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func TestRepositoryService_CreateRepository(t *testing.T) {
-	t.Parallel()
-
-	scenarios := []struct {
-		Name           string
-		ClientSetup    cf.ClientMockBuilder
-		DBSetup        dbMockBuilder
-		WebhookSetup   whMockBuilder
-		EventsSetup    eventMockBuilder
-		EventSendFails bool
-		ExpectedError  string
-	}{
-		{
-			Name:          "CreateRepository fails when repo cannot be found in GitHub",
-			ClientSetup:   cf.NewClientMock(cf.WithFailedGet),
-			ExpectedError: "error retrieving repo from github",
-		},
-		{
-			Name:          "CreateRepository fails for private repo in project which disallows private repos",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(privateRepo)),
-			DBSetup:       newDBMock(withPrivateReposDisabled),
-			ExpectedError: "private repos cannot be registered in this project",
-		},
-		{
-			Name:          "CreateRepository fails when webhook creation fails",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			WebhookSetup:  newWebhookMock(withFailedWebhookCreate),
-			ExpectedError: "error creating webhook in repo",
-		},
-		{
-			Name:          "CreateRepository fails when repo cannot be inserted into database",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			DBSetup:       newDBMock(withFailedCreate),
-			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withSuccessfulWebhookDelete),
-			ExpectedError: "error creating repository",
-		},
-		{
-			Name:          "CreateRepository fails when repo cannot be inserted into database (cleanup fails)",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			DBSetup:       newDBMock(withFailedCreate),
-			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withFailedWebhookDelete),
-			ExpectedError: "error creating repository",
-		},
-		{
-			Name:         "CreateRepository succeeds",
-			ClientSetup:  cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			DBSetup:      newDBMock(withSuccessfulCreate),
-			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
-		},
-		{
-			Name:         "CreateRepository succeeds (private repos enabled)",
-			ClientSetup:  cf.NewClientMock(cf.WithSuccessfulGet(privateRepo)),
-			DBSetup:      newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
-			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
-		},
-		{
-			Name:           "CreateRepository succeeds (skips failed event send)",
-			ClientSetup:    cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			DBSetup:        newDBMock(withSuccessfulCreate),
-			WebhookSetup:   newWebhookMock(withSuccessfulWebhookCreate),
-			EventSendFails: true,
-		},
-	}
-
-	for i := range scenarios {
-		scenario := scenarios[i]
-		t.Run(scenario.Name, func(t *testing.T) {
-			t.Parallel()
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			ctx := context.Background()
-
-			var ghClient clients.GitHubRepoClient
-			if scenario.ClientSetup != nil {
-				ghClient = scenario.ClientSetup(ctrl)
-			}
-
-			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, scenario.EventSendFails)
-			res, err := svc.CreateRepository(ctx, ghClient, projectID, upstreamRepo)
-			if scenario.ExpectedError == "" {
-				require.NoError(t, err)
-				// cheat here a little...
-				expectation := newExpectation(res.IsPrivate)
-				require.Equal(t, expectation, res)
-			} else {
-				require.Nil(t, res)
-				require.ErrorContains(t, err, scenario.ExpectedError)
-			}
-		})
-	}
-}
 
 func TestRepositoryService_DeleteRepository(t *testing.T) {
 	t.Parallel()
@@ -263,9 +167,7 @@ const (
 )
 
 var (
-	hookUUID   = uuid.New().String()
 	repoID     = uuid.New()
-	ghRepoID   = ptr.Ptr[int64](0xE1E10)
 	projectID  = uuid.New()
 	errDefault = errors.New("uh oh")
 	dbRepo     = db.Repository{
@@ -278,24 +180,13 @@ var (
 			Int64: cf.HookID,
 		},
 	}
-	upstreamRepo = ptr.Ptr(pb.UpstreamRepositoryRef{
-		Owner: repoOwner,
-		Name:  repoName,
-	})
-	webhook = &gh.Hook{
-		ID: ptr.Ptr[int64](cf.HookID),
-	}
-	publicRepo  = newGithubRepo(false)
-	privateRepo = newGithubRepo(true)
 )
 
 type (
-	dbMock           = *mockdb.MockStore
-	dbMockBuilder    = func(controller *gomock.Controller) dbMock
-	whMock           = *mockghhook.MockWebhookManager
-	whMockBuilder    = func(controller *gomock.Controller) whMock
-	eventMock        = *mockevents.MockInterface
-	eventMockBuilder = func(controller *gomock.Controller) eventMock
+	dbMock        = *mockdb.MockStore
+	dbMockBuilder = func(controller *gomock.Controller) dbMock
+	whMock        = *mockghhook.MockWebhookManager
+	whMockBuilder = func(controller *gomock.Controller) whMock
 )
 
 func newDBMock(opts ...func(dbMock)) dbMockBuilder {
@@ -316,18 +207,6 @@ func newWebhookMock(opts ...func(mock whMock)) whMockBuilder {
 		}
 		return mock
 	}
-}
-
-func withSuccessfulWebhookCreate(mock whMock) {
-	mock.EXPECT().
-		CreateWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(hookUUID, webhook, nil)
-}
-
-func withFailedWebhookCreate(mock whMock) {
-	mock.EXPECT().
-		CreateWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", nil, errDefault)
 }
 
 func withSuccessfulWebhookDelete(mock whMock) {
@@ -377,62 +256,4 @@ func withSuccessfulDelete(mock dbMock) {
 	mock.EXPECT().
 		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
 		Return(nil)
-}
-
-func withFailedCreate(mock dbMock) {
-	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
-}
-
-func withSuccessfulCreate(mock dbMock) {
-	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
-}
-
-func withPrivateReposEnabled(mock dbMock) {
-	mock.EXPECT().
-		GetFeatureInProject(gomock.Any(), gomock.Any()).
-		Return(json.RawMessage{}, nil)
-}
-
-func withPrivateReposDisabled(mock dbMock) {
-	mock.EXPECT().
-		GetFeatureInProject(gomock.Any(), gomock.Any()).
-		Return(json.RawMessage{}, sql.ErrNoRows)
-}
-
-func newGithubRepo(isPrivate bool) *gh.Repository {
-	return &gh.Repository{
-		ID:   ghRepoID,
-		Name: ptr.Ptr(repoName),
-		Owner: &gh.User{
-			Login: ptr.Ptr(repoOwner),
-		},
-		Private:        ptr.Ptr(isPrivate),
-		DeploymentsURL: ptr.Ptr("https://foo.com"),
-		CloneURL:       ptr.Ptr("http://cloneurl.com"),
-		Fork:           ptr.Ptr(false),
-		DefaultBranch:  ptr.Ptr("main"),
-	}
-}
-
-func newExpectation(isPrivate bool) *pb.Repository {
-	return &pb.Repository{
-		Id:            ptr.Ptr(dbRepo.ID.String()),
-		Name:          publicRepo.GetName(),
-		Owner:         publicRepo.GetOwner().GetLogin(),
-		RepoId:        publicRepo.GetID(),
-		HookId:        webhook.GetID(),
-		HookUrl:       webhook.GetURL(),
-		DeployUrl:     publicRepo.GetDeploymentsURL(),
-		CloneUrl:      publicRepo.GetCloneURL(),
-		HookType:      webhook.GetType(),
-		HookName:      webhook.GetName(),
-		HookUuid:      hookUUID,
-		IsPrivate:     isPrivate,
-		IsFork:        publicRepo.GetFork(),
-		DefaultBranch: publicRepo.GetDefaultBranch(),
-	}
 }

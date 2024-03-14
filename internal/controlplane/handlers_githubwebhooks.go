@@ -213,6 +213,92 @@ func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
 	return state
 }
 
+// registerWebhookForRepository registers a set repository and sets up the webhook for each of them
+// and returns the registration result for each repository.
+// If an error occurs, the registration is aborted and the error is returned.
+// https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
+
+// The actual logic for webhook creation lives in the WebhookManager interface
+// TODO: the remaining logic should be refactored into a repository
+// registration interface
+func (s *Server) registerWebhookForRepository(
+	ctx context.Context,
+	pbuild *providers.ProviderBuilder,
+	projectID uuid.UUID,
+	repo *pb.UpstreamRepositoryRef,
+) (*pb.RegisterRepoResult, error) {
+	logger := zerolog.Ctx(ctx).With().
+		Str("repoName", repo.Name).
+		Str("repoOwner", repo.Owner).
+		Logger()
+	ctx = logger.WithContext(ctx)
+
+	if !pbuild.Implements(db.ProviderTypeGithub) {
+		return nil, fmt.Errorf("provider %s is not supported for github webhook", pbuild.GetName())
+	}
+
+	client, err := pbuild.GetGitHub()
+	if err != nil {
+		return nil, fmt.Errorf("error creating github provider: %w", err)
+	}
+
+	regResult := &pb.RegisterRepoResult{
+		// We will overwrite this later when we've looked it up from the provider,
+		// but existing clients expect a message here, so let's add one.
+		Repository: &pb.Repository{
+			Name:  repo.Name,  // Not normalized, from client
+			Owner: repo.Owner, // Not normalized, from client
+		},
+		Status: &pb.RegisterRepoResult_Status{
+			Success: false,
+		},
+	}
+
+	// let's verify that the repository actually exists.
+	repoGet, err := client.GetRepository(ctx, repo.Owner, repo.Name)
+	if err != nil {
+		errorStr := err.Error()
+		regResult.Status.Error = &errorStr
+		return regResult, nil
+	}
+
+	// skip if we try to register a private repository
+	if repoGet.GetPrivate() && !features.ProjectAllowsPrivateRepos(ctx, s.store, projectID) {
+		errorStr := "repository is private"
+		regResult.Status.Error = &errorStr
+		return regResult, nil
+	}
+
+	hookUUID, githubHook, err := s.webhookManager.CreateWebhook(ctx, client, repo.Owner, repo.Name)
+	if err != nil {
+		logger.Error().Msgf("error while creating webhook: %v", err)
+		errorStr := err.Error()
+		regResult.Status.Error = &errorStr
+		return regResult, nil
+	}
+
+	regResult.Status.Success = true
+
+	regResult.Repository = &pb.Repository{
+		Name:          repoGet.GetName(),
+		Owner:         repoGet.GetOwner().GetLogin(),
+		RepoId:        repoGet.GetID(),
+		HookId:        githubHook.GetID(),
+		HookUrl:       githubHook.GetURL(),
+		DeployUrl:     repoGet.GetDeploymentsURL(),
+		CloneUrl:      repoGet.GetCloneURL(),
+		HookType:      githubHook.GetType(),
+		HookName:      githubHook.GetName(),
+		HookUuid:      hookUUID,
+		IsPrivate:     repoGet.GetPrivate(),
+		IsFork:        repoGet.GetFork(),
+		DefaultBranch: repoGet.GetDefaultBranch(),
+		License:       repoGet.GetLicense().GetSPDXID(),
+	}
+
+	return regResult, nil
+}
+
 func (s *Server) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
