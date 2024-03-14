@@ -32,9 +32,9 @@ import (
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	github "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -46,106 +46,41 @@ const maxFetchLimit = 100
 // Once a user had enrolled in a project (they have a valid token), they can register
 // repositories to be monitored by the minder by provisioning a webhook on the
 // repository(ies).
-func (s *Server) RegisterRepository(ctx context.Context,
-	in *pb.RegisterRepositoryRequest) (*pb.RegisterRepositoryResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
-
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+func (s *Server) RegisterRepository(
+	ctx context.Context,
+	in *pb.RegisterRepositoryRequest,
+) (*pb.RegisterRepositoryResponse, error) {
+	projectID, client, err := s.getProjectIDAndClient(ctx, in)
 	if err != nil {
-		return nil, providerError(err)
+		return nil, err
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
+	// Validate that the Repository struct in the request
+	repoReference := in.GetRepository()
+	if repoReference == nil || repoReference.Name == "" || repoReference.Owner == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository owner and/or name")
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	// Unmarshal the in.GetRepositories() into a struct Repository
-	if in.GetRepository() == nil || in.GetRepository().Name == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "no repository provided")
-	}
-
-	repo := in.GetRepository()
-
-	result, err := s.registerWebhookForRepository(ctx, p, projectID, repo)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.Internal, "cannot register webhook: %v", err)
-	}
-
-	r := result.Repository
 
 	response := &pb.RegisterRepositoryResponse{
-		Result: result,
+		Result: &pb.RegisterRepoResult{
+			Status: &pb.RegisterRepoResult_Status{
+				Success: false,
+			},
+		},
 	}
 
-	// Convert each result to a pb.Repository object
-	if result.Status.Error != nil {
-		return response, nil
-	}
-
-	// update the database
-	dbRepo, err := s.store.CreateRepository(ctx, db.CreateRepositoryParams{
-		Provider:   provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-		RepoOwner:  r.Owner,
-		RepoName:   r.Name,
-		RepoID:     r.RepoId,
-		IsPrivate:  r.IsPrivate,
-		IsFork:     r.IsFork,
-		WebhookID: sql.NullInt64{
-			Int64: r.HookId,
-			Valid: true,
-		},
-		CloneUrl:   r.CloneUrl,
-		WebhookUrl: r.HookUrl,
-		DeployUrl:  r.DeployUrl,
-		DefaultBranch: sql.NullString{
-			String: r.DefaultBranch,
-			Valid:  true,
-		},
-		License: sql.NullString{
-			String: r.License,
-			Valid:  true,
-		},
-	})
-	// even if we set the webhook, if we couldn't create it in the database, we'll return an error
+	// To be backwards compatible with the existing implementation, we return
+	// an 200-type response with any errors inside the response body once we
+	// validate the response body
+	newRepo, err := s.repos.CreateRepository(ctx, client, projectID, repoReference)
 	if err != nil {
-		log.Printf("error creating repository '%s/%s' in database: %v", r.Owner, r.Name, err)
-
-		result.Status.Success = false
-		errorStr := "error creating repository in database"
-		result.Status.Error = &errorStr
+		log.Printf("error while registering repository: %v", err)
+		response.Result.Status.Error = ptr.Ptr(err.Error())
 		return response, nil
 	}
 
-	repoDBID := dbRepo.ID.String()
-	r.Id = &repoDBID
-
-	// publish a reconciling event for the registered repositories
-	log.Printf("publishing register event for repository: %s/%s", r.Owner, r.Name)
-
-	msg, err := reconcilers.NewRepoReconcilerMessage(provider.Name, r.RepoId, projectID)
-	if err != nil {
-		log.Printf("error creating reconciler event: %v", err)
-		return response, nil
-	}
-
-	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := s.evt.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
-	logger.BusinessRecord(ctx).Project = projectID
-	logger.BusinessRecord(ctx).Repository = dbRepo.ID
-
+	response.Result.Status.Success = true
+	response.Result.Repository = newRepo
 	return response, nil
 }
 
