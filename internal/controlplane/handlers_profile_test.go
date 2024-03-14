@@ -322,7 +322,8 @@ func TestCreateProfile(t *testing.T) {
 			})
 			evts := &StubEventer{}
 			s := &Server{
-				store:    dbStore,
+				store: dbStore,
+				// Do not replace this with a mock - these tests are used to test ProfileService as well
 				profiles: profiles.NewProfileService(dbStore, evts),
 				evt:      evts,
 			}

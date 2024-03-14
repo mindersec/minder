@@ -81,6 +81,10 @@ func NewProfileService(
 	}
 }
 
+// Note that there are no unit tests for these methods in this package. They are instead tested by the tests in
+// `handlers_profiles`. In order to implement a full test suite for creation and update, further refactoring will be
+// needed.
+
 func (p *profileService) CreateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
