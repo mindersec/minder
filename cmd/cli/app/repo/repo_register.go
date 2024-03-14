@@ -85,7 +85,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	results, warnings := registerSelectedRepos(provider, project, client, selectedRepos)
 	printWarnings(cmd, warnings)
 
-	printRepoRegistrationStatus(results)
+	printRepoRegistrationStatus(cmd, results)
 	return nil
 }
 
@@ -224,19 +224,22 @@ func registerSelectedRepos(
 			Context:    &minderv1.Context{Provider: &provider, Project: &project},
 			Repository: repo,
 		})
+
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Error registering repository %s: %s", repo.Name, err))
-			continue
 		}
-
 		results = append(results, result.Result)
 	}
 	return results, warnings
 }
 
-func printRepoRegistrationStatus(results []*minderv1.RegisterRepoResult) {
+func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.RegisterRepoResult) {
 	t := table.New(table.Simple, layouts.Default, []string{"Repository", "Status", "Message"})
 	for _, result := range results {
+		// in the case of a malformed response, skip over it to avoid segfaulting
+		if result.Repository == nil {
+			cmd.Printf("Skipping malformed response: %v", result)
+		}
 		row := []string{cli.GetRepositoryName(result.Repository.Owner, result.Repository.Name)}
 		if result.Status.Success {
 			row = append(row, "Registered")
