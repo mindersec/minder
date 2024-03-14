@@ -128,43 +128,6 @@ func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner stri
 	return allRepos, nil
 }
 
-// ListAllPackages returns a list of all packages for the authenticated user
-func (c *GitHub) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
-	pageNumber int, itemsPerPage int) ([]*github.Package, error) {
-	opt := &github.PackageListOptions{
-		PackageType: &artifactType,
-		ListOptions: github.ListOptions{
-			Page:    pageNumber,
-			PerPage: itemsPerPage,
-		},
-	}
-	// create a slice to hold the containers
-	var allContainers []*github.Package
-	for {
-		var artifacts []*github.Package
-		var resp *github.Response
-		var err error
-
-		if isOrg {
-			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
-		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
-		}
-		if err != nil {
-			return allContainers, err
-		}
-
-		allContainers = append(allContainers, artifacts...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	return allContainers, nil
-}
-
 // ListPackagesByRepository returns a list of all packages for a specific repository
 func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
 	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
