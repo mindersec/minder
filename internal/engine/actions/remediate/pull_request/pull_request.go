@@ -228,6 +228,7 @@ func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
 	}
 }
 
+// nolint: gocyclo
 func (r *Remediator) runGit(
 	ctx context.Context,
 	fs billy.Filesystem,
@@ -264,6 +265,17 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
+
+	user, reply, err := r.ghCli.GetUserInfo(ctx)
+	if err != nil {
+		logger.Warn().Err(err).Msg("cannot get user info")
+	} else {
+		logger.Debug().Msgf("user info: %+v", user)
+		logger.Debug().
+			Str("scopes ", reply.Header.Get("x-oauth-scopes")).
+			Str("oauth client ID", reply.Header.Get("x-oauth-client-id")).
+			Msg("reply headers")
+	}
 
 	// This resets the worktree so we don't corrupt the ingest cache (at least the main/originally-fetched branch).
 	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
@@ -304,6 +316,11 @@ func (r *Remediator) runGit(
 	}
 
 	refspec := refFromBranch(branchBaseName(title))
+
+	zerolog.Ctx(ctx).Debug().
+		Str("remote", guessRemote(repo)).
+		Str("refspec", refspec).
+		Msg("Pushing changes")
 
 	err = pushBranch(ctx, repo, refspec, r.ghCli)
 	if err != nil {
