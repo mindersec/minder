@@ -364,7 +364,7 @@ service RepositoryService {
         option (google.api.http) = {
             get: "/api/v1/repository/provider/{provider}/name/{name}"
             additional_bindings {
-                get: "/api/v1/repository/name/{name}"
+                get: "/api/v1/repository/name/{name=**}"
             }
         };
 
@@ -389,7 +389,7 @@ service RepositoryService {
         option (google.api.http) = {
             delete: "/api/v1/repository/provider/{provider}/name/{name}"
             additional_bindings {
-                delete: "/api/v1/repository/name/{name}"
+                delete: "/api/v1/repository/name/{name=**}"
             }
         };
 
