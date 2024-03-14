@@ -18,14 +18,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
+	"testing"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
-	"net/http"
-	"testing"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"

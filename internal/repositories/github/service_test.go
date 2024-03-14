@@ -19,8 +19,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 	"testing"
 
 	gh "github.com/google/go-github/v56/github"
@@ -31,6 +29,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
+	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/clients"
 	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
@@ -38,6 +37,7 @@ import (
 	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestRepositoryService_CreateRepository(t *testing.T) {

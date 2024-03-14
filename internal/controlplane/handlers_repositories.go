@@ -18,8 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/stacklok/minder/internal/providers/github"
-	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"strings"
 
 	"github.com/google/uuid"
@@ -32,6 +30,8 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github"
+	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -65,9 +65,8 @@ func (s *Server) RegisterRepository(
 	if err != nil {
 		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
-		} else {
-			return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
 		}
+		return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
 	}
 
 	response := &pb.RegisterRepositoryResponse{
