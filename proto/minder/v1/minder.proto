@@ -718,6 +718,45 @@ service ProvidersService {
             relation: RELATION_PROVIDER_GET
         };
     }
+
+    rpc CreateProvider (CreateProviderRequest) returns (CreateProviderResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/providers"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_CREATE
+        };
+    }
+
+    rpc DeleteProvider (DeleteProviderRequest) returns (DeleteProviderResponse) {
+        option (google.api.http) = {
+            // TODO: it would be nice to be able to use context.project and
+            // context.provider here, but they are optional and cannot be used
+            // in the path.  Change this for v2.
+            delete: "/api/v1/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_DELETE
+        };
+    }
+
+    // GetUnclaimedProviders returns a list of known provider configurations
+    // that this user could claim based on their identity.  This is a read-only
+    // operation for use by clients which wish to present a menu of options.
+    rpc GetUnclaimedProviders (GetUnclaimedProvidersRequest) returns (GetUnclaimedProvidersResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/my/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_USER
+        };
+    }
 }
 
 message CheckHealthRequest {
@@ -1784,7 +1823,72 @@ message ListProvidersResponse {
     string cursor = 2;
 }
 
-// ProviderType is the type of the provider.
+message CreateProviderRequest {
+    // context is the context in which the provider is created.
+    Context context = 1;
+    // provider is the provider to be created.
+    Provider provider = 2;
+}
+
+message CreateProviderResponse {
+    // provider is the provider that was created.
+    Provider provider = 1;
+
+    // authorization provides additional authorization information needed
+    // to complete the initialization of the provider.
+    AuthorizationParams authorization = 2;
+}
+
+message DeleteProviderRequest {
+    // context is the context in which the provider is deleted.  Both
+    // project and provider are required in this context.
+    Context context = 1;
+}
+
+message DeleteProviderResponse {
+}
+
+message GetUnclaimedProvidersRequest {
+    // context is the context in which the set of providers are evaluated.
+    Context context = 1;
+}
+
+message GetUnclaimedProvidersResponse {
+    // providers is a set of parameters which can be supplied to allow the user
+    // to assign existing unclaimed credentials to a new provider in the project
+    // via CreateProvider().
+    repeated ProviderParameter providers = 1;
+}
+
+message AuthorizationParams {
+    // authorization_url is an external URL to use to authorize the provider.
+    string authorization_url = 1;
+
+}
+
+message ProviderParameter {
+    oneof parameters {
+        GitHubAppParams github_app = 1;
+    }
+}
+
+// GitHubAppParams is the parameters for a GitHub App provider.
+message GitHubAppParams {
+    // The GitHub installation ID for the app.  On create, this is the only
+    // parameter used; the organization parameters are ignored.
+    int64 installation_id = 1;
+
+    // The GitHub organization slug where the app is installed.  This is an
+    // output-only parameter, and is validated on input if set (i.e. the value
+    // must be either empty or match the org of the installation_id).
+    string organization = 2;
+    // The GitHub organization ID where the app is installed.  This is an
+    // output-only parameter, and is validated on input if set (i.e. the value
+    // must be either empty or match the org of the installation_id).
+    int64 organization_id = 3;
+}
+
+// ProviderTrait is the type of the provider.
 enum ProviderType {
     PROVIDER_TYPE_UNSPECIFIED = 0;
     PROVIDER_TYPE_GITHUB = 1 [(name) = "github"];
@@ -1805,7 +1909,10 @@ enum AuthorizationFlow {
 message Provider {
     // name is the name of the provider.
     string name = 1;
-    // project is the project where the provider is.
+    // class is the name of the provider implementation, eg. 'github' or 'gh-app'.
+    string class = 7;
+    // project is the project where the provider is.  This is ignored on input
+    // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
     string version = 3;
@@ -1818,4 +1925,7 @@ message Provider {
 
     // auth_flows is the list of authorization flows that the provider supports.
     repeated AuthorizationFlow auth_flows = 6;
+
+    // parameters is the list of parameters that the provider requires.
+    ProviderParameter parameters = 8;
 }

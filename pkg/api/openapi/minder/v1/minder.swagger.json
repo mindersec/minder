@@ -502,6 +502,45 @@
         ]
       }
     },
+    "/api/v1/my/providers": {
+      "get": {
+        "summary": "GetUnclaimedProviders returns a list of known provider configurations\nthat this user could claim based on their identity.  This is a read-only\noperation for use by clients which wish to present a menu of options.",
+        "operationId": "ProvidersService_GetUnclaimedProviders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUnclaimedProvidersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/permissions/assign": {
       "post": {
         "operationId": "PermissionsService_AssignRole",
@@ -1150,6 +1189,66 @@
             "in": "query",
             "required": false,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      },
+      "delete": {
+        "operationId": "ProvidersService_DeleteProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      },
+      "post": {
+        "operationId": "ProvidersService_CreateProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderRequest"
+            }
           }
         ],
         "tags": [
@@ -2588,6 +2687,15 @@
       ],
       "default": "AUTHORIZATION_FLOW_UNSPECIFIED"
     },
+    "v1AuthorizationParams": {
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "type": "string",
+          "description": "authorization_url is an external URL to use to authorize the provider."
+        }
+      }
+    },
     "v1BuiltinType": {
       "type": "object",
       "properties": {
@@ -2661,6 +2769,32 @@
         }
       }
     },
+    "v1CreateProviderRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the provider is created."
+        },
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider to be created."
+        }
+      }
+    },
+    "v1CreateProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider that was created."
+        },
+        "authorization": {
+          "$ref": "#/definitions/v1AuthorizationParams",
+          "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
+        }
+      }
+    },
     "v1CreateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -2727,6 +2861,9 @@
           "description": "project_id is the id of the project that was deleted."
         }
       }
+    },
+    "v1DeleteProviderResponse": {
+      "type": "object"
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",
@@ -2939,6 +3076,19 @@
       },
       "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
     },
+    "v1GetUnclaimedProvidersResponse": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProviderParameter"
+          },
+          "description": "providers is a set of parameters which can be supplied to allow the user\nto assign existing unclaimed credentials to a new provider in the project\nvia CreateProvider()."
+        }
+      }
+    },
     "v1GetUserResponse": {
       "type": "object",
       "properties": {
@@ -2953,6 +3103,26 @@
           }
         }
       }
+    },
+    "v1GitHubAppParams": {
+      "type": "object",
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub installation ID for the app.  On create, this is the only\nparameter used; the organization parameters are ignored."
+        },
+        "organization": {
+          "type": "string",
+          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        }
+      },
+      "description": "GitHubAppParams is the parameters for a GitHub App provider."
     },
     "v1GitType": {
       "type": "object",
@@ -3230,9 +3400,13 @@
           "type": "string",
           "description": "name is the name of the provider."
         },
+        "class": {
+          "type": "string",
+          "description": "class is the name of the provider implementation, eg. 'github' or 'gh-app'."
+        },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is."
+          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
         },
         "version": {
           "type": "string",
@@ -3255,6 +3429,18 @@
             "$ref": "#/definitions/v1AuthorizationFlow"
           },
           "description": "auth_flows is the list of authorization flows that the provider supports."
+        },
+        "parameters": {
+          "$ref": "#/definitions/v1ProviderParameter",
+          "description": "parameters is the list of parameters that the provider requires."
+        }
+      }
+    },
+    "v1ProviderParameter": {
+      "type": "object",
+      "properties": {
+        "githubApp": {
+          "$ref": "#/definitions/v1GitHubAppParams"
         }
       }
     },
@@ -3269,7 +3455,7 @@
         "PROVIDER_TYPE_REPO_LISTER"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
-      "description": "ProviderType is the type of the provider."
+      "description": "ProviderTrait is the type of the provider."
     },
     "v1RegisterRepoResult": {
       "type": "object",

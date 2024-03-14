@@ -116,6 +116,9 @@ replies with OK
 | ----------- | ------------ | ------------- | ------------|
 | GetProvider | [GetProviderRequest](#minder-v1-GetProviderRequest) | [GetProviderResponse](#minder-v1-GetProviderResponse) |  |
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
+| CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
+| DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
+| GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -207,6 +210,17 @@ ArtifactType defines the artifact data evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
+
+
+<a name="minder-v1-AuthorizationParams"></a>
+
+#### AuthorizationParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -311,6 +325,30 @@ Profile service
 | project | [Project](#minder-v1-Project) |  | project is the project that was created. |
 
 
+<a name="minder-v1-CreateProviderRequest"></a>
+
+#### CreateProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is created. |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider to be created. |
+
+
+<a name="minder-v1-CreateProviderResponse"></a>
+
+#### CreateProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was created. |
+| authorization | [AuthorizationParams](#minder-v1-AuthorizationParams) |  | authorization provides additional authorization information needed to complete the initialization of the provider. |
+
+
 <a name="minder-v1-CreateRuleTypeRequest"></a>
 
 #### CreateRuleTypeRequest
@@ -395,6 +433,23 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | project_id | [string](#string) |  | project_id is the id of the project that was deleted. |
+
+
+<a name="minder-v1-DeleteProviderRequest"></a>
+
+#### DeleteProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is deleted. Both project and provider are required in this context. |
+
+
+<a name="minder-v1-DeleteProviderResponse"></a>
+
+#### DeleteProviderResponse
+
 
 
 <a name="minder-v1-DeleteRepositoryByIdRequest"></a>
@@ -802,6 +857,28 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
 
 
+<a name="minder-v1-GetUnclaimedProvidersRequest"></a>
+
+#### GetUnclaimedProvidersRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the set of providers are evaluated. |
+
+
+<a name="minder-v1-GetUnclaimedProvidersResponse"></a>
+
+#### GetUnclaimedProvidersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| providers | [ProviderParameter](#minder-v1-ProviderParameter) | repeated | providers is a set of parameters which can be supplied to allow the user to assign existing unclaimed credentials to a new provider in the project via CreateProvider(). |
+
+
 <a name="minder-v1-GetUserRequest"></a>
 
 #### GetUserRequest
@@ -819,6 +896,19 @@ get user
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#minder-v1-UserRecord) | optional |  |
 | projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-GitHubAppParams"></a>
+
+#### GitHubAppParams
+GitHubAppParams is the parameters for a GitHub App provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| installation_id | [int64](#int64) |  | The GitHub installation ID for the app. On create, this is the only parameter used; the organization parameters are ignored. |
+| organization | [string](#string) |  | The GitHub organization slug where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
+| organization_id | [int64](#int64) |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
 
 
 <a name="minder-v1-GitHubProviderConfig"></a>
@@ -1284,11 +1374,24 @@ Project API Objects
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | name is the name of the provider. |
-| project | [string](#string) |  | project is the project where the provider is. |
+| class | [string](#string) |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
+| project | [string](#string) |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
 | version | [string](#string) |  | version is the version of the provider. |
 | implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
+| parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
+
+
+<a name="minder-v1-ProviderParameter"></a>
+
+#### ProviderParameter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| github_app | [GitHubAppParams](#minder-v1-GitHubAppParams) |  |  |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1936,7 +2039,7 @@ Entity defines the entity that is supported by the provider.
 <a name="minder-v1-ProviderType"></a>
 
 ### ProviderType
-ProviderType is the type of the provider.
+ProviderTrait is the type of the provider.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
