@@ -15,3 +15,4 @@
 /internal/db/models.go linguist-generated=true
 /internal/db/querier.go linguist-generated=true
 /internal/db/*.sql.go linguist-generated=true
+/internal/authz/model/minder.generated.json linguist-generated=true
