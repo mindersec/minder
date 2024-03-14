@@ -580,21 +580,6 @@ func (mr *MockGitHubMockRecorder) GetUsername(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsername", reflect.TypeOf((*MockGitHub)(nil).GetUsername), ctx)
 }
 
-// ListAllPackages mocks base method.
-func (m *MockGitHub) ListAllPackages(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4, arg5 int) ([]*github.Package, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllPackages", arg0, arg1, arg2, arg3, arg4, arg5)
-	ret0, _ := ret[0].([]*github.Package)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListAllPackages indicates an expected call of ListAllPackages.
-func (mr *MockGitHubMockRecorder) ListAllPackages(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllPackages", reflect.TypeOf((*MockGitHub)(nil).ListAllPackages), arg0, arg1, arg2, arg3, arg4, arg5)
-}
-
 // ListAllRepositories mocks base method.
 func (m *MockGitHub) ListAllRepositories(arg0 context.Context, arg1 bool, arg2 string) ([]*github.Repository, error) {
 	m.ctrl.T.Helper()
