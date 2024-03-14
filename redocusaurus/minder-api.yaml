@@ -26,10 +26,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetArtifactByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           in: path
@@ -59,10 +55,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetArtifactByIdResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           in: path
@@ -92,10 +84,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListArtifactsResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: query
@@ -129,10 +117,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListArtifactsResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -166,10 +150,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1StoreProviderTokenResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: query
@@ -207,10 +187,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetAuthorizationURLResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: cli
           in: query
@@ -256,10 +232,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1VerifyProviderTokenFromResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -297,10 +269,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1VerifyProviderTokenFromResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: timestamp
           in: path
@@ -335,10 +303,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1StoreProviderTokenResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -359,10 +323,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1CheckHealthResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       tags:
         - HealthService
   /api/v1/permissions/assign:
@@ -373,10 +333,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1AssignRoleResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -393,10 +349,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRoleAssignmentsResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -422,10 +374,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1RemoveRoleResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: roleAssignment.role
           description: role is the role that is assigned.
@@ -466,10 +414,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRolesResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -495,10 +439,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1CreateProfileResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -514,10 +454,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1UpdateProfileResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -534,10 +470,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetProfileStatusByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           description: name is the name of the profile to get
@@ -604,10 +536,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetProfileByIdResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           description: id is the id of the profile to get
@@ -637,10 +565,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteProfileResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           description: id is the id of the profile to delete
@@ -670,10 +594,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1PatchProfileResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           description: |-
@@ -712,10 +632,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetProfileStatusByProjectResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -741,10 +657,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListProfilesResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -785,10 +697,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListProjectsResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       tags:
         - ProjectsService
     delete:
@@ -798,10 +706,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteProjectResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -826,10 +730,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1CreateProjectResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -846,10 +746,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListProvidersResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -888,10 +784,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetProviderResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           description: name is the name of the provider to get.
@@ -922,10 +814,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRepositoriesResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: query
@@ -964,10 +852,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRepositoriesResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -1006,10 +890,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRemoteRepositoriesFromProviderResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -1039,10 +919,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRemoteRepositoriesFromProviderResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: query
@@ -1072,10 +948,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRepositoryByIdResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: repositoryId
           in: path
@@ -1104,10 +976,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteRepositoryByIdResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: repositoryId
           in: path
@@ -1137,10 +1005,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRepositoryByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           in: path
@@ -1173,10 +1037,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteRepositoryByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           in: path
@@ -1210,10 +1070,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRepositoryByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -1246,10 +1102,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteRepositoryByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -1283,10 +1135,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1RegisterRepositoryResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: path
@@ -1307,10 +1155,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1RegisterRepositoryResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: provider
           in: query
@@ -1356,10 +1200,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListEvaluationResultsResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -1415,10 +1255,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1CreateRuleTypeResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           description: CreateRuleTypeRequest is the request to create a rule type.
@@ -1435,10 +1271,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1UpdateRuleTypeResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           description: UpdateRuleTypeRequest is the request to update a rule type.
@@ -1456,10 +1288,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRuleTypeByNameResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: name
           description: name is the name of the rule type.
@@ -1490,10 +1318,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetRuleTypeByIdResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           description: id is the id of the rule type.
@@ -1523,10 +1347,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteRuleTypeResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           description: id is the id of the rule type to be deleted.
@@ -1557,10 +1377,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1ListRuleTypesResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: context.provider
           description: name of the provider
@@ -1586,10 +1402,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1GetUserResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       tags:
         - UserService
     delete:
@@ -1599,10 +1411,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1DeleteUserResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       tags:
         - UserService
     post:
@@ -1612,10 +1420,6 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/v1CreateUserResponse'
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1952,25 +1756,6 @@ definitions:
     description: >-
       Definition defines the rule type. It encompases the schema and the data
       evaluation.
-  googlerpcStatus:
-    type: object
-    properties:
-      code:
-        type: integer
-        format: int32
-      message:
-        type: string
-      details:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/protobufAny'
-  protobufAny:
-    type: object
-    properties:
-      '@type':
-        type: string
-    additionalProperties: {}
   protobufNullValue:
     type: string
     enum:
