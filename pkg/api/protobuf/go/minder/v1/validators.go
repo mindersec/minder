@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -90,11 +91,12 @@ func (rt *RuleType) Validate() error {
 		return fmt.Errorf("%w: rule type is nil", ErrInvalidRuleType)
 	}
 
-	if rt.Name == "" {
+	if rt.GetName() == "" {
 		return fmt.Errorf("%w: rule type name is empty", ErrInvalidRuleType)
 	}
-	if !dnsStyleNameRegex.MatchString(rt.Name) {
-		return fmt.Errorf("%w: rule type name may only contain letters, numbers, hyphens and underscores", ErrInvalidRuleType)
+
+	if err := validateNamespacedName(rt.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidRuleType, err)
 	}
 
 	if rt.Def == nil {
@@ -191,8 +193,9 @@ func (p *Profile) Validate() error {
 	if p.GetName() == "" {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}
-	if !dnsStyleNameRegex.MatchString(p.GetName()) {
-		return fmt.Errorf("%w: profile names may only contain letters, numbers, hyphens and underscores", ErrValidationFailed)
+
+	if err := validateNamespacedName(p.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrValidationFailed, err)
 	}
 
 	repoRuleCount := len(p.GetRepository())
@@ -262,5 +265,19 @@ func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() er
 		return errors.New("body is required")
 	}
 
+	return nil
+}
+
+func validateNamespacedName(name string) error {
+	components := strings.Split(name, "/")
+	if len(components) > 2 {
+		return errors.New("cannot have more than one slash in name")
+	}
+	// if this is a namespaced name, validate both the namespace and the name
+	for _, component := range components {
+		if !dnsStyleNameRegex.MatchString(component) {
+			return errors.New("name may only contain letters, numbers, hyphens and underscores")
+		}
+	}
 	return nil
 }

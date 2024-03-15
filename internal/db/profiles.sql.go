@@ -66,17 +66,19 @@ INSERT INTO profiles (
     remediate,
     alert,
     name,
-    provider_id
-    ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id
+    provider_id,
+    subscription_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id
 `
 
 type CreateProfileParams struct {
-	Provider   string         `json:"provider"`
-	ProjectID  uuid.UUID      `json:"project_id"`
-	Remediate  NullActionType `json:"remediate"`
-	Alert      NullActionType `json:"alert"`
-	Name       string         `json:"name"`
-	ProviderID uuid.UUID      `json:"provider_id"`
+	Provider       string         `json:"provider"`
+	ProjectID      uuid.UUID      `json:"project_id"`
+	Remediate      NullActionType `json:"remediate"`
+	Alert          NullActionType `json:"alert"`
+	Name           string         `json:"name"`
+	ProviderID     uuid.UUID      `json:"provider_id"`
+	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
 }
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error) {
@@ -87,6 +89,7 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (P
 		arg.Alert,
 		arg.Name,
 		arg.ProviderID,
+		arg.SubscriptionID,
 	)
 	var i Profile
 	err := row.Scan(

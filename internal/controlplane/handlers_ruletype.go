@@ -167,7 +167,7 @@ func (s *Server) CreateRuleType(
 		return nil, providerError(err)
 	}
 
-	newRuleType, err := s.ruleTypes.CreateRuleType(ctx, projectID, provider, crt.GetRuleType())
+	newRuleType, err := s.ruleTypes.CreateRuleType(ctx, projectID, &provider, crt.GetRuleType())
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
@@ -200,7 +200,7 @@ func (s *Server) UpdateRuleType(
 		return nil, providerError(err)
 	}
 
-	updatedRuleType, err := s.ruleTypes.UpdateRuleType(ctx, projectID, provider, urt.GetRuleType())
+	updatedRuleType, err := s.ruleTypes.UpdateRuleType(ctx, projectID, &provider, urt.GetRuleType())
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
@@ -232,6 +232,13 @@ func (s *Server) DeleteRuleType(
 			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+	}
+
+	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+	// rule types yet, reject them in the API
+	// TODO: Move this deletion logic to RuleTypeService
+	if rtdb.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
 	}
 
 	ph, err := s.store.GetParentProjects(ctx, rtdb.ProjectID)

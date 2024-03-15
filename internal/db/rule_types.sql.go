@@ -21,19 +21,31 @@ INSERT INTO rule_type (
     guidance,
     definition,
     severity_value,
-    provider_id
-    ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id
+    provider_id,
+    subscription_id
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6::jsonb,
+    $7,
+    $8,
+    $9
+) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id
 `
 
 type CreateRuleTypeParams struct {
-	Name          string          `json:"name"`
-	Provider      string          `json:"provider"`
-	ProjectID     uuid.UUID       `json:"project_id"`
-	Description   string          `json:"description"`
-	Guidance      string          `json:"guidance"`
-	Definition    json.RawMessage `json:"definition"`
-	SeverityValue Severity        `json:"severity_value"`
-	ProviderID    uuid.UUID       `json:"provider_id"`
+	Name           string          `json:"name"`
+	Provider       string          `json:"provider"`
+	ProjectID      uuid.UUID       `json:"project_id"`
+	Description    string          `json:"description"`
+	Guidance       string          `json:"guidance"`
+	Definition     json.RawMessage `json:"definition"`
+	SeverityValue  Severity        `json:"severity_value"`
+	ProviderID     uuid.UUID       `json:"provider_id"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 }
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
@@ -46,6 +58,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		arg.Definition,
 		arg.SeverityValue,
 		arg.ProviderID,
+		arg.SubscriptionID,
 	)
 	var i RuleType
 	err := row.Scan(

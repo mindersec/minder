@@ -102,6 +102,13 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
+	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+	// profile yet, reject deletion requests in the API
+	// TODO: Move this deletion logic to ProfileService
+	if profile.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete profile from bundle")
+	}
+
 	err = s.store.DeleteProfile(ctx, db.DeleteProfileParams{
 		ID:        profile.ID,
 		ProjectID: entityCtx.Project.ID,
@@ -549,6 +556,13 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
+	}
+
+	// TEMPORARY HACK: Since we do not need to support this patch logic in the
+	// bundles yet, just reject any attempt to patch a profile from a bundle
+	// TODO: Move this patch logic to ProfileService
+	if oldProfile.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot patch profile from bundle")
 	}
 
 	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}

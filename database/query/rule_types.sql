@@ -7,8 +7,19 @@ INSERT INTO rule_type (
     guidance,
     definition,
     severity_value,
-    provider_id
-    ) VALUES ($1, $2, $3, $4, $5, sqlc.arg(definition)::jsonb, sqlc.arg(severity_value), sqlc.arg(provider_id)) RETURNING *;
+    provider_id,
+    subscription_id
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    sqlc.arg(definition)::jsonb,
+    sqlc.arg(severity_value),
+    sqlc.arg(provider_id),
+    sqlc.narg(subscription_id)
+) RETURNING *;
 
 -- name: ListRuleTypesByProviderAndProject :many
 SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2;
