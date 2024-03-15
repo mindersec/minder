@@ -20,6 +20,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -201,6 +202,8 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 		GetUsername(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
 		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+	mockGitHub.EXPECT().
+		GetUserInfo(gomock.Any()).Return(nil, nil, errors.New("user not found"))
 	mockGitHub.EXPECT().
 		AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
 	mockGitHub.EXPECT().
@@ -465,6 +468,8 @@ func TestPullRequestRemediate(t *testing.T) {
 				// likewise we need to update the branch with a valid e-mail
 				mockGitHub.EXPECT().
 					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+				mockGitHub.EXPECT().
+					GetUserInfo(gomock.Any()).Return(nil, nil, errors.New("user not found"))
 				mockGitHub.EXPECT().
 					AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
 				// this is the last call we expect to make. It returns existing PRs from this branch, so we

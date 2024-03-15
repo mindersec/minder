@@ -19,6 +19,7 @@ package providers
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"golang.org/x/exp/slices"
@@ -44,19 +45,17 @@ func GetProviderBuilder(
 	crypteng crypto.Engine,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
-	encToken, err := store.GetAccessTokenByProjectID(ctx,
-		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	credential, err := getCredentialForProvider(ctx, prov, store, crypteng)
 	if err != nil {
-		return nil, fmt.Errorf("error getting access token: %w", err)
+		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	ownerFilter, err := getOwnerFilterForProvider(ctx, prov, store)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting access token: %w", err)
+		return nil, fmt.Errorf("error getting owner filter: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken.OwnerFilter,
-		credentials.NewGitHubTokenCredential(decryptedToken.AccessToken), opts...), nil
+	return NewProviderBuilder(&prov, ownerFilter, credential, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -253,4 +252,38 @@ func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
 	default:
 		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_UNSPECIFIED, false
 	}
+}
+
+func getCredentialForProvider(
+	ctx context.Context,
+	prov db.Provider,
+	store db.Store,
+	crypteng crypto.Engine,
+) (provinfv1.Credential, error) {
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	if err == nil {
+		decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting access token: %w", err)
+		}
+		return credentials.NewGitHubTokenCredential(decryptedToken.AccessToken), nil
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return credentials.NewEmptyCredential(), nil
+	}
+	return nil, fmt.Errorf("error getting credential: %w", err)
+}
+
+func getOwnerFilterForProvider(ctx context.Context, prov db.Provider, store db.Store) (sql.NullString, error) {
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return sql.NullString{}, nil
+		}
+		return sql.NullString{}, fmt.Errorf("error getting access token: %w", err)
+	}
+
+	return encToken.OwnerFilter, nil
 }

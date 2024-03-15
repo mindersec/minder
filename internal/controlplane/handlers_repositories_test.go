@@ -164,7 +164,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 				Return(db.ProviderAccessToken{
 					EncryptedToken: "encryptedToken",
-				}, nil)
+				}, nil).Times(2)
 			if tt.repoErr == nil {
 				mockStore.EXPECT().
 					CreateRepository(gomock.Any(), gomock.Any()).
@@ -561,6 +561,10 @@ func (*StubGitHub) UpdateIssueComment(context.Context, string, string, int64, st
 }
 
 func (*StubGitHub) UpdateReview(context.Context, string, string, int, int64, string) (*github.PullRequestReview, error) {
+	panic("unimplemented")
+}
+
+func (*StubGitHub) GetUserInfo(context.Context) (*github.User, *github.Response, error) {
 	panic("unimplemented")
 }
 
