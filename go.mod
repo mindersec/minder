@@ -18,7 +18,7 @@ require (
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/goccy/go-json v0.10.2
 	github.com/golang-migrate/migrate/v4 v4.17.0
-	github.com/google/go-containerregistry v0.19.0
+	github.com/google/go-containerregistry v0.19.1
 	github.com/google/go-github/v56 v56.0.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
@@ -100,7 +100,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
-	github.com/jackc/pgx/v5 v5.5.3 // indirect
+	github.com/jackc/pgx/v5 v5.5.4 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jon-whit/go-grpc-prometheus v1.4.0 // indirect
 	github.com/karlseguin/ccache/v3 v3.0.5 // indirect
