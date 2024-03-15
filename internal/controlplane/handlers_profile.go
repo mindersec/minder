@@ -408,12 +408,14 @@ func getRuleEvalStatus(
 		return nil, fmt.Errorf("rule evaluation status not valid")
 	}
 
-	// Get the rule type info
-	ruleTypeInfo, err := store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
-	if err != nil {
-		l.Err(err).Msg("error getting rule type info from db")
-	} else {
-		guidance = ruleTypeInfo.Guidance
+	if dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
+		dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
+		ruleTypeInfo, err := store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
+		if err != nil {
+			l.Err(err).Msg("error getting rule type info from db")
+		} else {
+			guidance = ruleTypeInfo.Guidance
+		}
 	}
 
 	st := &minderv1.RuleEvaluationStatus{
@@ -446,25 +448,36 @@ func getRuleEvalStatus(
 
 	// If the alert metadata is valid, parse it and set the URL
 	if dbRuleEvalStat.AlertMetadata.Valid {
-		// Define a struct to match the JSON structure
-		data := struct {
-			GhsaId string `json:"ghsa_id"`
-		}{}
-		err = json.Unmarshal(dbRuleEvalStat.AlertMetadata.RawMessage, &data)
+		alertURL, err := getAlertURLFromMetadata(
+			dbRuleEvalStat.AlertMetadata.RawMessage,
+			fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"]),
+		)
 		if err != nil {
-			l.Err(err).Msg("failed parsing alert metadata")
-		} else if data.GhsaId != "" {
-			st.Alert.Url = fmt.Sprintf(
-				"https://github.com/%s/%s/security/advisories/%s",
-				st.EntityInfo["repo_owner"],
-				st.EntityInfo["repo_name"],
-				data.GhsaId,
-			)
+			l.Err(err).Msg("error getting alert URL from metadata")
 		} else {
-			l.Debug().Msg("no GHSA ID found in alert metadata")
+			st.Alert.Url = alertURL
 		}
 	}
 	return st, nil
+}
+
+// getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
+func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
+	// Define a struct to match the JSON structure
+	jsonMeta := struct {
+		GhsaId string `json:"ghsa_id"`
+	}{}
+	err := json.Unmarshal(data, &jsonMeta)
+	if err != nil {
+		return "", err
+	} else if jsonMeta.GhsaId != "" {
+		return fmt.Sprintf(
+			"https://github.com/%s/security/advisories/%s",
+			repo,
+			jsonMeta.GhsaId,
+		), nil
+	}
+	return "", fmt.Errorf("no alert ID found in alert metadata")
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project
