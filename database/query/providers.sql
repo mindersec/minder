@@ -39,8 +39,8 @@ LIMIT sqlc.arg('limit');
 -- name: GlobalListProviders :many
 SELECT * FROM providers;
 
--- name: GlobalListProvidersByName :many
-SELECT * FROM providers WHERE lower(name) = lower(sqlc.arg(name));
+-- name: GlobalListProvidersByClass :many
+SELECT * FROM providers WHERE class = $1;
 
 -- name: UpdateProvider :exec
 UPDATE providers

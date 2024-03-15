@@ -166,12 +166,12 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 	return items, nil
 }
 
-const globalListProvidersByName = `-- name: GlobalListProvidersByName :many
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE lower(name) = lower($1)
+const globalListProvidersByClass = `-- name: GlobalListProvidersByClass :many
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE class = $1
 `
 
-func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([]Provider, error) {
-	rows, err := q.db.QueryContext(ctx, globalListProvidersByName, name)
+func (q *Queries) GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, globalListProvidersByClass, class)
 	if err != nil {
 		return nil, err
 	}
