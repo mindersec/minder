@@ -55,6 +55,9 @@ var (
 	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)\s*(\d+(\.\d+)*(\*)?)`)
 	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
 	PyRequestsNameRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)`)
+	// MinderAuthTokenEnvVar is the environment variable for the minder auth token
+	//nolint:gosec // This is not a hardcoded credential
+	MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
 )
 
 // OpenIdCredentials is a struct to hold the access and refresh tokens
@@ -109,9 +112,13 @@ func GetGrpcConnection(
 
 	// read credentials
 	token := ""
-	t, err := GetToken(issuerUrl, clientId)
-	if err == nil {
-		token = t
+	if os.Getenv(MinderAuthTokenEnvVar) != "" {
+		token = os.Getenv(MinderAuthTokenEnvVar)
+	} else {
+		t, err := GetToken(issuerUrl, clientId)
+		if err == nil {
+			token = t
+		}
 	}
 
 	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
