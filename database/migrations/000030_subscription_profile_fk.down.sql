@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- FK was created on wrong table (I mixed up profiles and projects again...)
 ALTER TABLE profiles DROP COLUMN subscription_id;
 ALTER TABLE projects
     ADD COLUMN subscription_id UUID DEFAULT NULL
