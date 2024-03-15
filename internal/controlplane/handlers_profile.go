@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -373,9 +374,11 @@ func (s *Server) getRuleEvaluationStatuses(
 		// make sure all fields are valid
 		if !dbRuleEvalStat.EvalStatus.Valid ||
 			!dbRuleEvalStat.EvalDetails.Valid ||
+			!dbRuleEvalStat.EvalLastUpdated.Valid ||
 			!dbRuleEvalStat.RemStatus.Valid ||
 			!dbRuleEvalStat.RemDetails.Valid ||
-			!dbRuleEvalStat.EvalLastUpdated.Valid {
+			!dbRuleEvalStat.AlertStatus.Valid ||
+			!dbRuleEvalStat.AlertDetails.Valid {
 			log.Print("error rule evaluation value not valid")
 			continue
 		}
@@ -404,12 +407,34 @@ func (s *Server) getRuleEvaluationStatuses(
 			LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 			RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
 			RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+			Alert: &minderv1.EvalResultAlert{
+				Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
+				Details: dbRuleEvalStat.AlertDetails.String,
+			},
 		}
 
 		if dbRuleEvalStat.RemLastUpdated.Valid {
 			st.RemediationLastUpdated = timestamppb.New(dbRuleEvalStat.RemLastUpdated.Time)
 		}
 
+		if dbRuleEvalStat.AlertLastUpdated.Valid {
+			st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
+		}
+
+		if dbRuleEvalStat.AlertMetadata.Valid {
+			// Define a struct to match the JSON structure
+			data := struct {
+				GhsaId string `json:"ghsa_id"`
+			}{}
+			err := json.Unmarshal(dbRuleEvalStat.AlertMetadata.RawMessage, &data)
+			if err != nil {
+				log.Print("error rule evaluation value not valid", err)
+			} else if data.GhsaId != "" {
+				st.Alert.Url = fmt.Sprintf("https://github.com/%s/%s/security/advisories/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"], data.GhsaId)
+			} else {
+				log.Print("error rule evaluation value not valid")
+			}
+		}
 		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
 	}
 	return ruleEvaluationStatuses
