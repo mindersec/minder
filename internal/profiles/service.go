@@ -117,7 +117,7 @@ func (p *profileService) CreateProfile(
 	params := db.CreateProfileParams{
 		Provider:   provider.Name,
 		ProviderID: provider.ID,
-		ProjectID:  provider.ProjectID,
+		ProjectID:  projectID,
 		Name:       profile.GetName(),
 		Remediate:  validateActionType(profile.GetRemediate()),
 		Alert:      validateActionType(profile.GetAlert()),
