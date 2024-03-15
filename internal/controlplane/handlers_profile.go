@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -228,6 +228,7 @@ func getRuleEvalEntityInfo(
 	rs db.ListRuleEvaluationsByProfileIdRow,
 	providerName string,
 ) map[string]string {
+	l := zerolog.Ctx(ctx)
 	entityInfo := map[string]string{
 		"provider": providerName,
 	}
@@ -246,7 +247,7 @@ func getRuleEvalEntityInfo(
 	if entityType.Entities == db.EntitiesArtifact {
 		artifact, err := store.GetArtifactByID(ctx, selector.UUID)
 		if err != nil {
-			log.Printf("error getting artifact: %v", err)
+			l.Err(err).Msg("error getting artifact by ID")
 			return entityInfo
 		}
 		entityInfo["artifact_id"] = artifact.ID.String()
@@ -368,76 +369,102 @@ func (s *Server) getRuleEvaluationStatuses(
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
 	)
+	l := zerolog.Ctx(ctx)
+	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
-		var guidance string
-
-		// make sure all fields are valid
-		if !dbRuleEvalStat.EvalStatus.Valid ||
-			!dbRuleEvalStat.EvalDetails.Valid ||
-			!dbRuleEvalStat.EvalLastUpdated.Valid ||
-			!dbRuleEvalStat.RemStatus.Valid ||
-			!dbRuleEvalStat.RemDetails.Valid ||
-			!dbRuleEvalStat.AlertStatus.Valid ||
-			!dbRuleEvalStat.AlertDetails.Valid {
-			log.Print("error rule evaluation value not valid")
+		// Get the rule evaluation status
+		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, providerName, dbRuleEvalStat)
+		if err != nil {
+			l.Err(err).Msg("error getting rule evaluation status")
 			continue
 		}
-
-		if dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
-			dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
-			ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
-			if err != nil {
-				log.Printf("error getting rule type info: %v", err)
-			} else {
-				guidance = ruleTypeInfo.Guidance
-			}
-		}
-
-		st := &minderv1.RuleEvaluationStatus{
-			ProfileId:           profileId,
-			RuleId:              dbRuleEvalStat.RuleTypeID.String(),
-			RuleName:            dbRuleEvalStat.RuleTypeName,
-			RuleTypeName:        dbRuleEvalStat.RuleTypeName,
-			RuleDescriptionName: dbRuleEvalStat.RuleName,
-			Entity:              string(dbRuleEvalStat.Entity),
-			Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
-			Details:             dbRuleEvalStat.EvalDetails.String,
-			EntityInfo:          getRuleEvalEntityInfo(ctx, s.store, dbEntity, selector, dbRuleEvalStat, providerName),
-			Guidance:            guidance,
-			LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
-			RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
-			RemediationDetails:  dbRuleEvalStat.RemDetails.String,
-			Alert: &minderv1.EvalResultAlert{
-				Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
-				Details: dbRuleEvalStat.AlertDetails.String,
-			},
-		}
-
-		if dbRuleEvalStat.RemLastUpdated.Valid {
-			st.RemediationLastUpdated = timestamppb.New(dbRuleEvalStat.RemLastUpdated.Time)
-		}
-
-		if dbRuleEvalStat.AlertLastUpdated.Valid {
-			st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
-		}
-
-		if dbRuleEvalStat.AlertMetadata.Valid {
-			// Define a struct to match the JSON structure
-			data := struct {
-				GhsaId string `json:"ghsa_id"`
-			}{}
-			err := json.Unmarshal(dbRuleEvalStat.AlertMetadata.RawMessage, &data)
-			if err != nil {
-				log.Print("error rule evaluation value not valid", err)
-			} else if data.GhsaId != "" {
-				st.Alert.Url = fmt.Sprintf("https://github.com/%s/%s/security/advisories/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"], data.GhsaId)
-			} else {
-				log.Print("error rule evaluation value not valid")
-			}
-		}
+		// Append the rule evaluation status to the list
 		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
 	}
 	return ruleEvaluationStatuses
+}
+
+// getRuleEvalStatus is a helper function to get rule evaluation status from a db row
+func getRuleEvalStatus(
+	ctx context.Context,
+	store db.Store,
+	profileID string,
+	dbEntity *db.NullEntities,
+	selector *uuid.NullUUID,
+	providerName string,
+	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
+) (*minderv1.RuleEvaluationStatus, error) {
+	l := zerolog.Ctx(ctx)
+	var guidance string
+
+	// make sure all fields are valid
+	if !dbRuleEvalStat.EvalStatus.Valid ||
+		!dbRuleEvalStat.EvalDetails.Valid ||
+		!dbRuleEvalStat.EvalLastUpdated.Valid ||
+		!dbRuleEvalStat.RemStatus.Valid ||
+		!dbRuleEvalStat.RemDetails.Valid ||
+		!dbRuleEvalStat.AlertStatus.Valid ||
+		!dbRuleEvalStat.AlertDetails.Valid {
+		return nil, fmt.Errorf("rule evaluation status not valid")
+	}
+
+	// Get the rule type info
+	ruleTypeInfo, err := store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
+	if err != nil {
+		l.Err(err).Msg("error getting rule type info from db")
+	} else {
+		guidance = ruleTypeInfo.Guidance
+	}
+
+	st := &minderv1.RuleEvaluationStatus{
+		ProfileId:           profileID,
+		RuleId:              dbRuleEvalStat.RuleTypeID.String(),
+		RuleName:            dbRuleEvalStat.RuleTypeName,
+		RuleTypeName:        dbRuleEvalStat.RuleTypeName,
+		RuleDescriptionName: dbRuleEvalStat.RuleName,
+		Entity:              string(dbRuleEvalStat.Entity),
+		Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
+		Details:             dbRuleEvalStat.EvalDetails.String,
+		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, providerName),
+		Guidance:            guidance,
+		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
+		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
+		RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+		Alert: &minderv1.EvalResultAlert{
+			Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
+			Details: dbRuleEvalStat.AlertDetails.String,
+		},
+	}
+
+	if dbRuleEvalStat.RemLastUpdated.Valid {
+		st.RemediationLastUpdated = timestamppb.New(dbRuleEvalStat.RemLastUpdated.Time)
+	}
+
+	if dbRuleEvalStat.AlertLastUpdated.Valid {
+		st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
+	}
+
+	// If the alert metadata is valid, parse it and set the URL
+	if dbRuleEvalStat.AlertMetadata.Valid {
+		// Define a struct to match the JSON structure
+		data := struct {
+			GhsaId string `json:"ghsa_id"`
+		}{}
+		err = json.Unmarshal(dbRuleEvalStat.AlertMetadata.RawMessage, &data)
+		if err != nil {
+			l.Err(err).Msg("failed parsing alert metadata")
+		} else if data.GhsaId != "" {
+			st.Alert.Url = fmt.Sprintf(
+				"https://github.com/%s/%s/security/advisories/%s",
+				st.EntityInfo["repo_owner"],
+				st.EntityInfo["repo_name"],
+				data.GhsaId,
+			)
+		} else {
+			l.Debug().Msg("no GHSA ID found in alert metadata")
+		}
+	}
+	return st, nil
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project
