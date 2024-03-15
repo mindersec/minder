@@ -1993,8 +1993,11 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProvidersService_GetProvider_FullMethodName   = "/minder.v1.ProvidersService/GetProvider"
-	ProvidersService_ListProviders_FullMethodName = "/minder.v1.ProvidersService/ListProviders"
+	ProvidersService_GetProvider_FullMethodName           = "/minder.v1.ProvidersService/GetProvider"
+	ProvidersService_ListProviders_FullMethodName         = "/minder.v1.ProvidersService/ListProviders"
+	ProvidersService_CreateProvider_FullMethodName        = "/minder.v1.ProvidersService/CreateProvider"
+	ProvidersService_DeleteProvider_FullMethodName        = "/minder.v1.ProvidersService/DeleteProvider"
+	ProvidersService_GetUnclaimedProviders_FullMethodName = "/minder.v1.ProvidersService/GetUnclaimedProviders"
 )
 
 // ProvidersServiceClient is the client API for ProvidersService service.
@@ -2003,6 +2006,12 @@ const (
 type ProvidersServiceClient interface {
 	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error)
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
+	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
+	DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error)
+	// GetUnclaimedProviders returns a list of known provider configurations
+	// that this user could claim based on their identity.  This is a read-only
+	// operation for use by clients which wish to present a menu of options.
+	GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error)
 }
 
 type providersServiceClient struct {
@@ -2031,12 +2040,45 @@ func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProv
 	return out, nil
 }
 
+func (c *providersServiceClient) CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error) {
+	out := new(CreateProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_CreateProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *providersServiceClient) DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error) {
+	out := new(DeleteProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_DeleteProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *providersServiceClient) GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error) {
+	out := new(GetUnclaimedProvidersResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_GetUnclaimedProviders_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvidersServiceServer is the server API for ProvidersService service.
 // All implementations must embed UnimplementedProvidersServiceServer
 // for forward compatibility
 type ProvidersServiceServer interface {
 	GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error)
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
+	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
+	DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error)
+	// GetUnclaimedProviders returns a list of known provider configurations
+	// that this user could claim based on their identity.  This is a read-only
+	// operation for use by clients which wish to present a menu of options.
+	GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error)
 	mustEmbedUnimplementedProvidersServiceServer()
 }
 
@@ -2049,6 +2091,15 @@ func (UnimplementedProvidersServiceServer) GetProvider(context.Context, *GetProv
 }
 func (UnimplementedProvidersServiceServer) ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProviders not implemented")
+}
+func (UnimplementedProvidersServiceServer) CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProvider not implemented")
+}
+func (UnimplementedProvidersServiceServer) DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProvider not implemented")
+}
+func (UnimplementedProvidersServiceServer) GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUnclaimedProviders not implemented")
 }
 func (UnimplementedProvidersServiceServer) mustEmbedUnimplementedProvidersServiceServer() {}
 
@@ -2099,6 +2150,60 @@ func _ProvidersService_ListProviders_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvidersService_CreateProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).CreateProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_CreateProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).CreateProvider(ctx, req.(*CreateProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvidersService_DeleteProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).DeleteProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_DeleteProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).DeleteProvider(ctx, req.(*DeleteProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvidersService_GetUnclaimedProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUnclaimedProvidersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).GetUnclaimedProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_GetUnclaimedProviders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).GetUnclaimedProviders(ctx, req.(*GetUnclaimedProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvidersService_ServiceDesc is the grpc.ServiceDesc for ProvidersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2113,6 +2218,18 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProviders",
 			Handler:    _ProvidersService_ListProviders_Handler,
+		},
+		{
+			MethodName: "CreateProvider",
+			Handler:    _ProvidersService_CreateProvider_Handler,
+		},
+		{
+			MethodName: "DeleteProvider",
+			Handler:    _ProvidersService_DeleteProvider_Handler,
+		},
+		{
+			MethodName: "GetUnclaimedProviders",
+			Handler:    _ProvidersService_GetUnclaimedProviders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
