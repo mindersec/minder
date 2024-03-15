@@ -473,15 +473,33 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, util.UserVisibleError(codes.InvalidArgument, "Malformed UUID")
 	}
 
+	// The UpdateProfile accepts Null values for the remediate and alert fields as "the server default". Until
+	// we fix that, we need to fetch the old profile to get the current values and extend the patch with those
+	oldProfile, err := s.store.GetProfileByID(ctx, db.GetProfileByIDParams{
+		ProjectID: entityCtx.Project.ID,
+		ID:        profileID,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
+	}
+
 	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}
 
 	// we check the pointers explicitly because the zero value of a string is valid
 	// value that means "use default" and we want to distinguish that from "not set in the patch"
 	if patch.Remediate != nil {
 		params.Remediate = validateActionType(patch.GetRemediate())
+	} else {
+		params.Remediate = oldProfile.Remediate
 	}
+
 	if patch.Alert != nil {
 		params.Alert = validateActionType(patch.GetAlert())
+	} else {
+		params.Alert = oldProfile.Alert
 	}
 
 	// Update top-level profile db object
