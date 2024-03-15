@@ -128,7 +128,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			}).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
-		}, nil)
+		}, nil).Times(2)
 
 	// list one profile
 	crs := []*minderv1.Profile_Rule{
