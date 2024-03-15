@@ -92,7 +92,7 @@ func (q *Queries) GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, 
 
 const getProviderByName = `-- name: GetProviderByName :one
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1 AND project_id = ANY($2::uuid[])
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE lower(name) = lower($1) AND project_id = ANY($2::uuid[])
 LIMIT 1
 `
 
@@ -160,7 +160,7 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 }
 
 const globalListProvidersByName = `-- name: GlobalListProvidersByName :many
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE name = $1
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE lower(name) = lower($1)
 `
 
 func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([]Provider, error) {

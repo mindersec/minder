@@ -49,7 +49,7 @@ func (q *Queries) CountProfilesByEntityType(ctx context.Context) ([]CountProfile
 }
 
 const countProfilesByName = `-- name: CountProfilesByName :one
-SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower($1)
 `
 
 func (q *Queries) CountProfilesByName(ctx context.Context, name string) (int64, error) {
@@ -176,7 +176,7 @@ func (q *Queries) DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleIns
 
 const getEntityProfileByProjectAndName = `-- name: GetEntityProfileByProjectAndName :many
 SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, subscription_id, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND profiles.name = $2
+WHERE profiles.project_id = $1 AND lower(profiles.name) = lower($2)
 `
 
 type GetEntityProfileByProjectAndNameParams struct {
@@ -298,16 +298,16 @@ func (q *Queries) GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDA
 }
 
 const getProfileByNameAndLock = `-- name: GetProfileByNameAndLock :one
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id FROM profiles WHERE lower(name) = lower($2) AND project_id = $1 FOR UPDATE
 `
 
 type GetProfileByNameAndLockParams struct {
-	Name      string    `json:"name"`
 	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
 }
 
 func (q *Queries) GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileByNameAndLock, arg.Name, arg.ProjectID)
+	row := q.db.QueryRowContext(ctx, getProfileByNameAndLock, arg.ProjectID, arg.Name)
 	var i Profile
 	err := row.Scan(
 		&i.ID,

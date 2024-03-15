@@ -3,7 +3,7 @@
 INSERT INTO rule_evaluations (
     profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, rule_name)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, lower(rule_name))
   DO UPDATE SET profile_id = $1
 RETURNING id;
 
@@ -65,7 +65,7 @@ WHERE p.id = $1 AND p.project_id = $2;
 -- name: GetProfileStatusByNameAndProject :one
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
-WHERE p.name = $1 AND p.project_id = $2;
+WHERE lower(p.name) = lower(sqlc.arg(name)) AND p.project_id = $1;
 
 -- name: GetProfileStatusByProject :many
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
@@ -145,5 +145,5 @@ WHERE res.profile_id = $1 AND
             ELSE false
             END
         ) AND (rt.name = sqlc.narg(rule_type_name) OR sqlc.narg(rule_type_name) IS NULL)
-          AND (res.rule_name = sqlc.narg(rule_name) OR sqlc.narg(rule_name) IS NULL)
+          AND (lower(res.rule_name) = lower(sqlc.narg(rule_name)) OR sqlc.narg(rule_name) IS NULL)
 ;
