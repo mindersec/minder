@@ -99,7 +99,7 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id FROM rule_type WHERE provider = $1 AND project_id = $2 AND name = $3
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id FROM rule_type WHERE provider = $1 AND project_id = $2 AND lower(name) = lower($3)
 `
 
 type GetRuleTypeByNameParams struct {

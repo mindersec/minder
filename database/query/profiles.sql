@@ -47,11 +47,11 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2;
 SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
-SELECT * FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE;
+SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
 
 -- name: GetEntityProfileByProjectAndName :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND profiles.name = $2;
+WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
 
 -- name: ListProfilesByProjectID :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
@@ -87,4 +87,4 @@ FROM profiles AS p
 GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
-SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1;
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));

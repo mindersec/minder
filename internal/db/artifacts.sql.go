@@ -101,12 +101,12 @@ SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts
        artifacts.artifact_visibility, artifacts.created_at,
        repositories.provider, repositories.project_id, repositories.repo_owner, repositories.repo_name
 FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
-WHERE artifacts.artifact_name = $1 AND artifacts.repository_id = $2
+WHERE lower(artifacts.artifact_name) = lower($2) AND artifacts.repository_id = $1
 `
 
 type GetArtifactByNameParams struct {
-	ArtifactName string    `json:"artifact_name"`
 	RepositoryID uuid.UUID `json:"repository_id"`
+	ArtifactName string    `json:"artifact_name"`
 }
 
 type GetArtifactByNameRow struct {
@@ -123,7 +123,7 @@ type GetArtifactByNameRow struct {
 }
 
 func (q *Queries) GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (GetArtifactByNameRow, error) {
-	row := q.db.QueryRowContext(ctx, getArtifactByName, arg.ArtifactName, arg.RepositoryID)
+	row := q.db.QueryRowContext(ctx, getArtifactByName, arg.RepositoryID, arg.ArtifactName)
 	var i GetArtifactByNameRow
 	err := row.Scan(
 		&i.ID,
