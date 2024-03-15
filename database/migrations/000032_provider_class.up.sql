@@ -23,10 +23,13 @@ ALTER TABLE providers
 -- join with the providers table to get the credential parameters.
 
 CREATE TABLE provider_app_installations (
-    provider_id UUID PRIMARY KEY,
-    app_installation_id TEXT,
-    organization_id BIGINT,
+    app_installation_id TEXT PRIMARY KEY,
+    provider_id UUID,
+    organization_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE NULLS DISTINCT (provider_id),  -- NULL provider_ids are unclaimed.
+    UNIQUE (organization_id),  -- add an index on organization_id
     FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE
 );
+

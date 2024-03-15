@@ -537,11 +537,11 @@ type ProviderAccessToken struct {
 }
 
 type ProviderAppInstallation struct {
-	ProviderID        uuid.UUID      `json:"provider_id"`
-	AppInstallationID sql.NullString `json:"app_installation_id"`
-	OrganizationID    sql.NullInt64  `json:"organization_id"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
+	AppInstallationID string        `json:"app_installation_id"`
+	ProviderID        uuid.NullUUID `json:"provider_id"`
+	OrganizationID    int64         `json:"organization_id"`
+	CreatedAt         time.Time     `json:"created_at"`
+	UpdatedAt         time.Time     `json:"updated_at"`
 }
 
 type PullRequest struct {
