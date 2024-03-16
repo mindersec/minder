@@ -127,7 +127,8 @@ SELECT
     repo.repo_owner,
     repo.provider,
     rt.name AS rule_type_name,
-    rt.id AS rule_type_id
+    rt.id AS rule_type_id,
+    rt.guidance as rule_type_guidance
 FROM rule_evaluations res
          LEFT JOIN eval_details ed ON ed.rule_eval_id = res.id
          LEFT JOIN remediation_details rd ON rd.rule_eval_id = res.id
