@@ -277,28 +277,58 @@ func TestCreateProfile(t *testing.T) {
 			},
 		},
 		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
-	}, {
-		name: "Create profile with valid name and rules",
-		profile: &minderv1.CreateProfileRequest{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+	},
+		{
+			name: "Create profile with valid name and rules",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test",
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test",
+					Alert:     proto.String("on"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-		result: &minderv1.CreateProfileResponse{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Name: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+		{
+			name: "Create profile with explicit alert and remediate",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-	}}
+	}
 
 	for _, tc := range tests {
 		tc := tc
