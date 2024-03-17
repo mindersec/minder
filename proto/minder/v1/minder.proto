@@ -134,7 +134,7 @@ service ArtifactService {
 
     rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/artifact/name/{name}"
+            get: "/api/v1/artifact/name/{name=**}"
         };
 
         option (rpc_options) = {
@@ -362,7 +362,7 @@ service RepositoryService {
 
     rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/repository/provider/{provider}/name/{name}"
+            get: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
                 get: "/api/v1/repository/name/{name=**}"
             }
@@ -387,7 +387,7 @@ service RepositoryService {
 
     rpc DeleteRepositoryByName (DeleteRepositoryByNameRequest) returns (DeleteRepositoryByNameResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/repository/provider/{provider}/name/{name}"
+            delete: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
                 delete: "/api/v1/repository/name/{name=**}"
             }
