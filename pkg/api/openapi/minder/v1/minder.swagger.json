@@ -3374,11 +3374,11 @@
         },
         "remediate": {
           "type": "string",
-          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional and defaults to \"off\""
         },
         "alert": {
           "type": "string",
-          "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to alert (on,off,dry_run)\nthis is optional and defaults to \"on\""
         },
         "type": {
           "type": "string",
