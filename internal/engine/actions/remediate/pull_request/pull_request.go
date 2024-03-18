@@ -249,11 +249,6 @@ func (r *Remediator) runGit(
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
-	username, err := r.ghCli.GetUsername(ctx)
-	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
-	}
-
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot get primary email: %w", err)
@@ -294,7 +289,7 @@ func (r *Remediator) runGit(
 	logger.Debug().Msg("Committing changes")
 	_, err = wt.Commit(title, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  username,
+			Name:  userNameForCommit(ctx, r.ghCli),
 			Email: email,
 			When:  time.Now(),
 		},
@@ -389,6 +384,18 @@ func branchBaseName(prTitle string) string {
 	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
 	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+}
+
+func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {
+	var name string
+
+	// we ignore errors here, as we can still create a commit without a name
+	// and errors are checked when getting the primary email
+	name, _ = gh.GetName(ctx)
+	if name == "" {
+		name, _ = gh.GetLogin(ctx)
+	}
+	return name
 }
 
 func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {

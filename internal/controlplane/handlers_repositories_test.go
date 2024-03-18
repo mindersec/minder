@@ -649,7 +649,12 @@ func (s *StubGitHub) GetUserId(context.Context) (int64, error) {
 }
 
 // GetUsername implements v1.GitHub.
-func (*StubGitHub) GetUsername(context.Context) (string, error) {
+func (*StubGitHub) GetName(context.Context) (string, error) {
+	panic("unimplemented")
+}
+
+// GetLogin implements v1.GitHub.
+func (*StubGitHub) GetLogin(context.Context) (string, error) {
 	panic("unimplemented")
 }
 

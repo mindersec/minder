@@ -664,8 +664,8 @@ func (c *GitHub) GetUserId(ctx context.Context) (int64, error) {
 	return user.GetID(), nil
 }
 
-// GetUsername returns the username for the authenticated user
-func (c *GitHub) GetUsername(ctx context.Context) (string, error) {
+// GetName returns the username for the authenticated user
+func (c *GitHub) GetName(ctx context.Context) (string, error) {
 	user, _, err := c.client.Users.Get(ctx, "")
 	if err != nil {
 		return "", err
