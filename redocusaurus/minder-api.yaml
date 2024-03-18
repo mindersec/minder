@@ -2500,6 +2500,12 @@ definitions:
       updatedAt:
         type: string
         format: date-time
+      displayName:
+        type: string
+        description: |-
+          display_name allows for a human-readable name to be used.
+          display_names are short *non-unique* strings to provide
+          a user-friendly name for presentation in lists, etc.
     title: Project API Objects
   v1Provider:
     type: object
