@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/google/go-github/v56/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
@@ -174,4 +176,50 @@ func protobufProviderAuthFlowFromDB(ctx context.Context, p db.Provider) []minder
 	}
 
 	return flows
+}
+
+func (s *Server) GetUnclaimedProviders(ctx context.Context, req *minderv1.GetUnclaimedProvidersRequest) (*minderv1.GetUnclaimedProvidersResponse, error) {
+	userID, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
+	if userID == "" {
+		return nil, util.UserVisibleError(codes.PermissionDenied, "cannot determine GitHub user identity")
+	}
+
+	ret := &minderv1.GetUnclaimedProvidersResponse{
+		Providers: []*minderv1.ProviderParameter{},
+	}
+
+	// TODO: get app installs from GitHub
+	// It would be nice to use this endpoint, but we'd need a GitHub App user access token:
+	// https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-user-access-token
+	var ghClient github.Client
+
+	opts := github.ListOptions{PerPage: 100}
+	candidates := []*github.Installation{}
+	for {
+		// We want to use ListUserInstallations here when we figure out the auth token.
+		installs, resp, err := ghClient.Apps.ListInstallations(ctx, nil)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error listing installations: %v", err)
+		}
+		candidates = append(candidates, installs...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	for _, i := range candidates {
+		// Get candidate admins and join with the user's GitHub ID
+		ret.Providers = append(ret.Providers, &minderv1.ProviderParameter{
+			Parameters: &minderv1.ProviderParameter_GithubApp{
+				GithubApp: &minderv1.GitHubAppParams{
+					InstallationId: i.GetID(),
+					Organization:   i.GetAccount().GetLogin(),
+					OrganizationId: i.GetAccount().GetID(),
+				},
+			},
+		})
+	}
+
+	return ret, nil
 }

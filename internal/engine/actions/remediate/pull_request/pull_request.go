@@ -228,7 +228,6 @@ func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
 	}
 }
 
-// nolint: gocyclo
 func (r *Remediator) runGit(
 	ctx context.Context,
 	fs billy.Filesystem,
@@ -250,11 +249,6 @@ func (r *Remediator) runGit(
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
-	username, err := r.ghCli.GetUsername(ctx)
-	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
-	}
-
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot get primary email: %w", err)
@@ -265,17 +259,6 @@ func (r *Remediator) runGit(
 		return fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
-
-	user, reply, err := r.ghCli.GetUserInfo(ctx)
-	if err != nil {
-		logger.Warn().Err(err).Msg("cannot get user info")
-	} else {
-		logger.Debug().Msgf("user info: %+v", user)
-		logger.Debug().
-			Str("scopes ", reply.Header.Get("x-oauth-scopes")).
-			Str("oauth client ID", reply.Header.Get("x-oauth-client-id")).
-			Msg("reply headers")
-	}
 
 	// This resets the worktree so we don't corrupt the ingest cache (at least the main/originally-fetched branch).
 	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
@@ -306,7 +289,7 @@ func (r *Remediator) runGit(
 	logger.Debug().Msg("Committing changes")
 	_, err = wt.Commit(title, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  username,
+			Name:  userNameForCommit(ctx, r.ghCli),
 			Email: email,
 			When:  time.Now(),
 		},
@@ -316,11 +299,6 @@ func (r *Remediator) runGit(
 	}
 
 	refspec := refFromBranch(branchBaseName(title))
-
-	zerolog.Ctx(ctx).Debug().
-		Str("remote", guessRemote(repo)).
-		Str("refspec", refspec).
-		Msg("Pushing changes")
 
 	err = pushBranch(ctx, repo, refspec, r.ghCli)
 	if err != nil {
@@ -406,6 +384,18 @@ func branchBaseName(prTitle string) string {
 	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
 	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+}
+
+func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {
+	var name string
+
+	// we ignore errors here, as we can still create a commit without a name
+	// and errors are checked when getting the primary email
+	name, _ = gh.GetName(ctx)
+	if name == "" {
+		name, _ = gh.GetLogin(ctx)
+	}
+	return name
 }
 
 func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {

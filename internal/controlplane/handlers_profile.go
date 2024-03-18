@@ -556,13 +556,13 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 	// we check the pointers explicitly because the zero value of a string is valid
 	// value that means "use default" and we want to distinguish that from "not set in the patch"
 	if patch.Remediate != nil {
-		params.Remediate = validateActionType(patch.GetRemediate())
+		params.Remediate = db.ValidateRemediateType(patch.GetRemediate())
 	} else {
 		params.Remediate = oldProfile.Remediate
 	}
 
 	if patch.Alert != nil {
-		params.Alert = validateActionType(patch.GetAlert())
+		params.Alert = db.ValidateAlertType(patch.GetAlert())
 	} else {
 		params.Alert = oldProfile.Alert
 	}
@@ -648,20 +648,4 @@ func getUnusedOldRuleTypes(newRules, oldRules prof.RuleMapping) []prof.EntityAnd
 	}
 
 	return unusedRuleTypes
-}
-
-// validateActionType returns the appropriate remediate type or the
-// NULL DB type if the input is invalid, thus letting the server run
-// the profile with the default remediate type.
-func validateActionType(r string) db.NullActionType {
-	switch r {
-	case "on":
-		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
-	case "off":
-		return db.NullActionType{ActionType: db.ActionTypeOff, Valid: true}
-	case "dry_run":
-		return db.NullActionType{ActionType: db.ActionTypeDryRun, Valid: true}
-	}
-
-	return db.NullActionType{Valid: false}
 }

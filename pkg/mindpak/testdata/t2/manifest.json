@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "name": "t2",
+    "version": "v0.0.1",
+    "date": {
+      "seconds": 1709881152,
+      "nanos": 854906417
+    }
+  },
+  "files": {
+    "profiles": [
+      {
+        "name": "branch-protection.yaml",
+        "hashes": {
+          "sha-256": "f3682a1cb5ab92c0cc71dd913338bf40a89ec324024f8d3f500be0e2aa4a9ae1"
+        }
+      }
+    ],
+    "ruleTypes": [
+      {
+        "name": "branch_protection_enabled.yaml",
+        "hashes": {
+          "sha-256": "10198b8cac16cd1d983a0a6fbb950816448f65e8f1d7a7407e2ff94949b42ccb"
+        }
+      }
+    ]
+  }
+}

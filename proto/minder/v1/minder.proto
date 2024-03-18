@@ -134,7 +134,7 @@ service ArtifactService {
 
     rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/artifact/name/{name}"
+            get: "/api/v1/artifact/name/{name=**}"
         };
 
         option (rpc_options) = {
@@ -362,7 +362,7 @@ service RepositoryService {
 
     rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/repository/provider/{provider}/name/{name}"
+            get: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
                 get: "/api/v1/repository/name/{name=**}"
             }
@@ -387,7 +387,7 @@ service RepositoryService {
 
     rpc DeleteRepositoryByName (DeleteRepositoryByNameRequest) returns (DeleteRepositoryByNameResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/repository/provider/{provider}/name/{name}"
+            delete: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
                 delete: "/api/v1/repository/name/{name=**}"
             }
@@ -812,6 +812,10 @@ message Project {
     string description = 4;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
+    // display_name allows for a human-readable name to be used.
+    // display_names are short *non-unique* strings to provide
+    // a user-friendly name for presentation in lists, etc.
+    string display_name = 5;
 }
 
 // Repositories API objects
@@ -1701,11 +1705,11 @@ message Profile {
     repeated Rule pull_request = 7;
 
     // whether and how to remediate (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "off"
     optional string remediate = 8;
 
     // whether and how to alert (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "on"
     optional string alert = 9;
 
     // type is a placeholder for the object type. It should always be set to "profile".

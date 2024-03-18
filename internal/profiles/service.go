@@ -119,8 +119,8 @@ func (p *profileService) CreateProfile(
 		ProviderID: provider.ID,
 		ProjectID:  projectID,
 		Name:       profile.GetName(),
-		Remediate:  validateActionType(profile.GetRemediate()),
-		Alert:      validateActionType(profile.GetAlert()),
+		Remediate:  db.ValidateRemediateType(profile.GetRemediate()),
+		Alert:      db.ValidateAlertType(profile.GetAlert()),
 	}
 
 	// Create profile
@@ -158,6 +158,9 @@ func (p *profileService) CreateProfile(
 		Provider: &newProfile.Provider,
 		Project:  ptr.Ptr(newProfile.ProjectID.String()),
 	}
+
+	profile.Remediate = ptr.Ptr(string(newProfile.Remediate.ActionType))
+	profile.Alert = ptr.Ptr(string(newProfile.Alert.ActionType))
 
 	return profile, nil
 }
@@ -228,8 +231,8 @@ func (p *profileService) UpdateProfile(
 	updatedProfile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
 		ProjectID: projectID,
 		ID:        oldDBProfile.ID,
-		Remediate: validateActionType(profile.GetRemediate()),
-		Alert:     validateActionType(profile.GetAlert()),
+		Remediate: db.ValidateRemediateType(profile.GetRemediate()),
+		Alert:     db.ValidateAlertType(profile.GetAlert()),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
@@ -270,6 +273,9 @@ func (p *profileService) UpdateProfile(
 		Provider: &updatedProfile.Provider,
 		Project:  ptr.Ptr(updatedProfile.ProjectID.String()),
 	}
+
+	profile.Remediate = ptr.Ptr(string(updatedProfile.Remediate.ActionType))
+	profile.Alert = ptr.Ptr(string(updatedProfile.Alert.ActionType))
 
 	// re-trigger profile evaluation
 	p.sendNewProfileEvent(provider.Name, projectID)
@@ -326,23 +332,6 @@ func createProfileRulesForEntity(
 	}
 
 	return err
-}
-
-// TODO: DEDUPE
-// validateActionType returns the appropriate remediate type or the
-// NULL DB type if the input is invalid, thus letting the server run
-// the profile with the default remediate type.
-func validateActionType(r string) db.NullActionType {
-	switch r {
-	case "on":
-		return db.NullActionType{ActionType: db.ActionTypeOn, Valid: true}
-	case "off":
-		return db.NullActionType{ActionType: db.ActionTypeOff, Valid: true}
-	case "dry_run":
-		return db.NullActionType{ActionType: db.ActionTypeDryRun, Valid: true}
-	}
-
-	return db.NullActionType{Valid: false}
 }
 
 func (p *profileService) sendNewProfileEvent(

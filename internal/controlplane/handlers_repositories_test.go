@@ -564,10 +564,6 @@ func (*StubGitHub) UpdateReview(context.Context, string, string, int, int64, str
 	panic("unimplemented")
 }
 
-func (*StubGitHub) GetUserInfo(context.Context) (*github.User, *github.Response, error) {
-	panic("unimplemented")
-}
-
 // GetRepository implements v1.GitHub.
 func (s *StubGitHub) GetRepository(_ context.Context, owner string, repo string) (*github.Repository, error) {
 	if owner != s.ExpectedOwner {
@@ -653,7 +649,12 @@ func (s *StubGitHub) GetUserId(context.Context) (int64, error) {
 }
 
 // GetUsername implements v1.GitHub.
-func (*StubGitHub) GetUsername(context.Context) (string, error) {
+func (*StubGitHub) GetName(context.Context) (string, error) {
+	panic("unimplemented")
+}
+
+// GetLogin implements v1.GitHub.
+func (*StubGitHub) GetLogin(context.Context) (string, error) {
 	panic("unimplemented")
 }
 

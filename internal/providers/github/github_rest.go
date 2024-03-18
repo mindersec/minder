@@ -664,13 +664,22 @@ func (c *GitHub) GetUserId(ctx context.Context) (int64, error) {
 	return user.GetID(), nil
 }
 
-// GetUsername returns the username for the authenticated user
-func (c *GitHub) GetUsername(ctx context.Context) (string, error) {
+// GetName returns the username for the authenticated user
+func (c *GitHub) GetName(ctx context.Context) (string, error) {
 	user, _, err := c.client.Users.Get(ctx, "")
 	if err != nil {
 		return "", err
 	}
 	return user.GetName(), nil
+}
+
+// GetLogin returns the login for the authenticated user
+func (c *GitHub) GetLogin(ctx context.Context) (string, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return "", err
+	}
+	return user.GetLogin(), nil
 }
 
 // GetPrimaryEmail returns the primary email for the authenticated user.
@@ -701,15 +710,10 @@ func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*gi
 
 // AddAuthToPushOptions adds authorization to the push options
 func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.PushOptions) error {
-	username, err := c.GetUsername(ctx)
+	login, err := c.GetLogin(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
+		return fmt.Errorf("cannot get login: %w", err)
 	}
-	c.credential.AddToPushOptions(pushOptions, username)
+	c.credential.AddToPushOptions(pushOptions, login)
 	return nil
-}
-
-// GetUserInfo returns the user information for the authenticated user
-func (c *GitHub) GetUserInfo(ctx context.Context) (*github.User, *github.Response, error) {
-	return c.client.Users.Get(ctx, "")
 }
