@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 
 	"github.com/stacklok/minder/internal/crypto"
@@ -267,9 +268,11 @@ func getCredentialForProvider(
 		if err != nil {
 			return nil, fmt.Errorf("error decrypting access token: %w", err)
 		}
+		zerolog.Ctx(ctx).Debug().Msg("access token found for provider")
 		return credentials.NewGitHubTokenCredential(decryptedToken.AccessToken), nil
 	}
 	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
 		return credentials.NewEmptyCredential(), nil
 	}
 	return nil, fmt.Errorf("error getting credential: %w", err)
