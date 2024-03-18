@@ -673,6 +673,15 @@ func (c *GitHub) GetUsername(ctx context.Context) (string, error) {
 	return user.GetName(), nil
 }
 
+// GetLogin returns the login for the authenticated user
+func (c *GitHub) GetLogin(ctx context.Context) (string, error) {
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return "", err
+	}
+	return user.GetLogin(), nil
+}
+
 // GetPrimaryEmail returns the primary email for the authenticated user.
 func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 	emails, _, err := c.client.Users.ListEmails(ctx, &github.ListOptions{})
@@ -701,11 +710,11 @@ func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*gi
 
 // AddAuthToPushOptions adds authorization to the push options
 func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.PushOptions) error {
-	username, err := c.GetUsername(ctx)
+	login, err := c.GetLogin(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get username: %w", err)
+		return fmt.Errorf("cannot get login: %w", err)
 	}
-	c.credential.AddToPushOptions(pushOptions, username)
+	c.credential.AddToPushOptions(pushOptions, login)
 	return nil
 }
 
