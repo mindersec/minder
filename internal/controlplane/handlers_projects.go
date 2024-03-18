@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -57,10 +58,24 @@ func (s *Server) ListProjects(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 		}
+
+		var description, displayName string
+		meta, err := projects.ParseMetadata(&project)
+		// ignore error if we can't parse the metadata. This information is not critical... yet.
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to parse metadata")
+			description = ""
+			displayName = project.Name
+		} else {
+			description = meta.Public.Description
+			displayName = meta.Public.DisplayName
+		}
+
 		resp.Projects = append(resp.Projects, &minderv1.Project{
 			ProjectId:   project.ID.String(),
 			Name:        project.Name,
-			Description: "",
+			Description: description,
+			DisplayName: displayName,
 			CreatedAt:   timestamppb.New(project.CreatedAt),
 			UpdatedAt:   timestamppb.New(project.UpdatedAt),
 		})
