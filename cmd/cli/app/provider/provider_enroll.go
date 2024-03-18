@@ -60,6 +60,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	token := viper.GetString("token")
 	owner := viper.GetString("owner")
 	yesFlag := viper.GetBool("yes")
+	skipBrowser := viper.GetBool("skip-browser")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -106,7 +107,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	// This will have a different timeout
 	enrollemntCtx := cmd.Context()
 
-	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, client, provider, project, owner)
+	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, client, provider, project, owner, skipBrowser)
 }
 
 func enrollUsingToken(
@@ -138,6 +139,7 @@ func enrollUsingOAuth2Flow(
 	provider string,
 	project string,
 	owner string,
+	skipBrowser bool,
 ) error {
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(ctx, MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
@@ -163,9 +165,11 @@ func enrollUsingOAuth2Flow(
 	cmd.Println("Once the flow is complete, the CLI will close")
 	cmd.Println("If this is a headless environment, please copy and paste the URL into a browser on a different machine.")
 
-	if err := browser.OpenURL(resp.GetUrl()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
-		cmd.Println("Please copy and paste the URL into a browser.")
+	if !skipBrowser {
+		if err := browser.OpenURL(resp.GetUrl()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error opening browser: %s\n", err)
+			cmd.Println("Please copy and paste the URL into a browser.")
+		}
 	}
 	openTime := time.Now()
 
@@ -249,6 +253,14 @@ func init() {
 	}
 	if err := viper.BindPFlag("owner", enrollCmd.Flags().Lookup("owner")); err != nil {
 		enrollCmd.Printf("Error binding flag: %s", err)
+		os.Exit(1)
+	}
+
+	// hidden flags
+	enrollCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
+	// mark hidden
+	if err := enrollCmd.Flags().MarkHidden("skip-browser"); err != nil {
+		enrollCmd.Printf("Error marking flag hidden: %s", err)
 		os.Exit(1)
 	}
 }
