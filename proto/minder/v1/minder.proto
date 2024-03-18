@@ -1701,11 +1701,11 @@ message Profile {
     repeated Rule pull_request = 7;
 
     // whether and how to remediate (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "off"
     optional string remediate = 8;
 
     // whether and how to alert (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "on"
     optional string alert = 9;
 
     // type is a placeholder for the object type. It should always be set to "profile".

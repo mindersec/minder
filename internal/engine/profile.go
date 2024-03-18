@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -175,13 +176,15 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[stri
 			}
 
 			if p.Remediate.Valid {
-				sRem := string(p.Remediate.ActionType)
-				profiles[p.Name].Remediate = &sRem
+				profiles[p.Name].Remediate = proto.String(string(p.Remediate.ActionType))
+			} else {
+				profiles[p.Name].Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
 			if p.Alert.Valid {
-				sAlert := string(p.Alert.ActionType)
-				profiles[p.Name].Alert = &sAlert
+				profiles[p.Name].Alert = proto.String(string(p.Alert.ActionType))
+			} else {
+				profiles[p.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
 		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {
@@ -219,13 +222,15 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 			}
 
 			if p.Remediate.Valid {
-				sRem := string(p.Remediate.ActionType)
-				profiles[p.Name].Remediate = &sRem
+				profiles[p.Name].Remediate = proto.String(string(p.Remediate.ActionType))
+			} else {
+				profiles[p.Name].Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
 			if p.Alert.Valid {
-				sAlert := string(p.Alert.ActionType)
-				profiles[p.Name].Alert = &sAlert
+				profiles[p.Name].Alert = proto.String(string(p.Alert.ActionType))
+			} else {
+				profiles[p.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
 		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {

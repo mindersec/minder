@@ -6174,10 +6174,10 @@ type Profile struct {
 	Artifact         []*Profile_Rule `protobuf:"bytes,6,rep,name=artifact,proto3" json:"artifact,omitempty"`
 	PullRequest      []*Profile_Rule `protobuf:"bytes,7,rep,name=pull_request,json=pullRequest,proto3" json:"pull_request,omitempty"`
 	// whether and how to remediate (on,off,dry_run)
-	// this is optional as the default is set by the system
+	// this is optional and defaults to "off"
 	Remediate *string `protobuf:"bytes,8,opt,name=remediate,proto3,oneof" json:"remediate,omitempty"`
 	// whether and how to alert (on,off,dry_run)
-	// this is optional as the default is set by the system
+	// this is optional and defaults to "on"
 	Alert *string `protobuf:"bytes,9,opt,name=alert,proto3,oneof" json:"alert,omitempty"`
 	// type is a placeholder for the object type. It should always be set to "profile".
 	Type string `protobuf:"bytes,10,opt,name=type,proto3" json:"type,omitempty"`

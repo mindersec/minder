@@ -1335,8 +1335,8 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | pull_request | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
-| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
-| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
+| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
+| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
 | type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
 | version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
 
