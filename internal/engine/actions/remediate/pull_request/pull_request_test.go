@@ -198,7 +198,7 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
-		GetUsername(gomock.Any()).Return("stacklok-bot", nil)
+		GetName(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
 		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
@@ -461,7 +461,7 @@ func TestPullRequestRemediate(t *testing.T) {
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 				// we need to get the user information and update the branch
 				mockGitHub.EXPECT().
-					GetUsername(gomock.Any()).Return("stacklok-bot", nil)
+					GetName(gomock.Any()).Return("stacklok-bot", nil)
 				// likewise we need to update the branch with a valid e-mail
 				mockGitHub.EXPECT().
 					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)

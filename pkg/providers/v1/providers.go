@@ -106,7 +106,8 @@ type GitHub interface {
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
 	GetUserId(ctx context.Context) (int64, error)
-	GetUsername(ctx context.Context) (string, error)
+	GetName(ctx context.Context) (string, error)
+	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
 	CreateIssueComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error)
 	ListIssueComments(ctx context.Context, owner, repo string, number int,
