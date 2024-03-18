@@ -69,12 +69,12 @@ func (q *Queries) GetProfileStatusByIdAndProject(ctx context.Context, arg GetPro
 const getProfileStatusByNameAndProject = `-- name: GetProfileStatusByNameAndProject :one
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
-WHERE p.name = $1 AND p.project_id = $2
+WHERE lower(p.name) = lower($2) AND p.project_id = $1
 `
 
 type GetProfileStatusByNameAndProjectParams struct {
-	Name      string    `json:"name"`
 	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
 }
 
 type GetProfileStatusByNameAndProjectRow struct {
@@ -85,7 +85,7 @@ type GetProfileStatusByNameAndProjectRow struct {
 }
 
 func (q *Queries) GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error) {
-	row := q.db.QueryRowContext(ctx, getProfileStatusByNameAndProject, arg.Name, arg.ProjectID)
+	row := q.db.QueryRowContext(ctx, getProfileStatusByNameAndProject, arg.ProjectID, arg.Name)
 	var i GetProfileStatusByNameAndProjectRow
 	err := row.Scan(
 		&i.ID,
@@ -201,7 +201,7 @@ WHERE res.profile_id = $1 AND
             ELSE false
             END
         ) AND (rt.name = $4 OR $4 IS NULL)
-          AND (res.rule_name = $5 OR $5 IS NULL)
+          AND (lower(res.rule_name) = lower($5) OR $5 IS NULL)
 `
 
 type ListRuleEvaluationsByProfileIdParams struct {
@@ -383,7 +383,7 @@ const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
     profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, rule_name)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, lower(rule_name))
   DO UPDATE SET profile_id = $1
 RETURNING id
 `
