@@ -1382,6 +1382,7 @@ Project API Objects
 | description | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| display_name | [string](#string) |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
 
 
 <a name="minder-v1-Provider"></a>

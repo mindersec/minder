@@ -3436,6 +3436,10 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
         }
       },
       "title": "Project API Objects"

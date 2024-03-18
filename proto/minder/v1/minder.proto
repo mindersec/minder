@@ -812,6 +812,10 @@ message Project {
     string description = 4;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
+    // display_name allows for a human-readable name to be used.
+    // display_names are short *non-unique* strings to provide
+    // a user-friendly name for presentation in lists, etc.
+    string display_name = 5;
 }
 
 // Repositories API objects
