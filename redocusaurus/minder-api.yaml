@@ -2453,12 +2453,12 @@ definitions:
         type: string
         title: |-
           whether and how to remediate (on,off,dry_run)
-          this is optional as the default is set by the system
+          this is optional and defaults to "off"
       alert:
         type: string
         title: |-
           whether and how to alert (on,off,dry_run)
-          this is optional as the default is set by the system
+          this is optional and defaults to "on"
       type:
         type: string
         description: >-
