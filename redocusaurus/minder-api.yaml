@@ -31,6 +31,7 @@ paths:
           in: path
           required: true
           type: string
+          pattern: .+
         - name: context.provider
           description: name of the provider
           in: query
@@ -1165,6 +1166,7 @@ paths:
           in: path
           required: true
           type: string
+          pattern: .+
         - name: context.provider
           description: name of the provider
           in: query
@@ -1197,6 +1199,7 @@ paths:
           in: path
           required: true
           type: string
+          pattern: .+
         - name: context.provider
           description: name of the provider
           in: query
