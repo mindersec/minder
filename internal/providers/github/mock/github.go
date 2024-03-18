@@ -565,22 +565,6 @@ func (mr *MockGitHubMockRecorder) GetUserId(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserId", reflect.TypeOf((*MockGitHub)(nil).GetUserId), ctx)
 }
 
-// GetUserInfo mocks base method.
-func (m *MockGitHub) GetUserInfo(ctx context.Context) (*github.User, *github.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserInfo", ctx)
-	ret0, _ := ret[0].(*github.User)
-	ret1, _ := ret[1].(*github.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetUserInfo indicates an expected call of GetUserInfo.
-func (mr *MockGitHubMockRecorder) GetUserInfo(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserInfo", reflect.TypeOf((*MockGitHub)(nil).GetUserInfo), ctx)
-}
-
 // GetUsername mocks base method.
 func (m *MockGitHub) GetUsername(ctx context.Context) (string, error) {
 	m.ctrl.T.Helper()
