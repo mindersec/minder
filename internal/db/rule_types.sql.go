@@ -22,15 +22,15 @@ INSERT INTO rule_type (
     definition,
     severity_value,
     provider_id
-    ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id
+    ) VALUES (lower($5::text), $1, $2, $3, $4, $6::jsonb, $7, $8) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id
 `
 
 type CreateRuleTypeParams struct {
-	Name          string          `json:"name"`
 	Provider      string          `json:"provider"`
 	ProjectID     uuid.UUID       `json:"project_id"`
 	Description   string          `json:"description"`
 	Guidance      string          `json:"guidance"`
+	Name          string          `json:"name"`
 	Definition    json.RawMessage `json:"definition"`
 	SeverityValue Severity        `json:"severity_value"`
 	ProviderID    uuid.UUID       `json:"provider_id"`
@@ -38,11 +38,11 @@ type CreateRuleTypeParams struct {
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
 	row := q.db.QueryRowContext(ctx, createRuleType,
-		arg.Name,
 		arg.Provider,
 		arg.ProjectID,
 		arg.Description,
 		arg.Guidance,
+		arg.Name,
 		arg.Definition,
 		arg.SeverityValue,
 		arg.ProviderID,

@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -89,7 +90,7 @@ func (r *ruleTypeService) CreateRuleType(
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
-	ruleTypeName := ruleType.GetName()
+	ruleTypeName := strings.ToLower(ruleType.GetName())
 	ruleTypeDef := ruleType.GetDef()
 
 	_, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
