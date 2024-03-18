@@ -536,12 +536,14 @@ type ProviderAccessToken struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
-type ProviderAppInstallation struct {
-	AppInstallationID string        `json:"app_installation_id"`
-	ProviderID        uuid.NullUUID `json:"provider_id"`
-	OrganizationID    int64         `json:"organization_id"`
-	CreatedAt         time.Time     `json:"created_at"`
-	UpdatedAt         time.Time     `json:"updated_at"`
+type ProviderGithubAppInstallation struct {
+	AppInstallationID string         `json:"app_installation_id"`
+	ProviderID        uuid.NullUUID  `json:"provider_id"`
+	OrganizationID    int64          `json:"organization_id"`
+	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
+	InstallationNonce string         `json:"installation_nonce"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
 type PullRequest struct {

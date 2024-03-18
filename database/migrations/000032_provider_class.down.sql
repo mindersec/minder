@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-DROP TABLE provider_app_installations;
+DROP TABLE provider_github_app_installations;
 
 ALTER TABLE providers DROP COLUMN class;
 
