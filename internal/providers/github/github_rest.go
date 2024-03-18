@@ -708,8 +708,3 @@ func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.Push
 	c.credential.AddToPushOptions(pushOptions, username)
 	return nil
 }
-
-// GetUserInfo returns the user information for the authenticated user
-func (c *GitHub) GetUserInfo(ctx context.Context) (*github.User, *github.Response, error) {
-	return c.client.Users.Get(ctx, "")
-}
