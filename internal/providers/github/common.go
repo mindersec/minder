@@ -668,7 +668,7 @@ func (c *GitHub) GetLogin(ctx context.Context) (string, error) {
 
 // GetPrimaryEmail returns the primary email for the acting user
 func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
-	return c.delegate.GetName(ctx)
+	return c.delegate.GetPrimaryEmail(ctx)
 }
 
 // setAsRateLimited adds the GitHub to the cache as rate limited.
