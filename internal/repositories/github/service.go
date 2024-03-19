@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
@@ -47,7 +46,8 @@ type RepositoryService interface {
 		client ghclient.GitHubRepoClient,
 		provider *db.Provider,
 		projectID uuid.UUID,
-		repo *pb.UpstreamRepositoryRef,
+		repoName string,
+		repoOwner string,
 	) (*pb.Repository, error)
 	// DeleteRepositoryByName removes the webhook and deletes the repo from the
 	// database. The repo is identified by its name and project.
@@ -55,6 +55,7 @@ type RepositoryService interface {
 		ctx context.Context,
 		client ghclient.GitHubRepoClient,
 		projectID uuid.UUID,
+		providerName string,
 		repoOwner string,
 		repoName string,
 	) error
@@ -99,10 +100,11 @@ func (r *repositoryService) CreateRepository(
 	client ghclient.GitHubRepoClient,
 	provider *db.Provider,
 	projectID uuid.UUID,
-	repo *pb.UpstreamRepositoryRef,
+	repoOwner string,
+	repoName string,
 ) (*pb.Repository, error) {
 	// get information about the repo from GitHub, and ensure it exists
-	githubRepo, err := client.GetRepository(ctx, repo.Owner, repo.Name)
+	githubRepo, err := client.GetRepository(ctx, repoOwner, repoName)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving repo from github: %w", err)
 	}
@@ -113,7 +115,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// create a webhook to capture events from the repository
-	hookUUID, githubHook, err := r.webhookManager.CreateWebhook(ctx, client, repo.Owner, repo.Name)
+	hookUUID, githubHook, err := r.webhookManager.CreateWebhook(ctx, client, repoOwner, repoName)
 	if err != nil {
 		return nil, fmt.Errorf("error creating webhook in repo: %w", err)
 	}
@@ -128,12 +130,12 @@ func (r *repositoryService) CreateRepository(
 		provider,
 	)
 	if err != nil {
-		log.Printf("error creating repository '%s/%s' in database: %v", repo.Owner, repo.Name, err)
+		log.Printf("error creating repository '%s/%s' in database: %v", repoOwner, repoName, err)
 		// Attempt to clean up the webhook we created earlier. This is a
 		// best-effort attempt: If it fails, the customer either has to delete
 		// the hook manually, or it will be deleted the next time the customer
 		// attempts to register a repo.
-		cleanupErr := r.webhookManager.DeleteWebhook(ctx, client, repo.Owner, repo.Name, *githubHook.ID)
+		cleanupErr := r.webhookManager.DeleteWebhook(ctx, client, repoOwner, repoName, *githubHook.ID)
 		if cleanupErr != nil {
 			log.Printf("error deleting new webhook: %v", cleanupErr)
 		}
@@ -141,7 +143,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// publish a reconciling event for the registered repositories
-	if err = r.pushReconcilerEvent(pbRepo, projectID); err != nil {
+	if err = r.pushReconcilerEvent(pbRepo, projectID, provider.Name); err != nil {
 		return nil, err
 	}
 
@@ -157,11 +159,12 @@ func (r *repositoryService) DeleteRepositoryByName(
 	ctx context.Context,
 	client ghclient.GitHubRepoClient,
 	projectID uuid.UUID,
+	providerName string,
 	repoOwner string,
 	repoName string,
 ) error {
 	params := db.GetRepositoryByRepoNameParams{
-		Provider:  ghprovider.Github,
+		Provider:  providerName,
 		RepoOwner: repoOwner,
 		RepoName:  repoName,
 		ProjectID: projectID,
@@ -217,10 +220,10 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 	return nil
 }
 
-func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID) error {
+func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID, providerName string) error {
 	log.Printf("publishing register event for repository: %s/%s", pbRepo.Owner, pbRepo.Name)
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(ghprovider.Github, pbRepo.RepoId, projectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(providerName, pbRepo.RepoId, projectID)
 	if err != nil {
 		return fmt.Errorf("error creating reconciler event: %v", err)
 	}

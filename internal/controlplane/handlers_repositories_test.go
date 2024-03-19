@@ -68,8 +68,8 @@ func TestServer_RegisterRepository(t *testing.T) {
 			Name:             "Repo creation fails when repo does not exist in Github",
 			RepoOwner:        repoOwner,
 			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withFailedCreate(ghprovider.ErrNotFound)),
-			ExpectedError:    ghprovider.ErrNotFound.Error(),
+			RepoServiceSetup: newRepoService(withFailedCreate(errDefault)),
+			ExpectedError:    errDefault.Error(),
 		},
 		{
 			Name:             "Repo creation fails repo is private, and private repos are not allowed",
@@ -299,7 +299,7 @@ func withSuccessfulDeleteByName(mock repoServiceMock) {
 func withFailedDeleteByName(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepositoryByName(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
+			DeleteRepositoryByName(gomock.Any(), gomock.Any(), projectID, gomock.Any(), repoOwner, repoName).
 			Return(err)
 	}
 }

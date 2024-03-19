@@ -263,7 +263,7 @@ func (s *Server) DeleteRepositoryById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
-	err = s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
+	err = s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID, _ string) error {
 		return s.repos.DeleteRepositoryByID(ctx, client, projectID, parsedRepositoryID)
 	})
 	if err != nil {
@@ -287,8 +287,8 @@ func (s *Server) DeleteRepositoryByName(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	err := s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID) error {
-		return s.repos.DeleteRepositoryByName(ctx, client, projectID, fragments[0], fragments[1])
+	err := s.deleteRepository(ctx, in, func(client v1.GitHub, projectID uuid.UUID, providerName string) error {
+		return s.repos.DeleteRepositoryByName(ctx, client, projectID, providerName, fragments[0], fragments[1])
 	})
 	if err != nil {
 		return nil, err
@@ -430,15 +430,15 @@ func (s *Server) getProviderAndClient(
 func (s *Server) deleteRepository(
 	ctx context.Context,
 	request HasProtoContext,
-	deletionMethod func(v1.GitHub, uuid.UUID) error,
+	deletionMethod func(v1.GitHub, uuid.UUID, string) error,
 ) error {
 	projectID := getProjectID(ctx)
-	_, client, err := s.getProviderAndClient(ctx, projectID, request)
+	provider, client, err := s.getProviderAndClient(ctx, projectID, request)
 	if err != nil {
 		return err
 	}
 
-	err = deletionMethod(client, projectID)
+	err = deletionMethod(client, projectID, provider.Name)
 	if errors.Is(err, sql.ErrNoRows) {
 		return status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {

@@ -29,7 +29,6 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/clients"
 	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
@@ -210,7 +209,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			case ByID:
 				err = svc.DeleteRepositoryByID(ctx, ghClient, projectID, repoID)
 			case ByName:
-				err = svc.DeleteRepositoryByName(ctx, ghClient, projectID, repoOwner, repoName)
+				err = svc.DeleteRepositoryByName(ctx, ghClient, projectID, providerName, repoOwner, repoName)
 			default:
 				t.Fatalf("Unknown deletion type: %d", scenario.DeleteType)
 			}
@@ -253,8 +252,9 @@ func createService(
 }
 
 const (
-	repoOwner = "acme-corp"
-	repoName  = "api-gateway"
+	repoOwner    = "acme-corp"
+	repoName     = "api-gateway"
+	providerName = "github"
 )
 
 type DeleteCallType int
@@ -287,7 +287,7 @@ var (
 	privateRepo = newGithubRepo(true)
 	provider    = db.Provider{
 		ID:         uuid.UUID{},
-		Name:       ghprovider.Github,
+		Name:       providerName,
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
 		Version:    provinfv1.V1,
 	}
