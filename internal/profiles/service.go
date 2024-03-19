@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/marketplace/namespaces"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -53,12 +54,32 @@ type ProfileService interface {
 		profile *minderv1.Profile,
 	) (*minderv1.Profile, error)
 
+	// CreateSubscriptionProfile creates the profile in the specified project
+	// returns the updated profile structure on successful update
+	CreateSubscriptionProfile(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		subscriptionID uuid.UUID,
+		profile *minderv1.Profile,
+	) (*minderv1.Profile, error)
+
 	// UpdateProfile updates the profile in the specified project
 	// returns the updated profile structure on successful update
 	UpdateProfile(
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
+		profile *minderv1.Profile,
+	) (*minderv1.Profile, error)
+
+	// UpdateSubscriptionProfile updates the profile in the specified project
+	// returns the updated profile structure on successful update
+	UpdateSubscriptionProfile(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
 	) (*minderv1.Profile, error)
 }
@@ -91,6 +112,16 @@ func (p *profileService) CreateProfile(
 	provider *db.Provider,
 	profile *minderv1.Profile,
 ) (*minderv1.Profile, error) {
+	return p.CreateSubscriptionProfile(ctx, projectID, provider, uuid.Nil, profile)
+}
+
+func (p *profileService) CreateSubscriptionProfile(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
+	profile *minderv1.Profile,
+) (*minderv1.Profile, error) {
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -99,6 +130,10 @@ func (p *profileService) CreateProfile(
 	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, projectID, provider.Name, profile)
 	if err != nil {
 		return nil, err
+	}
+
+	if err = namespaces.ValidateNamespacedNameRules(profile.GetName(), subscriptionID); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "name failed namespace validation: %v", err)
 	}
 
 	// Adds default rule names, if not present
@@ -115,12 +150,13 @@ func (p *profileService) CreateProfile(
 	qtx := p.store.GetQuerierWithTransaction(tx)
 
 	params := db.CreateProfileParams{
-		Provider:   provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-		Name:       profile.GetName(),
-		Remediate:  db.ValidateRemediateType(profile.GetRemediate()),
-		Alert:      db.ValidateAlertType(profile.GetAlert()),
+		Provider:       provider.Name,
+		ProviderID:     provider.ID,
+		ProjectID:      projectID,
+		Name:           profile.GetName(),
+		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
+		Alert:          db.ValidateAlertType(profile.GetAlert()),
+		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
 	}
 
 	// Create profile
@@ -165,13 +201,23 @@ func (p *profileService) CreateProfile(
 	return profile, nil
 }
 
-// TODO: refactor this to reduce cyclomatic complexity
-//
-//nolint:gocyclo
 func (p *profileService) UpdateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
+	profile *minderv1.Profile,
+) (*minderv1.Profile, error) {
+	return p.UpdateSubscriptionProfile(ctx, projectID, provider, uuid.Nil, profile)
+}
+
+// TODO: refactor this to reduce cyclomatic complexity
+//
+//nolint:gocyclo
+func (p *profileService) UpdateSubscriptionProfile(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
@@ -202,8 +248,12 @@ func (p *profileService) UpdateProfile(
 		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
 	}
 
+	if err = namespaces.DoesSubscriptionIDMatch(subscriptionID, oldDBProfile.SubscriptionID); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "namespace validation failed: %v", err)
+	}
+
 	// validate update
-	if err := validateProfileUpdate(oldDBProfile, profile, projectID, provider); err != nil {
+	if err = validateProfileUpdate(oldDBProfile, profile, projectID, provider); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile update: %v", err)
 	}
 

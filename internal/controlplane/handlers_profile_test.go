@@ -268,7 +268,7 @@ func TestCreateProfile(t *testing.T) {
 				Name: "colon:invalid",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+		wantErr: `Couldn't create profile: validation failed: name may only contain letters, numbers, hyphens and underscores`,
 	}, {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
