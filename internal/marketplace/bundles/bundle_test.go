@@ -15,6 +15,7 @@
 package bundles_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -85,6 +86,16 @@ func TestBundle_ForEachRuleType(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, []string{"branch_protection_enabled"}, results)
+}
+
+func TestBundle_ForEachRuleTypeError(t *testing.T) {
+	t.Parallel()
+	errorMessage := "oh no"
+	bundle := loadBundle(t)
+	err := bundle.ForEachRuleType(func(_ *minderv1.RuleType) error {
+		return errors.New(errorMessage)
+	})
+	require.ErrorContains(t, err, errorMessage)
 }
 
 func loadBundle(t *testing.T) bundles.Bundle {
