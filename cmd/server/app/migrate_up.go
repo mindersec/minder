@@ -35,7 +35,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // upCmd represents the up command
@@ -149,7 +149,7 @@ func ensureGitHubProvidersHaveAuthFlows(ctx context.Context, cmd *cobra.Command,
 		if err := store.UpdateProvider(ctx, db.UpdateProviderParams{
 			Implements: p.Implements,
 			Definition: p.Definition,
-			AuthFlows:  github.AuthorizationFlows, // This is what we are adding
+			AuthFlows:  oauth.AuthorizationFlows, // This is what we are adding
 			ID:         p.ID,
 			ProjectID:  p.ProjectID,
 		}); err != nil {

@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"

@@ -29,7 +29,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -136,7 +136,7 @@ func TestValidatorScenarios(t *testing.T) {
 			}
 
 			result, err := profiles.NewValidator(store).
-				ValidateAndExtractRules(context.Background(), projectID, github.Github, testScenario.Profile)
+				ValidateAndExtractRules(context.Background(), projectID, oauth.Github, testScenario.Profile)
 
 			if testScenario.ExpectedError != "" && testScenario.ExpectedResult == nil {
 				require.Nil(t, result)

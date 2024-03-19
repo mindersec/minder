@@ -37,7 +37,7 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	ghprovider "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
@@ -648,7 +648,7 @@ func (s *StubGitHub) GetUserId(context.Context) (int64, error) {
 	return s.UserId, nil
 }
 
-// GetUsername implements v1.GitHub.
+// GetName implements v1.GitHub.
 func (*StubGitHub) GetName(context.Context) (string, error) {
 	panic("unimplemented")
 }
