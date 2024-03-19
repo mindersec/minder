@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
-	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	ghprovider "github.com/stacklok/minder/internal/providers/github/oauth"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 )

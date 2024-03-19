@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -193,7 +193,7 @@ var (
 	projectID  = uuid.New()
 	provider   = db.Provider{
 		ID:   uuid.New(),
-		Name: github.Github,
+		Name: oauth.Github,
 	}
 	errDefault  = errors.New("oh no")
 	oldRuleType = db.RuleType{
