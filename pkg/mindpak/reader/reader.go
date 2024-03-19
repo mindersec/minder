@@ -67,6 +67,11 @@ func (b *bundleReader) GetMetadata() *mindpak.Metadata {
 }
 
 func (b *bundleReader) GetProfile(name string) (*v1.Profile, error) {
+	// if called with a namespace prefix, remove it
+	name, err := b.stripNamespace(name)
+	if err != nil {
+		return nil, err
+	}
 	// ensure name has file extension
 	name = ensureYamlSuffix(name)
 	// validate that profile exists
@@ -132,6 +137,23 @@ func ensureYamlSuffix(name string) string {
 		return name
 	}
 	return fmt.Sprintf("%s%s", name, fileSuffix)
+}
+
+func (b *bundleReader) stripNamespace(name string) (string, error) {
+	components := strings.Split(name, "/")
+	switch len(components) {
+	// non namespaced name
+	case 1:
+		return name, nil
+	case 2:
+		// sanity check that the namespace relates to this bundle
+		if components[0] != b.original.Manifest.Metadata.Namespace {
+			return "", fmt.Errorf("invalid namespace: %s", components[0])
+		}
+		return components[1], nil
+	default:
+		return "", fmt.Errorf("malformed profile name: %s", name)
+	}
 }
 
 const (
