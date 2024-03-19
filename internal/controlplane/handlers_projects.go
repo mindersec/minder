@@ -197,3 +197,144 @@ func (s *Server) DeleteProject(
 		ProjectId: projectID.String(),
 	}, nil
 }
+
+// UpdateProject updates a project. Note that this does not reparent nor
+// touches the project's metadata directly. There is only a subset of
+// fields that can be updated.
+func (s *Server) UpdateProject(
+	ctx context.Context,
+	req *minderv1.UpdateProjectRequest,
+) (*minderv1.UpdateProjectResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
+	qtx := s.store.GetQuerierWithTransaction(tx)
+
+	project, err := qtx.GetProjectByID(ctx, projectID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "project not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
+	}
+
+	meta, err := projects.ParseMetadata(&project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing metadata: %v", err)
+	}
+
+	if req.GetDisplayName() != "" {
+		meta.Public.DisplayName = req.GetDisplayName()
+	} else {
+		// Display name cannot be empty, it will
+		// default to the project name.
+		meta.Public.DisplayName = project.Name
+	}
+
+	meta.Public.Description = req.GetDescription()
+
+	serialized, err := projects.SerializeMetadata(meta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error serializing metadata: %v", err)
+	}
+
+	outproj, err := qtx.UpdateProjectMeta(ctx, db.UpdateProjectMetaParams{
+		ID:       project.ID,
+		Metadata: serialized,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error updating project: %v", err)
+	}
+
+	if err := s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	}
+
+	return &minderv1.UpdateProjectResponse{
+		Project: &minderv1.Project{
+			ProjectId:   outproj.ID.String(),
+			Name:        outproj.Name,
+			Description: meta.Public.Description,
+			DisplayName: meta.Public.DisplayName,
+			CreatedAt:   timestamppb.New(outproj.CreatedAt),
+			UpdatedAt:   timestamppb.New(outproj.UpdatedAt),
+		},
+	}, nil
+}
+
+// PatchProject patches a project. Note that this does not reparent nor
+// touches the project's metadata directly. There is only a subset of
+// fields that can be updated.
+func (s *Server) PatchProject(
+	ctx context.Context,
+	req *minderv1.PatchProjectRequest,
+) (*minderv1.PatchProjectResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
+	qtx := s.store.GetQuerierWithTransaction(tx)
+
+	project, err := qtx.GetProjectByID(ctx, projectID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "project not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
+	}
+
+	meta, err := projects.ParseMetadata(&project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing metadata: %v", err)
+	}
+
+	req.GetUpdateMask().Normalize()
+	for _, path := range req.GetUpdateMask().GetPaths() {
+		switch path {
+		case "display_name":
+			meta.Public.DisplayName = req.GetPatch().GetDisplayName()
+		case "description":
+			meta.Public.Description = req.GetPatch().GetDescription()
+		}
+	}
+
+	serialized, err := projects.SerializeMetadata(meta)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error serializing metadata: %v", err)
+	}
+
+	outproj, err := qtx.UpdateProjectMeta(ctx, db.UpdateProjectMetaParams{
+		ID:       project.ID,
+		Metadata: serialized,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error updating project: %v", err)
+	}
+
+	if err := s.store.Commit(tx); err != nil {
+
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	}
+
+	return &minderv1.PatchProjectResponse{
+		Project: &minderv1.Project{
+			ProjectId:   outproj.ID.String(),
+			Name:        outproj.Name,
+			Description: meta.Public.Description,
+			DisplayName: meta.Public.DisplayName,
+			CreatedAt:   timestamppb.New(outproj.CreatedAt),
+			UpdatedAt:   timestamppb.New(outproj.UpdatedAt),
+		},
+	}, nil
+}

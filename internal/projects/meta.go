@@ -76,3 +76,8 @@ func ParseMetadata(proj *db.Project) (*Metadata, error) {
 
 	return &meta, nil
 }
+
+// SerializeMetadata serializes the given Metadata object into JSON.
+func SerializeMetadata(meta *Metadata) ([]byte, error) {
+	return json.Marshal(meta)
+}
