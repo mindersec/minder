@@ -768,6 +768,51 @@ paths:
             $ref: '#/definitions/v1CreateProjectRequest'
       tags:
         - ProjectsService
+    put:
+      operationId: ProjectsService_UpdateProject
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1UpdateProjectResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1UpdateProjectRequest'
+      tags:
+        - ProjectsService
+    patch:
+      operationId: ProjectsService_PatchProject
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1PatchProjectResponse'
+      parameters:
+        - name: patch
+          description: patch is the patch to apply to the project
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1ProjectPatch'
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+      tags:
+        - ProjectsService
   /api/v1/projects/entity/reconcile:
     post:
       operationId: ProjectsService_CreateEntityReconciliationTask
@@ -2387,6 +2432,12 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+  v1PatchProjectResponse:
+    type: object
+    properties:
+      project:
+        $ref: '#/definitions/v1Project'
+        description: project is the project that was updated.
   v1Profile:
     type: object
     properties:
@@ -2507,6 +2558,15 @@ definitions:
           display_names are short *non-unique* strings to provide
           a user-friendly name for presentation in lists, etc.
     title: Project API Objects
+  v1ProjectPatch:
+    type: object
+    properties:
+      displayName:
+        type: string
+        description: display_name is the display name of the project to update.
+      description:
+        type: string
+        description: description is the description of the project to update.
   v1Provider:
     type: object
     properties:
@@ -2828,6 +2888,24 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+  v1UpdateProjectRequest:
+    type: object
+    properties:
+      context:
+        $ref: '#/definitions/v1Context'
+        description: context is the context in which the project is updated.
+      displayName:
+        type: string
+        description: display_name is the display name of the project to update.
+      description:
+        type: string
+        description: description is the description of the project to update.
+  v1UpdateProjectResponse:
+    type: object
+    properties:
+      project:
+        $ref: '#/definitions/v1Project'
+        description: project is the project that was updated.
   v1UpdateRuleTypeRequest:
     type: object
     properties:
