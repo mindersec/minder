@@ -105,6 +105,8 @@ replies with OK
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
 | CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
 | DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
+| UpdateProject | [UpdateProjectRequest](#minder-v1-UpdateProjectRequest) | [UpdateProjectResponse](#minder-v1-UpdateProjectResponse) |  |
+| PatchProject | [PatchProjectRequest](#minder-v1-PatchProjectRequest) | [PatchProjectResponse](#minder-v1-PatchProjectResponse) |  |
 | CreateEntityReconciliationTask | [CreateEntityReconciliationTaskRequest](#minder-v1-CreateEntityReconciliationTaskRequest) | [CreateEntityReconciliationTaskResponse](#minder-v1-CreateEntityReconciliationTaskResponse) |  |
 
 
@@ -1242,6 +1244,30 @@ ListRuleTypesResponse is the response to list rule types.
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
+<a name="minder-v1-PatchProjectRequest"></a>
+
+#### PatchProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| patch | [ProjectPatch](#minder-v1-ProjectPatch) |  | patch is the patch to apply to the project |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+
+
+<a name="minder-v1-PatchProjectResponse"></a>
+
+#### PatchProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
+
+
 <a name="minder-v1-PrContents"></a>
 
 #### PrContents
@@ -1383,6 +1409,18 @@ Project API Objects
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | display_name | [string](#string) |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
+
+
+<a name="minder-v1-ProjectPatch"></a>
+
+#### ProjectPatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| display_name | [string](#string) | optional | display_name is the display name of the project to update. |
+| description | [string](#string) | optional | description is the description of the project to update. |
 
 
 <a name="minder-v1-Provider"></a>
@@ -1919,6 +1957,30 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
+
+
+<a name="minder-v1-UpdateProjectRequest"></a>
+
+#### UpdateProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| display_name | [string](#string) |  | display_name is the display name of the project to update. |
+| description | [string](#string) |  | description is the description of the project to update. |
+
+
+<a name="minder-v1-UpdateProjectResponse"></a>
+
+#### UpdateProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
 
 
 <a name="minder-v1-UpdateRuleTypeRequest"></a>
