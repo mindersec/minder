@@ -14,7 +14,9 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	db "github.com/stacklok/minder/internal/db"
 	clients "github.com/stacklok/minder/internal/repositories/github/clients"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,6 +43,21 @@ func (m *MockRepositoryService) EXPECT() *MockRepositoryServiceMockRecorder {
 	return m.recorder
 }
 
+// CreateRepository mocks base method.
+func (m *MockRepositoryService) CreateRepository(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2 *db.Provider, arg3 uuid.UUID, arg4, arg5 string) (*v1.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRepository", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(*v1.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateRepository indicates an expected call of CreateRepository.
+func (mr *MockRepositoryServiceMockRecorder) CreateRepository(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockRepositoryService)(nil).CreateRepository), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // DeleteRepositoryByID mocks base method.
 func (m *MockRepositoryService) DeleteRepositoryByID(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2, arg3 uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -56,15 +73,15 @@ func (mr *MockRepositoryServiceMockRecorder) DeleteRepositoryByID(arg0, arg1, ar
 }
 
 // DeleteRepositoryByName mocks base method.
-func (m *MockRepositoryService) DeleteRepositoryByName(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2 uuid.UUID, arg3, arg4 string) error {
+func (m *MockRepositoryService) DeleteRepositoryByName(arg0 context.Context, arg1 clients.GitHubRepoClient, arg2 uuid.UUID, arg3, arg4, arg5 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteRepositoryByName", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "DeleteRepositoryByName", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteRepositoryByName indicates an expected call of DeleteRepositoryByName.
-func (mr *MockRepositoryServiceMockRecorder) DeleteRepositoryByName(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockRepositoryServiceMockRecorder) DeleteRepositoryByName(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepositoryByName", reflect.TypeOf((*MockRepositoryService)(nil).DeleteRepositoryByName), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepositoryByName", reflect.TypeOf((*MockRepositoryService)(nil).DeleteRepositoryByName), arg0, arg1, arg2, arg3, arg4, arg5)
 }

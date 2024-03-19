@@ -92,9 +92,6 @@ type Server struct {
 	ruleTypes ruletypes.RuleTypeService
 	repos     github.RepositoryService
 	profiles  profiles.ProfileService
-	// TODO: this will be removed from server when the create repo
-	// flow is refactored
-	webhookManager webhooks.WebhookManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -166,7 +163,6 @@ func NewServer(
 		profiles:            profileSvc,
 		ruleTypes:           ruletypes.NewRuleTypeService(store),
 		repos:               github.NewRepositoryService(whManager, store, evt),
-		webhookManager:      whManager,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
