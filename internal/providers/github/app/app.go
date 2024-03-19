@@ -17,23 +17,118 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 
-	"github.com/google/go-github/v56/github"
+	gogithub "github.com/google/go-github/v56/github"
+	"golang.org/x/oauth2"
 
-	github2 "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// GithubApp is the string that represents the GitHubApp provider
+const GithubApp = "github-app"
+
+// Implements is the list of provider types that the GitHubOAuth provider implements
+var Implements = []db.ProviderType{
+	db.ProviderTypeGithub,
+	db.ProviderTypeGit,
+	db.ProviderTypeRest,
+	db.ProviderTypeRepoLister,
+}
+
+// AuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
+var AuthorizationFlows = []db.AuthorizationFlow{
+	db.AuthorizationFlowGithubAppFlow,
+}
+
 // GitHubAppDelegate is the struct that contains the GitHub App specific operations
 type GitHubAppDelegate struct {
-	client     *github.Client
+	client     *gogithub.Client
 	credential provifv1.GitHubCredential
+	appId      string
+	appName    string
+	userId     int64
+}
+
+// NewGitHubAppProvider creates a new GitHub App API client
+// BaseURL defaults to the public GitHub API, if needing to use a customer domain
+// endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
+// the GitHubConfig struct
+func NewGitHubAppProvider(
+	config *minderv1.GitHubAppProviderConfig,
+	metrics telemetry.HttpClientMetrics,
+	restClientCache ratecache.RestClientCache,
+	credential provifv1.GitHubCredential,
+) (*github.GitHub, error) {
+	var err error
+
+	tc := &http.Client{
+		Transport: &oauth2.Transport{
+			Base:   http.DefaultClient.Transport,
+			Source: credential.GetAsOAuth2TokenSource(),
+		},
+	}
+
+	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	if err != nil {
+		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
+	}
+
+	ghClient := gogithub.NewClient(tc)
+
+	if config.Endpoint != "" {
+		parsedURL, err := url.Parse(config.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+		ghClient.BaseURL = parsedURL
+	}
+
+	oauthDelegate := &GitHubAppDelegate{
+		client:     ghClient,
+		credential: credential,
+		appId:      config.AppId,
+		appName:    config.AppName,
+		userId:     config.UserId,
+	}
+
+	return github.NewGitHub(
+		ghClient,
+		"",
+		restClientCache,
+		oauthDelegate,
+	), nil
+}
+
+// ParseV1Config parses the raw config into a GitHubAppProviderConfig struct
+func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubAppProviderConfig, error) {
+	type wrapper struct {
+		GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
+	}
+
+	var w wrapper
+	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
+		return nil, err
+	}
+
+	// Validate the config according to the protobuf validation rules.
+	if err := w.GitHubApp.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating GitHubOAuth v1 provider config: %w", err)
+	}
+
+	return w.GitHubApp, nil
 }
 
 // Ensure that the GitHubAppDelegate client implements the GitHub Delegate interface
-var _ github2.Delegate = (*GitHubAppDelegate)(nil)
+var _ github.Delegate = (*GitHubAppDelegate)(nil)
 
 // GetCredential returns the GitHub App installation credential
 func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
@@ -47,7 +142,7 @@ func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context, owner stri
 		return nil, err
 	}
 
-	return github2.ConvertRepositories(repos), nil
+	return github.ConvertRepositories(repos), nil
 }
 
 // ListOrganizationRepositories returns a list of repositories for the organization
@@ -60,20 +155,20 @@ func (g *GitHubAppDelegate) ListOrganizationRepositories(
 		return nil, err
 	}
 
-	return github2.ConvertRepositories(repos), nil
+	return github.ConvertRepositories(repos), nil
 }
 
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation
-func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ string) ([]*github.Repository, error) {
-	listOpt := &github.ListOptions{
+func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ string) ([]*gogithub.Repository, error) {
+	listOpt := &gogithub.ListOptions{
 		PerPage: 100,
 	}
 
 	// create a slice to hold the repositories
-	var allRepos []*github.Repository
+	var allRepos []*gogithub.Repository
 	for {
-		var repos *github.ListRepositories
-		var resp *github.Response
+		var repos *gogithub.ListRepositories
+		var resp *gogithub.Response
 		var err error
 
 		repos, resp, err = g.client.Apps.ListRepos(ctx, listOpt)
@@ -93,22 +188,19 @@ func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ s
 }
 
 // GetUserId returns the user id for the GitHub App user
-func (_ *GitHubAppDelegate) GetUserId(_ context.Context) (int64, error) {
-	// TODO: The GitHub App user will have a unique ID which we can find once we create the App.
+func (g *GitHubAppDelegate) GetUserId(_ context.Context) (int64, error) {
 	// note: this is different from the App ID
-	panic("unimplemented")
+	return g.userId, nil
 }
 
 // GetName returns the username for the GitHub App user
-func (_ *GitHubAppDelegate) GetName(_ context.Context) (string, error) {
-	// TODO: The GitHub App username is the name of the GitHub App, appended with [bot], e.g minder[bot]
-	panic("unimplemented")
+func (g *GitHubAppDelegate) GetName(_ context.Context) (string, error) {
+	return fmt.Sprintf("%s[bot]", g.appName), nil
 }
 
 // GetLogin returns the username for the GitHub App user
-func (_ *GitHubAppDelegate) GetLogin(_ context.Context) (string, error) {
-	// TODO: The GitHub App username is the name of the GitHub App, appended with [bot], e.g minder[bot]
-	panic("unimplemented")
+func (g *GitHubAppDelegate) GetLogin(ctx context.Context) (string, error) {
+	return g.GetName(ctx)
 }
 
 // GetPrimaryEmail returns the email for the GitHub App user

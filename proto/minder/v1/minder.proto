@@ -1234,6 +1234,18 @@ message GitHubProviderConfig {
 	string endpoint = 1;
 }
 
+// GitHubAppProviderConfig contains the configuration for the GitHub App provider
+message GitHubAppProviderConfig {
+  // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
+  string endpoint = 1;
+  // AppName is the GitHub App Name
+  string app_name = 2;
+  // AppID is the GitHub App ID
+  string app_id = 3;
+  // UserID is the GitHub App User ID
+  int64 user_id = 4;
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {

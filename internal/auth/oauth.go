@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 
 	go_github "github.com/google/go-github/v56/github"
 	"github.com/spf13/pflag"
@@ -38,10 +39,13 @@ const (
 
 	// Github OAuth2 provider
 	Github = "github"
+
+	// GitHubApp provider
+	GitHubApp = "github-app"
 )
 
 // TODO:
-var knownProviders = []string{Google, Github}
+var knownProviders = []string{Google, Github, GitHubApp}
 
 // NewOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
@@ -58,6 +62,9 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		if provider == Google {
 			return []string{"profile", "email"}
 		}
+		if provider == GitHubApp {
+			return []string{}
+		}
 		return []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"}
 	}
 
@@ -68,7 +75,7 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		return github.Endpoint
 	}
 
-	if provider != Google && provider != Github {
+	if !slices.Contains(knownProviders, provider) {
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 
