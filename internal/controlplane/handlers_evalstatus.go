@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -34,13 +35,11 @@ func (s *Server) ListEvaluationResults(
 	ctx context.Context,
 	in *minderv1.ListEvaluationResultsRequest,
 ) (*minderv1.ListEvaluationResultsResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
 	if _, err := uuid.Parse(in.GetProfile()); err != nil && in.GetProfile() != "" {
 		return nil, status.Error(codes.InvalidArgument, "Error invalid profile ID")
-	}
-
-	projectID, err := uuid.Parse(*in.GetContext().Project)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing project identifier")
 	}
 
 	// Build indexes of the request parameters
