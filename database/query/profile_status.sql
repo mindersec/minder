@@ -128,6 +128,7 @@ SELECT
     repo.repo_owner,
     repo.provider,
     rt.name AS rule_type_name,
+    rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance
 FROM rule_evaluations res

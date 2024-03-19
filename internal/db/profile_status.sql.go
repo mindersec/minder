@@ -184,6 +184,7 @@ SELECT
     repo.repo_owner,
     repo.provider,
     rt.name AS rule_type_name,
+    rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance
 FROM rule_evaluations res
@@ -215,26 +216,27 @@ type ListRuleEvaluationsByProfileIdParams struct {
 }
 
 type ListRuleEvaluationsByProfileIdRow struct {
-	EvalStatus       NullEvalStatusTypes        `json:"eval_status"`
-	EvalLastUpdated  sql.NullTime               `json:"eval_last_updated"`
-	EvalDetails      sql.NullString             `json:"eval_details"`
-	RemStatus        NullRemediationStatusTypes `json:"rem_status"`
-	RemDetails       sql.NullString             `json:"rem_details"`
-	RemLastUpdated   sql.NullTime               `json:"rem_last_updated"`
-	AlertStatus      NullAlertStatusTypes       `json:"alert_status"`
-	AlertDetails     sql.NullString             `json:"alert_details"`
-	AlertMetadata    pqtype.NullRawMessage      `json:"alert_metadata"`
-	AlertLastUpdated sql.NullTime               `json:"alert_last_updated"`
-	RuleEvaluationID uuid.UUID                  `json:"rule_evaluation_id"`
-	RepositoryID     uuid.NullUUID              `json:"repository_id"`
-	Entity           Entities                   `json:"entity"`
-	RuleName         string                     `json:"rule_name"`
-	RepoName         string                     `json:"repo_name"`
-	RepoOwner        string                     `json:"repo_owner"`
-	Provider         string                     `json:"provider"`
-	RuleTypeName     string                     `json:"rule_type_name"`
-	RuleTypeID       uuid.UUID                  `json:"rule_type_id"`
-	RuleTypeGuidance string                     `json:"rule_type_guidance"`
+	EvalStatus            NullEvalStatusTypes        `json:"eval_status"`
+	EvalLastUpdated       sql.NullTime               `json:"eval_last_updated"`
+	EvalDetails           sql.NullString             `json:"eval_details"`
+	RemStatus             NullRemediationStatusTypes `json:"rem_status"`
+	RemDetails            sql.NullString             `json:"rem_details"`
+	RemLastUpdated        sql.NullTime               `json:"rem_last_updated"`
+	AlertStatus           NullAlertStatusTypes       `json:"alert_status"`
+	AlertDetails          sql.NullString             `json:"alert_details"`
+	AlertMetadata         pqtype.NullRawMessage      `json:"alert_metadata"`
+	AlertLastUpdated      sql.NullTime               `json:"alert_last_updated"`
+	RuleEvaluationID      uuid.UUID                  `json:"rule_evaluation_id"`
+	RepositoryID          uuid.NullUUID              `json:"repository_id"`
+	Entity                Entities                   `json:"entity"`
+	RuleName              string                     `json:"rule_name"`
+	RepoName              string                     `json:"repo_name"`
+	RepoOwner             string                     `json:"repo_owner"`
+	Provider              string                     `json:"provider"`
+	RuleTypeName          string                     `json:"rule_type_name"`
+	RuleTypeSeverityValue Severity                   `json:"rule_type_severity_value"`
+	RuleTypeID            uuid.UUID                  `json:"rule_type_id"`
+	RuleTypeGuidance      string                     `json:"rule_type_guidance"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -271,6 +273,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RepoOwner,
 			&i.Provider,
 			&i.RuleTypeName,
+			&i.RuleTypeSeverityValue,
 			&i.RuleTypeID,
 			&i.RuleTypeGuidance,
 		); err != nil {
