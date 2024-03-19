@@ -268,6 +268,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	}
 
 	return &minderv1.RuleEvaluationStatus{
+		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		ProfileId:              profile.ID.String(),
 		RuleName:               eval.RuleName,
 		Entity:                 string(eval.Entity),

@@ -1671,6 +1671,7 @@ get the status of the rules for a given profile
 | rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
 | alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
 | severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
+| rule_evaluation_id | [string](#string) |  | rule_evaluation_id is the id of the rule evaluation |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
