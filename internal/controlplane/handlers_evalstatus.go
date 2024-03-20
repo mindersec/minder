@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -123,7 +124,7 @@ func sortEntitiesEvaluationStatus(
 				profileStatuses[p.ID] = buildProfileStatus(&p, profileStatusList)
 			}
 
-			stat := buildRuleEvaluationStatusFromDBEvaluation(&p, e)
+			stat := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
 			if _, ok := statusByEntity[entString]; !ok {
 				statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
 			}
@@ -258,6 +259,7 @@ func filterProfileLists(
 // buildRuleEvaluationStatusFromDBEvaluation converts from an evaluation and a
 // profile from the database to a minder RuleEvaluationStatus
 func buildRuleEvaluationStatusFromDBEvaluation(
+	ctx context.Context,
 	profile *db.ListProfilesByProjectIDRow, eval db.ListRuleEvaluationsByProfileIdRow,
 ) *minderv1.RuleEvaluationStatus {
 	guidance := ""
@@ -267,8 +269,18 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		guidance = eval.RuleTypeGuidance
 	}
 
+	sev := &minderv1.Severity{}
+	sev.EnsureDefault()
+	if err := sev.Value.FromString(string(eval.RuleTypeSeverityValue)); err != nil {
+		zerolog.Ctx(ctx).
+			Err(err).
+			Str("value", string(eval.RuleTypeSeverityValue)).
+			Msg("error converting severity will use defaults")
+	}
+
 	return &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
+		RuleId:                 eval.RuleTypeID.String(),
 		ProfileId:              profile.ID.String(),
 		RuleName:               eval.RuleName,
 		Entity:                 string(eval.Entity),
@@ -282,7 +294,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RemediationDetails:     eval.RemDetails.String,
 		RuleTypeName:           eval.RuleTypeName,
 		Alert:                  buildEvalResultAlertFrom(&eval),
-		Severity:               &minderv1.Severity{},
+		Severity:               sev,
 	}
 }
 
