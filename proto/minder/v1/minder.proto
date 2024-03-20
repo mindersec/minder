@@ -1755,6 +1755,9 @@ message Profile {
 
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11;
+
+    // display_name is the display name of the profile.
+    string display_name = 13;
 }
 
 message ListProjectsRequest {

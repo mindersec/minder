@@ -567,7 +567,10 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, status.Errorf(codes.InvalidArgument, "cannot patch profile from bundle")
 	}
 
-	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}
+	params := db.UpdateProfileParams{
+		ID:        profileID,
+		ProjectID: entityCtx.Project.ID,
+	}
 
 	// we check the pointers explicitly because the zero value of a string is valid
 	// value that means "use default" and we want to distinguish that from "not set in the patch"
@@ -581,6 +584,15 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		params.Alert = db.ValidateAlertType(patch.GetAlert())
 	} else {
 		params.Alert = oldProfile.Alert
+	}
+
+	// if the display name is set in the patch, use it, otherwise use the old display name or the name
+	if patch.GetDisplayName() != "" {
+		params.DisplayName = patch.GetDisplayName()
+	} else if oldProfile.DisplayName != "" {
+		params.DisplayName = oldProfile.DisplayName
+	} else {
+		params.DisplayName = oldProfile.Name
 	}
 
 	// Update top-level profile db object

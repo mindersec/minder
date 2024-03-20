@@ -1379,6 +1379,7 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
 | type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
 | version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
+| display_name | [string](#string) |  | display_name is the display name of the profile. |
 
 
 <a name="minder-v1-Profile-Rule"></a>

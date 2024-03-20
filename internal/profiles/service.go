@@ -149,11 +149,18 @@ func (p *profileService) CreateSubscriptionProfile(
 
 	qtx := p.store.GetQuerierWithTransaction(tx)
 
+	displayName := profile.GetDisplayName()
+	// if empty use the name
+	if displayName == "" {
+		displayName = profile.GetName()
+	}
+
 	params := db.CreateProfileParams{
 		Provider:       provider.Name,
 		ProviderID:     provider.ID,
 		ProjectID:      projectID,
 		Name:           profile.GetName(),
+		DisplayName:    displayName,
 		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
 		Alert:          db.ValidateAlertType(profile.GetAlert()),
 		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
@@ -277,12 +284,19 @@ func (p *profileService) UpdateSubscriptionProfile(
 		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
 	}
 
+	displayName := profile.GetDisplayName()
+	// if empty use the name
+	if displayName == "" {
+		displayName = profile.GetName()
+	}
+
 	// Update top-level profile db object
 	updatedProfile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
-		ProjectID: projectID,
-		ID:        oldDBProfile.ID,
-		Remediate: db.ValidateRemediateType(profile.GetRemediate()),
-		Alert:     db.ValidateAlertType(profile.GetAlert()),
+		ProjectID:   projectID,
+		ID:          oldDBProfile.ID,
+		DisplayName: displayName,
+		Remediate:   db.ValidateRemediateType(profile.GetRemediate()),
+		Alert:       db.ValidateAlertType(profile.GetAlert()),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
