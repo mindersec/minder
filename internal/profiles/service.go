@@ -86,14 +86,14 @@ type ProfileService interface {
 
 type profileService struct {
 	store     db.Store
-	publisher events.Interface
+	publisher events.Publisher
 	validator *Validator
 }
 
 // NewProfileService creates an instance of ProfileService
 func NewProfileService(
 	store db.Store,
-	publisher events.Interface,
+	publisher events.Publisher,
 ) ProfileService {
 	return &profileService{
 		store:     store,
