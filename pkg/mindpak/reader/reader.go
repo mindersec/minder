@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package bundles contains a domain-level representation of the bundles
-// created by the mindpak tool, and logic for working with that model
-package bundles
+// Package reader contains logic for accessing the contents of a bundle
+package reader
 
 import (
 	"fmt"
@@ -26,8 +25,9 @@ import (
 	"github.com/stacklok/minder/pkg/mindpak"
 )
 
-// Bundle encapsulates operations on the mindpak bundles
-type Bundle interface {
+// BundleReader provides a high-level interface for accessing the contents of
+// a Bundle
+type BundleReader interface {
 	// GetMetadata returns the bundle information as-is
 	GetMetadata() *mindpak.Metadata
 	// GetProfile takes the name of a profile in the bundle and attempts to
@@ -35,38 +35,38 @@ type Bundle interface {
 	// struct
 	GetProfile(string) (*v1.Profile, error)
 	// ForEachRuleType walks each rule type in the bundle, attempts to read
-	// and parse the rule type, and then applies the specific anonymous
+	// and parse the rule type, and then applies the specified anonymous
 	// function to the rule type
 	ForEachRuleType(func(*v1.RuleType) error) error
 }
 
 type profileSet = map[string]struct{}
-type bundle struct {
+type bundleReader struct {
 	original *mindpak.Bundle
 	profiles profileSet
 }
 
-// NewBundle creates an instance of the Bundle interface from a mindpak
-// bundle
-func NewBundle(mpBundle *mindpak.Bundle) Bundle {
-	bundleProfiles := mpBundle.Files.Profiles
+// NewBundleReader creates an instance of BundleReader from mindpak.Bundle
+func NewBundleReader(bundle *mindpak.Bundle) BundleReader {
+	bundleProfiles := bundle.Files.Profiles
 	profiles := make(profileSet, len(bundleProfiles))
-	// build a set of profile names for `GetProfile` to ease lookups
+	// build a set of profile names for `GetProfile`
+	// this saves us from searching the manifest each time this method is used
 	for _, profile := range bundleProfiles {
 		profiles[profile.Name] = struct{}{}
 	}
 
-	return &bundle{
-		original: mpBundle,
+	return &bundleReader{
+		original: bundle,
 		profiles: profiles,
 	}
 }
 
-func (b *bundle) GetMetadata() *mindpak.Metadata {
+func (b *bundleReader) GetMetadata() *mindpak.Metadata {
 	return b.original.Manifest.Metadata
 }
 
-func (b *bundle) GetProfile(name string) (*v1.Profile, error) {
+func (b *bundleReader) GetProfile(name string) (*v1.Profile, error) {
 	// ensure name has file extension
 	name = ensureYamlSuffix(name)
 	// validate that profile exists
@@ -92,7 +92,7 @@ func (b *bundle) GetProfile(name string) (*v1.Profile, error) {
 	return profile, nil
 }
 
-func (b *bundle) ForEachRuleType(fn func(*v1.RuleType) error) error {
+func (b *bundleReader) ForEachRuleType(fn func(*v1.RuleType) error) error {
 	var err error
 	var file fs.File
 	// used for error handling if we return during the loop

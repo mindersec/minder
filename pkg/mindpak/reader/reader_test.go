@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bundles_test
+package reader_test
 
 import (
 	"errors"
@@ -20,9 +20,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/marketplace/bundles"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/stacklok/minder/pkg/mindpak/reader"
 )
 
 func TestBundle_GetMetadata(t *testing.T) {
@@ -98,15 +98,15 @@ func TestBundle_ForEachRuleTypeError(t *testing.T) {
 	require.ErrorContains(t, err, errorMessage)
 }
 
-func loadBundle(t *testing.T) bundles.Bundle {
+func loadBundle(t *testing.T) reader.BundleReader {
 	t.Helper()
 	bundle, err := mindpak.NewBundleFromDirectory(testDataPath)
 	if err != nil {
 		t.Fatalf("Unable to load test data from %s: %v", testDataPath, err)
 	}
-	return bundles.NewBundle(bundle)
+	return reader.NewBundleReader(bundle)
 }
 
 const (
-	testDataPath = "../../../pkg/mindpak/testdata/t2"
+	testDataPath = "../testdata/t2"
 )
