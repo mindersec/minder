@@ -176,6 +176,7 @@ SELECT
     ad.alert_details,
     ad.alert_metadata,
     ad.alert_last_updated,
+    res.id AS rule_evaluation_id,
     res.repository_id,
     res.entity,
     res.rule_name,
@@ -224,6 +225,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	AlertDetails     sql.NullString             `json:"alert_details"`
 	AlertMetadata    pqtype.NullRawMessage      `json:"alert_metadata"`
 	AlertLastUpdated sql.NullTime               `json:"alert_last_updated"`
+	RuleEvaluationID uuid.UUID                  `json:"rule_evaluation_id"`
 	RepositoryID     uuid.NullUUID              `json:"repository_id"`
 	Entity           Entities                   `json:"entity"`
 	RuleName         string                     `json:"rule_name"`
@@ -261,6 +263,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.AlertDetails,
 			&i.AlertMetadata,
 			&i.AlertLastUpdated,
+			&i.RuleEvaluationID,
 			&i.RepositoryID,
 			&i.Entity,
 			&i.RuleName,

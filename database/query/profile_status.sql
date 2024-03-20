@@ -120,6 +120,7 @@ SELECT
     ad.alert_details,
     ad.alert_metadata,
     ad.alert_last_updated,
+    res.id AS rule_evaluation_id,
     res.repository_id,
     res.entity,
     res.rule_name,

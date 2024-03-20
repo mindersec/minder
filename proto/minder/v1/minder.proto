@@ -1161,6 +1161,8 @@ message RuleEvaluationStatus {
     EvalResultAlert alert = 15;
     // severity is the severity of the rule
     Severity severity = 16;
+    // rule_evaluation_id is the id of the rule evaluation
+    string rule_evaluation_id = 17;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
