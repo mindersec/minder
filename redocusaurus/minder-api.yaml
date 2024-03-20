@@ -2813,6 +2813,9 @@ definitions:
       severity:
         $ref: '#/definitions/v1Severity'
         title: severity is the severity of the rule
+      ruleEvaluationId:
+        type: string
+        title: rule_evaluation_id is the id of the rule evaluation
     title: get the status of the rules for a given profile
   v1RuleType:
     type: object
