@@ -932,6 +932,20 @@ GitHubAppParams is the parameters for a GitHub App provider.
 | organization_id | [int64](#int64) |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
 
 
+<a name="minder-v1-GitHubAppProviderConfig"></a>
+
+#### GitHubAppProviderConfig
+GitHubAppProviderConfig contains the configuration for the GitHub App provider
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+| app_name | [string](#string) |  | AppName is the GitHub App Name |
+| app_id | [string](#string) |  | AppID is the GitHub App ID |
+| user_id | [int64](#int64) |  | UserID is the GitHub App User ID |
+
+
 <a name="minder-v1-GitHubProviderConfig"></a>
 
 #### GitHubProviderConfig

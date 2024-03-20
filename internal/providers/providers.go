@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
+	githubapp "github.com/stacklok/minder/internal/providers/github/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -189,17 +190,30 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		}
 	}
 
-	// TODO: Parsing will change based on version
-	cfg, err := ghclient.ParseV1Config(pb.p.Definition)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing github config: %w", err)
+	// TODO: use provider class once it's available
+	if pb.p.Name == ghclient.Github {
+		// TODO: Parsing will change based on version
+		cfg, err := ghclient.ParseV1Config(pb.p.Definition)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing github config: %w", err)
+		}
+
+		cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github client: %w", err)
+		}
+		return cli, nil
 	}
 
-	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
+	cfg, err := githubapp.ParseV1Config(pb.p.Definition)
 	if err != nil {
-		return nil, fmt.Errorf("error creating github client: %w", err)
+		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.metrics, pb.restClientCache, gitHubCredential)
+	if err != nil {
+		return nil, fmt.Errorf("error creating github app client: %w", err)
+	}
 	return cli, nil
 }
 
