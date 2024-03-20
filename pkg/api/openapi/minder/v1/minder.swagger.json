@@ -3468,6 +3468,10 @@
         "version": {
           "type": "string",
           "title": "version is the version of the profile type. In this case, it is \"v1\""
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the profile."
         }
       },
       "description": "Profile defines a profile that is user defined."

@@ -451,6 +451,7 @@ type Profile struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	ProviderID     uuid.UUID      `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
+	DisplayName    string         `json:"display_name"`
 }
 
 type ProfileStatus struct {

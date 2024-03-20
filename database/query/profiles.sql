@@ -6,14 +6,16 @@ INSERT INTO profiles (
     alert,
     name,
     provider_id,
-    subscription_id
-) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id)) RETURNING *;
+    subscription_id,
+    display_name
+) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name)) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
     remediate = $3,
     alert = $4,
-    updated_at = NOW()
+    updated_at = NOW(),
+    display_name = sqlc.arg(display_name)
 WHERE id = $1 AND project_id = $2 RETURNING *;
 
 -- name: CreateProfileForEntity :one
