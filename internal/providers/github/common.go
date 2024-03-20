@@ -826,3 +826,20 @@ func convertRepository(repo *github.Repository) *minderv1.Repository {
 		IsFork:    *repo.Fork,
 	}
 }
+
+// IsMinderHook checks if a GitHub hook is a Minder hook
+func IsMinderHook(hook *github.Hook, hostURL string) (bool, error) {
+	configURL, ok := hook.Config["url"].(string)
+	if !ok || configURL == "" {
+		return false, fmt.Errorf("unexpected hook config structure: %v", hook.Config)
+	}
+	parsedURL, err := url.Parse(configURL)
+	if err != nil {
+		return false, err
+	}
+	if parsedURL.Host == hostURL {
+		return true, nil
+	}
+
+	return false, nil
+}
