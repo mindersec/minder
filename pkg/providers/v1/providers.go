@@ -99,6 +99,7 @@ type GitHub interface {
 	GetOwner() string
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
+	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 		v []*github.AdvisoryVulnerability) (string, error)

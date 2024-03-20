@@ -388,6 +388,21 @@ func (mr *MockGitHubMockRecorder) Do(ctx, req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockGitHub)(nil).Do), ctx, req)
 }
 
+// EditHook mocks base method.
+func (m *MockGitHub) EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditHook", ctx, owner, repo, id, hook)
+	ret0, _ := ret[0].(*github.Hook)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EditHook indicates an expected call of EditHook.
+func (mr *MockGitHubMockRecorder) EditHook(ctx, owner, repo, id, hook any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditHook", reflect.TypeOf((*MockGitHub)(nil).EditHook), ctx, owner, repo, id, hook)
+}
+
 // GetBaseURL mocks base method.
 func (m *MockGitHub) GetBaseURL() string {
 	m.ctrl.T.Helper()

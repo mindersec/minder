@@ -395,6 +395,10 @@ func (_ *StubGitHub) CreateHook(_ context.Context, _ string, _ string, _ *github
 	panic("unimplemented")
 }
 
+func (*StubGitHub) EditHook(context.Context, string, string, int64, *github.Hook) (*github.Hook, error) {
+	panic("unimplemented")
+}
+
 // CreatePullRequest implements v1.GitHub.
 func (*StubGitHub) CreatePullRequest(context.Context, string, string, string, string, string, string) (*github.PullRequest, error) {
 	panic("unimplemented")

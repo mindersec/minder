@@ -493,6 +493,12 @@ func (c *GitHub) CreateHook(ctx context.Context, owner, repo string, hook *githu
 	return h, err
 }
 
+// EditHook edits an existing Hook.
+func (c *GitHub) EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error) {
+	h, _, err := c.client.Repositories.EditHook(ctx, owner, repo, id, hook)
+	return h, err
+}
+
 // CreateSecurityAdvisory creates a new security advisory
 func (c *GitHub) CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 	v []*github.AdvisoryVulnerability) (string, error) {
