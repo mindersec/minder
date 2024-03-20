@@ -392,6 +392,8 @@ func (s *Server) getRuleEvaluationStatuses(
 }
 
 // getRuleEvalStatus is a helper function to get rule evaluation status from a db row
+//
+//nolint:gocyclo
 func getRuleEvalStatus(
 	ctx context.Context,
 	store db.Store,
@@ -453,8 +455,8 @@ func getRuleEvalStatus(
 		st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
 	}
 
-	// If the alert metadata is valid, parse it and set the URL
-	if dbRuleEvalStat.AlertMetadata.Valid {
+	// If the alert is on and its metadata is valid, parse it and set the URL
+	if dbRuleEvalStat.AlertMetadata.Valid && st.Alert.Status == string(db.AlertStatusTypesOn) {
 		alertURL, err := getAlertURLFromMetadata(
 			dbRuleEvalStat.AlertMetadata.RawMessage,
 			fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"]),
