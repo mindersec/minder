@@ -65,6 +65,7 @@ webhook-config:
   external_webhook_url: "https://example.com/api/v1/webhook/github"
   external_ping_url: "https://example.com/api/v1/health"
   webhook_secret: "your-password"
+# previous_webhook_secret_file: ./previous_secrets
 
 # OAuth2 Configuration (used during enrollment)
 # These values are to be set within the GitHub OAuth2 App page

@@ -249,6 +249,13 @@ webhook-config:
 
 After these steps, your Minder server should be ready to receive webhook events from GitHub, and add webhooks to repositories.
 
+In case you need to update the webhook secret, you can do so by putting the
+new secret in `webhook-config.webhook_secret` and for the duration of the
+migration, the old secret(s) in a file referenced by
+`webhook-config.previous_webhook_secret_file`. The old webhook secrets will
+then only be used to verify incoming webhooks messages, not for creating or
+updating webhooks and can be removed after the migration is complete.
+
 In order to rotate webhook secrets, you can use the `minder-server` CLI tool to update the webhook secret.
 
 ```bash
@@ -256,7 +263,7 @@ minder-server webhook update -p github
 ```
 
 Note that the command simply replaces the webhook secret on the provider
-side. You will need to update the webhook secret in the server configuration
+side. You will still need to update the webhook secret in the server configuration
 to match the provider's secret.
 
 ## Run the application

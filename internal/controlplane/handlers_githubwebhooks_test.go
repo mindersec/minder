@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -90,6 +91,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	srv, evt := newDefaultServer(t, mockStore)
+	srv.cfg.WebhookConfig.WebhookSecret = "test"
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -126,6 +128,8 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 
 	req.Header.Add("X-GitHub-Event", "ping")
 	req.Header.Add("X-GitHub-Delivery", "12345")
+	// the ping event has an empty body ({}), the value below is a SHA256 hmac of the empty body with the shared key "test"
+	req.Header.Add("X-Hub-Signature-256", "sha256=5f5863b9805ad4e66e954a260f9cab3f2e95718798dec0bb48a655195893d10e")
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
@@ -207,8 +211,16 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	prevCredsFile, err := os.CreateTemp("", "prevcreds*")
+	require.NoError(t, err, "failed to create temporary file")
+	_, err = prevCredsFile.WriteString("also-not-our-secret\ntest")
+	require.NoError(t, err, "failed to write to temporary file")
+	defer os.Remove(prevCredsFile.Name())
+
 	mockStore := mockdb.NewMockStore(ctrl)
 	srv, evt := newDefaultServer(t, mockStore)
+	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
+	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -307,6 +319,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Hub-Signature-256", "sha256=ab22bd9a3712e444e110c8088011fd827143ed63ba8655f07e76ed1a0f05edd1")
 	resp, err := httpDoWithRetry(client, req)
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
