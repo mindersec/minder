@@ -493,6 +493,15 @@ type ProviderAccessToken struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
+type ProviderGithubAppInstallation struct {
+	AppInstallationID string         `json:"app_installation_id"`
+	ProviderID        uuid.NullUUID  `json:"provider_id"`
+	OrganizationID    int64          `json:"organization_id"`
+	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+}
+
 type PullRequest struct {
 	ID           uuid.UUID `json:"id"`
 	RepositoryID uuid.UUID `json:"repository_id"`
