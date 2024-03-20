@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -39,11 +39,12 @@ func TestRuleTypeService(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name          string
-		RuleType      *pb.RuleType
-		DBSetup       dbf.DBMockBuilder
-		ExpectedError string
-		TestMethod    method
+		Name           string
+		RuleType       *pb.RuleType
+		DBSetup        dbf.DBMockBuilder
+		ExpectedError  string
+		TestMethod     method
+		SubscriptionID uuid.UUID
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -51,17 +52,45 @@ func TestRuleTypeService(t *testing.T) {
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    create,
 		},
+		// TODO: these tests should live with the validator, not this service
 		{
-			Name:          "CreateRuleType rule with empty name",
+			Name:          "CreateRuleType rejects rule with empty name",
 			RuleType:      newRuleType(withBasicStructure, withRuleName("")),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    create,
 		},
 		{
-			Name:          "CreateRuleType rule with invalid  name",
+			Name:          "CreateRuleType rejects rule with invalid name",
 			RuleType:      newRuleType(withBasicStructure, withRuleName("I'm a little teapot")),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
 			TestMethod:    create,
+		},
+		{
+			Name:          "CreateRuleType rejects rule with multiple slashes",
+			RuleType:      newRuleType(withBasicStructure, withRuleName("I'm a little teapot")),
+			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
+			TestMethod:    create,
+		},
+		{
+			Name:          "CreateRuleType rejects rule where part of a namespaced name is invalid",
+			RuleType:      newRuleType(withBasicStructure, withRuleName("validnamespace/I'm a little teapot")),
+			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
+			TestMethod:    create,
+		},
+		{
+			Name:          "CreateRuleType rejects attempt to create a namespaced rule",
+			RuleType:      newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
+			ExpectedError: "cannot create a rule type or profile with a namespace through the API",
+			DBSetup:       dbf.NewDBMock(),
+			TestMethod:    create,
+		},
+		{
+			Name:           "CreateSubscriptionRuleType rejects attempt to create a non-namespaced rule",
+			RuleType:       newRuleType(withBasicStructure),
+			ExpectedError:  "rule types and profiles from subscriptions must have namespaced names",
+			DBSetup:        dbf.NewDBMock(),
+			SubscriptionID: subscriptionID,
+			TestMethod:     create,
 		},
 		{
 			Name:          "CreateRuleType rejects attempt to overwrite an existing rule",
@@ -91,6 +120,13 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod: create,
 		},
 		{
+			Name:           "CreateRuleType successfully creates a new namespaced rule type",
+			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
+			DBSetup:        dbf.NewDBMock(withNotFoundGet, withSuccessfulNamespaceCreate),
+			SubscriptionID: subscriptionID,
+			TestMethod:     create,
+		},
+		{
 			Name:          "UpdateRuleType rejects malformed rule",
 			RuleType:      newRuleType(),
 			ExpectedError: ruletypes.ErrRuleTypeInvalid.Error(),
@@ -109,6 +145,29 @@ func TestRuleTypeService(t *testing.T) {
 			ExpectedError: "failed to get rule type",
 			DBSetup:       dbf.NewDBMock(withFailedGet),
 			TestMethod:    update,
+		},
+		{
+			Name:          "UpdateRuleType rejects attempt to update a rule type from a bundle",
+			RuleType:      newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
+			ExpectedError: "attempted to edit a rule type or profile which belongs to a bundle",
+			DBSetup:       dbf.NewDBMock(withSuccessfulNamespaceGet),
+			TestMethod:    update,
+		},
+		{
+			Name:           "UpdateSubscriptionRuleType rejects attempt to another subscription's rule types",
+			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
+			ExpectedError:  "attempted to edit a rule type or profile which belongs to a bundle",
+			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet),
+			SubscriptionID: uuid.New(),
+			TestMethod:     update,
+		},
+		{
+			Name:           "UpdateSubscriptionRuleType rejects attempt to update a customer rule",
+			RuleType:       newRuleType(withBasicStructure),
+			ExpectedError:  "attempted to edit a customer rule type or profile with bundle operation",
+			DBSetup:        dbf.NewDBMock(withSuccessfulGet),
+			SubscriptionID: subscriptionID,
+			TestMethod:     update,
 		},
 		{
 			Name:          "UpdateRuleType rejects update with incompatible rule schema",
@@ -137,6 +196,13 @@ func TestRuleTypeService(t *testing.T) {
 			DBSetup:    dbf.NewDBMock(withSuccessfulGet, withSuccessfulUpdate),
 			TestMethod: update,
 		},
+		{
+			Name:           "UpdateSubscriptionRuleType successfully updates an existing rule",
+			RuleType:       newRuleType(withBasicStructure),
+			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet, withSuccessfulUpdate),
+			TestMethod:     update,
+			SubscriptionID: subscriptionID,
+		},
 	}
 
 	for i := range scenarios {
@@ -156,9 +222,29 @@ func TestRuleTypeService(t *testing.T) {
 			var res *pb.RuleType
 			svc := ruletypes.NewRuleTypeService(store)
 			if scenario.TestMethod == create {
-				res, err = svc.CreateRuleType(ctx, provider, scenario.RuleType)
+				if scenario.SubscriptionID != uuid.Nil {
+					res, err = svc.CreateSubscriptionRuleType(
+						ctx,
+						projectID,
+						&provider,
+						scenario.SubscriptionID,
+						scenario.RuleType,
+					)
+				} else {
+					res, err = svc.CreateRuleType(ctx, projectID, &provider, scenario.RuleType)
+				}
 			} else if scenario.TestMethod == update {
-				res, err = svc.UpdateRuleType(ctx, provider, scenario.RuleType)
+				if scenario.SubscriptionID != uuid.Nil {
+					res, err = svc.UpdateSubscriptionRuleType(
+						ctx,
+						projectID,
+						&provider,
+						scenario.SubscriptionID,
+						scenario.RuleType,
+					)
+				} else {
+					res, err = svc.UpdateRuleType(ctx, projectID, &provider, scenario.RuleType)
+				}
 			} else {
 				t.Fatal("unexpected method value")
 			}
@@ -166,11 +252,11 @@ func TestRuleTypeService(t *testing.T) {
 			if scenario.ExpectedError == "" {
 				// due to the presence of autogenerated UUIDs and timestamps,
 				// limit our assertions to the subset we deliberately set
+				require.Nil(t, err)
 				require.Equal(t, scenario.RuleType.Id, res.Id)
 				require.Equal(t, scenario.RuleType.Description, res.Description)
 				require.Equal(t, scenario.RuleType.Name, res.Name)
 				require.Equal(t, scenario.RuleType.Severity.Value, res.Severity.Value)
-				require.Nil(t, err)
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
@@ -184,31 +270,25 @@ type method int
 const (
 	create method = iota
 	update
-	ruleName    = "rule_type"
-	description = "this is my awesome rule"
+	ruleName           = "rule_type"
+	namespacedRuleName = "namespace/rule_type"
+	description        = "this is my awesome rule"
 )
 
 var (
-	ruleTypeID = uuid.New()
-	provider   = db.Provider{
+	ruleTypeID     = uuid.New()
+	projectID      = uuid.New()
+	subscriptionID = uuid.New()
+	provider       = db.Provider{
 		ID:   uuid.New(),
-		Name: github.Github,
+		Name: oauth.Github,
 	}
-	errDefault  = errors.New("oh no")
-	oldRuleType = db.RuleType{
-		ID:            ruleTypeID,
-		Name:          ruleName,
-		Definition:    []byte(`{}`),
-		SeverityValue: "low",
-	}
-	expectation = db.RuleType{
-		ID:            ruleTypeID,
-		Name:          ruleName,
-		Definition:    []byte(`{}`),
-		SeverityValue: "high",
-		Description:   description,
-	}
-	incompatibleSchema = &structpb.Struct{
+	errDefault            = errors.New("oh no")
+	oldRuleType           = newDBRuleType("low", uuid.Nil)
+	namespacedOldRuleType = newDBRuleType("low", subscriptionID)
+	expectation           = newDBRuleType("high", uuid.Nil)
+	namespacedExpectation = newDBRuleType("high", subscriptionID)
+	incompatibleSchema    = &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"required": {
 				Kind: &structpb.Value_StringValue{
@@ -260,6 +340,12 @@ func withSuccessfulGet(mock dbf.DBMock) {
 		Return(oldRuleType, nil)
 }
 
+func withSuccessfulNamespaceGet(mock dbf.DBMock) {
+	mock.EXPECT().
+		GetRuleTypeByName(gomock.Any(), gomock.Any()).
+		Return(namespacedOldRuleType, nil)
+}
+
 func withNotFoundGet(mock dbf.DBMock) {
 	mock.EXPECT().
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
@@ -278,6 +364,12 @@ func withSuccessfulCreate(mock dbf.DBMock) {
 		Return(expectation, nil)
 }
 
+func withSuccessfulNamespaceCreate(mock dbf.DBMock) {
+	mock.EXPECT().
+		CreateRuleType(gomock.Any(), gomock.Any()).
+		Return(namespacedExpectation, nil)
+}
+
 func withFailedCreate(mock dbf.DBMock) {
 	mock.EXPECT().
 		CreateRuleType(gomock.Any(), gomock.Any()).
@@ -294,4 +386,19 @@ func withFailedUpdate(mock dbf.DBMock) {
 	mock.EXPECT().
 		UpdateRuleType(gomock.Any(), gomock.Any()).
 		Return(db.RuleType{}, errDefault)
+}
+
+func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID) db.RuleType {
+	name := ruleName
+	if subscriptionID != uuid.Nil {
+		name = namespacedRuleName
+	}
+	return db.RuleType{
+		ID:             ruleTypeID,
+		Name:           name,
+		Definition:     []byte(`{}`),
+		SeverityValue:  severity,
+		Description:    description,
+		SubscriptionID: uuid.NullUUID{Valid: subscriptionID != uuid.Nil, UUID: subscriptionID},
+	}
 }

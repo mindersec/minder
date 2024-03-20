@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package github
+package app
 
 import (
 	"context"
@@ -28,22 +28,59 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/credentials"
+	github2 "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-func TestNewRestClient(t *testing.T) {
+func TestNewGitHubAppProvider(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewRestClient(&minderv1.GitHubProviderConfig{
+	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 		Endpoint: "https://api.github.com",
 	},
 		provtelemetry.NewNoopMetrics(),
-		nil, "token", "")
+		nil, credentials.NewGitHubTokenCredential("token"))
 
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
+}
+
+func TestUserInfo(t *testing.T) {
+	t.Parallel()
+	appName := "test-app"
+	appId := "123456"
+	expectedUserId := int64(123456789)
+
+	ctx := context.Background()
+
+	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
+		Endpoint: "https://api.github.com",
+		AppName:  appName,
+		AppId:    appId,
+		UserId:   expectedUserId,
+	},
+		provtelemetry.NewNoopMetrics(),
+		nil, credentials.NewGitHubTokenCredential("token"))
+	assert.NoError(t, err)
+
+	userId, err := client.GetUserId(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedUserId, userId)
+
+	name, err := client.GetName(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-app[bot]", name)
+
+	login, err := client.GetLogin(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-app[bot]", login)
+
+	email, err := client.GetPrimaryEmail(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "123456789+github-actions[bot]@users.noreply.github.com", email)
 }
 
 func TestArtifactAPIEscapes(t *testing.T) {
@@ -52,7 +89,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 	tests := []struct {
 		name        string
 		testHandler http.HandlerFunc
-		cliFn       func(cli *GitHub)
+		cliFn       func(cli *github2.GitHub)
 		wantErr     bool
 	}{
 		{
@@ -61,7 +98,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *GitHub) {
+			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageByName(context.Background(), true, "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
@@ -72,7 +109,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *GitHub) {
+			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageVersions(context.Background(), true, "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
@@ -83,7 +120,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *GitHub) {
+			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageVersionByTag(context.Background(), true, "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
@@ -94,7 +131,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions/123", r.URL.RequestURI())
 				w.WriteHeader(http.StatusOK)
 			},
-			cliFn: func(cli *GitHub) {
+			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageVersionById(context.Background(), true, "stacklok", "container", "helm/mediator", 123)
 				assert.NoError(t, err)
 			},
@@ -110,11 +147,11 @@ func TestArtifactAPIEscapes(t *testing.T) {
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
 
-			client, err := NewRestClient(&minderv1.GitHubProviderConfig{
+			client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 				Endpoint: testServer.URL + "/",
 			},
 				provtelemetry.NewNoopMetrics(),
-				nil, "token", "")
+				nil, credentials.NewGitHubTokenCredential("token"))
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
@@ -142,7 +179,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), token, "mockOwner")
+	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), credentials.NewGitHubTokenCredential(token))
 	require.NoError(t, err)
 
 	_, err = client.CreateIssueComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
@@ -158,7 +195,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 
 	restClientCache := ratecache.NewRestClientCache(context.Background())
 	token := "mockToken-3"
-	owner := "mockOwner-3"
+	owner := ""
 
 	var reqCount int
 	var mu sync.Mutex
@@ -186,7 +223,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 	// Start a goroutine that will make a request to the server, rate limiting the gh client
 	go func() {
 		defer wg.Done()
-		client, err := NewRestClient(&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, token, owner)
+		client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, credentials.NewGitHubTokenCredential(token))
 		require.NoError(t, err)
 
 		_, err = client.CreateIssueComment(context.Background(), owner, "mockRepo", 1, "Test Comment")
@@ -207,7 +244,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 			client, ok := restClientCache.Get(owner, token, db.ProviderTypeGithub)
 			require.True(t, ok)
 
-			ghClient, ok := client.(*GitHub)
+			ghClient, ok := client.(*github2.GitHub)
 			require.True(t, ok)
 
 			_, err := ghClient.CreateIssueComment(ctx, owner, "mockRepo", 1, "Test Comment")

@@ -5,14 +5,17 @@ INSERT INTO profiles (
     remediate,
     alert,
     name,
-    provider_id
-    ) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id)) RETURNING *;
+    provider_id,
+    subscription_id,
+    display_name
+) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name)) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
     remediate = $3,
     alert = $4,
-    updated_at = NOW()
+    updated_at = NOW(),
+    display_name = sqlc.arg(display_name)
 WHERE id = $1 AND project_id = $2 RETURNING *;
 
 -- name: CreateProfileForEntity :one
@@ -47,11 +50,11 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2;
 SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
-SELECT * FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE;
+SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
 
 -- name: GetEntityProfileByProjectAndName :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND profiles.name = $2;
+WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
 
 -- name: ListProfilesByProjectID :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
@@ -87,4 +90,4 @@ FROM profiles AS p
 GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
-SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1;
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));

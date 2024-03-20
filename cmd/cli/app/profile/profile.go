@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // ProfileCmd is the root command for the profile subcommands

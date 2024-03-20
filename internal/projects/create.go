@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	github "github.com/stacklok/minder/internal/providers/github"
+	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -39,7 +39,7 @@ func ProvisionSelfEnrolledProject(
 	projectName string,
 	userSub string,
 ) (outproj *pb.Project, projerr error) {
-	projectmeta := NewSelfEnrolledMetadata()
+	projectmeta := NewSelfEnrolledMetadata(projectName)
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
@@ -76,7 +76,8 @@ func ProvisionSelfEnrolledProject(
 	prj := pb.Project{
 		ProjectId:   project.ID.String(),
 		Name:        project.Name,
-		Description: projectmeta.Description,
+		Description: projectmeta.Public.Description,
+		DisplayName: projectmeta.Public.DisplayName,
 		CreatedAt:   timestamppb.New(project.CreatedAt),
 		UpdatedAt:   timestamppb.New(project.UpdatedAt),
 	}

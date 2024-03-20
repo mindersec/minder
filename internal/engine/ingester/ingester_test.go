@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -177,7 +178,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 }`),
 				},
 				sql.NullString{},
-				"token",
+				credentials.NewGitHubTokenCredential("token"),
 			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")

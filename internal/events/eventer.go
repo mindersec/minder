@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
-	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v2/pkg/sql"
+	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/components/metrics"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"

@@ -76,6 +76,12 @@ clientScopes:
           claim.name: "gh_login"
           jsonType.label: "String"
           user.attribute: "gh_login"
+  - name: offline_access
+    description: "OpenID Connect built-in scope: offline_access"
+    protocol: openid-connect
+    attributes:
+      "include.in.token.scope": "true"
+      "display.on.consent.screen": "false"
 
 
 clients:

@@ -162,7 +162,7 @@ func getSigstoreBundles(
 ) ([]sigstoreBundle, error) {
 	imageRef := BuildImageRef(registry, owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
-	bundles, err := bundleFromOCIImage(ctx, imageRef, &authn.Basic{Username: owner, Password: auth.ghClient.GetToken()})
+	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.ghClient.GetCredential().GetAsContainerAuthenticator(owner))
 	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
 		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)

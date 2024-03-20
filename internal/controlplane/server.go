@@ -89,12 +89,9 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	profileValidator *profiles.Validator
-	ruleTypes        ruletypes.RuleTypeService
-	repos            github.RepositoryService
-	// TODO: this will be removed from server when the create repo
-	// flow is refactored
-	webhookManager webhooks.WebhookManager
+	ruleTypes ruletypes.RuleTypeService
+	repos     github.RepositoryService
+	profiles  profiles.ProfileService
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -153,6 +150,7 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
+	profileSvc := profiles.NewProfileService(store, evt)
 	s := &Server{
 		store:               store,
 		cfg:                 cfg,
@@ -162,10 +160,9 @@ func NewServer(
 		providerAuthFactory: auth.NewOAuthConfig,
 		mt:                  metrics.NewNoopMetrics(),
 		provMt:              provtelemetry.NewNoopMetrics(),
-		profileValidator:    profiles.NewValidator(store),
+		profiles:            profileSvc,
 		ruleTypes:           ruletypes.NewRuleTypeService(store),
 		repos:               github.NewRepositoryService(whManager, store, evt),
-		webhookManager:      whManager,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

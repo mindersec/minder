@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -109,7 +110,7 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
-		"token",
+		credentials.NewGitHubTokenCredential("token"),
 	)
 }
 
@@ -197,11 +198,11 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
-		GetUsername(gomock.Any()).Return("stacklok-bot", nil)
+		GetName(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
 		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
-		GetToken().Return("token")
+		AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 }
@@ -460,12 +461,12 @@ func TestPullRequestRemediate(t *testing.T) {
 					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 				// we need to get the user information and update the branch
 				mockGitHub.EXPECT().
-					GetUsername(gomock.Any()).Return("stacklok-bot", nil)
+					GetName(gomock.Any()).Return("stacklok-bot", nil)
 				// likewise we need to update the branch with a valid e-mail
 				mockGitHub.EXPECT().
 					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 				mockGitHub.EXPECT().
-					GetToken().Return("token")
+					AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
 				// this is the last call we expect to make. It returns existing PRs from this branch, so we
 				// stop after having updated the branch
 				mockGitHub.EXPECT().

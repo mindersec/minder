@@ -381,6 +381,12 @@ type Artifact struct {
 	UpdatedAt          time.Time `json:"updated_at"`
 }
 
+type Bundle struct {
+	ID        uuid.UUID `json:"id"`
+	Namespace string    `json:"namespace"`
+	Name      string    `json:"name"`
+}
+
 type Entitlement struct {
 	ID        uuid.UUID `json:"id"`
 	Feature   string    `json:"feature"`
@@ -435,15 +441,17 @@ type MigrationProfileBackfillLog struct {
 }
 
 type Profile struct {
-	ID         uuid.UUID      `json:"id"`
-	Name       string         `json:"name"`
-	Provider   string         `json:"provider"`
-	ProjectID  uuid.UUID      `json:"project_id"`
-	Remediate  NullActionType `json:"remediate"`
-	Alert      NullActionType `json:"alert"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	ProviderID uuid.UUID      `json:"provider_id"`
+	ID             uuid.UUID      `json:"id"`
+	Name           string         `json:"name"`
+	Provider       string         `json:"provider"`
+	ProjectID      uuid.UUID      `json:"project_id"`
+	Remediate      NullActionType `json:"remediate"`
+	Alert          NullActionType `json:"alert"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	ProviderID     uuid.UUID      `json:"provider_id"`
+	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
+	DisplayName    string         `json:"display_name"`
 }
 
 type ProfileStatus struct {
@@ -484,6 +492,15 @@ type ProviderAccessToken struct {
 	ExpirationTime time.Time      `json:"expiration_time"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type ProviderGithubAppInstallation struct {
+	AppInstallationID string         `json:"app_installation_id"`
+	ProviderID        uuid.NullUUID  `json:"provider_id"`
+	OrganizationID    int64          `json:"organization_id"`
+	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
 }
 
 type PullRequest struct {
@@ -551,17 +568,18 @@ type RuleEvaluation struct {
 }
 
 type RuleType struct {
-	ID            uuid.UUID       `json:"id"`
-	Name          string          `json:"name"`
-	Provider      string          `json:"provider"`
-	ProjectID     uuid.UUID       `json:"project_id"`
-	Description   string          `json:"description"`
-	Guidance      string          `json:"guidance"`
-	Definition    json.RawMessage `json:"definition"`
-	CreatedAt     time.Time       `json:"created_at"`
-	UpdatedAt     time.Time       `json:"updated_at"`
-	SeverityValue Severity        `json:"severity_value"`
-	ProviderID    uuid.UUID       `json:"provider_id"`
+	ID             uuid.UUID       `json:"id"`
+	Name           string          `json:"name"`
+	Provider       string          `json:"provider"`
+	ProjectID      uuid.UUID       `json:"project_id"`
+	Description    string          `json:"description"`
+	Guidance       string          `json:"guidance"`
+	Definition     json.RawMessage `json:"definition"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	SeverityValue  Severity        `json:"severity_value"`
+	ProviderID     uuid.UUID       `json:"provider_id"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 }
 
 type SessionStore struct {
@@ -574,6 +592,13 @@ type SessionStore struct {
 	CreatedAt    time.Time      `json:"created_at"`
 	RedirectUrl  sql.NullString `json:"redirect_url"`
 	RemoteUser   sql.NullString `json:"remote_user"`
+}
+
+type Subscription struct {
+	ID             uuid.UUID `json:"id"`
+	ProjectID      uuid.UUID `json:"project_id"`
+	BundleID       uuid.UUID `json:"bundle_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
 type User struct {

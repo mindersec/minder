@@ -290,7 +290,7 @@ func (q *Queries) GetProjectByID(ctx context.Context, id uuid.UUID) (Project, er
 
 const getProjectByName = `-- name: GetProjectByName :one
 SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
-WHERE name = $1 AND is_organization = FALSE LIMIT 1
+WHERE lower(name) = lower($1) AND is_organization = FALSE LIMIT 1
 `
 
 func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, error) {

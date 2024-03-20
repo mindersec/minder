@@ -94,6 +94,13 @@ spec:
             name: minder-grpc
             port:
               name: grpc
+      - path: /minder.v1.EvalResultsService
+        pathType: Prefix
+        backend:
+          service:
+            name: minder-grpc
+            port:
+              name: grpc
       - path: /
         pathType: Prefix
         backend:

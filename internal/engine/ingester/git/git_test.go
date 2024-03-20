@@ -26,6 +26,7 @@ import (
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -44,7 +45,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 			},
 		},
 		sql.NullString{},
-		"",
+		credentials.NewEmptyCredential(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -81,7 +82,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
-		"",
+		credentials.NewEmptyCredential(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -118,7 +119,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
-		"",
+		credentials.NewEmptyCredential(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -155,7 +156,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 				},
 			},
 			sql.NullString{},
-			"",
+			credentials.NewEmptyCredential(),
 		))
 	require.NoError(t, err, "expected no error")
 
@@ -194,7 +195,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
-		"",
+		credentials.NewEmptyCredential(),
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -222,7 +223,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 			},
 		},
 		sql.NullString{},
-		"foobar",
+		credentials.NewGitHubTokenCredential("foobar"),
 	),
 	)
 	require.NoError(t, err, "expected no error")
@@ -248,7 +249,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 		},
 		sql.NullString{},
 		// No authentication is the right thing in this case.
-		"",
+		credentials.NewEmptyCredential(),
 	))
 	require.NoError(t, err, "expected no error")
 

@@ -13,7 +13,7 @@ INSERT INTO providers (
 -- provider that matches the name.
 
 -- name: GetProviderByName :one
-SELECT * FROM providers WHERE name = $1 AND project_id = ANY(sqlc.arg(projects)::uuid[])
+SELECT * FROM providers WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = ANY(sqlc.arg(projects)::uuid[])
 LIMIT 1;
 
 -- name: GetProviderByID :one
@@ -40,7 +40,7 @@ LIMIT sqlc.arg('limit');
 SELECT * FROM providers;
 
 -- name: GlobalListProvidersByName :many
-SELECT * FROM providers WHERE name = $1;
+SELECT * FROM providers WHERE lower(name) = lower(sqlc.arg(name));
 
 -- name: UpdateProvider :exec
 UPDATE providers

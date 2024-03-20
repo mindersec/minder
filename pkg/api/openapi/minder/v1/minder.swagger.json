@@ -59,7 +59,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -499,6 +500,45 @@
         },
         "tags": [
           "HealthService"
+        ]
+      }
+    },
+    "/api/v1/my/providers": {
+      "get": {
+        "summary": "GetUnclaimedProviders returns a list of known provider configurations\nthat this user could claim based on their identity.  This is a read-only\noperation for use by clients which wish to present a menu of options.",
+        "operationId": "ProvidersService_GetUnclaimedProviders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUnclaimedProvidersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
         ]
       }
     },
@@ -1102,6 +1142,101 @@
         "tags": [
           "ProjectsService"
         ]
+      },
+      "put": {
+        "operationId": "ProjectsService_UpdateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectsService_PatchProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "patch",
+            "description": "patch is the patch to apply to the project",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ProjectPatch"
+            }
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      }
+    },
+    "/api/v1/projects/entity/reconcile": {
+      "post": {
+        "operationId": "ProjectsService_CreateEntityReconciliationTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
       }
     },
     "/api/v1/providers": {
@@ -1150,6 +1285,66 @@
             "in": "query",
             "required": false,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      },
+      "delete": {
+        "operationId": "ProvidersService_DeleteProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      },
+      "post": {
+        "operationId": "ProvidersService_CreateProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderRequest"
+            }
           }
         ],
         "tags": [
@@ -1506,7 +1701,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "provider",
@@ -1554,7 +1750,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "provider",
@@ -1610,7 +1807,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -1658,7 +1856,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -2588,6 +2787,15 @@
       ],
       "default": "AUTHORIZATION_FLOW_UNSPECIFIED"
     },
+    "v1AuthorizationParams": {
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "type": "string",
+          "description": "authorization_url is an external URL to use to authorize the provider."
+        }
+      }
+    },
     "v1BuiltinType": {
       "type": "object",
       "properties": {
@@ -2621,6 +2829,22 @@
         }
       },
       "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
+    },
+    "v1CreateEntityReconciliationTaskRequest": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityTypedId",
+          "description": "entity is the entity to be reconciled."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the entity reconciliation task is created."
+        }
+      }
+    },
+    "v1CreateEntityReconciliationTaskResponse": {
+      "type": "object"
     },
     "v1CreateProfileRequest": {
       "type": "object",
@@ -2658,6 +2882,32 @@
         "project": {
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was created."
+        }
+      }
+    },
+    "v1CreateProviderRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the provider is created."
+        },
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider to be created."
+        }
+      }
+    },
+    "v1CreateProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider that was created."
+        },
+        "authorization": {
+          "$ref": "#/definitions/v1AuthorizationParams",
+          "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
         }
       }
     },
@@ -2727,6 +2977,9 @@
           "description": "project_id is the id of the project that was deleted."
         }
       }
+    },
+    "v1DeleteProviderResponse": {
+      "type": "object"
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",
@@ -2939,6 +3192,19 @@
       },
       "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
     },
+    "v1GetUnclaimedProvidersResponse": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProviderParameter"
+          },
+          "description": "providers is a set of parameters which can be supplied to allow the user\nto assign existing unclaimed credentials to a new provider in the project\nvia CreateProvider()."
+        }
+      }
+    },
     "v1GetUserResponse": {
       "type": "object",
       "properties": {
@@ -2953,6 +3219,26 @@
           }
         }
       }
+    },
+    "v1GitHubAppParams": {
+      "type": "object",
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub installation ID for the app.  On create, this is the only\nparameter used; the organization parameters are ignored."
+        },
+        "organization": {
+          "type": "string",
+          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        }
+      },
+      "description": "GitHubAppParams is the parameters for a GitHub App provider."
     },
     "v1GitType": {
       "type": "object",
@@ -3107,6 +3393,15 @@
         }
       }
     },
+    "v1PatchProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
+        }
+      }
+    },
     "v1Profile": {
       "type": "object",
       "properties": {
@@ -3160,11 +3455,11 @@
         },
         "remediate": {
           "type": "string",
-          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional and defaults to \"off\""
         },
         "alert": {
           "type": "string",
-          "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to alert (on,off,dry_run)\nthis is optional and defaults to \"on\""
         },
         "type": {
           "type": "string",
@@ -3173,6 +3468,10 @@
         "version": {
           "type": "string",
           "title": "version is the version of the profile type. In this case, it is \"v1\""
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the profile."
         }
       },
       "description": "Profile defines a profile that is user defined."
@@ -3219,9 +3518,26 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
         }
       },
       "title": "Project API Objects"
+    },
+    "v1ProjectPatch": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
     },
     "v1Provider": {
       "type": "object",
@@ -3230,9 +3546,13 @@
           "type": "string",
           "description": "name is the name of the provider."
         },
+        "class": {
+          "type": "string",
+          "description": "class is the name of the provider implementation, eg. 'github' or 'gh-app'."
+        },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is."
+          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
         },
         "version": {
           "type": "string",
@@ -3255,6 +3575,18 @@
             "$ref": "#/definitions/v1AuthorizationFlow"
           },
           "description": "auth_flows is the list of authorization flows that the provider supports."
+        },
+        "parameters": {
+          "$ref": "#/definitions/v1ProviderParameter",
+          "description": "parameters is the list of parameters that the provider requires."
+        }
+      }
+    },
+    "v1ProviderParameter": {
+      "type": "object",
+      "properties": {
+        "githubApp": {
+          "$ref": "#/definitions/v1GitHubAppParams"
         }
       }
     },
@@ -3269,7 +3601,7 @@
         "PROVIDER_TYPE_REPO_LISTER"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
-      "description": "ProviderType is the type of the provider."
+      "description": "ProviderTrait is the type of the provider."
     },
     "v1RegisterRepoResult": {
       "type": "object",
@@ -3515,6 +3847,10 @@
         "severity": {
           "$ref": "#/definitions/v1Severity",
           "title": "severity is the severity of the rule"
+        },
+        "ruleEvaluationId": {
+          "type": "string",
+          "title": "rule_evaluation_id is the id of the rule evaluation"
         }
       },
       "title": "get the status of the rules for a given profile"
@@ -3593,6 +3929,32 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        }
+      }
+    },
+    "v1UpdateProjectRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the project is updated."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
+    },
+    "v1UpdateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
         }
       }
     },

@@ -22,7 +22,7 @@ WHERE id = $1 AND is_organization = FALSE LIMIT 1;
 
 -- name: GetProjectByName :one
 SELECT * FROM projects
-WHERE name = $1 AND is_organization = FALSE LIMIT 1;
+WHERE lower(name) = lower(sqlc.arg(name)) AND is_organization = FALSE LIMIT 1;
 
 -- name: GetParentProjects :many
 WITH RECURSIVE get_parents AS (

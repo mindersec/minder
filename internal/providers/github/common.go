@@ -24,14 +24,30 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v56/github"
+	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+)
+
+const (
+	// ExpensiveRestCallTimeout is the timeout for expensive REST calls
+	ExpensiveRestCallTimeout = 15 * time.Second
+	// MaxRateLimitWait is the maximum time to wait for a rate limit to reset
+	MaxRateLimitWait = 5 * time.Minute
+	// MaxRateLimitRetries is the maximum number of retries for rate limit errors after waiting
+	MaxRateLimitRetries = 1
+	// DefaultRateLimitWaitTime is the default time to wait for a rate limit to reset
+	DefaultRateLimitWaitTime = 1 * time.Minute
 )
 
 var (
@@ -39,129 +55,42 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
-// ListUserRepositories returns a list of all repositories for the authenticated user
-func (c *GitHub) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := c.ListAllRepositories(ctx, false, owner)
-	if err != nil {
-		return nil, err
-	}
-
-	return convertRepositories(repos), nil
+// GitHub is the struct that contains the shared GitHub client operations
+type GitHub struct {
+	client   *github.Client
+	owner    string
+	cache    ratecache.RestClientCache
+	delegate Delegate
 }
 
-// ListOrganizationRepsitories returns a list of all repositories for the organization
-func (c *GitHub) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := c.ListAllRepositories(ctx, true, owner)
-	if err != nil {
-		return nil, err
-	}
+// Ensure that the GitHub client implements the GitHub interface
+var _ provifv1.GitHub = (*GitHub)(nil)
 
-	return convertRepositories(repos), nil
+// Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
+type Delegate interface {
+	GetCredential() provifv1.GitHubCredential
+	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
+	ListOrganizationRepositories(context.Context, string) ([]*minderv1.Repository, error)
+	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
+	GetUserId(ctx context.Context) (int64, error)
+	GetName(ctx context.Context) (string, error)
+	GetLogin(ctx context.Context) (string, error)
+	GetPrimaryEmail(ctx context.Context) (string, error)
 }
 
-func convertRepositories(repos []*github.Repository) []*minderv1.Repository {
-	var converted []*minderv1.Repository
-	for _, repo := range repos {
-		converted = append(converted, convertRepository(repo))
+// NewGitHub creates a new GitHub client
+func NewGitHub(
+	client *github.Client,
+	owner string,
+	cache ratecache.RestClientCache,
+	delegate Delegate,
+) *GitHub {
+	return &GitHub{
+		client:   client,
+		owner:    owner,
+		cache:    cache,
+		delegate: delegate,
 	}
-	return converted
-}
-
-func convertRepository(repo *github.Repository) *minderv1.Repository {
-	return &minderv1.Repository{
-		Name:      repo.GetName(),
-		Owner:     repo.GetOwner().GetLogin(),
-		RepoId:    repo.GetID(),
-		HookUrl:   repo.GetHooksURL(),
-		DeployUrl: repo.GetDeploymentsURL(),
-		CloneUrl:  repo.GetCloneURL(),
-		IsPrivate: *repo.Private,
-		IsFork:    *repo.Fork,
-	}
-}
-
-// ListAllRepositories returns a list of all repositories for the authenticated user
-// Two APIs are available, contigent on whether the token is for a user or an organization
-func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
-	opt := &github.RepositoryListOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-		Affiliation: "owner",
-	}
-
-	orgOpt := &github.RepositoryListByOrgOptions{
-		ListOptions: github.ListOptions{
-			PerPage: 100,
-		},
-	}
-
-	// create a slice to hold the repositories
-	var allRepos []*github.Repository
-	for {
-		var repos []*github.Repository
-		var resp *github.Response
-		var err error
-
-		if isOrg {
-			repos, resp, err = c.client.Repositories.ListByOrg(ctx, owner, orgOpt)
-		} else {
-			repos, resp, err = c.client.Repositories.List(ctx, "", opt)
-		}
-
-		if err != nil {
-			return allRepos, err
-		}
-		allRepos = append(allRepos, repos...)
-		if resp.NextPage == 0 {
-			break
-		}
-
-		if isOrg {
-			orgOpt.Page = resp.NextPage
-		} else {
-			opt.Page = resp.NextPage
-		}
-	}
-
-	return allRepos, nil
-}
-
-// ListAllPackages returns a list of all packages for the authenticated user
-func (c *GitHub) ListAllPackages(ctx context.Context, isOrg bool, owner string, artifactType string,
-	pageNumber int, itemsPerPage int) ([]*github.Package, error) {
-	opt := &github.PackageListOptions{
-		PackageType: &artifactType,
-		ListOptions: github.ListOptions{
-			Page:    pageNumber,
-			PerPage: itemsPerPage,
-		},
-	}
-	// create a slice to hold the containers
-	var allContainers []*github.Package
-	for {
-		var artifacts []*github.Package
-		var resp *github.Response
-		var err error
-
-		if isOrg {
-			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
-		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
-		}
-		if err != nil {
-			return allContainers, err
-		}
-
-		allContainers = append(allContainers, artifacts...)
-
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	return allContainers, nil
 }
 
 // ListPackagesByRepository returns a list of all packages for a specific repository
@@ -184,7 +113,7 @@ func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner
 		if isOrg {
 			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
 		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, "", opt)
+			artifacts, resp, err = c.client.Users.ListPackages(ctx, owner, opt)
 		}
 		if err != nil {
 			if resp.StatusCode == http.StatusNotFound {
@@ -241,7 +170,7 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner strin
 		if isOrg {
 			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		} else {
-			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, "", package_type, package_name, opt)
+			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		}
 		if err != nil {
 			return nil, err
@@ -529,12 +458,9 @@ func (c *GitHub) Do(ctx context.Context, req *http.Request) (*http.Response, err
 	return resp.Response, err
 }
 
-// GetToken returns the token used to authenticate with the GitHub API
-func (c *GitHub) GetToken() string {
-	if c.token != "" {
-		return c.token
-	}
-	return ""
+// GetCredential returns the credential used to authenticate with the GitHub API
+func (c *GitHub) GetCredential() provifv1.GitHubCredential {
+	return c.delegate.GetCredential()
 }
 
 // GetOwner returns the owner of the repository
@@ -694,46 +620,209 @@ func (c *GitHub) UpdateIssueComment(ctx context.Context, owner, repo string, num
 	return err
 }
 
-// GetUserId returns the user id for the authenticated user
-func (c *GitHub) GetUserId(ctx context.Context) (int64, error) {
-	user, _, err := c.client.Users.Get(ctx, "")
-	if err != nil {
-		return 0, err
-	}
-	return user.GetID(), nil
-}
-
-// GetUsername returns the username for the authenticated user
-func (c *GitHub) GetUsername(ctx context.Context) (string, error) {
-	user, _, err := c.client.Users.Get(ctx, "")
-	if err != nil {
-		return "", err
-	}
-	return user.GetName(), nil
-}
-
-// GetPrimaryEmail returns the primary email for the authenticated user.
-func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
-	emails, _, err := c.client.Users.ListEmails(ctx, &github.ListOptions{})
-	if err != nil {
-		return "", fmt.Errorf("cannot get email: %w", err)
-	}
-
-	fallback := ""
-	for _, email := range emails {
-		if fallback == "" {
-			fallback = email.GetEmail()
-		}
-		if email.GetPrimary() {
-			return email.GetEmail(), nil
-		}
-	}
-
-	return fallback, nil
-}
-
 // Clone clones a GitHub repository
 func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
-	delegator := gitclient.NewGit(c.GetToken())
+	delegator := gitclient.NewGit(c.delegate.GetCredential())
 	return delegator.Clone(ctx, cloneUrl, branch)
+}
+
+// AddAuthToPushOptions adds authorization to the push options
+func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.PushOptions) error {
+	login, err := c.delegate.GetLogin(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot get login: %w", err)
+	}
+	c.delegate.GetCredential().AddToPushOptions(pushOptions, login)
+	return nil
+}
+
+// ListUserRepositories lists all repositories for the owner
+func (c *GitHub) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
+	return c.delegate.ListUserRepositories(ctx, owner)
+}
+
+// ListOrganizationRepsitories lists all repositories for the organization
+func (c *GitHub) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
+	return c.delegate.ListOrganizationRepositories(ctx, owner)
+}
+
+// ListAllRepositories lists all repositories the credential has access to
+func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
+	return c.delegate.ListAllRepositories(ctx, isOrg, owner)
+}
+
+// GetUserId returns the user id for the acting user
+func (c *GitHub) GetUserId(ctx context.Context) (int64, error) {
+	return c.delegate.GetUserId(ctx)
+}
+
+// GetName returns the username for the acting user
+func (c *GitHub) GetName(ctx context.Context) (string, error) {
+	return c.delegate.GetName(ctx)
+}
+
+// GetLogin returns the login for the acting user
+func (c *GitHub) GetLogin(ctx context.Context) (string, error) {
+	return c.delegate.GetLogin(ctx)
+}
+
+// GetPrimaryEmail returns the primary email for the acting user
+func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
+	return c.delegate.GetPrimaryEmail(ctx)
+}
+
+// setAsRateLimited adds the GitHub to the cache as rate limited.
+// An optimistic concurrency control mechanism is used to ensure that every request doesn't need
+// synchronization. GitHub only adds itself to the cache if it's not already there. It doesn't
+// remove itself from the cache when the rate limit is reset. This approach leverages the high
+// likelihood of the client or token being rate-limited again. By keeping the client in the cache,
+// we can reuse client's rateLimits map, which holds rate limits for different endpoints.
+// This reuse of cached rate limits helps avoid unnecessary GitHub API requests when the client
+// is rate-limited. Every cache entry has an expiration time, so the cache will eventually evict
+// the rate-limited client.
+func (c *GitHub) setAsRateLimited() {
+	if c.cache != nil {
+		c.cache.Set(c.owner, c.delegate.GetCredential().GetCacheKey(), db.ProviderTypeGithub, c)
+	}
+}
+
+// waitForRateLimitReset waits for token wait limit to reset. Returns error if wait time is more
+// than MaxRateLimitWait or requests' context is cancelled.
+func (c *GitHub) waitForRateLimitReset(ctx context.Context, err error) error {
+	var rateLimitError *github.RateLimitError
+	isRateLimitErr := errors.As(err, &rateLimitError)
+
+	if isRateLimitErr {
+		return c.processPrimaryRateLimitErr(ctx, rateLimitError)
+	}
+
+	var abuseRateLimitError *github.AbuseRateLimitError
+	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
+
+	if isAbuseRateLimitErr {
+		return c.processAbuseRateLimitErr(ctx, abuseRateLimitError)
+	}
+
+	return nil
+}
+
+func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.RateLimitError) error {
+	logger := zerolog.Ctx(ctx)
+	rate := err.Rate
+	if rate.Remaining == 0 {
+		c.setAsRateLimited()
+
+		waitTime := DefaultRateLimitWaitTime
+		resetTime := rate.Reset.Time
+		if !resetTime.IsZero() {
+			waitTime = time.Until(resetTime)
+		}
+
+		logRateLimitError(logger, "RateLimitError", waitTime, c.owner, err.Response)
+
+		if waitTime > MaxRateLimitWait {
+			logger.Debug().Msgf("rate limit reset time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
+			return err
+		}
+
+		// Wait for the rate limit to reset
+		select {
+		case <-time.After(waitTime):
+			return nil
+		case <-ctx.Done():
+			logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.AbuseRateLimitError) error {
+	logger := zerolog.Ctx(ctx)
+	c.setAsRateLimited()
+
+	retryAfter := err.RetryAfter
+	waitTime := DefaultRateLimitWaitTime
+	if retryAfter != nil && *retryAfter > 0 {
+		waitTime = *retryAfter
+	}
+
+	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.owner, err.Response)
+
+	if waitTime > MaxRateLimitWait {
+		logger.Debug().Msgf("abuse rate limit wait time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
+		return err
+	}
+
+	// Wait for the rate limit to reset
+	select {
+	case <-time.After(waitTime):
+		return nil
+	case <-ctx.Done():
+		logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
+		return err
+	}
+}
+
+func logRateLimitError(logger *zerolog.Logger, errType string, waitTime time.Duration, owner string, resp *http.Response) {
+	var method, path string
+	if resp != nil && resp.Request != nil {
+		method = resp.Request.Method
+		path = resp.Request.URL.Path
+	}
+
+	event := logger.Debug().
+		Str("owner", owner).
+		Str("wait_time", waitTime.String()).
+		Str("error_type", errType)
+
+	if method != "" {
+		event = event.Str("method", method)
+	}
+
+	if path != "" {
+		event = event.Str("path", path)
+	}
+
+	event.Msg("rate limit exceeded")
+}
+
+func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData[T]) (T, error) {
+	exponentialBackOff := backoffv4.NewExponentialBackOff()
+	maxRetriesBackoff := backoffv4.WithMaxRetries(exponentialBackOff, MaxRateLimitRetries)
+	return backoffv4.RetryWithData(op, backoffv4.WithContext(maxRetriesBackoff, ctx))
+}
+
+func isRateLimitError(err error) bool {
+	var rateLimitError *github.RateLimitError
+	isRateLimitErr := errors.As(err, &rateLimitError)
+
+	var abuseRateLimitError *github.AbuseRateLimitError
+	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
+
+	return isRateLimitErr || isAbuseRateLimitErr
+}
+
+// ConvertRepositories converts a list of GitHub repositories to a list of minder repositories
+func ConvertRepositories(repos []*github.Repository) []*minderv1.Repository {
+	var converted []*minderv1.Repository
+	for _, repo := range repos {
+		converted = append(converted, convertRepository(repo))
+	}
+	return converted
+}
+
+// ConvertRepository converts a GitHub repository to a minder repository
+func convertRepository(repo *github.Repository) *minderv1.Repository {
+	return &minderv1.Repository{
+		Name:      repo.GetName(),
+		Owner:     repo.GetOwner().GetLogin(),
+		RepoId:    repo.GetID(),
+		HookUrl:   repo.GetHooksURL(),
+		DeployUrl: repo.GetDeploymentsURL(),
+		CloneUrl:  repo.GetCloneURL(),
+		IsPrivate: *repo.Private,
+		IsFork:    *repo.Fork,
+	}
 }

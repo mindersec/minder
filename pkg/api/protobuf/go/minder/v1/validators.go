@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -40,6 +41,26 @@ var _ Validator = (*GitHubProviderConfig)(nil)
 func (_ *GitHubProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
+	return nil
+}
+
+// ensure GitHubAppProviderConfig implements the Validator interface
+var _ Validator = (*GitHubAppProviderConfig)(nil)
+
+// Validate is a utility function which allows for the validation of a struct.
+func (c *GitHubAppProviderConfig) Validate() error {
+	// Unfortunately, we don't currently have a way to add custom tags to
+	// protobuf-generated structs, so we have to do this manually.
+	if c.GetAppId() == "" {
+		return fmt.Errorf("app_id is required")
+	}
+	if c.GetAppName() == "" {
+		return fmt.Errorf("app_name is required")
+	}
+	if c.GetUserId() == 0 {
+		return fmt.Errorf("user_id is required")
+	}
+
 	return nil
 }
 
@@ -90,11 +111,12 @@ func (rt *RuleType) Validate() error {
 		return fmt.Errorf("%w: rule type is nil", ErrInvalidRuleType)
 	}
 
-	if rt.Name == "" {
+	if rt.GetName() == "" {
 		return fmt.Errorf("%w: rule type name is empty", ErrInvalidRuleType)
 	}
-	if !dnsStyleNameRegex.MatchString(rt.Name) {
-		return fmt.Errorf("%w: rule type name may only contain letters, numbers, hyphens and underscores", ErrInvalidRuleType)
+
+	if err := validateNamespacedName(rt.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrInvalidRuleType, err)
 	}
 
 	if rt.Def == nil {
@@ -191,8 +213,9 @@ func (p *Profile) Validate() error {
 	if p.GetName() == "" {
 		return fmt.Errorf("%w: profile name cannot be empty", ErrValidationFailed)
 	}
-	if !dnsStyleNameRegex.MatchString(p.GetName()) {
-		return fmt.Errorf("%w: profile names may only contain letters, numbers, hyphens and underscores", ErrValidationFailed)
+
+	if err := validateNamespacedName(p.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrValidationFailed, err)
 	}
 
 	repoRuleCount := len(p.GetRepository())
@@ -262,5 +285,19 @@ func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() er
 		return errors.New("body is required")
 	}
 
+	return nil
+}
+
+func validateNamespacedName(name string) error {
+	components := strings.Split(name, "/")
+	if len(components) > 2 {
+		return errors.New("cannot have more than one slash in name")
+	}
+	// if this is a namespaced name, validate both the namespace and the name
+	for _, component := range components {
+		if !dnsStyleNameRegex.MatchString(component) {
+			return errors.New("name may only contain letters, numbers, hyphens and underscores")
+		}
+	}
 	return nil
 }

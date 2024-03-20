@@ -268,7 +268,7 @@ func TestCreateProfile(t *testing.T) {
 				Name: "colon:invalid",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+		wantErr: `Couldn't create profile: validation failed: name may only contain letters, numbers, hyphens and underscores`,
 	}, {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
@@ -277,28 +277,58 @@ func TestCreateProfile(t *testing.T) {
 			},
 		},
 		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
-	}, {
-		name: "Create profile with valid name and rules",
-		profile: &minderv1.CreateProfileRequest{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+	},
+		{
+			name: "Create profile with valid name and rules",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test",
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test",
+					Alert:     proto.String("on"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-		result: &minderv1.CreateProfileResponse{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Name: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+		{
+			name: "Create profile with explicit alert and remediate",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-	}}
+	}
 
 	for _, tc := range tests {
 		tc := tc
@@ -320,10 +350,12 @@ func TestCreateProfile(t *testing.T) {
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})
+			evts := &StubEventer{}
 			s := &Server{
-				store:            dbStore,
-				profileValidator: profiles.NewValidator(dbStore),
-				evt:              &StubEventer{},
+				store: dbStore,
+				// Do not replace this with a mock - these tests are used to test ProfileService as well
+				profiles: profiles.NewProfileService(dbStore, evts),
+				evt:      evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)
