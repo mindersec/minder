@@ -55,6 +55,7 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
+	GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error)
