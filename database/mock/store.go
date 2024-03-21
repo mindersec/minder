@@ -296,6 +296,21 @@ func (mr *MockStoreMockRecorder) CreateSessionState(arg0, arg1 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSessionState", reflect.TypeOf((*MockStore)(nil).CreateSessionState), arg0, arg1)
 }
 
+// CreateSubscription mocks base method.
+func (m *MockStore) CreateSubscription(arg0 context.Context, arg1 db.CreateSubscriptionParams) (db.Subscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSubscription", arg0, arg1)
+	ret0, _ := ret[0].(db.Subscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSubscription indicates an expected call of CreateSubscription.
+func (mr *MockStoreMockRecorder) CreateSubscription(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscription", reflect.TypeOf((*MockStore)(nil).CreateSubscription), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockStore) CreateUser(arg0 context.Context, arg1 string) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -1032,6 +1047,21 @@ func (mr *MockStoreMockRecorder) GetRuleTypeByName(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByName", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByName), arg0, arg1)
 }
 
+// GetSubscriptionByProjectBundle mocks base method.
+func (m *MockStore) GetSubscriptionByProjectBundle(arg0 context.Context, arg1 db.GetSubscriptionByProjectBundleParams) (db.Subscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptionByProjectBundle", arg0, arg1)
+	ret0, _ := ret[0].(db.Subscription)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptionByProjectBundle indicates an expected call of GetSubscriptionByProjectBundle.
+func (mr *MockStoreMockRecorder) GetSubscriptionByProjectBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionByProjectBundle), arg0, arg1)
+}
+
 // GetUserByID mocks base method.
 func (m *MockStore) GetUserByID(arg0 context.Context, arg1 int32) (db.User, error) {
 	m.ctrl.T.Helper()
@@ -1345,6 +1375,20 @@ func (mr *MockStoreMockRecorder) Rollback(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), arg0)
 }
 
+// SetCurrentVersion mocks base method.
+func (m *MockStore) SetCurrentVersion(arg0 context.Context, arg1 db.SetCurrentVersionParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetCurrentVersion", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetCurrentVersion indicates an expected call of SetCurrentVersion.
+func (mr *MockStoreMockRecorder) SetCurrentVersion(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), arg0, arg1)
+}
+
 // UpdateLease mocks base method.
 func (m *MockStore) UpdateLease(arg0 context.Context, arg1 db.UpdateLeaseParams) error {
 	m.ctrl.T.Helper()
@@ -1446,6 +1490,21 @@ func (m *MockStore) UpsertArtifact(arg0 context.Context, arg1 db.UpsertArtifactP
 func (mr *MockStoreMockRecorder) UpsertArtifact(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertArtifact", reflect.TypeOf((*MockStore)(nil).UpsertArtifact), arg0, arg1)
+}
+
+// UpsertBundle mocks base method.
+func (m *MockStore) UpsertBundle(arg0 context.Context, arg1 db.UpsertBundleParams) (db.Bundle, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertBundle", arg0, arg1)
+	ret0, _ := ret[0].(db.Bundle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertBundle indicates an expected call of UpsertBundle.
+func (mr *MockStoreMockRecorder) UpsertBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertBundle", reflect.TypeOf((*MockStore)(nil).UpsertBundle), arg0, arg1)
 }
 
 // UpsertProfileForEntity mocks base method.

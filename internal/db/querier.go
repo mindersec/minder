@@ -26,6 +26,8 @@ type Querier interface {
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
+	// Subscriptions --
+	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
@@ -83,6 +85,7 @@ type Querier interface {
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
+	GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (Subscription, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
@@ -125,6 +128,7 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
+	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
@@ -132,6 +136,21 @@ type Querier interface {
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
+	// Copyright 2024 Stacklok, Inc
+	//
+	// Licensed under the Apache License, Version 2.0 (the "License");
+	// you may not use this file except in compliance with the License.
+	// You may obtain a copy of the License at
+	//
+	//      http://www.apache.org/licenses/LICENSE-2.0
+	//
+	// Unless required by applicable law or agreed to in writing, software
+	// distributed under the License is distributed on an "AS IS" BASIS,
+	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	// See the License for the specific language governing permissions and
+	// limitations under the License.
+	// Bundles --
+	UpsertBundle(ctx context.Context, arg UpsertBundleParams) (Bundle, error)
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)

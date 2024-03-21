@@ -52,8 +52,26 @@ func TestBundle_GetProfile(t *testing.T) {
 			ExpectedError: "profile does not exist in bundle",
 		},
 		{
+			Name:          "GetProfile returns error for incorrect namespace",
+			ProfileName:   "acmecorp/branch-protection-github-profile",
+			ExpectedError: "invalid namespace",
+		},
+		{
+			Name:          "GetProfile returns error for malformed name",
+			ProfileName:   "acmecorp/foo/bar/branch-protection-github-profile",
+			ExpectedError: "malformed profile name",
+		},
+		{
 			Name:        "GetProfile retrieves profile in bundle",
 			ProfileName: "branch-protection-github-profile",
+		},
+		{
+			Name:        "GetProfile retrieves profile in bundle (file suffix)",
+			ProfileName: "branch-protection-github-profile.yaml",
+		},
+		{
+			Name:        "GetProfile retrieves profile in bundle (namespaced)",
+			ProfileName: "stacklok/branch-protection-github-profile",
 		},
 	}
 
@@ -70,7 +88,7 @@ func TestBundle_GetProfile(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, profile)
-				require.Equal(t, scenario.ProfileName, profile.GetName())
+				require.Equal(t, expectedProfileName, profile.GetName())
 			}
 		})
 	}
@@ -108,5 +126,6 @@ func loadBundle(t *testing.T) reader.BundleReader {
 }
 
 const (
-	testDataPath = "../testdata/t2"
+	testDataPath        = "../testdata/t2"
+	expectedProfileName = "branch-protection-github-profile"
 )
