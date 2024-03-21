@@ -330,7 +330,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -413,7 +413,7 @@ func (s *Server) getProviderAndClient(
 		providers.WithRestClientCache(s.restClientCache),
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}

@@ -38,6 +38,7 @@ type Reconciler struct {
 	evt             events.Publisher
 	crypteng        crypto.Engine
 	restClientCache ratecache.RestClientCache
+	provCfg         *serverconfig.ProviderConfig
 	provMt          providertelemetry.ProviderMetrics
 }
 
@@ -63,6 +64,7 @@ func NewReconciler(
 	store db.Store,
 	evt events.Publisher,
 	authCfg *serverconfig.AuthConfig,
+	provCfg *serverconfig.ProviderConfig,
 	opts ...ReconcilerOption,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -74,6 +76,7 @@ func NewReconciler(
 		store:    store,
 		evt:      evt,
 		crypteng: crypteng,
+		provCfg:  provCfg,
 		provMt:   providertelemetry.NewNoopMetrics(),
 	}
 
