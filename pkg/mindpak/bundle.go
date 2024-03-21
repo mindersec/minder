@@ -18,13 +18,18 @@
 package mindpak
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/afero"
 )
 
 var (
@@ -57,6 +62,39 @@ func NewBundleFromDirectory(path string) (*Bundle, error) {
 
 	bundle := &Bundle{
 		Source: os.DirFS(path).(fs.StatFS),
+	}
+	if err := bundle.ReadSource(); err != nil {
+		return nil, fmt.Errorf("reading bundle data from %q: %w", path, err)
+	}
+
+	return bundle, nil
+}
+
+// NewBundleFromTarGZ loads a bundle from a .tar.gz file containing the bundle
+// structure. Note that this implementation loads the entire contents of the
+// bundle into memory.
+// This is tested by the test in the `internal/marketplace` package.
+func NewBundleFromTarGZ(path string) (*Bundle, error) {
+	file, err := os.Open(filepath.Clean(path))
+	if err != nil {
+		return nil, fmt.Errorf("error while opening %s: %w", path, err)
+	}
+	defer file.Close()
+
+	gz, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating gzip reader for %s: %w", path, err)
+	}
+	defer gz.Close()
+
+	tarReader := tar.NewReader(gz)
+	sourceFS, err := copyTarIntoMemory(tarReader)
+	if err != nil {
+		return nil, err
+	}
+
+	bundle := &Bundle{
+		Source: sourceFS,
 	}
 	if err := bundle.ReadSource(); err != nil {
 		return nil, fmt.Errorf("reading bundle data from %q: %w", path, err)
@@ -154,4 +192,55 @@ func (b *Bundle) ReadSource() error {
 func (_ *Bundle) Verify() error {
 	// FIXME(puerco): Implement
 	return nil
+}
+
+func copyTarIntoMemory(tarReader *tar.Reader) (fs.StatFS, error) {
+	// create the memfs instance, and create the directories we need
+	sourceFS := afero.NewIOFS(afero.NewMemMapFs())
+	if err := sourceFS.MkdirAll("/"+PathProfiles, 0700); err != nil {
+		return nil, fmt.Errorf("error creating directory in memfs: %w", err)
+	}
+	if err := sourceFS.MkdirAll("/"+PathRuleTypes, 0700); err != nil {
+		return nil, fmt.Errorf("error creating directory in memfs: %w", err)
+	}
+
+	var memFile afero.File
+	// used for error handling inside the loop
+	defer func() {
+		if memFile != nil {
+			_ = memFile.Close()
+		}
+	}()
+
+	// copy each file in the tar into the memfs
+	for {
+		header, err := tarReader.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("error while iterating through tar: %w", err)
+		}
+
+		// assumption: we do not care about anything other than regular files
+		// filter out relative paths to keep the static analysis tools happy
+		if strings.Contains(header.Name, "..") || header.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		memFile, err = sourceFS.Create(header.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error while creating memfs file: %w", err)
+		}
+
+		if _, err = io.Copy(memFile, tarReader); err != nil {
+			return nil, fmt.Errorf("error while copying file into memfs: %w", err)
+		}
+
+		if err = memFile.Close(); err != nil {
+			return nil, fmt.Errorf("error while closing memfs file: %w", err)
+		}
+	}
+
+	return sourceFS, nil
 }
