@@ -28,7 +28,9 @@ import (
 // may be present. Bundles are returned as instances of the BundleReader
 // interface.
 type BundleSource interface {
-	LoadBundle(namespace string, name string) (reader.BundleReader, error)
+	// GetBundle fetches a bundle from the source by namespace and name
+	// ErrBundleNotFound is returned if the bundle cannot be found
+	GetBundle(namespace string, name string) (reader.BundleReader, error)
 }
 
 var (
@@ -36,10 +38,8 @@ var (
 	ErrBundleNotFound = errors.New("bundle not found")
 )
 
-// NewSourceFromDirectory creates a source from a local filesystem directory
-// holding a bundle.
-// TODO: do we want to read from a tarball instead?
-func NewSourceFromDirectory(path string) (BundleSource, error) {
+// NewSourceFromTarGZ creates a singleBundleSource from a .tar.gz file
+func NewSourceFromTarGZ(path string) (BundleSource, error) {
 	bundle, err := mindpak.NewBundleFromTarGZ(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load bundle from %s: %w", path, err)
@@ -57,7 +57,7 @@ type singleBundleSource struct {
 	bundle reader.BundleReader
 }
 
-func (s *singleBundleSource) LoadBundle(namespace string, name string) (reader.BundleReader, error) {
+func (s *singleBundleSource) GetBundle(namespace string, name string) (reader.BundleReader, error) {
 	metadata := s.bundle.GetMetadata()
 	if namespace == metadata.Namespace && name == metadata.Name {
 		return s.bundle, nil

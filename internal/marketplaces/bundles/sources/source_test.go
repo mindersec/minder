@@ -26,7 +26,7 @@ import (
 // Happy path is implicitly tested by the other tests
 func TestNewSourceFromDirectory_Fails(t *testing.T) {
 	t.Parallel()
-	bundle, err := sources.NewSourceFromDirectory(invalidPath)
+	bundle, err := sources.NewSourceFromTarGZ(invalidPath)
 	require.Nil(t, bundle)
 	require.ErrorContains(t, err, "unable to load bundle")
 }
@@ -56,9 +56,9 @@ func TestSingleBundleSource_LoadBundle(t *testing.T) {
 		scenario := scenarios[i]
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
-			source, err := sources.NewSourceFromDirectory(sampleDataPath)
+			source, err := sources.NewSourceFromTarGZ(sampleDataPath)
 			require.NoError(t, err)
-			bundle, err := source.LoadBundle(scenario.BundleNamespace, scenario.BundleName)
+			bundle, err := source.GetBundle(scenario.BundleNamespace, scenario.BundleName)
 			if scenario.ExpectedError == "" {
 				require.Nil(t, err)
 				require.Equal(t, scenario.BundleName, bundle.GetMetadata().Name)
