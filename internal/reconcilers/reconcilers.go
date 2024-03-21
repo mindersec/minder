@@ -23,6 +23,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/events/unordered"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -37,6 +38,7 @@ type Reconciler struct {
 	provCfg             *serverconfig.ProviderConfig
 	provMt              providertelemetry.ProviderMetrics
 	fallbackTokenClient *gogithub.Client
+	proc                *unordered.Retrier
 }
 
 // ReconcilerOption is a function that modifies a reconciler
@@ -78,6 +80,7 @@ func NewReconciler(
 		provCfg:             provCfg,
 		provMt:              providertelemetry.NewNoopMetrics(),
 		fallbackTokenClient: fallbackTokenClient,
+		proc:                unordered.New(evt),
 	}
 
 	for _, opt := range opts {
@@ -89,7 +92,17 @@ func NewReconciler(
 
 // Register implements the Consumer interface.
 func (r *Reconciler) Register(reg events.Registrar) {
-	reg.Register(events.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
-	reg.Register(events.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
-	reg.Register(events.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)
+	reporec := r.proc.Wrap(events.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
+	reg.Register(events.TopicQueueReconcileRepoInit, reporec)
+
+	profrec := r.proc.Wrap(events.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
+	reg.Register(events.TopicQueueReconcileProfileInit, profrec)
+
+	delrec := r.proc.Wrap(events.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)
+	reg.Register(events.TopicQueueReconcileEntityDelete, delrec)
+}
+
+// Wait waits for all the messages to be processed
+func (r *Reconciler) Wait() {
+	r.proc.Wait()
 }

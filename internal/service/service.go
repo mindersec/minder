@@ -104,12 +104,21 @@ func AllInOneServerService(
 	<-evt.Running()
 
 	// Flush all cache
-	if err := aggr.FlushAll(ctx); err != nil {
-		return fmt.Errorf("error flushing cache: %w", err)
-	}
+	errg.Go(func() error {
+		return aggr.FlushAll(ctx)
+	})
+
+	// Wait for all reconcile events to be processed
+	errg.Go(func() error {
+		rec.Wait()
+		return nil
+	})
 
 	// Wait for all entity events to be executed
-	exec.Wait()
+	errg.Go(func() error {
+		exec.Wait()
+		return nil
+	})
 
 	return errg.Wait()
 }
