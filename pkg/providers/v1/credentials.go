@@ -25,6 +25,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const (
+	// CredentialStateSet is the state of a credential when it is set
+	CredentialStateSet = "set"
+	// CredentialStateUnset is the state of a credential when it is unset
+	CredentialStateUnset = "unset"
+	// CredentialStateNotApplicable is the state of a credential when it is not applicable
+	CredentialStateNotApplicable = "not_applicable"
+)
+
 // Credential is the general interface for all credentials
 type Credential interface {
 }

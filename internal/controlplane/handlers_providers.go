@@ -63,12 +63,13 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 
 	return &minderv1.GetProviderResponse{
 		Provider: &minderv1.Provider{
-			Name:       prov.Name,
-			Project:    projectID.String(),
-			Version:    prov.Version,
-			Implements: protobufProviderImplementsFromDB(ctx, prov),
-			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, prov),
-			Config:     cfg,
+			Name:             prov.Name,
+			Project:          projectID.String(),
+			Version:          prov.Version,
+			Implements:       protobufProviderImplementsFromDB(ctx, prov),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
+			Config:           cfg,
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine),
 		},
 	}, nil
 }
@@ -124,12 +125,13 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 		}
 
 		provs = append(provs, &minderv1.Provider{
-			Name:       p.Name,
-			Project:    projectID.String(),
-			Version:    p.Version,
-			Implements: protobufProviderImplementsFromDB(ctx, p),
-			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, p),
-			Config:     cfg,
+			Name:             p.Name,
+			Project:          projectID.String(),
+			Version:          p.Version,
+			Implements:       protobufProviderImplementsFromDB(ctx, p),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine),
+			Config:           cfg,
 		})
 	}
 

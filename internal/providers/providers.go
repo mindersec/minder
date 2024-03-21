@@ -269,6 +269,33 @@ func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
 	}
 }
 
+// GetCredentialStateForProvider returns the credential state for the given provider.
+func GetCredentialStateForProvider(ctx context.Context, prov db.Provider, s db.Store, cryptoEngine crypto.Engine) string {
+	var credState string
+	// if the provider doesn't support any auth flow
+	// credentials state is not applicable
+	if slices.Equal(prov.AuthFlows, []db.AuthorizationFlow{db.AuthorizationFlowNone}) {
+		credState = provinfv1.CredentialStateNotApplicable
+	} else {
+		credState = provinfv1.CredentialStateUnset
+		cred, err := getCredentialForProvider(ctx, prov, s, cryptoEngine)
+		if err != nil {
+			// This is non-fatal
+			zerolog.Ctx(ctx).Error().Err(err).Str("provider", prov.Name).Msg("error getting credential")
+		} else {
+			// check if the credential is EmptyCredential
+			// if it is, then the state is not applicable
+			if _, ok := cred.(*credentials.EmptyCredential); ok {
+				credState = provinfv1.CredentialStateUnset
+			} else {
+				credState = provinfv1.CredentialStateSet
+			}
+		}
+	}
+
+	return credState
+}
+
 func getCredentialForProvider(
 	ctx context.Context,
 	prov db.Provider,

@@ -1454,6 +1454,7 @@ Project API Objects
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
+| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_supported". |
 
 
 <a name="minder-v1-ProviderParameter"></a>

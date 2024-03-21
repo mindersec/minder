@@ -2038,4 +2038,8 @@ message Provider {
 
     // parameters is the list of parameters that the provider requires.
     ProviderParameter parameters = 8;
+
+    // credentials_state is the state of the credentials for the provider.
+    // This is an output-only field. It may be: "set", "unset", "not_applicable".
+    string credentials_state = 9;
 }
