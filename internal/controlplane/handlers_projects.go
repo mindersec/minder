@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -185,7 +186,12 @@ func (s *Server) DeleteProject(
 			"project does not allow project hierarchy operations")
 	}
 
-	if err := projects.DeleteProject(ctx, projectID, qtx, s.authzClient); err != nil {
+	l := zerolog.Ctx(ctx).With().
+		Str("component", "controlplane").
+		Str("operation", "delete").
+		Str("project", projectID.String()).
+		Logger()
+	if err := projects.DeleteProject(ctx, projectID, qtx, s.authzClient, l); err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting project: %v", err)
 	}
 
