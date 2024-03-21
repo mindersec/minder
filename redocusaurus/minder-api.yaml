@@ -2609,6 +2609,13 @@ definitions:
       parameters:
         $ref: '#/definitions/v1ProviderParameter'
         description: parameters is the list of parameters that the provider requires.
+      credentialsState:
+        type: string
+        description: >-
+          credentials_state is the state of the credentials for the provider.
+
+          This is an output-only field. It may be: "set", "unset",
+          "not_supported".
   v1ProviderParameter:
     type: object
     properties:
