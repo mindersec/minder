@@ -141,19 +141,26 @@ func HandleEvents(
 }
 
 // DeleteUser deletes a user and all their associated data from the minder database
-func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) error {
-	tx, err := store.BeginTransaction()
-	if err != nil {
-		return err
-	}
-	defer store.Rollback(tx)
-	qtx := store.GetQuerierWithTransaction(tx)
-
-	var userDBID *int32
+func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) (retErr error) {
 	l := zerolog.Ctx(ctx).With().
 		Str("operation", "delete").
 		Str("subject", userId).
 		Logger()
+
+	tx, err := store.BeginTransaction()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if retErr != nil {
+			if err := store.Rollback(tx); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				l.Debug().Msgf("error rolling back transaction: %v", err)
+			}
+		}
+	}()
+	qtx := store.GetQuerierWithTransaction(tx)
+
+	var userDBID *int32
 
 	usr, err := qtx.GetUserBySubject(ctx, userId)
 	// If the user doesn't exist, we still want to clean up any associated data
