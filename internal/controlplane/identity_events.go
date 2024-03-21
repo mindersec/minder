@@ -195,6 +195,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 
 	// organizations will be cleaned up in a migration after this change
 
+	l.Debug().Msg("committing account deletion")
 	if err = store.Commit(tx); err != nil {
 		return fmt.Errorf("error committing account deletion %w", err)
 	}
