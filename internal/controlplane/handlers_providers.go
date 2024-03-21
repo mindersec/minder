@@ -69,7 +69,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 			Implements:       protobufProviderImplementsFromDB(ctx, prov),
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
 			Config:           cfg,
-			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine),
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider),
 		},
 	}, nil
 }
@@ -130,7 +130,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			Version:          p.Version,
 			Implements:       protobufProviderImplementsFromDB(ctx, p),
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
-			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine),
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
 			Config:           cfg,
 		})
 	}

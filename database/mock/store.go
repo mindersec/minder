@@ -673,6 +673,21 @@ func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
 }
 
+// GetInstallationIDByProviderID mocks base method.
+func (m *MockStore) GetInstallationIDByProviderID(arg0 context.Context, arg1 uuid.NullUUID) (db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInstallationIDByProviderID", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInstallationIDByProviderID indicates an expected call of GetInstallationIDByProviderID.
+func (mr *MockStoreMockRecorder) GetInstallationIDByProviderID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallationIDByProviderID", reflect.TypeOf((*MockStore)(nil).GetInstallationIDByProviderID), arg0, arg1)
+}
+
 // GetParentProjects mocks base method.
 func (m *MockStore) GetParentProjects(arg0 context.Context, arg1 uuid.UUID) ([]uuid.UUID, error) {
 	m.ctrl.T.Helper()
