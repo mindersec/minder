@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/marketplaces/bundles/sources"
+	"github.com/stacklok/minder/pkg/mindpak/sources"
 )
 
 // This test does not fit into the scenario structure below and is trivial
