@@ -29,9 +29,9 @@ import (
 	brf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
 	"github.com/stacklok/minder/internal/profiles"
-	psf "github.com/stacklok/minder/internal/profiles/mocks/fixtures"
+	psf "github.com/stacklok/minder/internal/profiles/mock/fixtures"
 	"github.com/stacklok/minder/internal/ruletypes"
-	rsf "github.com/stacklok/minder/internal/ruletypes/mocks/fixtures"
+	rsf "github.com/stacklok/minder/internal/ruletypes/mock/fixtures"
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {
