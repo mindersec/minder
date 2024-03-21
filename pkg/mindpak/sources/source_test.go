@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/pkg/mindpak"
 	"github.com/stacklok/minder/pkg/mindpak/sources"
 )
 
@@ -58,7 +59,8 @@ func TestSingleBundleSource_LoadBundle(t *testing.T) {
 			t.Parallel()
 			source, err := sources.NewSourceFromTarGZ(sampleDataPath)
 			require.NoError(t, err)
-			bundle, err := source.GetBundle(scenario.BundleNamespace, scenario.BundleName)
+			id := mindpak.ID(scenario.BundleNamespace, scenario.BundleName)
+			bundle, err := source.GetBundle(id)
 			if scenario.ExpectedError == "" {
 				require.Nil(t, err)
 				require.Equal(t, scenario.BundleName, bundle.GetMetadata().Name)
