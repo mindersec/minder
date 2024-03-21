@@ -48,19 +48,9 @@ func (_ *GitHubProviderConfig) Validate() error {
 var _ Validator = (*GitHubAppProviderConfig)(nil)
 
 // Validate is a utility function which allows for the validation of a struct.
-func (c *GitHubAppProviderConfig) Validate() error {
+func (_ *GitHubAppProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
-	if c.GetAppId() == "" {
-		return fmt.Errorf("app_id is required")
-	}
-	if c.GetAppName() == "" {
-		return fmt.Errorf("app_name is required")
-	}
-	if c.GetUserId() == 0 {
-		return fmt.Errorf("user_id is required")
-	}
-
 	return nil
 }
 

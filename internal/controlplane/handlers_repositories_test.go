@@ -29,6 +29,7 @@ import (
 	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/config/server"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -364,6 +365,7 @@ func createServer(
 		repos:           svc,
 		cryptoEngine:    mockCryptoEngine,
 		restClientCache: clientCache,
+		cfg:             &server.Config{},
 	}
 }
 

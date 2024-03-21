@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	github2 "github.com/stacklok/minder/internal/providers/github"
@@ -41,6 +42,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 		Endpoint: "https://api.github.com",
 	},
+		&config.GitHubAppConfig{},
 		provtelemetry.NewNoopMetrics(),
 		nil, credentials.NewGitHubTokenCredential("token"))
 
@@ -51,17 +53,19 @@ func TestNewGitHubAppProvider(t *testing.T) {
 func TestUserInfo(t *testing.T) {
 	t.Parallel()
 	appName := "test-app"
-	appId := "123456"
+	appId := int64(123456)
 	expectedUserId := int64(123456789)
 
 	ctx := context.Background()
 
 	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 		Endpoint: "https://api.github.com",
-		AppName:  appName,
-		AppId:    appId,
-		UserId:   expectedUserId,
 	},
+		&config.GitHubAppConfig{
+			AppName: appName,
+			AppID:   appId,
+			UserID:  expectedUserId,
+		},
 		provtelemetry.NewNoopMetrics(),
 		nil, credentials.NewGitHubTokenCredential("token"))
 	assert.NoError(t, err)
@@ -150,6 +154,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 			client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 				Endpoint: testServer.URL + "/",
 			},
+				&config.GitHubAppConfig{},
 				provtelemetry.NewNoopMetrics(),
 				nil, credentials.NewGitHubTokenCredential("token"))
 			assert.NoError(t, err)
@@ -179,7 +184,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), credentials.NewGitHubTokenCredential(token))
+	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, &config.GitHubAppConfig{}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), credentials.NewGitHubTokenCredential(token))
 	require.NoError(t, err)
 
 	_, err = client.CreateIssueComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
@@ -223,7 +228,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 	// Start a goroutine that will make a request to the server, rate limiting the gh client
 	go func() {
 		defer wg.Done()
-		client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, provtelemetry.NewNoopMetrics(), restClientCache, credentials.NewGitHubTokenCredential(token))
+		client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, &config.GitHubAppConfig{}, provtelemetry.NewNoopMetrics(), restClientCache, credentials.NewGitHubTokenCredential(token))
 		require.NoError(t, err)
 
 		_, err = client.CreateIssueComment(context.Background(), owner, "mockRepo", 1, "Test Comment")

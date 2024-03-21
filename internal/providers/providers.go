@@ -25,6 +25,7 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -45,6 +46,7 @@ func GetProviderBuilder(
 	prov db.Provider,
 	store db.Store,
 	crypteng crypto.Engine,
+	provCfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	credential, err := getCredentialForProvider(ctx, prov, store, crypteng)
@@ -57,7 +59,7 @@ func GetProviderBuilder(
 		return nil, fmt.Errorf("error getting owner filter: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, ownerFilter, credential, opts...), nil
+	return NewProviderBuilder(&prov, ownerFilter, credential, provCfg, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -68,6 +70,7 @@ type ProviderBuilder struct {
 	restClientCache ratecache.RestClientCache
 	credential      provinfv1.Credential
 	metrics         telemetry.ProviderMetrics
+	cfg             *serverconfig.ProviderConfig
 }
 
 // ProviderBuilderOption is a function which can be used to set options on the ProviderBuilder.
@@ -92,10 +95,12 @@ func NewProviderBuilder(
 	p *db.Provider,
 	ownerFilter sql.NullString,
 	credential provinfv1.Credential,
+	cfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
 		p:           p,
+		cfg:         cfg,
 		ownerFilter: ownerFilter,
 		credential:  credential,
 		metrics:     telemetry.NewNoopMetrics(),
@@ -210,7 +215,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.metrics, pb.restClientCache, gitHubCredential)
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}

@@ -253,7 +253,7 @@ func (s *Server) parseGithubEventForProcessing(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, pbOpts...)
+	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

@@ -15,11 +15,7 @@
 
 package server
 
-import (
-	"fmt"
-	"os"
-	"path/filepath"
-)
+import "github.com/stacklok/minder/internal/config"
 
 // AuthConfig is the configuration for the auth package
 type AuthConfig struct {
@@ -31,15 +27,5 @@ type AuthConfig struct {
 
 // GetTokenKey returns a key used to encrypt the provider's token in the database
 func (acfg *AuthConfig) GetTokenKey() ([]byte, error) {
-	return readKey(acfg.TokenKey)
-}
-
-func readKey(keypath string) ([]byte, error) {
-	cleankeypath := filepath.Clean(keypath)
-	data, err := os.ReadFile(cleankeypath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read key: %w", err)
-	}
-
-	return data, nil
+	return config.ReadKey(acfg.TokenKey)
 }

@@ -288,7 +288,8 @@ func (s *Server) verifyProviderTokenIdentity(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token), pbOpts...)
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
+		&s.cfg.Provider, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
 	ghClient, err := builder.GetGitHub()

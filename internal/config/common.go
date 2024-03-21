@@ -20,6 +20,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -131,4 +133,15 @@ func RegisterGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	return BindConfigFlag(v, flags, "grpc_server.insecure", "grpc-insecure", false,
 		"Allow establishing insecure connections", flags.Bool)
+}
+
+// ReadKey reads a key from a file
+func ReadKey(keypath string) ([]byte, error) {
+	cleankeypath := filepath.Clean(keypath)
+	data, err := os.ReadFile(cleankeypath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key: %w", err)
+	}
+
+	return data, nil
 }
