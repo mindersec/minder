@@ -219,9 +219,16 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 		if _, ok := profiles[p.Name]; !ok {
 			profileID := p.ID.String()
 			project := p.ProjectID.String()
+
+			displayName := p.DisplayName
+			if displayName == "" {
+				displayName = p.Name
+			}
+
 			profiles[p.Name] = &pb.Profile{
-				Id:   &profileID,
-				Name: p.Name,
+				Id:          &profileID,
+				Name:        p.Name,
+				DisplayName: displayName,
 				Context: &pb.Context{
 					Provider: &p.Provider,
 					Project:  &project,
