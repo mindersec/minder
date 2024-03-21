@@ -28,6 +28,7 @@ import (
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
 	brf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
+	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/internal/profiles"
 	psf "github.com/stacklok/minder/internal/profiles/mock/fixtures"
 	"github.com/stacklok/minder/internal/ruletypes"
@@ -73,7 +74,7 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			bundle := brf.NewBundleReaderMock(brf.WithMetadata)(ctrl)
 
 			svc := createService(ctrl, scenario.DBSetup, nil, nil)
-			err := svc.Subscribe(ctx, projectID, bundle)
+			err := svc.Subscribe(ctx, projectContext, bundle)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -137,7 +138,7 @@ func TestSubscriptionService_CreateProfile(t *testing.T) {
 			bundle := scenario.BundleSetup(ctrl)
 
 			svc := createService(ctrl, scenario.DBSetup, scenario.ProfileSetup, nil)
-			err := svc.CreateProfile(ctx, projectID, &provider, bundle, profileName)
+			err := svc.CreateProfile(ctx, projectContext, bundle, profileName)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -201,7 +202,7 @@ func TestNewSubscriptionService_CreateRuleTypes(t *testing.T) {
 			bundle := scenario.BundleSetup(ctrl)
 
 			svc := createService(ctrl, scenario.DBSetup, nil, scenario.RuleTypeSetup)
-			err := svc.CreateRuleTypes(ctx, projectID, &provider, bundle)
+			err := svc.CreateRuleTypes(ctx, projectContext, bundle)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -224,6 +225,7 @@ var (
 		ID:   uuid.New(),
 		Name: "github",
 	}
+	projectContext = types.NewProjectContext(projectID, &provider)
 )
 
 func withNotFoundFindSubscription(mock dbf.DBMock) {

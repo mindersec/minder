@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/marketplaces/types"
 	profsvc "github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/ruletypes"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -40,22 +41,20 @@ type SubscriptionService interface {
 	// and bundle. It is a no-op if the project is already subscribed.
 	Subscribe(
 		ctx context.Context,
-		projectID uuid.UUID,
+		project types.ProjectContext,
 		bundle reader.BundleReader,
 	) error
 	// CreateProfile creates the specified profile from the bundle in the project.
 	CreateProfile(
 		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
+		project types.ProjectContext,
 		bundle reader.BundleReader,
 		profileName string,
 	) error
 	// CreateRuleTypes creates all rule types from the bundle in the project.
 	CreateRuleTypes(
 		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
+		project types.ProjectContext,
 		bundle reader.BundleReader,
 	) error
 }
@@ -79,12 +78,12 @@ func NewSubscriptionService(
 	}
 }
 
-func (s *subscriptionService) Subscribe(ctx context.Context, projectID uuid.UUID, bundle reader.BundleReader) error {
+func (s *subscriptionService) Subscribe(ctx context.Context, project types.ProjectContext, bundle reader.BundleReader) error {
 	metadata := bundle.GetMetadata()
 	_, err := s.store.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
 		Namespace: metadata.Namespace,
 		Name:      metadata.Name,
-		ProjectID: projectID,
+		ProjectID: project.ID,
 	})
 	// project already subscribed to bundle, skip
 	if err == nil {
@@ -103,7 +102,7 @@ func (s *subscriptionService) Subscribe(ctx context.Context, projectID uuid.UUID
 
 	// create subscription
 	_, err = s.store.CreateSubscription(ctx, db.CreateSubscriptionParams{
-		ProjectID:      projectID,
+		ProjectID:      project.ID,
 		BundleID:       bundleID,
 		CurrentVersion: metadata.Version,
 	})
@@ -115,13 +114,12 @@ func (s *subscriptionService) Subscribe(ctx context.Context, projectID uuid.UUID
 
 func (s *subscriptionService) CreateProfile(
 	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
+	project types.ProjectContext,
 	bundle reader.BundleReader,
 	profileName string,
 ) error {
 	// ensure project is subscribed to this bundle
-	subscription, err := s.findSubscription(ctx, projectID, bundle.GetMetadata())
+	subscription, err := s.findSubscription(ctx, project.ID, bundle.GetMetadata())
 	if err != nil {
 		return err
 	}
@@ -131,7 +129,7 @@ func (s *subscriptionService) CreateProfile(
 		return fmt.Errorf("error while retrieving profile from bundle: %w", err)
 	}
 
-	_, err = s.profiles.CreateSubscriptionProfile(ctx, projectID, provider, subscription.ID, profile)
+	_, err = s.profiles.CreateSubscriptionProfile(ctx, project.ID, project.Provider, subscription.ID, profile)
 	if err != nil {
 		return fmt.Errorf("error while creating profile in project: %w", err)
 	}
@@ -140,18 +138,17 @@ func (s *subscriptionService) CreateProfile(
 
 func (s *subscriptionService) CreateRuleTypes(
 	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
+	project types.ProjectContext,
 	bundle reader.BundleReader,
 ) error {
 	// ensure project is subscribed to this bundle
-	subscription, err := s.findSubscription(ctx, projectID, bundle.GetMetadata())
+	subscription, err := s.findSubscription(ctx, project.ID, bundle.GetMetadata())
 	if err != nil {
 		return err
 	}
 
 	// populate all rule types from this bundle into the project
-	err = s.upsertBundleRules(ctx, projectID, provider, bundle, subscription.ID)
+	err = s.upsertBundleRules(ctx, project.ID, project.Provider, bundle, subscription.ID)
 	if err != nil {
 		return fmt.Errorf("error while creating rules in project: %w", err)
 	}
