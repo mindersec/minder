@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -54,5 +55,14 @@ func NewMixedScriptEvaluator(pbuild *providers.ProviderBuilder) (*MixedScriptsEv
 
 // Eval evaluates the mixed scripts rule type
 func (mse *MixedScriptsEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
-	return evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
+	hasFoundViolations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
+	if err != nil {
+		return err
+	}
+
+	if hasFoundViolations {
+		return evalerrors.NewErrEvaluationFailed("found mixed scripts violations")
+	}
+
+	return nil
 }
