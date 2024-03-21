@@ -2538,6 +2538,9 @@ definitions:
         type: string
         format: date-time
         title: last_updated is the last time the profile was updated
+      profileDisplayName:
+        type: string
+        title: profile_display_name is the display name of the profile
     title: get the overall profile status
   v1Project:
     type: object
@@ -2615,7 +2618,7 @@ definitions:
           credentials_state is the state of the credentials for the provider.
 
           This is an output-only field. It may be: "set", "unset",
-          "not_supported".
+          "not_applicable".
   v1ProviderParameter:
     type: object
     properties:
