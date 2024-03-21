@@ -27,7 +27,6 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -89,19 +88,6 @@ func ProvisionSelfEnrolledProject(
 		DisplayName: projectmeta.Public.DisplayName,
 		CreatedAt:   timestamppb.New(project.CreatedAt),
 		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}
-
-	// Create GitHub provider
-	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       github.Github,
-		ProjectID:  project.ID,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
-		Implements: github.Implements,
-		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.AuthorizationFlows,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
 	return &prj, nil
 }

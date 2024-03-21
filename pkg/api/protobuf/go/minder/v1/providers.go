@@ -14,7 +14,9 @@
 
 package v1
 
-import "slices"
+import (
+	"slices"
+)
 
 // ToString returns the string representation of the ProviderType
 func (provt ProviderType) ToString() string {

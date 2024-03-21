@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -47,7 +46,17 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+			// FIXME: This is temporary for backwards compatibility with old CLI versions
+			return &minderv1.GetProviderResponse{
+				Provider: &minderv1.Provider{
+					Name:    req.Name,
+					Project: projectID.String(),
+					AuthFlows: []minderv1.AuthorizationFlow{
+						minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW,
+						minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT,
+					},
+				},
+			}, nil
 		}
 		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
 	}
@@ -66,8 +75,8 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 			Name:             prov.Name,
 			Project:          projectID.String(),
 			Version:          prov.Version,
-			Implements:       protobufProviderImplementsFromDB(ctx, prov),
-			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
+			Implements:       protobufProviderImplementsFromDB(ctx, prov.Implements),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov.AuthFlows),
 			Config:           cfg,
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider),
 			Class:            providers.GetProviderClassString(prov),
@@ -129,8 +138,8 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			Name:             p.Name,
 			Project:          projectID.String(),
 			Version:          p.Version,
-			Implements:       protobufProviderImplementsFromDB(ctx, p),
-			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
+			Implements:       protobufProviderImplementsFromDB(ctx, p.Implements),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p.AuthFlows),
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
 			Config:           cfg,
 			Class:            providers.GetProviderClassString(p),
@@ -162,12 +171,12 @@ func (_ *Server) ListProviderClasses(
 	}, nil
 }
 
-func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []minderv1.ProviderType {
-	impls := make([]minderv1.ProviderType, 0, len(p.Implements))
-	for _, i := range p.Implements {
+func protobufProviderImplementsFromDB(ctx context.Context, implements []db.ProviderType) []minderv1.ProviderType {
+	impls := make([]minderv1.ProviderType, 0, len(implements))
+	for _, i := range implements {
 		impl, ok := providers.DBToPBType(i)
 		if !ok {
-			zerolog.Ctx(ctx).Error().Str("type", string(i)).Str("id", p.ID.String()).Msg("unknown provider type")
+			zerolog.Ctx(ctx).Error().Str("type", string(i)).Msg("unknown provider type")
 			// we won't return an error here, we'll just skip the provider implementation listing
 			continue
 		}
@@ -177,9 +186,9 @@ func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []mind
 	return impls
 }
 
-func protobufProviderAuthFlowFromDB(ctx context.Context, p db.Provider) []minderv1.AuthorizationFlow {
-	flows := make([]minderv1.AuthorizationFlow, 0, len(p.AuthFlows))
-	for _, a := range p.AuthFlows {
+func protobufProviderAuthFlowFromDB(ctx context.Context, authFlows []db.AuthorizationFlow) []minderv1.AuthorizationFlow {
+	flows := make([]minderv1.AuthorizationFlow, 0, len(authFlows))
+	for _, a := range authFlows {
 		flow, ok := providers.DBToPBAuthFlow(a)
 		if !ok {
 			zerolog.Ctx(ctx).Error().Str("flow", string(a)).Msg("unknown authorization flow")

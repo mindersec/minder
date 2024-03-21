@@ -525,7 +525,7 @@ service ProfileService {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROFILE_STATUS_GET
         };
-    }    
+    }
 
     rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
         option (google.api.http) = {
@@ -837,7 +837,7 @@ message StoreProviderTokenRequest {
     reserved 2; // deprecated project_id
 }
 
-message StoreProviderTokenResponse {    
+message StoreProviderTokenResponse {
 }
 
 // Project API Objects
@@ -1091,7 +1091,7 @@ message ListProfilesRequest {
     // context is the context which contains the profiles
     Context context = 1;
     // Filter profiles to only those matching the specified labels.
-    // 
+    //
     // The default is to return all user-created profiles; the string "*" can
     // be used to select all profiles, including system profiles.  This syntax
     // may be expanded in the future.
@@ -1365,7 +1365,7 @@ message ListEvaluationResultsRequest{
         // ID can contain either a profile name or an ID
         string profile = 2;
         // Filter profiles to only those matching the specified labels.
-        // 
+        //
         // The default is to return all user-created profiles; the string "*" can
         // be used to select all profiles, including system profiles.  This syntax
         // may be expanded in the future.

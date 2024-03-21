@@ -44,9 +44,6 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 			ID: uuid.New(),
 		}, nil)
 
-	mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
-		Return(db.Provider{}, nil)
-
 	ctx := context.Background()
 
 	_, err := projects.ProvisionSelfEnrolledProject(ctx, authzClient, mockStore, "test-proj", "test-user")

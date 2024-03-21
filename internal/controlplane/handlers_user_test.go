@@ -82,7 +82,6 @@ func TestCreateUserDBMock(t *testing.T) {
 							Valid: true,
 						},
 					}, nil)
-				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), "subject1").
 					Return(returnedUser, nil)
@@ -160,7 +159,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 					Return(db.Project{
 						ID: projectID,
 					}, nil)
-				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
