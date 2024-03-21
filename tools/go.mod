@@ -8,7 +8,7 @@ require (
 	github.com/bufbuild/buf v1.30.0
 	github.com/daixiang0/gci v0.13.1
 	github.com/go-critic/go-critic v0.11.2
-	github.com/golangci/golangci-lint v1.57.0
+	github.com/golangci/golangci-lint v1.57.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/mikefarah/yq/v4 v4.42.1
@@ -126,7 +126,7 @@ require (
 	github.com/golangci/dupl v0.0.0-20180902072040-3e9179ac440a // indirect
 	github.com/golangci/gofmt v0.0.0-20231018234816-f50ced29576e // indirect
 	github.com/golangci/misspell v0.4.1 // indirect
-	github.com/golangci/plugin-module-register v0.1.0 // indirect
+	github.com/golangci/plugin-module-register v0.1.1 // indirect
 	github.com/golangci/revgrep v0.5.2 // indirect
 	github.com/golangci/unconvert v0.0.0-20240309020433-c5143eacb3ed // indirect
 	github.com/google/cel-go v0.20.1 // indirect
@@ -210,7 +210,7 @@ require (
 	github.com/openfga/go-sdk v0.3.5 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240311093347-a2bba7a149ff // indirect
 	github.com/openfga/openfga v1.5.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/pganalyze/pg_query_go/v4 v4.2.4-0.20231205012101-7463430c7b73 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
 	github.com/pingcap/failpoint v0.0.0-20220801062533-2eaa32854a6c // indirect
