@@ -223,7 +223,8 @@ func copyTarIntoMemory(tarReader *tar.Reader) (fs.StatFS, error) {
 		}
 
 		// assumption: we do not care about anything other than regular files
-		if header.Typeflag != tar.TypeReg {
+		// filter out relative paths to keep the static analysis tools happy
+		if strings.Contains(header.Name, "..") || header.Typeflag != tar.TypeReg {
 			continue
 		}
 
