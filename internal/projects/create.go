@@ -18,17 +18,23 @@ package projects
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	// ErrProjectAlreadyExists is returned when a project with the same name already exists
+	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
 // ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
@@ -43,7 +49,7 @@ func ProvisionSelfEnrolledProject(
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal meta: %v", err)
+		return nil, fmt.Errorf("failed to marshal meta: %w", err)
 	}
 
 	projectID := uuid.New()
@@ -53,7 +59,7 @@ func ProvisionSelfEnrolledProject(
 	//       We currently have no use for the organization and it might be
 	//       removed in the future.
 	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create authorization tuple: %v", err)
+		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
 		if outproj == nil && projerr != nil {
@@ -70,7 +76,11 @@ func ProvisionSelfEnrolledProject(
 		Metadata: jsonmeta,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create default project: %v", err)
+		// Check if `project_name_lower_idx` unique constraint was violated
+		if strings.Contains(err.Error(), "project_name_lower_idx") {
+			return nil, ErrProjectAlreadyExists
+		}
+		return nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
 	prj := pb.Project{
@@ -91,7 +101,7 @@ func ProvisionSelfEnrolledProject(
 		AuthFlows:  github.AuthorizationFlows,
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create provider: %v", err)
+		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
 	return &prj, nil
 }
