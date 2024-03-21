@@ -48,7 +48,7 @@ const (
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
 	querier                db.Store
-	evt                    *events.Eventer
+	evt                    events.Publisher
 	crypteng               crypto.Engine
 	provMt                 providertelemetry.ProviderMetrics
 	mdws                   []message.HandlerMiddleware
@@ -88,7 +88,7 @@ func NewExecutor(
 	ctx context.Context,
 	querier db.Store,
 	authCfg *serverconfig.AuthConfig,
-	evt *events.Eventer,
+	evt events.Publisher,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)

@@ -438,4 +438,4 @@ func (*StubEventer) Running() chan struct{} {
 	panic("unimplemented")
 }
 
-var _ events.Interface = (*StubEventer)(nil)
+var _ events.Publisher = (*StubEventer)(nil)

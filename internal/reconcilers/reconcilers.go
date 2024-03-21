@@ -35,7 +35,7 @@ const (
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
 	store           db.Store
-	evt             *events.Eventer
+	evt             events.Publisher
 	crypteng        crypto.Engine
 	restClientCache ratecache.RestClientCache
 	provMt          providertelemetry.ProviderMetrics
@@ -61,7 +61,7 @@ func WithRestClientCache(cache ratecache.RestClientCache) ReconcilerOption {
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
-	evt *events.Eventer,
+	evt events.Publisher,
 	authCfg *serverconfig.AuthConfig,
 	opts ...ReconcilerOption,
 ) (*Reconciler, error) {

@@ -287,7 +287,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := newDefaultServer(t, store)
+			server, _ := newDefaultServer(t, store)
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
@@ -362,7 +362,7 @@ func TestProviderCallback(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			store := mockdb.NewMockStore(ctrl)
-			s := newDefaultServer(t, store)
+			s, _ := newDefaultServer(t, store)
 
 			encryptedUrl := sql.NullString{}
 			if tc.redirectUrl != "" {

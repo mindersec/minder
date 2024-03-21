@@ -74,7 +74,7 @@ var (
 type Server struct {
 	store               db.Store
 	cfg                 *serverconfig.Config
-	evt                 events.Interface
+	evt                 events.Publisher
 	mt                  metrics.Metrics
 	provMt              provtelemetry.ProviderMetrics
 	grpcServer          *grpc.Server
@@ -140,7 +140,7 @@ func WithServerMetrics(mt metrics.Metrics) ServerOption {
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
-	evt *events.Eventer,
+	evt events.Publisher,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,

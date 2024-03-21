@@ -79,14 +79,14 @@ var (
 type repositoryService struct {
 	webhookManager webhooks.WebhookManager
 	store          db.Store
-	eventProducer  events.Interface
+	eventProducer  events.Publisher
 }
 
 // NewRepositoryService creates an instance of the RepositoryService interface
 func NewRepositoryService(
 	webhookManager webhooks.WebhookManager,
 	store db.Store,
-	eventProducer events.Interface,
+	eventProducer events.Publisher,
 ) RepositoryService {
 	return &repositoryService{
 		webhookManager: webhookManager,

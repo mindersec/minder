@@ -192,7 +192,7 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 }
 
 // Publish builds a message.Message and publishes it to the event bus
-func (eiw *EntityInfoWrapper) Publish(evt *events.Eventer) error {
+func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
 	msg, err := eiw.BuildMessage()
 	if err != nil {
 		return err

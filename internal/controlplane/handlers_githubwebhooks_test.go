@@ -89,20 +89,20 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv := newDefaultServer(t, mockStore)
-	defer srv.evt.Close()
+	srv, evt := newDefaultServer(t, mockStore)
+	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
-		err := srv.evt.Run(context.Background())
+		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	<-srv.evt.Running()
+	<-evt.Running()
 
 	hook := srv.HandleGitHubWebHook()
 	port, err := rand.GetRandomPort()
@@ -142,20 +142,20 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv := newDefaultServer(t, mockStore)
-	defer srv.evt.Close()
+	srv, evt := newDefaultServer(t, mockStore)
+	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
-		err := srv.evt.Run(context.Background())
+		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	<-srv.evt.Running()
+	<-evt.Running()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
@@ -208,20 +208,20 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv := newDefaultServer(t, mockStore)
-	defer srv.evt.Close()
+	srv, evt := newDefaultServer(t, mockStore)
+	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
-		err := srv.evt.Run(context.Background())
+		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	<-srv.evt.Running()
+	<-evt.Running()
 
 	providerName := "github"
 	repositoryID := uuid.New()
@@ -333,20 +333,20 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv := newDefaultServer(t, mockStore)
-	defer srv.evt.Close()
+	srv, evt := newDefaultServer(t, mockStore)
+	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	srv.evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
 
 	go func() {
-		err := srv.evt.Run(context.Background())
+		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()
 
-	<-srv.evt.Running()
+	<-evt.Running()
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
