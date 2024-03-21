@@ -30,7 +30,7 @@ import (
 type BundleSource interface {
 	// GetBundle fetches a bundle from the source by namespace and name
 	// ErrBundleNotFound is returned if the bundle cannot be found
-	GetBundle(namespace string, name string) (reader.BundleReader, error)
+	GetBundle(id mindpak.BundleID) (reader.BundleReader, error)
 }
 
 var (
@@ -57,10 +57,10 @@ type singleBundleSource struct {
 	bundle reader.BundleReader
 }
 
-func (s *singleBundleSource) GetBundle(namespace string, name string) (reader.BundleReader, error) {
+func (s *singleBundleSource) GetBundle(id mindpak.BundleID) (reader.BundleReader, error) {
 	metadata := s.bundle.GetMetadata()
-	if namespace == metadata.Namespace && name == metadata.Name {
+	if id.Namespace == metadata.Namespace && id.Name == metadata.Name {
 		return s.bundle, nil
 	}
-	return nil, fmt.Errorf("%w: %s/%s", ErrBundleNotFound, namespace, name)
+	return nil, fmt.Errorf("%w: %s", ErrBundleNotFound, id)
 }
