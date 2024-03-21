@@ -319,11 +319,17 @@ func buildProfileStatus(
 		pfStatus = string(profileStatusList[row.ID].ProfileStatus)
 	}
 
+	displayName := row.DisplayName
+	if displayName == "" {
+		displayName = row.Name
+	}
+
 	return &minderv1.ProfileStatus{
-		ProfileId:     row.ID.String(),
-		ProfileName:   row.Name,
-		ProfileStatus: pfStatus,
-		LastUpdated:   timestamppb.New(row.UpdatedAt),
+		ProfileId:          row.ID.String(),
+		ProfileName:        row.Name,
+		ProfileDisplayName: displayName,
+		ProfileStatus:      pfStatus,
+		LastUpdated:        timestamppb.New(row.UpdatedAt),
 	}
 }
 

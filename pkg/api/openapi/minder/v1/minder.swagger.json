@@ -3495,6 +3495,10 @@
           "type": "string",
           "format": "date-time",
           "title": "last_updated is the last time the profile was updated"
+        },
+        "profileDisplayName": {
+          "type": "string",
+          "title": "profile_display_name is the display name of the profile"
         }
       },
       "title": "get the overall profile status"
@@ -3582,7 +3586,7 @@
         },
         "credentialsState": {
           "type": "string",
-          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_supported\"."
+          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
         }
       }
     },

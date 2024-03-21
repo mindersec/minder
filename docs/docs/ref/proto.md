@@ -1408,6 +1408,7 @@ get the overall profile status
 | profile_name | [string](#string) |  | profile_name is the name of the profile |
 | profile_status | [string](#string) |  | profile_status is the status of the profile |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
+| profile_display_name | [string](#string) |  | profile_display_name is the display name of the profile |
 
 
 <a name="minder-v1-Project"></a>
@@ -1454,7 +1455,7 @@ Project API Objects
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
-| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_supported". |
+| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 
 
 <a name="minder-v1-ProviderParameter"></a>
