@@ -121,6 +121,15 @@ type GitHub interface {
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
 }
 
+// OCI is the interface for interacting with OCI registries
+type OCI interface {
+	Provider
+
+	// ListTags lists the tags available for the given container in the given namespace
+	// for the OCI provider.
+	ListTags(ctx context.Context, name string) ([]string, error)
+}
+
 // ParseAndValidate parses the given provider configuration and validates it.
 func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	if err := json.Unmarshal(rawConfig, to); err != nil {

@@ -858,3 +858,41 @@ func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReview", reflect.TypeOf((*MockGitHub)(nil).UpdateReview), arg0, arg1, arg2, arg3, arg4, arg5)
 }
+
+// MockOCI is a mock of OCI interface.
+type MockOCI struct {
+	ctrl     *gomock.Controller
+	recorder *MockOCIMockRecorder
+}
+
+// MockOCIMockRecorder is the mock recorder for MockOCI.
+type MockOCIMockRecorder struct {
+	mock *MockOCI
+}
+
+// NewMockOCI creates a new mock instance.
+func NewMockOCI(ctrl *gomock.Controller) *MockOCI {
+	mock := &MockOCI{ctrl: ctrl}
+	mock.recorder = &MockOCIMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockOCI) EXPECT() *MockOCIMockRecorder {
+	return m.recorder
+}
+
+// ListTags mocks base method.
+func (m *MockOCI) ListTags(ctx context.Context, name string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTags", ctx, name)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTags indicates an expected call of ListTags.
+func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockOCI)(nil).ListTags), ctx, name)
+}
