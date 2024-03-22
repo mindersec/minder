@@ -26,6 +26,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -234,7 +235,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			tt.setup(mockStore, tt.entityContext)
 
-			stubEventer := StubEventer{}
+			stubEventer := stubeventer.StubEventer{}
 
 			s := &Server{
 				store: mockStore,
