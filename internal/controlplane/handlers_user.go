@@ -171,6 +171,10 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 	for _, proj := range projs {
 		pinfo, err := s.store.GetProjectByID(ctx, proj)
 		if err != nil {
+			// if the project was deleted while iterating, skip it
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
 			return nil, err
 		}
 
