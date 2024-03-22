@@ -19,7 +19,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
@@ -30,7 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/events"
+	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -351,7 +350,7 @@ func TestCreateProfile(t *testing.T) {
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})
-			evts := &StubEventer{}
+			evts := &stubeventer.StubEventer{}
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
@@ -397,46 +396,3 @@ func generateConsistentUUID(t *testing.T, ruleType, ruleName string) uuid.UUID {
 	t.Helper()
 	return uuid.NewSHA1(uuid.Nil, []byte(ruleType+ruleName))
 }
-
-// TODO: replace with gomock
-type EventPayload struct {
-	Project    uuid.UUID
-	Repository int
-}
-
-type StubEventer struct {
-	Sent []*message.Message
-}
-
-// Close implements events.Interface.
-func (*StubEventer) Close() error {
-	panic("unimplemented")
-}
-
-// ConsumeEvents implements events.Interface.
-func (*StubEventer) ConsumeEvents(...events.Consumer) {
-	panic("unimplemented")
-}
-
-// Publish implements events.Interface.
-func (s *StubEventer) Publish(_ string, messages ...*message.Message) error {
-	s.Sent = append(s.Sent, messages...)
-	return nil
-}
-
-// Register implements events.Interface.
-func (*StubEventer) Register(string, message.NoPublishHandlerFunc, ...message.HandlerMiddleware) {
-	panic("unimplemented")
-}
-
-// Run implements events.Interface.
-func (*StubEventer) Run(context.Context) error {
-	panic("unimplemented")
-}
-
-// Running implements events.Interface.
-func (*StubEventer) Running() chan struct{} {
-	panic("unimplemented")
-}
-
-var _ events.Publisher = (*StubEventer)(nil)
