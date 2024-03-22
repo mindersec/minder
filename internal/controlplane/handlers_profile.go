@@ -102,6 +102,13 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
+	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+	// profile yet, reject deletion requests in the API
+	// TODO: Move this deletion logic to ProfileService
+	if profile.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete profile from bundle")
+	}
+
 	err = s.store.DeleteProfile(ctx, db.DeleteProfileParams{
 		ID:        profile.ID,
 		ProjectID: entityCtx.Project.ID,
@@ -385,6 +392,8 @@ func (s *Server) getRuleEvaluationStatuses(
 }
 
 // getRuleEvalStatus is a helper function to get rule evaluation status from a db row
+//
+//nolint:gocyclo
 func getRuleEvalStatus(
 	ctx context.Context,
 	store db.Store,
@@ -446,8 +455,8 @@ func getRuleEvalStatus(
 		st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
 	}
 
-	// If the alert metadata is valid, parse it and set the URL
-	if dbRuleEvalStat.AlertMetadata.Valid {
+	// If the alert is on and its metadata is valid, parse it and set the URL
+	if dbRuleEvalStat.AlertMetadata.Valid && st.Alert.Status == string(db.AlertStatusTypesOn) {
 		alertURL, err := getAlertURLFromMetadata(
 			dbRuleEvalStat.AlertMetadata.RawMessage,
 			fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"]),
@@ -551,7 +560,17 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	params := db.UpdateProfileParams{ID: profileID, ProjectID: entityCtx.Project.ID}
+	// TEMPORARY HACK: Since we do not need to support this patch logic in the
+	// bundles yet, just reject any attempt to patch a profile from a bundle
+	// TODO: Move this patch logic to ProfileService
+	if oldProfile.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot patch profile from bundle")
+	}
+
+	params := db.UpdateProfileParams{
+		ID:        profileID,
+		ProjectID: entityCtx.Project.ID,
+	}
 
 	// we check the pointers explicitly because the zero value of a string is valid
 	// value that means "use default" and we want to distinguish that from "not set in the patch"
@@ -565,6 +584,15 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		params.Alert = db.ValidateAlertType(patch.GetAlert())
 	} else {
 		params.Alert = oldProfile.Alert
+	}
+
+	// if the display name is set in the patch, use it, otherwise use the old display name or the name
+	if patch.GetDisplayName() != "" {
+		params.DisplayName = patch.GetDisplayName()
+	} else if oldProfile.DisplayName != "" {
+		params.DisplayName = oldProfile.DisplayName
+	} else {
+		params.DisplayName = oldProfile.Name
 	}
 
 	// Update top-level profile db object

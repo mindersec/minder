@@ -15,6 +15,12 @@
 
 package server
 
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
 // WebhookConfig is the configuration for our webhook capabilities
 type WebhookConfig struct {
 	// ExternalWebhookURL is the URL that we will send our webhook to
@@ -22,6 +28,22 @@ type WebhookConfig struct {
 	// ExternalPingURL is the URL that we will send our ping to
 	ExternalPingURL string `mapstructure:"external_ping_url"`
 	// WebhookSecret is the secret that we will use to sign our webhook
-	// TODO: Check if this is actually used and needed
 	WebhookSecret string `mapstructure:"webhook_secret"`
+	// PreviousWebhookSecretFile is a reference to a file that contains previous webhook secrets. This is used
+	// in case we are rotating secrets and the external service is still using the old secret. These will not
+	// be used when creating new webhooks.
+	PreviousWebhookSecretFile string `mapstructure:"previous_webhook_secret_file"`
+}
+
+// GetPreviousWebhookSecrets retrieves the previous webhook secrets from a file specified in the WebhookConfig.
+// It reads the contents of the file, splits the data by whitespace, and returns it as a slice of strings.
+func (wc *WebhookConfig) GetPreviousWebhookSecrets() ([]string, error) {
+	data, err := os.ReadFile(wc.PreviousWebhookSecretFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read previous webhook secrets from file: %w", err)
+	}
+
+	// Split the data by whitespace and return it as a slice of strings
+	secrets := strings.Fields(string(data))
+	return secrets, nil
 }

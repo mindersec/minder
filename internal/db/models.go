@@ -493,6 +493,7 @@ type Profile struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	ProviderID     uuid.UUID      `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
+	DisplayName    string         `json:"display_name"`
 }
 
 type ProfileStatus struct {
@@ -541,7 +542,6 @@ type ProviderGithubAppInstallation struct {
 	ProviderID        uuid.NullUUID  `json:"provider_id"`
 	OrganizationID    int64          `json:"organization_id"`
 	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
-	InstallationNonce string         `json:"installation_nonce"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
 }

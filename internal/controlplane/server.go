@@ -74,7 +74,7 @@ var (
 type Server struct {
 	store               db.Store
 	cfg                 *serverconfig.Config
-	evt                 events.Interface
+	evt                 events.Publisher
 	mt                  metrics.Metrics
 	provMt              provtelemetry.ProviderMetrics
 	grpcServer          *grpc.Server
@@ -92,9 +92,6 @@ type Server struct {
 	ruleTypes ruletypes.RuleTypeService
 	repos     github.RepositoryService
 	profiles  profiles.ProfileService
-	// TODO: this will be removed from server when the create repo
-	// flow is refactored
-	webhookManager webhooks.WebhookManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -143,7 +140,7 @@ func WithServerMetrics(mt metrics.Metrics) ServerOption {
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
-	evt *events.Eventer,
+	evt events.Publisher,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,
@@ -166,7 +163,6 @@ func NewServer(
 		profiles:            profileSvc,
 		ruleTypes:           ruletypes.NewRuleTypeService(store),
 		repos:               github.NewRepositoryService(whManager, store, evt),
-		webhookManager:      whManager,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

@@ -1,16 +1,14 @@
 {
   "metadata": {
     "name": "t2",
+    "namespace": "stacklok",
     "version": "v0.0.1",
-    "date": {
-      "seconds": 1709881152,
-      "nanos": 854906417
-    }
+    "date": null
   },
   "files": {
     "profiles": [
       {
-        "name": "branch-protection.yaml",
+        "name": "branch-protection-github-profile.yaml",
         "hashes": {
           "sha-256": "f3682a1cb5ab92c0cc71dd913338bf40a89ec324024f8d3f500be0e2aa4a9ae1"
         }

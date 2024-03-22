@@ -242,7 +242,7 @@ func TestCreateProfile(t *testing.T) {
 		Provider:      provider.Name,
 		ProviderID:    provider.ID,
 		ProjectID:     dbproj.ID,
-		Definition:    []byte(`{"ruleSchema":{}}`),
+		Definition:    []byte(`{"in_entity": "repository","ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,
 	})
 	if err != nil {
@@ -269,7 +269,7 @@ func TestCreateProfile(t *testing.T) {
 				Name: "colon:invalid",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+		wantErr: `Couldn't create profile: validation failed: name may only contain letters, numbers, hyphens and underscores`,
 	}, {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
@@ -439,4 +439,4 @@ func (*StubEventer) Running() chan struct{} {
 	panic("unimplemented")
 }
 
-var _ events.Interface = (*StubEventer)(nil)
+var _ events.Publisher = (*StubEventer)(nil)

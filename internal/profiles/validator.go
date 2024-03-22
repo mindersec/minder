@@ -53,12 +53,22 @@ func (v *Validator) ValidateAndExtractRules(
 
 	// ensure that the profile has all required fields
 	if err := profile.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
 	// ensure that the rule names follow all naming constraints
 	if err := validateRuleNames(profile); err != nil {
 		return nil, err
+	}
+
+	// validate that the rule invocations match what the rule types expect
+	if err := v.validateEntities(ctx, profile, projectID, providerName); err != nil {
+		var violation *engine.RuleValidationError
+		if errors.As(err, &violation) {
+			return nil, util.UserVisibleError(codes.InvalidArgument,
+				"profile failed rule validation: %s", violation)
+		}
+		return nil, status.Errorf(codes.Internal, "error validating profile")
 	}
 
 	// validate that the parameters for the rules match the expected schema
@@ -256,5 +266,53 @@ func validateRuleWithNonEmptyName(
 	}
 
 	ruleNameToType[ruleName] = ruleType
+	return nil
+}
+
+func (v *Validator) validateEntities(
+	ctx context.Context,
+	profile *minderv1.Profile,
+	projectID uuid.UUID,
+	providerName string,
+) error {
+	// validate that the entities in the profile match the entities in the project
+	err := engine.TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
+		// TODO: This will need to be updated to support
+		// the hierarchy tree once that's settled in.
+		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+			Provider:  providerName,
+			ProjectID: projectID,
+			Name:      rule.GetType(),
+		})
+
+		if err != nil {
+			// This is checked elsewhere. We probably want to converge and
+			// do a single check, but that would require a wider refactor.
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil
+			}
+
+			return fmt.Errorf("error getting rule type %s: %w", rule.GetType(), err)
+		}
+
+		ruleTypePB, err := engine.RuleTypePBFromDB(&ruleType)
+		if err != nil {
+			return fmt.Errorf("cannot convert rule type %s to minderv1: %w", ruleType.Name, err)
+		}
+
+		if ruleTypePB.Def.InEntity != entity.ToString() {
+			return &engine.RuleValidationError{
+				Err: fmt.Sprintf("rule type %s expects entity %s, but was given entity %s",
+					ruleTypePB.Name, ruleTypePB.Def.InEntity, entity.ToString()),
+				RuleType: ruleTypePB.Name,
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

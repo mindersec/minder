@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/schemaupdate"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -42,7 +43,20 @@ type RuleTypeService interface {
 	CreateRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider db.Provider,
+		provider *db.Provider,
+		ruleType *pb.RuleType,
+	) (*pb.RuleType, error)
+
+	// CreateSubscriptionRuleType creates rule types in the database
+	// the new rule type is validated
+	// if the rule type already exists - this will return an error
+	// returns the pb definition of the new rule type on success
+	CreateSubscriptionRuleType(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		// TODO: should this be a whole instance of the subscription?
+		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
 	) (*pb.RuleType, error)
 
@@ -53,9 +67,32 @@ type RuleTypeService interface {
 	UpdateRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider db.Provider,
+		provider *db.Provider,
 		ruleType *pb.RuleType,
 	) (*pb.RuleType, error)
+
+	// UpdateSubscriptionRuleType updates rule types in the database
+	// the new rule type is validated, and backwards compatibility verified
+	// if the rule does not already exist - this will return an error
+	// returns the pb definition of the updated rule type on success
+	UpdateSubscriptionRuleType(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		subscriptionID uuid.UUID,
+		ruleType *pb.RuleType,
+	) (*pb.RuleType, error)
+
+	// UpsertSubscriptionRuleType creates the rule type if it does not exist
+	// or updates it if it already exists. This is used in the subscription
+	// logic.
+	UpsertSubscriptionRuleType(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		subscriptionID uuid.UUID,
+		ruleType *pb.RuleType,
+	) error
 }
 
 type ruleTypeService struct {
@@ -82,10 +119,28 @@ var (
 func (r *ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider db.Provider,
+	provider *db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
+	return r.CreateSubscriptionRuleType(ctx, projectID, provider, uuid.Nil, ruleType)
+}
+
+func (r *ruleTypeService) CreateSubscriptionRuleType(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
+	ruleType *pb.RuleType,
+) (*pb.RuleType, error) {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	if err := ruleType.Validate(); err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	if err := namespaces.ValidateNamespacedNameRules(ruleType.GetName(), subscriptionID); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
@@ -115,28 +170,26 @@ func (r *ruleTypeService) CreateRuleType(
 	}
 
 	newDBRecord, err := r.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:          ruleTypeName,
-		Provider:      provider.Name,
-		ProviderID:    provider.ID,
-		ProjectID:     projectID,
-		Description:   ruleType.GetDescription(),
-		Definition:    serializedRule,
-		Guidance:      ruleType.GetGuidance(),
-		SeverityValue: *severity,
+		Name:           ruleTypeName,
+		Provider:       provider.Name,
+		ProviderID:     provider.ID,
+		ProjectID:      projectID,
+		Description:    ruleType.GetDescription(),
+		Definition:     serializedRule,
+		Guidance:       ruleType.GetGuidance(),
+		SeverityValue:  *severity,
+		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
 	}
 
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
+
 	rt, err := engine.RuleTypePBFromDB(&newDBRecord)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", newDBRecord.Name, err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = newDBRecord.Provider
-	logger.BusinessRecord(ctx).Project = newDBRecord.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
 
 	return rt, nil
 }
@@ -144,9 +197,23 @@ func (r *ruleTypeService) CreateRuleType(
 func (r *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider db.Provider,
+	provider *db.Provider,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
+	return r.UpdateSubscriptionRuleType(ctx, projectID, provider, uuid.Nil, ruleType)
+}
+
+func (r *ruleTypeService) UpdateSubscriptionRuleType(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
+	ruleType *pb.RuleType,
+) (*pb.RuleType, error) {
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
 	if err := ruleType.Validate(); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
@@ -154,7 +221,7 @@ func (r *ruleTypeService) UpdateRuleType(
 	ruleTypeName := ruleType.GetName()
 	ruleTypeDef := ruleType.GetDef()
 
-	existingRuleType, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+	oldRuleType, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Provider:  provider.Name,
 		ProjectID: projectID,
 		Name:      ruleTypeName,
@@ -166,9 +233,13 @@ func (r *ruleTypeService) UpdateRuleType(
 		return nil, fmt.Errorf("failed to get rule type: %w", err)
 	}
 
+	if err = namespaces.DoesSubscriptionIDMatch(subscriptionID, oldRuleType.SubscriptionID); err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
 	// extra validation applies when updating rules to make sure the update
 	// does not break profiles which use the rule
-	err = validateRuleUpdate(&existingRuleType, ruleType)
+	err = validateRuleUpdate(&oldRuleType, ruleType)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +255,7 @@ func (r *ruleTypeService) UpdateRuleType(
 	}
 
 	updatedRuleType, err := r.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:            existingRuleType.ID,
+		ID:            oldRuleType.ID,
 		Description:   ruleType.GetDescription(),
 		Definition:    serializedRule,
 		SeverityValue: *severity,
@@ -193,17 +264,40 @@ func (r *ruleTypeService) UpdateRuleType(
 		return nil, fmt.Errorf("failed to update rule type: %w", err)
 	}
 
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: oldRuleType.Name, ID: oldRuleType.ID}
+
 	result, err := engine.RuleTypePBFromDB(&updatedRuleType)
 	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", existingRuleType.Name, err)
+		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", oldRuleType.Name, err)
 	}
 
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = existingRuleType.Provider
-	logger.BusinessRecord(ctx).Project = existingRuleType.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: existingRuleType.Name, ID: existingRuleType.ID}
-
 	return result, nil
+}
+
+func (s *ruleTypeService) UpsertSubscriptionRuleType(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
+	ruleType *pb.RuleType,
+) error {
+	// In future, we may want to refactor the code so that we use upserts
+	// instead of separate create and update methods. For now, simulate upsert
+	// semantics by trying to create, then trying to update.
+	_, err := s.CreateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	if err == nil {
+		// Rule successfully created, we can stop here.
+		return nil
+	} else if !errors.Is(err, ErrRuleAlreadyExists) {
+		return fmt.Errorf("error while creating rule: %w", err)
+	}
+
+	// If we get here: rule already exists. Let's update it.
+	_, err = s.UpdateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	if err != nil {
+		return fmt.Errorf("error while updating rule: %w", err)
+	}
+	return nil
 }
 
 func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {

@@ -1142,6 +1142,75 @@
         "tags": [
           "ProjectsService"
         ]
+      },
+      "put": {
+        "operationId": "ProjectsService_UpdateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectsService_PatchProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "patch",
+            "description": "patch is the patch to apply to the project",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ProjectPatch"
+            }
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
       }
     },
     "/api/v1/projects/entity/reconcile": {
@@ -3324,6 +3393,15 @@
         }
       }
     },
+    "v1PatchProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
+        }
+      }
+    },
     "v1Profile": {
       "type": "object",
       "properties": {
@@ -3390,6 +3468,10 @@
         "version": {
           "type": "string",
           "title": "version is the version of the profile type. In this case, it is \"v1\""
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the profile."
         }
       },
       "description": "Profile defines a profile that is user defined."
@@ -3413,6 +3495,10 @@
           "type": "string",
           "format": "date-time",
           "title": "last_updated is the last time the profile was updated"
+        },
+        "profileDisplayName": {
+          "type": "string",
+          "title": "profile_display_name is the display name of the profile"
         }
       },
       "title": "get the overall profile status"
@@ -3443,6 +3529,19 @@
         }
       },
       "title": "Project API Objects"
+    },
+    "v1ProjectPatch": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
     },
     "v1Provider": {
       "type": "object",
@@ -3484,6 +3583,10 @@
         "parameters": {
           "$ref": "#/definitions/v1ProviderParameter",
           "description": "parameters is the list of parameters that the provider requires."
+        },
+        "credentialsState": {
+          "type": "string",
+          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
         }
       }
     },
@@ -3752,6 +3855,10 @@
         "severity": {
           "$ref": "#/definitions/v1Severity",
           "title": "severity is the severity of the rule"
+        },
+        "ruleEvaluationId": {
+          "type": "string",
+          "title": "rule_evaluation_id is the id of the rule evaluation"
         }
       },
       "title": "get the status of the rules for a given profile"
@@ -3830,6 +3937,32 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        }
+      }
+    },
+    "v1UpdateProjectRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the project is updated."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
+    },
+    "v1UpdateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
         }
       }
     },

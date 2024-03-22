@@ -696,6 +696,30 @@ service ProjectsService {
         };
     }
 
+    rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/projects"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_UPDATE
+        };
+    }
+
+    rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/projects"
+            body: "patch"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_UPDATE
+        };
+    }
+
     rpc CreateEntityReconciliationTask(CreateEntityReconciliationTaskRequest) returns (CreateEntityReconciliationTaskResponse) {
         option (google.api.http) = {
             post: "/api/v1/projects/entity/reconcile"
@@ -1089,6 +1113,9 @@ message ProfileStatus {
     string profile_status = 3;
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
+
+    // profile_display_name is the display name of the profile
+    string profile_display_name = 5;
 }
 
 // EvalResultAlert holds the alert details for a given rule evaluation
@@ -1137,6 +1164,8 @@ message RuleEvaluationStatus {
     EvalResultAlert alert = 15;
     // severity is the severity of the rule
     Severity severity = 16;
+    // rule_evaluation_id is the id of the rule evaluation
+    string rule_evaluation_id = 17;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -1206,6 +1235,14 @@ message RESTProviderConfig {
 message GitHubProviderConfig {
     // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
 	string endpoint = 1;
+}
+
+// GitHubAppProviderConfig contains the configuration for the GitHub App provider
+message GitHubAppProviderConfig {
+  // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
+  string endpoint = 1;
+  reserved 2, 3, 4;
+  reserved "app_name", "app_id", "user_id";
 }
 
 // Context defines the context in which a rule is evaluated.
@@ -1717,6 +1754,9 @@ message Profile {
 
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11;
+
+    // display_name is the display name of the profile.
+    string display_name = 13;
 }
 
 message ListProjectsRequest {
@@ -1748,6 +1788,47 @@ message DeleteProjectRequest {
 message DeleteProjectResponse {
     // project_id is the id of the project that was deleted.
     string project_id = 1;
+}
+
+message UpdateProjectRequest {
+    // context is the context in which the project is updated.
+    Context context = 1;
+
+    // display_name is the display name of the project to update.
+    string display_name = 2;
+
+    // description is the description of the project to update.
+    string description = 3;
+}
+
+message UpdateProjectResponse {
+    // project is the project that was updated.
+    Project project = 1;
+}
+
+message ProjectPatch {
+    // display_name is the display name of the project to update.
+    optional string display_name = 1;
+
+    // description is the description of the project to update.
+    optional string description = 2;
+}
+
+message PatchProjectRequest {
+    // context is the context in which the project is updated.
+    Context context = 1;
+
+    // patch is the patch to apply to the project
+    ProjectPatch patch = 3;
+
+    // needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/
+    // is not exposed to the API user
+    google.protobuf.FieldMask update_mask = 4;
+}
+
+message PatchProjectResponse {
+    // project is the project that was updated.
+    Project project = 1;
 }
 
 message CreateEntityReconciliationTaskRequest {
@@ -1956,4 +2037,8 @@ message Provider {
 
     // parameters is the list of parameters that the provider requires.
     ProviderParameter parameters = 8;
+
+    // credentials_state is the state of the credentials for the provider.
+    // This is an output-only field. It may be: "set", "unset", "not_applicable".
+    string credentials_state = 9;
 }

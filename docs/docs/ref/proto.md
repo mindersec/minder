@@ -105,6 +105,8 @@ replies with OK
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
 | CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
 | DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
+| UpdateProject | [UpdateProjectRequest](#minder-v1-UpdateProjectRequest) | [UpdateProjectResponse](#minder-v1-UpdateProjectResponse) |  |
+| PatchProject | [PatchProjectRequest](#minder-v1-PatchProjectRequest) | [PatchProjectResponse](#minder-v1-PatchProjectResponse) |  |
 | CreateEntityReconciliationTask | [CreateEntityReconciliationTaskRequest](#minder-v1-CreateEntityReconciliationTaskRequest) | [CreateEntityReconciliationTaskResponse](#minder-v1-CreateEntityReconciliationTaskResponse) |  |
 
 
@@ -930,6 +932,17 @@ GitHubAppParams is the parameters for a GitHub App provider.
 | organization_id | [int64](#int64) |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
 
 
+<a name="minder-v1-GitHubAppProviderConfig"></a>
+
+#### GitHubAppProviderConfig
+GitHubAppProviderConfig contains the configuration for the GitHub App provider
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+
+
 <a name="minder-v1-GitHubProviderConfig"></a>
 
 #### GitHubProviderConfig
@@ -1242,6 +1255,30 @@ ListRuleTypesResponse is the response to list rule types.
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
+<a name="minder-v1-PatchProjectRequest"></a>
+
+#### PatchProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| patch | [ProjectPatch](#minder-v1-ProjectPatch) |  | patch is the patch to apply to the project |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+
+
+<a name="minder-v1-PatchProjectResponse"></a>
+
+#### PatchProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
+
+
 <a name="minder-v1-PrContents"></a>
 
 #### PrContents
@@ -1339,6 +1376,7 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
 | type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
 | version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
+| display_name | [string](#string) |  | display_name is the display name of the profile. |
 
 
 <a name="minder-v1-Profile-Rule"></a>
@@ -1367,6 +1405,7 @@ get the overall profile status
 | profile_name | [string](#string) |  | profile_name is the name of the profile |
 | profile_status | [string](#string) |  | profile_status is the status of the profile |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
+| profile_display_name | [string](#string) |  | profile_display_name is the display name of the profile |
 
 
 <a name="minder-v1-Project"></a>
@@ -1385,6 +1424,18 @@ Project API Objects
 | display_name | [string](#string) |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
 
 
+<a name="minder-v1-ProjectPatch"></a>
+
+#### ProjectPatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| display_name | [string](#string) | optional | display_name is the display name of the project to update. |
+| description | [string](#string) | optional | description is the description of the project to update. |
+
+
 <a name="minder-v1-Provider"></a>
 
 #### Provider
@@ -1401,6 +1452,7 @@ Project API Objects
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
+| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 
 
 <a name="minder-v1-ProviderParameter"></a>
@@ -1633,6 +1685,7 @@ get the status of the rules for a given profile
 | rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
 | alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
 | severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
+| rule_evaluation_id | [string](#string) |  | rule_evaluation_id is the id of the rule evaluation |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
@@ -1919,6 +1972,30 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
+
+
+<a name="minder-v1-UpdateProjectRequest"></a>
+
+#### UpdateProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| display_name | [string](#string) |  | display_name is the display name of the project to update. |
+| description | [string](#string) |  | description is the description of the project to update. |
+
+
+<a name="minder-v1-UpdateProjectResponse"></a>
+
+#### UpdateProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
 
 
 <a name="minder-v1-UpdateRuleTypeRequest"></a>

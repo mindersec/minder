@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -49,7 +50,9 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient)
+	tl := zerolog.NewTestWriter(t)
+	l := zerolog.New(tl)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -93,7 +96,9 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient)
+	tl := zerolog.NewTestWriter(t)
+	l := zerolog.New(tl)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -139,7 +144,9 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient)
+	tl := zerolog.NewTestWriter(t)
+	l := zerolog.New(tl)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -198,7 +205,9 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient)
+	tl := zerolog.NewTestWriter(t)
+	l := zerolog.New(tl)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
 	assert.NoError(t, err)
 
 	// Ensure there are two calls to the orphan cleanup function

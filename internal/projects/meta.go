@@ -16,6 +16,12 @@
 // Package projects contains utilities for working with projects.
 package projects
 
+import (
+	"encoding/json"
+
+	"github.com/stacklok/minder/internal/db"
+)
+
 const (
 	// MinderMetadataVersion is the version of the metadata format.
 	MinderMetadataVersion = "v1alpha1"
@@ -25,16 +31,53 @@ const (
 type Metadata struct {
 	Version      string `json:"version"`
 	SelfEnrolled bool   `json:"self_enrolled"`
-	Description  string `json:"description"`
+
+	// This will be deprecated in favor of PublicMetadataV1.
+	Description string `json:"description"`
 
 	// TODO: Add more metadata fields here.
 	// e.g. vendor-specific fields
+
+	// Public is a field that is meant to be read by other systems.
+	// It will be exposed to the public, e.g. via a UI.
+	Public PublicMetadataV1 `json:"public"`
+}
+
+// PublicMetadataV1 contains public metadata relevant for a project.
+type PublicMetadataV1 struct {
+	Description string `json:"description"`
+	DisplayName string `json:"display_name"`
 }
 
 // NewSelfEnrolledMetadata returns a new Metadata object with the SelfEnrolled field set to true.
-func NewSelfEnrolledMetadata() Metadata {
+func NewSelfEnrolledMetadata(projectName string) Metadata {
 	return Metadata{
 		Version:      MinderMetadataVersion,
 		SelfEnrolled: true,
+		// These will be editable by the user.
+		Public: PublicMetadataV1{
+			Description: "A self-enrolled project.",
+			DisplayName: projectName,
+		},
 	}
+}
+
+// ParseMetadata parses the given JSON data into a Metadata object.
+func ParseMetadata(proj *db.Project) (*Metadata, error) {
+	var meta Metadata
+	if err := json.Unmarshal(proj.Metadata, &meta); err != nil {
+		return nil, err
+	}
+
+	// default the display name to the project name if it's not set
+	if meta.Public.DisplayName == "" {
+		meta.Public.DisplayName = proj.Name
+	}
+
+	return &meta, nil
+}
+
+// SerializeMetadata serializes the given Metadata object into JSON.
+func SerializeMetadata(meta *Metadata) ([]byte, error) {
+	return json.Marshal(meta)
 }

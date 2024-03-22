@@ -141,12 +141,23 @@ func HandleEvents(
 }
 
 // DeleteUser deletes a user and all their associated data from the minder database
-func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) error {
+func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) (retErr error) {
+	l := zerolog.Ctx(ctx).With().
+		Str("operation", "delete").
+		Str("subject", userId).
+		Logger()
+
 	tx, err := store.BeginTransaction()
 	if err != nil {
 		return err
 	}
-	defer store.Rollback(tx)
+	defer func() {
+		if retErr != nil {
+			if err := store.Rollback(tx); err != nil && !errors.Is(err, sql.ErrTxDone) {
+				l.Debug().Msgf("error rolling back transaction: %v", err)
+			}
+		}
+	}()
 	qtx := store.GetQuerierWithTransaction(tx)
 
 	var userDBID *int32
@@ -157,6 +168,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 		return fmt.Errorf("error retrieving user %v", err)
 	} else if err == nil {
 		userDBID = &usr.ID
+		l = l.With().Int32("user_id", usr.ID).Logger()
 	}
 
 	// Fetching the projects for user before the deletion was made.
@@ -167,6 +179,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 		return fmt.Errorf("error getting projects for user %v", err)
 	}
 
+	l.Debug().Msg("deleting user from authorization system")
 	// We delete the user from the authorization system first
 	if err := authzClient.DeleteUser(ctx, userId); err != nil {
 		return fmt.Errorf("error deleting authorization tuple %v", err)
@@ -174,28 +187,22 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 
 	// We only delete the user if it still exists in the database
 	if userDBID != nil {
+		l.Debug().Msg("deleting user from database")
 		if err := qtx.DeleteUser(ctx, *userDBID); err != nil {
 			return fmt.Errorf("error deleting user %v", err)
 		}
 	}
 
 	for _, proj := range projs {
-		// Given that we've deleted the user from the authorization system,
-		// we can now check if there are any role assignments for the project.
-		as, err := authzClient.AssignmentsToProject(ctx, proj)
-		if err != nil {
-			return fmt.Errorf("error getting role assignments for project %v", err)
-		}
-
-		if len(as) == 0 {
-			if err := projects.CleanUpUnmanagedProjects(ctx, proj, qtx, authzClient); err != nil {
-				return fmt.Errorf("error deleting project %v", err)
-			}
+		l.Debug().Str("project_id", proj.String()).Msg("cleaning up project")
+		if err := projects.CleanUpUnmanagedProjects(ctx, proj, qtx, authzClient, l); err != nil {
+			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
 
 	// organizations will be cleaned up in a migration after this change
 
+	l.Debug().Msg("committing account deletion")
 	if err = store.Commit(tx); err != nil {
 		return fmt.Errorf("error committing account deletion %w", err)
 	}
