@@ -28,7 +28,7 @@ INSERT INTO providers (
 type CreateProviderParams struct {
 	Name       string              `json:"name"`
 	ProjectID  uuid.UUID           `json:"project_id"`
-	Class      ProviderClass       `json:"class"`
+	Class      NullProviderClass   `json:"class"`
 	Implements []ProviderType      `json:"implements"`
 	Definition json.RawMessage     `json:"definition"`
 	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
@@ -170,7 +170,7 @@ const globalListProvidersByClass = `-- name: GlobalListProvidersByClass :many
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE class = $1
 `
 
-func (q *Queries) GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error) {
+func (q *Queries) GlobalListProvidersByClass(ctx context.Context, class NullProviderClass) ([]Provider, error) {
 	rows, err := q.db.QueryContext(ctx, globalListProvidersByClass, class)
 	if err != nil {
 		return nil, err

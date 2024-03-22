@@ -122,6 +122,7 @@ replies with OK
 | CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
 | DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
 | GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
+| ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -1088,6 +1089,28 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-ListProviderClassesRequest"></a>
+
+#### ListProviderClassesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider classes are evaluated. |
+
+
+<a name="minder-v1-ListProviderClassesResponse"></a>
+
+#### ListProviderClassesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider_classes | [string](#string) | repeated | provider_classes is the list of provider classes. |
 
 
 <a name="minder-v1-ListProvidersRequest"></a>
