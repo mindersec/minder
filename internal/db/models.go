@@ -494,6 +494,7 @@ type Profile struct {
 	ProviderID     uuid.UUID      `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
 	DisplayName    string         `json:"display_name"`
+	Labels         []string       `json:"labels"`
 }
 
 type ProfileStatus struct {
