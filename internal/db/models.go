@@ -238,8 +238,8 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 type ProviderClass string
 
 const (
-	ProviderClassGithub ProviderClass = "github"
-	ProviderClassGhApp  ProviderClass = "gh-app"
+	ProviderClassGithub    ProviderClass = "github"
+	ProviderClassGithubApp ProviderClass = "github-app"
 )
 
 func (e *ProviderClass) Scan(src interface{}) error {
