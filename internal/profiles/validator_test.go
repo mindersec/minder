@@ -120,6 +120,13 @@ func TestValidatorScenarios(t *testing.T) {
 			// if rule name is empty in the profile, it should be set to the name of the rule type by the validator
 			ExpectedResult: expectation(ruleTypeName),
 		},
+		{
+			Name: "Validator rejects profile with with rule type that doesn't match entity",
+			// Note that this should fail since the default rule definition we have is for a repo entity and not for artifacts
+			Profile:       makeProfile(withBasicProfileData, withArtifactRules(makeRule(withRuleDefs, withRuleParams))),
+			DBSetup:       dbReturnsRuleType,
+			ExpectedError: "expects entity repository, but was given entity artifact",
+		},
 	}
 
 	// some of this boilerplate can probably be shared across multiple tests
@@ -172,10 +179,17 @@ func withRules(rules ...*minderv1.Profile_Rule) func(*minderv1.Profile) {
 	}
 }
 
+func withArtifactRules(rules ...*minderv1.Profile_Rule) func(*minderv1.Profile) {
+	return func(profile *minderv1.Profile) {
+		profile.Artifact = rules
+	}
+}
+
 func dbReturnsError(store *mockdb.MockStore) {
 	store.EXPECT().
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
-		Return(db.RuleType{}, sql.ErrNoRows)
+		Return(db.RuleType{}, sql.ErrNoRows).
+		AnyTimes()
 }
 
 func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStore) {
@@ -188,7 +202,8 @@ func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStor
 
 		store.EXPECT().
 			GetRuleTypeByName(gomock.Any(), gomock.Any()).
-			Return(ruleType, nil)
+			Return(ruleType, nil).
+			AnyTimes()
 	}
 }
 

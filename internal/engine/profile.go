@@ -116,6 +116,26 @@ func GetRulesForEntity(p *pb.Profile, entity pb.Entity) ([]*pb.Profile_Rule, err
 	}
 }
 
+// TraverseRuleTypesForEntities traverses the rules for the given entities and calls the given function
+func TraverseRuleTypesForEntities(p *pb.Profile, fn func(pb.Entity, *pb.Profile_Rule) error) error {
+	pairs := map[pb.Entity][]*pb.Profile_Rule{
+		pb.Entity_ENTITY_REPOSITORIES:       p.Repository,
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: p.BuildEnvironment,
+		pb.Entity_ENTITY_ARTIFACTS:          p.Artifact,
+		pb.Entity_ENTITY_PULL_REQUESTS:      p.PullRequest,
+	}
+
+	for entity, rules := range pairs {
+		for _, rule := range rules {
+			if err := fn(entity, rule); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // TraverseAllRulesForPipeline traverses all rules for the given pipeline profile
 func TraverseAllRulesForPipeline(p *pb.Profile, fn func(*pb.Profile_Rule) error) error {
 	if err := TraverseRules(p.Repository, fn); err != nil {
