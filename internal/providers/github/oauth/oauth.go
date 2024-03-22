@@ -137,26 +137,6 @@ func (o *GitHubOAuthDelegate) GetOwner() string {
 	return o.owner
 }
 
-// ListUserRepositories returns a list of all repositories for the authenticated user
-func (o *GitHubOAuthDelegate) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	repos, err := o.ListAllRepositories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
-// ListOrganizationRepositories returns a list of all repositories for the organization
-func (o *GitHubOAuthDelegate) ListOrganizationRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	repos, err := o.ListAllRepositories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
 func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {

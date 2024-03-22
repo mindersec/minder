@@ -142,26 +142,6 @@ func (_ *GitHubAppDelegate) GetOwner() string {
 	return ""
 }
 
-// ListUserRepositories returns a list of repositories for the owner
-func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
-// ListOrganizationRepositories returns a list of repositories for the organization
-func (g *GitHubAppDelegate) ListOrganizationRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation
 func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
 	listOpt := &gogithub.ListOptions{

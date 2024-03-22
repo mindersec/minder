@@ -68,8 +68,6 @@ var _ provifv1.GitHub = (*GitHub)(nil)
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
 type Delegate interface {
 	GetCredential() provifv1.GitHubCredential
-	ListUserRepositories(context.Context) ([]*minderv1.Repository, error)
-	ListOrganizationRepositories(context.Context) ([]*minderv1.Repository, error)
 	ListAllRepositories(context.Context) ([]*github.Repository, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
@@ -635,16 +633,6 @@ func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.Push
 	}
 	c.delegate.GetCredential().AddToPushOptions(pushOptions, login)
 	return nil
-}
-
-// ListUserRepositories lists all repositories for the owner
-func (c *GitHub) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	return c.delegate.ListUserRepositories(ctx)
-}
-
-// ListOrganizationRepsitories lists all repositories for the organization
-func (c *GitHub) ListOrganizationRepsitories(ctx context.Context) ([]*minderv1.Repository, error) {
-	return c.delegate.ListOrganizationRepositories(ctx)
 }
 
 // ListAllRepositories lists all repositories the credential has access to
