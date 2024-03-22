@@ -17,11 +17,14 @@
 package controlplane
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime"
 	"net/http"
 	"sort"
 	"strconv"
@@ -32,10 +35,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -132,7 +135,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		segments := strings.Split(r.URL.Path, "/")
 		_ = segments[len(segments)-1]
 
-		rawWBPayload, err := github.ValidatePayload(r, []byte(viper.GetString("webhook-config.webhook_secret")))
+		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
 		if err != nil {
 			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -184,6 +187,72 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func validatePayloadSignature(r *http.Request, wc *server.WebhookConfig) (payload []byte, err error) {
+	var br *bytes.Reader
+	br, err = readerFromRequest(r)
+	if err != nil {
+		return
+	}
+
+	signature := r.Header.Get(github.SHA256SignatureHeader)
+	if signature == "" {
+		signature = r.Header.Get(github.SHA1SignatureHeader)
+	}
+	contentType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil {
+		return
+	}
+
+	payload, err = github.ValidatePayloadFromBody(contentType, br, signature, []byte(wc.WebhookSecret))
+	if err == nil {
+		return
+	}
+
+	payload, err = validatePreviousSecrets(r.Context(), signature, contentType, br, wc)
+	return
+}
+
+func readerFromRequest(r *http.Request) (*bytes.Reader, error) {
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(b), nil
+}
+
+func validatePreviousSecrets(
+	ctx context.Context,
+	signature, contentType string,
+	br *bytes.Reader,
+	wc *server.WebhookConfig,
+) (payload []byte, err error) {
+	previousSecrets := []string{}
+	if wc.PreviousWebhookSecretFile != "" {
+		previousSecrets, err = wc.GetPreviousWebhookSecrets()
+		if err != nil {
+			return
+		}
+	}
+
+	for _, prevSecret := range previousSecrets {
+		_, err = br.Seek(0, io.SeekStart)
+		if err != nil {
+			return
+		}
+		payload, err = github.ValidatePayloadFromBody(contentType, br, signature, []byte(prevSecret))
+		if err == nil {
+			zerolog.Ctx(ctx).Warn().Msg("used previous secret to validate payload")
+			return
+		}
+	}
+
+	return
 }
 
 func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
