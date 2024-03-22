@@ -26,9 +26,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/authz"
+	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/marketplaces"
+	"github.com/stacklok/minder/internal/marketplaces/types"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/pkg/mindpak"
 )
 
 var (
@@ -40,9 +44,15 @@ var (
 func ProvisionSelfEnrolledProject(
 	ctx context.Context,
 	authzClient authz.Client,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 	projectName string,
 	userSub string,
+	// Passing these as arguments to minimize code changes. In future, it may
+	// make sense to hang these project create/delete methods off a struct or
+	// interface to reduce the amount of dependencies which need to be passed
+	// to individual methods.
+	marketplace marketplaces.Marketplace,
+	profilesCfg server.DefaultProfilesConfig,
 ) (outproj *pb.Project, projerr error) {
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
@@ -92,7 +102,7 @@ func ProvisionSelfEnrolledProject(
 	}
 
 	// Create GitHub provider
-	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
+	dbProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       github.Github,
 		ProjectID:  project.ID,
 		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
@@ -103,5 +113,20 @@ func ProvisionSelfEnrolledProject(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
+
+	// Enable healthcheck in the project.
+	// For now, we subscribe to a single bundle and a single profile.
+	// Both are specified in the service config.
+	projectContext := types.NewProjectContext(project.ID, &dbProvider)
+	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
+	if err := marketplace.Subscribe(ctx, projectContext, bundleID, qtx); err != nil {
+		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
+	}
+	for _, profileName := range profilesCfg.GetProfiles() {
+		if err := marketplace.AddProfile(ctx, projectContext, bundleID, profileName, qtx); err != nil {
+			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
+		}
+	}
+
 	return &prj, nil
 }

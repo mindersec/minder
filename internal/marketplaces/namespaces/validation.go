@@ -51,7 +51,7 @@ func ValidateNamespacedNameRules(name string, subscriptionID uuid.UUID) error {
 //
 //	subscription ID.
 //
-// B) If the subscription ID from the DB is null, the subscriptionID parameterß
+// B) If the subscription ID from the DB is null, the subscriptionID parameter
 //
 //	must be equal to uuid.Nil
 //

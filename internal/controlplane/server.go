@@ -54,6 +54,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -87,10 +88,11 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes ruletypes.RuleTypeService
-	repos     github.RepositoryService
-	profiles  profiles.ProfileService
-	providers providers.ProviderService
+	ruleTypes   ruletypes.RuleTypeService
+	repos       github.RepositoryService
+	profiles    profiles.ProfileService
+	providers   providers.ProviderService
+	marketplace marketplaces.Marketplace
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -148,10 +150,17 @@ func NewServer(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
+
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	profileSvc := profiles.NewProfileService(evt)
 	mt := metrics.NewNoopMetrics()
 	provMt := provtelemetry.NewNoopMetrics()
+	ruleSvc := ruletypes.NewRuleTypeService()
+	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create marketplace: %w", err)
+	}
+
 	s := &Server{
 		store:               store,
 		cfg:                 cfg,
@@ -162,8 +171,9 @@ func NewServer(
 		mt:                  mt,
 		provMt:              provMt,
 		profiles:            profileSvc,
-		ruleTypes:           ruletypes.NewRuleTypeService(),
+		ruleTypes:           ruleSvc,
 		repos:               github.NewRepositoryService(whManager, store, evt),
+		marketplace:         marketplace,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

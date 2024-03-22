@@ -26,7 +26,9 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
+	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/projects"
 )
 
@@ -49,7 +51,15 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(ctx, authzClient, mockStore, "test-proj", "test-user")
+	_, err := projects.ProvisionSelfEnrolledProject(
+		ctx,
+		authzClient,
+		mockStore,
+		"test-proj",
+		"test-user",
+		marketplaces.NewNoopMarketplace(),
+		server.DefaultProfilesConfig{},
+	)
 	assert.NoError(t, err)
 
 	t.Log("ensure project permission was written")
@@ -70,7 +80,15 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(ctx, authzClient, mockStore, "test-proj", "test-user")
+	_, err := projects.ProvisionSelfEnrolledProject(
+		ctx,
+		authzClient,
+		mockStore,
+		"test-proj",
+		"test-user",
+		marketplaces.NewNoopMarketplace(),
+		server.DefaultProfilesConfig{},
+	)
 	assert.Error(t, err)
 
 	t.Log("ensure project permission was cleaned up")

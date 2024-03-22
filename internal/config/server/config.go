@@ -31,20 +31,21 @@ import (
 
 // Config is the top-level configuration structure.
 type Config struct {
-	HTTPServer    HTTPServerConfig      `mapstructure:"http_server"`
-	GRPCServer    GRPCServerConfig      `mapstructure:"grpc_server"`
-	MetricServer  MetricServerConfig    `mapstructure:"metric_server"`
-	LoggingConfig LoggingConfig         `mapstructure:"logging"`
-	Tracing       TracingConfig         `mapstructure:"tracing"`
-	Metrics       MetricsConfig         `mapstructure:"metrics"`
-	Database      config.DatabaseConfig `mapstructure:"database"`
-	Identity      IdentityConfigWrapper `mapstructure:"identity"`
-	Auth          AuthConfig            `mapstructure:"auth"`
-	WebhookConfig WebhookConfig         `mapstructure:"webhook-config"`
-	Events        EventConfig           `mapstructure:"events"`
-	Authz         AuthzConfig           `mapstructure:"authz"`
-	Provider      ProviderConfig        `mapstructure:"provider"`
-	Marketplace   MarketplaceConfig     `mapstructure:"marketplace"`
+	HTTPServer      HTTPServerConfig      `mapstructure:"http_server"`
+	GRPCServer      GRPCServerConfig      `mapstructure:"grpc_server"`
+	MetricServer    MetricServerConfig    `mapstructure:"metric_server"`
+	LoggingConfig   LoggingConfig         `mapstructure:"logging"`
+	Tracing         TracingConfig         `mapstructure:"tracing"`
+	Metrics         MetricsConfig         `mapstructure:"metrics"`
+	Database        config.DatabaseConfig `mapstructure:"database"`
+	Identity        IdentityConfigWrapper `mapstructure:"identity"`
+	Auth            AuthConfig            `mapstructure:"auth"`
+	WebhookConfig   WebhookConfig         `mapstructure:"webhook-config"`
+	Events          EventConfig           `mapstructure:"events"`
+	Authz           AuthzConfig           `mapstructure:"authz"`
+	Provider        ProviderConfig        `mapstructure:"provider"`
+	Marketplace     MarketplaceConfig     `mapstructure:"marketplace"`
+	DefaultProfiles DefaultProfilesConfig `mapstructure:"default_profiles"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

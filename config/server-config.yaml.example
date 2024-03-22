@@ -89,3 +89,20 @@ authz:
   auth:
     # Set to token for production
     method: none
+
+# Configuration for the default profile functionality
+# Defaults to disabled if not defined
+#marketplace:
+#  enabled: true
+#  type: local
+#  sources:
+#    - type: tgz
+#      location: ./bundles/healthcheck.tar.gz
+#
+#default_profiles:
+#  enabled: true
+#  profiles:
+#    - stacklok-health-check
+#  bundle:
+#    namespace: stacklok
+#    name: healthcheck
