@@ -95,7 +95,7 @@ func ProvisionSelfEnrolledProject(
 	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       github.Github,
 		ProjectID:  project.ID,
-		Class:      db.ProviderClassGithub,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
 		Implements: github.Implements,
 		Definition: json.RawMessage(`{"github": {}}`),
 		AuthFlows:  github.AuthorizationFlows,

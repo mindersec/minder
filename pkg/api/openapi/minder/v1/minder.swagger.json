@@ -1239,6 +1239,44 @@
         ]
       }
     },
+    "/api/v1/provider_classes": {
+      "get": {
+        "operationId": "ProvidersService_ListProviderClasses",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListProviderClassesResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/providers": {
       "get": {
         "operationId": "ProvidersService_ListProviders",
@@ -3300,6 +3338,18 @@
             "type": "object",
             "$ref": "#/definitions/v1Project"
           }
+        }
+      }
+    },
+    "v1ListProviderClassesResponse": {
+      "type": "object",
+      "properties": {
+        "providerClasses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "provider_classes is the list of provider classes."
         }
       }
     },

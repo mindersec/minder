@@ -70,6 +70,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
 			Config:           cfg,
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider),
+			Class:            providers.GetProviderClassString(prov),
 		},
 	}, nil
 }
@@ -132,6 +133,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
 			Config:           cfg,
+			Class:            providers.GetProviderClassString(p),
 		})
 	}
 
@@ -146,6 +148,17 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 	return &minderv1.ListProvidersResponse{
 		Providers: provs,
 		Cursor:    cursor,
+	}, nil
+}
+
+// ListProviderClasses lists the provider classes available in the system.
+func (_ *Server) ListProviderClasses(
+	_ context.Context, _ *minderv1.ListProviderClassesRequest,
+) (*minderv1.ListProviderClassesResponse, error) {
+	// Note: New provider classes should be added to the providers package.
+	classes := providers.ListProviderClasses()
+	return &minderv1.ListProviderClassesResponse{
+		ProviderClasses: classes,
 	}, nil
 }
 

@@ -794,6 +794,17 @@ service ProvidersService {
             target_resource: TARGET_RESOURCE_USER
         };
     }
+
+    rpc ListProviderClasses (ListProviderClassesRequest) returns (ListProviderClassesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/provider_classes"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
 }
 
 message CheckHealthRequest {
@@ -1967,6 +1978,16 @@ message GetUnclaimedProvidersResponse {
     // to assign existing unclaimed credentials to a new provider in the project
     // via CreateProvider().
     repeated ProviderParameter providers = 1;
+}
+
+message ListProviderClassesRequest {
+    // context is the context in which the provider classes are evaluated.
+    Context context = 1;
+}
+
+message ListProviderClassesResponse {
+    // provider_classes is the list of provider classes.
+    repeated string provider_classes = 1;
 }
 
 message AuthorizationParams {
