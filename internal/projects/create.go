@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -77,7 +76,7 @@ func ProvisionSelfEnrolledProject(
 	})
 	if err != nil {
 		// Check if `project_name_lower_idx` unique constraint was violated
-		if strings.Contains(err.Error(), "project_name_lower_idx") {
+		if db.ErrIsUniqueViolation(err) {
 			return nil, ErrProjectAlreadyExists
 		}
 		return nil, fmt.Errorf("failed to create default project: %v", err)

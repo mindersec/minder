@@ -19,7 +19,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -131,7 +130,7 @@ func (s *Server) CreateProject(
 		Metadata: json.RawMessage(`{}`),
 	})
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		if db.ErrIsUniqueViolation(err) {
 			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", req.Name)
 		}
 		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
