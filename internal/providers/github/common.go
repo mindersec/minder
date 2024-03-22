@@ -58,7 +58,6 @@ var (
 // GitHub is the struct that contains the shared GitHub client operations
 type GitHub struct {
 	client   *github.Client
-	owner    string
 	cache    ratecache.RestClientCache
 	delegate Delegate
 }
@@ -76,18 +75,17 @@ type Delegate interface {
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
+	GetOwner() string
 }
 
 // NewGitHub creates a new GitHub client
 func NewGitHub(
 	client *github.Client,
-	owner string,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
 ) *GitHub {
 	return &GitHub{
 		client:   client,
-		owner:    owner,
 		cache:    cache,
 		delegate: delegate,
 	}
@@ -465,10 +463,7 @@ func (c *GitHub) GetCredential() provifv1.GitHubCredential {
 
 // GetOwner returns the owner of the repository
 func (c *GitHub) GetOwner() string {
-	if c.owner != "" {
-		return c.owner
-	}
-	return ""
+	return c.delegate.GetOwner()
 }
 
 // ListHooks lists all Hooks for the specified repository.
@@ -688,7 +683,7 @@ func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 // the rate-limited client.
 func (c *GitHub) setAsRateLimited() {
 	if c.cache != nil {
-		c.cache.Set(c.owner, c.delegate.GetCredential().GetCacheKey(), db.ProviderTypeGithub, c)
+		c.cache.Set(c.delegate.GetOwner(), c.delegate.GetCredential().GetCacheKey(), db.ProviderTypeGithub, c)
 	}
 }
 
@@ -724,7 +719,7 @@ func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.Rat
 			waitTime = time.Until(resetTime)
 		}
 
-		logRateLimitError(logger, "RateLimitError", waitTime, c.owner, err.Response)
+		logRateLimitError(logger, "RateLimitError", waitTime, c.delegate.GetOwner(), err.Response)
 
 		if waitTime > MaxRateLimitWait {
 			logger.Debug().Msgf("rate limit reset time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
@@ -754,7 +749,7 @@ func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.Abuse
 		waitTime = *retryAfter
 	}
 
-	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.owner, err.Response)
+	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.delegate.GetOwner(), err.Response)
 
 	if waitTime > MaxRateLimitWait {
 		logger.Debug().Msgf("abuse rate limit wait time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)

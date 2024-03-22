@@ -105,7 +105,6 @@ func NewGitHubAppProvider(
 
 	return github.NewGitHub(
 		ghClient,
-		"",
 		restClientCache,
 		oauthDelegate,
 	), nil
@@ -136,6 +135,11 @@ var _ github.Delegate = (*GitHubAppDelegate)(nil)
 // GetCredential returns the GitHub App installation credential
 func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 	return g.credential
+}
+
+// GetOwner returns the owner filter
+func (_ *GitHubAppDelegate) GetOwner() string {
+	return ""
 }
 
 // ListUserRepositories returns a list of repositories for the owner

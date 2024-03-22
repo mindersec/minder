@@ -103,7 +103,6 @@ func NewRestClient(
 
 	return github.NewGitHub(
 		ghClient,
-		owner,
 		restClientCache,
 		oauthDelegate,
 	), nil
@@ -131,6 +130,11 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, erro
 // GetCredential returns the GitHub OAuth credential
 func (o *GitHubOAuthDelegate) GetCredential() provifv1.GitHubCredential {
 	return o.credential
+}
+
+// GetOwner returns the owner filter
+func (o *GitHubOAuthDelegate) GetOwner() string {
+	return o.owner
 }
 
 // ListUserRepositories returns a list of all repositories for the authenticated user
