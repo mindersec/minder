@@ -495,13 +495,8 @@ func (*StubGitHub) GetCredential() provinfv1.GitHubCredential {
 	panic("unimplemented")
 }
 
-// ListAllPackages implements v1.GitHub.
-func (*StubGitHub) ListAllPackages(context.Context, bool, string, string, int, int) ([]*github.Package, error) {
-	panic("unimplemented")
-}
-
 // ListAllRepositories implements v1.GitHub.
-func (*StubGitHub) ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error) {
+func (*StubGitHub) ListAllRepositories(context.Context) ([]*github.Repository, error) {
 	panic("unimplemented")
 }
 
@@ -516,7 +511,7 @@ func (_ *StubGitHub) ListHooks(_ context.Context, _ string, _ string) ([]*github
 }
 
 // ListOrganizationRepsitories implements v1.GitHub.
-func (*StubGitHub) ListOrganizationRepsitories(context.Context, string) ([]*pb.Repository, error) {
+func (*StubGitHub) ListOrganizationRepsitories(context.Context) ([]*pb.Repository, error) {
 	panic("unimplemented")
 }
 
@@ -532,11 +527,6 @@ func (*StubGitHub) ListPullRequests(context.Context, string, string, *github.Pul
 
 // ListReviews implements v1.GitHub.
 func (*StubGitHub) ListReviews(context.Context, string, string, int, *github.ListOptions) ([]*github.PullRequestReview, error) {
-	panic("unimplemented")
-}
-
-// ListUserRepositories implements v1.GitHub.
-func (*StubGitHub) ListUserRepositories(context.Context, string) ([]*pb.Repository, error) {
 	panic("unimplemented")
 }
 

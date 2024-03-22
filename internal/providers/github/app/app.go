@@ -105,7 +105,6 @@ func NewGitHubAppProvider(
 
 	return github.NewGitHub(
 		ghClient,
-		"",
 		restClientCache,
 		oauthDelegate,
 	), nil
@@ -138,31 +137,13 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 	return g.credential
 }
 
-// ListUserRepositories returns a list of repositories for the owner
-func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, false, owner)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
-// ListOrganizationRepositories returns a list of repositories for the organization
-func (g *GitHubAppDelegate) ListOrganizationRepositories(
-	ctx context.Context,
-	owner string,
-) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, true, owner)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
+// GetOwner returns the owner filter
+func (_ *GitHubAppDelegate) GetOwner() string {
+	return ""
 }
 
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation
-func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ string) ([]*gogithub.Repository, error) {
+func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
 	listOpt := &gogithub.ListOptions{
 		PerPage: 100,
 	}

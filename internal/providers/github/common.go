@@ -58,7 +58,6 @@ var (
 // GitHub is the struct that contains the shared GitHub client operations
 type GitHub struct {
 	client   *github.Client
-	owner    string
 	cache    ratecache.RestClientCache
 	delegate Delegate
 }
@@ -69,25 +68,22 @@ var _ provifv1.GitHub = (*GitHub)(nil)
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
 type Delegate interface {
 	GetCredential() provifv1.GitHubCredential
-	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListOrganizationRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
+	ListAllRepositories(context.Context) ([]*github.Repository, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
+	GetOwner() string
 }
 
 // NewGitHub creates a new GitHub client
 func NewGitHub(
 	client *github.Client,
-	owner string,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
 ) *GitHub {
 	return &GitHub{
 		client:   client,
-		owner:    owner,
 		cache:    cache,
 		delegate: delegate,
 	}
@@ -465,10 +461,7 @@ func (c *GitHub) GetCredential() provifv1.GitHubCredential {
 
 // GetOwner returns the owner of the repository
 func (c *GitHub) GetOwner() string {
-	if c.owner != "" {
-		return c.owner
-	}
-	return ""
+	return c.delegate.GetOwner()
 }
 
 // ListHooks lists all Hooks for the specified repository.
@@ -642,19 +635,9 @@ func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.Push
 	return nil
 }
 
-// ListUserRepositories lists all repositories for the owner
-func (c *GitHub) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	return c.delegate.ListUserRepositories(ctx, owner)
-}
-
-// ListOrganizationRepsitories lists all repositories for the organization
-func (c *GitHub) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	return c.delegate.ListOrganizationRepositories(ctx, owner)
-}
-
 // ListAllRepositories lists all repositories the credential has access to
-func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
-	return c.delegate.ListAllRepositories(ctx, isOrg, owner)
+func (c *GitHub) ListAllRepositories(ctx context.Context) ([]*github.Repository, error) {
+	return c.delegate.ListAllRepositories(ctx)
 }
 
 // GetUserId returns the user id for the acting user
@@ -688,7 +671,7 @@ func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 // the rate-limited client.
 func (c *GitHub) setAsRateLimited() {
 	if c.cache != nil {
-		c.cache.Set(c.owner, c.delegate.GetCredential().GetCacheKey(), db.ProviderTypeGithub, c)
+		c.cache.Set(c.delegate.GetOwner(), c.delegate.GetCredential().GetCacheKey(), db.ProviderTypeGithub, c)
 	}
 }
 
@@ -724,7 +707,7 @@ func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.Rat
 			waitTime = time.Until(resetTime)
 		}
 
-		logRateLimitError(logger, "RateLimitError", waitTime, c.owner, err.Response)
+		logRateLimitError(logger, "RateLimitError", waitTime, c.delegate.GetOwner(), err.Response)
 
 		if waitTime > MaxRateLimitWait {
 			logger.Debug().Msgf("rate limit reset time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
@@ -754,7 +737,7 @@ func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.Abuse
 		waitTime = *retryAfter
 	}
 
-	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.owner, err.Response)
+	logRateLimitError(logger, "AbuseRateLimitError", waitTime, c.delegate.GetOwner(), err.Response)
 
 	if waitTime > MaxRateLimitWait {
 		logger.Debug().Msgf("abuse rate limit wait time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
