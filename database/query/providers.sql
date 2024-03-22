@@ -2,10 +2,11 @@
 INSERT INTO providers (
     name,
     project_id,
+    class,
     implements,
     definition,
     auth_flows
-    ) VALUES ($1, $2, $3, sqlc.arg(definition)::jsonb, sqlc.arg(auth_flows)) RETURNING *;
+    ) VALUES ($1, $2, $3, $4, sqlc.arg(definition)::jsonb, sqlc.arg(auth_flows)) RETURNING *;
 
 -- GetProviderByName allows us to get a provider by its name. This takes
 -- into account the project hierarchy, so it will only return the provider
@@ -35,12 +36,11 @@ WHERE project_id = $1
 ORDER BY created_at DESC, id
 LIMIT sqlc.arg('limit');
 
-
 -- name: GlobalListProviders :many
 SELECT * FROM providers;
 
--- name: GlobalListProvidersByName :many
-SELECT * FROM providers WHERE lower(name) = lower(sqlc.arg(name));
+-- name: GlobalListProvidersByClass :many
+SELECT * FROM providers WHERE class = $1;
 
 -- name: UpdateProvider :exec
 UPDATE providers

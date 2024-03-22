@@ -139,7 +139,7 @@ func init() {
 }
 
 func ensureGitHubProvidersHaveAuthFlows(ctx context.Context, cmd *cobra.Command, store db.Store) error {
-	providers, err := store.GlobalListProvidersByName(ctx, "github")
+	providers, err := store.GlobalListProvidersByClass(ctx, "github")
 	if err != nil {
 		return fmt.Errorf("error while listing providers: %w", err)
 	}

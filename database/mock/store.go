@@ -1122,19 +1122,19 @@ func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProviders", reflect.TypeOf((*MockStore)(nil).GlobalListProviders), arg0)
 }
 
-// GlobalListProvidersByName mocks base method.
-func (m *MockStore) GlobalListProvidersByName(arg0 context.Context, arg1 string) ([]db.Provider, error) {
+// GlobalListProvidersByClass mocks base method.
+func (m *MockStore) GlobalListProvidersByClass(arg0 context.Context, arg1 db.ProviderClass) ([]db.Provider, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GlobalListProvidersByName", arg0, arg1)
+	ret := m.ctrl.Call(m, "GlobalListProvidersByClass", arg0, arg1)
 	ret0, _ := ret[0].([]db.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GlobalListProvidersByName indicates an expected call of GlobalListProvidersByName.
-func (mr *MockStoreMockRecorder) GlobalListProvidersByName(arg0, arg1 any) *gomock.Call {
+// GlobalListProvidersByClass indicates an expected call of GlobalListProvidersByClass.
+func (mr *MockStoreMockRecorder) GlobalListProvidersByClass(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByName", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByName), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByClass", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByClass), arg0, arg1)
 }
 
 // ListArtifactsByRepoID mocks base method.

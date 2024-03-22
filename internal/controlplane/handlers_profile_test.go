@@ -229,6 +229,7 @@ func TestCreateProfile(t *testing.T) {
 	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       "github",
 		ProjectID:  dbproj.ID,
+		Class:      db.ProviderClassGithub,
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
 		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: []byte(`{}`),
