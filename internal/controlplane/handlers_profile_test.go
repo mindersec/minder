@@ -241,7 +241,7 @@ func TestCreateProfile(t *testing.T) {
 		Provider:      provider.Name,
 		ProviderID:    provider.ID,
 		ProjectID:     dbproj.ID,
-		Definition:    []byte(`{"ruleSchema":{}}`),
+		Definition:    []byte(`{"in_entity": "repository","ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,
 	})
 	if err != nil {
