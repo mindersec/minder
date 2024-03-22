@@ -69,9 +69,9 @@ var _ provifv1.GitHub = (*GitHub)(nil)
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
 type Delegate interface {
 	GetCredential() provifv1.GitHubCredential
-	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListOrganizationRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
+	ListUserRepositories(context.Context) ([]*minderv1.Repository, error)
+	ListOrganizationRepositories(context.Context) ([]*minderv1.Repository, error)
+	ListAllRepositories(context.Context) ([]*github.Repository, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
@@ -643,18 +643,18 @@ func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.Push
 }
 
 // ListUserRepositories lists all repositories for the owner
-func (c *GitHub) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	return c.delegate.ListUserRepositories(ctx, owner)
+func (c *GitHub) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
+	return c.delegate.ListUserRepositories(ctx)
 }
 
 // ListOrganizationRepsitories lists all repositories for the organization
-func (c *GitHub) ListOrganizationRepsitories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	return c.delegate.ListOrganizationRepositories(ctx, owner)
+func (c *GitHub) ListOrganizationRepsitories(ctx context.Context) ([]*minderv1.Repository, error) {
+	return c.delegate.ListOrganizationRepositories(ctx)
 }
 
 // ListAllRepositories lists all repositories the credential has access to
-func (c *GitHub) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*github.Repository, error) {
-	return c.delegate.ListAllRepositories(ctx, isOrg, owner)
+func (c *GitHub) ListAllRepositories(ctx context.Context) ([]*github.Repository, error) {
+	return c.delegate.ListAllRepositories(ctx)
 }
 
 // GetUserId returns the user id for the acting user

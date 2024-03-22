@@ -351,13 +351,13 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	isOrg := (owner_filter != "")
 	if isOrg {
 		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for organization")
-		remoteRepos, err = client.ListOrganizationRepsitories(tmoutCtx, owner_filter)
+		remoteRepos, err = client.ListOrganizationRepsitories(tmoutCtx)
 		if err != nil {
 			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 		}
 	} else {
 		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for the user")
-		remoteRepos, err = client.ListUserRepositories(tmoutCtx, owner_filter)
+		remoteRepos, err = client.ListUserRepositories(tmoutCtx)
 		if err != nil {
 			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 		}

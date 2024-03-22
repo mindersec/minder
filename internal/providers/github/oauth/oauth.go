@@ -54,6 +54,7 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 type GitHubOAuthDelegate struct {
 	client     *gogithub.Client
 	credential provifv1.GitHubCredential
+	owner      string
 }
 
 // Ensure that the GitHubOAuthDelegate client implements the GitHub Delegate interface
@@ -97,6 +98,7 @@ func NewRestClient(
 	oauthDelegate := &GitHubOAuthDelegate{
 		client:     ghClient,
 		credential: credential,
+		owner:      owner,
 	}
 
 	return github.NewGitHub(
@@ -132,8 +134,8 @@ func (o *GitHubOAuthDelegate) GetCredential() provifv1.GitHubCredential {
 }
 
 // ListUserRepositories returns a list of all repositories for the authenticated user
-func (o *GitHubOAuthDelegate) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := o.ListAllRepositories(ctx, false, owner)
+func (o *GitHubOAuthDelegate) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
+	repos, err := o.ListAllRepositories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,8 +144,8 @@ func (o *GitHubOAuthDelegate) ListUserRepositories(ctx context.Context, owner st
 }
 
 // ListOrganizationRepositories returns a list of all repositories for the organization
-func (o *GitHubOAuthDelegate) ListOrganizationRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := o.ListAllRepositories(ctx, true, owner)
+func (o *GitHubOAuthDelegate) ListOrganizationRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
+	repos, err := o.ListAllRepositories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +155,7 @@ func (o *GitHubOAuthDelegate) ListOrganizationRepositories(ctx context.Context, 
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context, isOrg bool, owner string) ([]*gogithub.Repository, error) {
+func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
 	opt := &gogithub.RepositoryListOptions{
 		ListOptions: gogithub.ListOptions{
 			PerPage: 100,
@@ -174,8 +176,8 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context, isOrg boo
 		var resp *gogithub.Response
 		var err error
 
-		if isOrg {
-			repos, resp, err = o.client.Repositories.ListByOrg(ctx, owner, orgOpt)
+		if o.owner != "" {
+			repos, resp, err = o.client.Repositories.ListByOrg(ctx, o.owner, orgOpt)
 		} else {
 			repos, resp, err = o.client.Repositories.List(ctx, "", opt)
 		}
@@ -188,7 +190,7 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context, isOrg boo
 			break
 		}
 
-		if isOrg {
+		if o.owner != "" {
 			orgOpt.Page = resp.NextPage
 		} else {
 			opt.Page = resp.NextPage

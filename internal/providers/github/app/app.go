@@ -139,8 +139,8 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 }
 
 // ListUserRepositories returns a list of repositories for the owner
-func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, false, owner)
+func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
+	repos, err := g.ListAllRepositories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -149,11 +149,8 @@ func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context, owner stri
 }
 
 // ListOrganizationRepositories returns a list of repositories for the organization
-func (g *GitHubAppDelegate) ListOrganizationRepositories(
-	ctx context.Context,
-	owner string,
-) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, true, owner)
+func (g *GitHubAppDelegate) ListOrganizationRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
+	repos, err := g.ListAllRepositories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +159,7 @@ func (g *GitHubAppDelegate) ListOrganizationRepositories(
 }
 
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation
-func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ string) ([]*gogithub.Repository, error) {
+func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
 	listOpt := &gogithub.ListOptions{
 		PerPage: 100,
 	}

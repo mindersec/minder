@@ -65,8 +65,8 @@ type REST interface {
 type RepoLister interface {
 	Provider
 
-	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListOrganizationRepsitories(context.Context, string) ([]*minderv1.Repository, error)
+	ListUserRepositories(context.Context) ([]*minderv1.Repository, error)
+	ListOrganizationRepsitories(context.Context) ([]*minderv1.Repository, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API
@@ -79,7 +79,7 @@ type GitHub interface {
 
 	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
-	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
+	ListAllRepositories(context.Context) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
 	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
