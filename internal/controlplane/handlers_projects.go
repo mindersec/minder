@@ -57,6 +57,10 @@ func (s *Server) ListProjects(
 	for _, projectID := range projs {
 		project, err := s.store.GetProjectByID(ctx, projectID)
 		if err != nil {
+			// project was deleted while we were iterating
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
 			return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 		}
 
