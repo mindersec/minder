@@ -148,7 +148,7 @@ func (w *webhookManager) cleanupStaleHooks(
 
 	for _, hook := range hooks {
 		// it is our hook, we can remove it
-		shouldDelete, err := isMinderHook(hook, webhookHost)
+		shouldDelete, err := ghprovider.IsMinderHook(hook, webhookHost)
 		// If err != nil, shouldDelete == false - use one error check for both calls
 		if shouldDelete {
 			err = w.DeleteWebhook(ctx, client, repoOwner, repoName, hook.GetID())
@@ -159,20 +159,4 @@ func (w *webhookManager) cleanupStaleHooks(
 	}
 
 	return nil
-}
-
-func isMinderHook(hook *github.Hook, hostURL string) (bool, error) {
-	configURL, ok := hook.Config["url"].(string)
-	if !ok || configURL == "" {
-		return false, fmt.Errorf("unexpected hook config structure: %v", hook.Config)
-	}
-	parsedURL, err := url.Parse(configURL)
-	if err != nil {
-		return false, err
-	}
-	if parsedURL.Host == hostURL {
-		return true, nil
-	}
-
-	return false, nil
 }
