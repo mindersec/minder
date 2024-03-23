@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -136,6 +137,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		},
 		sql.NullString{},
 		credentials.NewGitHubTokenCredential(token),
+		&serverconfig.ProviderConfig{},
 	))
 	inf := &entities.EntityInfoWrapper{
 		Entity: ent,

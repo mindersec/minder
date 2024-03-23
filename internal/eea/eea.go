@@ -39,12 +39,12 @@ import (
 // EEA is the Event Execution Aggregator
 type EEA struct {
 	querier db.Store
-	evt     *events.Eventer
+	evt     events.Publisher
 	cfg     *serverconfig.AggregatorConfig
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt *events.Eventer, cfg *serverconfig.AggregatorConfig) *EEA {
+func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig) *EEA {
 	return &EEA{
 		querier: querier,
 		evt:     evt,

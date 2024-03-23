@@ -63,12 +63,14 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 
 	return &minderv1.GetProviderResponse{
 		Provider: &minderv1.Provider{
-			Name:       prov.Name,
-			Project:    projectID.String(),
-			Version:    prov.Version,
-			Implements: protobufProviderImplementsFromDB(ctx, prov),
-			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, prov),
-			Config:     cfg,
+			Name:             prov.Name,
+			Project:          projectID.String(),
+			Version:          prov.Version,
+			Implements:       protobufProviderImplementsFromDB(ctx, prov),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
+			Config:           cfg,
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider),
+			Class:            providers.GetProviderClassString(prov),
 		},
 	}, nil
 }
@@ -124,12 +126,14 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 		}
 
 		provs = append(provs, &minderv1.Provider{
-			Name:       p.Name,
-			Project:    projectID.String(),
-			Version:    p.Version,
-			Implements: protobufProviderImplementsFromDB(ctx, p),
-			AuthFlows:  protobufProviderAuthFlowFromDB(ctx, p),
-			Config:     cfg,
+			Name:             p.Name,
+			Project:          projectID.String(),
+			Version:          p.Version,
+			Implements:       protobufProviderImplementsFromDB(ctx, p),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
+			Config:           cfg,
+			Class:            providers.GetProviderClassString(p),
 		})
 	}
 
@@ -144,6 +148,17 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 	return &minderv1.ListProvidersResponse{
 		Providers: provs,
 		Cursor:    cursor,
+	}, nil
+}
+
+// ListProviderClasses lists the provider classes available in the system.
+func (_ *Server) ListProviderClasses(
+	_ context.Context, _ *minderv1.ListProviderClassesRequest,
+) (*minderv1.ListProviderClassesResponse, error) {
+	// Note: New provider classes should be added to the providers package.
+	classes := providers.ListProviderClasses()
+	return &minderv1.ListProviderClassesResponse{
+		ProviderClasses: classes,
 	}, nil
 }
 

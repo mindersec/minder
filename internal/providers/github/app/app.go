@@ -25,6 +25,7 @@ import (
 	gogithub "github.com/google/go-github/v56/github"
 	"golang.org/x/oauth2"
 
+	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -53,7 +54,6 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 type GitHubAppDelegate struct {
 	client     *gogithub.Client
 	credential provifv1.GitHubCredential
-	appId      string
 	appName    string
 	userId     int64
 }
@@ -63,7 +63,8 @@ type GitHubAppDelegate struct {
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
 func NewGitHubAppProvider(
-	config *minderv1.GitHubAppProviderConfig,
+	providerConfig *minderv1.GitHubAppProviderConfig,
+	appConfig *server.GitHubAppConfig,
 	metrics telemetry.HttpClientMetrics,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
@@ -84,25 +85,26 @@ func NewGitHubAppProvider(
 
 	ghClient := gogithub.NewClient(tc)
 
-	if config.Endpoint != "" {
-		parsedURL, err := url.Parse(config.Endpoint)
+	if providerConfig.Endpoint != "" {
+		parsedURL, err := url.Parse(providerConfig.Endpoint)
 		if err != nil {
 			return nil, err
 		}
 		ghClient.BaseURL = parsedURL
 	}
 
+	appName := appConfig.AppName
+	userId := appConfig.UserID
+
 	oauthDelegate := &GitHubAppDelegate{
 		client:     ghClient,
 		credential: credential,
-		appId:      config.AppId,
-		appName:    config.AppName,
-		userId:     config.UserId,
+		appName:    appName,
+		userId:     userId,
 	}
 
 	return github.NewGitHub(
 		ghClient,
-		"",
 		restClientCache,
 		oauthDelegate,
 	), nil
@@ -135,31 +137,13 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 	return g.credential
 }
 
-// ListUserRepositories returns a list of repositories for the owner
-func (g *GitHubAppDelegate) ListUserRepositories(ctx context.Context, owner string) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, false, owner)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
-}
-
-// ListOrganizationRepositories returns a list of repositories for the organization
-func (g *GitHubAppDelegate) ListOrganizationRepositories(
-	ctx context.Context,
-	owner string,
-) ([]*minderv1.Repository, error) {
-	repos, err := g.ListAllRepositories(ctx, true, owner)
-	if err != nil {
-		return nil, err
-	}
-
-	return github.ConvertRepositories(repos), nil
+// GetOwner returns the owner filter
+func (_ *GitHubAppDelegate) GetOwner() string {
+	return ""
 }
 
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation
-func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context, _ bool, _ string) ([]*gogithub.Repository, error) {
+func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
 	listOpt := &gogithub.ListOptions{
 		PerPage: 100,
 	}

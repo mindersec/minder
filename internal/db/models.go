@@ -235,6 +235,48 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 	return string(ns.EvalStatusTypes), nil
 }
 
+type ProviderClass string
+
+const (
+	ProviderClassGithub    ProviderClass = "github"
+	ProviderClassGithubApp ProviderClass = "github-app"
+)
+
+func (e *ProviderClass) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProviderClass(s)
+	case string:
+		*e = ProviderClass(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProviderClass: %T", src)
+	}
+	return nil
+}
+
+type NullProviderClass struct {
+	ProviderClass ProviderClass `json:"provider_class"`
+	Valid         bool          `json:"valid"` // Valid is true if ProviderClass is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProviderClass) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProviderClass, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProviderClass.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProviderClass) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProviderClass), nil
+}
+
 type ProviderType string
 
 const (
@@ -481,6 +523,7 @@ type Provider struct {
 	CreatedAt  time.Time           `json:"created_at"`
 	UpdatedAt  time.Time           `json:"updated_at"`
 	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
+	Class      NullProviderClass   `json:"class"`
 }
 
 type ProviderAccessToken struct {

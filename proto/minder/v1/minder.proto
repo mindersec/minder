@@ -794,6 +794,17 @@ service ProvidersService {
             target_resource: TARGET_RESOURCE_USER
         };
     }
+
+    rpc ListProviderClasses (ListProviderClassesRequest) returns (ListProviderClassesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/provider_classes"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
 }
 
 message CheckHealthRequest {
@@ -1113,6 +1124,9 @@ message ProfileStatus {
     string profile_status = 3;
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
+
+    // profile_display_name is the display name of the profile
+    string profile_display_name = 5;
 }
 
 // EvalResultAlert holds the alert details for a given rule evaluation
@@ -1238,12 +1252,8 @@ message GitHubProviderConfig {
 message GitHubAppProviderConfig {
   // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
   string endpoint = 1;
-  // AppName is the GitHub App Name
-  string app_name = 2;
-  // AppID is the GitHub App ID
-  string app_id = 3;
-  // UserID is the GitHub App User ID
-  int64 user_id = 4;
+  reserved 2, 3, 4;
+  reserved "app_name", "app_id", "user_id";
 }
 
 // Context defines the context in which a rule is evaluated.
@@ -1970,6 +1980,16 @@ message GetUnclaimedProvidersResponse {
     repeated ProviderParameter providers = 1;
 }
 
+message ListProviderClassesRequest {
+    // context is the context in which the provider classes are evaluated.
+    Context context = 1;
+}
+
+message ListProviderClassesResponse {
+    // provider_classes is the list of provider classes.
+    repeated string provider_classes = 1;
+}
+
 message AuthorizationParams {
     // authorization_url is an external URL to use to authorize the provider.
     string authorization_url = 1;
@@ -2038,4 +2058,8 @@ message Provider {
 
     // parameters is the list of parameters that the provider requires.
     ProviderParameter parameters = 8;
+
+    // credentials_state is the state of the credentials for the provider.
+    // This is an output-only field. It may be: "set", "unset", "not_applicable".
+    string credentials_state = 9;
 }

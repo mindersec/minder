@@ -235,7 +235,7 @@ var setupMu sync.Mutex
 // We currently use the global meter provider, so reset it for each test.
 // Since this is global, we use a global mutex to ensure we don't enter setup
 // concurrently.
-func setupEventerWithMetricReader(ctx context.Context) (*events.Eventer, *metric.ManualReader, error) {
+func setupEventerWithMetricReader(ctx context.Context) (events.Interface, *metric.ManualReader, error) {
 	setupMu.Lock()
 	defer setupMu.Unlock()
 	oldMeter := otel.GetMeterProvider()

@@ -26,8 +26,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v56/github"
-
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // V1 is the version of the providers interface
@@ -65,8 +63,7 @@ type REST interface {
 type RepoLister interface {
 	Provider
 
-	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListOrganizationRepsitories(context.Context, string) ([]*minderv1.Repository, error)
+	ListAllRepositories(context.Context) ([]*github.Repository, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API
@@ -79,7 +76,6 @@ type GitHub interface {
 
 	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
-	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
 	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
@@ -99,6 +95,7 @@ type GitHub interface {
 	GetOwner() string
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
+	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 		v []*github.AdvisoryVulnerability) (string, error)

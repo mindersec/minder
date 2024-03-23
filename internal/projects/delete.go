@@ -22,13 +22,17 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 )
 
 // CleanUpUnmanagedProjects deletes a project if it has no role assignments left
-func CleanUpUnmanagedProjects(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client) error {
+func CleanUpUnmanagedProjects(
+	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client, l zerolog.Logger,
+) error {
+	l = l.With().Str("project", proj.String()).Logger()
 	// Given that we've deleted the user from the authorization system,
 	// we can now check if there are any role assignments for the project.
 	as, err := authzClient.AssignmentsToProject(ctx, proj)
@@ -37,7 +41,8 @@ func CleanUpUnmanagedProjects(ctx context.Context, proj uuid.UUID, querier db.Qu
 	}
 
 	if len(as) == 0 {
-		if err := DeleteProject(ctx, proj, querier, authzClient); err != nil {
+		l.Info().Msg("deleting project")
+		if err := DeleteProject(ctx, proj, querier, authzClient, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
@@ -45,11 +50,12 @@ func CleanUpUnmanagedProjects(ctx context.Context, proj uuid.UUID, querier db.Qu
 }
 
 // DeleteProject deletes a project and authorization relationships
-func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client) error {
+func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client, l zerolog.Logger) error {
 	_, err := querier.GetProjectByID(ctx, proj)
 	if err != nil {
 		// This project has already been deleted. Skip and go to the next one.
 		if errors.Is(err, sql.ErrNoRows) {
+			l.Debug().Msg("project already deleted")
 			return nil
 		}
 		return fmt.Errorf("error getting project %v", err)
@@ -57,6 +63,7 @@ func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, auth
 
 	// no role assignments for this project
 	// we can safely delete it.
+	l.Debug().Msg("deleting project from database")
 	deletions, err := querier.DeleteProject(ctx, proj)
 	if err != nil {
 		return fmt.Errorf("error deleting project %v", err)
@@ -64,6 +71,7 @@ func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, auth
 
 	for _, d := range deletions {
 		if d.ParentID.Valid {
+			l.Debug().Str("parent_id", d.ParentID.UUID.String()).Msg("orphaning project")
 			if err := authzClient.Orphan(ctx, d.ParentID.UUID, d.ID); err != nil {
 				return fmt.Errorf("error orphaning project %v", err)
 			}

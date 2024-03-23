@@ -48,7 +48,7 @@ const (
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
 	querier                db.Store
-	evt                    *events.Eventer
+	evt                    events.Publisher
 	crypteng               crypto.Engine
 	provMt                 providertelemetry.ProviderMetrics
 	mdws                   []message.HandlerMiddleware
@@ -57,6 +57,7 @@ type Executor struct {
 	// when the server is shutting down.
 	terminationcontext context.Context
 	restClientCache    ratecache.RestClientCache
+	provCfg            *serverconfig.ProviderConfig
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -88,7 +89,8 @@ func NewExecutor(
 	ctx context.Context,
 	querier db.Store,
 	authCfg *serverconfig.AuthConfig,
-	evt *events.Eventer,
+	provCfg *serverconfig.ProviderConfig,
+	evt events.Publisher,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -104,6 +106,7 @@ func NewExecutor(
 		wgEntityEventExecution: &sync.WaitGroup{},
 		terminationcontext:     ctx,
 		mdws:                   []message.HandlerMiddleware{},
+		provCfg:                provCfg,
 	}
 
 	for _, opt := range opts {
@@ -200,7 +203,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, pbOpts...)
+	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

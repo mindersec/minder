@@ -278,6 +278,14 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
+	entityInfo := map[string]string{}
+	if eval.Entity == db.EntitiesRepository {
+		entityInfo["provider"] = eval.Provider
+		entityInfo["repo_owner"] = eval.RepoOwner
+		entityInfo["repo_name"] = eval.RepoName
+		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
+	}
+
 	return &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
@@ -286,7 +294,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		Entity:                 string(eval.Entity),
 		Status:                 string(eval.EvalStatus.EvalStatusTypes),
 		LastUpdated:            timestamppb.New(eval.EvalLastUpdated.Time),
-		EntityInfo:             map[string]string{},
+		EntityInfo:             entityInfo,
 		Details:                eval.EvalDetails.String,
 		Guidance:               guidance,
 		RemediationStatus:      string(eval.RemStatus.RemediationStatusTypes),
@@ -304,7 +312,7 @@ func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minde
 	}
 
 	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES && eval.RepoOwner != "" && eval.RepoName != "" {
-		ent.Id = fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName)
+		ent.Id = eval.RepositoryID.UUID.String()
 	}
 	return ent
 }
@@ -319,11 +327,17 @@ func buildProfileStatus(
 		pfStatus = string(profileStatusList[row.ID].ProfileStatus)
 	}
 
+	displayName := row.DisplayName
+	if displayName == "" {
+		displayName = row.Name
+	}
+
 	return &minderv1.ProfileStatus{
-		ProfileId:     row.ID.String(),
-		ProfileName:   row.Name,
-		ProfileStatus: pfStatus,
-		LastUpdated:   timestamppb.New(row.UpdatedAt),
+		ProfileId:          row.ID.String(),
+		ProfileName:        row.Name,
+		ProfileDisplayName: displayName,
+		ProfileStatus:      pfStatus,
+		LastUpdated:        timestamppb.New(row.UpdatedAt),
 	}
 }
 

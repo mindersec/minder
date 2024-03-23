@@ -288,7 +288,8 @@ func (s *Server) verifyProviderTokenIdentity(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token), pbOpts...)
+	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
+		&s.cfg.Provider, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
 	ghClient, err := builder.GetGitHub()
@@ -303,26 +304,6 @@ func (s *Server) verifyProviderTokenIdentity(
 		return fmt.Errorf("user ID mismatch: %d != %s", userId, stateData.RemoteUser.String)
 	}
 	return nil
-}
-
-// getProviderAccessToken returns the access token for providers
-func (s *Server) getProviderAccessToken(ctx context.Context, provider string,
-	projectID uuid.UUID) (oauth2.Token, string, error) {
-
-	encToken, err := s.store.GetAccessTokenByProjectID(ctx,
-		db.GetAccessTokenByProjectIDParams{Provider: provider, ProjectID: projectID})
-	if err != nil {
-		return oauth2.Token{}, "", err
-	}
-
-	decryptedToken, err := s.cryptoEngine.DecryptOAuthToken(encToken.EncryptedToken)
-	if err != nil {
-		return oauth2.Token{}, "", err
-	}
-
-	// base64 decode the token
-	decryptedToken.Expiry = encToken.ExpirationTime
-	return decryptedToken, encToken.OwnerFilter.String, nil
 }
 
 // StoreProviderToken stores the provider token for a project

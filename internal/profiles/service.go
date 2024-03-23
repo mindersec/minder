@@ -35,7 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/marketplace/namespaces"
+	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -86,14 +86,14 @@ type ProfileService interface {
 
 type profileService struct {
 	store     db.Store
-	publisher events.Interface
+	publisher events.Publisher
 	validator *Validator
 }
 
 // NewProfileService creates an instance of ProfileService
 func NewProfileService(
 	store db.Store,
-	publisher events.Interface,
+	publisher events.Publisher,
 ) ProfileService {
 	return &profileService{
 		store:     store,

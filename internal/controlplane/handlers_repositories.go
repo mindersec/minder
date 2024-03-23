@@ -318,19 +318,11 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Str("projectID", projectID.String()).
 		Msg("listing repositories")
 
-	// FIXME: this is a hack to get the owner filter from the request
-	_, owner_filter, err := s.getProviderAccessToken(ctx, provider.Name, provider.ProjectID)
-
-	if err != nil {
-		return nil, util.UserVisibleError(codes.PermissionDenied,
-			"cannot get access token for provider: did you run `minder provider enroll`?")
-	}
-
 	pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -347,21 +339,11 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
-	var remoteRepos []*pb.Repository
-	isOrg := (owner_filter != "")
-	if isOrg {
-		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for organization")
-		remoteRepos, err = client.ListOrganizationRepsitories(tmoutCtx, owner_filter)
-		if err != nil {
-			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
-		}
-	} else {
-		zerolog.Ctx(ctx).Debug().Msgf("listing repositories for the user")
-		remoteRepos, err = client.ListUserRepositories(tmoutCtx, owner_filter)
-		if err != nil {
-			return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
-		}
+	remoteGhRepos, err := client.ListAllRepositories(tmoutCtx)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 	}
+	remoteRepos := github.ConvertRepositories(remoteGhRepos)
 
 	out := &pb.ListRemoteRepositoriesFromProviderResponse{
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
@@ -413,7 +395,7 @@ func (s *Server) getProviderAndClient(
 		providers.WithRestClientCache(s.restClientCache),
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}

@@ -68,14 +68,14 @@ func AllInOneServerService(
 	executorOpts = append([]engine.ExecutorOption{engine.WithMiddleware(aggr.AggregateMiddleware)},
 		executorOpts...)
 
-	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, evt, executorOpts...)
+	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, executorOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to create executor: %w", err)
 	}
 
 	evt.ConsumeEvents(exec)
 
-	rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, reconcilerOpts...)
+	rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, &cfg.Provider, reconcilerOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}

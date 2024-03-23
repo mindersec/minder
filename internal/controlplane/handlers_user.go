@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -70,6 +71,9 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	orgProject, err := projects.ProvisionSelfEnrolledProject(ctx, s.authzClient, qtx, baseName, subject)
 	if err != nil {
+		if errors.Is(err, projects.ErrProjectAlreadyExists) {
+			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", baseName)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
 
@@ -171,6 +175,10 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 	for _, proj := range projs {
 		pinfo, err := s.store.GetProjectByID(ctx, proj)
 		if err != nil {
+			// if the project was deleted while iterating, skip it
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
 			return nil, err
 		}
 

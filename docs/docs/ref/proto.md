@@ -122,6 +122,7 @@ replies with OK
 | CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
 | DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
 | GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
+| ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -941,9 +942,6 @@ GitHubAppProviderConfig contains the configuration for the GitHub App provider
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
-| app_name | [string](#string) |  | AppName is the GitHub App Name |
-| app_id | [string](#string) |  | AppID is the GitHub App ID |
-| user_id | [int64](#int64) |  | UserID is the GitHub App User ID |
 
 
 <a name="minder-v1-GitHubProviderConfig"></a>
@@ -1091,6 +1089,28 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-ListProviderClassesRequest"></a>
+
+#### ListProviderClassesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider classes are evaluated. |
+
+
+<a name="minder-v1-ListProviderClassesResponse"></a>
+
+#### ListProviderClassesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider_classes | [string](#string) | repeated | provider_classes is the list of provider classes. |
 
 
 <a name="minder-v1-ListProvidersRequest"></a>
@@ -1408,6 +1428,7 @@ get the overall profile status
 | profile_name | [string](#string) |  | profile_name is the name of the profile |
 | profile_status | [string](#string) |  | profile_status is the status of the profile |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
+| profile_display_name | [string](#string) |  | profile_display_name is the display name of the profile |
 
 
 <a name="minder-v1-Project"></a>
@@ -1454,6 +1475,7 @@ Project API Objects
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
+| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 
 
 <a name="minder-v1-ProviderParameter"></a>

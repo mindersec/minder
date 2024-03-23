@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/marketplace/namespaces"
+	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/schemaupdate"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -82,6 +82,17 @@ type RuleTypeService interface {
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
 	) (*pb.RuleType, error)
+
+	// UpsertSubscriptionRuleType creates the rule type if it does not exist
+	// or updates it if it already exists. This is used in the subscription
+	// logic.
+	UpsertSubscriptionRuleType(
+		ctx context.Context,
+		projectID uuid.UUID,
+		provider *db.Provider,
+		subscriptionID uuid.UUID,
+		ruleType *pb.RuleType,
+	) error
 }
 
 type ruleTypeService struct {
@@ -261,6 +272,32 @@ func (r *ruleTypeService) UpdateSubscriptionRuleType(
 	}
 
 	return result, nil
+}
+
+func (s *ruleTypeService) UpsertSubscriptionRuleType(
+	ctx context.Context,
+	projectID uuid.UUID,
+	provider *db.Provider,
+	subscriptionID uuid.UUID,
+	ruleType *pb.RuleType,
+) error {
+	// In future, we may want to refactor the code so that we use upserts
+	// instead of separate create and update methods. For now, simulate upsert
+	// semantics by trying to create, then trying to update.
+	_, err := s.CreateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	if err == nil {
+		// Rule successfully created, we can stop here.
+		return nil
+	} else if !errors.Is(err, ErrRuleAlreadyExists) {
+		return fmt.Errorf("error while creating rule: %w", err)
+	}
+
+	// If we get here: rule already exists. Let's update it.
+	_, err = s.UpdateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	if err != nil {
+		return fmt.Errorf("error while updating rule: %w", err)
+	}
+	return nil
 }
 
 func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {

@@ -43,6 +43,7 @@ type Config struct {
 	WebhookConfig WebhookConfig         `mapstructure:"webhook-config"`
 	Events        EventConfig           `mapstructure:"events"`
 	Authz         AuthzConfig           `mapstructure:"authz"`
+	Provider      ProviderConfig        `mapstructure:"provider"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,
@@ -112,6 +113,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		case reflect.Bool:
 			defaultValue, err = strconv.ParseBool(value)
 		case reflect.Slice:
+			defaultValue = nil
+		case reflect.Ptr:
 			defaultValue = nil
 		default:
 			err = fmt.Errorf("unhandled type %s", fieldType)

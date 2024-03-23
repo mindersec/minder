@@ -160,6 +160,7 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	prov, err := testQueries.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       providerName,
 		ProjectID:  proj.ID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
 		Implements: []db.ProviderType{db.ProviderTypeRest},
 		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: json.RawMessage(`{}`),

@@ -292,7 +292,7 @@ default allow = true`,
 
 	e, err := engine.NewExecutor(ctx, mockStore, &serverconfig.AuthConfig{
 		TokenKey: tokenKeyPath,
-	}, evt)
+	}, nil, evt)
 	require.NoError(t, err, "expected no error")
 
 	eiw := entities.NewEntityInfoWrapper().

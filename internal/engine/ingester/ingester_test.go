@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
 	"github.com/stacklok/minder/internal/engine/ingester/builtin"
@@ -179,6 +180,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 				},
 				sql.NullString{},
 				credentials.NewGitHubTokenCredential("token"),
+				&serverconfig.ProviderConfig{},
 			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")

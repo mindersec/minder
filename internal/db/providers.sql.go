@@ -18,15 +18,17 @@ const createProvider = `-- name: CreateProvider :one
 INSERT INTO providers (
     name,
     project_id,
+    class,
     implements,
     definition,
     auth_flows
-    ) VALUES ($1, $2, $3, $4::jsonb, $5) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows
+    ) VALUES ($1, $2, $3, $4, $5::jsonb, $6) RETURNING id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class
 `
 
 type CreateProviderParams struct {
 	Name       string              `json:"name"`
 	ProjectID  uuid.UUID           `json:"project_id"`
+	Class      NullProviderClass   `json:"class"`
 	Implements []ProviderType      `json:"implements"`
 	Definition json.RawMessage     `json:"definition"`
 	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
@@ -36,6 +38,7 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 	row := q.db.QueryRowContext(ctx, createProvider,
 		arg.Name,
 		arg.ProjectID,
+		arg.Class,
 		pq.Array(arg.Implements),
 		arg.Definition,
 		pq.Array(arg.AuthFlows),
@@ -51,6 +54,7 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.AuthFlows),
+		&i.Class,
 	)
 	return i, err
 }
@@ -70,7 +74,7 @@ func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) 
 }
 
 const getProviderByID = `-- name: GetProviderByID :one
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE id = $1
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE id = $1
 `
 
 func (q *Queries) GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error) {
@@ -86,13 +90,14 @@ func (q *Queries) GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, 
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.AuthFlows),
+		&i.Class,
 	)
 	return i, err
 }
 
 const getProviderByName = `-- name: GetProviderByName :one
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE lower(name) = lower($1) AND project_id = ANY($2::uuid[])
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE lower(name) = lower($1) AND project_id = ANY($2::uuid[])
 LIMIT 1
 `
 
@@ -118,12 +123,13 @@ func (q *Queries) GetProviderByName(ctx context.Context, arg GetProviderByNamePa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		pq.Array(&i.AuthFlows),
+		&i.Class,
 	)
 	return i, err
 }
 
 const globalListProviders = `-- name: GlobalListProviders :many
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers
 `
 
 func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
@@ -145,6 +151,7 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.AuthFlows),
+			&i.Class,
 		); err != nil {
 			return nil, err
 		}
@@ -159,12 +166,12 @@ func (q *Queries) GlobalListProviders(ctx context.Context) ([]Provider, error) {
 	return items, nil
 }
 
-const globalListProvidersByName = `-- name: GlobalListProvidersByName :many
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE lower(name) = lower($1)
+const globalListProvidersByClass = `-- name: GlobalListProvidersByClass :many
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE class = $1
 `
 
-func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([]Provider, error) {
-	rows, err := q.db.QueryContext(ctx, globalListProvidersByName, name)
+func (q *Queries) GlobalListProvidersByClass(ctx context.Context, class NullProviderClass) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, globalListProvidersByClass, class)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +189,7 @@ func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.AuthFlows),
+			&i.Class,
 		); err != nil {
 			return nil, err
 		}
@@ -198,7 +206,7 @@ func (q *Queries) GlobalListProvidersByName(ctx context.Context, name string) ([
 
 const listProvidersByProjectID = `-- name: ListProvidersByProjectID :many
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers WHERE project_id = ANY($1::uuid[])
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE project_id = ANY($1::uuid[])
 `
 
 // ListProvidersByProjectID allows us to list all providers
@@ -222,6 +230,7 @@ func (q *Queries) ListProvidersByProjectID(ctx context.Context, projects []uuid.
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.AuthFlows),
+			&i.Class,
 		); err != nil {
 			return nil, err
 		}
@@ -238,7 +247,7 @@ func (q *Queries) ListProvidersByProjectID(ctx context.Context, projects []uuid.
 
 const listProvidersByProjectIDPaginated = `-- name: ListProvidersByProjectIDPaginated :many
 
-SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows FROM providers
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers
 WHERE project_id = $1
     AND (created_at > $2 OR $2 IS NULL)
 ORDER BY created_at DESC, id
@@ -272,6 +281,7 @@ func (q *Queries) ListProvidersByProjectIDPaginated(ctx context.Context, arg Lis
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			pq.Array(&i.AuthFlows),
+			&i.Class,
 		); err != nil {
 			return nil, err
 		}

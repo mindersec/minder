@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
@@ -69,6 +70,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: false,
@@ -94,6 +96,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -119,6 +122,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -139,6 +143,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -164,6 +169,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -188,6 +194,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					},
 					sql.NullString{},
 					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -232,6 +239,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		},
 		sql.NullString{},
 		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 }
 

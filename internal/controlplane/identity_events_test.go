@@ -70,7 +70,6 @@ func TestHandleEvents(t *testing.T) {
 		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
 
 	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
@@ -78,7 +77,6 @@ func TestHandleEvents(t *testing.T) {
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
 	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
 
 	c := serverconfig.Config{
 		Identity: serverconfig.IdentityConfigWrapper{

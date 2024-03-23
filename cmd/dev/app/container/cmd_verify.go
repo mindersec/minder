@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -125,6 +126,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 		},
 		sql.NullString{},
 		credentials.NewGitHubTokenCredential(token),
+		&serverconfig.ProviderConfig{},
 	)
 
 	return pbuild.GetGitHub()
