@@ -641,6 +641,21 @@ func (mr *MockGitHubMockRecorder) ListHooks(ctx, owner, repo any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHooks", reflect.TypeOf((*MockGitHub)(nil).ListHooks), ctx, owner, repo)
 }
 
+// ListImages mocks base method.
+func (m *MockGitHub) ListImages(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListImages", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockGitHubMockRecorder) ListImages(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockGitHub)(nil).ListImages), ctx)
+}
+
 // ListIssueComments mocks base method.
 func (m *MockGitHub) ListIssueComments(ctx context.Context, owner, repo string, number int, opts *github.IssueListCommentsOptions) ([]*github.IssueComment, error) {
 	m.ctrl.T.Helper()
@@ -772,6 +787,44 @@ func (m *MockGitHub) UpdateReview(arg0 context.Context, arg1, arg2 string, arg3 
 func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReview", reflect.TypeOf((*MockGitHub)(nil).UpdateReview), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// MockImageLister is a mock of ImageLister interface.
+type MockImageLister struct {
+	ctrl     *gomock.Controller
+	recorder *MockImageListerMockRecorder
+}
+
+// MockImageListerMockRecorder is the mock recorder for MockImageLister.
+type MockImageListerMockRecorder struct {
+	mock *MockImageLister
+}
+
+// NewMockImageLister creates a new mock instance.
+func NewMockImageLister(ctrl *gomock.Controller) *MockImageLister {
+	mock := &MockImageLister{ctrl: ctrl}
+	mock.recorder = &MockImageListerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockImageLister) EXPECT() *MockImageListerMockRecorder {
+	return m.recorder
+}
+
+// ListImages mocks base method.
+func (m *MockImageLister) ListImages(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListImages", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockImageListerMockRecorder) ListImages(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockImageLister)(nil).ListImages), ctx)
 }
 
 // MockOCI is a mock of OCI interface.

@@ -142,6 +142,7 @@ service ArtifactService {
             relation: RELATION_ARTIFACT_GET
         };
     }
+
 }
 
 message ListArtifactsRequest {
@@ -2026,6 +2027,9 @@ enum ProviderType {
     PROVIDER_TYPE_GIT = 3 [(name) = "git"];
     PROVIDER_TYPE_OCI = 4 [(name) = "oci"];
     PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
+    PROVIDER_TYPE_IMAGE_LISTER = 6 [(name) = "image-lister"];
+    PROVIDER_TYPE_GHCR = 7 [(name) = "ghcr"];
+    PROVIDER_TYPE_DOCKERHUB = 8 [(name) = "dockerhub"];
 }
 
 enum AuthorizationFlow {

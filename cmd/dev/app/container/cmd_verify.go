@@ -49,7 +49,9 @@ func CmdVerify() *cobra.Command {
 	verifyCmd.Flags().StringP("owner", "o", "", "owner of the artifact")
 	verifyCmd.Flags().StringP("name", "n", "", "name of the artifact")
 	verifyCmd.Flags().StringP("digest", "s", "", "digest of the artifact")
+	//nolint:goconst // let's not use a const for this one
 	verifyCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
+		//nolint:goconst // let's not use a const for this one
 		"Can also be set via the AUTH_TOKEN environment variable.")
 	verifyCmd.Flags().StringP("tuf-root", "r", sigstore.SigstorePublicTrustedRootRepo, "TUF root to use for verification")
 

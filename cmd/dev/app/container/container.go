@@ -25,6 +25,8 @@ func CmdContainer() *cobra.Command {
 	}
 
 	rtCmd.AddCommand(CmdVerify())
+	rtCmd.AddCommand(CmdList())
+	rtCmd.AddCommand(CmdListTags())
 
 	return rtCmd
 }

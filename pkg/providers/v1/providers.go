@@ -75,6 +75,7 @@ type GitHub interface {
 	RepoLister
 	REST
 	Git
+	ImageLister
 
 	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
@@ -114,6 +115,13 @@ type GitHub interface {
 	) ([]*github.IssueComment, error)
 	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
+}
+
+// ImageLister is the interface for listing images
+type ImageLister interface {
+	Provider
+
+	ListImages(ctx context.Context) ([]string, error)
 }
 
 // OCI is the interface for interacting with OCI registries

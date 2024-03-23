@@ -240,6 +240,8 @@ type ProviderClass string
 const (
 	ProviderClassGithub    ProviderClass = "github"
 	ProviderClassGithubApp ProviderClass = "github-app"
+	ProviderClassGhcr      ProviderClass = "ghcr"
+	ProviderClassDockerhub ProviderClass = "dockerhub"
 )
 
 func (e *ProviderClass) Scan(src interface{}) error {
@@ -280,11 +282,14 @@ func (ns NullProviderClass) Value() (driver.Value, error) {
 type ProviderType string
 
 const (
-	ProviderTypeGithub     ProviderType = "github"
-	ProviderTypeRest       ProviderType = "rest"
-	ProviderTypeGit        ProviderType = "git"
-	ProviderTypeOci        ProviderType = "oci"
-	ProviderTypeRepoLister ProviderType = "repo-lister"
+	ProviderTypeGithub      ProviderType = "github"
+	ProviderTypeRest        ProviderType = "rest"
+	ProviderTypeGit         ProviderType = "git"
+	ProviderTypeOci         ProviderType = "oci"
+	ProviderTypeRepoLister  ProviderType = "repo-lister"
+	ProviderTypeImageLister ProviderType = "image-lister"
+	ProviderTypeGhcr        ProviderType = "ghcr"
+	ProviderTypeDockerhub   ProviderType = "dockerhub"
 )
 
 func (e *ProviderType) Scan(src interface{}) error {

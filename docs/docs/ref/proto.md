@@ -2169,6 +2169,9 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_GIT | 3 |  |
 | PROVIDER_TYPE_OCI | 4 |  |
 | PROVIDER_TYPE_REPO_LISTER | 5 |  |
+| PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
+| PROVIDER_TYPE_GHCR | 7 |  |
+| PROVIDER_TYPE_DOCKERHUB | 8 |  |
 
 
 <a name="minder-v1-Relation"></a>

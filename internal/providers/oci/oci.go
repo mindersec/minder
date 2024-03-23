@@ -61,6 +61,9 @@ func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 
 	lister, err := puller.Lister(ctx, repo)
 	if err != nil {
+		if strings.Contains(err.Error(), "status code 404") {
+			return nil, fmt.Errorf("no such repository: %s", repo)
+		}
 		return nil, fmt.Errorf("reading tags for %s: %w", repo, err)
 	}
 
@@ -77,7 +80,7 @@ func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 				continue
 			}
 
-			outtags = append(outtags, repo.Tag(tag).String())
+			outtags = append(outtags, tag)
 		}
 	}
 

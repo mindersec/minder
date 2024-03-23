@@ -3656,7 +3656,10 @@
         "PROVIDER_TYPE_REST",
         "PROVIDER_TYPE_GIT",
         "PROVIDER_TYPE_OCI",
-        "PROVIDER_TYPE_REPO_LISTER"
+        "PROVIDER_TYPE_REPO_LISTER",
+        "PROVIDER_TYPE_IMAGE_LISTER",
+        "PROVIDER_TYPE_GHCR",
+        "PROVIDER_TYPE_DOCKERHUB"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
