@@ -546,6 +546,20 @@ func (mr *MockGitHubMockRecorder) GetName(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockGitHub)(nil).GetName), ctx)
 }
 
+// GetNamespaceURL mocks base method.
+func (m *MockGitHub) GetNamespaceURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespaceURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetNamespaceURL indicates an expected call of GetNamespaceURL.
+func (mr *MockGitHubMockRecorder) GetNamespaceURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespaceURL", reflect.TypeOf((*MockGitHub)(nil).GetNamespaceURL))
+}
+
 // GetPackageByName mocks base method.
 func (m *MockGitHub) GetPackageByName(arg0 context.Context, arg1, arg2, arg3 string) (*github.Package, error) {
 	m.ctrl.T.Helper()
@@ -726,6 +740,21 @@ func (mr *MockGitHubMockRecorder) ListHooks(ctx, owner, repo any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHooks", reflect.TypeOf((*MockGitHub)(nil).ListHooks), ctx, owner, repo)
 }
 
+// ListImages mocks base method.
+func (m *MockGitHub) ListImages(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListImages", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockGitHubMockRecorder) ListImages(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockGitHub)(nil).ListImages), ctx)
+}
+
 // ListIssueComments mocks base method.
 func (m *MockGitHub) ListIssueComments(ctx context.Context, owner, repo string, number int, opts *github.IssueListCommentsOptions) ([]*github.IssueComment, error) {
 	m.ctrl.T.Helper()
@@ -859,6 +888,72 @@ func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReview", reflect.TypeOf((*MockGitHub)(nil).UpdateReview), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// MockImageLister is a mock of ImageLister interface.
+type MockImageLister struct {
+	ctrl     *gomock.Controller
+	recorder *MockImageListerMockRecorder
+}
+
+// MockImageListerMockRecorder is the mock recorder for MockImageLister.
+type MockImageListerMockRecorder struct {
+	mock *MockImageLister
+}
+
+// NewMockImageLister creates a new mock instance.
+func NewMockImageLister(ctrl *gomock.Controller) *MockImageLister {
+	mock := &MockImageLister{ctrl: ctrl}
+	mock.recorder = &MockImageListerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockImageLister) EXPECT() *MockImageListerMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockImageLister) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockImageListerMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockImageLister)(nil).CanImplement), trait)
+}
+
+// GetNamespaceURL mocks base method.
+func (m *MockImageLister) GetNamespaceURL() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespaceURL")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetNamespaceURL indicates an expected call of GetNamespaceURL.
+func (mr *MockImageListerMockRecorder) GetNamespaceURL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespaceURL", reflect.TypeOf((*MockImageLister)(nil).GetNamespaceURL))
+}
+
+// ListImages mocks base method.
+func (m *MockImageLister) ListImages(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListImages", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListImages indicates an expected call of ListImages.
+func (mr *MockImageListerMockRecorder) ListImages(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockImageLister)(nil).ListImages), ctx)
+}
+
 // MockOCI is a mock of OCI interface.
 type MockOCI struct {
 	ctrl     *gomock.Controller
@@ -880,6 +975,65 @@ func NewMockOCI(ctrl *gomock.Controller) *MockOCI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockOCI) EXPECT() *MockOCIMockRecorder {
 	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockOCI) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
+}
+
+// GetDigest mocks base method.
+func (m *MockOCI) GetDigest(ctx context.Context, name, tag string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDigest", ctx, name, tag)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDigest indicates an expected call of GetDigest.
+func (mr *MockOCIMockRecorder) GetDigest(ctx, name, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDigest", reflect.TypeOf((*MockOCI)(nil).GetDigest), ctx, name, tag)
+}
+
+// GetManifest mocks base method.
+func (m *MockOCI) GetManifest(ctx context.Context, name, tag string) (any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetManifest", ctx, name, tag)
+	ret0, _ := ret[0].(any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetManifest indicates an expected call of GetManifest.
+func (mr *MockOCIMockRecorder) GetManifest(ctx, name, tag any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifest", reflect.TypeOf((*MockOCI)(nil).GetManifest), ctx, name, tag)
+}
+
+// GetReferrer mocks base method.
+func (m *MockOCI) GetReferrer(ctx context.Context, name, tag, artifactType string) (any, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReferrer", ctx, name, tag, artifactType)
+	ret0, _ := ret[0].(any)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReferrer indicates an expected call of GetReferrer.
+func (mr *MockOCIMockRecorder) GetReferrer(ctx, name, tag, artifactType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReferrer", reflect.TypeOf((*MockOCI)(nil).GetReferrer), ctx, name, tag, artifactType)
 }
 
 // ListTags mocks base method.

@@ -75,6 +75,18 @@ func (rpcfg *RESTProviderConfig) Validate() error {
 	return nil
 }
 
+// Ensure DockerHubProviderConfig implements the Validator interface
+var _ Validator = (*DockerHubProviderConfig)(nil)
+
+// Validate is a utility function which allows for the validation of a struct.
+func (d *DockerHubProviderConfig) Validate() error {
+	if d.GetNamespace() == "" {
+		return fmt.Errorf("namespace is required")
+	}
+
+	return nil
+}
+
 // Ensure Entity implements the Validator interface
 var _ Validator = (*Entity)(nil)
 
