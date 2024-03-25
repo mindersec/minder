@@ -131,6 +131,7 @@ type OCI interface {
 	// ListTags lists the tags available for the given container in the given namespace
 	// for the OCI provider.
 	ListTags(ctx context.Context, name string) ([]string, error)
+	GetConfiguredRegistry() string
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

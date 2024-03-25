@@ -86,3 +86,8 @@ func (o *OCI) ListTags(ctx context.Context, contname string) ([]string, error) {
 
 	return outtags, nil
 }
+
+// GetConfiguredRegistry returns the configured registry
+func (o *OCI) GetConfiguredRegistry() string {
+	return o.baseURL
+}
