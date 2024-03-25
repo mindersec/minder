@@ -52,3 +52,20 @@ ALTER TABLE entity_execution_lock ADD CONSTRAINT fk_entity_execution_lock_projec
 -- Add project_id column to flush_cache table and make it a foreign key to projects
 ALTER TABLE flush_cache ADD COLUMN project_id UUID;
 ALTER TABLE flush_cache ADD CONSTRAINT fk_flush_cache_project_id FOREIGN KEY (project_id) REFERENCES projects (id);
+
+-- delete entity_execution_lock_idx and flush_cache_idx indexes.
+DROP INDEX entity_execution_lock_idx;
+DROP INDEX flush_cache_idx;
+
+-- recreate entity_execution_lock_idx and flush_cache_idx indexes with nullable repository_id
+CREATE UNIQUE INDEX IF NOT EXISTS entity_execution_lock_idx ON entity_execution_lock(
+    entity,
+    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID),
+    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID),
+    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID));
+
+CREATE UNIQUE INDEX IF NOT EXISTS flush_cache_idx ON flush_cache(
+    entity,
+    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID),
+    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID),
+    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID));
