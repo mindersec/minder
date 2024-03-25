@@ -250,7 +250,7 @@ const listProvidersByProjectIDPaginated = `-- name: ListProvidersByProjectIDPagi
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers
 WHERE project_id = $1
     AND (created_at > $2 OR $2 IS NULL)
-ORDER BY created_at DESC, id
+ORDER BY created_at ASC
 LIMIT $3
 `
 

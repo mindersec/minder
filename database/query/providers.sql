@@ -33,7 +33,7 @@ SELECT * FROM providers WHERE project_id = ANY(sqlc.arg(projects)::uuid[]);
 SELECT * FROM providers
 WHERE project_id = $1
     AND (created_at > sqlc.narg('created_at') OR sqlc.narg('created_at') IS NULL)
-ORDER BY created_at DESC, id
+ORDER BY created_at ASC
 LIMIT sqlc.arg('limit');
 
 -- name: GlobalListProviders :many
