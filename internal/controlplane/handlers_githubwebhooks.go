@@ -403,6 +403,9 @@ func (s *Server) parseArtifactPublishedEvent(
 		ArtifactName:       tempArtifact.GetName(),
 		ArtifactType:       tempArtifact.GetTypeLower(),
 		ArtifactVisibility: tempArtifact.Visibility,
+		ProjectID:          dbrepo.ProjectID,
+		ProviderName:       dbrepo.Provider,
+		ProviderID:         dbrepo.ProviderID,
 	})
 	if err != nil {
 		return fmt.Errorf("error upserting artifact: %w", err)

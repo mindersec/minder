@@ -17,7 +17,10 @@ INSERT INTO artifacts (
     artifact_name,
     artifact_type,
     artifact_visibility,
-    project_id) VALUES ($1, $2, $3, $4, $5) RETURNING id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name
+    project_id,
+    provider_id,
+    provider_name
+) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name
 `
 
 type CreateArtifactParams struct {
@@ -26,6 +29,8 @@ type CreateArtifactParams struct {
 	ArtifactType       string        `json:"artifact_type"`
 	ArtifactVisibility string        `json:"artifact_visibility"`
 	ProjectID          uuid.UUID     `json:"project_id"`
+	ProviderID         uuid.UUID     `json:"provider_id"`
+	ProviderName       string        `json:"provider_name"`
 }
 
 func (q *Queries) CreateArtifact(ctx context.Context, arg CreateArtifactParams) (Artifact, error) {
@@ -35,6 +40,8 @@ func (q *Queries) CreateArtifact(ctx context.Context, arg CreateArtifactParams) 
 		arg.ArtifactType,
 		arg.ArtifactVisibility,
 		arg.ProjectID,
+		arg.ProviderID,
+		arg.ProviderName,
 	)
 	var i Artifact
 	err := row.Scan(
@@ -203,8 +210,10 @@ INSERT INTO artifacts (
     artifact_name,
     artifact_type,
     artifact_visibility,
-    project_id
-) VALUES ($1, $2, $3, $4, $5)
+    project_id,
+    provider_id,
+    provider_name
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (project_id, LOWER(artifact_name))
 DO UPDATE SET
     artifact_type = $3,
@@ -219,6 +228,8 @@ type UpsertArtifactParams struct {
 	ArtifactType       string        `json:"artifact_type"`
 	ArtifactVisibility string        `json:"artifact_visibility"`
 	ProjectID          uuid.UUID     `json:"project_id"`
+	ProviderID         uuid.UUID     `json:"provider_id"`
+	ProviderName       string        `json:"provider_name"`
 }
 
 func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error) {
@@ -228,6 +239,8 @@ func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) 
 		arg.ArtifactType,
 		arg.ArtifactVisibility,
 		arg.ProjectID,
+		arg.ProviderID,
+		arg.ProviderName,
 	)
 	var i Artifact
 	err := row.Scan(

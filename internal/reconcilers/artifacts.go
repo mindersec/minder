@@ -161,6 +161,8 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 				ArtifactName:       artifact.GetName(),
 				ArtifactType:       typeLower,
 				ArtifactVisibility: artifact.GetVisibility(),
+				ProviderName:       repository.Provider,
+				ProviderID:         repository.ProviderID,
 			})
 
 		if err != nil {

@@ -277,12 +277,16 @@ func (pb *ProviderBuilder) GetDockerHub() (provinfv1.ImageLister, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	oauth2cred, ok := pb.credential.(provinfv1.OAuth2TokenCredential)
+	var cred provinfv1.Credential
+	var ok bool
+	cred, ok = pb.credential.(provinfv1.OAuth2TokenCredential)
 	if !ok {
-		return nil, fmt.Errorf("credential is not an oauth2 token credential")
+		if cred, ok = pb.credential.(*credentials.EmptyCredential); !ok {
+			return nil, fmt.Errorf("credential is not an oauth2 token credential nor empty credential")
+		}
 	}
 
-	return dockerhub.New(oauth2cred, "devopsfaith")
+	return dockerhub.New(cred, "devopsfaith")
 }
 
 // GetImageLister returns an image lister for the provider.
@@ -308,7 +312,7 @@ func (pb *ProviderBuilder) GetOCI() (provinfv1.OCI, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	return oci.New(pb.credential, "docker.io"), nil
+	return oci.New(pb.credential, "docker.io/devopsfaith"), nil
 }
 
 // DBToPBType converts a database provider type to a protobuf provider type.

@@ -279,6 +279,8 @@ func (s *Server) RegisterArtifact(ctx context.Context, in *pb.RegisterArtifactRe
 		ArtifactType: ref.GetType(),
 		// TODO get this from the provider
 		ArtifactVisibility: "public",
+		ProviderID:         prov.ID,
+		ProviderName:       prov.Name,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create artifact: %s", err)
@@ -335,13 +337,13 @@ func (s *Server) ListRemoteArtifactsFromProvider(ctx context.Context, in *pb.Lis
 		return nil, status.Errorf(codes.Unknown, "failed to get provider builder: %s", err)
 	}
 
-	ociprov, err := provBuilder.GetImageLister()
+	imglist, err := provBuilder.GetImageLister()
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get OCI client: %s", err)
+		return nil, status.Errorf(codes.Unknown, "failed to get image lister client: %s", err)
 	}
 
 	// list all artifacts in the OCI registry
-	refs, err := ociprov.ListImages(ctx)
+	refs, err := imglist.ListImages(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to list artifacts: %s", err)
 	}

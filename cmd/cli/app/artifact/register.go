@@ -176,7 +176,7 @@ func getSelectedArtifacts(
 	if len(allSelected) == 0 {
 		var userSelected []string
 		prompt := &survey.MultiSelect{
-			Message: "Select repositories to register with Minder: \n",
+			Message: "Select artifacts to register with Minder: \n",
 			Options: artNames,
 		}
 		// Prompt the user to select repos, defaulting to 20 per page, but scrollable
@@ -196,14 +196,9 @@ func getSelectedArtifacts(
 	proto := make([]*minderv1.UpstreamArtifactRef, len(allSelected))
 
 	// Convert the selected repos into a slice of itories protobufs
-	for i, repo := range allSelected {
-		splitRepo := strings.Split(repo, "/")
-		if len(splitRepo) != 2 {
-			warnings = append(warnings, fmt.Sprintf("Unexpected repository name format: %s, skipping registration", repo))
-			continue
-		}
+	for i, art := range allSelected {
 		proto[i] = &minderv1.UpstreamArtifactRef{
-			Name: splitRepo[1],
+			Name: art,
 			Type: "container",
 		}
 	}
@@ -227,8 +222,9 @@ func registerSelected(
 
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Error registering artifact %s: %s", art.Name, err))
+		} else {
+			results = append(results, result.Artifact)
 		}
-		results = append(results, result.Artifact)
 	}
 	return results, warnings
 }

@@ -4,7 +4,10 @@ INSERT INTO artifacts (
     artifact_name,
     artifact_type,
     artifact_visibility,
-    project_id) VALUES ($1, $2, $3, $4, sqlc.arg(project_id)) RETURNING *;
+    project_id,
+    provider_id,
+    provider_name
+) VALUES ($1, $2, $3, $4, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.arg(provider_name)) RETURNING *;
 
 -- name: UpsertArtifact :one
 INSERT INTO artifacts (
@@ -12,8 +15,10 @@ INSERT INTO artifacts (
     artifact_name,
     artifact_type,
     artifact_visibility,
-    project_id
-) VALUES ($1, $2, $3, $4, sqlc.arg(project_id))
+    project_id,
+    provider_id,
+    provider_name
+) VALUES ($1, $2, $3, $4, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.arg(provider_name))
 ON CONFLICT (project_id, LOWER(artifact_name))
 DO UPDATE SET
     artifact_type = $3,

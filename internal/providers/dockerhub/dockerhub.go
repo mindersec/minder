@@ -30,7 +30,6 @@ import (
 
 // DockerHub is the struct that contains the Docker Hub client
 type DockerHub struct {
-	cred      provifv1.OAuth2TokenCredential
 	cli       *http.Client
 	namespace string
 	target    *url.URL
@@ -40,8 +39,14 @@ type DockerHub struct {
 var _ provifv1.ImageLister = (*DockerHub)(nil)
 
 // New creates a new Docker Hub client
-func New(cred provifv1.OAuth2TokenCredential, ns string) (*DockerHub, error) {
-	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
+func New(cred provifv1.Credential, ns string) (*DockerHub, error) {
+	var cli *http.Client
+	oauth2cred, ok := cred.(provifv1.OAuth2TokenCredential)
+	if ok {
+		cli = oauth2.NewClient(context.Background(), oauth2cred.GetAsOAuth2TokenSource())
+	} else {
+		cli = http.DefaultClient
+	}
 
 	u, err := url.Parse("https://hub.docker.com/v2/repositories")
 	if err != nil {
@@ -52,7 +57,6 @@ func New(cred provifv1.OAuth2TokenCredential, ns string) (*DockerHub, error) {
 
 	return &DockerHub{
 		namespace: ns,
-		cred:      cred,
 		cli:       cli,
 		target:    t,
 	}, nil
