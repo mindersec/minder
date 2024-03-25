@@ -28,7 +28,7 @@ SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2;
 SELECT * FROM rule_type WHERE id = $1;
 
 -- name: GetRuleTypeByName :one
-SELECT * FROM rule_type WHERE provider = $1 AND project_id = $2 AND lower(name) = lower(sqlc.arg(name));
+SELECT * FROM rule_type WHERE  project_id = sqlc.arg(project_id) AND lower(name) = lower(sqlc.arg(name));
 
 -- name: DeleteRuleType :exec
 DELETE FROM rule_type WHERE id = $1;

@@ -148,7 +148,6 @@ func (r *ruleTypeService) CreateSubscriptionRuleType(
 	ruleTypeDef := ruleType.GetDef()
 
 	_, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  provider.Name,
 		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})
@@ -222,7 +221,6 @@ func (r *ruleTypeService) UpdateSubscriptionRuleType(
 	ruleTypeDef := ruleType.GetDef()
 
 	oldRuleType, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  provider.Name,
 		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})

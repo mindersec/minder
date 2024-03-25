@@ -301,7 +301,6 @@ func (e *Executor) getEvaluator(
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  ectx.Provider.Name,
 		ProjectID: ectx.Project.ID,
 		Name:      rule.Type,
 	})

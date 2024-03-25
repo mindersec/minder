@@ -47,7 +47,6 @@ func NewValidator(store db.Store) *Validator {
 func (v *Validator) ValidateAndExtractRules(
 	ctx context.Context,
 	projectID uuid.UUID,
-	providerName string,
 	profile *minderv1.Profile,
 ) (RuleMapping, error) {
 
@@ -62,7 +61,7 @@ func (v *Validator) ValidateAndExtractRules(
 	}
 
 	// validate that the rule invocations match what the rule types expect
-	if err := v.validateEntities(ctx, profile, projectID, providerName); err != nil {
+	if err := v.validateEntities(ctx, profile, projectID); err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
 			return nil, util.UserVisibleError(codes.InvalidArgument,
@@ -72,7 +71,7 @@ func (v *Validator) ValidateAndExtractRules(
 	}
 
 	// validate that the parameters for the rules match the expected schema
-	rulesInProf, err := v.validateRuleParams(ctx, profile, projectID, providerName)
+	rulesInProf, err := v.validateRuleParams(ctx, profile, projectID)
 	if err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
@@ -93,7 +92,6 @@ func (v *Validator) validateRuleParams(
 	ctx context.Context,
 	prof *minderv1.Profile,
 	projectID uuid.UUID,
-	providerName string,
 ) (RuleMapping, error) {
 	// We capture the rule instantiations here, so we can
 	// track them in the db later.
@@ -103,7 +101,6 @@ func (v *Validator) validateRuleParams(
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  providerName,
 			ProjectID: projectID,
 			Name:      profileRule.GetType(),
 		})
@@ -273,14 +270,12 @@ func (v *Validator) validateEntities(
 	ctx context.Context,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
-	providerName string,
 ) error {
 	// validate that the entities in the profile match the entities in the project
 	err := engine.TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  providerName,
 			ProjectID: projectID,
 			Name:      rule.GetType(),
 		})

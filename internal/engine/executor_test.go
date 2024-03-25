@@ -182,7 +182,6 @@ default allow = true`,
 
 	mockStore.EXPECT().
 		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Provider:  providerName,
 			ProjectID: projectID,
 			Name:      passthroughRuleType,
 		}).Return(db.RuleType{
