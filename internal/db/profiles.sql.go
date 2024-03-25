@@ -69,8 +69,9 @@ INSERT INTO profiles (
     name,
     provider_id,
     subscription_id,
-    display_name
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+    display_name,
+    labels
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::text[]) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
 `
 
 type CreateProfileParams struct {
@@ -82,6 +83,7 @@ type CreateProfileParams struct {
 	ProviderID     uuid.UUID      `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
 	DisplayName    string         `json:"display_name"`
+	Labels         []string       `json:"labels"`
 }
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error) {
@@ -94,6 +96,7 @@ func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (P
 		arg.ProviderID,
 		arg.SubscriptionID,
 		arg.DisplayName,
+		pq.Array(arg.Labels),
 	)
 	var i Profile
 	err := row.Scan(
@@ -552,7 +555,8 @@ UPDATE profiles SET
     remediate = $3,
     alert = $4,
     updated_at = NOW(),
-    display_name = $5
+    display_name = $5,
+    labels = $6::TEXT[]
 WHERE id = $1 AND project_id = $2 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
 `
 
@@ -562,6 +566,7 @@ type UpdateProfileParams struct {
 	Remediate   NullActionType `json:"remediate"`
 	Alert       NullActionType `json:"alert"`
 	DisplayName string         `json:"display_name"`
+	Labels      []string       `json:"labels"`
 }
 
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
@@ -571,6 +576,7 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (P
 		arg.Remediate,
 		arg.Alert,
 		arg.DisplayName,
+		pq.Array(arg.Labels),
 	)
 	var i Profile
 	err := row.Scan(

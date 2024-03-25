@@ -570,6 +570,7 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 	params := db.UpdateProfileParams{
 		ID:        profileID,
 		ProjectID: entityCtx.Project.ID,
+		Labels:    oldProfile.Labels, // since labels are meant to be used by subscription profiles, just copy them over
 	}
 
 	// we check the pointers explicitly because the zero value of a string is valid
