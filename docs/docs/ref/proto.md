@@ -25,6 +25,7 @@ toc_max_heading_level: 4
 | GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
 | RegisterArtifact | [RegisterArtifactRequest](#minder-v1-RegisterArtifactRequest) | [RegisterArtifactResponse](#minder-v1-RegisterArtifactResponse) |  |
+| ListRemoteArtifactsFromProvider | [ListRemoteArtifactsFromProviderRequest](#minder-v1-ListRemoteArtifactsFromProviderRequest) | [ListRemoteArtifactsFromProviderResponse](#minder-v1-ListRemoteArtifactsFromProviderResponse) |  |
 
 
 <a name="minder-v1-EvalResultsService"></a>
@@ -1138,6 +1139,29 @@ The default is to return all user-created profiles; the string "*" can be used t
 | ----- | ---- | ----- | ----------- |
 | providers | [Provider](#minder-v1-Provider) | repeated |  |
 | cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
+
+
+<a name="minder-v1-ListRemoteArtifactsFromProviderRequest"></a>
+
+#### ListRemoteArtifactsFromProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| type | [string](#string) |  |  |
+
+
+<a name="minder-v1-ListRemoteArtifactsFromProviderResponse"></a>
+
+#### ListRemoteArtifactsFromProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | [UpstreamArtifactRef](#minder-v1-UpstreamArtifactRef) | repeated |  |
 
 
 <a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>

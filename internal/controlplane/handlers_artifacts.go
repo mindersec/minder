@@ -311,6 +311,58 @@ func (s *Server) RegisterArtifact(ctx context.Context, in *pb.RegisterArtifactRe
 	}, nil
 }
 
+// ListRemoteArtifactsFromProvider lists all artifacts for a given project and provider
+func (s *Server) ListRemoteArtifactsFromProvider(ctx context.Context, in *pb.ListRemoteArtifactsFromProviderRequest) (*pb.ListRemoteArtifactsFromProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	prov, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
+	if in.GetType() != "container" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact type")
+	}
+
+	// get OCI registry provider builder
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get provider builder: %s", err)
+	}
+
+	ociprov, err := provBuilder.GetImageLister()
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get OCI client: %s", err)
+	}
+
+	// list all artifacts in the OCI registry
+	refs, err := ociprov.ListImages(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to list artifacts: %s", err)
+	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = prov.Name
+	logger.BusinessRecord(ctx).Project = projectID
+
+	upstreamRefs := make([]*pb.UpstreamArtifactRef, 0, len(refs))
+	for _, ref := range refs {
+		upstreamRefs = append(upstreamRefs, &pb.UpstreamArtifactRef{
+			Name: ref,
+			Type: "container",
+		})
+	}
+
+	return &pb.ListRemoteArtifactsFromProviderResponse{
+		Results: upstreamRefs,
+	}, nil
+}
+
 type artifactSource string
 
 const (

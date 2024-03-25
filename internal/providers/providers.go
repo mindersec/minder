@@ -282,7 +282,20 @@ func (pb *ProviderBuilder) GetDockerHub() (provinfv1.ImageLister, error) {
 		return nil, fmt.Errorf("credential is not an oauth2 token credential")
 	}
 
-	return dockerhub.New(oauth2cred, "jaormx")
+	return dockerhub.New(oauth2cred, "devopsfaith")
+}
+
+// GetImageLister returns an image lister for the provider.
+func (pb *ProviderBuilder) GetImageLister() (provinfv1.ImageLister, error) {
+	if pb.Implements(db.ProviderTypeDockerhub) {
+		return pb.GetDockerHub()
+	}
+
+	if pb.Implements(db.ProviderTypeGhcr) {
+		return pb.GetGHCR()
+	}
+
+	return nil, fmt.Errorf("provider does not implement image lister")
 }
 
 // GetOCI returns an OCI client for the provider.

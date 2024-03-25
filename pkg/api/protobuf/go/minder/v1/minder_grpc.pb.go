@@ -124,10 +124,11 @@ var HealthService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ArtifactService_ListArtifacts_FullMethodName     = "/minder.v1.ArtifactService/ListArtifacts"
-	ArtifactService_GetArtifactById_FullMethodName   = "/minder.v1.ArtifactService/GetArtifactById"
-	ArtifactService_GetArtifactByName_FullMethodName = "/minder.v1.ArtifactService/GetArtifactByName"
-	ArtifactService_RegisterArtifact_FullMethodName  = "/minder.v1.ArtifactService/RegisterArtifact"
+	ArtifactService_ListArtifacts_FullMethodName                   = "/minder.v1.ArtifactService/ListArtifacts"
+	ArtifactService_GetArtifactById_FullMethodName                 = "/minder.v1.ArtifactService/GetArtifactById"
+	ArtifactService_GetArtifactByName_FullMethodName               = "/minder.v1.ArtifactService/GetArtifactByName"
+	ArtifactService_RegisterArtifact_FullMethodName                = "/minder.v1.ArtifactService/RegisterArtifact"
+	ArtifactService_ListRemoteArtifactsFromProvider_FullMethodName = "/minder.v1.ArtifactService/ListRemoteArtifactsFromProvider"
 )
 
 // ArtifactServiceClient is the client API for ArtifactService service.
@@ -138,6 +139,7 @@ type ArtifactServiceClient interface {
 	GetArtifactById(ctx context.Context, in *GetArtifactByIdRequest, opts ...grpc.CallOption) (*GetArtifactByIdResponse, error)
 	GetArtifactByName(ctx context.Context, in *GetArtifactByNameRequest, opts ...grpc.CallOption) (*GetArtifactByNameResponse, error)
 	RegisterArtifact(ctx context.Context, in *RegisterArtifactRequest, opts ...grpc.CallOption) (*RegisterArtifactResponse, error)
+	ListRemoteArtifactsFromProvider(ctx context.Context, in *ListRemoteArtifactsFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteArtifactsFromProviderResponse, error)
 }
 
 type artifactServiceClient struct {
@@ -184,6 +186,15 @@ func (c *artifactServiceClient) RegisterArtifact(ctx context.Context, in *Regist
 	return out, nil
 }
 
+func (c *artifactServiceClient) ListRemoteArtifactsFromProvider(ctx context.Context, in *ListRemoteArtifactsFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteArtifactsFromProviderResponse, error) {
+	out := new(ListRemoteArtifactsFromProviderResponse)
+	err := c.cc.Invoke(ctx, ArtifactService_ListRemoteArtifactsFromProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ArtifactServiceServer is the server API for ArtifactService service.
 // All implementations must embed UnimplementedArtifactServiceServer
 // for forward compatibility
@@ -192,6 +203,7 @@ type ArtifactServiceServer interface {
 	GetArtifactById(context.Context, *GetArtifactByIdRequest) (*GetArtifactByIdResponse, error)
 	GetArtifactByName(context.Context, *GetArtifactByNameRequest) (*GetArtifactByNameResponse, error)
 	RegisterArtifact(context.Context, *RegisterArtifactRequest) (*RegisterArtifactResponse, error)
+	ListRemoteArtifactsFromProvider(context.Context, *ListRemoteArtifactsFromProviderRequest) (*ListRemoteArtifactsFromProviderResponse, error)
 	mustEmbedUnimplementedArtifactServiceServer()
 }
 
@@ -210,6 +222,9 @@ func (UnimplementedArtifactServiceServer) GetArtifactByName(context.Context, *Ge
 }
 func (UnimplementedArtifactServiceServer) RegisterArtifact(context.Context, *RegisterArtifactRequest) (*RegisterArtifactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterArtifact not implemented")
+}
+func (UnimplementedArtifactServiceServer) ListRemoteArtifactsFromProvider(context.Context, *ListRemoteArtifactsFromProviderRequest) (*ListRemoteArtifactsFromProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRemoteArtifactsFromProvider not implemented")
 }
 func (UnimplementedArtifactServiceServer) mustEmbedUnimplementedArtifactServiceServer() {}
 
@@ -296,6 +311,24 @@ func _ArtifactService_RegisterArtifact_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ArtifactService_ListRemoteArtifactsFromProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRemoteArtifactsFromProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ArtifactServiceServer).ListRemoteArtifactsFromProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ArtifactService_ListRemoteArtifactsFromProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ArtifactServiceServer).ListRemoteArtifactsFromProvider(ctx, req.(*ListRemoteArtifactsFromProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ArtifactService_ServiceDesc is the grpc.ServiceDesc for ArtifactService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -318,6 +351,10 @@ var ArtifactService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterArtifact",
 			Handler:    _ArtifactService_RegisterArtifact_Handler,
+		},
+		{
+			MethodName: "ListRemoteArtifactsFromProvider",
+			Handler:    _ArtifactService_ListRemoteArtifactsFromProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

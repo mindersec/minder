@@ -154,6 +154,17 @@ service ArtifactService {
             relation: RELATION_ARTIFACT_CREATE
         };
     }
+
+    rpc ListRemoteArtifactsFromProvider(ListRemoteArtifactsFromProviderRequest) returns (ListRemoteArtifactsFromProviderResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/artifacts/remote"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REMOTE_REPO_GET
+        };
+    }
 }
 
 message ListArtifactsRequest {
@@ -229,6 +240,15 @@ message RegisterArtifactResponse {
 message UpstreamArtifactRef {
     string name = 1;
     string type = 2;
+}
+
+message ListRemoteArtifactsFromProviderRequest {
+    Context context = 1;
+    string type = 2;
+}
+
+message ListRemoteArtifactsFromProviderResponse {
+    repeated UpstreamArtifactRef results = 1;
 }
 
 message PullRequest {

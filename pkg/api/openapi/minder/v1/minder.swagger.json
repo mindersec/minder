@@ -208,6 +208,50 @@
         ]
       }
     },
+    "/api/v1/artifacts/remote": {
+      "get": {
+        "operationId": "ArtifactService_ListRemoteArtifactsFromProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListRemoteArtifactsFromProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/artifacts/{provider}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
@@ -3395,6 +3439,18 @@
         "cursor": {
           "type": "string",
           "title": "cursor is the cursor to use for the next page of results, empty if at the end"
+        }
+      }
+    },
+    "v1ListRemoteArtifactsFromProviderResponse": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UpstreamArtifactRef"
+          }
         }
       }
     },
