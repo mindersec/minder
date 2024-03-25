@@ -41,6 +41,9 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// ErrInvalidCredential is returned when the credential is not of the required type
+var ErrInvalidCredential = errors.New("invalid credential type")
+
 // GetProviderBuilder is a utility function which allows for the creation of
 // a provider factory.
 func GetProviderBuilder(
@@ -138,7 +141,7 @@ func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 
 	gitCredential, ok := pb.credential.(provinfv1.GitCredential)
 	if !ok {
-		return nil, fmt.Errorf("credential is not a git credential")
+		return nil, ErrInvalidCredential
 	}
 
 	return gitclient.NewGit(gitCredential), nil
@@ -169,7 +172,7 @@ func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
 
 	restCredential, ok := pb.credential.(provinfv1.RestCredential)
 	if !ok {
-		return nil, fmt.Errorf("credential is not a rest credential")
+		return nil, ErrInvalidCredential
 	}
 
 	return httpclient.NewREST(cfg, pb.metrics, restCredential)
@@ -187,7 +190,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 
 	gitHubCredential, ok := pb.credential.(provinfv1.GitHubCredential)
 	if !ok {
-		return nil, fmt.Errorf("credential is not a GitHub credential")
+		return nil, ErrInvalidCredential
 	}
 
 	if pb.restClientCache != nil {

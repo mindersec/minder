@@ -333,6 +333,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 	client, err := p.GetRepoLister()
 	if err != nil {
+		if errors.Is(err, providers.ErrInvalidCredential) {
+			return nil, util.UserVisibleError(codes.PermissionDenied,
+				"cannot get credential for provider: did you run `minder provider enroll`?")
+		}
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
 	}
 
