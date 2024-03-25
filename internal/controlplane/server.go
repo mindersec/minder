@@ -55,6 +55,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -92,6 +93,7 @@ type Server struct {
 	ruleTypes ruletypes.RuleTypeService
 	repos     github.RepositoryService
 	profiles  profiles.ProfileService
+	providers providers.ProviderService
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -151,6 +153,8 @@ func NewServer(
 	}
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	profileSvc := profiles.NewProfileService(store, evt)
+	mt := metrics.NewNoopMetrics()
+	provMt := provtelemetry.NewNoopMetrics()
 	s := &Server{
 		store:               store,
 		cfg:                 cfg,
@@ -158,8 +162,8 @@ func NewServer(
 		cryptoEngine:        eng,
 		vldtr:               vldtr,
 		providerAuthFactory: auth.NewOAuthConfig,
-		mt:                  metrics.NewNoopMetrics(),
-		provMt:              provtelemetry.NewNoopMetrics(),
+		mt:                  mt,
+		provMt:              provMt,
 		profiles:            profileSvc,
 		ruleTypes:           ruletypes.NewRuleTypeService(store),
 		repos:               github.NewRepositoryService(whManager, store, evt),
@@ -171,6 +175,9 @@ func NewServer(
 	for _, opt := range opts {
 		opt(s)
 	}
+
+	// Moved here because we have a dependency on s.restClientCache
+	s.providers = providers.NewProviderService(store, eng, mt, provMt, &cfg.Provider, s.restClientCache)
 
 	return s, nil
 }

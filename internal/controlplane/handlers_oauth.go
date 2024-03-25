@@ -24,11 +24,8 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
-	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -42,10 +39,12 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+const defaultProvider = oauth.Github
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
@@ -55,13 +54,20 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
+	var provider string
+	if req.GetContext().GetProvider() == "" {
+		provider = defaultProvider
+	} else {
+		provider = req.GetContext().GetProvider()
+	}
+
 	// get provider info
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, req, projectID)
+	providerDef, err := providers.GetProviderClassDefinition(provider)
 	if err != nil {
 		return nil, providerError(err)
 	}
 
-	if !slices.Contains(provider.AuthFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
+	if !slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
 		return nil, util.UserVisibleError(codes.InvalidArgument,
 			"provider does not support authorization code flow")
 	}
@@ -70,7 +76,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
-	span.SetAttributes(attribute.Key("provider").String(provider.Name))
+	span.SetAttributes(attribute.Key("provider").String(provider))
 	defer span.End()
 
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
@@ -85,7 +91,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
-		Provider:  provider.Name,
+		Provider:  provider,
 		ProjectID: projectID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
@@ -109,7 +115,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:     provider.Name,
+		Provider:     provider,
 		ProjectID:    projectID,
 		RemoteUser:   sql.NullString{Valid: user != "", String: user},
 		SessionState: state,
@@ -121,11 +127,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Provider = provider
 	logger.BusinessRecord(ctx).Project = projectID
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(provider.Name, req.Cli)
+	oauthConfig, err := s.providerAuthFactory(provider, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -215,10 +221,10 @@ func (s *Server) processCallback(ctx context.Context, w http.ResponseWriter, r *
 	return nil
 }
 
-func (s *Server) generateOAuthToken(ctx context.Context, provider string, code string,
+func (s *Server) generateOAuthToken(ctx context.Context, providerName string, code string,
 	stateData db.GetProjectIDBySessionStateRow) error {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(provider, true)
+	oauthConfig, err := s.providerAuthFactory(providerName, true)
 	if err != nil {
 		return fmt.Errorf("error creating OAuth config: %w", err)
 	}
@@ -231,78 +237,15 @@ func (s *Server) generateOAuthToken(ctx context.Context, provider string, code s
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
-	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
-	if stateData.RemoteUser.Valid {
-		if err := s.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
-			// TODO: make this prettier?
+	_, err = s.providers.CreateGitHubOAuthProvider(ctx, providerName, db.ProviderClassGithub, *token, stateData)
+	if err != nil {
+		if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
 				"The provided login token was associated with a different GitHub user.")
 		}
-	} else {
-		zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
+		return fmt.Errorf("error creating provider: %w", err)
 	}
 
-	ftoken := &oauth2.Token{
-		AccessToken:  token.AccessToken,
-		TokenType:    token.TokenType,
-		RefreshToken: "",
-	}
-
-	// Convert token to JSON
-	jsonData, err := json.Marshal(ftoken)
-	if err != nil {
-		return fmt.Errorf("error marshaling token: %w", err)
-	}
-
-	// encode token
-	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
-	if err != nil {
-		return fmt.Errorf("error encoding token: %w", err)
-	}
-
-	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
-
-	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:      stateData.ProjectID,
-		Provider:       provider,
-		EncryptedToken: encodedToken,
-		OwnerFilter:    stateData.OwnerFilter,
-	})
-	if err != nil {
-		return fmt.Errorf("error inserting access token: %w", err)
-	}
-	return nil
-}
-
-func (s *Server) verifyProviderTokenIdentity(
-	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider string, token string) error {
-	dbProvider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     provider,
-		Projects: []uuid.UUID{stateData.ProjectID},
-	})
-	if err != nil {
-		return fmt.Errorf("error getting provider by name: %w", err)
-	}
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	builder := providers.NewProviderBuilder(&dbProvider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
-		&s.cfg.Provider, pbOpts...)
-	// NOTE: this is github-specific at the moment.  We probably need to generally
-	// re-think token enrollment when we add more providers.
-	ghClient, err := builder.GetGitHub()
-	if err != nil {
-		return fmt.Errorf("error creating GitHub client: %w", err)
-	}
-	userId, err := ghClient.GetUserId(ctx)
-	if err != nil {
-		return fmt.Errorf("error getting user ID: %w", err)
-	}
-	if strconv.FormatInt(userId, 10) != stateData.RemoteUser.String {
-		return fmt.Errorf("user ID mismatch: %d != %s", userId, stateData.RemoteUser.String)
-	}
 	return nil
 }
 

@@ -99,8 +99,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	projectID := uuid.New()
-	providerID := uuid.New()
 	providerName := "github"
+	nonGithubProviderName := "non-github"
 	projectIdStr := projectID.String()
 
 	testCases := []struct {
@@ -122,18 +122,6 @@ func TestGetAuthorizationURL(t *testing.T) {
 				Cli:  true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					GetParentProjects(gomock.Any(), projectID).
-					Return([]uuid.UUID{projectID}, nil)
-				store.EXPECT().
-					ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
-					Return([]db.Provider{{
-						ID:   providerID,
-						Name: "github",
-						AuthFlows: []db.AuthorizationFlow{
-							db.AuthorizationFlowOauth2AuthorizationCodeFlow,
-						},
-					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), partialDbParamsMatcher{db.CreateSessionStateParams{
 						Provider:  "github",
@@ -163,26 +151,13 @@ func TestGetAuthorizationURL(t *testing.T) {
 			name: "Unsupported auth flow",
 			req: &pb.GetAuthorizationURLRequest{
 				Context: &pb.Context{
-					Provider: &providerName,
+					Provider: &nonGithubProviderName,
 					Project:  &projectIdStr,
 				},
 				Port: 8080,
 				Cli:  true,
 			},
-			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					GetParentProjects(gomock.Any(), projectID).
-					Return([]uuid.UUID{projectID}, nil)
-				store.EXPECT().
-					ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
-					Return([]db.Provider{{
-						ID:   providerID,
-						Name: "github",
-						AuthFlows: []db.AuthorizationFlow{
-							db.AuthorizationFlowNone,
-						},
-					}}, nil)
-			},
+			buildStubs: func(_ *mockdb.MockStore) {},
 
 			checkResponse: func(t *testing.T, _ *pb.GetAuthorizationURLResponse, err error) {
 				t.Helper()
@@ -203,18 +178,6 @@ func TestGetAuthorizationURL(t *testing.T) {
 				Cli:  true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().
-					GetParentProjects(gomock.Any(), projectID).
-					Return([]uuid.UUID{projectID}, nil)
-				store.EXPECT().
-					ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
-					Return([]db.Provider{{
-						ID:   providerID,
-						Name: "github",
-						AuthFlows: []db.AuthorizationFlow{
-							db.AuthorizationFlowOauth2AuthorizationCodeFlow,
-						},
-					}}, nil)
 				store.EXPECT().
 					CreateSessionState(gomock.Any(), partialDbParamsMatcher{db.CreateSessionStateParams{
 						Provider:   "github",
@@ -302,25 +265,34 @@ func TestProviderCallback(t *testing.T) {
 	code := "0xefbeadde"
 
 	testCases := []struct {
-		name        string
-		redirectUrl string
-		remoteUser  sql.NullString
-		code        int
-		err         string
+		name             string
+		redirectUrl      string
+		remoteUser       sql.NullString
+		code             int
+		existingProvider bool
+		err              string
 	}{{
-		name:        "Success",
-		redirectUrl: "http://localhost:8080",
-		code:        307,
+		name:             "Success",
+		redirectUrl:      "http://localhost:8080",
+		existingProvider: true,
+		code:             307,
 	}, {
-		name:        "Success with remote user",
-		redirectUrl: "http://localhost:8080",
-		remoteUser:  sql.NullString{Valid: true, String: "31337"},
-		code:        307,
+		name:             "Success with remote user",
+		redirectUrl:      "http://localhost:8080",
+		remoteUser:       sql.NullString{Valid: true, String: "31337"},
+		existingProvider: true,
+		code:             307,
 	}, {
-		name:       "Wrong remote userid",
-		remoteUser: sql.NullString{Valid: true, String: "1234"},
-		code:       403,
-		err:        "The provided login token was associated with a different GitHub user.\n",
+		name:             "Wrong remote userid",
+		remoteUser:       sql.NullString{Valid: true, String: "1234"},
+		existingProvider: true,
+		code:             403,
+		err:              "The provided login token was associated with a different GitHub user.\n",
+	}, {
+		name:             "No existing provider",
+		redirectUrl:      "http://localhost:8080",
+		existingProvider: false,
+		code:             307,
 	}}
 
 	for _, tt := range testCases {
@@ -359,20 +331,36 @@ func TestProviderCallback(t *testing.T) {
 				UserId: 31337,
 			}
 
+			var opts []ServerOption
+			if tc.remoteUser.String != "" {
+				// TODO: verfifyProviderTokenIdentity
+				cancelable, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				clientCache := ratecache.NewRestClientCache(cancelable)
+				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, &stubClient)
+				opts = []ServerOption{
+					WithRestClientCache(clientCache),
+				}
+			}
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			store := mockdb.NewMockStore(ctrl)
-			s, _ := newDefaultServer(t, store)
+			s, _ := newDefaultServer(t, store, opts...)
 
-			encryptedUrl := sql.NullString{}
-			if tc.redirectUrl != "" {
-				var err error
-				encryptedUrl.String, err = s.cryptoEngine.EncryptString(tc.redirectUrl)
-				if err != nil {
-					t.Fatalf("Failed to encrypt redirect URL: %v", err)
-				}
-				encryptedUrl.Valid = true
+			var err error
+			encryptedUrlString, err := s.cryptoEngine.EncryptString(tc.redirectUrl)
+			if err != nil {
+				t.Fatalf("Failed to encrypt redirect URL: %v", err)
 			}
+			encryptedUrl := sql.NullString{
+				Valid:  true,
+				String: encryptedUrlString,
+			}
+
+			tx := sql.Tx{}
+			store.EXPECT().BeginTransaction().Return(&tx, nil)
+			store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 
 			store.EXPECT().GetProjectIDBySessionState(gomock.Any(), state).Return(
 				db.GetProjectIDBySessionStateRow{
@@ -381,24 +369,25 @@ func TestProviderCallback(t *testing.T) {
 					RemoteUser:  tc.remoteUser,
 				}, nil)
 
-			if tc.remoteUser.String != "" {
-				// TODO: verfifyProviderTokenIdentity
+			if tc.existingProvider {
 				store.EXPECT().GetProviderByName(gomock.Any(), gomock.Any()).Return(
 					db.Provider{
 						Name:       "github",
 						Implements: []db.ProviderType{db.ProviderTypeGithub},
 						Version:    provinfv1.V1,
 					}, nil)
-				cancelable, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				clientCache := ratecache.NewRestClientCache(cancelable)
-				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, &stubClient)
-				s.restClientCache = clientCache
+			} else {
+				store.EXPECT().GetProviderByName(gomock.Any(), gomock.Any()).Return(
+					db.Provider{}, sql.ErrNoRows)
+				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).Return(db.Provider{}, nil)
 			}
+
 			if tc.code < http.StatusBadRequest {
 				store.EXPECT().UpsertAccessToken(gomock.Any(), gomock.Any()).Return(
 					db.ProviderAccessToken{}, nil)
+				store.EXPECT().Commit(gomock.Any())
 			}
+			store.EXPECT().Rollback(gomock.Any())
 
 			t.Logf("Request: %+v", req.URL)
 			s.providerAuthFactory = func(_ string, _ bool) (*oauth2.Config, error) {
