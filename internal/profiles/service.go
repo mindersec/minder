@@ -136,6 +136,10 @@ func (p *profileService) CreateSubscriptionProfile(
 		return nil, status.Errorf(codes.InvalidArgument, "name failed namespace validation: %v", err)
 	}
 
+	if err = namespaces.ValidateLabelsPresence(profile.GetLabels(), subscriptionID); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "labels failed namespace validation: %v", err)
+	}
+
 	// Adds default rule names, if not present
 	PopulateRuleNames(profile)
 
@@ -161,6 +165,7 @@ func (p *profileService) CreateSubscriptionProfile(
 		ProjectID:      projectID,
 		Name:           profile.GetName(),
 		DisplayName:    displayName,
+		Labels:         profile.GetLabels(),
 		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
 		Alert:          db.ValidateAlertType(profile.GetAlert()),
 		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
@@ -295,6 +300,7 @@ func (p *profileService) UpdateSubscriptionProfile(
 		ProjectID:   projectID,
 		ID:          oldDBProfile.ID,
 		DisplayName: displayName,
+		Labels:      profile.GetLabels(),
 		Remediate:   db.ValidateRemediateType(profile.GetRemediate()),
 		Alert:       db.ValidateAlertType(profile.GetAlert()),
 	})
@@ -482,6 +488,10 @@ func validateProfileUpdate(
 
 	if old.Provider != provider.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
+	}
+
+	if err := namespaces.ValidateLabelsUpdate(new.GetLabels(), old.Labels); err != nil {
+		return util.UserVisibleError(codes.InvalidArgument, "labels update failed validation: %v", err)
 	}
 
 	return nil
