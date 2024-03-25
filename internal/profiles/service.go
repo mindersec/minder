@@ -136,6 +136,10 @@ func (p *profileService) CreateSubscriptionProfile(
 		return nil, status.Errorf(codes.InvalidArgument, "name failed namespace validation: %v", err)
 	}
 
+	if err = namespaces.ValidateLabelsPresence(profile.GetLabels(), subscriptionID); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "labels failed namespace validation: %v", err)
+	}
+
 	// Adds default rule names, if not present
 	PopulateRuleNames(profile)
 
@@ -482,6 +486,10 @@ func validateProfileUpdate(
 
 	if old.Provider != provider.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
+	}
+
+	if err := namespaces.ValidateLabelsUpdate(new.GetLabels(), old.Labels); err != nil {
+		return util.UserVisibleError(codes.InvalidArgument, "labels update failed validation: %v", err)
 	}
 
 	return nil

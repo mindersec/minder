@@ -18,6 +18,7 @@ package namespaces
 
 import (
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -65,6 +66,24 @@ func DoesSubscriptionIDMatch(subscriptionID uuid.UUID, dbSubscriptionID uuid.Nul
 		return errors.New("attempted to edit a rule type or profile which belongs to a bundle")
 	} else if !dbSubscriptionID.Valid && subscriptionID != uuid.Nil {
 		return errors.New("attempted to edit a customer rule type or profile with bundle operation")
+	}
+	return nil
+}
+
+// ValidateLabelsPresence makes sure that only profiles that belong to a subscription
+// bundle have labels
+func ValidateLabelsPresence(labels []string, subscriptionID uuid.UUID) error {
+	if subscriptionID == uuid.Nil && len(labels) > 0 {
+		return errors.New("labels can only be applied to profiles from a subscription bundle")
+	}
+	return nil
+}
+
+// ValidateLabelsUpdate ensures that labels cannot be updated
+func ValidateLabelsUpdate(labels, dbLabels []string) error {
+	isEqual := slices.Equal(labels, dbLabels)
+	if !isEqual {
+		return errors.New("labels cannot be updated")
 	}
 	return nil
 }
