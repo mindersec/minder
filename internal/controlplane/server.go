@@ -162,7 +162,7 @@ func NewServer(
 		mt:                  mt,
 		provMt:              provMt,
 		profiles:            profileSvc,
-		ruleTypes:           ruletypes.NewRuleTypeService(store),
+		ruleTypes:           ruletypes.NewRuleTypeService(),
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.

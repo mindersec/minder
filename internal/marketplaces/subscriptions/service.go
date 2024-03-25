@@ -36,6 +36,8 @@ import (
 
 // SubscriptionService defines operations on the subscriptions, as well as the
 // profiles and rules linked to subscriptions
+// It is assumed that all methods will be called in the context of a
+// transaction, and they take
 type SubscriptionService interface {
 	// Subscribe creates a subscription record for the specified project
 	// and bundle. It is a no-op if the project is already subscribed.
@@ -43,6 +45,7 @@ type SubscriptionService interface {
 		ctx context.Context,
 		project types.ProjectContext,
 		bundle reader.BundleReader,
+		qtx db.ExtendQuerier,
 	) error
 	// CreateProfile creates the specified profile from the bundle in the project.
 	CreateProfile(
@@ -50,37 +53,34 @@ type SubscriptionService interface {
 		project types.ProjectContext,
 		bundle reader.BundleReader,
 		profileName string,
-	) error
-	// CreateRuleTypes creates all rule types from the bundle in the project.
-	CreateRuleTypes(
-		ctx context.Context,
-		project types.ProjectContext,
-		bundle reader.BundleReader,
+		qtx db.ExtendQuerier,
 	) error
 }
 
 type subscriptionService struct {
 	profiles profsvc.ProfileService
 	rules    ruletypes.RuleTypeService
-	store    db.Store
 }
 
 // NewSubscriptionService creates an instance of the SubscriptionService interface
 func NewSubscriptionService(
 	profiles profsvc.ProfileService,
 	rules ruletypes.RuleTypeService,
-	store db.Store,
 ) SubscriptionService {
 	return &subscriptionService{
 		profiles: profiles,
 		rules:    rules,
-		store:    store,
 	}
 }
 
-func (s *subscriptionService) Subscribe(ctx context.Context, project types.ProjectContext, bundle reader.BundleReader) error {
+func (s *subscriptionService) Subscribe(
+	ctx context.Context,
+	project types.ProjectContext,
+	bundle reader.BundleReader,
+	qtx db.ExtendQuerier,
+) error {
 	metadata := bundle.GetMetadata()
-	_, err := s.store.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
+	_, err := qtx.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
 		Namespace: metadata.Namespace,
 		Name:      metadata.Name,
 		ProjectID: project.ID,
@@ -95,19 +95,25 @@ func (s *subscriptionService) Subscribe(ctx context.Context, project types.Proje
 	}
 
 	// if creating new subscription, ensure bundle exists
-	bundleID, err := s.ensureBundleExists(ctx, metadata.Namespace, metadata.Name)
+	bundleID, err := ensureBundleExists(ctx, qtx, metadata.Namespace, metadata.Name)
 	if err != nil {
 		return fmt.Errorf("error while ensuring bundle exists: %w", err)
 	}
 
 	// create subscription
-	_, err = s.store.CreateSubscription(ctx, db.CreateSubscriptionParams{
+	subscription, err := qtx.CreateSubscription(ctx, db.CreateSubscriptionParams{
 		ProjectID:      project.ID,
 		BundleID:       bundleID,
 		CurrentVersion: metadata.Version,
 	})
 	if err != nil {
 		return fmt.Errorf("error while creating subscription: %w", err)
+	}
+
+	// populate all rule types from this bundle into the project
+	err = s.upsertBundleRules(ctx, qtx, project.ID, project.Provider, bundle, subscription.ID)
+	if err != nil {
+		return fmt.Errorf("error while creating rules in project: %w", err)
 	}
 	return nil
 }
@@ -117,9 +123,10 @@ func (s *subscriptionService) CreateProfile(
 	project types.ProjectContext,
 	bundle reader.BundleReader,
 	profileName string,
+	qtx db.ExtendQuerier,
 ) error {
 	// ensure project is subscribed to this bundle
-	subscription, err := s.findSubscription(ctx, project.ID, bundle.GetMetadata())
+	subscription, err := s.findSubscription(ctx, qtx, project.ID, bundle.GetMetadata())
 	if err != nil {
 		return err
 	}
@@ -129,38 +136,20 @@ func (s *subscriptionService) CreateProfile(
 		return fmt.Errorf("error while retrieving profile from bundle: %w", err)
 	}
 
-	_, err = s.profiles.CreateSubscriptionProfile(ctx, project.ID, project.Provider, subscription.ID, profile)
+	_, err = s.profiles.CreateProfile(ctx, project.ID, project.Provider, subscription.ID, profile, qtx)
 	if err != nil {
 		return fmt.Errorf("error while creating profile in project: %w", err)
 	}
 	return nil
 }
 
-func (s *subscriptionService) CreateRuleTypes(
+func (_ *subscriptionService) findSubscription(
 	ctx context.Context,
-	project types.ProjectContext,
-	bundle reader.BundleReader,
-) error {
-	// ensure project is subscribed to this bundle
-	subscription, err := s.findSubscription(ctx, project.ID, bundle.GetMetadata())
-	if err != nil {
-		return err
-	}
-
-	// populate all rule types from this bundle into the project
-	err = s.upsertBundleRules(ctx, project.ID, project.Provider, bundle, subscription.ID)
-	if err != nil {
-		return fmt.Errorf("error while creating rules in project: %w", err)
-	}
-	return nil
-}
-
-func (s *subscriptionService) findSubscription(
-	ctx context.Context,
+	qtx db.ExtendQuerier,
 	projectID uuid.UUID,
 	metadata *mindpak.Metadata,
 ) (result db.Subscription, err error) {
-	result, err = s.store.GetSubscriptionByProjectBundle(ctx,
+	result, err = qtx.GetSubscriptionByProjectBundle(ctx,
 		db.GetSubscriptionByProjectBundleParams{
 			Namespace: metadata.Namespace,
 			Name:      metadata.Name,
@@ -177,9 +166,13 @@ func (s *subscriptionService) findSubscription(
 	return result, nil
 }
 
-func (s *subscriptionService) ensureBundleExists(ctx context.Context, namespace, bundleName string) (uuid.UUID, error) {
+func ensureBundleExists(
+	ctx context.Context,
+	qtx db.ExtendQuerier,
+	namespace, bundleName string,
+) (uuid.UUID, error) {
 	// This is a no-op if this namespace/name pair already exists
-	dbBundle, err := s.store.UpsertBundle(ctx, db.UpsertBundleParams{
+	dbBundle, err := qtx.UpsertBundle(ctx, db.UpsertBundleParams{
 		Namespace: namespace,
 		Name:      bundleName,
 	})
@@ -192,12 +185,13 @@ func (s *subscriptionService) ensureBundleExists(ctx context.Context, namespace,
 
 func (s *subscriptionService) upsertBundleRules(
 	ctx context.Context,
+	qtx db.ExtendQuerier,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	bundle reader.BundleReader,
 	subscriptionID uuid.UUID,
 ) error {
 	return bundle.ForEachRuleType(func(ruleType *minderv1.RuleType) error {
-		return s.rules.UpsertSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+		return s.rules.UpsertRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
 	})
 }

@@ -78,14 +78,14 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod:    create,
 		},
 		{
-			Name:          "CreateRuleType rejects attempt to create a namespaced rule",
+			Name:          "CreateRuleType rejects attempt to create a namespaced rule when no subscription ID is passed",
 			RuleType:      newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
 			ExpectedError: "cannot create a rule type or profile with a namespace through the API",
 			DBSetup:       dbf.NewDBMock(),
 			TestMethod:    create,
 		},
 		{
-			Name:           "CreateSubscriptionRuleType rejects attempt to create a non-namespaced rule",
+			Name:           "CreateRuleType rejects attempt to create a non-namespaced rule when no subscription ID is passed",
 			RuleType:       newRuleType(withBasicStructure),
 			ExpectedError:  "rule types and profiles from subscriptions must have namespaced names",
 			DBSetup:        dbf.NewDBMock(),
@@ -154,7 +154,7 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod:    update,
 		},
 		{
-			Name:           "UpdateSubscriptionRuleType rejects attempt to another subscription's rule types",
+			Name:           "UpdateRuleType rejects attempt to another subscription's rule types",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
 			ExpectedError:  "attempted to edit a rule type or profile which belongs to a bundle",
 			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet),
@@ -197,21 +197,21 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod: update,
 		},
 		{
-			Name:           "UpdateSubscriptionRuleType successfully updates an existing rule",
+			Name:           "UpdateRuleType successfully updates an existing rule",
 			RuleType:       newRuleType(withBasicStructure),
 			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet, withSuccessfulUpdate),
 			TestMethod:     update,
 			SubscriptionID: subscriptionID,
 		},
 		{
-			Name:           "UpsertSubscriptionRuleType successfully creates a new namespaced rule type",
+			Name:           "UpsertRuleType successfully creates a new namespaced rule type",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
 			DBSetup:        dbf.NewDBMock(withNotFoundGet, withSuccessfulNamespaceCreate),
 			SubscriptionID: subscriptionID,
 			TestMethod:     upsert,
 		},
 		{
-			Name:           "UpsertSubscriptionRuleType successfully updates an existing rule",
+			Name:           "UpsertRuleType successfully updates an existing rule",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
 			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet, withSuccessfulUpdate),
 			TestMethod:     upsert,
@@ -234,38 +234,33 @@ func TestRuleTypeService(t *testing.T) {
 
 			var err error
 			var res *pb.RuleType
-			svc := ruletypes.NewRuleTypeService(store)
+			svc := ruletypes.NewRuleTypeService()
 			if scenario.TestMethod == create {
-				if scenario.SubscriptionID != uuid.Nil {
-					res, err = svc.CreateSubscriptionRuleType(
-						ctx,
-						projectID,
-						&provider,
-						scenario.SubscriptionID,
-						scenario.RuleType,
-					)
-				} else {
-					res, err = svc.CreateRuleType(ctx, projectID, &provider, scenario.RuleType)
-				}
-			} else if scenario.TestMethod == update {
-				if scenario.SubscriptionID != uuid.Nil {
-					res, err = svc.UpdateSubscriptionRuleType(
-						ctx,
-						projectID,
-						&provider,
-						scenario.SubscriptionID,
-						scenario.RuleType,
-					)
-				} else {
-					res, err = svc.UpdateRuleType(ctx, projectID, &provider, scenario.RuleType)
-				}
-			} else if scenario.TestMethod == upsert {
-				err = svc.UpsertSubscriptionRuleType(
+				res, err = svc.CreateRuleType(
 					ctx,
 					projectID,
 					&provider,
 					scenario.SubscriptionID,
 					scenario.RuleType,
+					store,
+				)
+			} else if scenario.TestMethod == update {
+				res, err = svc.UpdateRuleType(
+					ctx,
+					projectID,
+					&provider,
+					scenario.SubscriptionID,
+					scenario.RuleType,
+					store,
+				)
+			} else if scenario.TestMethod == upsert {
+				err = svc.UpsertRuleType(
+					ctx,
+					projectID,
+					&provider,
+					scenario.SubscriptionID,
+					scenario.RuleType,
+					store,
 				)
 			} else {
 				t.Fatal("unexpected method value")

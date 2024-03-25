@@ -46,24 +46,24 @@ var (
 
 func WithSuccessfulCreateSubscriptionProfile(mock ProfileSvcMock) {
 	mock.EXPECT().
-		CreateSubscriptionProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&minderv1.Profile{}, nil)
 }
 
 func WithFailedCreateSubscriptionProfile(mock ProfileSvcMock) {
 	mock.EXPECT().
-		CreateSubscriptionProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 }
 
 func WithSuccessfulUpdateSubscriptionProfile(mock ProfileSvcMock) {
 	mock.EXPECT().
-		UpdateSubscriptionProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpdateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(&minderv1.Profile{}, nil)
 }
 
 func WithFailedUpdateSubscriptionProfile(mock ProfileSvcMock) {
 	mock.EXPECT().
-		UpdateSubscriptionProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpdateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 }

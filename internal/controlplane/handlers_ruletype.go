@@ -166,7 +166,9 @@ func (s *Server) CreateRuleType(
 		return nil, providerError(err)
 	}
 
-	newRuleType, err := s.ruleTypes.CreateRuleType(ctx, projectID, &provider, crt.GetRuleType())
+	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
+		return s.ruleTypes.CreateRuleType(ctx, projectID, &provider, uuid.Nil, crt.GetRuleType(), qtx)
+	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
@@ -199,7 +201,9 @@ func (s *Server) UpdateRuleType(
 		return nil, providerError(err)
 	}
 
-	updatedRuleType, err := s.ruleTypes.UpdateRuleType(ctx, projectID, &provider, urt.GetRuleType())
+	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
+		return s.ruleTypes.UpdateRuleType(ctx, projectID, &provider, uuid.Nil, urt.GetRuleType(), qtx)
+	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)

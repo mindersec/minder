@@ -43,14 +43,14 @@ var (
 	errDefault = errors.New("error during rule type service operation")
 )
 
-func WithSuccessfulUpdateSubscriptionProfile(mock RuleTypeSvcMock) {
+func WithSuccessfulUpsertRuleType(mock RuleTypeSvcMock) {
 	mock.EXPECT().
-		UpsertSubscriptionRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 }
 
-func WithFailedUpdateSubscriptionProfile(mock RuleTypeSvcMock) {
+func WithFailedUpsertRuleType(mock RuleTypeSvcMock) {
 	mock.EXPECT().
-		UpsertSubscriptionRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errDefault)
 }

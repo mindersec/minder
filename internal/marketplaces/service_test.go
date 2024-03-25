@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
+	dbf "github.com/stacklok/minder/internal/db/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces"
 	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
 	bsf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
@@ -56,15 +57,9 @@ func TestMarketplace_Subscribe(t *testing.T) {
 			ExpectedError:     "error while creating subscription",
 		},
 		{
-			Name:              "Subscribe returns error when subscription cannot be created",
-			SourceSetup:       bsf.NewBundleSourceMock(bsf.WithSuccessfulGetBundle(bundleReader)),
-			SubscriptionSetup: ssf.NewSubscriptionServiceMock(ssf.WithSuccessfulSubscribe, ssf.WithFailedCreateRuleTypes),
-			ExpectedError:     "error while creating rule types in project",
-		},
-		{
 			Name:              "Subscribe subscribes the project to the bundle",
 			SourceSetup:       bsf.NewBundleSourceMock(bsf.WithSuccessfulGetBundle(bundleReader)),
-			SubscriptionSetup: ssf.NewSubscriptionServiceMock(ssf.WithSuccessfulSubscribe, ssf.WithSuccessfulCreateRuleTypes),
+			SubscriptionSetup: ssf.NewSubscriptionServiceMock(ssf.WithSuccessfulSubscribe),
 		},
 	})
 }
@@ -111,13 +106,15 @@ func testHarness(t *testing.T, method testMethod, scenarios []testScenario) {
 				source = scenario.SourceSetup(ctrl)
 			}
 
+			store := dbf.NewDBMock()(ctrl)
+
 			marketplace := marketplaces.NewSingleSourceMarketplace(source, subSvc)
 			var err error
 			switch method {
 			case subscribe:
-				err = marketplace.Subscribe(ctx, projectContext, bundleID)
+				err = marketplace.Subscribe(ctx, projectContext, bundleID, store)
 			case createProfile:
-				err = marketplace.AddProfile(ctx, projectContext, bundleID, profileName)
+				err = marketplace.AddProfile(ctx, projectContext, bundleID, profileName, store)
 			default:
 				t.Fatalf("unknown method %d", method)
 			}
