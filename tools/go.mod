@@ -11,7 +11,7 @@ require (
 	github.com/golangci/golangci-lint v1.57.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
-	github.com/mikefarah/yq/v4 v4.42.1
+	github.com/mikefarah/yq/v4 v4.43.1
 	github.com/norwoodj/helm-docs v1.13.1
 	github.com/openfga/cli v0.2.7
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
