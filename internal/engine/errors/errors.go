@@ -74,9 +74,12 @@ func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
 // the evaluation passed and the action was not needed.
 var ErrActionSkipped = errors.New("action not performed")
 
+// ErrActionPending is an error code that indicates that the action was performed but is pending, i.e., opened a PR.
+var ErrActionPending = errors.New("action pending")
+
 // IsActionInformativeError returns true if the error is an informative error that should not be reported to the user
 func IsActionInformativeError(err error) bool {
-	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable) || errors.Is(err, ErrActionTurnedOff)
+	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable) || errors.Is(err, ErrActionTurnedOff) || errors.Is(err, ErrActionPending)
 }
 
 // IsActionFatalError returns true if the error is a fatal error that should stop be reported to the user
@@ -144,6 +147,8 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 		return db.RemediationStatusTypesSkipped
 	case errors.Is(err, ErrActionNotAvailable):
 		return db.RemediationStatusTypesNotAvailable
+	case errors.Is(err, ErrActionPending):
+		return db.RemediationStatusTypesPending
 	}
 	return db.RemediationStatusTypesError
 }

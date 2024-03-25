@@ -115,7 +115,12 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			nil)
+			getMeta(params.GetEvalStatusFromDb().RemMetadata))
+		m, err := json.Marshal(map[string]string{"test": "test"})
+		if err != nil {
+			logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
+		}
+		result.RemediateMeta = m
 	}
 
 	// Try alerting

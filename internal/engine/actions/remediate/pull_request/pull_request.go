@@ -64,6 +64,10 @@ const (
 	prBodyTmplStr  = "{{.MagicComment}}\n\n{{.PrText}}"
 )
 
+type pullRequestMetadata struct {
+	ID string `json:"pr_id,omitempty"`
+}
+
 // Remediator is the remediation engine for the Pull Request remediation type
 type Remediator struct {
 	ghCli      provifv1.GitHub
@@ -148,7 +152,7 @@ func (r *Remediator) Do(
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
-	_ *json.RawMessage,
+	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
 	repo, ok := ent.(*pb.Repository)
 	if !ok {

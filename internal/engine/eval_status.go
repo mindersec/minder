@@ -151,6 +151,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		RuleEvalID: id,
 		Status:     evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr),
 		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
+		Metadata:   params.GetActionsErr().RemediateMeta,
 	})
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule remediation details")
