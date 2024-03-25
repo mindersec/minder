@@ -24,6 +24,7 @@ toc_max_heading_level: 4
 | ListArtifacts | [ListArtifactsRequest](#minder-v1-ListArtifactsRequest) | [ListArtifactsResponse](#minder-v1-ListArtifactsResponse) |  |
 | GetArtifactById | [GetArtifactByIdRequest](#minder-v1-GetArtifactByIdRequest) | [GetArtifactByIdResponse](#minder-v1-GetArtifactByIdResponse) |  |
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
+| RegisterArtifact | [RegisterArtifactRequest](#minder-v1-RegisterArtifactRequest) | [RegisterArtifactResponse](#minder-v1-RegisterArtifactResponse) |  |
 
 
 <a name="minder-v1-EvalResultsService"></a>
@@ -163,6 +164,7 @@ manage Users CRUD
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
 | artifact_pk | [string](#string) |  |  |
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
@@ -1517,6 +1519,29 @@ RESTProviderConfig contains the configuration for the REST provider.
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
+<a name="minder-v1-RegisterArtifactRequest"></a>
+
+#### RegisterArtifactRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| artifact | [UpstreamArtifactRef](#minder-v1-UpstreamArtifactRef) |  |  |
+
+
+<a name="minder-v1-RegisterArtifactResponse"></a>
+
+#### RegisterArtifactResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| artifact | [Artifact](#minder-v1-Artifact) |  |  |
+
+
 <a name="minder-v1-RegisterRepoResult"></a>
 
 #### RegisterRepoResult
@@ -2041,6 +2066,18 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was updated. |
+
+
+<a name="minder-v1-UpstreamArtifactRef"></a>
+
+#### UpstreamArtifactRef
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| type | [string](#string) |  |  |
 
 
 <a name="minder-v1-UpstreamRepositoryRef"></a>

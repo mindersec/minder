@@ -63,10 +63,7 @@ func (e *Executor) createEvalStatusParams(
 	case db.EntitiesArtifact:
 		entityID = params.ArtifactID
 	case db.EntitiesRepository:
-		entityID = uuid.NullUUID{
-			UUID:  params.RepoID,
-			Valid: true,
-		}
+		entityID = params.RepoID
 	case db.EntitiesPullRequest:
 		entityID = params.PullRequestID
 	case db.EntitiesBuildEnvironment:
@@ -119,11 +116,8 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Upsert evaluation
 	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-		ProfileID: params.ProfileID,
-		RepositoryID: uuid.NullUUID{
-			UUID:  params.RepoID,
-			Valid: true,
-		},
+		ProfileID:     params.ProfileID,
+		RepositoryID:  params.RepoID,
 		ArtifactID:    params.ArtifactID,
 		Entity:        params.EntityType,
 		RuleTypeID:    params.RuleTypeID,

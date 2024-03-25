@@ -50,8 +50,8 @@ type Querier interface {
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
-	GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error)
-	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (GetArtifactByNameRow, error)
+	GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams) (Artifact, error)
+	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	GetEntityProfileByProjectAndName(ctx context.Context, arg GetEntityProfileByProjectAndNameParams) ([]GetEntityProfileByProjectAndNameRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
@@ -91,7 +91,8 @@ type Querier interface {
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	GlobalListProvidersByClass(ctx context.Context, class NullProviderClass) ([]Provider, error)
-	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.UUID) ([]Artifact, error)
+	ListArtifactsByProjectID(ctx context.Context, projectID uuid.UUID) ([]Artifact, error)
+	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListNonOrgProjects is a query that lists all non-organization projects.
 	// projects have a boolean field is_organization that is set to true if the project is an organization.

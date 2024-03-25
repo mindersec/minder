@@ -469,8 +469,14 @@ func Int32FromString(v string) (int32, error) {
 // on the caller's side.
 func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
 	strRepoID := dbrepo.ID.String()
+	prov := dbrepo.Provider
+	proj := dbrepo.ProjectID.String()
 	return &minderv1.Repository{
-		Id:            &strRepoID,
+		Id: &strRepoID,
+		Context: &minderv1.Context{
+			Provider: &prov,
+			Project:  &proj,
+		},
 		Owner:         dbrepo.RepoOwner,
 		Name:          dbrepo.RepoName,
 		RepoId:        dbrepo.RepoID,
@@ -509,66 +515,83 @@ func GetRepository(
 func GetArtifact(
 	ctx context.Context,
 	store db.ExtendQuerier,
-	projectID,
-	repoID,
+	projectID uuid.UUID,
+	repoID uuid.NullUUID,
 	artifactID uuid.UUID,
 ) (*minderv1.Artifact, error) {
-	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
-		ProjectID: projectID,
-	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("repository not found")
-	} else if err != nil {
-		return nil, fmt.Errorf("cannot read repository: %v", err)
-	}
-
 	// Retrieve artifact details
-	artifact, err := store.GetArtifactByID(ctx, artifactID)
+	artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+		ProjectID: projectID,
+		ID:        artifactID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("artifact not found")
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get artifact: %v", err)
 	}
 
+	var repoOwner, repoName string
+	if artifact.RepositoryID.Valid && repoID.Valid {
+		// Get repository data - we need the owner and name
+		dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+			ID:        repoID.UUID,
+			ProjectID: projectID,
+		})
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("repository not found")
+		} else if err != nil {
+			return nil, fmt.Errorf("cannot read repository: %v", err)
+		}
+
+		repoOwner = dbrepo.RepoOwner
+		repoName = dbrepo.RepoName
+	}
+
 	// Build the artifact protobuf
+	prov := artifact.ProviderName
+	proj := artifact.ProjectID.String()
 	return &minderv1.Artifact{
 		ArtifactPk: artifact.ID.String(),
-		Owner:      dbrepo.RepoOwner,
+		Context: &minderv1.Context{
+			Provider: &prov,
+			Project:  &proj,
+		},
+		Owner:      repoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,
 		Visibility: artifact.ArtifactVisibility,
-		Repository: dbrepo.RepoName,
+		Repository: repoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	}, nil
 }
 
 // GetPullRequest retrieves a pull request from the database
-// and converts it to a protobuf
+// and converts it to a protobuf. Note this also returns the
+// provider name for the pull request... This might be handy
+// as a context for the PullRequest object. So this is a TODO.
 func GetPullRequest(
 	ctx context.Context,
 	store db.ExtendQuerier,
 	projectID,
 	repoID,
 	pullRequestID uuid.UUID,
-) (*minderv1.PullRequest, error) {
+) (*minderv1.PullRequest, string, error) {
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
 		ID:        repoID,
 		ProjectID: projectID,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("repository not found")
+		return nil, "", fmt.Errorf("repository not found")
 	} else if err != nil {
-		return nil, fmt.Errorf("cannot read repository: %v", err)
+		return nil, "", fmt.Errorf("cannot read repository: %v", err)
 	}
 
 	dbpr, err := store.GetPullRequestByID(ctx, pullRequestID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("pull request not found")
+		return nil, "", fmt.Errorf("pull request not found")
 	} else if err != nil {
-		return nil, fmt.Errorf("cannot read pull request: %v", err)
+		return nil, "", fmt.Errorf("cannot read pull request: %v", err)
 	}
 
 	// TODO: Do we need extra columns in the pull request table?
@@ -576,7 +599,7 @@ func GetPullRequest(
 		Number:    dbpr.PrNumber,
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,
-	}, nil
+	}, dbrepo.Provider, nil
 }
 
 // ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level

@@ -169,7 +169,10 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 	ectx *engine.EntityContext,
 	dbrepo *db.Repository,
 ) error {
-	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, dbrepo.ID)
+	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, uuid.NullUUID{
+		UUID:  dbrepo.ID,
+		Valid: true,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting artifacts: %w", err)
 	}
@@ -179,7 +182,8 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 	}
 	for _, dbA := range dbArtifacts {
 		// Get the artifact with all its versions as a protobuf
-		pbArtifact, err := util.GetArtifact(ctx, r.store, dbrepo.ProjectID, dbrepo.ID, dbA.ID)
+		pbArtifact, err := util.GetArtifact(ctx,
+			r.store, dbrepo.ProjectID, uuid.NullUUID{UUID: dbrepo.ID, Valid: true}, dbA.ID)
 		if err != nil {
 			return fmt.Errorf("error getting artifact versions: %w", err)
 		}

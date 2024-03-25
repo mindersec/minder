@@ -182,6 +182,32 @@
         ]
       }
     },
+    "/api/v1/artifacts/register": {
+      "post": {
+        "operationId": "ArtifactService_RegisterArtifact",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterArtifactResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterArtifactRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ArtifactService"
+        ]
+      }
+    },
     "/api/v1/artifacts/{provider}": {
       "get": {
         "operationId": "ArtifactService_ListArtifacts",
@@ -2735,6 +2761,9 @@
     "v1Artifact": {
       "type": "object",
       "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
         "artifactPk": {
           "type": "string"
         },
@@ -3664,6 +3693,25 @@
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
     },
+    "v1RegisterArtifactRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "artifact": {
+          "$ref": "#/definitions/v1UpstreamArtifactRef"
+        }
+      }
+    },
+    "v1RegisterArtifactResponse": {
+      "type": "object",
+      "properties": {
+        "artifact": {
+          "$ref": "#/definitions/v1Artifact"
+        }
+      }
+    },
     "v1RegisterRepoResult": {
       "type": "object",
       "properties": {
@@ -4038,6 +4086,17 @@
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type."
+    },
+    "v1UpstreamArtifactRef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
     },
     "v1UpstreamRepositoryRef": {
       "type": "object",

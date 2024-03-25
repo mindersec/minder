@@ -236,6 +236,7 @@ func getRuleEvalEntityInfo(
 	selector *uuid.NullUUID,
 	rs db.ListRuleEvaluationsByProfileIdRow,
 	providerName string,
+	projectID uuid.UUID,
 ) map[string]string {
 	l := zerolog.Ctx(ctx)
 	entityInfo := map[string]string{
@@ -254,7 +255,10 @@ func getRuleEvalEntityInfo(
 	}
 
 	if entityType.Entities == db.EntitiesArtifact {
-		artifact, err := store.GetArtifactByID(ctx, selector.UUID)
+		artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+			ProjectID: projectID,
+			ID:        selector.UUID,
+		})
 		if err != nil {
 			l.Err(err).Msg("error getting artifact by ID")
 			return entityInfo
@@ -346,7 +350,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
 			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-			dbEntity, selector, entityCtx.Provider.Name,
+			dbEntity, selector, entityCtx.Provider.Name, entityCtx.Project.ID,
 		)
 		// TODO: Add other entities once we have database entries for them
 	}
@@ -374,6 +378,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
 	providerName string,
+	projectID uuid.UUID,
 ) []*minderv1.RuleEvaluationStatus {
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
@@ -382,7 +387,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, providerName, dbRuleEvalStat)
+		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, providerName, projectID, dbRuleEvalStat)
 		if err != nil {
 			l.Err(err).Msg("error getting rule evaluation status")
 			continue
@@ -403,6 +408,7 @@ func getRuleEvalStatus(
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
 	providerName string,
+	projectID uuid.UUID,
 	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
@@ -438,7 +444,7 @@ func getRuleEvalStatus(
 		Entity:              string(dbRuleEvalStat.Entity),
 		Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
 		Details:             dbRuleEvalStat.EvalDetails.String,
-		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, providerName),
+		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, providerName, projectID),
 		Guidance:            guidance,
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),

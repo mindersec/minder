@@ -143,6 +143,17 @@ service ArtifactService {
         };
     }
 
+    rpc RegisterArtifact (RegisterArtifactRequest) returns (RegisterArtifactResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/artifacts/register"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ARTIFACT_CREATE
+        };
+    }
 }
 
 message ListArtifactsRequest {
@@ -158,6 +169,7 @@ message ListArtifactsResponse {
 }
 
 message Artifact {
+    Context context = 9;
     string artifact_pk = 1;
     string owner = 2;
     string name = 3;
@@ -203,6 +215,20 @@ message GetArtifactByNameRequest {
 message GetArtifactByNameResponse {
     Artifact artifact = 1;
     repeated ArtifactVersion versions = 2;
+}
+
+message RegisterArtifactRequest {
+    Context context = 1;
+    UpstreamArtifactRef artifact = 2;
+}
+
+message RegisterArtifactResponse {
+    Artifact artifact = 1;
+}
+
+message UpstreamArtifactRef {
+    string name = 1;
+    string type = 2;
 }
 
 message PullRequest {

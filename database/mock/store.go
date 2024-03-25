@@ -599,10 +599,10 @@ func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(arg0, arg1 any) *gomock
 }
 
 // GetArtifactByID mocks base method.
-func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 uuid.UUID) (db.GetArtifactByIDRow, error) {
+func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 db.GetArtifactByIDParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactByID", arg0, arg1)
-	ret0, _ := ret[0].(db.GetArtifactByIDRow)
+	ret0, _ := ret[0].(db.Artifact)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -614,10 +614,10 @@ func (mr *MockStoreMockRecorder) GetArtifactByID(arg0, arg1 any) *gomock.Call {
 }
 
 // GetArtifactByName mocks base method.
-func (m *MockStore) GetArtifactByName(arg0 context.Context, arg1 db.GetArtifactByNameParams) (db.GetArtifactByNameRow, error) {
+func (m *MockStore) GetArtifactByName(arg0 context.Context, arg1 db.GetArtifactByNameParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactByName", arg0, arg1)
-	ret0, _ := ret[0].(db.GetArtifactByNameRow)
+	ret0, _ := ret[0].(db.Artifact)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1137,8 +1137,23 @@ func (mr *MockStoreMockRecorder) GlobalListProvidersByClass(arg0, arg1 any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByClass", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByClass), arg0, arg1)
 }
 
+// ListArtifactsByProjectID mocks base method.
+func (m *MockStore) ListArtifactsByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListArtifactsByProjectID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Artifact)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListArtifactsByProjectID indicates an expected call of ListArtifactsByProjectID.
+func (mr *MockStoreMockRecorder) ListArtifactsByProjectID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListArtifactsByProjectID", reflect.TypeOf((*MockStore)(nil).ListArtifactsByProjectID), arg0, arg1)
+}
+
 // ListArtifactsByRepoID mocks base method.
-func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
+func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.NullUUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListArtifactsByRepoID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Artifact)

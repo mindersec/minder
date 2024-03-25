@@ -50,10 +50,14 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
-				Entity:        EntitiesRepository,
-				RepositoryID:  repo.ID,
+				Entity: EntitiesRepository,
+				RepositoryID: uuid.NullUUID{
+					UUID:  repo.ID,
+					Valid: true,
+				},
 				ArtifactID:    uuid.NullUUID{},
 				PullRequestID: uuid.NullUUID{},
+				ProjectID:     project.ID,
 				Interval:      fmt.Sprintf("%d", threshold),
 			})
 
@@ -63,10 +67,14 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 				queueCount.Add(1)
 
 				_, err := testQueries.EnqueueFlush(context.Background(), EnqueueFlushParams{
-					Entity:        EntitiesRepository,
-					RepositoryID:  repo.ID,
+					Entity: EntitiesRepository,
+					RepositoryID: uuid.NullUUID{
+						UUID:  repo.ID,
+						Valid: true,
+					},
 					ArtifactID:    uuid.NullUUID{},
 					PullRequestID: uuid.NullUUID{},
+					ProjectID:     project.ID,
 				})
 				if err == nil {
 					effectiveFlush.Add(1)
@@ -88,11 +96,15 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 	t.Log("Attempting to acquire lock now that threshold has passed")
 
 	_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
-		Entity:        EntitiesRepository,
-		RepositoryID:  repo.ID,
+		Entity: EntitiesRepository,
+		RepositoryID: uuid.NullUUID{
+			UUID:  repo.ID,
+			Valid: true,
+		},
 		ArtifactID:    uuid.NullUUID{},
 		PullRequestID: uuid.NullUUID{},
 		Interval:      fmt.Sprintf("%d", threshold),
+		ProjectID:     project.ID,
 	})
 
 	assert.NoError(t, err, "expected no error")

@@ -90,23 +90,37 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		Str("component", "EEA").
 		Str("event", msg.UUID).
 		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String()).
 		Logger()
+
+	if repoID.Valid {
+		logger = logger.With().Str("repository_id", repoID.UUID.String()).Logger()
+	}
+	if artifactID.Valid {
+		logger = logger.With().Str("artifact_id", artifactID.UUID.String()).Logger()
+	}
+	if pullRequestID.Valid {
+		logger = logger.With().Str("pull_request_id", pullRequestID.UUID.String()).Logger()
+	}
 
 	// We need to check that the resources still exist before attempting to lock them.
 	// TODO: consider whether we need foreign key checks on the locks.
-	_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
-		ProjectID: projectID,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			logger.Debug().Msg("Skipping event because repository no longer exists")
-			return nil, nil
+	if repoID.Valid {
+		_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+			ID:        repoID.UUID,
+			ProjectID: projectID,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				logger.Debug().Msg("Skipping event because repository no longer exists")
+				return nil, nil
+			}
 		}
 	}
 	if artifactID.Valid {
-		if _, err := e.querier.GetArtifactByID(ctx, artifactID.UUID); err != nil {
+		if _, err := e.querier.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+			ProjectID: projectID,
+			ID:        artifactID.UUID,
+		}); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				logger.Debug().Msg("Skipping event because artifact no longer exists")
 				return nil, nil
@@ -185,8 +199,16 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 		Str("component", "EEA").
 		Str("function", "FlushMessageHandler").
 		Str("event", msg.UUID).
-		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String()).Logger()
+		Str("entity", inf.Type.ToString()).Logger()
+	if repoID.Valid {
+		logger = logger.With().Str("repository_id", repoID.UUID.String()).Logger()
+	}
+	if artifactID.Valid {
+		logger = logger.With().Str("artifact_id", artifactID.UUID.String()).Logger()
+	}
+	if pullRequestID.Valid {
+		logger = logger.With().Str("pull_request_id", pullRequestID.UUID.String()).Logger()
+	}
 
 	logger.Debug().Msg("flushing event")
 
@@ -226,18 +248,30 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	for _, cache := range caches {
 		cache := cache
 
-		// ensure that the eiw has a project ID (invariant checked elsewhere)
-		r, err := e.querier.GetRepositoryByID(ctx, cache.RepositoryID)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				zerolog.Ctx(ctx).Info().Msg("No project found for repository, skipping")
-				continue
+		var projID uuid.UUID
+		if cache.ProjectID.Valid {
+			projID = cache.ProjectID.UUID
+		} else if cache.RepositoryID.Valid {
+			// Still checkf or the repository ID because we need it to build the entity wrapper
+			// This will be removed once we've migrated all the data.
+			// ensure that the eiw has a project ID (invariant checked elsewhere)
+			r, err := e.querier.GetRepositoryByID(ctx, cache.RepositoryID.UUID)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					zerolog.Ctx(ctx).Info().Msg("No project found for repository, skipping")
+					continue
+				}
+				return fmt.Errorf("unable to look up project for repository %s: %w", cache.RepositoryID.UUID, err)
 			}
-			return fmt.Errorf("unable to look up project for repository %s: %w", cache.RepositoryID, err)
+
+			projID = r.ProjectID
+		} else {
+			zerolog.Ctx(ctx).Error().Msg("No project or repository ID found in cache, skipping")
+			continue
 		}
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.RepositoryID, r.ProjectID, r.Provider, cache.ArtifactID, cache.PullRequestID)
+			cache.RepositoryID, projID, cache.ArtifactID, cache.PullRequestID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			continue
 		} else if err != nil {
@@ -262,18 +296,17 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 func (e *EEA) buildEntityWrapper(
 	ctx context.Context,
 	entity db.Entities,
-	repoID uuid.UUID,
+	repoID uuid.NullUUID,
 	projID uuid.UUID,
-	provider string,
 	artID, prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, repoID, projID, provider)
+		return e.buildRepositoryInfoWrapper(ctx, repoID.UUID, projID)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, repoID, projID, provider, artID)
+		return e.buildArtifactInfoWrapper(ctx, repoID, projID, artID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, provider, prID)
+		return e.buildPullRequestInfoWrapper(ctx, repoID.UUID, projID, prID)
 	case db.EntitiesBuildEnvironment:
 		return nil, fmt.Errorf("build environment entity not supported")
 	default:
@@ -285,7 +318,6 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
-	provider string,
 ) (*entities.EntityInfoWrapper, error) {
 	r, err := util.GetRepository(ctx, e.querier, projID, repoID)
 	if err != nil {
@@ -296,14 +328,13 @@ func (e *EEA) buildRepositoryInfoWrapper(
 		WithRepository(r).
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
-		WithProvider(provider), nil
+		WithProvider(r.GetContext().GetProvider()), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
-	repoID uuid.UUID,
+	repoID uuid.NullUUID,
 	projID uuid.UUID,
-	provider string,
 	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
 	a, err := util.GetArtifact(ctx, e.querier, projID, repoID, artID.UUID)
@@ -311,22 +342,26 @@ func (e *EEA) buildArtifactInfoWrapper(
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
 
-	return entities.NewEntityInfoWrapper().
-		WithRepositoryID(repoID).
+	eiw := entities.NewEntityInfoWrapper().
 		WithProjectID(projID).
 		WithArtifact(a).
 		WithArtifactID(artID.UUID).
-		WithProvider(provider), nil
+		WithProvider(a.GetContext().GetProvider())
+
+	if repoID.Valid {
+		eiw.WithRepositoryID(repoID.UUID)
+	}
+
+	return eiw, nil
 }
 
 func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
-	provider string,
 	prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	pr, err := util.GetPullRequest(ctx, e.querier, projID, repoID, prID.UUID)
+	pr, prov, err := util.GetPullRequest(ctx, e.querier, projID, repoID, prID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}
@@ -336,5 +371,5 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		WithProjectID(projID).
 		WithPullRequest(pr).
 		WithPullRequestID(prID.UUID).
-		WithProvider(provider), nil
+		WithProvider(prov), nil
 }

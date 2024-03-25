@@ -363,16 +363,17 @@ func (e *Executor) releaseLockAndFlush(
 ) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
-	logger := zerolog.Ctx(ctx).Info().
+	logger := zerolog.Ctx(ctx).With().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String()).
-		Str("repo_id", repoID.String())
-
+		Str("execution_id", inf.ExecutionID.String()).Logger()
+	if repoID.Valid {
+		logger = logger.With().Str("repo_id", repoID.UUID.String()).Logger()
+	}
 	if artID.Valid {
-		logger = logger.Str("artifact_id", artID.UUID.String())
+		logger = logger.With().Str("artifact_id", artID.UUID.String()).Logger()
 	}
 	if prID.Valid {
-		logger = logger.Str("pull_request_id", prID.UUID.String())
+		logger = logger.With().Str("pull_request_id", prID.UUID.String()).Logger()
 	}
 
 	if err := e.querier.ReleaseLock(ctx, db.ReleaseLockParams{

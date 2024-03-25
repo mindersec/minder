@@ -23,14 +23,18 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -44,22 +48,48 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	if err != nil {
 		return nil, providerError(err)
 	}
+	res := &pb.ListArtifactsResponse{}
 
-	artifactFilter, err := parseArtifactListFrom(s.store, in.From)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse artifact list from: %w", err)
-	}
+	if in.From != "" {
+		artifactFilter, err := parseArtifactListFrom(s.store, in.From)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse artifact list from: %w", err)
+		}
 
-	results, err := artifactFilter.listArtifacts(ctx, provider.Name, projectID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list artifacts: %w", err)
+		results, err := artifactFilter.listArtifacts(ctx, provider.Name, projectID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list artifacts: %w", err)
+		}
+
+		res.Results = results
+	} else {
+		artifacts, err := s.store.ListArtifactsByProjectID(ctx, projectID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, status.Errorf(codes.NotFound, "artifacts not found")
+			}
+			return nil, status.Errorf(codes.Unknown, "failed to get artifacts: %s", err)
+		}
+
+		for _, artifact := range artifacts {
+			res.Results = append(res.Results, &pb.Artifact{
+				ArtifactPk: artifact.ID.String(),
+				// TODO: add owner and repo to artifact
+				Owner:      "",
+				Repository: "",
+				Name:       artifact.ArtifactName,
+				Type:       artifact.ArtifactType,
+				Visibility: artifact.ArtifactVisibility,
+				CreatedAt:  timestamppb.New(artifact.CreatedAt),
+			})
+		}
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
-	return &pb.ListArtifactsResponse{Results: results}, nil
+	return res, nil
 }
 
 // GetArtifactByName gets an artifact by name
@@ -74,23 +104,10 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  in.GetContext().GetProvider(),
-		RepoOwner: nameParts[0],
-		RepoName:  nameParts[1],
-		ProjectID: projectID,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "repository not found")
-		}
-		return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
-	}
-
 	// the artifact name is the rest of the parts
 	artifactName := strings.Join(nameParts[2:], "/")
 	artifact, err := s.store.GetArtifactByName(ctx, db.GetArtifactByNameParams{
-		RepositoryID: repo.ID,
+		ProjectID:    entityCtx.Project.ID,
 		ArtifactName: artifactName,
 	})
 	if err != nil {
@@ -101,18 +118,37 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = artifact.Provider
+	logger.BusinessRecord(ctx).Provider = artifact.ProviderName
 	logger.BusinessRecord(ctx).Project = artifact.ProjectID
 	logger.BusinessRecord(ctx).Artifact = artifact.ID
-	logger.BusinessRecord(ctx).Repository = artifact.RepositoryID
+
+	var repoOwner string
+	var repoName string
+	if artifact.RepositoryID.Valid {
+		repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+			ID:        artifact.RepositoryID.UUID,
+			ProjectID: projectID,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "repository not found")
+			}
+			return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
+		}
+
+		logger.BusinessRecord(ctx).Repository = artifact.RepositoryID.UUID
+
+		repoOwner = repo.RepoOwner
+		repoName = repo.RepoName
+	}
 
 	return &pb.GetArtifactByNameResponse{Artifact: &pb.Artifact{
 		ArtifactPk: artifact.ID.String(),
-		Owner:      artifact.RepoOwner,
+		Owner:      repoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,
 		Visibility: artifact.ArtifactVisibility,
-		Repository: artifact.RepoName,
+		Repository: repoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	},
 		Versions: nil, // explicitly nil, will probably deprecate that field later
@@ -128,8 +164,14 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact ID")
 	}
 
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
 	// retrieve artifact details
-	artifact, err := s.store.GetArtifactByID(ctx, parsedArtifactID)
+	artifact, err := s.store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+		ProjectID: projectID,
+		ID:        parsedArtifactID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
@@ -138,21 +180,134 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = artifact.Provider
+	logger.BusinessRecord(ctx).Provider = artifact.ProviderName
 	logger.BusinessRecord(ctx).Project = artifact.ProjectID
 	logger.BusinessRecord(ctx).Artifact = artifact.ID
-	logger.BusinessRecord(ctx).Repository = artifact.RepositoryID
+
+	var repoOwner string
+	var repoName string
+	if artifact.RepositoryID.Valid {
+		repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+			ID:        artifact.RepositoryID.UUID,
+			ProjectID: projectID,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "repository not found")
+			}
+			return nil, status.Errorf(codes.Unknown, "failed to get repository: %s", err)
+		}
+
+		logger.BusinessRecord(ctx).Repository = artifact.RepositoryID.UUID
+
+		repoOwner = repo.RepoOwner
+		repoName = repo.RepoName
+	}
 
 	return &pb.GetArtifactByIdResponse{Artifact: &pb.Artifact{
 		ArtifactPk: artifact.ID.String(),
-		Owner:      artifact.RepoOwner,
+		Owner:      repoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,
 		Visibility: artifact.ArtifactVisibility,
-		Repository: artifact.RepoName,
+		Repository: repoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	},
 		Versions: nil, // explicitly nil, will probably deprecate that field later
+	}, nil
+}
+
+// RegisterArtifact registers an artifact
+func (s *Server) RegisterArtifact(ctx context.Context, in *pb.RegisterArtifactRequest) (*pb.RegisterArtifactResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	prov, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	if err != nil {
+		return nil, providerError(err)
+	}
+
+	ref := in.GetArtifact()
+
+	// name and type cannot be empty
+	if ref.GetName() == "" || ref.GetType() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "name and type cannot be empty")
+	}
+
+	typ := ref.GetType()
+	// TODO make this a switch and move out of the verifyif package
+	if typ != string(verifyif.ArtifactTypeContainer) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact type")
+	}
+
+	// check if artifact already exists
+	_, err = s.store.GetArtifactByName(ctx, db.GetArtifactByNameParams{
+		ProjectID:    projectID,
+		ArtifactName: ref.GetName(),
+	})
+	if err == nil {
+		return nil, util.UserVisibleError(codes.AlreadyExists, "artifact already exists")
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
+	}
+
+	// get OCI registry provider builder
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get provider builder: %s", err)
+	}
+
+	ociprov, err := provBuilder.GetOCI()
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get OCI client: %s", err)
+	}
+
+	// we verify that the artifact exists in the OCI registry
+	// by listing the tags for the given artifact
+	_, err = ociprov.ListTags(ctx, ref.GetName())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "artifact not found in registry: %s", err)
+	}
+
+	artifact, err := s.store.CreateArtifact(ctx, db.CreateArtifactParams{
+		ProjectID:    projectID,
+		RepositoryID: uuid.NullUUID{},
+		ArtifactName: ref.GetName(),
+		ArtifactType: ref.GetType(),
+		// TODO get this from the provider
+		ArtifactVisibility: "public",
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to create artifact: %s", err)
+	}
+
+	pbart := &pb.Artifact{
+		ArtifactPk: artifact.ID.String(),
+		Owner:      "",
+		Name:       artifact.ArtifactName,
+		Type:       artifact.ArtifactType,
+		Visibility: artifact.ArtifactVisibility,
+		Repository: "",
+		CreatedAt:  timestamppb.New(artifact.CreatedAt),
+	}
+
+	// build entity info and publish
+	if err := entities.NewEntityInfoWrapper().
+		WithProvider(prov.Name).
+		WithArtifact(pbart).
+		WithArtifactID(artifact.ID).
+		WithProjectID(projectID).
+		Publish(s.evt); err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).
+			Str("artifact_id", artifact.ID.String()).
+			Msg("failed to publish artifact event")
+	}
+
+	return &pb.RegisterArtifactResponse{
+		Artifact: pbart,
 	}, nil
 }
 
@@ -217,7 +372,10 @@ func (filter *artifactListFilter) listArtifacts(ctx context.Context, provider st
 
 	results := []*pb.Artifact{}
 	for _, repository := range repositories {
-		artifacts, err := filter.store.ListArtifactsByRepoID(ctx, repository.ID)
+		artifacts, err := filter.store.ListArtifactsByRepoID(ctx, uuid.NullUUID{
+			UUID:  repository.ID,
+			Valid: true,
+		})
 		if err != nil {
 			return nil, status.Errorf(codes.Unknown, "failed to get artifacts: %s", err)
 		}

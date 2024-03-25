@@ -15,6 +15,7 @@
 package entities
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -79,6 +80,11 @@ const (
 	PullRequestIDEventKey = "pull_request_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
+)
+
+var (
+	// ErrKeyNotFoundInMetadata is returned when a key is not found in the metadata
+	ErrKeyNotFoundInMetadata = errors.New("key not found in metadata")
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -240,8 +246,14 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 
 // GetEntityDBIDs returns the repository, artifact and pull request IDs
 // from the ownership data
-func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.UUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
-	repoID = uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
+func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.NullUUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
+	strRepoID, ok := eiw.OwnershipData[RepositoryIDEventKey]
+	if ok {
+		repoID = uuid.NullUUID{
+			UUID:  uuid.MustParse(strRepoID),
+			Valid: true,
+		}
+	}
 
 	strArtifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
 	if ok {
@@ -353,7 +365,7 @@ func pbEntityTypeToString(t minderv1.Entity) (string, error) {
 func getIDFromMessage(msg *message.Message, key string) (string, error) {
 	rawID := msg.Metadata.Get(key)
 	if rawID == "" {
-		return "", fmt.Errorf("%s not found in metadata", key)
+		return "", fmt.Errorf("%w: %s", ErrKeyNotFoundInMetadata, key)
 	}
 
 	return rawID, nil
@@ -373,21 +385,30 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	// We always have the repository ID.
-	if err := out.withRepositoryIDFromMessage(msg); err != nil {
-		return nil, err
-	}
+	repoErr := out.withRepositoryIDFromMessage(msg)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
 	switch typ {
 	case RepositoryEventEntityType:
+		// we need to have a repository ID
+		if repoErr != nil {
+			return nil, repoErr
+		}
 		out.AsRepository()
 	case VersionedArtifactEventEntityType:
+		// repository ID is optional
+		if repoErr != nil && !errors.Is(repoErr, ErrKeyNotFoundInMetadata) {
+			return nil, repoErr
+		}
 		out.AsArtifact()
 		if err := out.withArtifactIDFromMessage(msg); err != nil {
 			return nil, err
 		}
 	case PullRequestEventEntityType:
+		// we need to have a repository ID
+		if repoErr != nil {
+			return nil, repoErr
+		}
 		out.AsPullRequest()
 		if err := out.withPullRequestIDFromMessage(msg); err != nil {
 			return nil, err

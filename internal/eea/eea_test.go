@@ -199,7 +199,7 @@ func TestFlushAll(t *testing.T) {
 						{
 							ID:           uuid.New(),
 							Entity:       db.EntitiesRepository,
-							RepositoryID: repoID,
+							RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
 							QueuedAt:     time.Now(),
 						},
 					}, nil)
@@ -234,9 +234,12 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:           uuid.New(),
-							Entity:       db.EntitiesArtifact,
-							RepositoryID: repoID,
+							ID:     uuid.New(),
+							Entity: db.EntitiesArtifact,
+							RepositoryID: uuid.NullUUID{
+								UUID:  repoID,
+								Valid: true,
+							},
 							ArtifactID: uuid.NullUUID{
 								UUID:  artID,
 								Valid: true,
@@ -260,8 +263,11 @@ func TestFlushAll(t *testing.T) {
 						ProjectID: projectID,
 						Provider:  providerName,
 					}, nil)
-				mockStore.EXPECT().GetArtifactByID(ctx, artID).
-					Return(db.GetArtifactByIDRow{
+				mockStore.EXPECT().GetArtifactByID(ctx, db.GetArtifactByIDParams{
+					ProjectID: projectID,
+					ID:        artID,
+				}).
+					Return(db.Artifact{
 						ID:        artID,
 						ProjectID: projectID,
 					}, nil)
@@ -280,9 +286,12 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:           uuid.New(),
-							Entity:       db.EntitiesPullRequest,
-							RepositoryID: repoID,
+							ID:     uuid.New(),
+							Entity: db.EntitiesPullRequest,
+							RepositoryID: uuid.NullUUID{
+								UUID:  repoID,
+								Valid: true,
+							},
 							PullRequestID: uuid.NullUUID{
 								UUID:  prID,
 								Valid: true,
@@ -489,10 +498,13 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	mockStore.EXPECT().ListFlushCache(ctx).
 		Return([]db.FlushCache{
 			{
-				ID:           uuid.New(),
-				Entity:       db.EntitiesRepository,
-				RepositoryID: repoID,
-				QueuedAt:     time.Now(),
+				ID:     uuid.New(),
+				Entity: db.EntitiesRepository,
+				RepositoryID: uuid.NullUUID{
+					UUID:  repoID,
+					Valid: true,
+				},
+				QueuedAt: time.Now(),
 			},
 		}, nil)
 
