@@ -295,7 +295,7 @@ func (pb *ProviderBuilder) GetOCI() (provinfv1.OCI, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	return oci.New(pb.credential, "ghcr.io/stacklok"), nil
+	return oci.New(pb.credential, "docker.io"), nil
 }
 
 // DBToPBType converts a database provider type to a protobuf provider type.

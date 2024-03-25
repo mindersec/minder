@@ -27,6 +27,7 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
@@ -45,7 +46,8 @@ const (
 // Ingest is the engine for a rule type that uses artifact data ingest
 // Implements enginer.ingester.Ingester
 type Ingest struct {
-	ghCli provifv1.GitHub
+	ghCli  provifv1.GitHub
+	ociCli provifv1.OCI
 
 	// artifactVerifier is the verifier for sigstore. It's only used in the Ingest method
 	// but we store it in the Ingest structure to allow tests to set a custom artifactVerifier
@@ -68,14 +70,25 @@ func NewArtifactDataIngest(
 	pbuild *providers.ProviderBuilder,
 ) (*Ingest, error) {
 
-	ghCli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get github client: %w", err)
+	ing := &Ingest{}
+
+	if pbuild.Implements(db.ProviderTypeGithub) {
+		ghCli, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get github client: %w", err)
+		}
+		ing.ghCli = ghCli
+	} else if pbuild.Implements(db.ProviderTypeOci) {
+		ociCli, err := pbuild.GetOCI()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get oci client: %w", err)
+		}
+		ing.ociCli = ociCli
+	} else {
+		return nil, fmt.Errorf("provider builder does not implement required interfaces")
 	}
 
-	return &Ingest{
-		ghCli: ghCli,
-	}, nil
+	return ing, nil
 }
 
 // GetType returns the type of the artifact rule data ingest engine
@@ -133,7 +146,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 	}
 
 	// Get all artifact versions filtering out those that don't apply to this rule
-	versions, err := getAndFilterArtifactVersions(ctx, cfg, i.ghCli, artifact)
+	versions, err := i.getAndFilterArtifactVersions(ctx, cfg, artifact)
 	if err != nil {
 		return nil, err
 	}
@@ -231,23 +244,35 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 	return artifactVerifier, nil
 }
 
-func getAndFilterArtifactVersions(
+func (i *Ingest) getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
-	ghCli provifv1.GitHub,
 	artifact *pb.Artifact,
 ) ([]string, error) {
-	var res []string
-
 	// Build a tag filter based on the configuration
 	filter, err := buildTagMatcher(cfg.Tags, cfg.TagRegex)
 	if err != nil {
 		return nil, err
 	}
 
+	if i.ghCli != nil {
+		return i.getAndFilterGitHubArtifactVersions(ctx, cfg, artifact, filter)
+	}
+
+	return i.getAndFilterOciArtifactVersions(ctx, cfg, artifact, filter)
+}
+
+func (i *Ingest) getAndFilterGitHubArtifactVersions(
+	ctx context.Context,
+	cfg *ingesterConfig,
+	artifact *pb.Artifact,
+	filter tagMatcher,
+) ([]string, error) {
+	var res []string
+
 	// Fetch all available versions of the artifact
-	isOrg := (ghCli.GetOwner() != "")
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
+	isOrg := (i.ghCli.GetOwner() != "")
+	upstreamVersions, err := i.ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
@@ -270,6 +295,38 @@ func getAndFilterArtifactVersions(
 		// If the artifact version is applicable to this rule, add it to the list
 		zerolog.Ctx(ctx).Debug().Str("name", *version.Name).Strs("tags", tags).Msg("artifact version matched")
 		res = append(res, *version.Name)
+	}
+
+	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
+	if len(res) == 0 {
+		return nil, evalerrors.NewErrEvaluationFailed("no applicable artifact versions found")
+	}
+
+	// Return the list of applicable artifact versions, i.e. []string{"digest1", "digest2", ...}
+	return res, nil
+}
+
+func (i *Ingest) getAndFilterOciArtifactVersions(
+	ctx context.Context,
+	_ *ingesterConfig,
+	artifact *pb.Artifact,
+	filter tagMatcher,
+) ([]string, error) {
+	var res []string
+
+	// Fetch all available versions of the artifact
+	upstreamTags, err := i.ociCli.ListTags(ctx, artifact.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
+	}
+
+	sort.Strings(upstreamTags)
+
+	// Loop through all and filter out the versions that don't apply to this rule
+	for _, version := range upstreamTags {
+		// If the artifact version is applicable to this rule, add it to the list
+		zerolog.Ctx(ctx).Debug().Str("name", version).Msg("artifact version matched")
+		res = append(res, version)
 	}
 
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here

@@ -162,8 +162,12 @@ func getSigstoreBundles(
 ) ([]sigstoreBundle, error) {
 	imageRef := BuildImageRef(registry, owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
-	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.ghClient.GetCredential().GetAsContainerAuthenticator(owner))
-	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) {
+	var a authn.Authenticator
+	if auth.ghClient != nil {
+		a = auth.ghClient.GetCredential().GetAsContainerAuthenticator(owner)
+	}
+	bundles, err := bundleFromOCIImage(ctx, imageRef, a)
+	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) && auth.ghClient != nil {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
 		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)
 	}
@@ -362,7 +366,11 @@ func bundleFromOCIImage(ctx context.Context,
 // getSignatureReferenceFromOCIImage returns the simple signing layer from the OCI image reference
 func getSignatureReferenceFromOCIImage(imageRef string, auth authn.Authenticator) (string, error) {
 	// 0. Get the auth options
-	opts := []remote.Option{remote.WithAuth(auth)}
+	opts := []remote.Option{}
+
+	if auth != nil {
+		opts = append(opts, remote.WithAuth(auth))
+	}
 
 	// 1. Get the image reference
 	ref, err := name.ParseReference(imageRef)
@@ -392,7 +400,10 @@ func getSignatureReferenceFromOCIImage(imageRef string, auth authn.Authenticator
 
 // getSimpleSigningLayersFromSignatureManifest returns the identity and issuer from the certificate
 func getSimpleSigningLayersFromSignatureManifest(manifestRef string, auth authn.Authenticator) ([]v1.Descriptor, error) {
-	craneOpts := []crane.Option{crane.WithAuth(auth)}
+	craneOpts := []crane.Option{}
+	if auth != nil {
+		craneOpts = append(craneOpts, crane.WithAuth(auth))
+	}
 
 	// Get the manifest of the signature
 	mf, err := crane.Manifest(manifestRef, craneOpts...)
@@ -570,6 +581,9 @@ func getBundleMsgSignature(simpleSigningLayer v1.Descriptor) (*protobundle.Bundl
 
 // BuildImageRef returns the OCI image reference
 func BuildImageRef(registry, owner, artifact, version string) string {
+	if owner == "" {
+		return fmt.Sprintf("%s/%s@%s", registry, artifact, version)
+	}
 	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, version)
 }
 
