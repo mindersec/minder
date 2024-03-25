@@ -340,16 +340,8 @@ func (e *Executor) updateLockLease(
 	executionID uuid.UUID,
 	params *engif.EvalStatusParams,
 ) {
-	logger := zerolog.Ctx(ctx).Info().
-		Str("entity_type", string(params.EntityType)).
-		Str("execution_id", executionID.String()).
-		Str("repo_id", params.RepoID.String())
-	if params.ArtifactID.Valid {
-		logger = logger.Str("artifact_id", params.ArtifactID.UUID.String())
-	}
-	if params.PullRequestID.Valid {
-		logger = logger.Str("pull_request_id", params.PullRequestID.UUID.String())
-	}
+	logger := params.DecorateLogger(
+		zerolog.Ctx(ctx).With().Str("execution_id", executionID.String()).Logger())
 
 	if err := e.querier.UpdateLease(ctx, db.UpdateLeaseParams{
 		Entity:        params.EntityType,
@@ -362,7 +354,7 @@ func (e *Executor) updateLockLease(
 		return
 	}
 
-	logger.Msg("lock lease updated")
+	logger.Info().Msg("lock lease updated")
 }
 
 func (e *Executor) releaseLockAndFlush(
@@ -410,30 +402,23 @@ func logEval(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	params *engif.EvalStatusParams) {
-	logger := zerolog.Ctx(ctx)
-	evalLog := logger.Debug().
-		Str("profile", params.Profile.Name).
-		Str("ruleType", params.Rule.Type).
-		Str("ruleName", params.Rule.Name).
-		Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
-		Str("projectId", inf.ProjectID.String()).
-		Str("repositoryId", params.RepoID.String())
-
-	if params.ArtifactID.Valid {
-		evalLog = evalLog.Str("artifactId", params.ArtifactID.UUID.String())
-	}
+	evalLog := params.DecorateLogger(
+		zerolog.Ctx(ctx).With().
+			Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
+			Str("project_id", inf.ProjectID.String()).
+			Logger())
 
 	// log evaluation
 	evalLog.Err(params.GetEvalErr()).Msg("result - evaluation")
 
 	// log remediation
-	logger.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
+	evalLog.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
 		Str("action", "remediate").
 		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
 		Msg("result - action")
 
 	// log alert
-	logger.Err(filterActionErrorForLogging(params.GetActionsErr().AlertErr)).
+	evalLog.Err(filterActionErrorForLogging(params.GetActionsErr().AlertErr)).
 		Str("action", "alert").
 		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
 		Msg("result - action")
