@@ -14,10 +14,12 @@
 
 -- Bundles --
 
--- name: UpsertBundle :one
+-- name: UpsertBundle :exec
 INSERT INTO bundles (namespace, name) VALUES ($1, $2)
-ON CONFLICT DO NOTHING
-RETURNING *;
+ON CONFLICT DO NOTHING;
+
+-- name: GetBundle :one
+SELECT * FROM bundles WHERE namespace = $1 AND name = $2;
 
 -- Subscriptions --
 

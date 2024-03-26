@@ -52,6 +52,7 @@ type Querier interface {
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetArtifactByID(ctx context.Context, id uuid.UUID) (GetArtifactByIDRow, error)
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (GetArtifactByNameRow, error)
+	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	GetEntityProfileByProjectAndName(ctx context.Context, arg GetEntityProfileByProjectAndNameParams) ([]GetEntityProfileByProjectAndNameRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
@@ -151,7 +152,7 @@ type Querier interface {
 	// See the License for the specific language governing permissions and
 	// limitations under the License.
 	// Bundles --
-	UpsertBundle(ctx context.Context, arg UpsertBundleParams) (Bundle, error)
+	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)

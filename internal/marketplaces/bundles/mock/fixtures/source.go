@@ -17,6 +17,7 @@ package fixtures
 
 import (
 	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
+	"github.com/stacklok/minder/pkg/mindpak"
 	"github.com/stacklok/minder/pkg/mindpak/reader"
 	"github.com/stacklok/minder/pkg/mindpak/sources"
 	"go.uber.org/mock/gomock"
@@ -49,4 +50,12 @@ func WithFailedGetBundle(mock SourceMock) {
 	mock.EXPECT().
 		GetBundle(gomock.Any()).
 		Return(nil, sources.ErrBundleNotFound)
+}
+
+func WithListBundles(bundleID mindpak.BundleID) func(SourceMock) {
+	return func(mock SourceMock) {
+		mock.EXPECT().
+			ListBundles().
+			Return([]mindpak.BundleID{bundleID}, nil)
+	}
 }
