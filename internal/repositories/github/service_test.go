@@ -21,7 +21,7 @@ import (
 	"errors"
 	"testing"
 
-	gh "github.com/google/go-github/v56/github"
+	gh "github.com/google/go-github/v60/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"

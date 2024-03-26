@@ -28,7 +28,7 @@ import (
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"

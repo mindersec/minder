@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"

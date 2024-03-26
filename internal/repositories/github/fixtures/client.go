@@ -22,7 +22,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"go.uber.org/mock/gomock"
 
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
