@@ -9,7 +9,7 @@ INSERT INTO profiles (
     subscription_id,
     display_name,
     labels
-) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name), sqlc.arg(labels)::text[]) RETURNING *;
+) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name), COALESCE(sqlc.arg(labels)::text[], '{}'::text[])) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
@@ -17,7 +17,7 @@ UPDATE profiles SET
     alert = $4,
     updated_at = NOW(),
     display_name = sqlc.arg(display_name),
-    labels = sqlc.arg(labels)::TEXT[]
+    labels = COALESCE(sqlc.arg(labels)::TEXT[], '{}'::TEXT[])
 WHERE id = $1 AND project_id = $2 RETURNING *;
 
 -- name: CreateProfileForEntity :one
