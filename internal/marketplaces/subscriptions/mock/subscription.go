@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	db "github.com/stacklok/minder/internal/db"
 	types "github.com/stacklok/minder/internal/marketplaces/types"
 	reader "github.com/stacklok/minder/pkg/mindpak/reader"
 	gomock "go.uber.org/mock/gomock"
@@ -42,43 +43,29 @@ func (m *MockSubscriptionService) EXPECT() *MockSubscriptionServiceMockRecorder 
 }
 
 // CreateProfile mocks base method.
-func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 string) error {
+func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 string, arg4 db.ExtendQuerier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateProfile indicates an expected call of CreateProfile.
-func (mr *MockSubscriptionServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockSubscriptionServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockSubscriptionService)(nil).CreateProfile), arg0, arg1, arg2, arg3)
-}
-
-// CreateRuleTypes mocks base method.
-func (m *MockSubscriptionService) CreateRuleTypes(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRuleTypes", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateRuleTypes indicates an expected call of CreateRuleTypes.
-func (mr *MockSubscriptionServiceMockRecorder) CreateRuleTypes(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleTypes", reflect.TypeOf((*MockSubscriptionService)(nil).CreateRuleTypes), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockSubscriptionService)(nil).CreateProfile), arg0, arg1, arg2, arg3, arg4)
 }
 
 // Subscribe mocks base method.
-func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader) error {
+func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 db.ExtendQuerier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Subscribe indicates an expected call of Subscribe.
-func (mr *MockSubscriptionServiceMockRecorder) Subscribe(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockSubscriptionServiceMockRecorder) Subscribe(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockSubscriptionService)(nil).Subscribe), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockSubscriptionService)(nil).Subscribe), arg0, arg1, arg2, arg3)
 }

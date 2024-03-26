@@ -33,6 +33,7 @@ import (
 	psf "github.com/stacklok/minder/internal/profiles/mock/fixtures"
 	"github.com/stacklok/minder/internal/ruletypes"
 	rsf "github.com/stacklok/minder/internal/ruletypes/mock/fixtures"
+	"github.com/stacklok/minder/pkg/mindpak/reader"
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {
@@ -40,25 +41,45 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 	scenarios := []struct {
 		Name          string
 		DBSetup       dbf.DBMockBuilder
+		BundleSetup   brf.BundleMockBuilder
+		RuleTypeSetup rsf.RuleTypeSvcMockBuilder
 		ExpectedError string
 	}{
 		{
-			Name:    "Subscribe is a no-op when the subscription already exists",
-			DBSetup: dbf.NewDBMock(withSuccessfulFindSubscription),
+			Name:        "Subscribe is a no-op when the subscription already exists",
+			BundleSetup: brf.NewBundleReaderMock(brf.WithMetadata),
+			DBSetup:     dbf.NewDBMock(withSuccessfulFindSubscription),
 		},
 		{
 			Name:          "Subscribe returns error when it cannot query for existing subscriptions",
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
 			DBSetup:       dbf.NewDBMock(withFailedFindSubscription),
 			ExpectedError: "error while querying subscriptions",
 		},
 		{
 			Name:          "Subscribe returns error when subscription cannot be created",
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
 			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withFailedCreateSubscription, withBundleUpsert),
 			ExpectedError: "error while creating subscription",
 		},
 		{
-			Name:    "Subscribe creates subscription",
-			DBSetup: dbf.NewDBMock(withNotFoundFindSubscription, withSuccessfulCreateSubscription, withBundleUpsert),
+			Name:          "Subscribe returns error if rules cannot be read from bundle",
+			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithFailedForEachRuleType),
+			ExpectedError: "error while creating rules in project",
+		},
+		{
+			Name:          "Subscribe returns error if rules cannot be upserted into database",
+			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
+			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithFailedUpsertRuleType),
+			ExpectedError: "error while creating rules in project",
+		},
+		{
+			Name:          "Subscribe creates subscription",
+			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withSuccessfulCreateSubscription, withBundleUpsert),
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
+			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithSuccessfulUpsertRuleType),
 		},
 	}
 
@@ -71,10 +92,15 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			bundle := brf.NewBundleReaderMock(brf.WithMetadata)(ctrl)
+			var bundle reader.BundleReader
+			if scenario.BundleSetup != nil {
+				bundle = scenario.BundleSetup(ctrl)
+			}
 
-			svc := createService(ctrl, scenario.DBSetup, nil, nil)
-			err := svc.Subscribe(ctx, projectContext, bundle)
+			querier := getQuerier(ctrl, scenario.DBSetup)
+
+			svc := createService(ctrl, nil, scenario.RuleTypeSetup)
+			err := svc.Subscribe(ctx, projectContext, bundle, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -136,73 +162,10 @@ func TestSubscriptionService_CreateProfile(t *testing.T) {
 			ctx := context.Background()
 
 			bundle := scenario.BundleSetup(ctrl)
+			querier := getQuerier(ctrl, scenario.DBSetup)
 
-			svc := createService(ctrl, scenario.DBSetup, scenario.ProfileSetup, nil)
-			err := svc.CreateProfile(ctx, projectContext, bundle, profileName)
-			if scenario.ExpectedError == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, scenario.ExpectedError)
-			}
-		})
-	}
-}
-
-func TestNewSubscriptionService_CreateRuleTypes(t *testing.T) {
-	t.Parallel()
-	scenarios := []struct {
-		Name          string
-		DBSetup       dbf.DBMockBuilder
-		BundleSetup   brf.BundleMockBuilder
-		RuleTypeSetup rsf.RuleTypeSvcMockBuilder
-		ExpectedError string
-	}{
-		{
-			Name:          "CreateRuleTypes returns error when project is not subscribed to bundle",
-			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
-			ExpectedError: "not subscribed to bundle",
-		},
-		{
-			Name:          "CreateRuleTypes returns error when it cannot query for existing subscriptions",
-			DBSetup:       dbf.NewDBMock(withFailedFindSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
-			ExpectedError: "error while querying subscriptions",
-		},
-		{
-			Name:          "CreateRuleTypes returns error if rules cannot be read from bundle",
-			DBSetup:       dbf.NewDBMock(withSuccessfulFindSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithFailedForEachRuleType),
-			ExpectedError: "error while creating rules in project",
-		},
-		{
-			Name:          "CreateRuleTypes returns error if rules cannot be upserted into database",
-			DBSetup:       dbf.NewDBMock(withSuccessfulFindSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
-			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithFailedUpdateSubscriptionProfile),
-			ExpectedError: "error while creating rules in project",
-		},
-		{
-			Name:          "CreateRuleTypes creates rule types in project",
-			DBSetup:       dbf.NewDBMock(withSuccessfulFindSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
-			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithSuccessfulUpdateSubscriptionProfile),
-		},
-	}
-
-	for i := range scenarios {
-		scenario := scenarios[i]
-		t.Run(scenario.Name, func(t *testing.T) {
-			t.Parallel()
-
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			ctx := context.Background()
-
-			bundle := scenario.BundleSetup(ctrl)
-
-			svc := createService(ctrl, scenario.DBSetup, nil, scenario.RuleTypeSetup)
-			err := svc.CreateRuleTypes(ctx, projectContext, bundle)
+			svc := createService(ctrl, scenario.ProfileSetup, nil)
+			err := svc.CreateProfile(ctx, projectContext, bundle, profileName, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -266,15 +229,9 @@ func withBundleUpsert(mock dbf.DBMock) {
 
 func createService(
 	ctrl *gomock.Controller,
-	dbSetup dbf.DBMockBuilder,
 	profileSetup psf.ProfileSvcMockBuilder,
 	ruleTypeSetup rsf.RuleTypeSvcMockBuilder,
 ) subscriptions.SubscriptionService {
-	var store db.Store
-	if dbSetup != nil {
-		store = dbSetup(ctrl)
-	}
-
 	var rules ruletypes.RuleTypeService
 	if ruleTypeSetup != nil {
 		rules = ruleTypeSetup(ctrl)
@@ -285,5 +242,14 @@ func createService(
 		profSvc = profileSetup(ctrl)
 	}
 
-	return subscriptions.NewSubscriptionService(profSvc, rules, store)
+	return subscriptions.NewSubscriptionService(profSvc, rules)
+}
+
+func getQuerier(ctrl *gomock.Controller, dbSetup dbf.DBMockBuilder) db.ExtendQuerier {
+	var store db.Store
+	if dbSetup != nil {
+		store = dbSetup(ctrl)
+	}
+
+	return store
 }

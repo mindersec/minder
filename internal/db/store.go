@@ -110,3 +110,24 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	return ListRuleEvaluationsByProfileIdRow{},
 		fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
 }
+
+// WithTransaction wraps an operation in a new DB transaction.
+// Ideally this would be a method of the Store interface, but Go's generics do
+// not allow for generic methods :(
+func WithTransaction[T any](store Store, fn func(querier ExtendQuerier) (T, error)) (result T, err error) {
+	tx, err := store.BeginTransaction()
+	if err != nil {
+		return result, err
+	}
+	qtx := store.GetQuerierWithTransaction(tx)
+
+	defer func() {
+		_ = store.Rollback(tx)
+	}()
+
+	result, err = fn(qtx)
+	if err != nil {
+		return result, err
+	}
+	return result, store.Commit(tx)
+}

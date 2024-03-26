@@ -45,36 +45,24 @@ var (
 
 func WithSuccessfulSubscribe(mock SubscriptionMock) {
 	mock.EXPECT().
-		Subscribe(gomock.Any(), gomock.Any(), gomock.Any()).
+		Subscribe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 }
 
 func WithFailedSubscribe(mock SubscriptionMock) {
 	mock.EXPECT().
-		Subscribe(gomock.Any(), gomock.Any(), gomock.Any()).
+		Subscribe(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errDefault)
 }
 
 func WithSuccessfulCreateProfile(mock SubscriptionMock) {
 	mock.EXPECT().
-		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 }
 
 func WithFailedCreateProfile(mock SubscriptionMock) {
 	mock.EXPECT().
-		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(errDefault)
-}
-
-func WithSuccessfulCreateRuleTypes(mock SubscriptionMock) {
-	mock.EXPECT().
-		CreateRuleTypes(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil)
-}
-
-func WithFailedCreateRuleTypes(mock SubscriptionMock) {
-	mock.EXPECT().
-		CreateRuleTypes(gomock.Any(), gomock.Any(), gomock.Any()).
+		CreateProfile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errDefault)
 }

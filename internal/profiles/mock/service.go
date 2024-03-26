@@ -43,61 +43,31 @@ func (m *MockProfileService) EXPECT() *MockProfileServiceMockRecorder {
 }
 
 // CreateProfile mocks base method.
-func (m *MockProfileService) CreateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 *v1.Profile) (*v1.Profile, error) {
+func (m *MockProfileService) CreateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.ExtendQuerier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateProfile indicates an expected call of CreateProfile.
-func (mr *MockProfileServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockProfileServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileService)(nil).CreateProfile), arg0, arg1, arg2, arg3)
-}
-
-// CreateSubscriptionProfile mocks base method.
-func (m *MockProfileService) CreateSubscriptionProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile) (*v1.Profile, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSubscriptionProfile", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*v1.Profile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateSubscriptionProfile indicates an expected call of CreateSubscriptionProfile.
-func (mr *MockProfileServiceMockRecorder) CreateSubscriptionProfile(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscriptionProfile", reflect.TypeOf((*MockProfileService)(nil).CreateSubscriptionProfile), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileService)(nil).CreateProfile), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // UpdateProfile mocks base method.
-func (m *MockProfileService) UpdateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 *v1.Profile) (*v1.Profile, error) {
+func (m *MockProfileService) UpdateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.ExtendQuerier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProfile", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "UpdateProfile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateProfile indicates an expected call of UpdateProfile.
-func (mr *MockProfileServiceMockRecorder) UpdateProfile(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockProfileServiceMockRecorder) UpdateProfile(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileService)(nil).UpdateProfile), arg0, arg1, arg2, arg3)
-}
-
-// UpdateSubscriptionProfile mocks base method.
-func (m *MockProfileService) UpdateSubscriptionProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile) (*v1.Profile, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSubscriptionProfile", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*v1.Profile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateSubscriptionProfile indicates an expected call of UpdateSubscriptionProfile.
-func (mr *MockProfileServiceMockRecorder) UpdateSubscriptionProfile(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSubscriptionProfile", reflect.TypeOf((*MockProfileService)(nil).UpdateSubscriptionProfile), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProfile", reflect.TypeOf((*MockProfileService)(nil).UpdateProfile), arg0, arg1, arg2, arg3, arg4, arg5)
 }

@@ -63,7 +63,9 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	newProfile, err := s.profiles.CreateProfile(ctx, entityCtx.Project.ID, &provider, in)
+	newProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
+		return s.profiles.CreateProfile(ctx, entityCtx.Project.ID, &provider, uuid.Nil, in, qtx)
+	})
 	if err != nil {
 		// assumption: service layer is setting meaningful errors
 		return nil, err
@@ -632,7 +634,10 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		return nil, providerError(err)
 	}
 
-	updatedProfile, err := s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, &provider, in)
+	updatedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
+		return s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, &provider, uuid.Nil, in, qtx)
+	})
+
 	if err != nil {
 		// assumption: service layer sets sensible errors
 		return nil, err

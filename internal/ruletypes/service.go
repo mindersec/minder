@@ -44,20 +44,9 @@ type RuleTypeService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
-		ruleType *pb.RuleType,
-	) (*pb.RuleType, error)
-
-	// CreateSubscriptionRuleType creates rule types in the database
-	// the new rule type is validated
-	// if the rule type already exists - this will return an error
-	// returns the pb definition of the new rule type on success
-	CreateSubscriptionRuleType(
-		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
-		// TODO: should this be a whole instance of the subscription?
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
+		qtx db.ExtendQuerier,
 	) (*pb.RuleType, error)
 
 	// UpdateRuleType updates rule types in the database
@@ -68,40 +57,29 @@ type RuleTypeService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
-		ruleType *pb.RuleType,
-	) (*pb.RuleType, error)
-
-	// UpdateSubscriptionRuleType updates rule types in the database
-	// the new rule type is validated, and backwards compatibility verified
-	// if the rule does not already exist - this will return an error
-	// returns the pb definition of the updated rule type on success
-	UpdateSubscriptionRuleType(
-		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
+		qtx db.ExtendQuerier,
 	) (*pb.RuleType, error)
 
-	// UpsertSubscriptionRuleType creates the rule type if it does not exist
+	// UpsertRuleType creates the rule type if it does not exist
 	// or updates it if it already exists. This is used in the subscription
 	// logic.
-	UpsertSubscriptionRuleType(
+	UpsertRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
+		qtx db.ExtendQuerier,
 	) error
 }
 
-type ruleTypeService struct {
-	store db.Store
-}
+type ruleTypeService struct{}
 
 // NewRuleTypeService creates a new instance of RuleTypeService
-func NewRuleTypeService(store db.Store) RuleTypeService {
-	return &ruleTypeService{store: store}
+func NewRuleTypeService() RuleTypeService {
+	return &ruleTypeService{}
 }
 
 var (
@@ -116,21 +94,13 @@ var (
 	ErrRuleTypeInvalid = errors.New("rule type validation failed")
 )
 
-func (r *ruleTypeService) CreateRuleType(
-	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
-	ruleType *pb.RuleType,
-) (*pb.RuleType, error) {
-	return r.CreateSubscriptionRuleType(ctx, projectID, provider, uuid.Nil, ruleType)
-}
-
-func (r *ruleTypeService) CreateSubscriptionRuleType(
+func (_ *ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
+	qtx db.ExtendQuerier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -147,7 +117,7 @@ func (r *ruleTypeService) CreateSubscriptionRuleType(
 	ruleTypeName := ruleType.GetName()
 	ruleTypeDef := ruleType.GetDef()
 
-	_, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+	_, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})
@@ -168,7 +138,7 @@ func (r *ruleTypeService) CreateSubscriptionRuleType(
 		return nil, err
 	}
 
-	newDBRecord, err := r.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
+	newDBRecord, err := qtx.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:           ruleTypeName,
 		Provider:       provider.Name,
 		ProviderID:     provider.ID,
@@ -193,21 +163,13 @@ func (r *ruleTypeService) CreateSubscriptionRuleType(
 	return rt, nil
 }
 
-func (r *ruleTypeService) UpdateRuleType(
-	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
-	ruleType *pb.RuleType,
-) (*pb.RuleType, error) {
-	return r.UpdateSubscriptionRuleType(ctx, projectID, provider, uuid.Nil, ruleType)
-}
-
-func (r *ruleTypeService) UpdateSubscriptionRuleType(
+func (_ *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
+	qtx db.ExtendQuerier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -220,7 +182,7 @@ func (r *ruleTypeService) UpdateSubscriptionRuleType(
 	ruleTypeName := ruleType.GetName()
 	ruleTypeDef := ruleType.GetDef()
 
-	oldRuleType, err := r.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+	oldRuleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		ProjectID: projectID,
 		Name:      ruleTypeName,
 	})
@@ -252,7 +214,7 @@ func (r *ruleTypeService) UpdateSubscriptionRuleType(
 		return nil, err
 	}
 
-	updatedRuleType, err := r.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
+	updatedRuleType, err := qtx.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
 		ID:            oldRuleType.ID,
 		Description:   ruleType.GetDescription(),
 		Definition:    serializedRule,
@@ -272,17 +234,18 @@ func (r *ruleTypeService) UpdateSubscriptionRuleType(
 	return result, nil
 }
 
-func (s *ruleTypeService) UpsertSubscriptionRuleType(
+func (s *ruleTypeService) UpsertRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
+	qtx db.ExtendQuerier,
 ) error {
 	// In future, we may want to refactor the code so that we use upserts
 	// instead of separate create and update methods. For now, simulate upsert
 	// semantics by trying to create, then trying to update.
-	_, err := s.CreateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	_, err := s.CreateRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
 	if err == nil {
 		// Rule successfully created, we can stop here.
 		return nil
@@ -291,7 +254,7 @@ func (s *ruleTypeService) UpsertSubscriptionRuleType(
 	}
 
 	// If we get here: rule already exists. Let's update it.
-	_, err = s.UpdateSubscriptionRuleType(ctx, projectID, provider, subscriptionID, ruleType)
+	_, err = s.UpdateRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
 	if err != nil {
 		return fmt.Errorf("error while updating rule: %w", err)
 	}

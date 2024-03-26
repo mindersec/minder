@@ -47,21 +47,14 @@ import (
 type ProfileService interface {
 	// CreateProfile creates the profile in the specified project
 	// returns the updated profile structure on successful update
+	// subscriptionID should be set to nil when not calling
 	CreateProfile(
-		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
-		profile *minderv1.Profile,
-	) (*minderv1.Profile, error)
-
-	// CreateSubscriptionProfile creates the profile in the specified project
-	// returns the updated profile structure on successful update
-	CreateSubscriptionProfile(
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
+		qtx db.ExtendQuerier,
 	) (*minderv1.Profile, error)
 
 	// UpdateProfile updates the profile in the specified project
@@ -70,22 +63,13 @@ type ProfileService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		provider *db.Provider,
-		profile *minderv1.Profile,
-	) (*minderv1.Profile, error)
-
-	// UpdateSubscriptionProfile updates the profile in the specified project
-	// returns the updated profile structure on successful update
-	UpdateSubscriptionProfile(
-		ctx context.Context,
-		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
+		qtx db.ExtendQuerier,
 	) (*minderv1.Profile, error)
 }
 
 type profileService struct {
-	store     db.Store
 	publisher events.Publisher
 	validator *Validator
 }
@@ -96,7 +80,6 @@ func NewProfileService(
 	publisher events.Publisher,
 ) ProfileService {
 	return &profileService{
-		store:     store,
 		publisher: publisher,
 		validator: NewValidator(store),
 	}
@@ -110,19 +93,10 @@ func (p *profileService) CreateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
-	profile *minderv1.Profile,
-) (*minderv1.Profile, error) {
-	return p.CreateSubscriptionProfile(ctx, projectID, provider, uuid.Nil, profile)
-}
-
-func (p *profileService) CreateSubscriptionProfile(
-	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
+	qtx db.ExtendQuerier,
 ) (*minderv1.Profile, error) {
-
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
@@ -142,16 +116,6 @@ func (p *profileService) CreateSubscriptionProfile(
 
 	// Adds default rule names, if not present
 	PopulateRuleNames(profile)
-
-	// Now that we know it's valid, let's persist it!
-	tx, err := p.store.BeginTransaction()
-	if err != nil {
-		log.Printf("error starting transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-	defer p.store.Rollback(tx)
-
-	qtx := p.store.GetQuerierWithTransaction(tx)
 
 	displayName := profile.GetDisplayName()
 	// if empty use the name
@@ -193,11 +157,6 @@ func (p *profileService) CreateSubscriptionProfile(
 		}
 	}
 
-	if err := p.store.Commit(tx); err != nil {
-		log.Printf("error committing transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error creating profile")
-	}
-
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: newProfile.ID}
 	p.sendNewProfileEvent(provider.Name, projectID)
 
@@ -213,24 +172,15 @@ func (p *profileService) CreateSubscriptionProfile(
 	return profile, nil
 }
 
+// TODO: refactor to reduce complexity
+// nolint:gocyclo
 func (p *profileService) UpdateProfile(
-	ctx context.Context,
-	projectID uuid.UUID,
-	provider *db.Provider,
-	profile *minderv1.Profile,
-) (*minderv1.Profile, error) {
-	return p.UpdateSubscriptionProfile(ctx, projectID, provider, uuid.Nil, profile)
-}
-
-// TODO: refactor this to reduce cyclomatic complexity
-//
-//nolint:gocyclo
-func (p *profileService) UpdateSubscriptionProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
+	qtx db.ExtendQuerier,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -240,15 +190,6 @@ func (p *profileService) UpdateSubscriptionProfile(
 	if err != nil {
 		return nil, err
 	}
-
-	tx, err := p.store.BeginTransaction()
-	if err != nil {
-		log.Printf("error starting transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error updating profile")
-	}
-	defer p.store.Rollback(tx)
-
-	qtx := p.store.GetQuerierWithTransaction(tx)
 
 	// Get object and ensure we lock it for update
 	oldDBProfile, err := getProfileFromPBForUpdateWithQuerier(ctx, profile, projectID, qtx)
@@ -281,7 +222,7 @@ func (p *profileService) UpdateSubscriptionProfile(
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	oldRules, err := p.getRulesFromProfile(ctx, oldProfile, projectID)
+	oldRules, err := p.getRulesFromProfile(ctx, qtx, oldProfile, projectID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
@@ -329,11 +270,6 @@ func (p *profileService) UpdateSubscriptionProfile(
 
 	if err := deleteRuleStatusesForProfile(ctx, &updatedProfile, unusedRuleStatuses, qtx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
-	}
-
-	if err := p.store.Commit(tx); err != nil {
-		log.Printf("error committing transaction: %v", err)
-		return nil, status.Errorf(codes.Internal, "error updating profile")
 	}
 
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: updatedProfile.Name, ID: updatedProfile.ID}
@@ -527,8 +463,9 @@ func getProfilePBFromDB(
 	return nil, fmt.Errorf("profile not found")
 }
 
-func (p *profileService) getRulesFromProfile(
+func (_ *profileService) getRulesFromProfile(
 	ctx context.Context,
+	qtx db.ExtendQuerier,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
 ) (RuleMapping, error) {
@@ -539,7 +476,7 @@ func (p *profileService) getRulesFromProfile(
 	err := engine.TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
-		rtdb, err := p.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		rtdb, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			ProjectID: projectID,
 			Name:      r.GetType(),
 		})

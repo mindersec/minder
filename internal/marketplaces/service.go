@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/stacklok/minder/internal/db"
 	sub "github.com/stacklok/minder/internal/marketplaces/subscriptions"
 	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/pkg/mindpak"
@@ -30,8 +31,19 @@ import (
 // from bundles to projects. Subscriptions are implicitly created and managed
 // by these operations.
 type Marketplace interface {
-	Subscribe(ctx context.Context, project types.ProjectContext, bundleID mindpak.BundleID) error
-	AddProfile(ctx context.Context, project types.ProjectContext, bundleID mindpak.BundleID, profileName string) error
+	Subscribe(
+		ctx context.Context,
+		project types.ProjectContext,
+		bundleID mindpak.BundleID,
+		qtx db.ExtendQuerier,
+	) error
+	AddProfile(
+		ctx context.Context,
+		project types.ProjectContext,
+		bundleID mindpak.BundleID,
+		profileName string,
+		qtx db.ExtendQuerier,
+	) error
 }
 
 // trivial implementation of Marketplace with a single source
@@ -52,20 +64,16 @@ func (s *singleSourceMarketplace) Subscribe(
 	ctx context.Context,
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
+	qtx db.ExtendQuerier,
 ) error {
 	bundle, err := s.source.GetBundle(bundleID)
 	if err != nil {
 		return fmt.Errorf("error while retrieving bundle: %w", err)
 	}
 
-	if err = s.subscriptions.Subscribe(ctx, project, bundle); err != nil {
+	if err = s.subscriptions.Subscribe(ctx, project, bundle, qtx); err != nil {
 		return fmt.Errorf("error while creating subscription: %w", err)
 	}
-
-	if err = s.subscriptions.CreateRuleTypes(ctx, project, bundle); err != nil {
-		return fmt.Errorf("error while creating rule types in project: %w", err)
-	}
-
 	return nil
 }
 
@@ -74,13 +82,14 @@ func (s *singleSourceMarketplace) AddProfile(
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
 	profileName string,
+	qtx db.ExtendQuerier,
 ) error {
 	bundle, err := s.source.GetBundle(bundleID)
 	if err != nil {
 		return fmt.Errorf("error while retrieving bundle: %w", err)
 	}
 
-	if err = s.subscriptions.CreateProfile(ctx, project, bundle, profileName); err != nil {
+	if err = s.subscriptions.CreateProfile(ctx, project, bundle, profileName, qtx); err != nil {
 		return fmt.Errorf("error while creating profile in project: %w", err)
 	}
 
