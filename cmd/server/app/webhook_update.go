@@ -49,7 +49,7 @@ func cmdWebhookUpdate() *cobra.Command {
 	updateCmd.Flags().StringP("provider",
 		"p", "github",
 		"what provider interface must the provider implement to be updated")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	if err := updateCmd.MarkFlagRequired("provider"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)

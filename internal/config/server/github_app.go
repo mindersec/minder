@@ -24,9 +24,9 @@ type GitHubAppConfig struct {
 	// AppName is the name of the GitHub App
 	AppName string `mapstructure:"app_name"`
 	// AppID is the ID of the GitHub App
-	AppID int64 `mapstructure:"app_id"`
+	AppID int64 `mapstructure:"app_id" default:"0"`
 	// UserID is the ID of the GitHub App user
-	UserID int64 `mapstructure:"user_id"`
+	UserID int64 `mapstructure:"user_id" default:"0"`
 	// PrivateKey is the GitHub App's private key
 	PrivateKey string `mapstructure:"private_key"`
 }

@@ -114,7 +114,7 @@ func init() {
 
 func initConfig() {
 	viper.SetEnvPrefix("minder")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	cfgFile := viper.GetString("config")
 	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "config.yaml"))
