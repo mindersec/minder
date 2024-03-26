@@ -16,7 +16,8 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	github "github.com/google/go-github/v56/github"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v10 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -172,10 +173,10 @@ func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
 }
 
 // ListAllRepositories mocks base method.
-func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*github.Repository, error) {
+func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
-	ret0, _ := ret[0].([]*github.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -417,10 +418,10 @@ func (mr *MockGitHubMockRecorder) GetBranchProtection(arg0, arg1, arg2, arg3 any
 }
 
 // GetCredential mocks base method.
-func (m *MockGitHub) GetCredential() v1.GitHubCredential {
+func (m *MockGitHub) GetCredential() v10.GitHubCredential {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCredential")
-	ret0, _ := ret[0].(v1.GitHubCredential)
+	ret0, _ := ret[0].(v10.GitHubCredential)
 	return ret0
 }
 
@@ -595,10 +596,10 @@ func (mr *MockGitHubMockRecorder) GetUserId(ctx any) *gomock.Call {
 }
 
 // ListAllRepositories mocks base method.
-func (m *MockGitHub) ListAllRepositories(arg0 context.Context) ([]*github.Repository, error) {
+func (m *MockGitHub) ListAllRepositories(arg0 context.Context) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
-	ret0, _ := ret[0].([]*github.Repository)
+	ret0, _ := ret[0].([]*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

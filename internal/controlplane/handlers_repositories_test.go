@@ -496,7 +496,7 @@ func (*StubGitHub) GetCredential() provinfv1.GitHubCredential {
 }
 
 // ListAllRepositories implements v1.GitHub.
-func (*StubGitHub) ListAllRepositories(context.Context) ([]*github.Repository, error) {
+func (*StubGitHub) ListAllRepositories(context.Context) ([]*pb.Repository, error) {
 	panic("unimplemented")
 }
 

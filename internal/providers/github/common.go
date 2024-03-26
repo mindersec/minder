@@ -68,7 +68,7 @@ var _ provifv1.GitHub = (*GitHub)(nil)
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
 type Delegate interface {
 	GetCredential() provifv1.GitHubCredential
-	ListAllRepositories(context.Context) ([]*github.Repository, error)
+	ListAllRepositories(context.Context) ([]*minderv1.Repository, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
@@ -636,7 +636,7 @@ func (c *GitHub) AddAuthToPushOptions(ctx context.Context, pushOptions *git.Push
 }
 
 // ListAllRepositories lists all repositories the credential has access to
-func (c *GitHub) ListAllRepositories(ctx context.Context) ([]*github.Repository, error) {
+func (c *GitHub) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
 	return c.delegate.ListAllRepositories(ctx)
 }
 
@@ -791,29 +791,6 @@ func isRateLimitError(err error) bool {
 	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
 
 	return isRateLimitErr || isAbuseRateLimitErr
-}
-
-// ConvertRepositories converts a list of GitHub repositories to a list of minder repositories
-func ConvertRepositories(repos []*github.Repository) []*minderv1.Repository {
-	var converted []*minderv1.Repository
-	for _, repo := range repos {
-		converted = append(converted, convertRepository(repo))
-	}
-	return converted
-}
-
-// ConvertRepository converts a GitHub repository to a minder repository
-func convertRepository(repo *github.Repository) *minderv1.Repository {
-	return &minderv1.Repository{
-		Name:      repo.GetName(),
-		Owner:     repo.GetOwner().GetLogin(),
-		RepoId:    repo.GetID(),
-		HookUrl:   repo.GetHooksURL(),
-		DeployUrl: repo.GetDeploymentsURL(),
-		CloneUrl:  repo.GetCloneURL(),
-		IsPrivate: *repo.Private,
-		IsFork:    *repo.Fork,
-	}
 }
 
 // IsMinderHook checks if a GitHub hook is a Minder hook

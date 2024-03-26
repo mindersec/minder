@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
+	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -139,7 +140,7 @@ func (o *GitHubOAuthDelegate) GetOwner() string {
 
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
-func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*gogithub.Repository, error) {
+func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
 	opt := &gogithub.RepositoryListOptions{
 		ListOptions: gogithub.ListOptions{
 			PerPage: 100,
@@ -167,7 +168,7 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*gogit
 		}
 
 		if err != nil {
-			return allRepos, err
+			return ghcommon.ConvertRepositories(allRepos), fmt.Errorf("error listing repositories: %w", err)
 		}
 		allRepos = append(allRepos, repos...)
 		if resp.NextPage == 0 {
@@ -181,7 +182,7 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*gogit
 		}
 	}
 
-	return allRepos, nil
+	return ghcommon.ConvertRepositories(allRepos), nil
 }
 
 // GetUserId returns the user id for the authenticated user
