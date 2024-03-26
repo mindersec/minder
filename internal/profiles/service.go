@@ -127,7 +127,7 @@ func (p *profileService) CreateSubscriptionProfile(
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
-	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, projectID, provider.Name, profile)
+	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, projectID, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (p *profileService) UpdateSubscriptionProfile(
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
-	rules, err := p.validator.ValidateAndExtractRules(ctx, projectID, provider.Name, profile)
+	rules, err := p.validator.ValidateAndExtractRules(ctx, projectID, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +281,7 @@ func (p *profileService) UpdateSubscriptionProfile(
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
 	}
 
-	oldRules, err := p.getRulesFromProfile(ctx, oldProfile, projectID, provider)
+	oldRules, err := p.getRulesFromProfile(ctx, oldProfile, projectID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
@@ -531,7 +531,6 @@ func (p *profileService) getRulesFromProfile(
 	ctx context.Context,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
-	provider *db.Provider,
 ) (RuleMapping, error) {
 	// We capture the rule instantiations here so we can
 	// track them in the db later.
@@ -541,7 +540,6 @@ func (p *profileService) getRulesFromProfile(
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := p.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  provider.Name,
 			ProjectID: projectID,
 			Name:      r.GetType(),
 		})

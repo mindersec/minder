@@ -112,17 +112,16 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id FROM rule_type WHERE provider = $1 AND project_id = $2 AND lower(name) = lower($3)
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id FROM rule_type WHERE  project_id = $1 AND lower(name) = lower($2)
 `
 
 type GetRuleTypeByNameParams struct {
-	Provider  string    `json:"provider"`
 	ProjectID uuid.UUID `json:"project_id"`
 	Name      string    `json:"name"`
 }
 
 func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error) {
-	row := q.db.QueryRowContext(ctx, getRuleTypeByName, arg.Provider, arg.ProjectID, arg.Name)
+	row := q.db.QueryRowContext(ctx, getRuleTypeByName, arg.ProjectID, arg.Name)
 	var i RuleType
 	err := row.Scan(
 		&i.ID,

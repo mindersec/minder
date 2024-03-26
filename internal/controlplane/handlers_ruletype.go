@@ -87,7 +87,6 @@ func (s *Server) GetRuleTypeByName(
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.Provider.Name,
 		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
