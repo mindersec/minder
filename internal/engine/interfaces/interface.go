@@ -232,6 +232,27 @@ func (e *EvalStatusParams) GetIngestResult() *Result {
 	return e.Result
 }
 
+// DecorateLogger decorates the logger with the necessary fields
+func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
+	outl := l.With().
+		Str("entity_type", string(e.EntityType)).
+		Str("profile_id", e.ProfileID.String()).
+		Str("rule_type", e.GetRule().GetType()).
+		Str("rule_name", e.GetRule().GetName()).
+		Str("rule_type_id", e.GetRuleType().GetId()).
+		Str("repository_id", e.RepoID.String()).
+		Logger()
+
+	if e.ArtifactID.Valid {
+		outl = outl.With().Str("artifact_id", e.ArtifactID.UUID.String()).Logger()
+	}
+	if e.PullRequestID.Valid {
+		outl = outl.With().Str("pull_request_id", e.PullRequestID.UUID.String()).Logger()
+	}
+
+	return outl
+}
+
 // EvalParamsReader is the interface used for a rule type evaluator
 type EvalParamsReader interface {
 	GetRule() *pb.Profile_Rule
