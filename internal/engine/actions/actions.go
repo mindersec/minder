@@ -55,7 +55,7 @@ func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *provider
 	// Create the alert engine
 	alertEngine, err := alert.NewRuleAlert(rt, pbuild)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
+		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}
 
 	return &RuleActionsEngine{
