@@ -1198,7 +1198,7 @@ func (mr *MockStoreMockRecorder) ListOldOrgProjects(arg0 any) *gomock.Call {
 }
 
 // ListProfilesByProjectID mocks base method.
-func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 db.ListProfilesByProjectIDParams) ([]db.ListProfilesByProjectIDRow, error) {
+func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesByProjectIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProfilesByProjectID", arg0, arg1)
 	ret0, _ := ret[0].([]db.ListProfilesByProjectIDRow)
@@ -1210,6 +1210,21 @@ func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 db.ListPr
 func (mr *MockStoreMockRecorder) ListProfilesByProjectID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectID", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectID), arg0, arg1)
+}
+
+// ListProfilesByProjectIDAndLabel mocks base method.
+func (m *MockStore) ListProfilesByProjectIDAndLabel(arg0 context.Context, arg1 db.ListProfilesByProjectIDAndLabelParams) ([]db.ListProfilesByProjectIDAndLabelRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProfilesByProjectIDAndLabel", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListProfilesByProjectIDAndLabelRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProfilesByProjectIDAndLabel indicates an expected call of ListProfilesByProjectIDAndLabel.
+func (mr *MockStoreMockRecorder) ListProfilesByProjectIDAndLabel(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectIDAndLabel", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectIDAndLabel), arg0, arg1)
 }
 
 // ListProfilesInstantiatingRuleType mocks base method.

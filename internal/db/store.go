@@ -131,3 +131,29 @@ func WithTransaction[T any](store Store, fn func(querier ExtendQuerier) (T, erro
 	}
 	return result, store.Commit(tx)
 }
+
+// ProfileRow is an interface row in the profiles table
+type ProfileRow interface {
+	GetProfile() Profile
+	GetEntityProfile() EntityProfile
+}
+
+// GetProfile returns the profile
+func (r ListProfilesByProjectIDAndLabelRow) GetProfile() Profile {
+	return r.Profile
+}
+
+// GetEntityProfile returns the entity profile
+func (r ListProfilesByProjectIDAndLabelRow) GetEntityProfile() EntityProfile {
+	return r.EntityProfile
+}
+
+// GetProfile returns the profile
+func (r ListProfilesByProjectIDRow) GetProfile() Profile {
+	return r.Profile
+}
+
+// GetEntityProfile returns the entity profile
+func (r ListProfilesByProjectIDRow) GetEntityProfile() EntityProfile {
+	return r.EntityProfile
+}

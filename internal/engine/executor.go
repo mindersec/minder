@@ -234,7 +234,7 @@ func (e *Executor) evalEntityEvent(
 	defer e.releaseLockAndFlush(ctx, inf)
 
 	// Get profiles relevant to project
-	dbpols, err := e.querier.ListProfilesByProjectID(ctx, db.ListProfilesByProjectIDParams{ProjectID: inf.ProjectID})
+	dbpols, err := e.querier.ListProfilesByProjectID(ctx, inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting profiles: %w", err)
 	}

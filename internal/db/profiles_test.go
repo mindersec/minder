@@ -267,16 +267,17 @@ func TestProfileLabels(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rows, err := testQueries.ListProfilesByProjectID(context.Background(), ListProfilesByProjectIDParams{
-				ProjectID:     randomEntities.proj.ID,
-				IncludeLabels: tt.includeLabels,
-				ExcludeLabels: tt.excludeLabels,
-			})
+			rows, err := testQueries.ListProfilesByProjectIDAndLabel(
+				context.Background(), ListProfilesByProjectIDAndLabelParams{
+					ProjectID:     randomEntities.proj.ID,
+					IncludeLabels: tt.includeLabels,
+					ExcludeLabels: tt.excludeLabels,
+				})
 			require.NoError(t, err)
 
 			names := make([]string, 0, len(rows))
 			for _, row := range rows {
-				names = append(names, row.Name)
+				names = append(names, row.Profile.Name)
 			}
 			require.True(t, slices.Equal(names, tt.expectedNames), "expected %v, got %v", tt.expectedNames, names)
 		})

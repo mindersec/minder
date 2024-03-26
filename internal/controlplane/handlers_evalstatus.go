@@ -93,10 +93,12 @@ func sortEntitiesEvaluationStatus(
 	for _, p := range profileList {
 		p := p
 		evals, err := store.ListRuleEvaluationsByProfileId(
-			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.ID},
+			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.Profile.ID},
 		)
 		if err != nil {
-			return nil, nil, nil, status.Errorf(codes.Internal, "error reading evaluations from profile %q: %v", p.ID.String(), err)
+			return nil, nil, nil,
+				status.Errorf(codes.Internal,
+					"error reading evaluations from profile %q: %v", p.Profile.ID.String(), err)
 		}
 
 		for _, e := range evals {
@@ -120,15 +122,15 @@ func sortEntitiesEvaluationStatus(
 
 			entities[entString] = ent
 
-			if _, ok := profileStatuses[p.ID]; !ok {
-				profileStatuses[p.ID] = buildProfileStatus(&p, profileStatusList)
+			if _, ok := profileStatuses[p.Profile.ID]; !ok {
+				profileStatuses[p.Profile.ID] = buildProfileStatus(&p, profileStatusList)
 			}
 
 			stat := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
 			if _, ok := statusByEntity[entString]; !ok {
 				statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
 			}
-			statusByEntity[entString][p.ID] = append(statusByEntity[entString][p.ID], stat)
+			statusByEntity[entString][p.Profile.ID] = append(statusByEntity[entString][p.Profile.ID], stat)
 		}
 	}
 	return entities, profileStatuses, statusByEntity, err
@@ -221,7 +223,7 @@ func buildProjectsProfileList(
 	profileList := []db.ListProfilesByProjectIDRow{}
 
 	for _, projectID := range projects {
-		profiles, err := store.ListProfilesByProjectID(ctx, db.ListProfilesByProjectIDParams{ProjectID: projectID})
+		profiles, err := store.ListProfilesByProjectID(ctx, projectID)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error listing profiles")
 		}
@@ -244,7 +246,7 @@ func filterProfileLists(
 	outProfileStatus := map[uuid.UUID]db.GetProfileStatusByProjectRow{}
 
 	for _, p := range inProfileList {
-		if p.ID.String() == in.GetProfile() {
+		if p.Profile.ID.String() == in.GetProfile() {
 			outProfileList = append(outProfileList, p)
 		}
 	}
@@ -289,7 +291,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	return &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
-		ProfileId:              profile.ID.String(),
+		ProfileId:              profile.Profile.ID.String(),
 		RuleName:               eval.RuleName,
 		Entity:                 string(eval.Entity),
 		Status:                 string(eval.EvalStatus.EvalStatusTypes),
@@ -323,21 +325,21 @@ func buildProfileStatus(
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
 ) *minderv1.ProfileStatus {
 	pfStatus := ""
-	if _, ok := profileStatusList[row.ID]; ok {
-		pfStatus = string(profileStatusList[row.ID].ProfileStatus)
+	if _, ok := profileStatusList[row.Profile.ID]; ok {
+		pfStatus = string(profileStatusList[row.Profile.ID].ProfileStatus)
 	}
 
-	displayName := row.DisplayName
+	displayName := row.Profile.DisplayName
 	if displayName == "" {
-		displayName = row.Name
+		displayName = row.Profile.Name
 	}
 
 	return &minderv1.ProfileStatus{
-		ProfileId:          row.ID.String(),
-		ProfileName:        row.Name,
+		ProfileId:          row.Profile.ID.String(),
+		ProfileName:        row.Profile.Name,
 		ProfileDisplayName: displayName,
 		ProfileStatus:      pfStatus,
-		LastUpdated:        timestamppb.New(row.UpdatedAt),
+		LastUpdated:        timestamppb.New(row.Profile.UpdatedAt),
 	}
 }
 
