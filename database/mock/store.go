@@ -1198,7 +1198,7 @@ func (mr *MockStoreMockRecorder) ListOldOrgProjects(arg0 any) *gomock.Call {
 }
 
 // ListProfilesByProjectID mocks base method.
-func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesByProjectIDRow, error) {
+func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 db.ListProfilesByProjectIDParams) ([]db.ListProfilesByProjectIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProfilesByProjectID", arg0, arg1)
 	ret0, _ := ret[0].([]db.ListProfilesByProjectIDRow)

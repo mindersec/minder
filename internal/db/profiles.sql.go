@@ -445,7 +445,27 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
 SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, subscription_id, display_name, labels, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1
+AND (
+    -- the most common case first, if the include_labels is empty, we list profiles with no labels
+    -- we use coalesce to handle the case where the include_labels is null
+    (COALESCE(cardinality($2::TEXT[]), 0) = 0 AND profiles.labels = ARRAY[]::TEXT[]) OR
+    -- if the include_labels arg is equal to '*', we list all profiles
+    $2::TEXT[] = ARRAY['*'] OR
+    -- if the include_labels arg is not empty and not a wildcard, we list profiles whose labels are a subset of include_labels
+    (COALESCE(cardinality($2::TEXT[]), 0) > 0 AND profiles.labels @> $2::TEXT[])
+) AND (
+    -- if the exclude_labels arg is empty, we list all profiles
+    COALESCE(cardinality($3::TEXT[]), 0) = 0 OR
+    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
+    NOT profiles.labels @> $3::TEXT[]
+)
 `
+
+type ListProfilesByProjectIDParams struct {
+	ProjectID     uuid.UUID `json:"project_id"`
+	IncludeLabels []string  `json:"include_labels"`
+	ExcludeLabels []string  `json:"exclude_labels"`
+}
 
 type ListProfilesByProjectIDRow struct {
 	ID              uuid.UUID       `json:"id"`
@@ -468,8 +488,8 @@ type ListProfilesByProjectIDRow struct {
 	UpdatedAt_2     time.Time       `json:"updated_at_2"`
 }
 
-func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listProfilesByProjectID, projectID)
+func (q *Queries) ListProfilesByProjectID(ctx context.Context, arg ListProfilesByProjectIDParams) ([]ListProfilesByProjectIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listProfilesByProjectID, arg.ProjectID, pq.Array(arg.IncludeLabels), pq.Array(arg.ExcludeLabels))
 	if err != nil {
 		return nil, err
 	}

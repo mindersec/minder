@@ -143,7 +143,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		ListProfilesByProjectID(gomock.Any(), projectID).
+		ListProfilesByProjectID(gomock.Any(), db.ListProfilesByProjectIDParams{ProjectID: projectID}).
 		Return([]db.ListProfilesByProjectIDRow{
 			{
 				ID:              profileID,

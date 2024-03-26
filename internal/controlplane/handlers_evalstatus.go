@@ -221,7 +221,7 @@ func buildProjectsProfileList(
 	profileList := []db.ListProfilesByProjectIDRow{}
 
 	for _, projectID := range projects {
-		profiles, err := store.ListProfilesByProjectID(ctx, projectID)
+		profiles, err := store.ListProfilesByProjectID(ctx, db.ListProfilesByProjectIDParams{ProjectID: projectID})
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error listing profiles")
 		}

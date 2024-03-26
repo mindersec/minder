@@ -137,7 +137,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	profiles, err := s.store.ListProfilesByProjectID(ctx, entityCtx.Project.ID)
+	profiles, err := s.store.ListProfilesByProjectID(ctx, db.ListProfilesByProjectIDParams{ProjectID: entityCtx.Project.ID})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
 	}
