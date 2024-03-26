@@ -47,7 +47,7 @@ func (s *Server) ListEvaluationResults(
 	rtIndex, entIdIndex, entTypeIndex := indexRequestParams(in)
 
 	// Build a list of all profiles
-	profileList, err := buildProjectsProfileList(ctx, s.store, []uuid.UUID{projectID})
+	profileList, err := buildProjectsProfileList(ctx, s.store, []uuid.UUID{projectID}, in.GetLabelFilter())
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (s *Server) ListEvaluationResults(
 // response.
 func sortEntitiesEvaluationStatus(
 	ctx context.Context, store db.Store,
-	profileList []db.ListProfilesByProjectIDRow,
+	profileList []db.ListProfilesByProjectIDAndLabelRow,
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
 	rtIndex, entIdIndex, entTypeIndex map[string]struct{},
 ) (
@@ -218,12 +218,17 @@ func buildProjectStatusList(
 
 // buildProjectsProfileList takes a list of projects and returns a list if profiles
 func buildProjectsProfileList(
-	ctx context.Context, store db.Store, projects []uuid.UUID,
-) ([]db.ListProfilesByProjectIDRow, error) {
-	profileList := []db.ListProfilesByProjectIDRow{}
+	ctx context.Context, store db.Store, projects []uuid.UUID, filter string,
+) ([]db.ListProfilesByProjectIDAndLabelRow, error) {
+	profileList := []db.ListProfilesByProjectIDAndLabelRow{}
+
+	listParams := db.ListProfilesByProjectIDAndLabelParams{}
+	listParams.LabelsFromFilter(filter)
 
 	for _, projectID := range projects {
-		profiles, err := store.ListProfilesByProjectID(ctx, projectID)
+		listParams.ProjectID = projectID
+
+		profiles, err := store.ListProfilesByProjectIDAndLabel(ctx, listParams)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error listing profiles")
 		}
@@ -235,14 +240,14 @@ func buildProjectsProfileList(
 
 func filterProfileLists(
 	in *minderv1.ListEvaluationResultsRequest,
-	inProfileList []db.ListProfilesByProjectIDRow,
+	inProfileList []db.ListProfilesByProjectIDAndLabelRow,
 	inProfileStatus map[uuid.UUID]db.GetProfileStatusByProjectRow,
-) ([]db.ListProfilesByProjectIDRow, map[uuid.UUID]db.GetProfileStatusByProjectRow) {
+) ([]db.ListProfilesByProjectIDAndLabelRow, map[uuid.UUID]db.GetProfileStatusByProjectRow) {
 	if in.GetProfile() == "" {
 		return inProfileList, inProfileStatus
 	}
 
-	outProfileList := []db.ListProfilesByProjectIDRow{}
+	outProfileList := []db.ListProfilesByProjectIDAndLabelRow{}
 	outProfileStatus := map[uuid.UUID]db.GetProfileStatusByProjectRow{}
 
 	for _, p := range inProfileList {
@@ -262,7 +267,7 @@ func filterProfileLists(
 // profile from the database to a minder RuleEvaluationStatus
 func buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
-	profile *db.ListProfilesByProjectIDRow, eval db.ListRuleEvaluationsByProfileIdRow,
+	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
 ) *minderv1.RuleEvaluationStatus {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
@@ -321,7 +326,7 @@ func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minde
 
 // buildProfileStatus build a minderv1.ProfileStatus struct from a lookup row
 func buildProfileStatus(
-	row *db.ListProfilesByProjectIDRow,
+	row *db.ListProfilesByProjectIDAndLabelRow,
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
 ) *minderv1.ProfileStatus {
 	pfStatus := ""

@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -156,4 +157,24 @@ func (r ListProfilesByProjectIDRow) GetProfile() Profile {
 // GetEntityProfile returns the entity profile
 func (r ListProfilesByProjectIDRow) GetEntityProfile() EntityProfile {
 	return r.EntityProfile
+}
+
+// LabelsFromFilter parses the filter string and populates the IncludeLabels and ExcludeLabels fields
+func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string) {
+	// otherwise Split would have returned a slice with one empty string
+	if filter == "" {
+		return
+	}
+
+	for _, label := range strings.Split(filter, ",") {
+		switch {
+		case label == "*":
+			lp.IncludeLabels = append(lp.IncludeLabels, label)
+		case strings.HasPrefix(label, "!"):
+			// if the label starts with a "!", it is a negative filter, add it to the negative list
+			lp.ExcludeLabels = append(lp.ExcludeLabels, label[1:])
+		default:
+			lp.IncludeLabels = append(lp.IncludeLabels, label)
+		}
+	}
 }
