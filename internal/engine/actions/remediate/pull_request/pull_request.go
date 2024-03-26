@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	htmltemplate "html/template"
 	"os"
 	"strings"
@@ -65,7 +66,7 @@ const (
 )
 
 type pullRequestMetadata struct {
-	ID string `json:"pr_id,omitempty"`
+	ID int `json:"pr_id,omitempty"`
 }
 
 // Remediator is the remediation engine for the Pull Request remediation type
@@ -203,15 +204,7 @@ func (r *Remediator) Do(
 	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		alreadyExists, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
-		if err != nil {
-			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
-		}
-		if alreadyExists {
-			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			return nil, nil
-		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
+		return r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
 		remErr = nil
@@ -239,28 +232,28 @@ func (r *Remediator) runGit(
 	modifier fsModifier,
 	pbRepo *pb.Repository,
 	title, body string,
-) error {
+) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
 
 	repo, err := git.Open(storer, fs)
 	if err != nil {
-		return fmt.Errorf("cannot open git repo: %w", err)
+		return nil, fmt.Errorf("cannot open git repo: %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("cannot get worktree: %w", err)
+		return nil, fmt.Errorf("cannot get worktree: %w", err)
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get primary email: %w", err)
+		return nil, fmt.Errorf("cannot get primary email: %w", err)
 	}
 
 	currentHeadReference, err := repo.Head()
 	if err != nil {
-		return fmt.Errorf("cannot get current HEAD: %w", err)
+		return nil, fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
 
@@ -274,19 +267,19 @@ func (r *Remediator) runGit(
 		Create: true,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot checkout branch: %w", err)
+		return nil, fmt.Errorf("cannot checkout branch: %w", err)
 	}
 
 	logger.Debug().Msg("Creating file entries")
 	changeEntries, err := modifier.modifyFs()
 	if err != nil {
-		return fmt.Errorf("cannot modifyFs: %w", err)
+		return nil, fmt.Errorf("cannot modifyFs: %w", err)
 	}
 
 	logger.Debug().Msg("Staging changes")
 	for _, entry := range changeEntries {
 		if _, err := wt.Add(entry.Path); err != nil {
-			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+			return nil, fmt.Errorf("cannot add file %s: %w", entry.Path, err)
 		}
 	}
 
@@ -299,41 +292,32 @@ func (r *Remediator) runGit(
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("cannot commit: %w", err)
+		return nil, fmt.Errorf("cannot commit: %w", err)
 	}
 
 	refspec := refFromBranch(branchBaseName(title))
 
 	err = pushBranch(ctx, repo, refspec, r.ghCli)
 	if err != nil {
-		return fmt.Errorf("cannot push branch: %w", err)
+		return nil, fmt.Errorf("cannot push branch: %w", err)
 	}
 
-	// if a PR from this branch already exists, don't create a new one
-	// this handles the case where the content changed (e.g. profile changed)
-	// but the PR was not closed
-	prAlreadyExists, err := prFromBranchAlreadyExists(ctx, r.ghCli, pbRepo, branchBaseName(title))
-	if err != nil {
-		return fmt.Errorf("cannot check if PR from branch already exists: %w", err)
-	}
-
-	if prAlreadyExists {
-		zerolog.Ctx(ctx).Info().Msg("PR from branch already exists, won't create a new one")
-		return nil
-	}
-
-	_, err = r.ghCli.CreatePullRequest(
+	pr, err := r.ghCli.CreatePullRequest(
 		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
 		title, body,
 		refspec,
 		dflBranchTo,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create pull request: %w", err)
+		return nil, fmt.Errorf("cannot create pull request: %w", err)
 	}
-
-	zerolog.Ctx(ctx).Info().Msg("Pull request created")
-	return nil
+	newMeta, err := json.Marshal(pullRequestMetadata{ID: pr.GetNumber()})
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling pull request remediation metadata json: %w", err)
+	}
+	// Success - return the new metadata for storing the pull request number
+	logger.Info().Int("pr_id", pr.GetNumber()).Msg("pull request created")
+	return newMeta, enginerr.ErrActionPending
 }
 
 func pushBranch(ctx context.Context, repo *git.Repository, refspec string, gh provifv1.GitHub) error {

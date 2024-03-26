@@ -286,6 +286,7 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
+
 	cli *providers.ProviderBuilder,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,

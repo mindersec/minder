@@ -116,11 +116,6 @@ func (rae *RuleActionsEngine) DoActions(
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
 			getMeta(params.GetEvalStatusFromDb().RemMetadata))
-		m, err := json.Marshal(map[string]string{"test": "test"})
-		if err != nil {
-			logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
-		}
-		result.RemediateMeta = m
 	}
 
 	// Try alerting
@@ -156,9 +151,50 @@ func (rae *RuleActionsEngine) processAction(
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
 func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
-	_ = prevEvalFromDb
-	_ = evalErr
-	return engif.ActionCmdOn
+	// Get current evaluation status
+	newEval := enginerr.ErrorAsEvalStatus(evalErr)
+
+	// Get previous evaluation status
+	prevEval := db.EvalStatusTypesPending
+	if prevEvalFromDb.EvalStatus.Valid {
+		prevEval = prevEvalFromDb.EvalStatus.EvalStatusTypes
+	}
+
+	// Get previous Remediation status
+	prevRemediation := db.RemediationStatusTypesSkipped
+	if prevEvalFromDb.AlertStatus.Valid {
+		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
+	}
+
+	// Start evaluation scenarios
+
+	// Case 1 - Do nothing if the evaluation status has not changed
+	if newEval == prevEval && prevRemediation != db.RemediationStatusTypesError {
+		return engif.ActionCmdDoNothing
+	}
+
+	// Proceed with use cases where the evaluation changed
+	// Case 2 - Evaluation changed from something else to PASSING -> Remediation should be OFF
+	if db.EvalStatusTypesSuccess == newEval {
+		// The Remediation should be OFF (if it wasn't already)
+		if db.RemediationStatusTypesSkipped != prevRemediation {
+			return engif.ActionCmdOff
+		}
+		// We should do nothing if remediation was already skipped
+		return engif.ActionCmdDoNothing
+	}
+
+	// Case 3 - Evaluation has changed from something else to FAILED -> Remediation should be ON
+	if db.EvalStatusTypesFailure == newEval {
+		// The Remediation should be turned ON (if it wasn't already)
+		if db.RemediationStatusTypesPending != prevRemediation && db.RemediationStatusTypesSuccess != prevRemediation {
+			return engif.ActionCmdOn
+		}
+		// We should do nothing if the Remediation is already pending or successful
+		return engif.ActionCmdDoNothing
+	}
+	// Default to do nothing
+	return engif.ActionCmdDoNothing
 }
 
 // shouldAlert returns the action command for alerting taking into account previous evaluations
