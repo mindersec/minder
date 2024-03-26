@@ -41,6 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -327,9 +328,12 @@ func TestProviderCallback(t *testing.T) {
 				}))
 			defer oauthServer.Close()
 
-			stubClient := StubGitHub{
-				UserId: 31337,
-			}
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			store := mockdb.NewMockStore(ctrl)
+
+			gh := mockgh.NewMockGitHub(ctrl)
+			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
 
 			var opts []ServerOption
 			if tc.remoteUser.String != "" {
@@ -337,15 +341,12 @@ func TestProviderCallback(t *testing.T) {
 				cancelable, cancel := context.WithCancel(context.Background())
 				defer cancel()
 				clientCache := ratecache.NewRestClientCache(cancelable)
-				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, &stubClient)
+				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, gh)
 				opts = []ServerOption{
 					WithRestClientCache(clientCache),
 				}
 			}
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			store := mockdb.NewMockStore(ctrl)
 			s, _ := newDefaultServer(t, store, opts...)
 
 			var err error
@@ -361,6 +362,8 @@ func TestProviderCallback(t *testing.T) {
 			tx := sql.Tx{}
 			store.EXPECT().BeginTransaction().Return(&tx, nil)
 			store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+
+			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
 
 			store.EXPECT().GetProjectIDBySessionState(gomock.Any(), state).Return(
 				db.GetProjectIDBySessionStateRow{
