@@ -124,6 +124,7 @@ func login(
 	cmd *cobra.Command,
 	cfg *clientconfig.Config,
 	extraScopes []string,
+	skipBroswer bool,
 ) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
 	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
 	clientID := cfg.Identity.CLI.ClientId
@@ -193,6 +194,7 @@ func login(
 			cmd.Println("Authentication Successful")
 		}
 	}
+
 	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
 	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
 
@@ -219,8 +221,10 @@ func login(
 	cmd.Println("Please follow the instructions on the page to log in.")
 
 	// open user's browser to login page
-	if err := browser.OpenURL(loginUrl); err != nil {
-		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+	if skipBroswer {
+		if err := browser.OpenURL(loginUrl); err != nil {
+			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+		}
 	}
 
 	cmd.Println("Waiting for token...")
