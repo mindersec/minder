@@ -38,7 +38,12 @@ type (
 var (
 	// ErrClientTest is a sample error used by the fixtures
 	ErrClientTest = errors.New("oh no")
-	ResultHook    = &github.Hook{ID: ptr.Ptr[int64](HookID)}
+	ResultHook    = &github.Hook{
+		ID: ptr.Ptr[int64](HookID),
+		Config: &github.HookConfig{
+			URL: ptr.Ptr("https://foo"),
+		},
+	}
 )
 
 const (
@@ -99,6 +104,9 @@ func WithSuccessfulList(url string) func(ClientMock) {
 		{
 			ID:  ptr.Ptr[int64](HookID),
 			URL: &url,
+			Config: &github.HookConfig{
+				URL: &url,
+			},
 		},
 	}
 	return func(mock ClientMock) {
