@@ -152,9 +152,6 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner strin
 		},
 	}
 
-	// escape the package name
-	package_name = url.PathEscape(package_name)
-
 	// create a slice to hold the versions
 	var allVersions []*github.PackageVersion
 
@@ -223,7 +220,6 @@ func (c *GitHub) GetPackageByName(ctx context.Context, isOrg bool, owner string,
 	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
 	package_type = strings.ToLower(package_type)
 
-	package_name = url.PathEscape(package_name)
 	if isOrg {
 		pkg, _, err = c.client.Organizations.GetPackage(ctx, owner, package_type, package_name)
 		if err != nil {
@@ -249,8 +245,6 @@ func (c *GitHub) GetPackageVersionById(
 ) (*github.PackageVersion, error) {
 	var pkgVersion *github.PackageVersion
 	var err error
-
-	packageName = url.PathEscape(packageName)
 
 	if isOrg {
 		pkgVersion, _, err = c.client.Organizations.PackageGetVersion(ctx, owner, packageType, packageName, version)
