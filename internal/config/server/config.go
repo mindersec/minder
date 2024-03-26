@@ -62,7 +62,7 @@ func DefaultConfigForTest() *Config {
 // up by viper
 func SetViperDefaults(v *viper.Viper) {
 	v.SetEnvPrefix("minder")
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	setViperStructDefaults(v, "", Config{})
 }
 
@@ -95,6 +95,11 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			if value != "{}" {
 				setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
 			}
+			continue
+		}
+
+		if field.Type.Kind() == reflect.Ptr {
+			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type.Elem()).Interface())
 			continue
 		}
 

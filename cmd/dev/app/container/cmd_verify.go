@@ -73,7 +73,7 @@ func CmdVerify() *cobra.Command {
 		os.Exit(1)
 	}
 
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	return verifyCmd
 }
