@@ -43,7 +43,7 @@ func (m *MockProfileService) EXPECT() *MockProfileServiceMockRecorder {
 }
 
 // CreateProfile mocks base method.
-func (m *MockProfileService) CreateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.ExtendQuerier) (*v1.Profile, error) {
+func (m *MockProfileService) CreateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.Querier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.Profile)
@@ -58,7 +58,7 @@ func (mr *MockProfileServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3, 
 }
 
 // UpdateProfile mocks base method.
-func (m *MockProfileService) UpdateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.ExtendQuerier) (*v1.Profile, error) {
+func (m *MockProfileService) UpdateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.Profile, arg5 db.Querier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateProfile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.Profile)

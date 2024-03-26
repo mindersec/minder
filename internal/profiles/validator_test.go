@@ -141,8 +141,8 @@ func TestValidatorScenarios(t *testing.T) {
 				testScenario.DBSetup(store)
 			}
 
-			result, err := profiles.NewValidator(store).
-				ValidateAndExtractRules(context.Background(), projectID, testScenario.Profile)
+			v := &profiles.Validator{}
+			result, err := v.ValidateAndExtractRules(context.Background(), store, projectID, testScenario.Profile)
 
 			if testScenario.ExpectedError != "" && testScenario.ExpectedResult == nil {
 				require.Nil(t, result)

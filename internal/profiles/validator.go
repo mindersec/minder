@@ -33,19 +33,13 @@ import (
 )
 
 // Validator encapsulates the logic for validating profiles
-type Validator struct {
-	store db.Store
-}
-
-// NewValidator is a factory method for the Validator struct
-func NewValidator(store db.Store) *Validator {
-	return &Validator{store}
-}
+type Validator struct{}
 
 // ValidateAndExtractRules validates a profile to ensure it is well-formed
 // it also returns information about the rules in the profile
 func (v *Validator) ValidateAndExtractRules(
 	ctx context.Context,
+	qtx db.Querier,
 	projectID uuid.UUID,
 	profile *minderv1.Profile,
 ) (RuleMapping, error) {
@@ -61,7 +55,7 @@ func (v *Validator) ValidateAndExtractRules(
 	}
 
 	// validate that the rule invocations match what the rule types expect
-	if err := v.validateEntities(ctx, profile, projectID); err != nil {
+	if err := validateEntities(ctx, qtx, profile, projectID); err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
 			return nil, util.UserVisibleError(codes.InvalidArgument,
@@ -71,7 +65,7 @@ func (v *Validator) ValidateAndExtractRules(
 	}
 
 	// validate that the parameters for the rules match the expected schema
-	rulesInProf, err := v.validateRuleParams(ctx, profile, projectID)
+	rulesInProf, err := v.validateRuleParams(ctx, qtx, profile, projectID)
 	if err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
@@ -88,8 +82,9 @@ func (v *Validator) ValidateAndExtractRules(
 	return rulesInProf, nil
 }
 
-func (v *Validator) validateRuleParams(
+func (_ *Validator) validateRuleParams(
 	ctx context.Context,
+	qtx db.Querier,
 	prof *minderv1.Profile,
 	projectID uuid.UUID,
 ) (RuleMapping, error) {
@@ -100,7 +95,7 @@ func (v *Validator) validateRuleParams(
 	err := engine.TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
-		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			ProjectID: projectID,
 			Name:      profileRule.GetType(),
 		})
@@ -266,8 +261,9 @@ func validateRuleWithNonEmptyName(
 	return nil
 }
 
-func (v *Validator) validateEntities(
+func validateEntities(
 	ctx context.Context,
+	qtx db.Querier,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
 ) error {
@@ -275,7 +271,7 @@ func (v *Validator) validateEntities(
 	err := engine.TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
-		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 			ProjectID: projectID,
 			Name:      rule.GetType(),
 		})

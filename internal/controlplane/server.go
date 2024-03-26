@@ -149,7 +149,7 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
-	profileSvc := profiles.NewProfileService(store, evt)
+	profileSvc := profiles.NewProfileService(evt)
 	mt := metrics.NewNoopMetrics()
 	provMt := provtelemetry.NewNoopMetrics()
 	s := &Server{

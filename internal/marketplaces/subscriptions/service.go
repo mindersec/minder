@@ -45,7 +45,7 @@ type SubscriptionService interface {
 		ctx context.Context,
 		project types.ProjectContext,
 		bundle reader.BundleReader,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) error
 	// CreateProfile creates the specified profile from the bundle in the project.
 	CreateProfile(
@@ -53,7 +53,7 @@ type SubscriptionService interface {
 		project types.ProjectContext,
 		bundle reader.BundleReader,
 		profileName string,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) error
 }
 
@@ -77,7 +77,7 @@ func (s *subscriptionService) Subscribe(
 	ctx context.Context,
 	project types.ProjectContext,
 	bundle reader.BundleReader,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) error {
 	metadata := bundle.GetMetadata()
 	_, err := qtx.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
@@ -123,7 +123,7 @@ func (s *subscriptionService) CreateProfile(
 	project types.ProjectContext,
 	bundle reader.BundleReader,
 	profileName string,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) error {
 	// ensure project is subscribed to this bundle
 	subscription, err := s.findSubscription(ctx, qtx, project.ID, bundle.GetMetadata())
@@ -145,7 +145,7 @@ func (s *subscriptionService) CreateProfile(
 
 func (_ *subscriptionService) findSubscription(
 	ctx context.Context,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 	projectID uuid.UUID,
 	metadata *mindpak.Metadata,
 ) (result db.Subscription, err error) {
@@ -168,7 +168,7 @@ func (_ *subscriptionService) findSubscription(
 
 func ensureBundleExists(
 	ctx context.Context,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 	namespace, bundleName string,
 ) (uuid.UUID, error) {
 	// This is a no-op if this namespace/name pair already exists
@@ -185,7 +185,7 @@ func ensureBundleExists(
 
 func (s *subscriptionService) upsertBundleRules(
 	ctx context.Context,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 	projectID uuid.UUID,
 	provider *db.Provider,
 	bundle reader.BundleReader,

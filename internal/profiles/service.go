@@ -54,7 +54,7 @@ type ProfileService interface {
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) (*minderv1.Profile, error)
 
 	// UpdateProfile updates the profile in the specified project
@@ -65,7 +65,7 @@ type ProfileService interface {
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) (*minderv1.Profile, error)
 }
 
@@ -75,13 +75,10 @@ type profileService struct {
 }
 
 // NewProfileService creates an instance of ProfileService
-func NewProfileService(
-	store db.Store,
-	publisher events.Publisher,
-) ProfileService {
+func NewProfileService(publisher events.Publisher) ProfileService {
 	return &profileService{
 		publisher: publisher,
-		validator: NewValidator(store),
+		validator: &Validator{},
 	}
 }
 
@@ -95,13 +92,13 @@ func (p *profileService) CreateProfile(
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
-	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, projectID, profile)
+	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, qtx, projectID, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -180,13 +177,13 @@ func (p *profileService) UpdateProfile(
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
-	rules, err := p.validator.ValidateAndExtractRules(ctx, projectID, profile)
+	rules, err := p.validator.ValidateAndExtractRules(ctx, qtx, projectID, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +357,7 @@ func getProfileFromPBForUpdateWithQuerier(
 	ctx context.Context,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) (*db.Profile, error) {
 	if profile.GetId() != "" {
 		return getProfileFromPBForUpdateByID(ctx, profile, projectID, querier)
@@ -373,7 +370,7 @@ func getProfileFromPBForUpdateByID(
 	ctx context.Context,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) (*db.Profile, error) {
 	id, err := uuid.Parse(profile.GetId())
 	if err != nil {
@@ -395,7 +392,7 @@ func getProfileFromPBForUpdateByName(
 	ctx context.Context,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) (*db.Profile, error) {
 	pdb, err := querier.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
 		Name:      profile.GetName(),
@@ -438,7 +435,7 @@ func getProfilePBFromDB(
 	ctx context.Context,
 	id uuid.UUID,
 	projectID uuid.UUID,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) (*minderv1.Profile, error) {
 	profiles, err := querier.GetProfileByProjectAndID(ctx, db.GetProfileByProjectAndIDParams{
 		ProjectID: projectID,
@@ -465,7 +462,7 @@ func getProfilePBFromDB(
 
 func (_ *profileService) getRulesFromProfile(
 	ctx context.Context,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
 ) (RuleMapping, error) {
@@ -514,7 +511,7 @@ func deleteUnusedRulesFromProfile(
 	ctx context.Context,
 	profile *db.Profile,
 	unusedRules []EntityAndRuleTuple,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) error {
 	for _, rule := range unusedRules {
 		// get entity profile
@@ -637,7 +634,7 @@ func deleteRuleStatusesForProfile(
 	ctx context.Context,
 	profile *db.Profile,
 	unusedRuleStatuses RuleMapping,
-	querier db.ExtendQuerier,
+	querier db.Querier,
 ) error {
 	for ruleTypeAndName, rule := range unusedRuleStatuses {
 		log.Printf("deleting rule evaluations for rule %s in profile %s", rule.RuleID, profile.ID)
