@@ -75,9 +75,7 @@ type RuleTypeService interface {
 	) error
 }
 
-type ruleTypeService struct {
-	//store db.Store
-}
+type ruleTypeService struct{}
 
 // NewRuleTypeService creates a new instance of RuleTypeService
 func NewRuleTypeService() RuleTypeService {
