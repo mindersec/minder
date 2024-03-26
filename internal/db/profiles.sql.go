@@ -71,7 +71,7 @@ INSERT INTO profiles (
     subscription_id,
     display_name,
     labels
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::text[]) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::text[], '{}'::text[])) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
 `
 
 type CreateProfileParams struct {
@@ -556,7 +556,7 @@ UPDATE profiles SET
     alert = $4,
     updated_at = NOW(),
     display_name = $5,
-    labels = $6::TEXT[]
+    labels = COALESCE($6::TEXT[], '{}'::TEXT[])
 WHERE id = $1 AND project_id = $2 RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
 `
 
