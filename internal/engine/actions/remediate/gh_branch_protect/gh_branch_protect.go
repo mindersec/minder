@@ -25,7 +25,7 @@ import (
 	"text/template"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -210,7 +210,7 @@ func protectionResultToRequest(res *github.Protection) *github.ProtectionRequest
 	}
 
 	if req.RequiredStatusChecks != nil {
-		if req.RequiredStatusChecks.Checks != nil && len(req.RequiredStatusChecks.Contexts) > 0 {
+		if req.RequiredStatusChecks.Checks != nil && len(req.GetRequiredStatusChecks().GetContexts()) > 0 {
 			// if both are set, the API will return an error as Contexts is now deprecated
 			// but at the same time the API does return both fields, so we filter the deprecated
 			// one manually

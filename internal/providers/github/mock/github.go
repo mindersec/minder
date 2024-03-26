@@ -15,7 +15,7 @@ import (
 	reflect "reflect"
 
 	git "github.com/go-git/go-git/v5"
-	github "github.com/google/go-github/v56/github"
+	github "github.com/google/go-github/v60/github"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v10 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"

@@ -22,7 +22,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"go.uber.org/mock/gomock"
 
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
@@ -38,7 +38,12 @@ type (
 var (
 	// ErrClientTest is a sample error used by the fixtures
 	ErrClientTest = errors.New("oh no")
-	ResultHook    = &github.Hook{ID: ptr.Ptr[int64](HookID)}
+	ResultHook    = &github.Hook{
+		ID: ptr.Ptr[int64](HookID),
+		Config: &github.HookConfig{
+			URL: ptr.Ptr("https://foo"),
+		},
+	}
 )
 
 const (
@@ -95,13 +100,13 @@ func stubDelete(mock ClientMock, resp *github.Response, err error) {
 }
 
 func WithSuccessfulList(url string) func(ClientMock) {
-	hookConfig := map[string]any{
-		"url": url,
-	}
 	hooks := []*github.Hook{
 		{
-			ID:     ptr.Ptr[int64](HookID),
-			Config: hookConfig,
+			ID:  ptr.Ptr[int64](HookID),
+			URL: &url,
+			Config: &github.HookConfig{
+				URL: &url,
+			},
 		},
 	}
 	return func(mock ClientMock) {

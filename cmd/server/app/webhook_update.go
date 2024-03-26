@@ -189,7 +189,7 @@ func updateGithubRepoHooks(
 			continue
 		}
 
-		hook.Config["secret"] = secret
+		hook.Config.Secret = &secret
 		_, err = ghCli.EditHook(ctx, repo.RepoOwner, repo.RepoName, hook.GetID(), hook)
 		if err != nil {
 			hookLogger.Err(err).Msg("unable to update hook")

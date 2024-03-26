@@ -21,7 +21,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
