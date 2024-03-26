@@ -67,13 +67,45 @@ func getProviderFromRequestOrDefault(
 			len(providers))
 	}
 
-	matchesName := func(provider db.Provider) bool {
-		return provider.Name == in.GetContext().GetProvider()
+	return findProvider(in.GetContext().GetProvider(), providers)
+}
+
+func listProvidersOrInferDefault(
+	ctx context.Context,
+	store db.Store,
+	in HasProtoContext,
+	projectId uuid.UUID,
+) ([]db.Provider, error) {
+	// Allows us to take into account the hierarchy to find the provider
+	parents, err := store.GetParentProjects(ctx, projectId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
+	}
+	providers, err := store.ListProvidersByProjectID(ctx, parents)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve providers: %s", err)
+	}
+	// if we do not have a provider name, check if we can infer it
+	if in.GetContext().GetProvider() == "" {
+		return providers, nil
 	}
 
-	i := slices.IndexFunc(providers, matchesName)
-	if i == -1 {
-		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", in.GetContext().GetProvider())
+	prov, err := findProvider(in.GetContext().GetProvider(), providers)
+	if err != nil {
+		return nil, err
 	}
-	return providers[i], nil
+
+	return []db.Provider{prov}, nil
+}
+
+func findProvider(name string, provs []db.Provider) (db.Provider, error) {
+	matchesName := func(provider db.Provider) bool {
+		return provider.Name == name
+	}
+
+	i := slices.IndexFunc(provs, matchesName)
+	if i == -1 {
+		return db.Provider{}, util.UserVisibleError(codes.InvalidArgument, "invalid provider name: %s", name)
+	}
+	return provs[i], nil
 }
