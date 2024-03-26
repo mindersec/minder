@@ -71,8 +71,8 @@ func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
 }
 
 // ErrActionSkipped is an error code that indicates that the action was not performed at all because
-// the evaluation passed and the action was not needed.
-var ErrActionSkipped = errors.New("action not performed")
+// the evaluation passed and the action was not needed
+var ErrActionSkipped = errors.New("action skipped")
 
 // ErrActionPending is an error code that indicates that the action was performed but is pending, i.e., opened a PR.
 var ErrActionPending = errors.New("action pending")
@@ -151,6 +151,25 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 		return db.RemediationStatusTypesPending
 	}
 	return db.RemediationStatusTypesError
+}
+
+// RemediationStatusAsError returns the remediation status for a given error
+func RemediationStatusAsError(s db.RemediationStatusTypes) error {
+	if s == db.RemediationStatusTypesSuccess {
+		return nil
+	}
+
+	switch s {
+	case db.RemediationStatusTypesFailure:
+		return ErrActionFailed
+	case db.RemediationStatusTypesSkipped:
+		return ErrActionSkipped
+	case db.RemediationStatusTypesNotAvailable:
+		return ErrActionNotAvailable
+	case db.RemediationStatusTypesPending:
+		return ErrActionPending
+	}
+	return fmt.Errorf("unknown remediation status: %s", s)
 }
 
 // ErrorAsAlertStatus returns the alert status for a given error

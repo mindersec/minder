@@ -66,7 +66,7 @@ const (
 )
 
 type pullRequestMetadata struct {
-	ID int `json:"pr_id,omitempty"`
+	Number int `json:"pr_number,omitempty"`
 }
 
 // Remediator is the remediation engine for the Pull Request remediation type
@@ -149,7 +149,7 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 // Do performs the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
-	_ interfaces.ActionCmd,
+	cmd interfaces.ActionCmd,
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
@@ -191,12 +191,7 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot create PR entries: %w", err)
 	}
 
-	magicComment, err := r.prMagicComment(modification)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create PR magic comment: %w", err)
-	}
-
-	prFullBodyText, err := r.getPrBodyText(tmplParams, magicComment)
+	prFullBodyText, err := r.getPrBodyText(tmplParams)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
@@ -204,7 +199,7 @@ func (r *Remediator) Do(
 	var remErr error
 	switch remAction {
 	case interfaces.ActionOptOn:
-		return r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
+		return r.runGit(ctx, cmd, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
 	case interfaces.ActionOptDryRun:
 		r.dryRun(modification, title.String(), prFullBodyText)
 		remErr = nil
@@ -227,6 +222,7 @@ func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
 
 func (r *Remediator) runGit(
 	ctx context.Context,
+	cmd interfaces.ActionCmd,
 	fs billy.Filesystem,
 	storer storage.Storer,
 	modifier fsModifier,
@@ -234,6 +230,9 @@ func (r *Remediator) runGit(
 	title, body string,
 ) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
+	if cmd == interfaces.ActionCmdOff {
+		return nil, enginerr.ErrActionSkipped
+	}
 
 	repo, err := git.Open(storer, fs)
 	if err != nil {
@@ -311,12 +310,12 @@ func (r *Remediator) runGit(
 	if err != nil {
 		return nil, fmt.Errorf("cannot create pull request: %w", err)
 	}
-	newMeta, err := json.Marshal(pullRequestMetadata{ID: pr.GetNumber()})
+	newMeta, err := json.Marshal(pullRequestMetadata{Number: pr.GetNumber()})
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling pull request remediation metadata json: %w", err)
 	}
 	// Success - return the new metadata for storing the pull request number
-	logger.Info().Int("pr_id", pr.GetNumber()).Msg("pull request created")
+	logger.Info().Int("pr_number", pr.GetNumber()).Msg("pull request created")
 	return newMeta, enginerr.ErrActionPending
 }
 
@@ -412,13 +411,13 @@ func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {
 	return buf.String(), nil
 }
 
-func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams, magicComment string) (string, error) {
+func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams) (string, error) {
 	body := new(bytes.Buffer)
 	if err := r.bodyTemplate.Execute(body, tmplParams); err != nil {
 		return "", fmt.Errorf("cannot execute body template: %w", err)
 	}
 
-	prFullBodyText, err := createReviewBody(body.String(), magicComment)
+	prFullBodyText, err := createReviewBody(body.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot create PR full body text: %w", err)
 	}
@@ -434,18 +433,16 @@ func getMethod(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) s
 	return prCfg.Method
 }
 
-func createReviewBody(prText, magicComment string) (string, error) {
+func createReviewBody(prText string) (string, error) {
 	tmpl, err := template.New(prTemplateName).Option("missingkey=error").Parse(prBodyTmplStr)
 	if err != nil {
 		return "", err
 	}
 
 	data := struct {
-		MagicComment string
-		PrText       string
+		PrText string
 	}{
-		MagicComment: magicComment,
-		PrText:       prText,
+		PrText: prText,
 	}
 
 	// Execute the template
