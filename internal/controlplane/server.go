@@ -80,10 +80,7 @@ type Server struct {
 	provMt              provtelemetry.ProviderMetrics
 	grpcServer          *grpc.Server
 	vldtr               auth.JwtValidator
-	OAuth2              *oauth2.Config
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
-	ClientID            string
-	ClientSecret        string
 	authzClient         authz.Client
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
