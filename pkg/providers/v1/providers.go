@@ -26,6 +26,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v56/github"
+
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // V1 is the version of the providers interface
@@ -63,7 +65,7 @@ type REST interface {
 type RepoLister interface {
 	Provider
 
-	ListAllRepositories(context.Context) ([]*github.Repository, error)
+	ListAllRepositories(context.Context) ([]*minderv1.Repository, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API

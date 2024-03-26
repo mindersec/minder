@@ -343,11 +343,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
-	remoteGhRepos, err := client.ListAllRepositories(tmoutCtx)
+	remoteRepos, err := client.ListAllRepositories(tmoutCtx)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 	}
-	remoteRepos := github.ConvertRepositories(remoteGhRepos)
 
 	out := &pb.ListRemoteRepositoriesFromProviderResponse{
 		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
