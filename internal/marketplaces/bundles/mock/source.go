@@ -54,3 +54,18 @@ func (mr *MockBundleSourceMockRecorder) GetBundle(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBundle", reflect.TypeOf((*MockBundleSource)(nil).GetBundle), arg0)
 }
+
+// ListBundles mocks base method.
+func (m *MockBundleSource) ListBundles() ([]mindpak.BundleID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListBundles")
+	ret0, _ := ret[0].([]mindpak.BundleID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListBundles indicates an expected call of ListBundles.
+func (mr *MockBundleSourceMockRecorder) ListBundles() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBundles", reflect.TypeOf((*MockBundleSource)(nil).ListBundles))
+}

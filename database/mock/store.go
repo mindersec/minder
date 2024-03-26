@@ -628,6 +628,21 @@ func (mr *MockStoreMockRecorder) GetArtifactByName(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactByName", reflect.TypeOf((*MockStore)(nil).GetArtifactByName), arg0, arg1)
 }
 
+// GetBundle mocks base method.
+func (m *MockStore) GetBundle(arg0 context.Context, arg1 db.GetBundleParams) (db.Bundle, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBundle", arg0, arg1)
+	ret0, _ := ret[0].(db.Bundle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBundle indicates an expected call of GetBundle.
+func (mr *MockStoreMockRecorder) GetBundle(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBundle", reflect.TypeOf((*MockStore)(nil).GetBundle), arg0, arg1)
+}
+
 // GetChildrenProjects mocks base method.
 func (m *MockStore) GetChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([]db.GetChildrenProjectsRow, error) {
 	m.ctrl.T.Helper()
@@ -1508,12 +1523,11 @@ func (mr *MockStoreMockRecorder) UpsertArtifact(arg0, arg1 any) *gomock.Call {
 }
 
 // UpsertBundle mocks base method.
-func (m *MockStore) UpsertBundle(arg0 context.Context, arg1 db.UpsertBundleParams) (db.Bundle, error) {
+func (m *MockStore) UpsertBundle(arg0 context.Context, arg1 db.UpsertBundleParams) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertBundle", arg0, arg1)
-	ret0, _ := ret[0].(db.Bundle)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // UpsertBundle indicates an expected call of UpsertBundle.

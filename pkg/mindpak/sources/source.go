@@ -31,6 +31,8 @@ type BundleSource interface {
 	// GetBundle fetches a bundle from the source by namespace and name
 	// ErrBundleNotFound is returned if the bundle cannot be found
 	GetBundle(id mindpak.BundleID) (reader.BundleReader, error)
+	// ListBundles lists all bundles known to this source
+	ListBundles() ([]mindpak.BundleID, error)
 }
 
 var (
@@ -63,4 +65,10 @@ func (s *singleBundleSource) GetBundle(id mindpak.BundleID) (reader.BundleReader
 		return s.bundle, nil
 	}
 	return nil, fmt.Errorf("%w: %s", ErrBundleNotFound, id)
+}
+
+func (s *singleBundleSource) ListBundles() ([]mindpak.BundleID, error) {
+	return []mindpak.BundleID{
+		mindpak.ID(s.bundle.GetMetadata().Namespace, s.bundle.GetMetadata().Name),
+	}, nil
 }

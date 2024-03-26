@@ -24,6 +24,7 @@ import (
 	sub "github.com/stacklok/minder/internal/marketplaces/subscriptions"
 	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/stacklok/minder/pkg/mindpak/reader"
 	"github.com/stacklok/minder/pkg/mindpak/sources"
 )
 
@@ -31,12 +32,15 @@ import (
 // from bundles to projects. Subscriptions are implicitly created and managed
 // by these operations.
 type Marketplace interface {
+	// Subscribe creates a subscription between the specified project and
+	// bundle and adds all rules from that bundle to the project.
 	Subscribe(
 		ctx context.Context,
 		project types.ProjectContext,
 		bundleID mindpak.BundleID,
 		qtx db.Querier,
 	) error
+	// AddProfile adds the specified profile from the bundle to the project.
 	AddProfile(
 		ctx context.Context,
 		project types.ProjectContext,
@@ -47,51 +51,75 @@ type Marketplace interface {
 }
 
 // trivial implementation of Marketplace with a single source
-type singleSourceMarketplace struct {
-	source        sources.BundleSource
+type marketplace struct {
+	// ASSUMPTION: all sources are known at application startup
+	// This will need more complex logic if external sources can be added
+	// dynamically by customers.
+	sources       map[mindpak.BundleID]sources.BundleSource
 	subscriptions sub.SubscriptionService
 }
 
-// NewSingleSourceMarketplace creates an instance of Marketplace with a single source
-func NewSingleSourceMarketplace(source sources.BundleSource, subscriptions sub.SubscriptionService) Marketplace {
-	return &singleSourceMarketplace{
-		source:        source,
-		subscriptions: subscriptions,
-	}
-}
-
-func (s *singleSourceMarketplace) Subscribe(
+func (s *marketplace) Subscribe(
 	ctx context.Context,
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
 	qtx db.Querier,
 ) error {
-	bundle, err := s.source.GetBundle(bundleID)
+	bundle, err := s.getBundle(bundleID)
 	if err != nil {
-		return fmt.Errorf("error while retrieving bundle: %w", err)
+		return err
 	}
-
 	if err = s.subscriptions.Subscribe(ctx, project, bundle, qtx); err != nil {
 		return fmt.Errorf("error while creating subscription: %w", err)
 	}
 	return nil
 }
 
-func (s *singleSourceMarketplace) AddProfile(
+func (s *marketplace) AddProfile(
 	ctx context.Context,
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
 	profileName string,
 	qtx db.Querier,
 ) error {
-	bundle, err := s.source.GetBundle(bundleID)
+	bundle, err := s.getBundle(bundleID)
 	if err != nil {
-		return fmt.Errorf("error while retrieving bundle: %w", err)
+		return err
 	}
 
 	if err = s.subscriptions.CreateProfile(ctx, project, bundle, profileName, qtx); err != nil {
 		return fmt.Errorf("error while creating profile in project: %w", err)
 	}
 
+	return nil
+}
+
+func (s *marketplace) getBundle(bundleID mindpak.BundleID) (reader.BundleReader, error) {
+	source, ok := s.sources[bundleID]
+	if !ok {
+		return nil, fmt.Errorf("unknown bundle: %s", bundleID)
+	}
+	bundle, err := source.GetBundle(bundleID)
+	if err != nil {
+		return nil, fmt.Errorf("error while retrieving bundle: %w", err)
+	}
+	return bundle, nil
+}
+
+// noopMarketplace is an instance of Marketplace which does nothing.
+// This is used when the Marketplace functionality is disabled
+type noopMarketplace struct{}
+
+func (_ *noopMarketplace) Subscribe(_ context.Context, _ types.ProjectContext, _ mindpak.BundleID, _ db.Querier) error {
+	return nil
+}
+
+func (_ *noopMarketplace) AddProfile(
+	_ context.Context,
+	_ types.ProjectContext,
+	_ mindpak.BundleID,
+	_ string,
+	_ db.Querier,
+) error {
 	return nil
 }
