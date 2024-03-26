@@ -795,8 +795,8 @@ func isRateLimitError(err error) bool {
 
 // IsMinderHook checks if a GitHub hook is a Minder hook
 func IsMinderHook(hook *github.Hook, hostURL string) (bool, error) {
-	configURL, ok := hook.Config["url"].(string)
-	if !ok || configURL == "" {
+	configURL := hook.GetConfig().GetURL()
+	if configURL == "" {
 		return false, fmt.Errorf("unexpected hook config structure: %v", hook.Config)
 	}
 	parsedURL, err := url.Parse(configURL)

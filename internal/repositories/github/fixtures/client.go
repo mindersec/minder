@@ -95,13 +95,10 @@ func stubDelete(mock ClientMock, resp *github.Response, err error) {
 }
 
 func WithSuccessfulList(url string) func(ClientMock) {
-	hookConfig := map[string]any{
-		"url": url,
-	}
 	hooks := []*github.Hook{
 		{
-			ID:     ptr.Ptr[int64](HookID),
-			Config: hookConfig,
+			ID:  ptr.Ptr[int64](HookID),
+			URL: &url,
 		},
 	}
 	return func(mock ClientMock) {

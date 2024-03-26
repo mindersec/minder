@@ -141,7 +141,7 @@ func (o *GitHubOAuthDelegate) GetOwner() string {
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
 func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	opt := &gogithub.RepositoryListOptions{
+	opt := &gogithub.RepositoryListByAuthenticatedUserOptions{
 		ListOptions: gogithub.ListOptions{
 			PerPage: 100,
 		},
@@ -164,7 +164,7 @@ func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*minde
 		if o.owner != "" {
 			repos, resp, err = o.client.Repositories.ListByOrg(ctx, o.owner, orgOpt)
 		} else {
-			repos, resp, err = o.client.Repositories.List(ctx, "", opt)
+			repos, resp, err = o.client.Repositories.ListByAuthenticatedUser(ctx, opt)
 		}
 
 		if err != nil {

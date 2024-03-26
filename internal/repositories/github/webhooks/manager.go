@@ -89,14 +89,14 @@ func (w *webhookManager) CreateWebhook(
 	}
 
 	// Attempt to register new webhook
-	ping := w.webhookConfig.ExternalPingURL
+	// ping := w.webhookConfig.ExternalPingURL
 	secret := w.webhookConfig.WebhookSecret
+	jsonCT := "json"
 	newHook := &github.Hook{
-		Config: map[string]any{
-			"url":          webhookURL,
-			"content_type": "json",
-			"ping_url":     ping,
-			"secret":       secret,
+		Config: &github.HookConfig{
+			URL:         &webhookURL,
+			ContentType: &jsonCT,
+			Secret:      &secret,
 		},
 		Events: targetedEvents,
 	}

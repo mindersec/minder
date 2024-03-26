@@ -98,23 +98,23 @@ func (m *protectionRequestMatcher) Matches(x interface{}) bool {
 			return false
 		}
 
-		if len(req.RequiredStatusChecks.Contexts) != len(m.exp.RequiredStatusChecks.Contexts) {
+		if len(req.GetRequiredStatusChecks().GetContexts()) != len(m.exp.GetRequiredStatusChecks().GetContexts()) {
 			return false
 		}
 
-		for i, c := range req.RequiredStatusChecks.Contexts {
-			if c != m.exp.RequiredStatusChecks.Contexts[i] {
+		for i, c := range req.GetRequiredStatusChecks().GetContexts() {
+			if c != m.exp.GetRequiredStatusChecks().GetContexts()[i] {
 				return false
 			}
 		}
 
-		if len(req.RequiredStatusChecks.Checks) != len(m.exp.RequiredStatusChecks.Checks) {
+		if len(req.GetRequiredStatusChecks().GetChecks()) != len(m.exp.GetRequiredStatusChecks().GetChecks()) {
 			return false
 		}
 
-		for i, c := range req.RequiredStatusChecks.Checks {
-			if c.Context != m.exp.RequiredStatusChecks.Checks[i].Context ||
-				*c.AppID != *m.exp.RequiredStatusChecks.Checks[i].AppID {
+		for i, c := range req.GetRequiredStatusChecks().GetChecks() {
+			if c.Context != m.exp.GetRequiredStatusChecks().GetChecks()[i].Context ||
+				*c.AppID != *m.exp.GetRequiredStatusChecks().GetChecks()[i].AppID {
 				return false
 			}
 		}
@@ -259,8 +259,8 @@ func TestBranchProtectionRemediate(t *testing.T) {
 							},
 							AllowForcePushes: &github.AllowForcePushes{Enabled: true},
 							RequiredStatusChecks: &github.RequiredStatusChecks{
-								Contexts: []string{"ci"},
-								Checks: []*github.RequiredStatusCheck{
+								Contexts: &[]string{"ci"},
+								Checks: &[]*github.RequiredStatusCheck{
 									{
 										Context: "ci",
 										AppID:   github.Int64(1234),
@@ -280,7 +280,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 								},
 								AllowForcePushes: github.Bool(true),
 								RequiredStatusChecks: &github.RequiredStatusChecks{
-									Checks: []*github.RequiredStatusCheck{
+									Checks: &[]*github.RequiredStatusCheck{
 										{
 											Context: "ci",
 											AppID:   github.Int64(1234),
