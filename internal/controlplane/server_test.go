@@ -49,10 +49,6 @@ func init() {
 	s := grpc.NewServer()
 	// RegisterAuthUrlServiceServer
 	pb.RegisterHealthServiceServer(s, &Server{}) //
-	pb.RegisterOAuthServiceServer(s, &Server{
-		ClientID:     "test",
-		ClientSecret: "test",
-	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatal().Err(err).Msg("Server exited with error")
