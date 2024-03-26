@@ -43,7 +43,7 @@ func (m *MockSubscriptionService) EXPECT() *MockSubscriptionServiceMockRecorder 
 }
 
 // CreateProfile mocks base method.
-func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 string, arg4 db.ExtendQuerier) error {
+func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 string, arg4 db.Querier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -57,7 +57,7 @@ func (mr *MockSubscriptionServiceMockRecorder) CreateProfile(arg0, arg1, arg2, a
 }
 
 // Subscribe mocks base method.
-func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 db.ExtendQuerier) error {
+func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 db.Querier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)

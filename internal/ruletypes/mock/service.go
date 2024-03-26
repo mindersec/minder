@@ -43,7 +43,7 @@ func (m *MockRuleTypeService) EXPECT() *MockRuleTypeServiceMockRecorder {
 }
 
 // CreateRuleType mocks base method.
-func (m *MockRuleTypeService) CreateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.ExtendQuerier) (*v1.RuleType, error) {
+func (m *MockRuleTypeService) CreateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) (*v1.RuleType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.RuleType)
@@ -58,7 +58,7 @@ func (mr *MockRuleTypeServiceMockRecorder) CreateRuleType(arg0, arg1, arg2, arg3
 }
 
 // UpdateRuleType mocks base method.
-func (m *MockRuleTypeService) UpdateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.ExtendQuerier) (*v1.RuleType, error) {
+func (m *MockRuleTypeService) UpdateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) (*v1.RuleType, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.RuleType)
@@ -73,7 +73,7 @@ func (mr *MockRuleTypeServiceMockRecorder) UpdateRuleType(arg0, arg1, arg2, arg3
 }
 
 // UpsertRuleType mocks base method.
-func (m *MockRuleTypeService) UpsertRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.ExtendQuerier) error {
+func (m *MockRuleTypeService) UpsertRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)

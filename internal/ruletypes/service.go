@@ -46,7 +46,7 @@ type RuleTypeService interface {
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) (*pb.RuleType, error)
 
 	// UpdateRuleType updates rule types in the database
@@ -59,7 +59,7 @@ type RuleTypeService interface {
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) (*pb.RuleType, error)
 
 	// UpsertRuleType creates the rule type if it does not exist
@@ -71,7 +71,7 @@ type RuleTypeService interface {
 		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) error
 }
 
@@ -100,7 +100,7 @@ func (_ *ruleTypeService) CreateRuleType(
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -169,7 +169,7 @@ func (_ *ruleTypeService) UpdateRuleType(
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider.Name
@@ -240,7 +240,7 @@ func (s *ruleTypeService) UpsertRuleType(
 	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) error {
 	// In future, we may want to refactor the code so that we use upserts
 	// instead of separate create and update methods. For now, simulate upsert

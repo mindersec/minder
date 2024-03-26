@@ -354,7 +354,7 @@ func TestCreateProfile(t *testing.T) {
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles: profiles.NewProfileService(dbStore, evts),
+				profiles: profiles.NewProfileService(evts),
 				evt:      evts,
 			}
 

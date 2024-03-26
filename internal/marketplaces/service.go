@@ -35,14 +35,14 @@ type Marketplace interface {
 		ctx context.Context,
 		project types.ProjectContext,
 		bundleID mindpak.BundleID,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) error
 	AddProfile(
 		ctx context.Context,
 		project types.ProjectContext,
 		bundleID mindpak.BundleID,
 		profileName string,
-		qtx db.ExtendQuerier,
+		qtx db.Querier,
 	) error
 }
 
@@ -64,7 +64,7 @@ func (s *singleSourceMarketplace) Subscribe(
 	ctx context.Context,
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) error {
 	bundle, err := s.source.GetBundle(bundleID)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *singleSourceMarketplace) AddProfile(
 	project types.ProjectContext,
 	bundleID mindpak.BundleID,
 	profileName string,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 ) error {
 	bundle, err := s.source.GetBundle(bundleID)
 	if err != nil {
