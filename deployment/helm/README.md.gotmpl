@@ -29,6 +29,13 @@ these helm charts, you will need the following:
   you will want to create a `docker-registry` type credential with the name
   `minder-pull-secret`
 
+- In addition, if you are using a GitHub App for authorization, you will need:
+    - `minder-github-app-secrets`: Needs to contain API credentials for a GitHub
+      app. In particular, the following keys are required:
+        - `client_id`: The GitHub client ID to be used by Minder
+        - `client_secret`: The GitHub client secret to be used by Minder
+        - `private_key`: The GitHub App's private key for minting JWTs
+
 ## Building and running
 
 You can build a (local) helm chart with `make helm` at the top-level of the
