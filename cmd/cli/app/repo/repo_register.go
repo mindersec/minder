@@ -246,6 +246,7 @@ func registerSelectedRepos(
 
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Error registering repository %s: %s", repo.Name, err))
+			continue
 		}
 		results = append(results, result.Result)
 	}
