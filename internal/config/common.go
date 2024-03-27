@@ -56,19 +56,27 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 
 	for i := 0; i < 8; i++ {
 		zerolog.Ctx(ctx).Info().Int("try number", i).Msg("Trying to connect to DB")
-		// Ensure we actually connected to the database, per Go docs
-		err = conn.Ping()
+		// we don't defer canceling the context because we want to cancel it as soon as we're done
+		// and we might overwrite the context in the loop
+		pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+
+		err = conn.PingContext(pingCtx)
 		if err != nil {
 			zerolog.Ctx(ctx).Warn().Err(err).Msgf("Unable to initialize connection to DB, retry %d", i)
-			time.Sleep(1 * time.Second)
-			continue
+			time.Sleep(1 * time.Second) // Consider exponential backoff here
+		} else {
+			zerolog.Ctx(ctx).Info().Msg("Connected to DB")
+			cancel()
+			return conn, uri, nil
 		}
-		zerolog.Ctx(ctx).Info().Msg("Connected to DB")
-		return conn, uri, err
+
+		cancel()
 	}
 
-	//nolint:gosec // Not much we can do about an error here.
-	conn.Close()
+	// Handle the closing of the connection outside the loop if all retries fail
+	if closeErr := conn.Close(); closeErr != nil {
+		zerolog.Ctx(ctx).Error().Err(closeErr).Msg("Failed to close DB connection")
+	}
 	return nil, "", err
 }
 
