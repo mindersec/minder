@@ -48,7 +48,7 @@ that need to authenticate to the control plane.`,
 		}
 
 		f := viper.GetString("file")
-		skipBrowser := viper.GetBool("skip-browser")
+		skipBrowser := viper.GetBool("offline.get.skip-browser")
 
 		// No longer print usage on returned error, since we've parsed our inputs
 		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -80,11 +80,8 @@ func init() {
 		panic(err)
 	}
 
-	// hidden flags
 	offlineTokenGetCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
-	// mark hidden
-	if err := offlineTokenGetCmd.Flags().MarkHidden("skip-browser"); err != nil {
-		offlineTokenGetCmd.Printf("Error marking flag hidden: %s", err)
+	if err := viper.BindPFlag("offline.get.skip-browser", offlineTokenGetCmd.Flag("skip-browser")); err != nil {
 		panic(err)
 	}
 }

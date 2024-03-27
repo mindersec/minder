@@ -216,16 +216,19 @@ func login(
 	// get the OAuth authorization URL
 	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
-	// Redirect user to provider to log in
-	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
-	cmd.Println("Please follow the instructions on the page to log in.")
-
-	// open user's browser to login page
 	if !skipBroswer {
+		// Redirect user to provider to log in
+		cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
+
+		// open user's browser to login page
 		if err := browser.OpenURL(loginUrl); err != nil {
 			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
 		}
+	} else {
+		cmd.Printf("Skipping browser login. You may login by pasting this URL into your browser: %s\n", loginUrl)
 	}
+
+	cmd.Println("Please follow the instructions on the page to log in.")
 
 	cmd.Println("Waiting for token...")
 
