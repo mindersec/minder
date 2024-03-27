@@ -44,7 +44,7 @@ var (
 func ProvisionSelfEnrolledProject(
 	ctx context.Context,
 	authzClient authz.Client,
-	qtx db.ExtendQuerier,
+	qtx db.Querier,
 	projectName string,
 	userSub string,
 	// Passing these as arguments to minimize code changes. In future, it may
@@ -114,7 +114,7 @@ func ProvisionSelfEnrolledProject(
 		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
 
-	// Enable healthcheck in the project.
+	// Enable any default profiles and rule types in the project.
 	// For now, we subscribe to a single bundle and a single profile.
 	// Both are specified in the service config.
 	projectContext := types.NewProjectContext(project.ID, &dbProvider)

@@ -48,13 +48,9 @@ func ValidateNamespacedNameRules(name string, subscriptionID uuid.UUID) error {
 // DoesSubscriptionIDMatch takes a subscription ID from the database, and
 // compares it with the subscriptionID parameter. It asserts that:
 // A) If the subscription ID from the DB is not null, that it is equal to
-//
-//	subscription ID.
-//
+// subscription ID.
 // B) If the subscription ID from the DB is null, the subscriptionID parameter
-//
-//	must be equal to uuid.Nil
-//
+// must be equal to uuid.Nil
 // This logic is intended to check if the subscription ID associated with a
 // rule type or profile matches a given subscription ID.
 func DoesSubscriptionIDMatch(subscriptionID uuid.UUID, dbSubscriptionID uuid.NullUUID) error {

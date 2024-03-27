@@ -14,11 +14,14 @@
 
 package server
 
-// DefaultProfilesConfig holds the config for the marketplace functionality.
+// DefaultProfilesConfig holds the profiles installed by default during project
+// creation. If omitted - this will default to disabled.
 type DefaultProfilesConfig struct {
-	Enabled  bool                 `mapstructure:"enabled" default:"false"`
-	Profiles []string             `mapstructure:"profiles"`
-	Bundle   IncludedBundleConfig `mapstructure:"bundle"`
+	Enabled bool `mapstructure:"enabled" default:"false"`
+	// List of profile names to install
+	Profiles []string `mapstructure:"profiles"`
+	// The bundle to subscribe to
+	Bundle IncludedBundleConfig `mapstructure:"bundle"`
 }
 
 // GetProfiles is a null-safe getter for Profiles

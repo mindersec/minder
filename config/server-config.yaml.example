@@ -94,7 +94,6 @@ authz:
 # Defaults to disabled if not defined
 #marketplace:
 #  enabled: true
-#  type: local
 #  sources:
 #    - type: tgz
 #      location: ./bundles/healthcheck.tar.gz
