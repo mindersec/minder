@@ -15,37 +15,71 @@
 package providers
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	githubapp "github.com/stacklok/minder/internal/providers/github/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
-	"slices"
 )
 
-type ProviderFactory interface {
-	GetGit() (provinfv1.Git, error)
-	GetHTTP() (provinfv1.REST, error)
-	GetGitHub() (provinfv1.GitHub, error)
-	GetRepoLister() (provinfv1.RepoLister, error)
+// TraitInstantiator is responsible for creating instances of the Profile
+// interfaces defined in `github.com/stacklok/minder/pkg/providers/v1` from
+// the providers stored in the database.
+type TraitInstantiator interface {
+	GetGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error)
+	GetHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error)
+	GetGitHub(ctx context.Context, provider *db.Provider) (provinfv1.GitHub, error)
+	GetRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error)
 }
 
-type providerFactory struct {
+type traitInstantiator struct {
+	restClientCache ratecache.RestClientCache
+	metrics         telemetry.ProviderMetrics
+	cfg             *serverconfig.ProviderConfig
+	store           db.Store
+	crypteng        crypto.Engine
+}
+
+func NewTraitInstanceFactory(
+	restClientCache ratecache.RestClientCache,
+	metrics telemetry.ProviderMetrics,
+	cfg *serverconfig.ProviderConfig,
+	store db.Store,
+	crypteng crypto.Engine,
+) TraitInstantiator {
+	return &traitInstantiator{
+		restClientCache: restClientCache,
+		metrics:         metrics,
+		cfg:             cfg,
+		store:           store,
+		crypteng:        crypteng,
+	}
 }
 
 // GetGit returns a git client for the provider.
-func (p *providerFactory) GetGit() (provinfv1.Git, error) {
-	if !p.Implements(db.ProviderTypeGit) {
+func (t *traitInstantiator) GetGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error) {
+	if !provider.CanImplement(db.ProviderTypeGit) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}
 
-	if p.Implements(db.ProviderTypeGithub) {
-		return p.GetGitHub()
+	if provider.CanImplement(db.ProviderTypeGithub) {
+		return t.GetGitHub(ctx, provider)
 	}
 
-	gitCredential, ok := pb.credential.(provinfv1.GitCredential)
+	credential, err := t.getProviderCredential(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	gitCredential, ok := credential.(provinfv1.GitCredential)
 	if !ok {
 		return nil, ErrInvalidCredential
 	}
@@ -54,79 +88,93 @@ func (p *providerFactory) GetGit() (provinfv1.Git, error) {
 }
 
 // GetHTTP returns a github client for the provider.
-func (p *providerFactory) GetHTTP() (provinfv1.REST, error) {
-	if !pb.Implements(db.ProviderTypeRest) {
+func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error) {
+	if !provider.CanImplement(db.ProviderTypeRest) {
 		return nil, fmt.Errorf("provider does not implement rest")
 	}
 
 	// We can re-use the GitHub provider in case it also implements GitHub.
 	// The client gives us the ability to handle rate limiting and other
 	// things.
-	if pb.Implements(db.ProviderTypeGithub) {
-		return pb.GetGitHub()
+	if provider.CanImplement(db.ProviderTypeGithub) {
+		return t.GetGitHub(ctx, provider)
 	}
 
-	if pb.p.Version != provinfv1.V1 {
+	if provider.Version != provinfv1.V1 {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
+	credential, err := t.getProviderCredential(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: Parsing will change based on version
-	cfg, err := httpclient.ParseV1Config(pb.p.Definition)
+	cfg, err := httpclient.ParseV1Config(provider.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing http config: %w", err)
 	}
 
-	restCredential, ok := pb.credential.(provinfv1.RestCredential)
+	restCredential, ok := credential.(provinfv1.RestCredential)
 	if !ok {
 		return nil, ErrInvalidCredential
 	}
 
-	return httpclient.NewREST(cfg, pb.metrics, restCredential)
+	return httpclient.NewREST(cfg, t.metrics, restCredential)
 }
 
 // GetGitHub returns a github client for the provider.
-func (p *providerFactory) GetGitHub() (provinfv1.GitHub, error) {
-	if !pb.Implements(db.ProviderTypeGithub) {
+func (t *traitInstantiator) GetGitHub(ctx context.Context, provider *db.Provider) (provinfv1.GitHub, error) {
+	if !provider.CanImplement(db.ProviderTypeGithub) {
 		return nil, fmt.Errorf("provider does not implement github")
 	}
 
-	if pb.p.Version != provinfv1.V1 {
+	if provider.Version != provinfv1.V1 {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	gitHubCredential, ok := pb.credential.(provinfv1.GitHubCredential)
+	credential, err := t.getProviderCredential(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+	filter, err := t.getOwnerFilter(ctx, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	gitHubCredential, ok := credential.(provinfv1.GitHubCredential)
 	if !ok {
 		return nil, ErrInvalidCredential
 	}
 
-	if pb.restClientCache != nil {
-		client, ok := pb.restClientCache.Get(pb.ownerFilter.String, gitHubCredential.GetCacheKey(), db.ProviderTypeGithub)
+	if t.restClientCache != nil {
+		client, ok := t.restClientCache.Get(filter.String, gitHubCredential.GetCacheKey(), db.ProviderTypeGithub)
 		if ok {
 			return client.(provinfv1.GitHub), nil
 		}
 	}
 
 	// TODO: use provider class once it's available
-	if pb.p.Name == ghclient.Github {
+	if provider.Name == ghclient.Github {
 		// TODO: Parsing will change based on version
-		cfg, err := ghclient.ParseV1Config(pb.p.Definition)
+		cfg, err := ghclient.ParseV1Config(provider.Definition)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
 
-		cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
+		cli, err := ghclient.NewRestClient(cfg, t.metrics, t.restClientCache, gitHubCredential, filter.String)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github client: %w", err)
 		}
 		return cli, nil
 	}
 
-	cfg, err := githubapp.ParseV1Config(pb.p.Definition)
+	cfg, err := githubapp.ParseV1Config(provider.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential)
+	cli, err := githubapp.NewGitHubAppProvider(cfg, t.cfg.GitHubApp, t.metrics, t.restClientCache, gitHubCredential)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}
@@ -134,24 +182,35 @@ func (p *providerFactory) GetGitHub() (provinfv1.GitHub, error) {
 }
 
 // GetRepoLister returns a repo lister for the provider.
-func (p *providerFactory) GetRepoLister() (provinfv1.RepoLister, error) {
-	if !pb.Implements(db.ProviderTypeRepoLister) {
+func (t *traitInstantiator) GetRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error) {
+	if !provider.CanImplement(db.ProviderTypeRepoLister) {
 		return nil, fmt.Errorf("provider does not implement repo lister")
 	}
 
-	if pb.p.Version != provinfv1.V1 {
+	if provider.Version != provinfv1.V1 {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	if pb.Implements(db.ProviderTypeGithub) {
-		return pb.GetGitHub()
+	if provider.CanImplement(db.ProviderTypeGithub) {
+		return t.GetGitHub(ctx, provider)
 	}
 
 	// TODO: We'll need to add support for other providers here
 	return nil, fmt.Errorf("provider does not implement repo lister")
 }
 
-// Implements returns true if the provider implements the given type.
-func (p *providerFactory) Implements(impl db.ProviderType) bool {
-	return slices.Contains(p.p.Implements, impl)
+func (t *traitInstantiator) getProviderCredential(ctx context.Context, provider *db.Provider) (provinfv1.Credential, error) {
+	credential, err := getCredentialForProvider(ctx, *provider, t.crypteng, t.store, t.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error getting credential: %w", err)
+	}
+	return credential, nil
+}
+
+func (t *traitInstantiator) getOwnerFilter(ctx context.Context, provider *db.Provider) (*sql.NullString, error) {
+	ownerFilter, err := getOwnerFilterForProvider(ctx, *provider, t.store)
+	if err != nil {
+		return nil, fmt.Errorf("error getting owner filter: %w", err)
+	}
+	return &ownerFilter, nil
 }
