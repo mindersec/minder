@@ -120,6 +120,8 @@ deploymentSettings:
     appSecretName: "minder-github-secrets"
     # -- (string) Name of the secret containing the identity configuration
     identitySecretName: "minder-identity-secrets"
+    # -- (string) Name of the secret containing the GitHub App configuration
+    githubAppSecretName: "minder-github-app-secrets"
   # -- (array, optional) Additional configuration for sidecar containers
   sidecarContainers: null
 

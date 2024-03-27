@@ -57,6 +57,8 @@ spec:
           - "--metric-host=0.0.0.0"
           - "--github-client-id-file=/secrets/app/client_id"
           - "--github-client-secret-file=/secrets/app/client_secret"
+          - "--github-app-client-id-file=/secrets/github-app/github_app_client_id"
+          - "--github-app-client-secret-file=/secrets/github-app/github_app_client_secret"
           env:
           - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
@@ -64,6 +66,8 @@ spec:
             value: "/secrets/identity/identity_client_secret"
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
+          - name: "MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY"
+          - value: "/secrets/github-app/github_app_private_key"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
@@ -100,6 +104,8 @@ spec:
             mountPath: /secrets/app
           - name: identity-secrets
             mountPath: /secrets/identity
+          - name: github-app-secrets
+            mountPath: /secrets/github-app
           - name: sigstore-tuf-cache
             mountPath: /tmp/minder-cache
           {{- if .Values.deploymentSettings.extraVolumeMounts }}
@@ -126,6 +132,9 @@ spec:
       - name: identity-secrets
         secret:
           secretName: {{ .Values.deploymentSettings.secrets.identitySecretName }}
+      - name: github-app-secrets
+        secret:
+          secretName: {{ .Values.deploymentSettings.secrets.githubAppSecretName }}
       - name: sigstore-tuf-cache
         emptyDir:
           sizeLimit: 500Mi
