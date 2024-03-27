@@ -46,6 +46,8 @@ type DatabaseConfig struct {
 func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		c.User, url.QueryEscape(c.Password), c.Host, c.Port, c.Name, c.SSLMode)
+	zerolog.Ctx(ctx).Info().Str("host", c.Host).Int("port", c.Port).Str("user", c.User).
+		Str("dbname", c.Name).Msg("Connecting to DB")
 
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
@@ -53,6 +55,7 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 	}
 
 	for i := 0; i < 8; i++ {
+		zerolog.Ctx(ctx).Info().Int("try number", i).Msg("Trying to connect to DB")
 		// Ensure we actually connected to the database, per Go docs
 		err = conn.Ping()
 		if err != nil {

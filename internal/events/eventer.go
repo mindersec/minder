@@ -87,12 +87,14 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (Interface, error
 		metricsNamespace,
 		metricsSubsystem)
 	metricsBuilder.AddPrometheusRouterMetrics(router)
+	zerolog.Ctx(ctx).Info().Msg("Router Metrics registered")
 
 	meter := otel.Meter("eventer")
 	metricInstruments, err := initMetricsInstruments(meter)
 	if err != nil {
 		return nil, err
 	}
+	zerolog.Ctx(ctx).Info().Msg("Metrics Instruments registered")
 
 	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
 	if err != nil {
@@ -149,10 +151,13 @@ func instantiateDriver(
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
 	switch driver {
 	case GoChannelDriver:
+		zerolog.Ctx(ctx).Info().Msg("Using go-channel driver")
 		return gochannel.BuildGoChannelDriver(cfg)
 	case SQLDriver:
+		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
 	default:
+		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)
 	}
 }
