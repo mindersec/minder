@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,6 +32,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
@@ -39,9 +41,14 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
+	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
+	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -100,7 +107,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 	t.Parallel()
 
 	projectID := uuid.New()
-	providerName := "github"
+	githubProviderClass := "github"
+	githubAppProviderClass := "github-app"
 	nonGithubProviderName := "non-github"
 	projectIdStr := projectID.String()
 
@@ -113,10 +121,10 @@ func TestGetAuthorizationURL(t *testing.T) {
 		expectedStatusCode codes.Code
 	}{
 		{
-			name: "Success",
+			name: "Success OAuth",
 			req: &pb.GetAuthorizationURLRequest{
 				Context: &pb.Context{
-					Provider: &providerName,
+					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
 				Port: 8080,
@@ -134,6 +142,41 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Return(nil)
 			},
 
+			checkResponse: func(t *testing.T, res *pb.GetAuthorizationURLResponse, err error) {
+				t.Helper()
+
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+
+				if res.Url == "" {
+					t.Errorf("Unexpected response from GetAuthorizationURL: %v", res)
+				}
+			},
+
+			expectedStatusCode: codes.OK,
+		},
+		{
+			name: "Success GitHub App",
+			req: &pb.GetAuthorizationURLRequest{
+				Context: &pb.Context{
+					Provider: &githubAppProviderClass,
+					Project:  &projectIdStr,
+				},
+				Port: 8080,
+				Cli:  true,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					CreateSessionState(gomock.Any(), partialDbParamsMatcher{db.CreateSessionStateParams{
+						Provider:  "github-app",
+						ProjectID: projectID,
+					}}).
+					Return(db.SessionStore{}, nil)
+				store.EXPECT().
+					DeleteSessionStateByProjectID(gomock.Any(), gomock.Any()).
+					Return(nil)
+			},
 			checkResponse: func(t *testing.T, res *pb.GetAuthorizationURLResponse, err error) {
 				t.Helper()
 
@@ -172,7 +215,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			name: "No GitHub id",
 			req: &pb.GetAuthorizationURLRequest{
 				Context: &pb.Context{
-					Provider: &providerName,
+					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
 				Port: 8080,
@@ -251,7 +294,27 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server, _ := newDefaultServer(t, store)
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err, "failed to setup eventer")
+
+			tokenKeyPath := generateTokenKey(t)
+			c := &serverconfig.Config{
+				Auth: serverconfig.AuthConfig{
+					TokenKey: tokenKeyPath,
+				},
+				Provider: serverconfig.ProviderConfig{
+					GitHubApp: &serverconfig.GitHubAppConfig{
+						AppName: "test-app",
+					},
+				},
+			}
+			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
+
+			server, err := NewServer(store, evt, c, mockJwt)
+			require.NoError(t, err, "failed to create server")
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
@@ -400,7 +463,7 @@ func TestProviderCallback(t *testing.T) {
 					},
 				}, nil
 			}
-			s.HandleProviderCallback()(&resp, &req, params)
+			s.HandleOAuthCallback()(&resp, &req, params)
 
 			t.Logf("Response: %v", resp.Code)
 			body, err := io.ReadAll(resp.Body)
@@ -422,6 +485,161 @@ func TestProviderCallback(t *testing.T) {
 					t.Errorf("Unexpected error message: %q", string(body))
 				}
 			}
+		})
+	}
+}
+
+func TestHandleGitHubAppCallback(t *testing.T) {
+	t.Parallel()
+
+	stateBinary := make([]byte, 8)
+	// Store a very large timestamp in the state to ensure it's not expired
+	binary.BigEndian.PutUint64(stateBinary, 0x0fffffffffffffff)
+	stateBinary = append(stateBinary, []byte("state-test")...)
+	validState := base64.RawURLEncoding.EncodeToString(stateBinary)
+
+	code := "test-code"
+	installationID := int64(123456)
+
+	testCases := []struct {
+		name          string
+		state         string
+		buildStubs    func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService)
+		checkResponse func(t *testing.T, resp httptest.ResponseRecorder)
+	}{
+		{
+			name:  "Success with state",
+			state: validState,
+			buildStubs: func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService) {
+				service.EXPECT().
+					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
+					Return(nil)
+				store.EXPECT().
+					GetProjectIDBySessionState(gomock.Any(), validState).
+					Return(db.GetProjectIDBySessionStateRow{
+						ProjectID: uuid.New(),
+					}, nil)
+				service.EXPECT().
+					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID).
+					Return(&db.Provider{}, nil)
+			},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, 200, resp.Code)
+			},
+		}, {
+			name:  "Success no provider",
+			state: "",
+			buildStubs: func(_ *mockdb.MockStore, service *mockprofsvc.MockProviderService) {
+				service.EXPECT().
+					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
+					Return(nil)
+				service.EXPECT().
+					CreateUnclaimedGitHubAppInstallation(gomock.Any(), gomock.Any(), installationID).
+					Return(&db.ProviderGithubAppInstallation{}, nil)
+			},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, 200, resp.Code)
+			},
+		}, {
+			name:  "Invalid installation ID",
+			state: validState,
+			buildStubs: func(_ *mockdb.MockStore, service *mockprofsvc.MockProviderService) {
+				service.EXPECT().
+					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
+					Return(errors.New("invalid installation ID"))
+			},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, 403, resp.Code)
+			},
+		}, {
+			name:  "Wrong remote userid",
+			state: validState,
+			buildStubs: func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService) {
+				service.EXPECT().
+					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
+					Return(nil)
+				store.EXPECT().
+					GetProjectIDBySessionState(gomock.Any(), validState).
+					Return(db.GetProjectIDBySessionStateRow{
+						ProjectID: uuid.New(),
+					}, nil)
+				service.EXPECT().
+					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID).
+					Return(nil, providers.ErrInvalidTokenIdentity)
+			},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, 403, resp.Code)
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := http.Request{}
+			resp := httptest.ResponseRecorder{Body: new(bytes.Buffer)}
+			params := map[string]string{"provider": "github-app"}
+
+			req.URL = &url.URL{
+				RawQuery: url.Values{
+					"state":           {tc.state},
+					"code":            {code},
+					"installation_id": {fmt.Sprintf("%d", installationID)},
+				}.Encode(),
+			}
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err, "failed to setup eventer")
+
+			oauthServer := httptest.NewServer(http.HandlerFunc(
+				func(w http.ResponseWriter, _ *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					err := json.NewEncoder(w).Encode(map[string]interface{}{
+						"access_token": "anAccessToken",
+					})
+					if err != nil {
+						t.Fatalf("Failed to write response: %v", err)
+					}
+				}))
+			defer oauthServer.Close()
+			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
+				return &oauth2.Config{
+					Endpoint: oauth2.Endpoint{
+						TokenURL: oauthServer.URL,
+					},
+				}, nil
+			}
+
+			providerService := mockprofsvc.NewMockProviderService(ctrl)
+			store := mockdb.NewMockStore(ctrl)
+
+			tc.buildStubs(store, providerService)
+
+			s := &Server{
+				store:               store,
+				providers:           providerService,
+				evt:                 evt,
+				providerAuthFactory: providerAuthFactory,
+				cfg: &serverconfig.Config{
+					Auth: serverconfig.AuthConfig{},
+				},
+			}
+
+			s.HandleGitHubAppCallback()(&resp, &req, params)
+
+			tc.checkResponse(t, resp)
 		})
 	}
 }

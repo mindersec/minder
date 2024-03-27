@@ -47,6 +47,8 @@ services:
       # config file, point to them here:
       # - ./.github_client_id:/secrets/github_client_id:z
       # - ./.github_client_secret:/secrets/github_client_secret:z
+      # If you're using a GitHub App, you'll need to provide the private key:
+      - ./.secrets/github-app.pem:/app/.secrets/github-app.pem:z
       - ./.ssh:/app/.ssh:z
     environment:
       - KO_DATA_PATH=/app/
@@ -59,6 +61,7 @@ services:
       - MINDER_AUTH_REFRESH_TOKEN_PUBLIC_KEY=/app/.ssh/refresh_token_rsa.pub
       - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
       - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://api.trustypkg.dev
+      - MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY=/app/.secrets/github-app.pem
     networks:
       - app_net
     depends_on:

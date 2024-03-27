@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -17,6 +18,46 @@ SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, cre
 
 func (q *Queries) GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error) {
 	row := q.db.QueryRowContext(ctx, getInstallationIDByProviderID, providerID)
+	var i ProviderGithubAppInstallation
+	err := row.Scan(
+		&i.AppInstallationID,
+		&i.ProviderID,
+		&i.OrganizationID,
+		&i.EnrollingUserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertInstallationID = `-- name: UpsertInstallationID :one
+INSERT INTO provider_github_app_installations
+    (provider_id, app_installation_id, organization_id, enrolling_user_id)
+VALUES ($1, $2, $3, $4) ON CONFLICT (provider_id)
+    DO
+UPDATE SET
+    app_installation_id = $2,
+    organization_id = $3,
+    enrolling_user_id = $4,
+    updated_at = NOW()
+WHERE provider_github_app_installations.provider_id = $1
+    RETURNING app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at
+`
+
+type UpsertInstallationIDParams struct {
+	ProviderID        uuid.NullUUID  `json:"provider_id"`
+	AppInstallationID string         `json:"app_installation_id"`
+	OrganizationID    int64          `json:"organization_id"`
+	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
+}
+
+func (q *Queries) UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error) {
+	row := q.db.QueryRowContext(ctx, upsertInstallationID,
+		arg.ProviderID,
+		arg.AppInstallationID,
+		arg.OrganizationID,
+		arg.EnrollingUserID,
+	)
 	var i ProviderGithubAppInstallation
 	err := row.Scan(
 		&i.AppInstallationID,

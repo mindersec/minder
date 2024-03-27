@@ -173,9 +173,15 @@ func (g *GitHubAppDelegate) ListAllRepositories(ctx context.Context) ([]*minderv
 }
 
 // GetUserId returns the user id for the GitHub App user
-func (g *GitHubAppDelegate) GetUserId(_ context.Context) (int64, error) {
-	// note: this is different from the App ID
-	return g.userId, nil
+func (g *GitHubAppDelegate) GetUserId(ctx context.Context) (int64, error) {
+	// Try to get this user ID from the GitHub API
+	user, _, err := g.client.Users.Get(ctx, "")
+	if err != nil {
+		// Fallback to the configured user ID
+		// note: this is different from the App ID
+		return g.userId, nil
+	}
+	return user.GetID(), nil
 }
 
 // GetName returns the username for the GitHub App user

@@ -1566,6 +1566,21 @@ func (mr *MockStoreMockRecorder) UpsertBundle(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertBundle", reflect.TypeOf((*MockStore)(nil).UpsertBundle), arg0, arg1)
 }
 
+// UpsertInstallationID mocks base method.
+func (m *MockStore) UpsertInstallationID(arg0 context.Context, arg1 db.UpsertInstallationIDParams) (db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertInstallationID", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertInstallationID indicates an expected call of UpsertInstallationID.
+func (mr *MockStoreMockRecorder) UpsertInstallationID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertInstallationID", reflect.TypeOf((*MockStore)(nil).UpsertInstallationID), arg0, arg1)
+}
+
 // UpsertProfileForEntity mocks base method.
 func (m *MockStore) UpsertProfileForEntity(arg0 context.Context, arg1 db.UpsertProfileForEntityParams) (db.EntityProfile, error) {
 	m.ctrl.T.Helper()
