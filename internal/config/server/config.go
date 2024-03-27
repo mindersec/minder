@@ -89,14 +89,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		}
 		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
 
-		// Extract a default value the `default` struct tag
-		// we don't support all value types yet, but we can add them as needed
-		value := field.Tag.Get("default")
-
 		if field.Type.Kind() == reflect.Struct {
-			if value != "{}" {
-				setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
-			}
+			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
 			continue
 		}
 
@@ -105,6 +99,9 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			continue
 		}
 
+		// Extract a default value the `default` struct tag
+		// we don't support all value types yet, but we can add them as needed
+		value := field.Tag.Get("default")
 		defaultValue := reflect.Zero(field.Type).Interface()
 		var err error // We handle errors at the end of the switch
 		fieldType := field.Type.Kind()
