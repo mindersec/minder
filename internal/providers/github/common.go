@@ -564,6 +564,32 @@ func (c *GitHub) CreatePullRequest(
 	return pr, nil
 }
 
+// ClosePullRequest closes a pull request in a repository.
+func (c *GitHub) ClosePullRequest(
+	ctx context.Context,
+	owner, repo, number string,
+) error {
+	u := fmt.Sprintf("repos/%v/%v/pulls/%v", owner, repo, number)
+
+	payload := &struct {
+		State string `json:"state"`
+	}{
+		State: "closed",
+	}
+
+	req, err := c.client.NewRequest("PATCH", u, payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+	// Translate the HTTP status code to an error, nil if between 200 and 299
+	return engerrors.HTTPErrorCodeToErr(resp.StatusCode)
+}
+
 // ListPullRequests lists all pull requests in a repository.
 func (c *GitHub) ListPullRequests(
 	ctx context.Context,

@@ -239,6 +239,20 @@ func (mr *MockGitHubMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGitHub)(nil).Clone), ctx, url, branch)
 }
 
+// ClosePullRequest mocks base method.
+func (m *MockGitHub) ClosePullRequest(ctx context.Context, owner, repo, number string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClosePullRequest", ctx, owner, repo, number)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ClosePullRequest indicates an expected call of ClosePullRequest.
+func (mr *MockGitHubMockRecorder) ClosePullRequest(ctx, owner, repo, number any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClosePullRequest", reflect.TypeOf((*MockGitHub)(nil).ClosePullRequest), ctx, owner, repo, number)
+}
+
 // CloseSecurityAdvisory mocks base method.
 func (m *MockGitHub) CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error {
 	m.ctrl.T.Helper()
