@@ -173,33 +173,33 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		want        bool
 	}{
 		{
-			name:        "Empty versionPack",
+			name:        "empty versionPack",
 			versionPack: "",
-			pkgJson:     &packageJson{Name: "autocomplete-core"},
+			pkgJson:     &packageJson{Name: "@next/swc-linux-arm64-gnu"},
 			want:        false,
 		},
 		{
-			name: "versionPack without containing the correct package name but matching versions",
-			versionPack: `/next": {
-1.0.0
-1.0.0`,
-			pkgJson: &packageJson{Name: "autocomplete-core"},
+			name: "versionPack with containing a mismatching package name but matching versions",
+			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.18`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-x64-musl"},
 			want:    false,
 		},
 		{
-			name: "versionPack with correct package name but mismatching versions",
-			versionPack: `/autocomplete-core": {
-1.0.0
-2.0.0`,
-			pkgJson: &packageJson{Name: "autocomplete-core"},
+			name: "versionPack with a matching package name but mismatching versions",
+			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.20`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
 			want:    false,
 		},
 		{
 			name: "versionPack with matching package name and version",
-			versionPack: `/autocomplete-core": {
-1.0.0
-1.0.0`,
-			pkgJson: &packageJson{Name: "autocomplete-core"},
+			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.18`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
 			want:    true,
 		},
 	}
