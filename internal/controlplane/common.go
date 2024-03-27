@@ -126,12 +126,9 @@ func findProvider(
 
 // getNameFilterParam allows us to build a name filter for our provider queries
 func getNameFilterParam(in *pb.Context) sql.NullString {
-	if in.GetProvider() == "" {
-		return sql.NullString{}
-	}
 	return sql.NullString{
 		String: in.GetProvider(),
-		Valid:  true,
+		Valid:  in.GetProvider() != "",
 	}
 }
 
