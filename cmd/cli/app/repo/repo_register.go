@@ -148,9 +148,10 @@ func getUnregisteredRemoteRepositories(remoteRepositories []*minderv1.UpstreamRe
 	for _, remoteRepo := range remoteRepositories {
 		if !alreadyRegisteredRepos.Has(cli.GetRepositoryName(remoteRepo.Owner, remoteRepo.Name)) {
 			unregisteredRepos = append(unregisteredRepos, &minderv1.UpstreamRepositoryRef{
-				Owner:  remoteRepo.Owner,
-				Name:   remoteRepo.Name,
-				RepoId: remoteRepo.RepoId,
+				Owner:   remoteRepo.Owner,
+				Name:    remoteRepo.Name,
+				RepoId:  remoteRepo.RepoId,
+				Context: remoteRepo.Context,
 			})
 		}
 	}
@@ -170,10 +171,14 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 	// Map of repo names to IDs
 	repoIDs := make(map[string]int64)
 
-	// Populate the repoNames slice and repoIDs map
+	// Map of repo names to repo objects
+	repoMap := make(map[string]*minderv1.UpstreamRepositoryRef)
+
+	// Populate the repoNames slice, repoIDs map and repoMap
 	for i, repo := range repoList {
 		repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
 		repoIDs[repoNames[i]] = repo.RepoId
+		repoMap[repoNames[i]] = repo
 	}
 
 	// If the --name flag is set, use it to select repos
@@ -214,6 +219,9 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 			Owner:  splitRepo[0],
 			Name:   splitRepo[1],
 			RepoId: repoIDs[repo],
+			Context: &minderv1.Context{
+				Provider: ptr.Ptr(repoMap[repo].GetContext().GetProvider()),
+			},
 		}
 	}
 	return protoRepos, warnings, nil
