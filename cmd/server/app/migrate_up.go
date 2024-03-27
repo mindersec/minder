@@ -33,9 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // upCmd represents the up command
@@ -129,36 +127,10 @@ var upCmd = &cobra.Command{
 			return fmt.Errorf("error preparing authz client: %w", err)
 		}
 
-		store := db.NewStore(dbConn)
-		return ensureGitHubProvidersHaveAuthFlows(ctx, cmd, store)
+		return nil
 	},
 }
 
 func init() {
 	migrateCmd.AddCommand(upCmd)
-}
-
-func ensureGitHubProvidersHaveAuthFlows(ctx context.Context, cmd *cobra.Command, store db.Store) error {
-	providers, err := store.GlobalListProvidersByClass(ctx, db.NullProviderClass{
-		ProviderClass: db.ProviderClassGithub,
-		Valid:         true,
-	})
-	if err != nil {
-		return fmt.Errorf("error while listing providers: %w", err)
-	}
-
-	for _, p := range providers {
-		cmd.Printf("Enforce github provider %s has default auth flows\n", p.ID)
-		if err := store.UpdateProvider(ctx, db.UpdateProviderParams{
-			Implements: p.Implements,
-			Definition: p.Definition,
-			AuthFlows:  oauth.AuthorizationFlows, // This is what we are adding
-			ID:         p.ID,
-			ProjectID:  p.ProjectID,
-		}); err != nil {
-			return fmt.Errorf("error while updating provider: %w", err)
-		}
-	}
-
-	return nil
 }
