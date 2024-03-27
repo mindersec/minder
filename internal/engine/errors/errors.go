@@ -79,7 +79,10 @@ var ErrActionPending = errors.New("action pending")
 
 // IsActionInformativeError returns true if the error is an informative error that should not be reported to the user
 func IsActionInformativeError(err error) bool {
-	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable) || errors.Is(err, ErrActionTurnedOff) || errors.Is(err, ErrActionPending)
+	return errors.Is(err, ErrActionSkipped) ||
+		errors.Is(err, ErrActionNotAvailable) ||
+		errors.Is(err, ErrActionTurnedOff) ||
+		errors.Is(err, ErrActionPending)
 }
 
 // IsActionFatalError returns true if the error is a fatal error that should stop be reported to the user
@@ -166,8 +169,10 @@ func RemediationStatusAsError(s db.RemediationStatusTypes) error {
 		return ErrActionNotAvailable
 	case db.RemediationStatusTypesPending:
 		return ErrActionPending
+	case db.RemediationStatusTypesError:
+		return fmt.Errorf("generic remediation error status: %s", s)
 	}
-	return fmt.Errorf("unknown remediation status: %s", s)
+	return fmt.Errorf("generic remediation error status: %s", s)
 }
 
 // ErrorAsAlertStatus returns the alert status for a given error

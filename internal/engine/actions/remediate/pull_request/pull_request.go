@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	htmltemplate "html/template"
 	"os"
 	"strconv"
@@ -36,6 +35,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
@@ -176,7 +176,12 @@ func (r *Remediator) Do(
 	return nil, remErr
 }
 
-func (r *Remediator) getParamsForPRRemediation(ctx context.Context, ent protoreflect.ProtoMessage, params interfaces.ActionsParams, metadata *json.RawMessage) (*paramsPR, error) {
+func (r *Remediator) getParamsForPRRemediation(
+	ctx context.Context,
+	ent protoreflect.ProtoMessage,
+	params interfaces.ActionsParams,
+	metadata *json.RawMessage,
+) (*paramsPR, error) {
 	logger := zerolog.Ctx(ctx)
 
 	repo, ok := ent.(*pb.Repository)

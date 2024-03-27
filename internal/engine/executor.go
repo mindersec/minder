@@ -17,8 +17,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"sync"
 	"time"
 
@@ -29,6 +27,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
@@ -425,12 +425,4 @@ func logEval(
 
 	// log business logic
 	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
-}
-
-func filterActionErrorForLogging(err error) error {
-	if evalerrors.IsActionFatalError(err) {
-		return err
-	}
-
-	return nil
 }

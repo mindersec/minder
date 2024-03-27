@@ -190,14 +190,8 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	// Proceed with use cases where the evaluation changed
 	switch newEval {
 	case db.EvalStatusTypesError:
-		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
-		// The Remediation should be OFF (if it wasn't already)
-		if db.RemediationStatusTypesSkipped != prevRemediation {
-			return engif.ActionCmdOff
-		}
-		// We should do nothing if remediation was already skipped
-		return engif.ActionCmdDoNothing
 	case db.EvalStatusTypesSuccess:
+		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
 		if db.RemediationStatusTypesSkipped != prevRemediation {
@@ -213,6 +207,9 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 		}
 		// The Remediation should be turned ON (if it wasn't already)
 		return engif.ActionCmdOn
+	case db.EvalStatusTypesSkipped:
+	case db.EvalStatusTypesPending:
+		return engif.ActionCmdDoNothing
 	}
 
 	// Default to do nothing
@@ -260,7 +257,9 @@ func shouldAlert(
 	// Proceed with use cases where the evaluation changed
 	switch newEval {
 	case db.EvalStatusTypesError:
+	case db.EvalStatusTypesFailure:
 		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
+		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
 		// The Alert should be on (if it wasn't already)
 		if db.AlertStatusTypesOn != prevAlert {
 			return engif.ActionCmdOn
@@ -268,22 +267,18 @@ func shouldAlert(
 		// We should do nothing if alert was already turned on
 		return engif.ActionCmdDoNothing
 	case db.EvalStatusTypesSuccess:
-		// Case 4 - Evaluation changed from something else to PASSING -> Alert should be OFF
+		// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
 		// The Alert should be turned OFF (if it wasn't already)
 		if db.AlertStatusTypesOff != prevAlert {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if the Alert is already OFF
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesFailure:
-		// Case 5 - Evaluation has changed from something else to FAILED -> Alarm should be ON
-		// The Alert should be turned ON (if it wasn't already)
-		if db.AlertStatusTypesOn != prevAlert {
-			return engif.ActionCmdOn
-		}
-		// We should do nothing if the Alert is already ON
+	case db.EvalStatusTypesSkipped:
+	case db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
 	}
+
 	// Default to do nothing
 	return engif.ActionCmdDoNothing
 }
@@ -292,7 +287,9 @@ func shouldAlert(
 func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
 	var skipAction bool
 
-	logger := zerolog.Ctx(ctx).Info().Str("action", string(actionType)).Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr)))
+	logger := zerolog.Ctx(ctx).Info().
+		Str("action", string(actionType)).
+		Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr)))
 
 	// Get the profile option set for this action type
 	actionOnOff, ok := rae.actionsOnOff[actionType]

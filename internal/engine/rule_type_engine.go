@@ -18,9 +18,9 @@ package engine
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/db"
