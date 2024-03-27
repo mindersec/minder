@@ -69,12 +69,7 @@ func getProviderFromRequestOrDefault(
 		return db.Provider{}, err
 	}
 
-	p, err := inferProvider(providers, name)
-	if err != nil {
-		return db.Provider{}, err
-	}
-
-	return p, nil
+	return inferProvider(providers, name)
 }
 
 func getProvidersByTrait(
