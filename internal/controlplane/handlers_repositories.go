@@ -322,7 +322,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	for _, provider := range provs {
-		zerolog.Ctx(ctx).Debug().
+		zerolog.Ctx(ctx).Trace().
 			Str("provider", provider.Name).
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
