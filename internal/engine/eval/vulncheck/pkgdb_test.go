@@ -164,6 +164,8 @@ func TestNpmPkgDb(t *testing.T) {
 }
 
 func TestPackageJsonLineHasDependency(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		versionPack string
@@ -198,6 +200,8 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := tt.pkgJson.LineHasDependency(tt.versionPack); got != tt.want {
 				t.Errorf("packageJson.LineHasDependency() = %v, want %v", got, tt.want)
 			}
