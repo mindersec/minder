@@ -164,8 +164,6 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, expStatusBody)
 
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
-
 	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
@@ -175,7 +173,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 					Path:      github.String(dep.File.Name),
 					StartLine: github.Int(1),
 					Line:      github.Int(4),
-					Body:      github.String(expCommentBody),
+					Body:      github.String("```suggestion\n\n  \"version\": \"0.6.0\",\n  \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n  \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n```\n"),
 				},
 			},
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)
@@ -531,8 +529,6 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, expStatusBody)
 
-	expCommentBody := reviewBodyWithSuggestion(patchPackage.IndentedString(0, fmt.Sprintf(`"%s": {`, patchPackage.Name), nil))
-
 	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
@@ -542,7 +538,11 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 					Path:      github.String(dep.File.Name),
 					StartLine: github.Int(1),
 					Line:      github.Int(4),
-					Body:      github.String(expCommentBody),
+					Body: github.String("```suggestion\n\n" +
+						"  \"version\": \"0.6.0\",\n" +
+						"  \"resolved\": \"https://registry.npmjs.org/mongodb/-/mongodb-0.6.0.tgz\",\n" +
+						"  \"integrity\": \"sha512-+1+2+3+4+5+6+7+8+9+0\",\n" +
+						"```\n"),
 				},
 			},
 		}).Return(&github.PullRequestReview{HTMLURL: github.String(minderReviewUrl)}, nil)

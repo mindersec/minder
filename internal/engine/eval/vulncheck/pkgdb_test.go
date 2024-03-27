@@ -164,50 +164,44 @@ func TestNpmPkgDb(t *testing.T) {
 }
 
 func TestPackageJsonLineHasDependency(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
-		name         string
-		line         string
-		pj           *packageJson
-		expectRetval bool
+		name        string
+		versionPack string
+		pkgJson     *packageJson
+		want        bool
 	}{
 		{
-			name: "MatchWithScope",
-			line: "\"node_modules/@types/node\": {",
-			pj: &packageJson{
-				Name:    "@types/node",
-				Version: "20.9.0",
-			},
-			expectRetval: true,
+			name:        "Empty versionPack",
+			versionPack: "",
+			pkgJson:     &packageJson{Name: "test"},
+			want:        false,
 		},
 		{
-			name: "MatchNoScope",
-			line: "\"node_modules/lodash\": {",
-			pj: &packageJson{
-				Name:    "lodash",
-				Version: "4.17.21",
-			},
-			expectRetval: true,
+			name:        "versionPack without containing the correct package name but matching versions",
+			versionPack: "/random\": {\n1.0.0\n1.0.0",
+			pkgJson:     &packageJson{Name: "test"},
+			want:        false,
 		},
 		{
-			name: "NoMatch",
-			line: "\"node_modules/other\": {",
-			pj: &packageJson{
-				Name:    "lodash",
-				Version: "4.17.21",
-			},
-			expectRetval: false,
+			name:        "versionPack with correct package name but mismatching versions",
+			versionPack: "/test\": {\n1.0.0\n1.1.1",
+			pkgJson:     &packageJson{Name: "test"},
+			want:        false,
+		},
+		{
+			name:        "versionPack with matching package name and version",
+			versionPack: "/test\": {\n1.0.0\n1.0.0",
+			pkgJson:     &packageJson{Name: "test"},
+			want:        true,
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			if got := tt.pkgJson.LineHasDependency(tt.versionPack); got != tt.want {
+				t.Errorf("packageJson.LineHasDependency() = %v, want %v", got, tt.want)
+			}
 		})
-
-		require.Equal(t, tt.expectRetval, tt.pj.LineHasDependency(tt.line), "expected reply to match mock data")
 	}
 }
 
