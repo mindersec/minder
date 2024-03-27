@@ -50,7 +50,7 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Unable to read config", err)
 	}
 
-	skipBrowser := viper.GetBool("skip-browser")
+	skipBrowser := viper.GetBool("login.skip-browser")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -118,9 +118,8 @@ func init() {
 
 	// hidden flags
 	loginCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
-	// mark hidden
-	if err := loginCmd.Flags().MarkHidden("skip-browser"); err != nil {
-		loginCmd.Printf("Error marking flag hidden: %s", err)
+	// Bind flags
+	if err := viper.BindPFlag("login.skip-browser", loginCmd.Flags().Lookup("skip-browser")); err != nil {
 		panic(err)
 	}
 }

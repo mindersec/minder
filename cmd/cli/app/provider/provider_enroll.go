@@ -240,9 +240,4 @@ func init() {
 
 	// hidden flags
 	enrollCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
-	// mark hidden
-	if err := enrollCmd.Flags().MarkHidden("skip-browser"); err != nil {
-		enrollCmd.Printf("Error marking flag hidden: %s", err)
-		os.Exit(1)
-	}
 }
