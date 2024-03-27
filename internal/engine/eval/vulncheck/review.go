@@ -81,9 +81,19 @@ func locateDepInPr(
 	loc := reviewLocation{}
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
+		// if the dependency is an NPM dependency, we need to look for the next line
+		// since the patch diff part covers the version, but not the name. This
+		// was causing 422 issues with GitHub when trying to submit a review.
+		// Also, to ensure we are grabbing the correct line, we need to check if the
+		// versions align.
+		if dep.Dep.Ecosystem == pb.DepEcosystem_DEP_ECOSYSTEM_NPM && i+1 < len(lines) {
+			line = strings.Join([]string{line, lines[i+1], dep.Dep.Version}, "\n")
+			loc.lineToChange = i + 2
+		} else {
+			loc.lineToChange = i + 1
+		}
 		if patch.LineHasDependency(line) {
 			loc.leadingWhitespace = countLeadingWhitespace(line)
-			loc.lineToChange = i + 1
 			loc.line = line
 			break
 		}
