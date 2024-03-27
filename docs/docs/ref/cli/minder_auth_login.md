@@ -17,7 +17,8 @@ minder auth login [flags]
 ### Options
 
 ```
-  -h, --help   help for login
+  -h, --help           help for login
+      --skip-browser   Skip opening the browser for OAuth flow
 ```
 
 ### Options inherited from parent commands
