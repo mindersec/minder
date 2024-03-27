@@ -180,7 +180,7 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		},
 		{
 			name: "versionPack with containing a mismatching package name but matching versions",
-			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
   "version": "13.4.18",
 13.4.18`,
 			pkgJson: &packageJson{Name: "@next/swc-linux-x64-musl"},
@@ -188,7 +188,7 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		},
 		{
 			name: "versionPack with a matching package name but mismatching versions",
-			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
   "version": "13.4.18",
 13.4.20`,
 			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
@@ -196,7 +196,7 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		},
 		{
 			name: "versionPack with matching package name and version",
-			versionPack: `node_modules/@next/swc-linux-arm64-gnu": {
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
   "version": "13.4.18",
 13.4.18`,
 			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
