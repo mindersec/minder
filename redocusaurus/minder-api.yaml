@@ -2888,6 +2888,9 @@ definitions:
       name:
         type: string
         description: name is the name of the rule type.
+      displayName:
+        type: string
+        description: display_name is the display name of the rule type.
       context:
         $ref: '#/definitions/v1Context'
         description: context is the context in which the rule is evaluated.
