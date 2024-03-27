@@ -114,7 +114,7 @@ func findProvider(
 		Trait:    trait,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error finding providers: %w", err)
+		return nil, fmt.Errorf("cannot retrieve providers: %w", err)
 	}
 
 	if len(provs) == 0 {
