@@ -29,13 +29,6 @@ these helm charts, you will need the following:
   you will want to create a `docker-registry` type credential with the name
   `minder-pull-secret`
 
-- In addition, if you are using a GitHub App for authorization, you will need:
-    - `minder-github-app-secrets`: Needs to contain API credentials for a GitHub
-      app. In particular, the following keys are required:
-        - `client_id`: The GitHub client ID to be used by Minder
-        - `client_secret`: The GitHub client secret to be used by Minder
-        - `private_key`: The GitHub App's private key for minting JWTs
-
 ## Building and running
 
 You can build a (local) helm chart with `make helm` at the top-level of the
@@ -65,6 +58,7 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | Resources to use for the main deployment |
 | deploymentSettings.secrets.appSecretName | string | `"minder-github-secrets"` | Name of the secret containing the GitHub configuration |
 | deploymentSettings.secrets.authSecretName | string | `"minder-auth-secrets"` | Name of the secret containing the auth configuration |
+| deploymentSettings.secrets.githubAppSecretName | string | `"minder-github-app-secrets"` | Name of the secret containing the GitHub App configuration |
 | deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` | Name of the secret containing the identity configuration |
 | deploymentSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
 | extra_config | string | `"# Add content here\n"` | Additional configuration yaml beyond what's in server-config.yaml.example |
