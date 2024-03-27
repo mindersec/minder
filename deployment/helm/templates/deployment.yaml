@@ -67,7 +67,7 @@ spec:
           - name: "MINDER_UNSTABLE_TRUSTY_ENDPOINT"
             value: "{{ .Values.trusty.endpoint }}"
           - name: "MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY"
-          - value: "/secrets/github-app/github_app_private_key"
+            value: "/secrets/github-app/github_app_private_key"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
