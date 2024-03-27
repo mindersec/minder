@@ -37,6 +37,22 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 	return i, err
 }
 
+const getBundle = `-- name: GetBundle :one
+SELECT id, namespace, name FROM bundles WHERE namespace = $1 AND name = $2
+`
+
+type GetBundleParams struct {
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+func (q *Queries) GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error) {
+	row := q.db.QueryRowContext(ctx, getBundle, arg.Namespace, arg.Name)
+	var i Bundle
+	err := row.Scan(&i.ID, &i.Namespace, &i.Name)
+	return i, err
+}
+
 const getSubscriptionByProjectBundle = `-- name: GetSubscriptionByProjectBundle :one
 SELECT su.id, su.project_id, su.bundle_id, su.current_version FROM subscriptions AS su
 JOIN bundles AS bu ON bu.id = su.bundle_id
@@ -79,12 +95,11 @@ func (q *Queries) SetCurrentVersion(ctx context.Context, arg SetCurrentVersionPa
 	return err
 }
 
-const upsertBundle = `-- name: UpsertBundle :one
+const upsertBundle = `-- name: UpsertBundle :exec
 
 
 INSERT INTO bundles (namespace, name) VALUES ($1, $2)
 ON CONFLICT DO NOTHING
-RETURNING id, namespace, name
 `
 
 type UpsertBundleParams struct {
@@ -106,9 +121,7 @@ type UpsertBundleParams struct {
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // Bundles --
-func (q *Queries) UpsertBundle(ctx context.Context, arg UpsertBundleParams) (Bundle, error) {
-	row := q.db.QueryRowContext(ctx, upsertBundle, arg.Namespace, arg.Name)
-	var i Bundle
-	err := row.Scan(&i.ID, &i.Namespace, &i.Name)
-	return i, err
+func (q *Queries) UpsertBundle(ctx context.Context, arg UpsertBundleParams) error {
+	_, err := q.db.ExecContext(ctx, upsertBundle, arg.Namespace, arg.Name)
+	return err
 }

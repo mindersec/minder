@@ -57,6 +57,12 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			ExpectedError: "error while querying subscriptions",
 		},
 		{
+			Name:          "Subscribe returns error when bundle cannot be upserted",
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
+			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withFailedBundleUpsert),
+			ExpectedError: "error while ensuring bundle exists",
+		},
+		{
 			Name:          "Subscribe returns error when subscription cannot be created",
 			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata),
 			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withFailedCreateSubscription, withBundleUpsert),
@@ -224,7 +230,17 @@ func withFailedCreateSubscription(mock dbf.DBMock) {
 func withBundleUpsert(mock dbf.DBMock) {
 	mock.EXPECT().
 		UpsertBundle(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	mock.EXPECT().
+		GetBundle(gomock.Any(), gomock.Any()).
 		Return(db.Bundle{ID: bundleID}, nil)
+}
+
+func withFailedBundleUpsert(mock dbf.DBMock) {
+	mock.EXPECT().
+		UpsertBundle(gomock.Any(), gomock.Any()).
+		Return(errDefault)
 }
 
 func createService(

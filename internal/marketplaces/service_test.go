@@ -103,13 +103,16 @@ func testHarness(t *testing.T, method testMethod, scenarios []testScenario) {
 
 			var source sources.BundleSource
 			if scenario.SourceSetup != nil {
-				source = scenario.SourceSetup(ctrl)
+				mock := scenario.SourceSetup(ctrl)
+				bsf.WithListBundles(bundleID)(mock)
+				source = mock
 			}
 
 			store := dbf.NewDBMock()(ctrl)
 
-			marketplace := marketplaces.NewSingleSourceMarketplace(source, subSvc)
-			var err error
+			marketplace, err := marketplaces.NewMarketplace([]sources.BundleSource{source}, subSvc)
+			require.NoError(t, err)
+
 			switch method {
 			case subscribe:
 				err = marketplace.Subscribe(ctx, projectContext, bundleID, store)

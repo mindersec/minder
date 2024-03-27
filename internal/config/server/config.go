@@ -41,6 +41,7 @@ type Config struct {
 	Events        EventConfig           `mapstructure:"events"`
 	Authz         AuthzConfig           `mapstructure:"authz"`
 	Provider      ProviderConfig        `mapstructure:"provider"`
+	Marketplace   MarketplaceConfig     `mapstructure:"marketplace"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

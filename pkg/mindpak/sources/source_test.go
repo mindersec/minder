@@ -32,6 +32,17 @@ func TestNewSourceFromDirectory_Fails(t *testing.T) {
 	require.ErrorContains(t, err, "unable to load bundle")
 }
 
+func TestListBundles(t *testing.T) {
+	t.Parallel()
+	bundle, err := sources.NewSourceFromTarGZ(sampleDataPath)
+	require.NoError(t, err)
+	idList, err := bundle.ListBundles()
+	require.NoError(t, err)
+	require.Len(t, idList, 1)
+	require.Equal(t, idList[0].Name, "t2")
+	require.Equal(t, idList[0].Namespace, "stacklok")
+}
+
 func TestSingleBundleSource_LoadBundle(t *testing.T) {
 	t.Parallel()
 	scenarios := []struct {
