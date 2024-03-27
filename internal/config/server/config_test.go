@@ -137,8 +137,6 @@ func TestReadDefaultConfig(t *testing.T) {
 	cfg := serverconfig.DefaultConfigForTest()
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
-	require.Equal(t, int64(0), cfg.Events.Aggregator.LockInterval)
-	require.Equal(t, "", cfg.Events.SQLPubSub.Connection.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
 }
 

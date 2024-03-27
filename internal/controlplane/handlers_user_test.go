@@ -39,6 +39,7 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/marketplaces"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -128,6 +129,7 @@ func TestCreateUserDBMock(t *testing.T) {
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
 				authzClient:  &mock.NoopClient{Authorized: true},
+				marketplace:  marketplaces.NewNoopMarketplace(),
 			}
 
 			resp, err := server.CreateUser(ctx, tc.req)

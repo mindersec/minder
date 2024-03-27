@@ -34,6 +34,7 @@ import (
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -308,29 +309,51 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = projectID
+
+	provs, err := getProvidersByTrait(ctx, s.store, in, projectID, db.ProviderTypeRepoLister)
 	if err != nil {
 		return nil, providerError(err)
 	}
 
-	zerolog.Ctx(ctx).Debug().
-		Str("provider", provider.Name).
-		Str("projectID", projectID.String()).
-		Msg("listing repositories")
-
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	out := &pb.ListRemoteRepositoriesFromProviderResponse{
+		Results: []*pb.UpstreamRepositoryRef{},
 	}
 
-	if !p.Implements(db.ProviderTypeRepoLister) {
-		return nil, util.UserVisibleError(codes.Unimplemented, "provider does not implement repository listing")
+	for _, provider := range provs {
+		zerolog.Ctx(ctx).Trace().
+			Str("provider", provider.Name).
+			Str("project_id", projectID.String()).
+			Msg("listing repositories")
+
+		pbOpts := []providers.ProviderBuilderOption{
+			providers.WithProviderMetrics(s.provMt),
+			providers.WithRestClientCache(s.restClientCache),
+		}
+		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+		}
+
+		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
+		if err != nil {
+			return nil, err
+		}
+
+		out.Results = append(out.Results, results...)
 	}
 
+	return out, nil
+}
+
+func (s *Server) listRemoteRepositoriesForProvider(
+	ctx context.Context,
+	provName string,
+	p *providers.ProviderBuilder,
+	projectID uuid.UUID,
+) ([]*pb.UpstreamRepositoryRef, error) {
+	// by now we've already checked that repo listed is implemented
 	client, err := p.GetRepoLister()
 	if err != nil {
 		if errors.Is(err, providers.ErrInvalidCredential) {
@@ -348,16 +371,14 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 	}
 
-	out := &pb.ListRemoteRepositoriesFromProviderResponse{
-		Results: make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos)),
-	}
-
 	allowsPrivateRepos := features.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
 	if !allowsPrivateRepos {
 		zerolog.Ctx(ctx).Info().Msg("filtering out private repositories")
 	} else {
 		zerolog.Ctx(ctx).Info().Msg("including private repositories")
 	}
+
+	results := make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos))
 
 	for idx, rem := range remoteRepos {
 		// Skip private repositories
@@ -366,18 +387,18 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		}
 		remoteRepo := remoteRepos[idx]
 		repo := &pb.UpstreamRepositoryRef{
+			Context: &pb.Context{
+				Provider: &provName,
+				Project:  ptr.Ptr(projectID.String()),
+			},
 			Owner:  remoteRepo.Owner,
 			Name:   remoteRepo.Name,
 			RepoId: remoteRepo.RepoId,
 		}
-		out.Results = append(out.Results, repo)
+		results = append(results, repo)
 	}
 
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
-	logger.BusinessRecord(ctx).Project = projectID
-
-	return out, nil
+	return results, nil
 }
 
 // TODO: this probably can probably be used elsewhere

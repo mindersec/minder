@@ -138,8 +138,10 @@ func (_ *ruleTypeService) CreateRuleType(
 		return nil, err
 	}
 
+	ruleType = ruleType.WithDefaultDisplayName()
 	newDBRecord, err := qtx.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:           ruleTypeName,
+		DisplayName:    ruleType.GetDisplayName(),
 		Provider:       provider.Name,
 		ProviderID:     provider.ID,
 		ProjectID:      projectID,
@@ -214,11 +216,13 @@ func (_ *ruleTypeService) UpdateRuleType(
 		return nil, err
 	}
 
+	ruleType = ruleType.WithDefaultDisplayName()
 	updatedRuleType, err := qtx.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
 		ID:            oldRuleType.ID,
 		Description:   ruleType.GetDescription(),
 		Definition:    serializedRule,
 		SeverityValue: *severity,
+		DisplayName:   ruleType.GetDisplayName(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update rule type: %w", err)

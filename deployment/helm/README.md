@@ -58,6 +58,7 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | Resources to use for the main deployment |
 | deploymentSettings.secrets.appSecretName | string | `"minder-github-secrets"` | Name of the secret containing the GitHub configuration |
 | deploymentSettings.secrets.authSecretName | string | `"minder-auth-secrets"` | Name of the secret containing the auth configuration |
+| deploymentSettings.secrets.githubAppSecretName | string | `"minder-github-app-secrets"` | Name of the secret containing the GitHub App configuration |
 | deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` | Name of the secret containing the identity configuration |
 | deploymentSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
 | extra_config | string | `"# Add content here\n"` | Additional configuration yaml beyond what's in server-config.yaml.example |

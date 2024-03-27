@@ -129,7 +129,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 
 // ListProfiles is a method to get all profiles for a project
 func (s *Server) ListProfiles(ctx context.Context,
-	_ *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
+	req *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
 	err := entityCtx.Validate(ctx, s.store)
@@ -137,7 +137,12 @@ func (s *Server) ListProfiles(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	profiles, err := s.store.ListProfilesByProjectID(ctx, entityCtx.Project.ID)
+	listParams := db.ListProfilesByProjectIDAndLabelParams{
+		ProjectID: entityCtx.Project.ID,
+	}
+	listParams.LabelsFromFilter(req.GetLabelFilter())
+
+	profiles, err := s.store.ListProfilesByProjectIDAndLabel(ctx, listParams)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
 	}

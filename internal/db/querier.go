@@ -46,6 +46,10 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
+	// FindProviders allows us to take a trait and filter
+	// providers by it. It also optionally takes a name, in case we want to
+	// filter by name as well.
+	FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error)
 	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
@@ -103,6 +107,7 @@ type Querier interface {
 	// this flag is no longer used and will be removed in the future.
 	ListOldOrgProjects(ctx context.Context) ([]Project, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
+	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
 	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
 	// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
 	// so we only return the profile information. We also should group the profiles so that we don't get duplicates.

@@ -177,8 +177,8 @@ github.com/curioswitch/go-reassign v0.2.0 h1:G9UZyOcpk/d7Gd6mqYgd8XYWFMw/znxwGDU
 github.com/curioswitch/go-reassign v0.2.0/go.mod h1:x6OpXuWvgfQaMGks2BZybTngWjT84hqJfKoO8Tt/Roc=
 github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 h1:iwZdTE0PVqJCos1vaoKsclOGD3ADKpshg3SRtYBbwso=
 github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548/go.mod h1:e6NPNENfs9mPDVNRekM7lKScauxd5kXTr1Mfyig6TDM=
-github.com/daixiang0/gci v0.13.1 h1:jkQWCPu7JZhNoO+OMHFxs1KGonWPhXw9txySE8qwAb0=
-github.com/daixiang0/gci v0.13.1/go.mod h1:JyUVY/ZKzBjrzLOm2UQDZohEZ2HlfX72jONBV0REVb4=
+github.com/daixiang0/gci v0.13.2 h1:zMNnZrkMbVEDazqZpqYi0SGbDsrOG+5HG1WPcQzbGSo=
+github.com/daixiang0/gci v0.13.2/go.mod h1:sQCsUhFcpb5CQ4sYr4UBlt4d9iazB0PUeXzWA0RZmIY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=

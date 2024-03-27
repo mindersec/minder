@@ -1734,6 +1734,7 @@ The version is assumed from the folder's version.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
+| display_name | [string](#string) |  | display_name is the display name of the rule type. |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
@@ -2054,6 +2055,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UserRecord"></a>

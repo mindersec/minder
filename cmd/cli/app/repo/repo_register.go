@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -82,7 +83,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 	printWarnings(cmd, warnings)
 
-	results, warnings := registerSelectedRepos(provider, project, client, selectedRepos)
+	results, warnings := registerSelectedRepos(project, client, selectedRepos)
 	printWarnings(cmd, warnings)
 
 	printRepoRegistrationStatus(cmd, results)
@@ -125,8 +126,15 @@ func getUnregisteredInputRepos(inputRepoList string, alreadyRegisteredRepos sets
 
 func fetchRemoteRepositoriesFromProvider(ctx context.Context, provider, project string, client minderv1.RepositoryServiceClient) (
 	[]*minderv1.UpstreamRepositoryRef, error) {
+	var provPtr *string
+	if provider != "" {
+		provPtr = &provider
+	}
 	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &minderv1.ListRemoteRepositoriesFromProviderRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{
+			Provider: provPtr,
+			Project:  &project,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -212,7 +220,7 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 }
 
 func registerSelectedRepos(
-	provider, project string,
+	project string,
 	client minderv1.RepositoryServiceClient,
 	selectedRepos []*minderv1.UpstreamRepositoryRef) ([]*minderv1.RegisterRepoResult, []string) {
 	var results []*minderv1.RegisterRepoResult
@@ -221,7 +229,10 @@ func registerSelectedRepos(
 		repo := selectedRepos[idx]
 
 		result, err := client.RegisterRepository(context.Background(), &minderv1.RegisterRepositoryRequest{
-			Context:    &minderv1.Context{Provider: &provider, Project: &project},
+			Context: &minderv1.Context{
+				Provider: ptr.Ptr(repo.GetContext().GetProvider()),
+				Project:  &project,
+			},
 			Repository: repo,
 		})
 

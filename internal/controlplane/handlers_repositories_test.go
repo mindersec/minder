@@ -348,11 +348,11 @@ func createServer(
 
 	if providerFails {
 		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
+			FindProviders(gomock.Any(), gomock.Any()).
 			Return(nil, errDefault)
 	} else {
 		store.EXPECT().
-			ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projectID}).
+			FindProviders(gomock.Any(), gomock.Any()).
 			Return([]db.Provider{provider}, nil).AnyTimes()
 		store.EXPECT().
 			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).

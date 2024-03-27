@@ -538,6 +538,21 @@ func (mr *MockStoreMockRecorder) EnqueueFlush(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueFlush", reflect.TypeOf((*MockStore)(nil).EnqueueFlush), arg0, arg1)
 }
 
+// FindProviders mocks base method.
+func (m *MockStore) FindProviders(arg0 context.Context, arg1 db.FindProvidersParams) ([]db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindProviders", arg0, arg1)
+	ret0, _ := ret[0].([]db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindProviders indicates an expected call of FindProviders.
+func (mr *MockStoreMockRecorder) FindProviders(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindProviders", reflect.TypeOf((*MockStore)(nil).FindProviders), arg0, arg1)
+}
+
 // FlushCache mocks base method.
 func (m *MockStore) FlushCache(arg0 context.Context, arg1 db.FlushCacheParams) (db.FlushCache, error) {
 	m.ctrl.T.Helper()
@@ -1225,6 +1240,21 @@ func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID
 func (mr *MockStoreMockRecorder) ListProfilesByProjectID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectID", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectID), arg0, arg1)
+}
+
+// ListProfilesByProjectIDAndLabel mocks base method.
+func (m *MockStore) ListProfilesByProjectIDAndLabel(arg0 context.Context, arg1 db.ListProfilesByProjectIDAndLabelParams) ([]db.ListProfilesByProjectIDAndLabelRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProfilesByProjectIDAndLabel", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListProfilesByProjectIDAndLabelRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProfilesByProjectIDAndLabel indicates an expected call of ListProfilesByProjectIDAndLabel.
+func (mr *MockStoreMockRecorder) ListProfilesByProjectIDAndLabel(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProfilesByProjectIDAndLabel", reflect.TypeOf((*MockStore)(nil).ListProfilesByProjectIDAndLabel), arg0, arg1)
 }
 
 // ListProfilesInstantiatingRuleType mocks base method.
