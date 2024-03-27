@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -42,6 +43,22 @@ func providerError(err error) error {
 		return util.UserVisibleError(codes.NotFound, "provider not found")
 	}
 	return fmt.Errorf("provider error: %w", err)
+}
+
+// providerBuilderFactory is a helper function to build a provider builder
+// It has the added value that it will trigger some devs XD
+func (s *Server) providerBuilderFactory(ctx context.Context, provider db.Provider) (*providers.ProviderBuilder, error) {
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	return p, nil
 }
 
 // builds an error message based on the given filters.

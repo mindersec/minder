@@ -327,13 +327,9 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
-		pbOpts := []providers.ProviderBuilderOption{
-			providers.WithProviderMetrics(s.provMt),
-			providers.WithRestClientCache(s.restClientCache),
-		}
-		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+		p, err := s.providerBuilderFactory(ctx, provider)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+			return nil, err
 		}
 
 		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
@@ -414,14 +410,9 @@ func (s *Server) getProviderAndClient(
 		return nil, nil, providerError(err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	p, err := s.providerBuilderFactory(ctx, provider)
 	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+		return nil, nil, err
 	}
 
 	client, err := p.GetGitHub()
