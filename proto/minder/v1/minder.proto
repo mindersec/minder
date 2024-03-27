@@ -1516,6 +1516,9 @@ message RuleType {
     // name is the name of the rule type.
     string name = 2;
 
+    // display_name is the display name of the rule type.
+    string display_name = 8;
+
     // context is the context in which the rule is evaluated.
     Context context = 3;
 

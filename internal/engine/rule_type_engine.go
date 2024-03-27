@@ -216,9 +216,15 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 		seval = minderv1.Severity_VALUE_UNKNOWN
 	}
 
+	displayName := rt.DisplayName
+	if displayName == "" {
+		displayName = rt.Name
+	}
+
 	return &minderv1.RuleType{
-		Id:   &id,
-		Name: rt.Name,
+		Id:          &id,
+		Name:        rt.Name,
+		DisplayName: displayName,
 		Context: &minderv1.Context{
 			Provider: &rt.Provider,
 			Project:  &project,

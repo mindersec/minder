@@ -54,6 +54,19 @@ func ParseRuleType(r io.Reader) (*RuleType, error) {
 	return rt, nil
 }
 
+// WithDefaultDisplayName sets the display name if it is not set
+func (r *RuleType) WithDefaultDisplayName() *RuleType {
+	if r == nil {
+		return nil
+	}
+
+	if r.DisplayName == "" {
+		r.DisplayName = r.Name
+	}
+
+	return r
+}
+
 // GetContext returns the context from the nested RuleType
 func (r *CreateRuleTypeRequest) GetContext() *Context {
 	if r != nil && r.RuleType != nil {

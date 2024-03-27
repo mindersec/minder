@@ -274,6 +274,8 @@ func TestRuleTypeService(t *testing.T) {
 					require.Equal(t, scenario.RuleType.Id, res.Id)
 					require.Equal(t, scenario.RuleType.Description, res.Description)
 					require.Equal(t, scenario.RuleType.Name, res.Name)
+					// By default this should be the name
+					require.Equal(t, scenario.RuleType.Name, res.DisplayName)
 					require.Equal(t, scenario.RuleType.Severity.Value, res.Severity.Value)
 				}
 			} else {
