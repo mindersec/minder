@@ -21,8 +21,9 @@ minder auth offline-token get [flags]
 ### Options
 
 ```
-  -f, --file string   The file to write the offline token to (default "offline.token")
-  -h, --help          help for get
+  -f, --file string    The file to write the offline token to (default "offline.token")
+  -h, --help           help for get
+      --skip-browser   Skip opening the browser for OAuth flow
 ```
 
 ### Options inherited from parent commands

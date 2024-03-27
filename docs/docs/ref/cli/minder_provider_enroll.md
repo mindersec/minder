@@ -20,6 +20,7 @@ minder provider enroll [flags]
 ```
   -h, --help           help for enroll
   -o, --owner string   Owner to filter on for provider resources
+      --skip-browser   Skip opening the browser for OAuth flow
   -t, --token string   Personal Access Token (PAT) to use for enrollment
   -y, --yes            Bypass yes/no prompt when enrolling new provider
 ```
