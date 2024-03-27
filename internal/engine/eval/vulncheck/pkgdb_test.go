@@ -175,26 +175,32 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		{
 			name:        "Empty versionPack",
 			versionPack: "",
-			pkgJson:     &packageJson{Name: "test"},
+			pkgJson:     &packageJson{Name: "autocomplete-core"},
 			want:        false,
 		},
 		{
-			name:        "versionPack without containing the correct package name but matching versions",
-			versionPack: "/random\": {\n1.0.0\n1.0.0",
-			pkgJson:     &packageJson{Name: "test"},
-			want:        false,
+			name: "versionPack without containing the correct package name but matching versions",
+			versionPack: `/next": {
+1.0.0
+1.0.0`,
+			pkgJson: &packageJson{Name: "autocomplete-core"},
+			want:    false,
 		},
 		{
-			name:        "versionPack with correct package name but mismatching versions",
-			versionPack: "/test\": {\n1.0.0\n1.1.1",
-			pkgJson:     &packageJson{Name: "test"},
-			want:        false,
+			name: "versionPack with correct package name but mismatching versions",
+			versionPack: `/autocomplete-core": {
+1.0.0
+2.0.0`,
+			pkgJson: &packageJson{Name: "autocomplete-core"},
+			want:    false,
 		},
 		{
-			name:        "versionPack with matching package name and version",
-			versionPack: "/test\": {\n1.0.0\n1.0.0",
-			pkgJson:     &packageJson{Name: "test"},
-			want:        true,
+			name: "versionPack with matching package name and version",
+			versionPack: `/autocomplete-core": {
+1.0.0
+1.0.0`,
+			pkgJson: &packageJson{Name: "autocomplete-core"},
+			want:    true,
 		},
 	}
 
