@@ -24,11 +24,11 @@ type EventConfig struct {
 	// RouterCloseTimeout is the timeout for closing the router in seconds
 	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
 	// GoChannel is the configuration for the go channel event driver
-	GoChannel GoChannelEventConfig `mapstructure:"go-channel" default:"{}"`
+	GoChannel GoChannelEventConfig `mapstructure:"go-channel"`
 	// SQLPubSub is the configuration for the database event driver
-	SQLPubSub SQLEventConfig `mapstructure:"sql" default:"{}"`
+	SQLPubSub SQLEventConfig `mapstructure:"sql"`
 	// Aggregator is the configuration for the event aggregator middleware
-	Aggregator AggregatorConfig `mapstructure:"aggregator" default:"{}"`
+	Aggregator AggregatorConfig `mapstructure:"aggregator"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
@@ -47,7 +47,7 @@ type GoChannelEventConfig struct {
 type SQLEventConfig struct {
 	// InitSchema is whether or not to initialize the schema
 	InitSchema bool                  `mapstructure:"init_schema" default:"true"`
-	Connection config.DatabaseConfig `mapstructure:"connection" default:"{}"`
+	Connection config.DatabaseConfig `mapstructure:"connection"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware

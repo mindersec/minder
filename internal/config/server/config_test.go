@@ -131,6 +131,46 @@ metric_server:
 	require.Equal(t, 6679, cfg.MetricServer.Port)
 }
 
+func TestMergeDBConfig(t *testing.T) {
+	t.Parallel()
+
+	cfgstr := `---
+events:
+  sql:
+    connection:
+      dbhost: "myhost"
+      # dbport is not set
+      dbuser: "myuser"
+      # Don't set dbpass, etc.
+`
+	cfgbuf := bytes.NewBufferString(cfgstr)
+
+	v := viper.New()
+	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+	// Without SetViperDefaults calling v.SetDefault on each field, the default
+	// values don't merge correctly.
+	serverconfig.SetViperDefaults(v)
+
+	require.NoError(t, serverconfig.RegisterServerFlags(v, flags), "Unexpected error")
+	require.NoError(t, config.RegisterDatabaseFlags(v, flags), "Unexpected error")
+
+	// Make sure that `database.dbhost` doesn't affect events
+	require.NoError(t, flags.Parse([]string{"--db-host=production-host"}))
+
+	v.SetConfigType("yaml")
+	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
+
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](v)
+	require.NoError(t, err, "Unexpected error")
+
+	require.Equal(t, "myhost", cfg.Events.SQLPubSub.Connection.Host)
+	require.Equal(t, 5432, cfg.Events.SQLPubSub.Connection.Port)
+	require.Equal(t, "myuser", cfg.Events.SQLPubSub.Connection.User)
+	require.Equal(t, "postgres", cfg.Events.SQLPubSub.Connection.Password)
+	require.Equal(t, "minder", cfg.Events.SQLPubSub.Connection.Name)
+	require.Equal(t, "disable", cfg.Events.SQLPubSub.Connection.SSLMode)
+}
+
 func TestReadDefaultConfig(t *testing.T) {
 	t.Parallel()
 

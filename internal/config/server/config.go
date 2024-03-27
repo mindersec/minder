@@ -91,11 +91,21 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 
 		if field.Type.Kind() == reflect.Struct {
 			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
+			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
+			// for now, we just warn about setting the tag, because it's ignored.
+			if _, ok := field.Tag.Lookup("default"); ok {
+				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
+			}
 			continue
 		}
 
 		if field.Type.Kind() == reflect.Ptr {
 			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type.Elem()).Interface())
+			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
+			// for now, we just warn about setting the tag, because it's ignored.
+			if _, ok := field.Tag.Lookup("default"); ok {
+				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
+			}
 			continue
 		}
 
