@@ -150,7 +150,7 @@ type paramsPR struct {
 	metadata *pullRequestMetadata
 }
 
-// Do performs the remediation
+// Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
@@ -227,10 +227,8 @@ func (r *Remediator) getParamsForPRRemediation(ctx context.Context, ent protoref
 		if err != nil {
 			// There's nothing saved apparently, so no need to fail here, but do log the error
 			logger.Debug().Msgf("error unmarshalling remediation metadata: %v", err)
-		} else {
 		}
 	}
-
 	return &paramsPR{
 		ingested: ingested,
 		repo:     repo,

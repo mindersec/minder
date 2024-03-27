@@ -188,29 +188,25 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	}
 
 	// Proceed with use cases where the evaluation changed
-
-	// Case 2 - Evaluation errored out -> Remediation should be OFF if it was not already
-	if db.EvalStatusTypesError == newEval {
+	switch newEval {
+	case db.EvalStatusTypesError:
+		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
 		if db.RemediationStatusTypesSkipped != prevRemediation {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if remediation was already skipped
 		return engif.ActionCmdDoNothing
-	}
-
-	// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
-	if db.EvalStatusTypesSuccess == newEval {
+	case db.EvalStatusTypesSuccess:
+		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
 		if db.RemediationStatusTypesSkipped != prevRemediation {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if remediation was already skipped
 		return engif.ActionCmdDoNothing
-	}
-
-	// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-	if db.EvalStatusTypesFailure == newEval {
+	case db.EvalStatusTypesFailure:
+		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
 		// We should do nothing if the Remediation is already pending or successful
 		if db.RemediationStatusTypesPending == prevRemediation || db.RemediationStatusTypesSuccess == prevRemediation {
 			return engif.ActionCmdDoNothing
@@ -218,6 +214,7 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 		// The Remediation should be turned ON (if it wasn't already)
 		return engif.ActionCmdOn
 	}
+
 	// Default to do nothing
 	return engif.ActionCmdDoNothing
 }
@@ -246,17 +243,7 @@ func shouldAlert(
 
 	// Start evaluation scenarios
 
-	// Case 1 - Evaluation errored out -> Alert should be turned on if it was not already
-	if db.EvalStatusTypesError == newEval {
-		// The Alert should be on (if it wasn't already)
-		if db.AlertStatusTypesOn != prevAlert {
-			return engif.ActionCmdOn
-		}
-		// We should do nothing if alert was already turned on
-		return engif.ActionCmdDoNothing
-	}
-
-	// Case 2 - Successful remediation of a type that is not PR is considered instant.
+	// Case 1 - Successful remediation of a type that is not PR is considered instant.
 	if remType != pull_request.RemediateType && remErr == nil {
 		// If this is the case either skip alerting or turn it off if it was on
 		if prevAlert != db.AlertStatusTypesOff {
@@ -265,25 +252,31 @@ func shouldAlert(
 		return engif.ActionCmdDoNothing
 	}
 
-	// Case 3 - Do nothing if the evaluation status has not changed
+	// Case 2 - Do nothing if the evaluation status has not changed
 	if newEval == prevEval && prevAlert != db.AlertStatusTypesError {
 		return engif.ActionCmdDoNothing
 	}
 
 	// Proceed with use cases where the evaluation changed
-
-	// Case 4 - Evaluation changed from something else to PASSING -> Alarm should be OFF
-	if db.EvalStatusTypesSuccess == newEval {
+	switch newEval {
+	case db.EvalStatusTypesError:
+		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
+		// The Alert should be on (if it wasn't already)
+		if db.AlertStatusTypesOn != prevAlert {
+			return engif.ActionCmdOn
+		}
+		// We should do nothing if alert was already turned on
+		return engif.ActionCmdDoNothing
+	case db.EvalStatusTypesSuccess:
+		// Case 4 - Evaluation changed from something else to PASSING -> Alert should be OFF
 		// The Alert should be turned OFF (if it wasn't already)
 		if db.AlertStatusTypesOff != prevAlert {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if the Alert is already OFF
 		return engif.ActionCmdDoNothing
-	}
-
-	// Case 5 - Evaluation has changed from something else to FAILED -> Alarm should be ON
-	if db.EvalStatusTypesFailure == newEval {
+	case db.EvalStatusTypesFailure:
+		// Case 5 - Evaluation has changed from something else to FAILED -> Alarm should be ON
 		// The Alert should be turned ON (if it wasn't already)
 		if db.AlertStatusTypesOn != prevAlert {
 			return engif.ActionCmdOn
