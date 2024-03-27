@@ -14,7 +14,7 @@
 # limitations under the License.
 
 .PHONY: build
-build: build-minder-cli build-minder-server build-mindev ## build all binaries
+build: build-minder-cli build-minder-server build-mindev build-reminder-server ## build all binaries
 
 
 .PHONY: build-mindev
@@ -35,3 +35,8 @@ build-minder-cli: ## build minder cli
 build-minder-server: ## build minder-server
 	@echo "Building $(projectname)-server..."
 	@CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/$(projectname)-server ./cmd/server
+
+.PHONY: build-reminder-server
+build-reminder-server: ## build reminder server
+	@echo "Building reminder..."
+	@CGO_ENABLED=0 go build -trimpath -tags '$(BUILDTAGS)' -o ./bin/reminder ./cmd/reminder

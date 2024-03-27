@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/spf13/pflag"
@@ -238,7 +239,9 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		switch fieldType.Kind() {
 		case reflect.String:
 			defaultValue = value
-		case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
+		case reflect.Int64:
+			defaultValue, err = getDefaultValueForInt64(value)
+		case reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
 			reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
 			defaultValue, err = strconv.Atoi(value)
 		case reflect.Float64:
@@ -273,4 +276,24 @@ func overrideViperStructDefaults(v *viper.Viper, prefix string, newDefaults stri
 		// I expect it will blow up at config-parse time, which should be earlier enough.
 		v.SetDefault(prefix+"."+key, value)
 	}
+}
+
+func getDefaultValueForInt64(value string) (any, error) {
+	var defaultValue any
+	var err error
+
+	defaultValue, err = strconv.Atoi(value)
+	if err == nil {
+		return defaultValue, nil
+	}
+
+	// Try to parse it as a time.Duration
+	var parseErr error
+	defaultValue, parseErr = time.ParseDuration(value)
+	if parseErr == nil {
+		return defaultValue, nil
+	}
+
+	// Return the original error, not time.ParseDuration's error
+	return nil, err
 }
