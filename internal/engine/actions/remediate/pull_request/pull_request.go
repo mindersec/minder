@@ -347,7 +347,7 @@ func (r *Remediator) runOff(
 ) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
 
-	if p.metadata == nil || p.metadata.Number != 0 {
+	if p.metadata == nil || p.metadata.Number == 0 {
 		// We cannot do anything without a PR number, so we assume that closing this is a success
 		return nil, fmt.Errorf("no pull request number provided: %w", enginerr.ErrActionSkipped)
 	}

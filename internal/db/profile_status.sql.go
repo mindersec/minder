@@ -305,9 +305,9 @@ INSERT INTO rule_details_alert (
 VALUES ($1, $2, $3, $4::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
-                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
-                  metadata = CASE WHEN $2 != 'skipped' THEN $4::jsonb ELSE rule_details_alert.metadata END,
+                  status = $2,
+                  details = $3,
+                  metadata = $4::jsonb,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id

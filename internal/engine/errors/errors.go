@@ -155,11 +155,9 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 
 // RemediationStatusAsError returns the remediation status for a given error
 func RemediationStatusAsError(s db.RemediationStatusTypes) error {
-	if s == db.RemediationStatusTypesSuccess {
-		return nil
-	}
-
 	switch s {
+	case db.RemediationStatusTypesSuccess:
+		return nil
 	case db.RemediationStatusTypesFailure:
 		return ErrActionFailed
 	case db.RemediationStatusTypesSkipped:
@@ -189,6 +187,23 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 		return db.AlertStatusTypesNotAvailable
 	}
 	return db.AlertStatusTypesError
+}
+
+// AlertStatusAsError returns the error for a given alert status
+func AlertStatusAsError(s db.AlertStatusTypes) error {
+	switch s {
+	case db.AlertStatusTypesOn:
+		return nil
+	case db.AlertStatusTypesOff:
+		return ErrActionTurnedOff
+	case db.AlertStatusTypesError:
+		return ErrActionFailed
+	case db.AlertStatusTypesSkipped:
+		return ErrActionSkipped
+	case db.AlertStatusTypesNotAvailable:
+		return ErrActionNotAvailable
+	}
+	return fmt.Errorf("unknown alert status: %s", s)
 }
 
 var (

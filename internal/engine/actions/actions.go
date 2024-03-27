@@ -138,27 +138,28 @@ func (rae *RuleActionsEngine) processAction(
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
-	// Exit early in case we shouldn't do anything, i.e., cmd != ActionCmdOn or ActionCmdOff
+	logger := zerolog.Ctx(ctx).Debug().
+		Str("action", string(actionType)).
+		Str("cmd", string(cmd))
+
+	// Exit early in case we shouldn't do anything, i.e., cmd != ActionCmdOn or cmd != ActionCmdOff
 	if cmd == engif.ActionCmdDoNothing {
+		logger.Msg("skipping action")
 		switch actionType {
 		case remediate.ActionType:
 			// Return the previous remediation status.
-			// Note that we cannot return "skipped" as with alerts since it is a valid action status in the case of remediation.
 			err := enginerr.RemediationStatusAsError(params.GetEvalStatusFromDb().RemStatus.RemediationStatusTypes)
 			return *(getMeta(params.GetEvalStatusFromDb().RemMetadata)), err
 		case alert.ActionType:
-			// Skip alerting, this preserves the previous alert status (handled in the database layer)
-			return nil, enginerr.ErrActionSkipped
+			// Return the previous alert status.
+			err := enginerr.AlertStatusAsError(params.GetEvalStatusFromDb().AlertStatus.AlertStatusTypes)
+			return *(getMeta(params.GetEvalStatusFromDb().AlertMetadata)), err
 		}
 	}
 	// Get action engine
 	action := rae.actions[actionType]
 	// Return the result of the action
-	logger := zerolog.Ctx(ctx)
-	logger.Debug().
-		Str("action", string(actionType)).
-		Str("cmd", string(cmd)).
-		Msg("invoking action")
+	logger.Msg("invoking action")
 	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
 }
 
@@ -188,7 +189,17 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 	// Proceed with use cases where the evaluation changed
 
-	// Case 2 - Evaluation changed from something else to PASSING -> Remediation should be OFF
+	// Case 2 - Evaluation errored out -> Remediation should be OFF if it was not already
+	if db.EvalStatusTypesError == newEval {
+		// The Remediation should be OFF (if it wasn't already)
+		if db.RemediationStatusTypesSkipped != prevRemediation {
+			return engif.ActionCmdOff
+		}
+		// We should do nothing if remediation was already skipped
+		return engif.ActionCmdDoNothing
+	}
+
+	// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 	if db.EvalStatusTypesSuccess == newEval {
 		// The Remediation should be OFF (if it wasn't already)
 		if db.RemediationStatusTypesSkipped != prevRemediation {
@@ -198,7 +209,7 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 		return engif.ActionCmdDoNothing
 	}
 
-	// Case 3 - Evaluation has changed from something else to FAILED -> Remediation should be ON
+	// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
 	if db.EvalStatusTypesFailure == newEval {
 		// We should do nothing if the Remediation is already pending or successful
 		if db.RemediationStatusTypesPending == prevRemediation || db.RemediationStatusTypesSuccess == prevRemediation {
@@ -235,7 +246,17 @@ func shouldAlert(
 
 	// Start evaluation scenarios
 
-	// Case 1 - Successful remediation of a type that is not PR is considered instant.
+	// Case 1 - Evaluation errored out -> Alert should be turned on if it was not already
+	if db.EvalStatusTypesError == newEval {
+		// The Alert should be on (if it wasn't already)
+		if db.AlertStatusTypesOn != prevAlert {
+			return engif.ActionCmdOn
+		}
+		// We should do nothing if alert was already turned on
+		return engif.ActionCmdDoNothing
+	}
+
+	// Case 2 - Successful remediation of a type that is not PR is considered instant.
 	if remType != pull_request.RemediateType && remErr == nil {
 		// If this is the case either skip alerting or turn it off if it was on
 		if prevAlert != db.AlertStatusTypesOff {
@@ -244,14 +265,14 @@ func shouldAlert(
 		return engif.ActionCmdDoNothing
 	}
 
-	// Case 2 - Do nothing if the evaluation status has not changed
+	// Case 3 - Do nothing if the evaluation status has not changed
 	if newEval == prevEval && prevAlert != db.AlertStatusTypesError {
 		return engif.ActionCmdDoNothing
 	}
 
 	// Proceed with use cases where the evaluation changed
 
-	// Case 3 - Evaluation changed from something else to PASSING -> Alarm should be OFF
+	// Case 4 - Evaluation changed from something else to PASSING -> Alarm should be OFF
 	if db.EvalStatusTypesSuccess == newEval {
 		// The Alert should be turned OFF (if it wasn't already)
 		if db.AlertStatusTypesOff != prevAlert {
@@ -261,7 +282,7 @@ func shouldAlert(
 		return engif.ActionCmdDoNothing
 	}
 
-	// Case 4 - Evaluation has changed from something else to FAILED -> Alarm should be ON
+	// Case 5 - Evaluation has changed from something else to FAILED -> Alarm should be ON
 	if db.EvalStatusTypesFailure == newEval {
 		// The Alert should be turned ON (if it wasn't already)
 		if db.AlertStatusTypesOn != prevAlert {
@@ -276,39 +297,38 @@ func shouldAlert(
 
 // isSkippable returns true if the action should be skipped
 func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
-	var skipRemediation bool
+	var skipAction bool
 
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).Info().Str("action", string(actionType)).Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr)))
 
 	// Get the profile option set for this action type
 	actionOnOff, ok := rae.actionsOnOff[actionType]
 	if !ok {
 		// If the action is not found, definitely skip it
+		logger.Msg("action type not found, skipping")
 		return true
 	}
 	// Check the action option
 	switch actionOnOff {
 	case engif.ActionOptOff:
 		// Action is off, skip
+		logger.Msg("action is off, skipping")
 		return true
 	case engif.ActionOptUnknown:
 		// Action is unknown, skip
-		logger.Info().Msg("unknown action option, check your profile definition")
+		logger.Msg("unknown action option, skipping")
 		return true
 	case engif.ActionOptDryRun, engif.ActionOptOn:
 		// Action is on or dry-run, do not skip yet. Check the evaluation error
-		skipRemediation =
-		// rule evaluation was skipped, skip action too
+		skipAction =
+			// rule evaluation was skipped, skip action too
 			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
 				// rule evaluation was skipped silently, skip action
-				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently) ||
-				// skip if the error is not a failure and the action type is remediate
-				(!errors.Is(evalErr, enginerr.ErrEvaluationFailed) && actionType == remediate.ActionType) ||
-				// rule evaluation had no error, skip action if actionType IS NOT alert
-				(evalErr == nil && actionType != alert.ActionType)
+				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently)
 	}
+	logger.Bool("skip_action", skipAction).Msg("action skip decision")
 	// Everything else, do not skip
-	return skipRemediation
+	return skipAction
 }
 
 // getMeta returns the json.RawMessage from the database type, empty if not valid
