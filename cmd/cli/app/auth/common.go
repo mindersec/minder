@@ -221,7 +221,7 @@ func login(
 	cmd.Println("Please follow the instructions on the page to log in.")
 
 	// open user's browser to login page
-	if skipBroswer {
+	if !skipBroswer {
 		if err := browser.OpenURL(loginUrl); err != nil {
 			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
 		}
