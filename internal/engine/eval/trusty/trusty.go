@@ -26,7 +26,6 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -45,11 +44,8 @@ type Evaluator struct {
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
-func NewTrustyEvaluator(ctx context.Context, pbuild *providers.ProviderBuilder) (*Evaluator, error) {
-	if pbuild == nil {
-		return nil, fmt.Errorf("provider builder is nil")
-	}
-
+// TODO: needs a trait which is not Github specific
+func NewTrustyEvaluator(ctx context.Context, ghClient provifv1.GitHub) (*Evaluator, error) {
 	// Read the trusty endpoint from the environment
 	trustyEndpoint := os.Getenv(trustyEndpointEnvVar)
 	// If the environment variable is not set, use the default endpoint
@@ -60,13 +56,8 @@ func NewTrustyEvaluator(ctx context.Context, pbuild *providers.ProviderBuilder) 
 		zerolog.Ctx(ctx).Info().Str("trusty-endpoint", trustyEndpoint).Msg("using trusty endpoint from environment")
 	}
 
-	ghcli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get github client: %w", err)
-	}
-
 	return &Evaluator{
-		cli:      ghcli,
+		cli:      ghClient,
 		endpoint: trustyEndpoint,
 	}, nil
 }

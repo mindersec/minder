@@ -38,7 +38,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -80,7 +79,7 @@ type Remediator struct {
 func NewPullRequestRemediate(
 	actionType interfaces.ActionType,
 	prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation,
-	pbuild *providers.ProviderBuilder,
+	ghClient provifv1.GitHub,
 ) (*Remediator, error) {
 	err := prCfg.Validate()
 	if err != nil {
@@ -97,16 +96,11 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
 
-	ghCli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get github client: %w", err)
-	}
-
 	modRegistry := newModificationRegistry()
 	modRegistry.registerBuiltIn()
 
 	return &Remediator{
-		ghCli:                ghCli,
+		ghCli:                ghClient,
 		prCfg:                prCfg,
 		actionType:           actionType,
 		modificationRegistry: modRegistry,

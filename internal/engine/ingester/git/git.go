@@ -24,10 +24,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -45,22 +43,9 @@ type Git struct {
 }
 
 // NewGitIngester creates a new git rule data ingest engine
-func NewGitIngester(cfg *pb.GitType, pbuild *providers.ProviderBuilder) (*Git, error) {
-	if pbuild == nil {
-		return nil, fmt.Errorf("provider builder is nil")
-	}
-
-	if !pbuild.Implements(db.ProviderTypeGit) {
-		return nil, fmt.Errorf("provider builder does not implement git")
-	}
-
+func NewGitIngester(cfg *pb.GitType, gitprov provifv1.Git) (*Git, error) {
 	if cfg == nil {
 		cfg = &pb.GitType{}
-	}
-
-	gitprov, err := pbuild.GetGit()
-	if err != nil {
-		return nil, fmt.Errorf("could not get git provider: %w", err)
 	}
 
 	return &Git{

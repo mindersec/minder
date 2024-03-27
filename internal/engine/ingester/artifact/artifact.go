@@ -29,7 +29,6 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -64,15 +63,8 @@ type verification struct {
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
 func NewArtifactDataIngest(
-	_ *pb.ArtifactType,
-	pbuild *providers.ProviderBuilder,
+	ghCli provifv1.GitHub,
 ) (*Ingest, error) {
-
-	ghCli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get github client: %w", err)
-	}
-
 	return &Ingest{
 		ghCli: ghCli,
 	}, nil

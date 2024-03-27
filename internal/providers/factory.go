@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -48,7 +49,7 @@ type traitInstantiator struct {
 	crypteng        crypto.Engine
 }
 
-func NewTraitInstanceFactory(
+func NewTraitInstantiator(
 	restClientCache ratecache.RestClientCache,
 	metrics telemetry.ProviderMetrics,
 	cfg *serverconfig.ProviderConfig,

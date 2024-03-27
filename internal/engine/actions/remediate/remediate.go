@@ -19,13 +19,13 @@ package remediate
 
 import (
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	"github.com/stacklok/minder/internal/engine/actions/remediate/gh_branch_protect"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -33,7 +33,7 @@ import (
 const ActionType engif.ActionType = "remediate"
 
 // NewRuleRemediator creates a new rule remediator
-func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
+func NewRuleRemediator(rt *pb.RuleType, ghClient v1.GitHub) (engif.Action, error) {
 	rem := rt.Def.GetRemediate()
 	if rem == nil {
 		return noop.NewNoopRemediate(ActionType)
@@ -45,20 +45,20 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rem.GetRest() == nil {
 			return nil, fmt.Errorf("remediations engine missing rest configuration")
 		}
-		return rest.NewRestRemediate(ActionType, rem.GetRest(), pbuild)
+		return rest.NewRestRemediate(ActionType, rem.GetRest(), ghClient)
 
 	case gh_branch_protect.RemediateType:
 		if rem.GetGhBranchProtection() == nil {
 			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
 		}
-		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), pbuild)
+		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), ghClient)
 
 	case pull_request.RemediateType:
 		if rem.GetPullRequest() == nil {
 			return nil, fmt.Errorf("remediations engine missing pull request configuration")
 		}
 
-		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), pbuild)
+		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), ghClient)
 	}
 
 	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())

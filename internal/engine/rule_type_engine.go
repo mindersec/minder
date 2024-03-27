@@ -18,6 +18,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -31,7 +32,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -75,7 +75,7 @@ type RuleTypeEngine struct {
 
 	rt *minderv1.RuleType
 
-	cli *providers.ProviderBuilder
+	cli v1.GitHub
 
 	ingestCache ingestcache.Cache
 }
@@ -85,7 +85,7 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	p *minderv1.Profile,
 	rt *minderv1.RuleType,
-	cli *providers.ProviderBuilder,
+	cli v1.GitHub,
 ) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {

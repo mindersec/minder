@@ -17,6 +17,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	"sync"
 	"time"
 
@@ -58,6 +59,7 @@ type Executor struct {
 	terminationcontext context.Context
 	restClientCache    ratecache.RestClientCache
 	provCfg            *serverconfig.ProviderConfig
+	instantiator       providers.TraitInstantiator
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -199,11 +201,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(e.provMt),
-		providers.WithRestClientCache(e.restClientCache),
-	}
-	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
+	cli, err := e.instantiator.GetGitHub(ctx, &provider)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -224,7 +222,7 @@ func (e *Executor) evalEntityEvent(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
-	cli *providers.ProviderBuilder,
+	cli v1.GitHub,
 ) error {
 	// this is a cache so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
@@ -286,7 +284,7 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
-	cli *providers.ProviderBuilder,
+	cli v1.GitHub,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
 	ingestCache ingestcache.Cache,

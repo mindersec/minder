@@ -31,7 +31,6 @@ import (
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -133,7 +132,7 @@ func NewSecurityAdvisoryAlert(
 	actionType interfaces.ActionType,
 	sev *pb.Severity,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
-	pbuild *providers.ProviderBuilder,
+	cli provifv1.GitHub,
 ) (*Alert, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -153,11 +152,7 @@ func NewSecurityAdvisoryAlert(
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse description template: %w", err)
 	}
-	// Get the GitHub client
-	cli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get http client: %w", err)
-	}
+
 	// Create the alert action
 	return &Alert{
 		actionType:           actionType,

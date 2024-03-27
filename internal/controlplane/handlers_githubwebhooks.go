@@ -44,7 +44,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -317,14 +316,10 @@ func (s *Server) parseGithubEventForProcessing(
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
-
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	
+	ghProvider, err := s.instantiator.GetGitHub(ctx, &prov)
 	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
+		return err
 	}
 
 	var action string // explicit declaration to use the default value
@@ -337,12 +332,12 @@ func (s *Server) parseGithubEventForProcessing(
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
 		return s.parseArtifactPublishedEvent(
-			ctx, payload, msg, dbRepo, provBuilder)
+			ctx, payload, msg, dbRepo, ghProvider, prov.Name)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
 		return parsePullRequestModEvent(
-			ctx, payload, msg, dbRepo, s.store, provBuilder)
+			ctx, payload, msg, dbRepo, s.store, ghProvider, prov.Name)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+		return parseRepoEvent(msg, dbRepo, prov.Name)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -370,7 +365,8 @@ func (s *Server) parseArtifactPublishedEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	prov *providers.ProviderBuilder,
+	ghProvider provifv1.GitHub,
+	providerName string,
 ) error {
 	// we need to have information about package and repository
 	if whPayload["package"] == nil || whPayload["repository"] == nil {
@@ -378,19 +374,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
-	if err != nil {
-		log.Printf("error creating github provider: %v", err)
-		return err
-	}
-
-	tempArtifact, err := gatherArtifact(ctx, cli, whPayload)
+	tempArtifact, err := gatherArtifact(ctx, ghProvider, whPayload)
 	if err != nil {
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
@@ -414,7 +398,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
-		WithProvider(prov.GetName()).
+		WithProvider(providerName).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
@@ -428,20 +412,10 @@ func parsePullRequestModEvent(
 	msg *message.Message,
 	dbrepo db.Repository,
 	store db.Store,
-	prov *providers.ProviderBuilder,
+	ghProvider provifv1.GitHub,
+	providerName string,
 ) error {
 	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
-	if err != nil {
-		log.Printf("error creating github provider: %v", err)
-		return nil
-	}
-
 	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
 	if err != nil {
 		return fmt.Errorf("error getting pull request information from payload: %w", err)
@@ -454,7 +428,7 @@ func parsePullRequestModEvent(
 		return fmt.Errorf("error reconciling PR with DB: %w", err)
 	}
 
-	err = updatePullRequestInfoFromProvider(ctx, cli, dbrepo, prEvalInfo)
+	err = updatePullRequestInfoFromProvider(ctx, ghProvider, dbrepo, prEvalInfo)
 	if err != nil {
 		return fmt.Errorf("error updating pull request information from provider: %w", err)
 	}
@@ -464,7 +438,7 @@ func parsePullRequestModEvent(
 	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(dbPr.ID).
-		WithProvider(prov.GetName()).
+		WithProvider(providerName).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
 

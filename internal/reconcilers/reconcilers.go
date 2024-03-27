@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
@@ -40,6 +41,7 @@ type Reconciler struct {
 	restClientCache ratecache.RestClientCache
 	provCfg         *serverconfig.ProviderConfig
 	provMt          providertelemetry.ProviderMetrics
+	instantiator    providers.TraitInstantiator
 }
 
 // ReconcilerOption is a function that modifies a reconciler

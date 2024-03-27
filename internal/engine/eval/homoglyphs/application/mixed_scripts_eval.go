@@ -17,12 +17,12 @@ package application
 import (
 	"context"
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 )
 
 // MixedScriptsEvaluator is the evaluator for the mixed scripts rule type
@@ -32,16 +32,7 @@ type MixedScriptsEvaluator struct {
 }
 
 // NewMixedScriptEvaluator creates a new mixed scripts evaluator
-func NewMixedScriptEvaluator(pbuild *providers.ProviderBuilder) (*MixedScriptsEvaluator, error) {
-	if pbuild == nil {
-		return nil, fmt.Errorf("provider builder is nil")
-	}
-
-	ghClient, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch GitHub client: %w", err)
-	}
-
+func NewMixedScriptEvaluator(ghClient v1.GitHub) (*MixedScriptsEvaluator, error) {
 	msProcessor, err := domain.NewMixedScriptsProcessor()
 	if err != nil {
 		return nil, fmt.Errorf("could not create mixed scripts processor: %w", err)

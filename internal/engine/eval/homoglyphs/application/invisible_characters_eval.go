@@ -16,13 +16,12 @@ package application
 
 import (
 	"context"
-	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 )
 
 // InvisibleCharactersEvaluator is an evaluator for the invisible characters rule type
@@ -32,16 +31,7 @@ type InvisibleCharactersEvaluator struct {
 }
 
 // NewInvisibleCharactersEvaluator creates a new invisible characters evaluator
-func NewInvisibleCharactersEvaluator(pbuild *providers.ProviderBuilder) (*InvisibleCharactersEvaluator, error) {
-	if pbuild == nil {
-		return nil, fmt.Errorf("provider builder is nil")
-	}
-
-	ghClient, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("could not fetch GitHub client: %w", err)
-	}
-
+func NewInvisibleCharactersEvaluator(ghClient v1.GitHub) (*InvisibleCharactersEvaluator, error) {
 	return &InvisibleCharactersEvaluator{
 		processor:     domain.NewInvisibleCharactersProcessor(),
 		reviewHandler: communication.NewGhReviewPrHandler(ghClient),

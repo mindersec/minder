@@ -19,11 +19,11 @@ package alert
 
 import (
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert/noop"
 	"github.com/stacklok/minder/internal/engine/actions/alert/security_advisory"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,7 +31,7 @@ import (
 const ActionType engif.ActionType = "alert"
 
 // NewRuleAlert creates a new rule alert engine
-func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
+func NewRuleAlert(rt *pb.RuleType, ghClient v1.GitHub) (engif.Action, error) {
 	alertCfg := rt.Def.GetAlert()
 	if alertCfg == nil {
 		return noop.NewNoopAlert(ActionType)
@@ -43,7 +43,7 @@ func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Act
 		if alertCfg.GetSecurityAdvisory() == nil {
 			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), pbuild)
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), ghClient)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

@@ -31,7 +31,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -53,7 +52,7 @@ type GhBranchProtectRemediator struct {
 func NewGhBranchProtectRemediator(
 	actionType interfaces.ActionType,
 	ghp *pb.RuleType_Definition_Remediate_GhBranchProtectionType,
-	pbuild *providers.ProviderBuilder,
+	cli provifv1.GitHub,
 ) (*GhBranchProtectRemediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -64,10 +63,6 @@ func NewGhBranchProtectRemediator(
 		return nil, fmt.Errorf("cannot parse patch template: %w", err)
 	}
 
-	cli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get http client: %w", err)
-	}
 	return &GhBranchProtectRemediator{
 		actionType:    actionType,
 		cli:           cli,

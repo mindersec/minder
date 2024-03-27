@@ -31,12 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	gitclient "github.com/stacklok/minder/internal/providers/git"
 	githubapp "github.com/stacklok/minder/internal/providers/github/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
-	httpclient "github.com/stacklok/minder/internal/providers/http"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -46,7 +41,7 @@ var ErrInvalidCredential = errors.New("invalid credential type")
 
 // GetProviderBuilder is a utility function which allows for the creation of
 // a provider factory.
-func GetProviderBuilder(
+/*func GetProviderBuilder(
 	ctx context.Context,
 	prov db.Provider,
 	store db.Store,
@@ -244,6 +239,7 @@ func (pb *ProviderBuilder) GetRepoLister() (provinfv1.RepoLister, error) {
 	// TODO: We'll need to add support for other providers here
 	return nil, fmt.Errorf("provider does not implement repo lister")
 }
+*/
 
 // DBToPBType converts a database provider type to a protobuf provider type.
 func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {

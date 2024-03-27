@@ -20,6 +20,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/stacklok/minder/internal/engine/eval/jq"
@@ -27,7 +28,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/trusty"
 	"github.com/stacklok/minder/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -35,7 +35,7 @@ import (
 func NewRuleEvaluator(
 	ctx context.Context,
 	rt *pb.RuleType,
-	cli *providers.ProviderBuilder,
+	cli v1.GitHub,
 ) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
@@ -52,7 +52,7 @@ func NewRuleEvaluator(
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
-		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
+		return vulncheck.NewVulncheckEvaluator(cli)
 	case trusty.TrustyEvalType:
 		return trusty.NewTrustyEvaluator(ctx, cli)
 	case application.HomoglyphsEvalType:

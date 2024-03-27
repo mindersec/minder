@@ -30,13 +30,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
 // ProviderService encapsulates methods for creating and updating providers
@@ -50,24 +46,24 @@ type ProviderService interface {
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 
 type providerService struct {
-	store           db.Store
-	cryptoEngine    crypto.Engine
-	mt              metrics.Metrics
-	provMt          provtelemetry.ProviderMetrics
-	config          *server.ProviderConfig
-	restClientCache ratecache.RestClientCache
+	store        db.Store
+	cryptoEngine crypto.Engine
+	mt           metrics.Metrics
+	instantiator TraitInstantiator
 }
 
 // NewProviderService creates an instance of ProviderService
-func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.Metrics,
-	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig, restClientCache ratecache.RestClientCache) ProviderService {
+func NewProviderService(
+	store db.Store,
+	cryptoEngine crypto.Engine,
+	mt metrics.Metrics,
+	instantiator TraitInstantiator,
+) ProviderService {
 	return &providerService{
-		store:           store,
-		cryptoEngine:    cryptoEngine,
-		mt:              mt,
-		provMt:          provMt,
-		config:          config,
-		restClientCache: restClientCache,
+		store:        store,
+		cryptoEngine: cryptoEngine,
+		mt:           mt,
+		instantiator: instantiator,
 	}
 }
 
@@ -159,15 +155,7 @@ func (p *providerService) CreateGitHubOAuthProvider(ctx context.Context, provide
 
 func (p *providerService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
-	pbOpts := []ProviderBuilderOption{
-		WithProviderMetrics(p.provMt),
-		WithRestClientCache(p.restClientCache),
-	}
-	builder := NewProviderBuilder(&provider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
-		p.config, pbOpts...)
-	// NOTE: this is github-specific at the moment.  We probably need to generally
-	// re-think token enrollment when we add more providers.
-	ghClient, err := builder.GetGitHub()
+	ghClient, err := p.instantiator.GetGitHub(ctx, &provider)
 	if err != nil {
 		return fmt.Errorf("error creating GitHub client: %w", err)
 	}

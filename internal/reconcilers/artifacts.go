@@ -30,7 +30,6 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -103,14 +102,19 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
+	cli, err := r.instantiator.GetGitHub(ctx, &prov)
+	if err != nil {
+		return err // TODO: fill me in
+	}
+
+	/*pbOpts := []providers.ProviderBuilderOption{
 		providers.WithProviderMetrics(r.provMt),
 		providers.WithRestClientCache(r.restClientCache),
 	}
 	p, err := providers.GetProviderBuilder(ctx, prov, r.store, r.crypteng, r.provCfg, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
-	}
+	}*/
 
 	// evaluate profile for repo
 	repo := util.PBRepositoryFromDB(repository)
@@ -125,7 +129,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error publishing message: %w", err)
 	}
 
-	if !p.Implements(db.ProviderTypeGithub) {
+	/*if !p.Implements(db.ProviderTypeGithub) {
 		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
 		return nil
 	}
@@ -133,9 +137,9 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	cli, err := p.GetGitHub()
 	if err != nil {
 		return fmt.Errorf("error getting github client: %w", err)
-	}
+	}*/
 
-	isOrg := (cli.GetOwner() != "")
+	isOrg := cli.GetOwner() != ""
 	// todo: add another type of artifacts
 	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
 		string(verifyif.ArtifactTypeContainer), int64(repository.RepoID), 1, 100)

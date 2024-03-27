@@ -96,14 +96,13 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to parse webhook url: %w", err)
 	}
 
+	// TODO: Fill me in
+	instantiator := providers.NewTraitInstantiator(nil, nil, &cfg.Provider, store, cryptoEng)
+
 	for _, provider := range allProviders {
 		zerolog.Ctx(ctx).Info().Str("name", provider.Name).Str("uuid", provider.ID.String()).Msg("provider")
-		pb, err := providers.GetProviderBuilder(ctx, provider, store, cryptoEng, &cfg.Provider)
-		if err != nil {
-			return fmt.Errorf("unable to get provider builder: %w", err)
-		}
 
-		if !pb.Implements(db.ProviderType(providerName)) {
+		if !provider.CanImplement(db.ProviderType(providerName)) {
 			zerolog.Ctx(ctx).Info().
 				Str("name", provider.Name).
 				Str("uuid", provider.ID.String()).
@@ -112,9 +111,8 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		}
 
 		var updateErr error
-
 		if db.ProviderType(providerName) == db.ProviderTypeGithub {
-			ghCli, err := pb.GetGitHub()
+			ghCli, err := instantiator.GetGitHub(ctx, &provider)
 			if err != nil {
 				zerolog.Ctx(ctx).Err(err).Msg("cannot get github client")
 			}

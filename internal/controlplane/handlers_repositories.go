@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/util"
@@ -327,16 +326,12 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
-		pbOpts := []providers.ProviderBuilderOption{
-			providers.WithProviderMetrics(s.provMt),
-			providers.WithRestClientCache(s.restClientCache),
-		}
-		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+		repoLister, err := s.instantiator.GetRepoLister(ctx, &provider)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+			return nil, status.Errorf(codes.Internal, "cannot instantiate repo lister: %v", err)
 		}
 
-		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
+		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, repoLister, projectID)
 		if err != nil {
 			return nil, err
 		}
@@ -350,23 +345,23 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 func (s *Server) listRemoteRepositoriesForProvider(
 	ctx context.Context,
 	provName string,
-	p *providers.ProviderBuilder,
+	repoLister v1.RepoLister,
 	projectID uuid.UUID,
 ) ([]*pb.UpstreamRepositoryRef, error) {
 	// by now we've already checked that repo listed is implemented
-	client, err := p.GetRepoLister()
+	/*client, err := p.GetRepoLister()
 	if err != nil {
 		if errors.Is(err, providers.ErrInvalidCredential) {
 			return nil, util.UserVisibleError(codes.PermissionDenied,
 				"cannot get credential for provider: did you run `minder provider enroll`?")
 		}
 		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
-	}
+	}*/
 
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
-	remoteRepos, err := client.ListAllRepositories(tmoutCtx)
+	remoteRepos, err := repoLister.ListAllRepositories(tmoutCtx)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
 	}
@@ -414,17 +409,7 @@ func (s *Server) getProviderAndClient(
 		return nil, nil, providerError(err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
-	if err != nil {
-		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	client, err := p.GetGitHub()
+	client, err := s.instantiator.GetGitHub(ctx, &provider)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
 	}
