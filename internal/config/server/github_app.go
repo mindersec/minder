@@ -16,6 +16,11 @@
 package server
 
 import (
+	"crypto/rsa"
+	"fmt"
+
+	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/stacklok/minder/internal/config"
 )
 
@@ -32,6 +37,16 @@ type GitHubAppConfig struct {
 }
 
 // GetPrivateKey returns the GitHub App's private key
-func (acfg *GitHubAppConfig) GetPrivateKey() ([]byte, error) {
-	return config.ReadKey(acfg.PrivateKey)
+func (acfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
+	privateKeyBytes, err := config.ReadKey(acfg.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error reading private key: %w", err)
+	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing private key: %w", err)
+	}
+
+	return privateKey, err
 }

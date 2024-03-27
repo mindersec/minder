@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
@@ -359,14 +358,9 @@ func getInstallationTokenCredential(
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	privateKeyBytes, err := provCfg.GitHubApp.GetPrivateKey()
+	privateKey, err := provCfg.GitHubApp.GetPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("error reading private key: %w", err)
-	}
-
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing private key: %w", err)
 	}
 
 	return credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,

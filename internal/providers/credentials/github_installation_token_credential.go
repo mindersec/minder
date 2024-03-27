@@ -21,11 +21,9 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	"github.com/go-git/go-git/v5"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-github/v60/github"
 	"golang.org/x/oauth2"
@@ -116,7 +114,7 @@ func generateInstallationAccessToken(
 		return "", fmt.Errorf("unable to parse installationId to integer: %v", err)
 	}
 
-	jwtToken, err := createJWT(appId, privateKey)
+	jwtToken, err := CreateGitHubAppJWT(appId, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to create JWT token: %v", err)
 	}
@@ -141,22 +139,4 @@ func generateInstallationAccessToken(
 		return "", err
 	}
 	return token.GetToken(), nil
-}
-
-func createJWT(appId int64, privateKey *rsa.PrivateKey) (string, error) {
-	// Create the Claims
-	claims := jwt.MapClaims{
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Minute * 10).Unix(),
-		"iss": appId,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	jwtToken, err := token.SignedString(privateKey)
-	if err != nil {
-		return "", fmt.Errorf("unable to sign JWT token: %v", err)
-	}
-
-	return jwtToken, nil
 }
