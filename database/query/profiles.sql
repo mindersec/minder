@@ -59,8 +59,26 @@ SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.pro
 WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
 
 -- name: ListProfilesByProjectID :many
-SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1;
+
+-- name: ListProfilesByProjectIDAndLabel :many
+SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+WHERE profiles.project_id = $1
+AND (
+    -- the most common case first, if the include_labels is empty, we list profiles with no labels
+    -- we use coalesce to handle the case where the include_labels is null
+    (COALESCE(cardinality(sqlc.arg(include_labels)::TEXT[]), 0) = 0 AND profiles.labels = ARRAY[]::TEXT[]) OR
+    -- if the include_labels arg is equal to '*', we list all profiles
+    sqlc.arg(include_labels)::TEXT[] = ARRAY['*'] OR
+    -- if the include_labels arg is not empty and not a wildcard, we list profiles whose labels are a subset of include_labels
+    (COALESCE(cardinality(sqlc.arg(include_labels)::TEXT[]), 0) > 0 AND profiles.labels @> sqlc.arg(include_labels)::TEXT[])
+) AND (
+    -- if the exclude_labels arg is empty, we list all profiles
+    COALESCE(cardinality(sqlc.arg(exclude_labels)::TEXT[]), 0) = 0 OR
+    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
+    NOT profiles.labels @> sqlc.arg(exclude_labels)::TEXT[]
+);
 
 -- name: DeleteProfile :exec
 DELETE FROM profiles

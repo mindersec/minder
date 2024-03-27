@@ -146,14 +146,18 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		ListProfilesByProjectID(gomock.Any(), projectID).
 		Return([]db.ListProfilesByProjectIDRow{
 			{
-				ID:              profileID,
-				Name:            "test-profile",
-				Entity:          db.EntitiesRepository,
-				Provider:        providerName,
-				ProjectID:       projectID,
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-				ContextualRules: json.RawMessage(marshalledCRS),
+				Profile: db.Profile{
+					ID:        profileID,
+					Name:      "test-profile",
+					Provider:  providerName,
+					ProjectID: projectID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				EntityProfile: db.EntityProfile{
+					Entity:          db.EntitiesRepository,
+					ContextualRules: json.RawMessage(marshalledCRS),
+				},
 			},
 		}, nil)
 

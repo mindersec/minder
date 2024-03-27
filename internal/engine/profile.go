@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -174,7 +175,7 @@ func TraverseRules(rules []*pb.Profile_Rule, fn func(*pb.Profile_Rule) error) er
 // profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[string]*pb.Profile {
+func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Profile {
 	profiles := map[string]*pb.Profile{}
 
 	for idx := range ppl {
@@ -183,39 +184,41 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[stri
 		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 		// first we check if profile already exists, if not we create a new one
-		if _, ok := profiles[p.Name]; !ok {
-			profileID := p.ID.String()
-			project := p.ProjectID.String()
+		if _, ok := profiles[p.GetProfile().Name]; !ok {
+			profileID := p.GetProfile().ID.String()
+			project := p.GetProfile().ProjectID.String()
 
-			displayName := p.DisplayName
+			displayName := p.GetProfile().DisplayName
 			if displayName == "" {
-				displayName = p.Name
+				displayName = p.GetProfile().Name
 			}
 
-			profiles[p.Name] = &pb.Profile{
+			profiles[p.GetProfile().Name] = &pb.Profile{
 				Id:          &profileID,
-				Name:        p.Name,
+				Name:        p.GetProfile().Name,
 				DisplayName: displayName,
 				Context: &pb.Context{
-					Provider: &p.Provider,
+					Provider: ptr.Ptr[string](p.GetProfile().Provider),
 					Project:  &project,
 				},
 			}
 
-			if p.Remediate.Valid {
-				profiles[p.Name].Remediate = proto.String(string(p.Remediate.ActionType))
+			if p.GetProfile().Remediate.Valid {
+				profiles[p.GetProfile().Name].Remediate = proto.String(string(p.GetProfile().Remediate.ActionType))
 			} else {
-				profiles[p.Name].Remediate = proto.String(string(db.ActionTypeOff))
+				profiles[p.GetProfile().Name].Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
-			if p.Alert.Valid {
-				profiles[p.Name].Alert = proto.String(string(p.Alert.ActionType))
+			if p.GetProfile().Alert.Valid {
+				profiles[p.GetProfile().Name].Alert = proto.String(string(p.GetProfile().Alert.ActionType))
 			} else {
-				profiles[p.Name].Alert = proto.String(string(db.ActionTypeOn))
+				profiles[p.GetProfile().Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
-		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {
-			profiles[p.Name] = pm
+		if pm := rowInfoToProfileMap(
+			profiles[p.GetProfile().Name], p.GetEntityProfile().Entity,
+			p.GetEntityProfile().ContextualRules); pm != nil {
+			profiles[p.GetProfile().Name] = pm
 		}
 	}
 

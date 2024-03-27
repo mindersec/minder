@@ -443,29 +443,13 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 }
 
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, subscription_id, display_name, labels, entity_profiles.id, entity, profile_id, contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, entity_profiles.id, entity_profiles.entity, entity_profiles.profile_id, entity_profiles.contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1
 `
 
 type ListProfilesByProjectIDRow struct {
-	ID              uuid.UUID       `json:"id"`
-	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
-	ProjectID       uuid.UUID       `json:"project_id"`
-	Remediate       NullActionType  `json:"remediate"`
-	Alert           NullActionType  `json:"alert"`
-	CreatedAt       time.Time       `json:"created_at"`
-	UpdatedAt       time.Time       `json:"updated_at"`
-	ProviderID      uuid.UUID       `json:"provider_id"`
-	SubscriptionID  uuid.NullUUID   `json:"subscription_id"`
-	DisplayName     string          `json:"display_name"`
-	Labels          []string        `json:"labels"`
-	ID_2            uuid.UUID       `json:"id_2"`
-	Entity          Entities        `json:"entity"`
-	ProfileID       uuid.UUID       `json:"profile_id"`
-	ContextualRules json.RawMessage `json:"contextual_rules"`
-	CreatedAt_2     time.Time       `json:"created_at_2"`
-	UpdatedAt_2     time.Time       `json:"updated_at_2"`
+	Profile       Profile       `json:"profile"`
+	EntityProfile EntityProfile `json:"entity_profile"`
 }
 
 func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error) {
@@ -478,24 +462,96 @@ func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UU
 	for rows.Next() {
 		var i ListProfilesByProjectIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.ProjectID,
-			&i.Remediate,
-			&i.Alert,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProviderID,
-			&i.SubscriptionID,
-			&i.DisplayName,
-			pq.Array(&i.Labels),
-			&i.ID_2,
-			&i.Entity,
-			&i.ProfileID,
-			&i.ContextualRules,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
+			&i.Profile.ID,
+			&i.Profile.Name,
+			&i.Profile.Provider,
+			&i.Profile.ProjectID,
+			&i.Profile.Remediate,
+			&i.Profile.Alert,
+			&i.Profile.CreatedAt,
+			&i.Profile.UpdatedAt,
+			&i.Profile.ProviderID,
+			&i.Profile.SubscriptionID,
+			&i.Profile.DisplayName,
+			pq.Array(&i.Profile.Labels),
+			&i.EntityProfile.ID,
+			&i.EntityProfile.Entity,
+			&i.EntityProfile.ProfileID,
+			&i.EntityProfile.ContextualRules,
+			&i.EntityProfile.CreatedAt,
+			&i.EntityProfile.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listProfilesByProjectIDAndLabel = `-- name: ListProfilesByProjectIDAndLabel :many
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, entity_profiles.id, entity_profiles.entity, entity_profiles.profile_id, entity_profiles.contextual_rules, entity_profiles.created_at, entity_profiles.updated_at FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+WHERE profiles.project_id = $1
+AND (
+    -- the most common case first, if the include_labels is empty, we list profiles with no labels
+    -- we use coalesce to handle the case where the include_labels is null
+    (COALESCE(cardinality($2::TEXT[]), 0) = 0 AND profiles.labels = ARRAY[]::TEXT[]) OR
+    -- if the include_labels arg is equal to '*', we list all profiles
+    $2::TEXT[] = ARRAY['*'] OR
+    -- if the include_labels arg is not empty and not a wildcard, we list profiles whose labels are a subset of include_labels
+    (COALESCE(cardinality($2::TEXT[]), 0) > 0 AND profiles.labels @> $2::TEXT[])
+) AND (
+    -- if the exclude_labels arg is empty, we list all profiles
+    COALESCE(cardinality($3::TEXT[]), 0) = 0 OR
+    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
+    NOT profiles.labels @> $3::TEXT[]
+)
+`
+
+type ListProfilesByProjectIDAndLabelParams struct {
+	ProjectID     uuid.UUID `json:"project_id"`
+	IncludeLabels []string  `json:"include_labels"`
+	ExcludeLabels []string  `json:"exclude_labels"`
+}
+
+type ListProfilesByProjectIDAndLabelRow struct {
+	Profile       Profile       `json:"profile"`
+	EntityProfile EntityProfile `json:"entity_profile"`
+}
+
+func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error) {
+	rows, err := q.db.QueryContext(ctx, listProfilesByProjectIDAndLabel, arg.ProjectID, pq.Array(arg.IncludeLabels), pq.Array(arg.ExcludeLabels))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListProfilesByProjectIDAndLabelRow{}
+	for rows.Next() {
+		var i ListProfilesByProjectIDAndLabelRow
+		if err := rows.Scan(
+			&i.Profile.ID,
+			&i.Profile.Name,
+			&i.Profile.Provider,
+			&i.Profile.ProjectID,
+			&i.Profile.Remediate,
+			&i.Profile.Alert,
+			&i.Profile.CreatedAt,
+			&i.Profile.UpdatedAt,
+			&i.Profile.ProviderID,
+			&i.Profile.SubscriptionID,
+			&i.Profile.DisplayName,
+			pq.Array(&i.Profile.Labels),
+			&i.EntityProfile.ID,
+			&i.EntityProfile.Entity,
+			&i.EntityProfile.ProfileID,
+			&i.EntityProfile.ContextualRules,
+			&i.EntityProfile.CreatedAt,
+			&i.EntityProfile.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

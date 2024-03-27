@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/stacklok/minder/internal/util/rand"
 )
 
-func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID) Profile {
+func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID, labels []string) Profile {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
@@ -27,11 +28,21 @@ func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID) Profi
 			ActionType: "on",
 			Valid:      true,
 		},
+		Labels: labels,
 	}
 
 	prof, err := testQueries.CreateProfile(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, prof)
+
+	// listProfilesLabels doesn't join properly without the entityProfile entries
+	ent, err := testQueries.CreateProfileForEntity(context.Background(), CreateProfileForEntityParams{
+		ProfileID:       prof.ID,
+		Entity:          EntitiesRepository,
+		ContextualRules: json.RawMessage(`{"key": "value"}`),
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ent)
 
 	return prof
 }
@@ -176,6 +187,100 @@ func createTestRandomEntities(t *testing.T) *testRandomEntities {
 		repo:      repo,
 		ruleType1: ruleType1,
 		ruleType2: ruleType2,
+	}
+}
+
+func TestProfileLabels(t *testing.T) {
+	t.Parallel()
+
+	randomEntities := createTestRandomEntities(t)
+
+	health1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health"})
+	require.NotEmpty(t, health1)
+	health2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health", "obsolete"})
+	require.NotEmpty(t, health2)
+	obsolete := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"obsolete"})
+	require.NotEmpty(t, obsolete)
+	p1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	require.NotEmpty(t, p1)
+	p2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	require.NotEmpty(t, p2)
+
+	tests := []struct {
+		name          string
+		includeLabels []string
+		excludeLabels []string
+		expectedNames []string
+	}{
+		{
+			name:          "list all profiles",
+			includeLabels: []string{"*"},
+			expectedNames: []string{health1.Name, health2.Name, obsolete.Name, p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles with no labels",
+			includeLabels: []string{},
+			expectedNames: []string{p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles with no labels using nil - default ",
+			includeLabels: nil,
+			expectedNames: []string{p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles that have the obsolete label",
+			includeLabels: []string{"obsolete"},
+			expectedNames: []string{health2.Name, obsolete.Name},
+		},
+		{
+			name:          "list profiles with the stacklok:health label",
+			includeLabels: []string{"stacklok:health"},
+			expectedNames: []string{health1.Name, health2.Name},
+		},
+		{
+			name:          "list profile having both obsolete and stacklok:health labels",
+			includeLabels: []string{"stacklok:health", "obsolete"},
+			expectedNames: []string{health2.Name},
+		},
+		{
+			name:          "list profiles with nonexistent labels",
+			includeLabels: []string{"nonexistent"},
+			expectedNames: []string{},
+		},
+		{
+			name:          "both include and exclude",
+			includeLabels: []string{"stacklok:health"},
+			excludeLabels: []string{"obsolete"},
+			expectedNames: []string{health1.Name},
+		},
+		{
+			name:          "include all labels but exclude one",
+			includeLabels: []string{"*"},
+			excludeLabels: []string{"obsolete"},
+			expectedNames: []string{health1.Name, p1.Name, p2.Name},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rows, err := testQueries.ListProfilesByProjectIDAndLabel(
+				context.Background(), ListProfilesByProjectIDAndLabelParams{
+					ProjectID:     randomEntities.proj.ID,
+					IncludeLabels: tt.includeLabels,
+					ExcludeLabels: tt.excludeLabels,
+				})
+			require.NoError(t, err)
+
+			names := make([]string, 0, len(rows))
+			for _, row := range rows {
+				names = append(names, row.Profile.Name)
+			}
+			require.True(t, slices.Equal(names, tt.expectedNames), "expected %v, got %v", tt.expectedNames, names)
+		})
 	}
 }
 
@@ -366,7 +471,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID)
+			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
 			tt.ruleStatusSetupFn(profile, randomEntities)
@@ -499,7 +604,7 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID)
+			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
 			delRepo := createRandomRepository(t, randomEntities.proj.ID, randomEntities.prov)
@@ -724,7 +829,7 @@ func TestListRuleEvaluations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.profile = createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID)
+			tt.profile = createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, tt.profile)
 
 			tt.ruleStatusSetupFn(tt.profile, randomEntities)
