@@ -624,6 +624,7 @@ type RuleType struct {
 	SeverityValue  Severity        `json:"severity_value"`
 	ProviderID     uuid.UUID       `json:"provider_id"`
 	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
+	DisplayName    string          `json:"display_name"`
 }
 
 type SessionStore struct {

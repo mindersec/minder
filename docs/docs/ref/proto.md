@@ -1734,6 +1734,7 @@ The version is assumed from the folder's version.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
+| display_name | [string](#string) |  | display_name is the display name of the rule type. |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |

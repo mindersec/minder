@@ -8,7 +8,8 @@ INSERT INTO rule_type (
     definition,
     severity_value,
     provider_id,
-    subscription_id
+    subscription_id,
+    display_name
 ) VALUES (
     $1,
     $2,
@@ -18,7 +19,8 @@ INSERT INTO rule_type (
     sqlc.arg(definition)::jsonb,
     sqlc.arg(severity_value),
     sqlc.arg(provider_id),
-    sqlc.narg(subscription_id)
+    sqlc.narg(subscription_id),
+    sqlc.arg(display_name)
 ) RETURNING *;
 
 -- name: ListRuleTypesByProviderAndProject :many
@@ -35,6 +37,6 @@ DELETE FROM rule_type WHERE id = $1;
 
 -- name: UpdateRuleType :one
 UPDATE rule_type
-    SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value)
+    SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value), display_name = sqlc.arg(display_name)
     WHERE id = $1
     RETURNING *;
