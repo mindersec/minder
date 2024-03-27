@@ -46,6 +46,10 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
+	// FindProviders allows us to take a trait and filter
+	// providers by it. It also optionally takes a name, in case we want to
+	// filter by name as well.
+	FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error)
 	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)

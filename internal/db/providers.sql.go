@@ -73,6 +73,57 @@ func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) 
 	return err
 }
 
+const findProviders = `-- name: FindProviders :many
+
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers
+WHERE project_id = ANY($1::uuid[])
+    AND ($2::provider_type = ANY(implements) OR $2::provider_type IS NULL)
+    AND (lower(name) = lower($3::text) OR $3::text IS NULL)
+`
+
+type FindProvidersParams struct {
+	Projects []uuid.UUID      `json:"projects"`
+	Trait    NullProviderType `json:"trait"`
+	Name     sql.NullString   `json:"name"`
+}
+
+// FindProviders allows us to take a trait and filter
+// providers by it. It also optionally takes a name, in case we want to
+// filter by name as well.
+func (q *Queries) FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error) {
+	rows, err := q.db.QueryContext(ctx, findProviders, pq.Array(arg.Projects), arg.Trait, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Provider{}
+	for rows.Next() {
+		var i Provider
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Version,
+			&i.ProjectID,
+			pq.Array(&i.Implements),
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			pq.Array(&i.AuthFlows),
+			&i.Class,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProviderByID = `-- name: GetProviderByID :one
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE id = $1
 `

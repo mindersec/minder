@@ -309,7 +309,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provs, err := listProvidersOrInferDefault(ctx, s.store, in, projectID)
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = projectID
+
+	provs, err := getProvidersByTrait(ctx, s.store, in, projectID, db.ProviderTypeRepoLister)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -318,12 +321,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: []*pb.UpstreamRepositoryRef{},
 	}
 
-	failIfListerNotImplemented := len(provs) == 1
-
 	for _, provider := range provs {
 		zerolog.Ctx(ctx).Debug().
 			Str("provider", provider.Name).
-			Str("projectID", projectID.String()).
+			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
 		pbOpts := []providers.ProviderBuilderOption{
@@ -335,23 +336,12 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 		}
 
-		// check if the provider implements the repo lister interface
-		if failIfListerNotImplemented && !p.Implements(db.ProviderTypeRepoLister) {
-			return nil, util.UserVisibleError(codes.Unimplemented, "provider does not implement repository listing")
-		} else if !p.Implements(db.ProviderTypeRepoLister) {
-			// skip the provider if it does not implement the repo lister interface
-			continue
-		}
-
 		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
 		if err != nil {
 			return nil, err
 		}
 
 		out.Results = append(out.Results, results...)
-
-		// Telemetry logging
-		logger.BusinessRecord(ctx).Project = projectID
 	}
 
 	return out, nil
