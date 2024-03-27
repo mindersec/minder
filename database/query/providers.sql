@@ -20,6 +20,16 @@ LIMIT 1;
 -- name: GetProviderByID :one
 SELECT * FROM providers WHERE id = $1;
 
+-- FindProviders allows us to take a trait and filter
+-- providers by it. It also optionally takes a name, in case we want to
+-- filter by name as well.
+
+-- name: FindProviders :many
+SELECT * FROM providers
+WHERE project_id = ANY(sqlc.arg(projects)::uuid[])
+    AND (sqlc.narg('trait')::provider_type = ANY(implements) OR sqlc.narg('trait')::provider_type IS NULL)
+    AND (lower(name) = lower(sqlc.narg('name')::text) OR sqlc.narg('name')::text IS NULL);
+
 -- ListProvidersByProjectID allows us to list all providers
 -- for a given array of projects.
 

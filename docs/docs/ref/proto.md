@@ -2054,6 +2054,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UserRecord"></a>

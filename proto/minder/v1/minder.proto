@@ -872,6 +872,7 @@ message UpstreamRepositoryRef {
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3;
+    Context context = 4;
 }
 
 message Repository {
