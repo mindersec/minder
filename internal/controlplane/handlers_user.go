@@ -69,7 +69,15 @@ func (s *Server) CreateUser(ctx context.Context,
 		baseName = token.PreferredUsername()
 	}
 
-	orgProject, err := projects.ProvisionSelfEnrolledProject(ctx, s.authzClient, qtx, baseName, subject)
+	orgProject, err := projects.ProvisionSelfEnrolledProject(
+		ctx,
+		s.authzClient,
+		qtx,
+		baseName,
+		subject,
+		s.marketplace,
+		s.cfg.DefaultProfiles,
+	)
 	if err != nil {
 		if errors.Is(err, projects.ErrProjectAlreadyExists) {
 			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", baseName)
