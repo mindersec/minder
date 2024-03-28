@@ -154,7 +154,6 @@ func (s *Server) CreateRuleType(
 	}
 
 	projectID := entityCtx.Project.ID
-
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
@@ -184,7 +183,6 @@ func (s *Server) UpdateRuleType(
 	}
 
 	projectID := entityCtx.Project.ID
-
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
 	})

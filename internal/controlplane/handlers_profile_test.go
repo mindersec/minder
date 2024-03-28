@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -354,8 +355,9 @@ func TestCreateProfile(t *testing.T) {
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles: profiles.NewProfileService(evts),
-				evt:      evts,
+				profiles:      profiles.NewProfileService(evts),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)

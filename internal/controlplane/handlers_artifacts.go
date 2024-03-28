@@ -40,7 +40,7 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, in.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}

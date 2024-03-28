@@ -98,7 +98,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, in.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -221,7 +221,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, in.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -312,7 +312,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = projectID
 
-	provs, err := getProvidersByTrait(ctx, s.store, in, projectID, db.ProviderTypeRepoLister)
+	providerName := in.GetContext().GetProvider()
+	provs, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeRepoLister)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -409,7 +410,7 @@ func (s *Server) getProviderAndClient(
 	projectID uuid.UUID,
 	request HasProtoContext,
 ) (*db.Provider, v1.GitHub, error) {
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, request, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, request.GetContext().GetProvider())
 	if err != nil {
 		return nil, nil, providerError(err)
 	}
@@ -419,7 +420,7 @@ func (s *Server) getProviderAndClient(
 		providers.WithRestClientCache(s.restClientCache),
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return nil, nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}
@@ -429,7 +430,7 @@ func (s *Server) getProviderAndClient(
 		return nil, nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
 	}
 
-	return &provider, client, nil
+	return provider, client, nil
 }
 
 // covers the common logic for the two varieties of repo deletion

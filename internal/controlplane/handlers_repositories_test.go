@@ -30,6 +30,7 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghprovider "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -367,5 +368,6 @@ func createServer(
 		cryptoEngine:    mockCryptoEngine,
 		restClientCache: clientCache,
 		cfg:             &server.Config{},
+		providerStore:   providers.NewProviderStore(store),
 	}
 }
