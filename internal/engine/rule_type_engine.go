@@ -40,8 +40,6 @@ import (
 type RuleMeta struct {
 	// Name is the name of the rule
 	Name string
-	// Provider is the ID of the provider that this rule is for
-	Provider string
 	// Organization is the ID of the organization that this rule is for
 	Organization *string
 	// Project is the ID of the project that this rule is for
@@ -51,9 +49,9 @@ type RuleMeta struct {
 // String returns a string representation of the rule meta
 func (r *RuleMeta) String() string {
 	if r.Project != nil {
-		return fmt.Sprintf("%s/group/%s/%s", r.Provider, *r.Project, r.Name)
+		return fmt.Sprintf("group/%s/%s", *r.Project, r.Name)
 	}
-	return fmt.Sprintf("%s/org/%s/%s", r.Provider, *r.Organization, r.Name)
+	return fmt.Sprintf("org/%s/%s", *r.Organization, r.Name)
 }
 
 // RuleTypeEngine is the engine for a rule type. It builds the multiple
@@ -109,8 +107,7 @@ func NewRuleTypeEngine(
 
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
-			Name:     rt.Name,
-			Provider: *rt.Context.Provider,
+			Name: rt.Name,
 		},
 		rval:        rval,
 		rdi:         rdi,
@@ -221,12 +218,14 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 		displayName = rt.Name
 	}
 
+	// TODO: (2024/03/28) this is for compatibility with old CLI versions that expect provider, remove this eventually
+	noProvider := ""
 	return &minderv1.RuleType{
 		Id:          &id,
 		Name:        rt.Name,
 		DisplayName: displayName,
 		Context: &minderv1.Context{
-			Provider: &rt.Provider,
+			Provider: &noProvider,
 			Project:  &project,
 		},
 		Description: rt.Description,

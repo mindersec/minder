@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // ruleTypeCmd is the root command for the rule subcommands
@@ -36,6 +35,5 @@ var ruleTypeCmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(ruleTypeCmd)
 	// Flags for all subcommands
-	ruleTypeCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
 	ruleTypeCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

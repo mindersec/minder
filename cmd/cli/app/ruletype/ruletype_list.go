@@ -41,7 +41,6 @@ var listCmd = &cobra.Command{
 func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 
@@ -55,7 +54,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	cmd.SilenceUsage = true
 
 	resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{Project: &project},
 	})
 	if err != nil {
 		return cli.MessageAndError("Error listing rule types", err)
@@ -78,7 +77,6 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 		table := initializeTableForList()
 		for _, rt := range resp.RuleTypes {
 			table.AddRow(
-				*rt.Context.Provider,
 				*rt.Context.Project,
 				*rt.Id,
 				rt.Name,

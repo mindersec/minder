@@ -86,3 +86,13 @@ func (c *EntityContext) Validate(ctx context.Context, q db.Querier) error {
 
 	return nil
 }
+
+// ValidateProject validates that the entity context contains a project that is present in the DB
+func (c *EntityContext) ValidateProject(ctx context.Context, q db.Querier) error {
+	_, err := q.GetProjectByID(ctx, c.Project.ID)
+	if err != nil {
+		return fmt.Errorf("unable to get context: failed getting project: %w", err)
+	}
+
+	return nil
+}

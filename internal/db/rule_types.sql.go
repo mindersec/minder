@@ -15,13 +15,11 @@ import (
 const createRuleType = `-- name: CreateRuleType :one
 INSERT INTO rule_type (
     name,
-    provider,
     project_id,
     description,
     guidance,
     definition,
     severity_value,
-    provider_id,
     subscription_id,
     display_name
 ) VALUES (
@@ -29,24 +27,20 @@ INSERT INTO rule_type (
     $2,
     $3,
     $4,
-    $5,
-    $6::jsonb,
+    $5::jsonb,
+    $6,
     $7,
-    $8,
-    $9,
-    $10
+    $8
 ) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name
 `
 
 type CreateRuleTypeParams struct {
 	Name           string          `json:"name"`
-	Provider       string          `json:"provider"`
 	ProjectID      uuid.UUID       `json:"project_id"`
 	Description    string          `json:"description"`
 	Guidance       string          `json:"guidance"`
 	Definition     json.RawMessage `json:"definition"`
 	SeverityValue  Severity        `json:"severity_value"`
-	ProviderID     uuid.UUID       `json:"provider_id"`
 	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 	DisplayName    string          `json:"display_name"`
 }
@@ -54,13 +48,11 @@ type CreateRuleTypeParams struct {
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
 	row := q.db.QueryRowContext(ctx, createRuleType,
 		arg.Name,
-		arg.Provider,
 		arg.ProjectID,
 		arg.Description,
 		arg.Guidance,
 		arg.Definition,
 		arg.SeverityValue,
-		arg.ProviderID,
 		arg.SubscriptionID,
 		arg.DisplayName,
 	)
@@ -147,17 +139,12 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 	return i, err
 }
 
-const listRuleTypesByProviderAndProject = `-- name: ListRuleTypesByProviderAndProject :many
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name FROM rule_type WHERE provider = $1 AND project_id = $2
+const listRuleTypesByProject = `-- name: ListRuleTypesByProject :many
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name FROM rule_type WHERE project_id = $1
 `
 
-type ListRuleTypesByProviderAndProjectParams struct {
-	Provider  string    `json:"provider"`
-	ProjectID uuid.UUID `json:"project_id"`
-}
-
-func (q *Queries) ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleTypesByProviderAndProject, arg.Provider, arg.ProjectID)
+func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error) {
+	rows, err := q.db.QueryContext(ctx, listRuleTypesByProject, projectID)
 	if err != nil {
 		return nil, err
 	}
