@@ -96,7 +96,7 @@ authz:
 #  enabled: true
 #  sources:
 #    - type: tgz
-#      location: ./bundles/healthcheck.tar.gz
+#      location: ./cmd/server/kodata/healthcheck-bundle.tar.gz
 #
 #default_profiles:
 #  enabled: true
