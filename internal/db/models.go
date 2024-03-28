@@ -614,7 +614,7 @@ type RuleEvaluation struct {
 type RuleType struct {
 	ID             uuid.UUID       `json:"id"`
 	Name           string          `json:"name"`
-	Provider       string          `json:"provider"`
+	Provider       sql.NullString  `json:"provider"`
 	ProjectID      uuid.UUID       `json:"project_id"`
 	Description    string          `json:"description"`
 	Guidance       string          `json:"guidance"`
@@ -622,7 +622,7 @@ type RuleType struct {
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
 	SeverityValue  Severity        `json:"severity_value"`
-	ProviderID     uuid.UUID       `json:"provider_id"`
+	ProviderID     uuid.NullUUID   `json:"provider_id"`
 	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 	DisplayName    string          `json:"display_name"`
 }

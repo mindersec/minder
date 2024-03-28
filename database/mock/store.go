@@ -1347,19 +1347,19 @@ func (mr *MockStoreMockRecorder) ListRuleEvaluationsByProfileId(arg0, arg1 any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleEvaluationsByProfileId", reflect.TypeOf((*MockStore)(nil).ListRuleEvaluationsByProfileId), arg0, arg1)
 }
 
-// ListRuleTypesByProviderAndProject mocks base method.
-func (m *MockStore) ListRuleTypesByProviderAndProject(arg0 context.Context, arg1 db.ListRuleTypesByProviderAndProjectParams) ([]db.RuleType, error) {
+// ListRuleTypesByProject mocks base method.
+func (m *MockStore) ListRuleTypesByProject(arg0 context.Context, arg1 uuid.UUID) ([]db.RuleType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleTypesByProviderAndProject", arg0, arg1)
+	ret := m.ctrl.Call(m, "ListRuleTypesByProject", arg0, arg1)
 	ret0, _ := ret[0].([]db.RuleType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListRuleTypesByProviderAndProject indicates an expected call of ListRuleTypesByProviderAndProject.
-func (mr *MockStoreMockRecorder) ListRuleTypesByProviderAndProject(arg0, arg1 any) *gomock.Call {
+// ListRuleTypesByProject indicates an expected call of ListRuleTypesByProject.
+func (mr *MockStoreMockRecorder) ListRuleTypesByProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProviderAndProject", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProviderAndProject), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProject", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProject), arg0, arg1)
 }
 
 // ListUsers mocks base method.

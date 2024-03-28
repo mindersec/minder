@@ -45,12 +45,12 @@ var (
 
 func WithSuccessfulUpsertRuleType(mock RuleTypeSvcMock) {
 	mock.EXPECT().
-		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil)
 }
 
 func WithFailedUpsertRuleType(mock RuleTypeSvcMock) {
 	mock.EXPECT().
-		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		UpsertRuleType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errDefault)
 }

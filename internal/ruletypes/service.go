@@ -43,7 +43,6 @@ type RuleTypeService interface {
 	CreateRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
 		qtx db.Querier,
@@ -56,7 +55,6 @@ type RuleTypeService interface {
 	UpdateRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
 		qtx db.Querier,
@@ -68,7 +66,6 @@ type RuleTypeService interface {
 	UpsertRuleType(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		ruleType *pb.RuleType,
 		qtx db.Querier,
@@ -97,13 +94,11 @@ var (
 func (_ *ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
 	qtx db.Querier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if err := ruleType.Validate(); err != nil {
@@ -142,8 +137,6 @@ func (_ *ruleTypeService) CreateRuleType(
 	newDBRecord, err := qtx.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:           ruleTypeName,
 		DisplayName:    ruleType.GetDisplayName(),
-		Provider:       provider.Name,
-		ProviderID:     provider.ID,
 		ProjectID:      projectID,
 		Description:    ruleType.GetDescription(),
 		Definition:     serializedRule,
@@ -168,13 +161,11 @@ func (_ *ruleTypeService) CreateRuleType(
 func (_ *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
 	qtx db.Querier,
 ) (*pb.RuleType, error) {
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if err := ruleType.Validate(); err != nil {
@@ -241,7 +232,6 @@ func (_ *ruleTypeService) UpdateRuleType(
 func (s *ruleTypeService) UpsertRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
 	qtx db.Querier,
@@ -249,7 +239,7 @@ func (s *ruleTypeService) UpsertRuleType(
 	// In future, we may want to refactor the code so that we use upserts
 	// instead of separate create and update methods. For now, simulate upsert
 	// semantics by trying to create, then trying to update.
-	_, err := s.CreateRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
+	_, err := s.CreateRuleType(ctx, projectID, subscriptionID, ruleType, qtx)
 	if err == nil {
 		// Rule successfully created, we can stop here.
 		return nil
@@ -258,7 +248,7 @@ func (s *ruleTypeService) UpsertRuleType(
 	}
 
 	// If we get here: rule already exists. Let's update it.
-	_, err = s.UpdateRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
+	_, err = s.UpdateRuleType(ctx, projectID, subscriptionID, ruleType, qtx)
 	if err != nil {
 		return fmt.Errorf("error while updating rule: %w", err)
 	}
