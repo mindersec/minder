@@ -88,14 +88,20 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			panic(fmt.Sprintf("Untagged config struct field %q", field.Name))
 		}
 		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
+		fieldType := field.Type
 
-		if field.Type.Kind() == reflect.Struct {
-			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
-			continue
+		// Dereference one level of pointers, if present
+		if fieldType.Kind() == reflect.Ptr {
+			fieldType = fieldType.Elem()
 		}
 
-		if field.Type.Kind() == reflect.Ptr {
-			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type.Elem()).Interface())
+		if fieldType.Kind() == reflect.Struct {
+			setViperStructDefaults(v, valueName+".", reflect.Zero(fieldType).Interface())
+			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
+			// for now, we just warn about setting the tag, because it's ignored.
+			if _, ok := field.Tag.Lookup("default"); ok {
+				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
+			}
 			continue
 		}
 
@@ -104,9 +110,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		value := field.Tag.Get("default")
 		defaultValue := reflect.Zero(field.Type).Interface()
 		var err error // We handle errors at the end of the switch
-		fieldType := field.Type.Kind()
 		//nolint:golint,exhaustive
-		switch fieldType {
+		switch fieldType.Kind() {
 		case reflect.String:
 			defaultValue = value
 		case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
@@ -117,8 +122,6 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		case reflect.Bool:
 			defaultValue, err = strconv.ParseBool(value)
 		case reflect.Slice:
-			defaultValue = nil
-		case reflect.Ptr:
 			defaultValue = nil
 		default:
 			err = fmt.Errorf("unhandled type %s", fieldType)
