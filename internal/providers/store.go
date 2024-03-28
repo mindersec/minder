@@ -142,21 +142,3 @@ func getNameFilterParam(name string) sql.NullString {
 		Valid:  name != "",
 	}
 }
-
-// given a list of providers, inferProvider will validate the filter and
-// return the provider if it can be inferred. Note that this assumes that validation
-// has already been made and that the list of providers is not empty.
-func inferProvider(providers []db.Provider, nameFilter sql.NullString) (*db.Provider, error) {
-	if nameFilter.Valid {
-		if len(providers) == 1 {
-			return &providers[0], nil
-		}
-		return nil, util.UserVisibleError(
-			codes.InvalidArgument,
-			"cannot infer provider, there are %d providers available",
-			len(providers),
-		)
-	}
-
-	return &providers[0], nil
-}
