@@ -17,11 +17,9 @@ package bundles
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/internal/util/ptr"
 	"github.com/stacklok/minder/pkg/mindpak"
 	"github.com/stacklok/minder/pkg/mindpak/build"
 )
@@ -86,6 +84,7 @@ func parseVersion(id string) (*mindpak.Metadata, error) {
 		Namespace: firstSplit[0],
 		Name:      secondSplit[0],
 		Version:   secondSplit[1],
-		Date:      ptr.Ptr(time.Now()),
+		// leave this as nil for now so that the builds are reproducible
+		Date: nil,
 	}, nil
 }
