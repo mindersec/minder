@@ -76,14 +76,20 @@ func testNewProviderService(
 	}
 	require.NoError(t, err)
 
+	instantiator := NewTraitInstantiator(
+		mockratecache.NewMockRestClientCache(mockCtrl),
+		telemetry.NewNoopMetrics(),
+		config,
+		mocks.fakeStore,
+		mocks.cryptoMocks,
+	)
 	psi := NewProviderService(
 		mocks.fakeStore,
 		mocks.cryptoMocks,
 		metrics.NewNoopMetrics(),
-		telemetry.NewNoopMetrics(),
-		config,
+		instantiator,
 		projectFactory,
-		mockratecache.NewMockRestClientCache(mockCtrl),
+		config,
 	)
 
 	ps, ok := psi.(*providerService)
