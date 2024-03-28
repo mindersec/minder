@@ -270,8 +270,8 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	var skipAction bool
 
 	logger := zerolog.Ctx(ctx).Info().
-		Str("action", string(actionType)).
-		Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr)))
+		Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr))).
+		Str("action", string(actionType))
 
 	// Get the profile option set for this action type
 	actionOnOff, ok := rae.actionsOnOff[actionType]

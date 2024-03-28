@@ -360,7 +360,7 @@ func (r *Remediator) runOn(
 		dflBranchTo,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create pull request: %w", err)
+		return nil, fmt.Errorf("cannot create pull request: %w, %w", err, enginerr.ErrActionFailed)
 	}
 	newMeta, err := json.Marshal(pullRequestMetadata{Number: pr.GetNumber()})
 	if err != nil {
