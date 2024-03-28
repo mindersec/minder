@@ -62,6 +62,7 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
 | deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the main deployment |
 | deploymentSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy to use for the main deployment |
+| deploymentSettings.initContainers | array, optional | `nil` | Additional init containers to run |
 | deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | Resources to use for the main deployment |
 | deploymentSettings.secrets.appSecretName | string | `"minder-github-secrets"` | Name of the secret containing the GitHub configuration |
 | deploymentSettings.secrets.authSecretName | string | `"minder-auth-secrets"` | Name of the secret containing the auth configuration |
