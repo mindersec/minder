@@ -138,28 +138,10 @@ func (rae *RuleActionsEngine) processAction(
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx).Debug().
-		Str("action", string(actionType)).
-		Str("cmd", string(cmd))
-
-	// Exit early in case we shouldn't do anything, i.e., cmd != ActionCmdOn or cmd != ActionCmdOff
-	if cmd == engif.ActionCmdDoNothing {
-		logger.Msg("skipping action")
-		switch actionType {
-		case remediate.ActionType:
-			// Return the previous remediation status.
-			err := enginerr.RemediationStatusAsError(params.GetEvalStatusFromDb().RemStatus.RemediationStatusTypes)
-			return *(getMeta(params.GetEvalStatusFromDb().RemMetadata)), err
-		case alert.ActionType:
-			// Return the previous alert status.
-			err := enginerr.AlertStatusAsError(params.GetEvalStatusFromDb().AlertStatus.AlertStatusTypes)
-			return *(getMeta(params.GetEvalStatusFromDb().AlertMetadata)), err
-		}
-	}
+	zerolog.Ctx(ctx).Debug().Str("action", string(actionType)).Str("cmd", string(cmd)).Msg("invoking action")
 	// Get action engine
 	action := rae.actions[actionType]
 	// Return the result of the action
-	logger.Msg("invoking action")
 	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
 }
 

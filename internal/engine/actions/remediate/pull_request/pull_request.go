@@ -34,6 +34,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/minder/internal/db"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
@@ -73,6 +74,16 @@ type Remediator struct {
 
 	titleTemplate *htmltemplate.Template
 	bodyTemplate  *htmltemplate.Template
+}
+
+type paramsPR struct {
+	ingested   *interfaces.Result
+	repo       *pb.Repository
+	title      string
+	modifier   fsModifier
+	body       string
+	metadata   *pullRequestMetadata
+	prevStatus *db.ListRuleEvaluationsByProfileIdRow
 }
 
 // NewPullRequestRemediate creates a new PR remediation engine
@@ -140,15 +151,6 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
 }
 
-type paramsPR struct {
-	ingested *interfaces.Result
-	repo     *pb.Repository
-	title    string
-	modifier fsModifier
-	body     string
-	metadata *pullRequestMetadata
-}
-
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
@@ -167,8 +169,7 @@ func (r *Remediator) Do(
 	case interfaces.ActionOptOn:
 		return r.run(ctx, cmd, p)
 	case interfaces.ActionOptDryRun:
-		r.dryRun(p)
-		remErr = nil
+		return r.dryRun(ctx, cmd, p)
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		remErr = errors.New("unexpected action")
 	}
@@ -234,24 +235,51 @@ func (r *Remediator) getParamsForPRRemediation(
 		}
 	}
 	return &paramsPR{
-		ingested: ingested,
-		repo:     repo,
-		title:    title.String(),
-		modifier: modification,
-		body:     prFullBodyText,
-		metadata: meta,
+		ingested:   ingested,
+		repo:       repo,
+		title:      title.String(),
+		modifier:   modification,
+		body:       prFullBodyText,
+		metadata:   meta,
+		prevStatus: params.GetEvalStatusFromDb(),
 	}, nil
 }
 
-func (_ *Remediator) dryRun(p *paramsPR) {
-	// TODO: jsonize too
-	fmt.Printf("title:\n%s\n", p.title)
-	fmt.Printf("body:\n%s\n", p.body)
+func (r *Remediator) dryRun(
+	ctx context.Context,
+	cmd interfaces.ActionCmd,
+	p *paramsPR,
+) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).Info().Str("repo", p.repo.String())
+	// Process the command
+	switch cmd {
+	case interfaces.ActionCmdOn:
+		// TODO: jsonize too
+		logger.Msgf("title:\n%s\n", p.title)
+		logger.Msgf("body:\n%s\n", p.body)
 
-	err := p.modifier.writeSummary(os.Stdout)
-	if err != nil {
-		fmt.Printf("cannot write summary: %s\n", err)
+		err := p.modifier.writeSummary(os.Stdout)
+		if err != nil {
+			logger.Msgf("cannot write summary: %s\n", err)
+		}
+		return nil, nil
+	case interfaces.ActionCmdOff:
+		if p.metadata == nil || p.metadata.Number == 0 {
+			// We cannot do anything without a PR number, so we assume that closing this is a success
+			return nil, fmt.Errorf("no pull request number provided: %w", enginerr.ErrActionSkipped)
+		}
+		endpoint := fmt.Sprintf("repos/%v/%v/pulls/%d", p.repo.GetOwner(), p.repo.GetName(), p.metadata.Number)
+		body := "{\"state\": \"closed\"}"
+		curlCmd, err := util.GenerateCurlCommand("PATCH", r.ghCli.GetBaseURL(), endpoint, body)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate curl command to close a pull request: %w", err)
+		}
+		logger.Msgf("run the following curl command: \n%s\n", curlCmd)
+		return nil, nil
+	case interfaces.ActionCmdDoNothing:
+		return r.runDoNothing(ctx, p)
 	}
+	return nil, nil
 }
 func (r *Remediator) runOn(
 	ctx context.Context,
@@ -374,7 +402,7 @@ func (r *Remediator) run(
 	case interfaces.ActionCmdOff:
 		return r.runOff(ctx, p)
 	case interfaces.ActionCmdDoNothing:
-		return nil, enginerr.ErrActionSkipped
+		return r.runDoNothing(ctx, p)
 	}
 	return nil, enginerr.ErrActionSkipped
 }
@@ -503,4 +531,20 @@ func checkoutToOriginallyFetchedBranch(
 	} else {
 		logger.Info().Msg(fmt.Sprintf("checked out back to %s branch", originallyFetchedBranch))
 	}
+}
+
+// runDoNothing returns the previous remediation status
+func (_ *Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
+
+	logger.Debug().Msg("Running do nothing")
+
+	// Return the previous remediation status.
+	err := enginerr.RemediationStatusAsError(p.prevStatus.RemStatus.RemediationStatusTypes)
+	// If there is a valid remediation metadata, return it too
+	if p.prevStatus.RemMetadata.Valid {
+		return p.prevStatus.RemMetadata.RawMessage, err
+	}
+	// If there is no remediation metadata, return nil as the metadata and the error
+	return nil, err
 }
