@@ -103,7 +103,7 @@ type GitHub interface {
 		v []*github.AdvisoryVulnerability) (string, error)
 	CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
-	ClosePullRequest(ctx context.Context, owner, repo, number string) error
+	ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)

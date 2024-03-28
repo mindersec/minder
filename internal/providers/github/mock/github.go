@@ -240,11 +240,12 @@ func (mr *MockGitHubMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
 }
 
 // ClosePullRequest mocks base method.
-func (m *MockGitHub) ClosePullRequest(ctx context.Context, owner, repo, number string) error {
+func (m *MockGitHub) ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ClosePullRequest", ctx, owner, repo, number)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*github.PullRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ClosePullRequest indicates an expected call of ClosePullRequest.

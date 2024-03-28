@@ -23,7 +23,6 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"os"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -355,16 +354,11 @@ func (r *Remediator) runOff(
 		return nil, fmt.Errorf("no pull request number provided: %w", enginerr.ErrActionSkipped)
 	}
 
-	err := r.ghCli.ClosePullRequest(ctx, p.repo.GetOwner(), p.repo.GetName(), strconv.Itoa(p.metadata.Number))
+	pr, err := r.ghCli.ClosePullRequest(ctx, p.repo.GetOwner(), p.repo.GetName(), p.metadata.Number)
 	if err != nil {
-		if errors.Is(err, enginerr.ErrNotFound) {
-			// There's no pull request with such PR number anymore (perhaps it was closed manually).
-			// We exit by stating that the action was turned off.
-			return nil, fmt.Errorf("pull request already closed: %w, %w", err, enginerr.ErrActionSkipped)
-		}
-		return nil, fmt.Errorf("error closing pull request: %w, %w", err, enginerr.ErrActionFailed)
+		return nil, fmt.Errorf("error closing pull request %d: %w, %w", p.metadata.Number, err, enginerr.ErrActionFailed)
 	}
-	logger.Info().Int("pr_number", p.metadata.Number).Msg("pull request closed")
+	logger.Info().Int("pr_number", pr.GetNumber()).Msg("pull request closed")
 	return nil, enginerr.ErrActionSkipped
 }
 
