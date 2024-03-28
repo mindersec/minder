@@ -38,7 +38,6 @@ func execOnOneRuleType(
 	f string,
 	dashOpen io.Reader,
 	proj string,
-	provider string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
@@ -64,15 +63,6 @@ func execOnOneRuleType(
 		r.Context.Project = &proj
 	}
 
-	// Override the YAML specified provider with the command line argument
-	if provider != "" {
-		if r.Context == nil {
-			r.Context = &minderv1.Context{}
-		}
-
-		r.Context.Provider = &provider
-	}
-
 	// create a rule
 	rt, err := exec(ctx, f, r)
 	if err != nil {
@@ -81,7 +71,6 @@ func execOnOneRuleType(
 
 	// add the rule type to the table rows
 	t.AddRow(
-		*rt.Context.Provider,
 		*rt.Context.Project,
 		*rt.Id,
 		rt.Name,
@@ -134,7 +123,6 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("ID", *rt.Id)
 	t.AddRow("Name", rt.Name)
 	t.AddRow("Description", rt.Description)
-	t.AddRow("Provider", *rt.Context.Provider)
 	t.AddRow("Project", *rt.Context.Project)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)

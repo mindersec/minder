@@ -27,7 +27,6 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -239,7 +238,6 @@ func TestRuleTypeService(t *testing.T) {
 				res, err = svc.CreateRuleType(
 					ctx,
 					projectID,
-					&provider,
 					scenario.SubscriptionID,
 					scenario.RuleType,
 					store,
@@ -248,7 +246,6 @@ func TestRuleTypeService(t *testing.T) {
 				res, err = svc.UpdateRuleType(
 					ctx,
 					projectID,
-					&provider,
 					scenario.SubscriptionID,
 					scenario.RuleType,
 					store,
@@ -257,7 +254,6 @@ func TestRuleTypeService(t *testing.T) {
 				err = svc.UpsertRuleType(
 					ctx,
 					projectID,
-					&provider,
 					scenario.SubscriptionID,
 					scenario.RuleType,
 					store,
@@ -298,13 +294,9 @@ const (
 )
 
 var (
-	ruleTypeID     = uuid.New()
-	projectID      = uuid.New()
-	subscriptionID = uuid.New()
-	provider       = db.Provider{
-		ID:   uuid.New(),
-		Name: oauth.Github,
-	}
+	ruleTypeID            = uuid.New()
+	projectID             = uuid.New()
+	subscriptionID        = uuid.New()
 	errDefault            = errors.New("oh no")
 	oldRuleType           = newDBRuleType("low", uuid.Nil)
 	namespacedOldRuleType = newDBRuleType("low", subscriptionID)

@@ -191,7 +191,6 @@ default allow = true`,
 		}).Return(db.RuleType{
 		ID:         ruleTypeID,
 		Name:       passthroughRuleType,
-		Provider:   providerName,
 		ProjectID:  projectID,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)

@@ -43,45 +43,45 @@ func (m *MockRuleTypeService) EXPECT() *MockRuleTypeServiceMockRecorder {
 }
 
 // CreateRuleType mocks base method.
-func (m *MockRuleTypeService) CreateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) (*v1.RuleType, error) {
+func (m *MockRuleTypeService) CreateRuleType(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 *v1.RuleType, arg4 db.Querier) (*v1.RuleType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "CreateRuleType", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*v1.RuleType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateRuleType indicates an expected call of CreateRuleType.
-func (mr *MockRuleTypeServiceMockRecorder) CreateRuleType(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockRuleTypeServiceMockRecorder) CreateRuleType(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).CreateRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).CreateRuleType), arg0, arg1, arg2, arg3, arg4)
 }
 
 // UpdateRuleType mocks base method.
-func (m *MockRuleTypeService) UpdateRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) (*v1.RuleType, error) {
+func (m *MockRuleTypeService) UpdateRuleType(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 *v1.RuleType, arg4 db.Querier) (*v1.RuleType, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "UpdateRuleType", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*v1.RuleType)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateRuleType indicates an expected call of UpdateRuleType.
-func (mr *MockRuleTypeServiceMockRecorder) UpdateRuleType(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockRuleTypeServiceMockRecorder) UpdateRuleType(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).UpdateRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).UpdateRuleType), arg0, arg1, arg2, arg3, arg4)
 }
 
 // UpsertRuleType mocks base method.
-func (m *MockRuleTypeService) UpsertRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 *db.Provider, arg3 uuid.UUID, arg4 *v1.RuleType, arg5 db.Querier) error {
+func (m *MockRuleTypeService) UpsertRuleType(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 *v1.RuleType, arg4 db.Querier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleType", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "UpsertRuleType", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertRuleType indicates an expected call of UpsertRuleType.
-func (mr *MockRuleTypeServiceMockRecorder) UpsertRuleType(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockRuleTypeServiceMockRecorder) UpsertRuleType(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).UpsertRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleType", reflect.TypeOf((*MockRuleTypeService)(nil).UpsertRuleType), arg0, arg1, arg2, arg3, arg4)
 }

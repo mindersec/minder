@@ -121,7 +121,7 @@ type Querier interface {
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
-	ListRuleTypesByProviderAndProject(ctx context.Context, arg ListRuleTypesByProviderAndProjectParams) ([]RuleType, error)
+	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
 	// attempt to insert or update the entity_execution_lock table only if the

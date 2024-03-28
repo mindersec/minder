@@ -40,15 +40,12 @@ func (s *Server) ListRuleTypes(
 ) (*minderv1.ListRuleTypesResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
-		Provider:  entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID,
-	})
+	lrt, err := s.store.ListRuleTypesByProject(ctx, entityCtx.Project.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
 	}
@@ -66,7 +63,6 @@ func (s *Server) ListRuleTypes(
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return resp, nil
@@ -79,7 +75,7 @@ func (s *Server) GetRuleTypeByName(
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -102,7 +98,6 @@ func (s *Server) GetRuleTypeByName(
 	resp.RuleType = rt
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
@@ -116,7 +111,7 @@ func (s *Server) GetRuleTypeById(
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -141,7 +136,6 @@ func (s *Server) GetRuleTypeById(
 	resp.RuleType = rt
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
@@ -154,20 +148,15 @@ func (s *Server) CreateRuleType(
 	crt *minderv1.CreateRuleTypeRequest,
 ) (*minderv1.CreateRuleTypeResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
 	projectID := entityCtx.Project.ID
-	// TODO: This will be removed once we decouple providers from rule types
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, crt, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
 
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		return s.ruleTypes.CreateRuleType(ctx, projectID, &provider, uuid.Nil, crt.GetRuleType(), qtx)
+		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
@@ -189,20 +178,15 @@ func (s *Server) UpdateRuleType(
 	urt *minderv1.UpdateRuleTypeRequest,
 ) (*minderv1.UpdateRuleTypeResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
 	projectID := entityCtx.Project.ID
-	// TODO: This will be removed once we decouple providers from rule types
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, urt, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		return s.ruleTypes.UpdateRuleType(ctx, projectID, &provider, uuid.Nil, urt.GetRuleType(), qtx)
+		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
@@ -244,24 +228,9 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
 	}
 
-	ph, err := s.store.GetParentProjects(ctx, rtdb.ProjectID)
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get project hierarchy: %s", err)
-	}
-
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     rtdb.Provider,
-		Projects: ph,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
-	}
-
-	in.Context.Provider = &prov.Name
-
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err = entityCtx.Validate(ctx, s.store)
+	err = entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -294,7 +263,6 @@ func (s *Server) DeleteRuleType(
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 

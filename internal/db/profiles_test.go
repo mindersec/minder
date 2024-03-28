@@ -47,15 +47,13 @@ func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID, label
 	return prof
 }
 
-func createRandomRuleType(t *testing.T, prov Provider, projectID uuid.UUID) RuleType {
+func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
 	arg := CreateRuleTypeParams{
 		Name:          rand.RandomName(seed),
-		Provider:      prov.Name,
-		ProviderID:    prov.ID,
 		ProjectID:     projectID,
 		Description:   rand.RandomString(64, seed),
 		Guidance:      rand.RandomString(64, seed),
@@ -178,8 +176,8 @@ func createTestRandomEntities(t *testing.T) *testRandomEntities {
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
 	repo := createRandomRepository(t, proj.ID, prov)
-	ruleType1 := createRandomRuleType(t, prov, proj.ID)
-	ruleType2 := createRandomRuleType(t, prov, proj.ID)
+	ruleType1 := createRandomRuleType(t, proj.ID)
+	ruleType2 := createRandomRuleType(t, proj.ID)
 
 	return &testRandomEntities{
 		prov:      prov,

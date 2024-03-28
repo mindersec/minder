@@ -42,7 +42,6 @@ var getCmd = &cobra.Command{
 func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	id := viper.GetString("id")
@@ -57,7 +56,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	cmd.SilenceUsage = true
 
 	rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{Project: &project},
 		Id:      id,
 	})
 	if err != nil {

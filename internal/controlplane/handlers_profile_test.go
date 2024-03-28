@@ -225,7 +225,9 @@ func TestCreateProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating project: %v", err)
 	}
-	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
+
+	// The provider is used in the profile definition
+	_, err = dbStore.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       "github",
 		ProjectID:  dbproj.ID,
 		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
@@ -238,8 +240,6 @@ func TestCreateProfile(t *testing.T) {
 	}
 	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          "rule_type_1",
-		Provider:      provider.Name,
-		ProviderID:    provider.ID,
 		ProjectID:     dbproj.ID,
 		Definition:    []byte(`{"in_entity": "repository","ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,

@@ -111,7 +111,7 @@ func (s *subscriptionService) Subscribe(
 	}
 
 	// populate all rule types from this bundle into the project
-	err = s.upsertBundleRules(ctx, qtx, project.ID, project.Provider, bundle, subscription.ID)
+	err = s.upsertBundleRules(ctx, qtx, project.ID, bundle, subscription.ID)
 	if err != nil {
 		return fmt.Errorf("error while creating rules in project: %w", err)
 	}
@@ -197,11 +197,10 @@ func (s *subscriptionService) upsertBundleRules(
 	ctx context.Context,
 	qtx db.Querier,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	bundle reader.BundleReader,
 	subscriptionID uuid.UUID,
 ) error {
 	return bundle.ForEachRuleType(func(ruleType *minderv1.RuleType) error {
-		return s.rules.UpsertRuleType(ctx, projectID, provider, subscriptionID, ruleType, qtx)
+		return s.rules.UpsertRuleType(ctx, projectID, subscriptionID, ruleType, qtx)
 	})
 }

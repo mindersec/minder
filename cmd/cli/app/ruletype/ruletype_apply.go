@@ -42,7 +42,6 @@ var applyCmd = &cobra.Command{
 func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")
@@ -101,7 +100,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, provider, applyFunc); err != nil {
+		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, applyFunc); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f), err)
 		}
 	}
