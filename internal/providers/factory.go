@@ -16,7 +16,6 @@ package providers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -83,14 +82,9 @@ func (t *traitInstantiator) GetGit(ctx context.Context, provider *db.Provider) (
 		return t.GetGitHub(ctx, provider, nil)
 	}
 
-	credential, err := t.getProviderCredential(ctx, provider, nil)
+	gitCredential, err := getCredential[provinfv1.GitCredential](ctx, t, provider, nil)
 	if err != nil {
 		return nil, err
-	}
-
-	gitCredential, ok := credential.(provinfv1.GitCredential)
-	if !ok {
-		return nil, ErrInvalidCredential
 	}
 
 	return gitclient.NewGit(gitCredential), nil
@@ -113,7 +107,7 @@ func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) 
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	credential, err := t.getProviderCredential(ctx, provider, nil)
+	restCredential, err := getCredential[provinfv1.RestCredential](ctx, t, provider, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -122,11 +116,6 @@ func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) 
 	cfg, err := httpclient.ParseV1Config(provider.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing http config: %w", err)
-	}
-
-	restCredential, ok := credential.(provinfv1.RestCredential)
-	if !ok {
-		return nil, ErrInvalidCredential
 	}
 
 	return httpclient.NewREST(cfg, t.metrics, restCredential)
@@ -146,7 +135,7 @@ func (t *traitInstantiator) GetGitHub(
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	credential, err := t.getProviderCredential(ctx, provider, options)
+	credential, err := getCredential[provinfv1.GitHubCredential](ctx, t, provider, options)
 	if err != nil {
 		return nil, err
 	}
@@ -208,23 +197,40 @@ func (t *traitInstantiator) GetRepoLister(ctx context.Context, provider *db.Prov
 	return nil, fmt.Errorf("provider does not implement repo lister")
 }
 
-func (t *traitInstantiator) getProviderCredential(
+func (t *traitInstantiator) getCredentialFromDB(
 	ctx context.Context,
 	provider *db.Provider,
-	options *GitHubOptions,
-) (provinfv1.GitHubCredential, error) {
-	if options != nil && options.Credential != nil {
-		return options.Credential, nil
-	}
-	rawCredential, err := getCredentialForProvider(ctx, *provider, t.crypteng, t.store, t.cfg)
+) (provinfv1.Credential, error) {
+	credential, err := getCredentialForProvider(ctx, *provider, t.crypteng, t.store, t.cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
-	credential, ok := rawCredential.(provinfv1.GitHubCredential)
-	if !ok {
-		return nil, errors.New("invalid credential in database")
-	}
 	return credential, nil
+}
+
+// Because of the use of generics, this cannot be a method of traitInstantiator
+func getCredential[T provinfv1.Credential](
+	ctx context.Context,
+	t *traitInstantiator,
+	provider *db.Provider,
+	options *GitHubOptions,
+) (result T, err error) {
+	var credential provinfv1.Credential
+	if options == nil || options.Credential == nil {
+		credential, err = t.getCredentialFromDB(ctx, provider)
+		if err != nil {
+			return
+		}
+	} else {
+		credential = options.Credential
+	}
+
+	var ok bool
+	result, ok = credential.(T)
+	if !ok {
+		return result, ErrInvalidCredential
+	}
+	return result, nil
 }
 
 func (t *traitInstantiator) getOwnerFilter(
