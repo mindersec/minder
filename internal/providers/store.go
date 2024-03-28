@@ -35,6 +35,8 @@ type ProviderStore interface {
 	GetByName(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error)
 	// GetByNameAndTrait returns the providers in the project which match the
 	// specified trait.
+	// Note that if error is nil, there will always be at least one element
+	// in the list of providers which is returned.
 	GetByNameAndTrait(
 		ctx context.Context,
 		projectID uuid.UUID,
@@ -59,7 +61,20 @@ func (p *providerStore) GetByName(ctx context.Context, projectID uuid.UUID, name
 		return nil, err
 	}
 
-	return inferProvider(providers, nameFilter)
+	// Note that by the time we get here, `providers` will always have at
+	// least one element.
+	if nameFilter.Valid {
+		if len(providers) == 1 {
+			return &providers[0], nil
+		}
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument,
+			"cannot infer provider, there are %d providers available",
+			len(providers),
+		)
+	}
+
+	return &providers[0], nil
 }
 
 func (p *providerStore) GetByNameAndTrait(
