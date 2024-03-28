@@ -46,20 +46,17 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rt.Def.Ingest.GetRest() == nil {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
-
 		return rest.NewRestRuleDataIngest(ing.GetRest(), pbuild)
 	case builtin.BuiltinRuleDataIngestType:
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
 		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin(), pbuild)
-
 	case artifact.ArtifactRuleDataIngestType:
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
 		return artifact.NewArtifactDataIngest(ing.GetArtifact(), pbuild)
-
 	case git.GitRuleDataIngestType:
 		return git.NewGitIngester(ing.GetGit(), pbuild)
 	case diff.DiffRuleDataIngestType:

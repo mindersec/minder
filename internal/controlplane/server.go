@@ -85,6 +85,7 @@ type Server struct {
 	authzClient         authz.Client
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
+
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
@@ -94,6 +95,7 @@ type Server struct {
 	providers     providers.ProviderService
 	marketplace   marketplaces.Marketplace
 	providerStore providers.ProviderStore
+	instantiator  providers.TraitInstantiator
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -187,8 +189,8 @@ func NewServer(
 	}
 
 	// Moved here because we have a dependency on s.restClientCache
-	s.providers = providers.NewProviderService(
-		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache)
+	s.instantiator = providers.NewTraitInstantiator(s.restClientCache, provMt, &cfg.Provider, store, eng)
+	s.providers = providers.NewProviderService(store, eng, mt, s.instantiator, s.makeProjectForGitHubApp, &cfg.Provider)
 
 	return s, nil
 }

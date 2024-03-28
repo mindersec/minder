@@ -335,29 +335,31 @@ func TestProviderCallback(t *testing.T) {
 		code             int
 		existingProvider bool
 		err              string
-	}{{
-		name:             "Success",
-		redirectUrl:      "http://localhost:8080",
-		existingProvider: true,
-		code:             307,
-	}, {
-		name:             "Success with remote user",
-		redirectUrl:      "http://localhost:8080",
-		remoteUser:       sql.NullString{Valid: true, String: "31337"},
-		existingProvider: true,
-		code:             307,
-	}, {
-		name:             "Wrong remote userid",
-		remoteUser:       sql.NullString{Valid: true, String: "1234"},
-		existingProvider: true,
-		code:             403,
-		err:              "The provided login token was associated with a different GitHub user.\n",
-	}, {
-		name:             "No existing provider",
-		redirectUrl:      "http://localhost:8080",
-		existingProvider: false,
-		code:             307,
-	}}
+	}{
+		{
+			name:             "Success",
+			redirectUrl:      "http://localhost:8080",
+			existingProvider: true,
+			code:             307,
+		}, {
+			name:             "Success with remote user",
+			redirectUrl:      "http://localhost:8080",
+			remoteUser:       sql.NullString{Valid: true, String: "31337"},
+			existingProvider: true,
+			code:             307,
+		}, {
+			name:             "Wrong remote userid",
+			remoteUser:       sql.NullString{Valid: true, String: "1234"},
+			existingProvider: true,
+			code:             403,
+			err:              "The provided login token was associated with a different GitHub user.\n",
+		}, {
+			name:             "No existing provider",
+			redirectUrl:      "http://localhost:8080",
+			existingProvider: false,
+			code:             307,
+		},
+	}
 
 	for _, tt := range testCases {
 		tc := tt

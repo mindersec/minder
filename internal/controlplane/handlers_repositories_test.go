@@ -374,5 +374,6 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, pro
 		restClientCache: clientCache,
 		cfg:             &server.Config{},
 		providerStore:   providers.NewProviderStore(store),
+		instantiator:    providers.NewTraitInstantiator(clientCache, nil, &server.ProviderConfig{}, store, mockCryptoEngine),
 	}
 }

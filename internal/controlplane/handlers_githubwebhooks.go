@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/providers"
 	"io"
 	"mime"
 	"net/http"
@@ -44,7 +45,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -418,15 +418,6 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
-	}
-
 	var action string // explicit declaration to use the default value
 	action, err = util.JQReadFrom[string](ctx, ".action", payload)
 	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
@@ -436,13 +427,11 @@ func (s *Server) parseGithubEventForProcessing(
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
-		return s.parseArtifactPublishedEvent(
-			ctx, payload, msg, dbRepo, provBuilder)
+		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, prov)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
-		return parsePullRequestModEvent(
-			ctx, payload, msg, dbRepo, s.store, provBuilder)
+		return s.parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, prov)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+		return parseRepoEvent(msg, dbRepo, prov.Name)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -470,7 +459,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	prov *providers.ProviderBuilder,
+	provider *db.Provider,
 ) error {
 	// we need to have information about package and repository
 	if whPayload["package"] == nil || whPayload["repository"] == nil {
@@ -478,13 +467,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
+	cli, err := s.instantiator.GetGitHub(ctx, provider, nil)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return err
@@ -514,7 +497,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
-		WithProvider(prov.GetName()).
+		WithProvider(provider.Name).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID)
@@ -522,24 +505,18 @@ func (s *Server) parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parsePullRequestModEvent(
+func (s *Server) parsePullRequestModEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
 	store db.Store,
-	prov *providers.ProviderBuilder,
+	provider *db.Provider,
 ) error {
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
+	cli, err := s.instantiator.GetGitHub(ctx, provider, nil)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
-		return nil
+		return err
 	}
 
 	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
@@ -564,7 +541,7 @@ func parsePullRequestModEvent(
 	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(dbPr.ID).
-		WithProvider(prov.GetName()).
+		WithProvider(provider.Name).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID)
 

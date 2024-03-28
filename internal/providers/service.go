@@ -40,8 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/app"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/util/ptr"
 )
 
 // ProviderService encapsulates methods for creating and updating providers
@@ -71,25 +70,28 @@ type providerService struct {
 	store           db.Store
 	cryptoEngine    crypto.Engine
 	mt              metrics.Metrics
-	provMt          provtelemetry.ProviderMetrics
+	instantiator    TraitInstantiator
 	config          *server.ProviderConfig
 	projectFactory  ProjectFactory
-	restClientCache ratecache.RestClientCache
 	ghClientService ghprov.ClientService
 }
 
 // NewProviderService creates an instance of ProviderService
-func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.Metrics,
-	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig,
-	projectFactory ProjectFactory, restClientCache ratecache.RestClientCache) ProviderService {
+func NewProviderService(
+	store db.Store,
+	cryptoEngine crypto.Engine,
+	mt metrics.Metrics,
+	instantiator TraitInstantiator,
+	projectFactory ProjectFactory,
+	config *server.ProviderConfig,
+) ProviderService {
 	return &providerService{
 		store:           store,
 		cryptoEngine:    cryptoEngine,
 		mt:              mt,
-		provMt:          provMt,
+		instantiator:    instantiator,
 		config:          config,
 		projectFactory:  projectFactory,
-		restClientCache: restClientCache,
 		ghClientService: ghprov.ClientServiceImplementation{},
 	}
 }
@@ -399,15 +401,8 @@ func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payl
 
 func (p *providerService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
-	pbOpts := []ProviderBuilderOption{
-		WithProviderMetrics(p.provMt),
-		WithRestClientCache(p.restClientCache),
-	}
-	builder := NewProviderBuilder(&provider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
-		p.config, pbOpts...)
-	// NOTE: this is github-specific at the moment.  We probably need to generally
-	// re-think token enrollment when we add more providers.
-	ghClient, err := builder.GetGitHub()
+	opts := GitHubOptions{Credential: credentials.NewGitHubTokenCredential(token), OwnerFilter: ptr.Ptr("")}
+	ghClient, err := p.instantiator.GetGitHub(ctx, &provider, &opts)
 	if err != nil {
 		return fmt.Errorf("error creating GitHub client: %w", err)
 	}
