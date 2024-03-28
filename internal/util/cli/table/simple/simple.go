@@ -94,7 +94,7 @@ func keyValueLayout(table *tablewriter.Table) {
 
 func profileSettingsLayout(table *tablewriter.Table) {
 	defaultLayout(table)
-	table.SetHeader([]string{"ID", "Name", "Provider", "Alert", "Remediate"})
+	table.SetHeader([]string{"ID", "Name", "Alert", "Remediate"})
 	table.SetColMinWidth(1, 50)
 }
 

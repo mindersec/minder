@@ -41,7 +41,6 @@ var listCmd = &cobra.Command{
 func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
 	format := viper.GetString("output")
@@ -55,7 +54,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-		Context:  &minderv1.Context{Provider: &provider, Project: &project},
+		Context:  &minderv1.Context{Project: &project},
 		Name:     profileName,
 		All:      detailed,
 		RuleType: ruleType,

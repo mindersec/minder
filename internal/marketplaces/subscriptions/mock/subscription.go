@@ -13,8 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
-	types "github.com/stacklok/minder/internal/marketplaces/types"
 	reader "github.com/stacklok/minder/pkg/mindpak/reader"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -43,7 +43,7 @@ func (m *MockSubscriptionService) EXPECT() *MockSubscriptionServiceMockRecorder 
 }
 
 // CreateProfile mocks base method.
-func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 string, arg4 db.Querier) error {
+func (m *MockSubscriptionService) CreateProfile(arg0 context.Context, arg1 uuid.UUID, arg2 reader.BundleReader, arg3 string, arg4 db.Querier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateProfile", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -57,7 +57,7 @@ func (mr *MockSubscriptionServiceMockRecorder) CreateProfile(arg0, arg1, arg2, a
 }
 
 // Subscribe mocks base method.
-func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 types.ProjectContext, arg2 reader.BundleReader, arg3 db.Querier) error {
+func (m *MockSubscriptionService) Subscribe(arg0 context.Context, arg1 uuid.UUID, arg2 reader.BundleReader, arg3 db.Querier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)

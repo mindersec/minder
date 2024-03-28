@@ -51,7 +51,6 @@ type ProfileService interface {
 	CreateProfile(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
 		qtx db.Querier,
@@ -62,7 +61,6 @@ type ProfileService interface {
 	UpdateProfile(
 		ctx context.Context,
 		projectID uuid.UUID,
-		provider *db.Provider,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
 		qtx db.Querier,
@@ -89,13 +87,11 @@ func NewProfileService(publisher events.Publisher) ProfileService {
 func (p *profileService) CreateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
 	qtx db.Querier,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
 	rulesInProf, err := p.validator.ValidateAndExtractRules(ctx, qtx, projectID, profile)
@@ -121,8 +117,6 @@ func (p *profileService) CreateProfile(
 	}
 
 	params := db.CreateProfileParams{
-		Provider:       provider.Name,
-		ProviderID:     provider.ID,
 		ProjectID:      projectID,
 		Name:           profile.GetName(),
 		DisplayName:    displayName,
@@ -155,12 +149,11 @@ func (p *profileService) CreateProfile(
 	}
 
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: newProfile.ID}
-	p.sendNewProfileEvent(provider.Name, projectID)
+	p.sendNewProfileEvent(projectID)
 
 	profile.Id = ptr.Ptr(newProfile.ID.String())
 	profile.Context = &minderv1.Context{
-		Provider: &newProfile.Provider,
-		Project:  ptr.Ptr(newProfile.ProjectID.String()),
+		Project: ptr.Ptr(newProfile.ProjectID.String()),
 	}
 
 	profile.Remediate = ptr.Ptr(string(newProfile.Remediate.ActionType))
@@ -174,13 +167,11 @@ func (p *profileService) CreateProfile(
 func (p *profileService) UpdateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
-	provider *db.Provider,
 	subscriptionID uuid.UUID,
 	profile *minderv1.Profile,
 	qtx db.Querier,
 ) (*minderv1.Profile, error) {
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
 	logger.BusinessRecord(ctx).Project = projectID
 
 	rules, err := p.validator.ValidateAndExtractRules(ctx, qtx, projectID, profile)
@@ -203,7 +194,7 @@ func (p *profileService) UpdateProfile(
 	}
 
 	// validate update
-	if err = validateProfileUpdate(oldDBProfile, profile, projectID, provider); err != nil {
+	if err = validateProfileUpdate(oldDBProfile, profile, projectID); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile update: %v", err)
 	}
 
@@ -273,15 +264,14 @@ func (p *profileService) UpdateProfile(
 
 	profile.Id = ptr.Ptr(updatedProfile.ID.String())
 	profile.Context = &minderv1.Context{
-		Provider: &updatedProfile.Provider,
-		Project:  ptr.Ptr(updatedProfile.ProjectID.String()),
+		Project: ptr.Ptr(updatedProfile.ProjectID.String()),
 	}
 
 	profile.Remediate = ptr.Ptr(string(updatedProfile.Remediate.ActionType))
 	profile.Alert = ptr.Ptr(string(updatedProfile.Alert.ActionType))
 
 	// re-trigger profile evaluation
-	p.sendNewProfileEvent(provider.Name, projectID)
+	p.sendNewProfileEvent(projectID)
 
 	return profile, nil
 }
@@ -338,11 +328,10 @@ func createProfileRulesForEntity(
 }
 
 func (p *profileService) sendNewProfileEvent(
-	providerName string,
 	projectID uuid.UUID,
 ) {
 	// both errors in this case are considered non-fatal
-	msg, err := reconcilers.NewProfileInitMessage(providerName, projectID)
+	msg, err := reconcilers.NewProfileInitMessage(projectID)
 	if err != nil {
 		log.Printf("error creating reconciler event: %v", err)
 	}
@@ -409,7 +398,6 @@ func validateProfileUpdate(
 	old *db.Profile,
 	new *minderv1.Profile,
 	projectID uuid.UUID,
-	provider *db.Provider,
 ) error {
 	if old.Name != new.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile name")
@@ -417,10 +405,6 @@ func validateProfileUpdate(
 
 	if old.ProjectID != projectID {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
-	}
-
-	if old.Provider != provider.Name {
-		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile provider")
 	}
 
 	if err := namespaces.ValidateLabelsUpdate(new.GetLabels(), old.Labels); err != nil {

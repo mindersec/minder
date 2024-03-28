@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/internal/marketplaces/types"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
@@ -102,7 +101,7 @@ func ProvisionSelfEnrolledProject(
 	}
 
 	// Create GitHub provider
-	dbProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
+	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       github.Github,
 		ProjectID:  project.ID,
 		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
@@ -117,13 +116,12 @@ func ProvisionSelfEnrolledProject(
 	// Enable any default profiles and rule types in the project.
 	// For now, we subscribe to a single bundle and a single profile.
 	// Both are specified in the service config.
-	projectContext := types.NewProjectContext(project.ID, &dbProvider)
 	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
-	if err := marketplace.Subscribe(ctx, projectContext, bundleID, qtx); err != nil {
+	if err := marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
 		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
 	}
 	for _, profileName := range profilesCfg.GetProfiles() {
-		if err := marketplace.AddProfile(ctx, projectContext, bundleID, profileName, qtx); err != nil {
+		if err := marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
 			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
 		}
 	}
