@@ -136,8 +136,8 @@ func TestPackerInitBundle(t *testing.T) {
 			tc.prepare(t, tc.opts)
 			p := NewPacker()
 
-			// Run the nundle initialization
-			err := p.InitBundle(tc.opts)
+			// Run the bundle initialization
+			_, err := p.InitBundle(tc.opts)
 			if tc.mustErr {
 				require.Error(t, err)
 				return

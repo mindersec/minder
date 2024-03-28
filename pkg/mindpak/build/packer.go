@@ -19,6 +19,7 @@ package build
 
 import (
 	"archive/tar"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -74,9 +75,9 @@ func (opts *InitOptions) Validate() error {
 
 // InitBundle creates a new bundle manifest in a directory with minder data in the
 // expected structure.
-func (_ *Packer) InitBundle(opts *InitOptions) error {
+func (_ *Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
 	if opts == nil {
-		return fmt.Errorf("invalid init options")
+		return nil, fmt.Errorf("invalid init options")
 	}
 
 	if opts.Metadata == nil {
@@ -84,32 +85,32 @@ func (_ *Packer) InitBundle(opts *InitOptions) error {
 	}
 
 	if opts.Metadata.Name == "" {
-		return fmt.Errorf("unable to initialize new bundle, no name defined")
+		return nil, fmt.Errorf("unable to initialize new bundle, no name defined")
 	}
 
 	bundle, err := mindpak.NewBundleFromDirectory(opts.Path)
 	if err != nil {
-		return fmt.Errorf("reading source data: %w", err)
+		return nil, fmt.Errorf("reading source data: %w", err)
 	}
 
 	bundle.Metadata = opts.Metadata
 
 	if err := bundle.UpdateManifest(); err != nil {
-		return fmt.Errorf("updating new bundle manifest: %w", err)
+		return nil, fmt.Errorf("updating new bundle manifest: %w", err)
 	}
 	t := time.Now()
 	bundle.Metadata.Date = &t
 
 	f, err := os.Create(filepath.Join(opts.Path, mindpak.ManifestFileName))
 	if err != nil {
-		return fmt.Errorf("opening manifest file: %w", err)
+		return nil, fmt.Errorf("opening manifest file: %w", err)
 	}
 
 	if err := bundle.Manifest.Write(f); err != nil {
-		return fmt.Errorf("writing manifest data: %w", err)
+		return nil, fmt.Errorf("writing manifest data: %w", err)
 	}
 	fmt.Printf("wrote to %s", f.Name())
-	return nil
+	return bundle, nil
 }
 
 // WriteToFile writes the bundle to a file on disk.
@@ -129,7 +130,9 @@ func (p *Packer) WriteToFile(bundle *mindpak.Bundle, path string) error {
 
 // Write writes a bundle archive to writer w
 func (_ *Packer) Write(bundle *mindpak.Bundle, w io.Writer) error {
-	tarWriter := tar.NewWriter(w)
+	gzWriter := gzip.NewWriter(w)
+	defer gzWriter.Close()
+	tarWriter := tar.NewWriter(gzWriter)
 	defer tarWriter.Close()
 
 	if bundle.Source == nil {

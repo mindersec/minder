@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/stacklok/minder/cmd/dev/app/bundles"
 	"github.com/stacklok/minder/cmd/dev/app/container"
 	"github.com/stacklok/minder/cmd/dev/app/rule_type"
 	"github.com/stacklok/minder/cmd/dev/app/testserver"
@@ -39,6 +40,7 @@ https://docs.stacklok.com/minder`,
 	cmd.AddCommand(rule_type.CmdRuleType())
 	cmd.AddCommand(container.CmdContainer())
 	cmd.AddCommand(testserver.CmdTestServer())
+	cmd.AddCommand(bundles.CmdBundle())
 
 	return cmd
 }
