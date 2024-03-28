@@ -158,7 +158,7 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 	// Get previous Remediation status
 	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb.AlertStatus.Valid {
+	if prevEvalFromDb.RemStatus.Valid {
 		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
 	}
 
