@@ -150,12 +150,6 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	// Get current evaluation status
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
-	// Get previous evaluation status
-	prevEval := db.EvalStatusTypesPending
-	if prevEvalFromDb.EvalStatus.Valid {
-		prevEval = prevEvalFromDb.EvalStatus.EvalStatusTypes
-	}
-
 	// Get previous Remediation status
 	prevRemediation := db.RemediationStatusTypesSkipped
 	if prevEvalFromDb.RemStatus.Valid {
@@ -164,10 +158,7 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 	// Start evaluation scenarios
 
-	// Case 1 - Do nothing if the evaluation status has not changed and remediation did not errored-out
-	if newEval == prevEval && prevRemediation != db.RemediationStatusTypesError {
-		return engif.ActionCmdDoNothing
-	}
+	// Case 1 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
 	switch newEval {
@@ -208,12 +199,6 @@ func shouldAlert(
 	// Get current evaluation status
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
-	// Get previous evaluation status
-	prevEval := db.EvalStatusTypesPending
-	if prevEvalFromDb.EvalStatus.Valid {
-		prevEval = prevEvalFromDb.EvalStatus.EvalStatusTypes
-	}
-
 	// Get previous Alert status
 	prevAlert := db.AlertStatusTypesSkipped
 	if prevEvalFromDb.AlertStatus.Valid {
@@ -231,10 +216,7 @@ func shouldAlert(
 		return engif.ActionCmdDoNothing
 	}
 
-	// Case 2 - Do nothing if the evaluation status has not changed
-	if newEval == prevEval && prevAlert != db.AlertStatusTypesError {
-		return engif.ActionCmdDoNothing
-	}
+	// Case 2 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
 	switch newEval {
