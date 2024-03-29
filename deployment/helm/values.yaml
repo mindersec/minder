@@ -110,9 +110,14 @@ deploymentSettings:
       cpu: 4
       memory: 1.5Gi
   # -- (array, optional) Additional volumes to mount
-  extraVolumes: null
+  extraVolumes:
+    - name: healthcheck-bundle
+      emptyDir: {}
   # -- (array, optional) Additional volume mounts
-  extraVolumeMounts: null
+  extraVolumeMounts:
+    - name: healthcheck-bundle
+      mountPath: /app
+      readOnly: true
   secrets:
     # -- (string) Name of the secret containing the auth configuration
     authSecretName: "minder-auth-secrets"
@@ -125,12 +130,31 @@ deploymentSettings:
   # -- (array, optional) Additional configuration for sidecar containers
   sidecarContainers: null
   # -- (array, optional) Additional init containers to run
-  initContainers: null
-
+  initContainers:
+    - name: healthcheck-bundle-installer
+      image: ghcr.io/stacklok/healthcheck-bundle@sha256:0e74b62bab16788cc90d12524be9afd8cec33a7511c0609db4c36fb2f7c6561b
+      command: ["/bin/cp"]
+      args: ["-r", "/app/healthcheck.tar.gz", "/target"]
+      volumeMounts:
+        - name: healthcheck-bundle
+          mountPath: /target
 
 # -- (string) Additional configuration yaml beyond what's in server-config.yaml.example
 extra_config: |
   # Add content here
+  marketplace:
+  enabled: true
+  sources:
+    - type: tgz
+      location: ./healthcheck-bundle.tar.gz
+
+  default_profiles:
+    enabled: true
+    profiles:
+      - stacklok-health-check
+    bundle:
+      namespace: stacklok
+      name: healthcheck
 
 # -- (string) Additional configuration yaml that's applied to the migration job
 extra_config_migrate: |
