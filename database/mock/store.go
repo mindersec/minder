@@ -398,7 +398,7 @@ func (mr *MockStoreMockRecorder) DeleteProject(arg0, arg1 any) *gomock.Call {
 }
 
 // DeleteProvider mocks base method.
-func (m *MockStore) DeleteProvider(arg0 context.Context, arg1 db.DeleteProviderParams) error {
+func (m *MockStore) DeleteProvider(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteProvider", arg0, arg1)
 	ret0, _ := ret[0].(error)
