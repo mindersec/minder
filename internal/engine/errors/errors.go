@@ -71,18 +71,12 @@ func NewErrEvaluationSkipSilently(sfmt string, args ...any) error {
 }
 
 // ErrActionSkipped is an error code that indicates that the action was not performed at all because
-// the evaluation passed and the action was not needed
-var ErrActionSkipped = errors.New("action skipped")
-
-// ErrActionPending is an error code that indicates that the action was performed but is pending, i.e., opened a PR.
-var ErrActionPending = errors.New("action pending")
+// the evaluation passed and the action was not needed.
+var ErrActionSkipped = errors.New("action not performed")
 
 // IsActionInformativeError returns true if the error is an informative error that should not be reported to the user
 func IsActionInformativeError(err error) bool {
-	return errors.Is(err, ErrActionSkipped) ||
-		errors.Is(err, ErrActionNotAvailable) ||
-		errors.Is(err, ErrActionTurnedOff) ||
-		errors.Is(err, ErrActionPending)
+	return errors.Is(err, ErrActionSkipped) || errors.Is(err, ErrActionNotAvailable) || errors.Is(err, ErrActionTurnedOff)
 }
 
 // IsActionFatalError returns true if the error is a fatal error that should stop be reported to the user
@@ -150,29 +144,8 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 		return db.RemediationStatusTypesSkipped
 	case errors.Is(err, ErrActionNotAvailable):
 		return db.RemediationStatusTypesNotAvailable
-	case errors.Is(err, ErrActionPending):
-		return db.RemediationStatusTypesPending
 	}
 	return db.RemediationStatusTypesError
-}
-
-// RemediationStatusAsError returns the remediation status for a given error
-func RemediationStatusAsError(s db.RemediationStatusTypes) error {
-	switch s {
-	case db.RemediationStatusTypesSuccess:
-		return nil
-	case db.RemediationStatusTypesFailure:
-		return ErrActionFailed
-	case db.RemediationStatusTypesSkipped:
-		return ErrActionSkipped
-	case db.RemediationStatusTypesNotAvailable:
-		return ErrActionNotAvailable
-	case db.RemediationStatusTypesPending:
-		return ErrActionPending
-	case db.RemediationStatusTypesError:
-		return fmt.Errorf("generic remediation error status: %s", s)
-	}
-	return fmt.Errorf("generic remediation error status: %s", s)
 }
 
 // ErrorAsAlertStatus returns the alert status for a given error
@@ -192,23 +165,6 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 		return db.AlertStatusTypesNotAvailable
 	}
 	return db.AlertStatusTypesError
-}
-
-// AlertStatusAsError returns the error for a given alert status
-func AlertStatusAsError(s db.AlertStatusTypes) error {
-	switch s {
-	case db.AlertStatusTypesOn:
-		return nil
-	case db.AlertStatusTypesOff:
-		return ErrActionTurnedOff
-	case db.AlertStatusTypesError:
-		return ErrActionFailed
-	case db.AlertStatusTypesSkipped:
-		return ErrActionSkipped
-	case db.AlertStatusTypesNotAvailable:
-		return ErrActionNotAvailable
-	}
-	return fmt.Errorf("unknown alert status: %s", s)
 }
 
 var (

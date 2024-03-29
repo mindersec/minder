@@ -27,8 +27,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
@@ -228,10 +226,6 @@ func (e *Executor) evalEntityEvent(
 	ectx *EntityContext,
 	cli *providers.ProviderBuilder,
 ) error {
-	logger := zerolog.Ctx(ctx).Info().
-		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String())
-	logger.Msg("entity evaluation - started")
 	// this is a cache so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.
@@ -292,7 +286,6 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
-
 	cli *providers.ProviderBuilder,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
@@ -415,14 +408,29 @@ func logEval(
 			Str("project_id", inf.ProjectID.String()).
 			Logger())
 
-	// log evaluation result and actions status
-	evalLog.Info().
-		Str("action", string(remediate.ActionType)).
+	// log evaluation
+	evalLog.Err(params.GetEvalErr()).Msg("result - evaluation")
+
+	// log remediation
+	evalLog.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
+		Str("action", "remediate").
 		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
-		Str("action", string(alert.ActionType)).
+		Msg("result - action")
+
+	// log alert
+	evalLog.Err(filterActionErrorForLogging(params.GetActionsErr().AlertErr)).
+		Str("action", "alert").
 		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
-		Msg("entity evaluation - completed")
+		Msg("result - action")
 
 	// log business logic
 	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
+}
+
+func filterActionErrorForLogging(err error) error {
+	if evalerrors.IsActionFatalError(err) {
+		return err
+	}
+
+	return nil
 }

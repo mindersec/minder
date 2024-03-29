@@ -113,7 +113,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Check if we should skip silently
 	if errors.Is(params.GetEvalErr(), evalerrors.ErrEvaluationSkipSilently) {
-		logger.Info().Msg("rule evaluation skipped silently - skip updating the database")
+		logger.Debug().Msg("rule evaluation skipped silently")
 		return nil
 	}
 
@@ -135,7 +135,6 @@ func (e *Executor) createOrUpdateEvalStatus(
 		logger.Err(err).Msg("error upserting rule evaluation")
 		return err
 	}
-
 	// Upsert evaluation details
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: id,
@@ -152,7 +151,6 @@ func (e *Executor) createOrUpdateEvalStatus(
 		RuleEvalID: id,
 		Status:     evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr),
 		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
-		Metadata:   params.GetActionsErr().RemediateMeta,
 	})
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule remediation details")

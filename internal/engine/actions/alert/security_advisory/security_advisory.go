@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stacklok/minder/internal/db"
 	htmltemplate "html/template"
 	"strings"
 
@@ -114,7 +113,6 @@ type paramsSA struct {
 	Description     string
 	Vulnerabilities []*github.AdvisoryVulnerability
 	Metadata        *alertMetadata
-	prevStatus      *db.ListRuleEvaluationsByProfileIdRow
 }
 
 type templateParamsSA struct {
@@ -207,7 +205,7 @@ func (alert *Alert) Do(
 	case interfaces.ActionOptOn:
 		return alert.run(ctx, p, cmd)
 	case interfaces.ActionOptDryRun:
-		return alert.runDry(ctx, p, cmd)
+		return nil, alert.runDry(ctx, p, cmd)
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		return nil, fmt.Errorf("unexpected action setting: %w", enginerr.ErrActionFailed)
 	}
@@ -258,14 +256,13 @@ func (alert *Alert) run(ctx context.Context, params *paramsSA, cmd interfaces.Ac
 		// Success - return ErrActionTurnedOff to indicate the action was successful
 		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
 	case interfaces.ActionCmdDoNothing:
-		// Return the previous alert status.
-		return alert.runDoNothing(ctx, params)
+		return nil, enginerr.ErrActionSkipped
 	}
 	return nil, enginerr.ErrActionSkipped
 }
 
 // runDry runs the security advisory action in dry run mode
-func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces.ActionCmd) (json.RawMessage, error) {
+func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces.ActionCmd) error {
 	logger := zerolog.Ctx(ctx)
 
 	// Process the command
@@ -276,30 +273,28 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 		body := ""
 		curlCmd, err := util.GenerateCurlCommand("POST", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot generate curl command: %w", err)
+			return fmt.Errorf("cannot generate curl command: %w", err)
 		}
 		logger.Info().Msgf("run the following curl command to open a security-advisory: \n%s\n", curlCmd)
-		return nil, nil
+		return nil
 	// Close a security advisory
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ID == "" {
 			// We cannot do anything without the GHSA_ID, so we assume that closing this is a success
-			return nil, fmt.Errorf("no security advisory GHSA_ID provided: %w", enginerr.ErrActionTurnedOff)
+			return fmt.Errorf("no security advisory GHSA_ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
 		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v",
 			params.Owner, params.Repo, params.Metadata.ID)
 		body := "{\"state\": \"closed\"}"
 		curlCmd, err := util.GenerateCurlCommand("PATCH", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot generate curl command to close a security-adivsory: %w", err)
+			return fmt.Errorf("cannot generate curl command to close a security-adivsory: %w", err)
 		}
 		logger.Info().Msgf("run the following curl command: \n%s\n", curlCmd)
 	case interfaces.ActionCmdDoNothing:
-		// Return the previous alert status.
-		return alert.runDoNothing(ctx, params)
-
+		return enginerr.ErrActionSkipped
 	}
-	return nil, enginerr.ErrActionSkipped
+	return enginerr.ErrActionSkipped
 }
 
 // getParamsForSecurityAdvisory extracts the details from the entity
@@ -310,9 +305,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	metadata *json.RawMessage,
 ) (*paramsSA, error) {
 	logger := zerolog.Ctx(ctx)
-	result := &paramsSA{
-		prevStatus: params.GetEvalStatusFromDb(),
-	}
+	result := &paramsSA{}
 
 	// Get the owner and repo from the entity
 	switch entity := entity.(type) {
@@ -398,20 +391,4 @@ func (alert *Alert) getSeverityString() string {
 	}
 
 	return alert.saCfg.Severity
-}
-
-// runDoNothing returns the previous alert status
-func (_ *Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx).With().Str("repo", params.Repo).Logger()
-
-	logger.Debug().Msg("Running do nothing")
-
-	// Return the previous alert status.
-	err := enginerr.AlertStatusAsError(params.prevStatus.AlertStatus.AlertStatusTypes)
-	// If there is a valid alert metadata, return it too
-	if params.prevStatus.AlertMetadata.Valid {
-		return params.prevStatus.AlertMetadata.RawMessage, err
-	}
-	// If there is no alert metadata, return nil as the metadata and the error
-	return nil, err
 }

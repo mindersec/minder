@@ -28,15 +28,13 @@ INSERT INTO rule_details_remediate (
     rule_eval_id,
     status,
     details,
-    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, sqlc.arg(metadata)::jsonb, NOW())
+VALUES ($1, $2, $3, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
                   status = $2,
                   details = $3,
-                  metadata = sqlc.arg(metadata)::jsonb,
                   last_updated = NOW()
     WHERE rule_details_remediate.rule_eval_id = $1
 RETURNING id;
@@ -52,9 +50,9 @@ INSERT INTO rule_details_alert (
 VALUES ($1, $2, $3, sqlc.arg(metadata)::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = $2,
-                  details = $3,
-                  metadata = sqlc.arg(metadata)::jsonb,
+                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
+                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
+                  metadata = CASE WHEN $2 != 'skipped' THEN sqlc.arg(metadata)::jsonb ELSE rule_details_alert.metadata END,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id;
@@ -98,7 +96,6 @@ WITH
            rule_eval_id,
            status AS rem_status,
            details AS rem_details,
-           metadata AS rem_metadata,
            last_updated AS rem_last_updated
        FROM rule_details_remediate
    ),
@@ -118,7 +115,6 @@ SELECT
     ed.eval_details,
     rd.rem_status,
     rd.rem_details,
-    rd.rem_metadata,
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
