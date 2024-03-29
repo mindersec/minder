@@ -49,24 +49,22 @@ type RepositoryService interface {
 		repoName string,
 		repoOwner string,
 	) (*pb.Repository, error)
-	// DeleteRepositoryByName removes the webhook and deletes the repo from the
-	// database. The repo is identified by its name and project.
-	DeleteRepositoryByName(
+	// DeleteRepository removes the webhook and deletes the repo from the database.
+	DeleteRepository(
 		ctx context.Context,
 		client ghclient.GitHubRepoClient,
-		projectID uuid.UUID,
-		providerName string,
+		repo *db.Repository,
+	) error
+	// GetRepositoryById retrieves a repository by its ID and project.
+	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (db.Repository, error)
+	// GetRepositoryByName retrieves a repository by its name, owner, project and provider (if specified).
+	GetRepositoryByName(
+		ctx context.Context,
 		repoOwner string,
 		repoName string,
-	) error
-	// DeleteRepositoryByID removes the webhook and deletes the repo from the
-	// database. The repo is identified by its database ID and project.
-	DeleteRepositoryByID(
-		ctx context.Context,
-		client ghclient.GitHubRepoClient,
 		projectID uuid.UUID,
-		repoID uuid.UUID,
-	) error
+		providerName string,
+	) (db.Repository, error)
 }
 
 var (
@@ -155,45 +153,38 @@ func (r *repositoryService) CreateRepository(
 	return pbRepo, nil
 }
 
-func (r *repositoryService) DeleteRepositoryByName(
+func (r *repositoryService) GetRepositoryById(
 	ctx context.Context,
-	client ghclient.GitHubRepoClient,
+	repositoryID uuid.UUID,
 	projectID uuid.UUID,
-	providerName string,
+) (db.Repository, error) {
+	return r.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repositoryID,
+		ProjectID: projectID,
+	})
+}
+
+func (r *repositoryService) GetRepositoryByName(
+	ctx context.Context,
 	repoOwner string,
 	repoName string,
-) error {
+	projectID uuid.UUID,
+	providerName string,
+) (db.Repository, error) {
+	providerFilter := sql.NullString{
+		String: providerName,
+		Valid:  providerName != "",
+	}
 	params := db.GetRepositoryByRepoNameParams{
-		Provider:  providerName,
+		Provider:  providerFilter,
 		RepoOwner: repoOwner,
 		RepoName:  repoName,
 		ProjectID: projectID,
 	}
-	repo, err := r.store.GetRepositoryByRepoName(ctx, params)
-	if err != nil {
-		return err
-	}
-	return r.deleteRepository(ctx, client, &repo)
+	return r.store.GetRepositoryByRepoName(ctx, params)
 }
 
-func (r *repositoryService) DeleteRepositoryByID(
-	ctx context.Context,
-	client ghclient.GitHubRepoClient,
-	projectID uuid.UUID,
-	repoID uuid.UUID,
-) error {
-	repo, err := r.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
-		ProjectID: projectID,
-	})
-	if err != nil {
-		log.Printf("error is %v", err)
-		return err
-	}
-	return r.deleteRepository(ctx, client, &repo)
-}
-
-func (r *repositoryService) deleteRepository(ctx context.Context, client ghclient.GitHubRepoClient, repo *db.Repository) error {
+func (r *repositoryService) DeleteRepository(ctx context.Context, client ghclient.GitHubRepoClient, repo *db.Repository) error {
 	var err error
 
 	// Cleanup any webhook we created for this project

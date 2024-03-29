@@ -20,7 +20,9 @@ INSERT INTO repositories (
 SELECT * FROM repositories WHERE repo_id = $1;
 
 -- name: GetRepositoryByRepoName :one
-SELECT * FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3 AND project_id = $4;
+SELECT * FROM repositories
+    WHERE repo_owner = $1 AND repo_name = $2 AND project_id = $3
+    AND lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL;
 
 -- avoid using this, where possible use GetRepositoryByIDAndProject instead
 -- name: GetRepositoryByID :one
@@ -31,14 +33,16 @@ SELECT * FROM repositories WHERE id = $1 AND project_id = $2;
 
 -- name: ListRepositoriesByProjectID :many
 SELECT * FROM repositories
-WHERE provider = $1 AND project_id = $2
+WHERE project_id = $1
   AND (repo_id >= sqlc.narg('repo_id') OR sqlc.narg('repo_id') IS NULL)
+  AND lower(provider) = lower(COALESCE(sqlc.narg('provider'), provider)::text)
 ORDER BY project_id, provider, repo_id
 LIMIT sqlc.narg('limit')::bigint;
 
 -- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories
-WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
+WHERE project_id = $1 AND webhook_id IS NOT NULL
+    AND lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL
 ORDER BY repo_name;
 
 -- name: DeleteRepository :exec

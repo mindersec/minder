@@ -39,24 +39,20 @@ import (
 func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
-	if err != nil {
-		return nil, providerError(err)
-	}
+	providerName := entityCtx.Provider.Name
 
 	artifactFilter, err := parseArtifactListFrom(s.store, in.From)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse artifact list from: %w", err)
 	}
 
-	results, err := artifactFilter.listArtifacts(ctx, provider.Name, projectID)
+	results, err := artifactFilter.listArtifacts(ctx, providerName, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list artifacts: %w", err)
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.ListArtifactsResponse{Results: results}, nil
@@ -73,9 +69,10 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
 
 	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  in.GetContext().GetProvider(),
+		Provider:  providerFilter,
 		RepoOwner: nameParts[0],
 		RepoName:  nameParts[1],
 		ProjectID: projectID,
@@ -241,8 +238,10 @@ func (filter *artifactListFilter) listArtifacts(ctx context.Context, provider st
 func artifactListRepoFilter(
 	ctx context.Context, store db.Store, provider string, projectID uuid.UUID, repoSlubList []string,
 ) ([]*db.Repository, error) {
+	providerFilter := getNameFilterParam(provider)
+
 	repositories, err := store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{Provider: provider, ProjectID: projectID})
+		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{Provider: providerFilter, ProjectID: projectID})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "repositories not found")

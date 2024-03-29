@@ -130,7 +130,10 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	repo1 := createRandomRepository(t, project.ID, prov)
 
 	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
-		Provider:  repo1.Provider,
+		Provider: sql.NullString{
+			String: repo1.Provider,
+			Valid:  true,
+		},
 		RepoOwner: repo1.RepoOwner,
 		RepoName:  repo1.RepoName,
 		ProjectID: project.ID,
@@ -168,7 +171,10 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	}
 
 	arg := ListRepositoriesByProjectIDParams{
-		Provider:  prov.Name,
+		Provider: sql.NullString{
+			String: prov.Name,
+			Valid:  true,
+		},
 		ProjectID: project.ID,
 	}
 
