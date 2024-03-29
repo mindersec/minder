@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/db"
@@ -148,6 +148,11 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParamsReadWriter) error {
+	logger := zerolog.Ctx(ctx).Info().
+		Str("entity_type", inf.Type.ToString()).
+		Str("execution_id", inf.ExecutionID.String())
+
+	logger.Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
@@ -159,15 +164,18 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapp
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
 			return fmt.Errorf("error ingesting data: %w", err)
 		}
-
 		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
 	} else {
-		log.Printf("Using cached result for %s", r.GetID())
+		logger.Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
 	}
-
+	logger.Msg("entity evaluation - ingest completed")
 	params.SetIngestResult(result)
+
 	// Process evaluation
-	return r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
+	logger.Msg("entity evaluation - evaluation started")
+	err := r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
+	logger.Msg("entity evaluation - evaluation completed")
+	return err
 }
 
 // Actions runs all actions for the rule type engine against the given entity

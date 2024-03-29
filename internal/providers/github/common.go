@@ -564,6 +564,17 @@ func (c *GitHub) CreatePullRequest(
 	return pr, nil
 }
 
+// ClosePullRequest closes a pull request in a repository.
+func (c *GitHub) ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error) {
+	pr, _, err := c.client.PullRequests.Edit(ctx, owner, repo, number, &github.PullRequest{
+		State: github.String("closed"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return pr, nil
+}
+
 // ListPullRequests lists all pull requests in a repository.
 func (c *GitHub) ListPullRequests(
 	ctx context.Context,
