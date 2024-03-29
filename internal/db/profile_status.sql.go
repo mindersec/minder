@@ -152,7 +152,6 @@ WITH
            rule_eval_id,
            status AS rem_status,
            details AS rem_details,
-           metadata AS rem_metadata,
            last_updated AS rem_last_updated
        FROM rule_details_remediate
    ),
@@ -172,7 +171,6 @@ SELECT
     ed.eval_details,
     rd.rem_status,
     rd.rem_details,
-    rd.rem_metadata,
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
@@ -223,7 +221,6 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	EvalDetails           sql.NullString             `json:"eval_details"`
 	RemStatus             NullRemediationStatusTypes `json:"rem_status"`
 	RemDetails            sql.NullString             `json:"rem_details"`
-	RemMetadata           pqtype.NullRawMessage      `json:"rem_metadata"`
 	RemLastUpdated        sql.NullTime               `json:"rem_last_updated"`
 	AlertStatus           NullAlertStatusTypes       `json:"alert_status"`
 	AlertDetails          sql.NullString             `json:"alert_details"`
@@ -263,7 +260,6 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.EvalDetails,
 			&i.RemStatus,
 			&i.RemDetails,
-			&i.RemMetadata,
 			&i.RemLastUpdated,
 			&i.AlertStatus,
 			&i.AlertDetails,
@@ -305,9 +301,9 @@ INSERT INTO rule_details_alert (
 VALUES ($1, $2, $3, $4::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = $2,
-                  details = $3,
-                  metadata = $4::jsonb,
+                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
+                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
+                  metadata = CASE WHEN $2 != 'skipped' THEN $4::jsonb ELSE rule_details_alert.metadata END,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id
@@ -367,15 +363,13 @@ INSERT INTO rule_details_remediate (
     rule_eval_id,
     status,
     details,
-    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, $4::jsonb, NOW())
+VALUES ($1, $2, $3, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
                   status = $2,
                   details = $3,
-                  metadata = $4::jsonb,
                   last_updated = NOW()
     WHERE rule_details_remediate.rule_eval_id = $1
 RETURNING id
@@ -385,16 +379,10 @@ type UpsertRuleDetailsRemediateParams struct {
 	RuleEvalID uuid.UUID              `json:"rule_eval_id"`
 	Status     RemediationStatusTypes `json:"status"`
 	Details    string                 `json:"details"`
-	Metadata   json.RawMessage        `json:"metadata"`
 }
 
 func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRuleDetailsRemediateParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, upsertRuleDetailsRemediate,
-		arg.RuleEvalID,
-		arg.Status,
-		arg.Details,
-		arg.Metadata,
-	)
+	row := q.db.QueryRowContext(ctx, upsertRuleDetailsRemediate, arg.RuleEvalID, arg.Status, arg.Details)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err

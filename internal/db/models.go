@@ -330,7 +330,6 @@ const (
 	RemediationStatusTypesError        RemediationStatusTypes = "error"
 	RemediationStatusTypesSkipped      RemediationStatusTypes = "skipped"
 	RemediationStatusTypesNotAvailable RemediationStatusTypes = "not_available"
-	RemediationStatusTypesPending      RemediationStatusTypes = "pending"
 )
 
 func (e *RemediationStatusTypes) Scan(src interface{}) error {
@@ -599,7 +598,6 @@ type RuleDetailsRemediate struct {
 	Status      RemediationStatusTypes `json:"status"`
 	Details     string                 `json:"details"`
 	LastUpdated time.Time              `json:"last_updated"`
-	Metadata    json.RawMessage        `json:"metadata"`
 }
 
 type RuleEvaluation struct {
