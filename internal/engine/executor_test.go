@@ -227,6 +227,7 @@ default allow = true`,
 			RuleEvalID: ruleEvalId,
 			Status:     db.RemediationStatusTypesSkipped,
 			Details:    "",
+			Metadata:   json.RawMessage("{}"),
 		}).Return(ruleEvalRemediationId, nil)
 	// Empty metadata
 	meta, _ := json.Marshal(map[string]any{})

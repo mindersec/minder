@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/util/rand"
@@ -25,6 +26,10 @@ func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID, label
 		ProviderID: prov.ID,
 		ProjectID:  projectID,
 		Remediate: NullActionType{
+			ActionType: "on",
+			Valid:      true,
+		},
+		Alert: NullActionType{
 			ActionType: "on",
 			Valid:      true,
 		},
@@ -109,7 +114,7 @@ func upsertEvalStatus(
 
 func upsertRemediationStatus(
 	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	remStatus RemediationStatusTypes, details string,
+	remStatus RemediationStatusTypes, details string, metadata json.RawMessage,
 ) {
 	t.Helper()
 
@@ -129,6 +134,7 @@ func upsertRemediationStatus(
 		RuleEvalID: id,
 		Status:     remStatus,
 		Details:    details,
+		Metadata:   metadata,
 	})
 	require.NoError(t, err)
 }
@@ -645,8 +651,10 @@ func compareRows(t *testing.T, a, b *ListRuleEvaluationsByProfileIdRow) {
 	require.Equal(t, a.EvalDetails, b.EvalDetails)
 	require.Equal(t, a.RemStatus, b.RemStatus)
 	require.Equal(t, a.RemDetails, b.RemDetails)
+	require.Equal(t, a.RemMetadata, b.RemMetadata)
 	require.Equal(t, a.AlertStatus, b.AlertStatus)
 	require.Equal(t, a.AlertDetails, b.AlertDetails)
+	require.Equal(t, a.AlertMetadata, b.AlertMetadata)
 	require.Equal(t, a.Entity, b.Entity)
 }
 
@@ -780,7 +788,7 @@ func TestListRuleEvaluations(t *testing.T) {
 					EvalStatusTypesFailure, "this rule failed")
 				upsertRemediationStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
-					RemediationStatusTypesSuccess, "this rule was remediated")
+					RemediationStatusTypesSuccess, "this rule was remediated", json.RawMessage(`{"pr_number": "56"}`))
 				upsertAlertStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
 					AlertStatusTypesOn, "we alerted about this rule", json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`))
@@ -806,6 +814,10 @@ func TestListRuleEvaluations(t *testing.T) {
 					String: "this rule was remediated",
 					Valid:  true,
 				},
+				RemMetadata: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`{"pr_number": "56"}`),
+					Valid:      true,
+				},
 				AlertStatus: NullAlertStatusTypes{
 					AlertStatusTypes: AlertStatusTypesOn,
 					Valid:            true,
@@ -813,6 +825,10 @@ func TestListRuleEvaluations(t *testing.T) {
 				AlertDetails: sql.NullString{
 					String: "we alerted about this rule",
 					Valid:  true,
+				},
+				AlertMetadata: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+					Valid:      true,
 				},
 				Entity: EntitiesRepository,
 			},

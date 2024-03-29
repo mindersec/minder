@@ -27,16 +27,15 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/storage"
-	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/stacklok/minder/internal/db"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
@@ -57,12 +56,13 @@ const (
 )
 
 const (
-	prMagicTemplateName = "prMagicComment"
-	prBodyMagicTemplate = `<!-- minder: pr-remediation-body: { "ContentSha": "{{.ContentSha}}" } -->`
-
 	prTemplateName = "prBody"
-	prBodyTmplStr  = "{{.MagicComment}}\n\n{{.PrText}}"
+	prBodyTmplStr  = "{{.PrText}}"
 )
+
+type pullRequestMetadata struct {
+	Number int `json:"pr_number,omitempty"`
+}
 
 // Remediator is the remediation engine for the Pull Request remediation type
 type Remediator struct {
@@ -74,6 +74,16 @@ type Remediator struct {
 
 	titleTemplate *htmltemplate.Template
 	bodyTemplate  *htmltemplate.Template
+}
+
+type paramsPR struct {
+	ingested   *interfaces.Result
+	repo       *pb.Repository
+	title      string
+	modifier   fsModifier
+	body       string
+	metadata   *pullRequestMetadata
+	prevStatus *db.ListRuleEvaluationsByProfileIdRow
 }
 
 // NewPullRequestRemediate creates a new PR remediation engine
@@ -141,15 +151,39 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
 }
 
-// Do performs the remediation
+// Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
-	_ interfaces.ActionCmd,
-	remAction interfaces.ActionOpt,
+	cmd interfaces.ActionCmd,
+	setting interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
-	_ *json.RawMessage,
+	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
+	p, err := r.getParamsForPRRemediation(ctx, ent, params, metadata)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get PR remediation params: %w", err)
+	}
+	var remErr error
+	switch setting {
+	case interfaces.ActionOptOn:
+		return r.run(ctx, cmd, p)
+	case interfaces.ActionOptDryRun:
+		return r.dryRun(ctx, cmd, p)
+	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+		remErr = errors.New("unexpected action")
+	}
+	return nil, remErr
+}
+
+func (r *Remediator) getParamsForPRRemediation(
+	ctx context.Context,
+	ent protoreflect.ProtoMessage,
+	params interfaces.ActionsParams,
+	metadata *json.RawMessage,
+) (*paramsPR, error) {
+	logger := zerolog.Ctx(ctx)
+
 	repo, ok := ent.(*pb.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository, got %T", ent)
@@ -186,77 +220,91 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot create PR entries: %w", err)
 	}
 
-	magicComment, err := r.prMagicComment(modification)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create PR magic comment: %w", err)
-	}
-
-	prFullBodyText, err := r.getPrBodyText(tmplParams, magicComment)
+	prFullBodyText, err := r.getPrBodyText(tmplParams)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
 
-	var remErr error
-	switch remAction {
-	case interfaces.ActionOptOn:
-		alreadyExists, err := prWithContentAlreadyExists(ctx, r.ghCli, repo, magicComment)
+	// Unmarshal the existing remediation metadata, if any
+	meta := &pullRequestMetadata{}
+	if metadata != nil {
+		err := json.Unmarshal(*metadata, meta)
 		if err != nil {
-			return nil, fmt.Errorf("cannot check if PR already exists: %w", err)
+			// There's nothing saved apparently, so no need to fail here, but do log the error
+			logger.Debug().Msgf("error unmarshalling remediation metadata: %v", err)
 		}
-		if alreadyExists {
-			zerolog.Ctx(ctx).Info().Msg("PR already exists, won't create a new one")
-			return nil, nil
-		}
-		remErr = r.runGit(ctx, ingested.Fs, ingested.Storer, modification, repo, title.String(), prFullBodyText)
-	case interfaces.ActionOptDryRun:
-		r.dryRun(modification, title.String(), prFullBodyText)
-		remErr = nil
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
-		remErr = errors.New("unexpected action")
 	}
-	return nil, remErr
+	return &paramsPR{
+		ingested:   ingested,
+		repo:       repo,
+		title:      title.String(),
+		modifier:   modification,
+		body:       prFullBodyText,
+		metadata:   meta,
+		prevStatus: params.GetEvalStatusFromDb(),
+	}, nil
 }
 
-func (_ *Remediator) dryRun(modifier fsModifier, title, body string) {
-	// TODO: jsonize too
-	fmt.Printf("title:\n%s\n", title)
-	fmt.Printf("body:\n%s\n", body)
-
-	err := modifier.writeSummary(os.Stdout)
-	if err != nil {
-		fmt.Printf("cannot write summary: %s\n", err)
-	}
-}
-
-func (r *Remediator) runGit(
+func (r *Remediator) dryRun(
 	ctx context.Context,
-	fs billy.Filesystem,
-	storer storage.Storer,
-	modifier fsModifier,
-	pbRepo *pb.Repository,
-	title, body string,
-) error {
-	logger := zerolog.Ctx(ctx).With().Str("repo", pbRepo.String()).Logger()
+	cmd interfaces.ActionCmd,
+	p *paramsPR,
+) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).Info().Str("repo", p.repo.String())
+	// Process the command
+	switch cmd {
+	case interfaces.ActionCmdOn:
+		// TODO: jsonize too
+		logger.Msgf("title:\n%s\n", p.title)
+		logger.Msgf("body:\n%s\n", p.body)
 
-	repo, err := git.Open(storer, fs)
+		err := p.modifier.writeSummary(os.Stdout)
+		if err != nil {
+			logger.Msgf("cannot write summary: %s\n", err)
+		}
+		return nil, nil
+	case interfaces.ActionCmdOff:
+		if p.metadata == nil || p.metadata.Number == 0 {
+			// We cannot do anything without a PR number, so we assume that closing this is a success
+			return nil, fmt.Errorf("no pull request number provided: %w", enginerr.ErrActionSkipped)
+		}
+		endpoint := fmt.Sprintf("repos/%v/%v/pulls/%d", p.repo.GetOwner(), p.repo.GetName(), p.metadata.Number)
+		body := "{\"state\": \"closed\"}"
+		curlCmd, err := util.GenerateCurlCommand("PATCH", r.ghCli.GetBaseURL(), endpoint, body)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate curl command to close a pull request: %w", err)
+		}
+		logger.Msgf("run the following curl command: \n%s\n", curlCmd)
+		return nil, nil
+	case interfaces.ActionCmdDoNothing:
+		return r.runDoNothing(ctx, p)
+	}
+	return nil, nil
+}
+func (r *Remediator) runOn(
+	ctx context.Context,
+	p *paramsPR,
+) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
+	repo, err := git.Open(p.ingested.Storer, p.ingested.Fs)
 	if err != nil {
-		return fmt.Errorf("cannot open git repo: %w", err)
+		return nil, fmt.Errorf("cannot open git repo: %w", err)
 	}
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		return fmt.Errorf("cannot get worktree: %w", err)
+		return nil, fmt.Errorf("cannot get worktree: %w", err)
 	}
 
 	logger.Debug().Msg("Getting authenticated user details")
 	email, err := r.ghCli.GetPrimaryEmail(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get primary email: %w", err)
+		return nil, fmt.Errorf("cannot get primary email: %w", err)
 	}
 
 	currentHeadReference, err := repo.Head()
 	if err != nil {
-		return fmt.Errorf("cannot get current HEAD: %w", err)
+		return nil, fmt.Errorf("cannot get current HEAD: %w", err)
 	}
 	currHeadName := currentHeadReference.Name()
 
@@ -264,30 +312,30 @@ func (r *Remediator) runGit(
 	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
 	defer checkoutToOriginallyFetchedBranch(&logger, wt, currHeadName)
 
-	logger.Debug().Str("branch", branchBaseName(title)).Msg("Checking out branch")
+	logger.Debug().Str("branch", branchBaseName(p.title)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branchBaseName(title)),
+		Branch: plumbing.NewBranchReferenceName(branchBaseName(p.title)),
 		Create: true,
 	})
 	if err != nil {
-		return fmt.Errorf("cannot checkout branch: %w", err)
+		return nil, fmt.Errorf("cannot checkout branch: %w", err)
 	}
 
 	logger.Debug().Msg("Creating file entries")
-	changeEntries, err := modifier.modifyFs()
+	changeEntries, err := p.modifier.modifyFs()
 	if err != nil {
-		return fmt.Errorf("cannot modifyFs: %w", err)
+		return nil, fmt.Errorf("cannot modifyFs: %w", err)
 	}
 
 	logger.Debug().Msg("Staging changes")
 	for _, entry := range changeEntries {
 		if _, err := wt.Add(entry.Path); err != nil {
-			return fmt.Errorf("cannot add file %s: %w", entry.Path, err)
+			return nil, fmt.Errorf("cannot add file %s: %w", entry.Path, err)
 		}
 	}
 
 	logger.Debug().Msg("Committing changes")
-	_, err = wt.Commit(title, &git.CommitOptions{
+	_, err = wt.Commit(p.title, &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  userNameForCommit(ctx, r.ghCli),
 			Email: email,
@@ -295,41 +343,68 @@ func (r *Remediator) runGit(
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("cannot commit: %w", err)
+		return nil, fmt.Errorf("cannot commit: %w", err)
 	}
 
-	refspec := refFromBranch(branchBaseName(title))
+	refspec := refFromBranch(branchBaseName(p.title))
 
 	err = pushBranch(ctx, repo, refspec, r.ghCli)
 	if err != nil {
-		return fmt.Errorf("cannot push branch: %w", err)
+		return nil, fmt.Errorf("cannot push branch: %w", err)
 	}
 
-	// if a PR from this branch already exists, don't create a new one
-	// this handles the case where the content changed (e.g. profile changed)
-	// but the PR was not closed
-	prAlreadyExists, err := prFromBranchAlreadyExists(ctx, r.ghCli, pbRepo, branchBaseName(title))
-	if err != nil {
-		return fmt.Errorf("cannot check if PR from branch already exists: %w", err)
-	}
-
-	if prAlreadyExists {
-		zerolog.Ctx(ctx).Info().Msg("PR from branch already exists, won't create a new one")
-		return nil
-	}
-
-	_, err = r.ghCli.CreatePullRequest(
-		ctx, pbRepo.GetOwner(), pbRepo.GetName(),
-		title, body,
+	pr, err := r.ghCli.CreatePullRequest(
+		ctx, p.repo.GetOwner(), p.repo.GetName(),
+		p.title, p.body,
 		refspec,
 		dflBranchTo,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create pull request: %w", err)
+		return nil, fmt.Errorf("cannot create pull request: %w, %w", err, enginerr.ErrActionFailed)
+	}
+	newMeta, err := json.Marshal(pullRequestMetadata{Number: pr.GetNumber()})
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling pull request remediation metadata json: %w", err)
+	}
+	// Success - return the new metadata for storing the pull request number
+	logger.Info().Int("pr_number", pr.GetNumber()).Msg("pull request created")
+	return newMeta, enginerr.ErrActionPending
+}
+
+func (r *Remediator) runOff(
+	ctx context.Context,
+	p *paramsPR,
+) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
+
+	if p.metadata == nil || p.metadata.Number == 0 {
+		// We cannot do anything without a PR number, so we assume that closing this is a success
+		return nil, fmt.Errorf("no pull request number provided: %w", enginerr.ErrActionSkipped)
 	}
 
-	zerolog.Ctx(ctx).Info().Msg("Pull request created")
-	return nil
+	pr, err := r.ghCli.ClosePullRequest(ctx, p.repo.GetOwner(), p.repo.GetName(), p.metadata.Number)
+	if err != nil {
+		return nil, fmt.Errorf("error closing pull request %d: %w, %w", p.metadata.Number, err, enginerr.ErrActionFailed)
+	}
+	logger.Info().Int("pr_number", pr.GetNumber()).Msg("pull request closed")
+	return nil, enginerr.ErrActionSkipped
+}
+
+func (r *Remediator) run(
+	ctx context.Context,
+	cmd interfaces.ActionCmd,
+	p *paramsPR,
+) (json.RawMessage, error) {
+	// Process the command
+	switch cmd {
+	case interfaces.ActionCmdOn:
+		return r.runOn(ctx, p)
+	case interfaces.ActionCmdOff:
+		return r.runOff(ctx, p)
+	case interfaces.ActionCmdDoNothing:
+		return r.runDoNothing(ctx, p)
+	}
+	return nil, enginerr.ErrActionSkipped
 }
 
 func pushBranch(ctx context.Context, repo *git.Repository, refspec string, gh provifv1.GitHub) error {
@@ -398,39 +473,13 @@ func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {
 	return name
 }
 
-func (_ *Remediator) prMagicComment(modifier fsModifier) (string, error) {
-	tmpl, err := template.New(prMagicTemplateName).Option("missingkey=error").Parse(prBodyMagicTemplate)
-	if err != nil {
-		return "", err
-	}
-
-	contentSha, err := modifier.hash()
-	if err != nil {
-		return "", fmt.Errorf("cannot get content sha1: %w", err)
-	}
-
-	data := struct {
-		ContentSha string
-	}{
-		ContentSha: contentSha,
-	}
-
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
-	if err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
-}
-
-func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams, magicComment string) (string, error) {
+func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams) (string, error) {
 	body := new(bytes.Buffer)
 	if err := r.bodyTemplate.Execute(body, tmplParams); err != nil {
 		return "", fmt.Errorf("cannot execute body template: %w", err)
 	}
 
-	prFullBodyText, err := createReviewBody(body.String(), magicComment)
+	prFullBodyText, err := createReviewBody(body.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot create PR full body text: %w", err)
 	}
@@ -446,18 +495,16 @@ func getMethod(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) s
 	return prCfg.Method
 }
 
-func createReviewBody(prText, magicComment string) (string, error) {
+func createReviewBody(prText string) (string, error) {
 	tmpl, err := template.New(prTemplateName).Option("missingkey=error").Parse(prBodyTmplStr)
 	if err != nil {
 		return "", err
 	}
 
 	data := struct {
-		MagicComment string
-		PrText       string
+		PrText string
 	}{
-		MagicComment: magicComment,
-		PrText:       prText,
+		PrText: prText,
 	}
 
 	// Execute the template
@@ -467,45 +514,6 @@ func createReviewBody(prText, magicComment string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// returns true if an open PR with the magic comment already exists
-func prWithContentAlreadyExists(
-	ctx context.Context,
-	cli provifv1.GitHub,
-	repo *pb.Repository,
-	magicComment string,
-) (bool, error) {
-	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), &github.PullRequestListOptions{})
-	if err != nil {
-		return false, fmt.Errorf("cannot list pull requests: %w", err)
-	}
-
-	for _, pr := range openPrs {
-		if strings.Contains(pr.GetBody(), magicComment) {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func prFromBranchAlreadyExists(
-	ctx context.Context,
-	cli provifv1.GitHub,
-	repo *pb.Repository,
-	branchName string,
-) (bool, error) {
-	// TODO(jakub): pagination
-	opts := &github.PullRequestListOptions{
-		Head: fmt.Sprintf("%s:%s", repo.GetOwner(), branchName),
-	}
-
-	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), opts)
-	if err != nil {
-		return false, fmt.Errorf("cannot list pull requests: %w", err)
-	}
-
-	return len(openPrs) > 0, nil
 }
 
 func checkoutToOriginallyFetchedBranch(
@@ -523,4 +531,20 @@ func checkoutToOriginallyFetchedBranch(
 	} else {
 		logger.Info().Msg(fmt.Sprintf("checked out back to %s branch", originallyFetchedBranch))
 	}
+}
+
+// runDoNothing returns the previous remediation status
+func (_ *Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
+
+	logger.Debug().Msg("Running do nothing")
+
+	// Return the previous remediation status.
+	err := enginerr.RemediationStatusAsError(p.prevStatus.RemStatus.RemediationStatusTypes)
+	// If there is a valid remediation metadata, return it too
+	if p.prevStatus.RemMetadata.Valid {
+		return p.prevStatus.RemMetadata.RawMessage, err
+	}
+	// If there is no remediation metadata, return nil as the metadata and the error
+	return nil, err
 }
