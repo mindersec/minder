@@ -6,7 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/bufbuild/buf v1.30.0
-	github.com/daixiang0/gci v0.13.2
+	github.com/daixiang0/gci v0.13.3
 	github.com/go-critic/go-critic v0.11.2
 	github.com/golangci/golangci-lint v1.57.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
