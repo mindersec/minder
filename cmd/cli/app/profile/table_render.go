@@ -189,7 +189,7 @@ func getEvalStatusText(status string) string {
 
 // Gets a friendly status text with an emoji
 func getRemediationStatusText(status string) string {
-	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
+	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'pending' or 'not supported'
 	switch strings.ToLower(status) {
 	case successStatus:
 		return "Success"
@@ -199,6 +199,8 @@ func getRemediationStatusText(status string) string {
 		return "Error"
 	case skippedStatus:
 		return "Skipped" // visually empty as we didn't have to remediate
+	case pendingStatus:
+		return "Pending"
 	case notAvailableStatus:
 		return "Not Available"
 	default:
