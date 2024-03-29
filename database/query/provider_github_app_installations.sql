@@ -1,6 +1,9 @@
 -- name: GetInstallationIDByProviderID :one
 SELECT * FROM provider_github_app_installations WHERE provider_id = $1;
 
+-- name: GetInstallationIDByAppID :one
+SELECT * FROM provider_github_app_installations WHERE app_installation_id = $1;
+
 -- name: UpsertInstallationID :one
 INSERT INTO provider_github_app_installations
     (provider_id, app_installation_id, organization_id, enrolling_user_id, enrollment_nonce, project_id)
@@ -18,3 +21,6 @@ WHERE provider_github_app_installations.provider_id = $1
 
 -- name: GetInstallationIDByEnrollmentNonce :one
 SELECT * FROM provider_github_app_installations WHERE project_id = $1 AND enrollment_nonce = $2;
+
+-- name: DeleteInstallationIDByAppID :exec
+DELETE FROM provider_github_app_installations WHERE app_installation_id = $1;
