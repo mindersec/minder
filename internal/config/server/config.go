@@ -102,8 +102,6 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 
 		if fieldType.Kind() == reflect.Struct {
 			setViperStructDefaults(v, valueName+".", reflect.Zero(fieldType).Interface())
-			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
-			// for now, we just warn about setting the tag, because it's ignored.
 			if _, ok := field.Tag.Lookup("default"); ok {
 				overrideViperStructDefaults(v, valueName, value)
 			}
