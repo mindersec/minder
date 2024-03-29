@@ -12,6 +12,10 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+BEGIN;
+
 ALTER TABLE rule_details_remediate ADD COLUMN metadata JSONB NOT NULL DEFAULT '{}';
 
-ALTER TYPE remediation_status_types add value 'pending';
+ALTER TYPE remediation_status_types ADD VALUE 'pending';
+
+COMMIT;
