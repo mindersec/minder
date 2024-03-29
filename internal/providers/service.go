@@ -51,6 +51,7 @@ type ProviderService interface {
 	CreateUnclaimedGitHubAppInstallation(ctx context.Context, token *oauth2.Token,
 		installationID int64) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
+	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 }
 
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
@@ -286,6 +287,31 @@ func (_ *providerService) ValidateGitHubInstallationId(ctx context.Context, toke
 	}
 
 	return nil
+}
+
+// GitHubAppInstallationDeletedPayload represents the payload of a GitHub App installation deleted event
+type GitHubAppInstallationDeletedPayload struct {
+	InstallationID int64 `json:"installation_id"`
+}
+
+func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
+	installation, err := p.store.GetInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+	if err != nil {
+		return fmt.Errorf("error getting installation: %w", err)
+	}
+
+	if installation.ProviderID.UUID == uuid.Nil {
+		zerolog.Ctx(ctx).Info().
+			Int64("installationID", installationID).
+			Msg("Installation not claimed, deleting the installation")
+		return p.store.DeleteInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+	}
+
+	zerolog.Ctx(ctx).Info().
+		Int64("installationID", installationID).
+		Str("providerID", installation.ProviderID.UUID.String()).
+		Msg("Deleting claimed installation")
+	return p.store.DeleteProvider(ctx, installation.ProviderID.UUID)
 }
 
 func (p *providerService) verifyProviderTokenIdentity(

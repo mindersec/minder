@@ -48,6 +48,8 @@ func createRandomProvider(t *testing.T, projectID uuid.UUID) Provider {
 }
 
 func TestCreateAndDeleteProvider(t *testing.T) {
+	t.Parallel()
+
 	org := createRandomOrganization(t)
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)

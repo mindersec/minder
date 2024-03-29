@@ -86,6 +86,20 @@ func (mr *MockProviderServiceMockRecorder) CreateUnclaimedGitHubAppInstallation(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUnclaimedGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).CreateUnclaimedGitHubAppInstallation), arg0, arg1, arg2)
 }
 
+// DeleteGitHubAppInstallation mocks base method.
+func (m *MockProviderService) DeleteGitHubAppInstallation(arg0 context.Context, arg1 int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteGitHubAppInstallation", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteGitHubAppInstallation indicates an expected call of DeleteGitHubAppInstallation.
+func (mr *MockProviderServiceMockRecorder) DeleteGitHubAppInstallation(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).DeleteGitHubAppInstallation), arg0, arg1)
+}
+
 // ValidateGitHubInstallationId mocks base method.
 func (m *MockProviderService) ValidateGitHubInstallationId(arg0 context.Context, arg1 *oauth2.Token, arg2 int64) error {
 	m.ctrl.T.Helper()
