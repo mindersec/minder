@@ -76,7 +76,7 @@ func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[strin
 
 	// TODO(jhrozek): Fix this!
 	//nolint:govet
-	prdeps, ok := res.Object.(pb.PrDependencies)
+	prdeps, ok := res.Object.(*pb.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")
 	}

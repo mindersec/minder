@@ -78,7 +78,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	var lowScoringPackages []string
 
 	//nolint:govet
-	prdeps, ok := res.Object.(pb.PrDependencies)
+	prdeps, ok := res.Object.(*pb.PrDependencies)
 	if !ok {
 		return fmt.Errorf("invalid object type for vulncheck evaluator")
 	}

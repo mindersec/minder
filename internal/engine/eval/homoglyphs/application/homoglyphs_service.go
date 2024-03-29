@@ -71,7 +71,7 @@ func evaluateHomoglyphs(
 	}
 
 	//nolint:govet
-	prContents, ok := res.Object.(pb.PrContents)
+	prContents, ok := res.Object.(*pb.PrContents)
 	if !ok {
 		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}
