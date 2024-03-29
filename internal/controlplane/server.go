@@ -189,6 +189,11 @@ func NewServer(
 	return s, nil
 }
 
+// GetProviderService returns the provider service
+func (s *Server) GetProviderService() providers.ProviderService {
+	return s.providers
+}
+
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
 	exporter, err := stdout.New(stdout.WithPrettyPrint())

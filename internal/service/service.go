@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/reconcilers"
 )
 
@@ -81,6 +82,12 @@ func AllInOneServerService(
 	}
 
 	evt.ConsumeEvents(rec)
+
+	im, err := providers.NewInstallationManager(evt, store, s.GetProviderService())
+	if err != nil {
+		return fmt.Errorf("unable to create installation manager: %w", err)
+	}
+	evt.ConsumeEvents(im)
 
 	// Start the gRPC and HTTP server in separate goroutines
 	errg.Go(func() error {
