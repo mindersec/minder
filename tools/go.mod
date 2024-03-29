@@ -13,7 +13,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/mikefarah/yq/v4 v4.43.1
 	github.com/norwoodj/helm-docs v1.13.1
-	github.com/openfga/cli v0.2.7
+	github.com/openfga/cli v0.3.0
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.25.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
@@ -29,6 +29,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.33.0-20240221180331-f05a6f4403ce.1 // indirect
 	connectrpc.com/connect v1.15.0 // indirect
 	connectrpc.com/otelconnect v0.7.0 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/4meepo/tagalign v1.3.3 // indirect
 	github.com/Abirdcfly/dupword v0.0.14 // indirect
 	github.com/Antonboom/errname v0.1.12 // indirect
@@ -104,7 +105,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-sql-driver/mysql v1.7.1 // indirect
+	github.com/go-sql-driver/mysql v1.8.1-0.20240317050433-65395d853d2c // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
 	github.com/go-toolsmith/astcopy v1.1.0 // indirect
 	github.com/go-toolsmith/astequal v1.2.0 // indirect
@@ -140,7 +141,7 @@ require (
 	github.com/gostaticanalysis/forcetypeassert v0.1.0 // indirect
 	github.com/gostaticanalysis/nilerr v0.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
@@ -151,7 +152,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
-	github.com/jackc/pgx/v5 v5.5.4 // indirect
+	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/jgautheron/goconst v1.7.0 // indirect
@@ -206,10 +207,10 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20240201160513-05de9d8be3ee // indirect
-	github.com/openfga/go-sdk v0.3.5 // indirect
-	github.com/openfga/language/pkg/go v0.0.0-20240311093347-a2bba7a149ff // indirect
-	github.com/openfga/openfga v1.5.0 // indirect
+	github.com/openfga/api/proto v0.0.0-20240318145204-66b9e5cb403c // indirect
+	github.com/openfga/go-sdk v0.3.6-0.20240313140700-3de2c059df44 // indirect
+	github.com/openfga/language/pkg/go v0.0.0-20240327204426-18b0254b2be1 // indirect
+	github.com/openfga/openfga v1.5.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.0 // indirect
 	github.com/pganalyze/pg_query_go/v4 v4.2.4-0.20231205012101-7463430c7b73 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
