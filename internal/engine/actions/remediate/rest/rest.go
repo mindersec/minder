@@ -116,12 +116,18 @@ func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
-	_ interfaces.ActionCmd,
+	cmd interfaces.ActionCmd,
 	setting interfaces.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
+	// Remediating through rest doesn't really have a turn-off behavior so
+	// only proceed with the remediation if the command is to turn on the action
+	if cmd != interfaces.ActionCmdOn {
+		return nil, engerrors.ErrActionSkipped
+	}
+
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
 		Profile: params.GetRule().Def.AsMap(),

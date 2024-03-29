@@ -30,6 +30,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
@@ -103,12 +104,18 @@ func (_ *GhBranchProtectRemediator) GetOnOffState(p *pb.Profile) interfaces.Acti
 // Do perform the remediation
 func (r *GhBranchProtectRemediator) Do(
 	ctx context.Context,
-	_ interfaces.ActionCmd,
+	cmd interfaces.ActionCmd,
 	remAction interfaces.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
 ) (json.RawMessage, error) {
+	// Remediating through rest(gh_branch_protection uses REST calls) doesn't really have a turn-off behavior so
+	// only proceed with the remediation if the command is to turn on the action
+	if cmd != interfaces.ActionCmdOn {
+		return nil, engerrors.ErrActionSkipped
+	}
+
 	retp := &PatchTemplateParams{
 		Entity:  ent,
 		Profile: params.GetRule().Def.AsMap(),
