@@ -41,6 +41,7 @@ import (
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -56,20 +57,14 @@ const (
 	repoName  = "minder"
 
 	commitTitle = "Add Dependabot configuration for gomod"
-	prBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "1041e57c2fac284bdb7827ce55c6e3cb609e97b9" } -->
-
-Adds Dependabot configuration for gomod`
+	prBody      = `Adds Dependabot configuration for gomod`
 
 	authorLogin = "stacklok-bot"
 	authorEmail = "bot@stacklok.com"
 
-	frizbeeCommitTitle = "Replace tags with sha"
-	frizbeePrBody      = `<!-- minder: pr-remediation-body: { "ContentSha": "198f40869c1a66030129bdb4c22e8b91f8fe3979" } -->
-
-This PR replaces tags with sha`
-	frizbeePrBodyWithExcludes = `<!-- minder: pr-remediation-body: { "ContentSha": "287e445dad8fae5a16a5f39050e13e5d3750c2d3" } -->
-
-This PR replaces tags with sha`
+	frizbeeCommitTitle        = "Replace tags with sha"
+	frizbeePrBody             = `This PR replaces tags with sha`
+	frizbeePrBodyWithExcludes = `This PR replaces tags with sha`
 
 	actionWithTags = `
 on:
@@ -196,17 +191,15 @@ func createTestRemArgsWithExcludes() *remediateArgs {
 }
 
 func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
-	// no pull requst so far
-	mockGitHub.EXPECT().
-		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
+	// no pull request so far
+	//mockGitHub.EXPECT().
+	//	ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
 		GetName(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
 		GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
 	mockGitHub.EXPECT().
 		AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
-	mockGitHub.EXPECT().
-		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 }
 
 func resolveActionMockSetup(t *testing.T, mockGitHub *mock_ghclient.MockGitHub, url, ref string) {
@@ -379,13 +372,14 @@ func TestPullRequestRemediate(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		newRemArgs  *newPullRequestRemediateArgs
-		remArgs     *remediateArgs
-		repoSetup   func(*testing.T) (*git.Repository, error)
-		mockSetup   func(*testing.T, *mock_ghclient.MockGitHub)
-		wantErr     bool
-		wantInitErr bool
+		name             string
+		newRemArgs       *newPullRequestRemediateArgs
+		remArgs          *remediateArgs
+		repoSetup        func(*testing.T) (*git.Repository, error)
+		mockSetup        func(*testing.T, *mock_ghclient.MockGitHub)
+		expectedErr      error
+		wantInitErr      bool
+		expectedMetadata json.RawMessage
 	}{
 		{
 			name: "open a PR",
@@ -405,8 +399,33 @@ func TestPullRequestRemediate(t *testing.T) {
 						repoOwner, repoName,
 						commitTitle, prBody,
 						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
-					Return(nil, nil)
+					Return(&github.PullRequest{Number: github.Int(42)}, nil)
 			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":42}`),
+		},
+		{
+			name: "fail to open a PR",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      dependabotPrRem(),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						commitTitle, prBody,
+						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+					Return(nil, fmt.Errorf("failed to create PR"))
+			},
+			expectedErr:      errors.ErrActionFailed,
+			expectedMetadata: json.RawMessage(nil),
 		},
 		{
 			name: "update an existing PR branch with a force-push",
@@ -426,60 +445,63 @@ func TestPullRequestRemediate(t *testing.T) {
 						repoOwner, repoName,
 						commitTitle, prBody,
 						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
-					Return(nil, nil)
+					Return(&github.PullRequest{Number: github.Int(41)}, nil)
 			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":41}`),
 		},
-		{
-			name: "A PR with the same content already exists",
-			newRemArgs: &newPullRequestRemediateArgs{
-				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
-				actionType: TestActionTypeValid,
-			},
-			remArgs:   createTestRemArgs(),
-			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
-				mockGitHub.EXPECT().
-					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
-					Return([]*github.PullRequest{
-						{
-							Body: github.String(prBody),
-						},
-					}, nil)
-			},
-		},
-		{
-			name: "A branch for this PR already exists, shouldn't open a new PR, but only update the branch",
-			newRemArgs: &newPullRequestRemediateArgs{
-				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
-				actionType: TestActionTypeValid,
-			},
-			remArgs:   createTestRemArgs(),
-			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
-				// no pull requst so far
-				mockGitHub.EXPECT().
-					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
-				// we need to get the user information and update the branch
-				mockGitHub.EXPECT().
-					GetName(gomock.Any()).Return("stacklok-bot", nil)
-				// likewise we need to update the branch with a valid e-mail
-				mockGitHub.EXPECT().
-					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
-				mockGitHub.EXPECT().
-					AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
-				// this is the last call we expect to make. It returns existing PRs from this branch, so we
-				// stop after having updated the branch
-				mockGitHub.EXPECT().
-					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{
-					// it doesn't matter what we return here, we just need to return a non-empty list
-					{
-						Number: github.Int(1),
-					},
-				}, nil)
-			},
-		},
+		//{
+		//	name: "A PR with the same content already exists",
+		//	newRemArgs: &newPullRequestRemediateArgs{
+		//		prRem:      dependabotPrRem(),
+		//		pbuild:     testGithubProviderBuilder(),
+		//		actionType: TestActionTypeValid,
+		//	},
+		//	remArgs:   createTestRemArgs(),
+		//	repoSetup: defaultMockRepoSetup,
+		//	mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+		//		mockGitHub.EXPECT().
+		//			ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
+		//			Return([]*github.PullRequest{
+		//				{
+		//					Body: github.String(prBody),
+		//				},
+		//			}, nil)
+		//	},
+		//},
+		//
+		//{
+		//	name: "A branch for this PR already exists, shouldn't open a new PR, but only update the branch",
+		//	newRemArgs: &newPullRequestRemediateArgs{
+		//		prRem:      dependabotPrRem(),
+		//		pbuild:     testGithubProviderBuilder(),
+		//		actionType: TestActionTypeValid,
+		//	},
+		//	remArgs:   createTestRemArgs(),
+		//	repoSetup: defaultMockRepoSetup,
+		//	mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+		//		// no pull requst so far
+		//		mockGitHub.EXPECT().
+		//			ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
+		//		// we need to get the user information and update the branch
+		//		mockGitHub.EXPECT().
+		//			GetName(gomock.Any()).Return("stacklok-bot", nil)
+		//		// likewise we need to update the branch with a valid e-mail
+		//		mockGitHub.EXPECT().
+		//			GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+		//		mockGitHub.EXPECT().
+		//			AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
+		//		// this is the last call we expect to make. It returns existing PRs from this branch, so we
+		//		// stop after having updated the branch
+		//		mockGitHub.EXPECT().
+		//			ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{
+		//			// it doesn't matter what we return here, we just need to return a non-empty list
+		//			{
+		//				Number: github.Int(1),
+		//			},
+		//		}, nil)
+		//	},
+		//},
 		{
 			name: "resolve tags using frizbee",
 			newRemArgs: &newPullRequestRemediateArgs{
@@ -503,8 +525,10 @@ func TestPullRequestRemediate(t *testing.T) {
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBody,
 						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
-					Return(nil, nil)
+					Return(&github.PullRequest{Number: github.Int(40)}, nil)
 			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":40}`),
 		},
 		{
 			name: "resolve tags using frizbee with excludes",
@@ -521,15 +545,16 @@ func TestPullRequestRemediate(t *testing.T) {
 				happyPathMockSetup(mockGitHub)
 
 				resolveActionMockSetup(t, mockGitHub, "repos/actions/checkout/git/refs/tags/v4", checkoutV4Ref)
-
 				mockGitHub.EXPECT().
 					CreatePullRequest(
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
 						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
-					Return(nil, nil)
+					Return(&github.PullRequest{Number: github.Int(43)}, nil)
 			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":43}`),
 		},
 		{
 			name: "resolve tags using frizbee with excludes from rule",
@@ -553,8 +578,10 @@ func TestPullRequestRemediate(t *testing.T) {
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
 						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
-					Return(nil, nil)
+					Return(&github.PullRequest{Number: github.Int(44)}, nil)
 			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":44}`),
 		},
 	}
 
@@ -619,13 +646,9 @@ func TestPullRequestRemediate(t *testing.T) {
 				tt.remArgs.ent,
 				evalParams,
 				nil)
-			if tt.wantErr {
-				require.Error(t, err, "expected error")
-				require.Nil(t, retMeta, "expected nil metadata")
-				return
-			}
 
-			require.NoError(t, err, "unexpected error running remediate engine")
+			require.ErrorIs(t, err, tt.expectedErr, "expected error")
+			require.Equal(t, tt.expectedMetadata, retMeta)
 		})
 	}
 }

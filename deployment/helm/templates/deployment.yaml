@@ -31,6 +31,10 @@ spec:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccounts.server | default "minder" }}
+      initContainers:
+        {{- if .Values.deploymentSettings.initContainers }}
+        {{- toYaml .Values.deploymentSettings.initContainers | nindent 8 }}
+        {{- end }}
       containers:
         - name: minder
           # restricted security context:

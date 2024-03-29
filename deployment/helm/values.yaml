@@ -124,6 +124,8 @@ deploymentSettings:
     githubAppSecretName: "minder-github-app-secrets"
   # -- (array, optional) Additional configuration for sidecar containers
   sidecarContainers: null
+  # -- (array, optional) Additional init containers to run
+  initContainers: null
 
 
 # -- (string) Additional configuration yaml beyond what's in server-config.yaml.example
