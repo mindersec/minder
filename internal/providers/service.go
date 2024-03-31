@@ -57,6 +57,44 @@ type ProviderService interface {
 // from the state
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 
+// ProvSvcGhOps is an interface for GitHub operations inside this module
+// It is used to mock GitHub operations in tests, but in order to generate
+// mocks, the interface must be exported
+type ProvSvcGhOps interface {
+	GetInstallation(ctx context.Context, id int64, jwt string) (*github.Installation, *github.Response, error)
+	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
+	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
+}
+
+type provSvcGhOpsImpl struct{}
+
+func (provSvcGhOpsImpl) GetInstallation(
+	ctx context.Context,
+	installationID int64,
+	jwt string,
+) (*github.Installation, *github.Response, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(jwt)
+	return ghClient.Apps.GetInstallation(ctx, installationID)
+}
+
+func (provSvcGhOpsImpl) GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+
+	user, _, err := ghClient.Users.Get(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return user.ID, nil
+}
+
+func (provSvcGhOpsImpl) ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+
+	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
+	return installations, err
+}
+
 type providerService struct {
 	store           db.Store
 	cryptoEngine    crypto.Engine
@@ -64,6 +102,7 @@ type providerService struct {
 	provMt          provtelemetry.ProviderMetrics
 	config          *server.ProviderConfig
 	restClientCache ratecache.RestClientCache
+	provSvcGhOps    ProvSvcGhOps
 }
 
 // NewProviderService creates an instance of ProviderService
@@ -76,6 +115,7 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 		provMt:          provMt,
 		config:          config,
 		restClientCache: restClientCache,
+		provSvcGhOps:    provSvcGhOpsImpl{},
 	}
 }
 
@@ -246,7 +286,7 @@ func (p *providerService) CreateUnclaimedGitHubAppInstallation(
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 
-	userID, err := getUserIdFromToken(ctx, token)
+	userID, err := p.provSvcGhOps.GetUserIdFromToken(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user ID from token: %w", err)
 	}
@@ -266,11 +306,8 @@ func (p *providerService) CreateUnclaimedGitHubAppInstallation(
 }
 
 // ValidateGitHubInstallationId checks if the user has access to the installation ID
-func (_ *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
-	// Get the installations this user has access to
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
+func (p *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
+	installations, err := p.provSvcGhOps.ListUserInstallations(ctx, token)
 	if err != nil {
 		return fmt.Errorf("error getting user installations: %w", err)
 	}
@@ -322,21 +359,9 @@ func (p *providerService) getInstallationOwner(ctx context.Context, installation
 		return nil, fmt.Errorf("error creating GitHub App JWT: %w", err)
 	}
 
-	ghClient := github.NewClient(nil).WithAuthToken(jwt)
-	installation, _, err := ghClient.Apps.GetInstallation(ctx, installationID)
+	installation, _, err := p.provSvcGhOps.GetInstallation(ctx, installationID, jwt)
 	if err != nil {
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 	return installation.GetAccount(), nil
-}
-
-func getUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	user, _, err := ghClient.Users.Get(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	return user.ID, nil
 }
