@@ -58,7 +58,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 	}
 
 	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, entityCtx.Provider.Name, entityCtx.Project.ID)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -634,7 +634,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	}
 
 	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, entityCtx.Project.ID)
+	provider, err := getProviderFromRequestOrDefault(ctx, s.store, entityCtx.Provider.Name, entityCtx.Project.ID)
 	if err != nil {
 		return nil, providerError(err)
 	}

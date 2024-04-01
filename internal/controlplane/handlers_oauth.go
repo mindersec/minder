@@ -41,12 +41,9 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-const defaultProvider = oauth.Github
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
@@ -384,8 +381,17 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	if providerName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		// We don't check parent projects here because subprojects should not update the credentials of their parent
+		Projects: []uuid.UUID{projectID},
+		Name:     providerName,
+	})
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -450,8 +456,17 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	if providerName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		// We don't check parent projects here because subprojects should not check the credentials of their parent
+		Projects: []uuid.UUID{projectID},
+		Name:     providerName,
+	})
 	if err != nil {
 		return nil, providerError(err)
 	}

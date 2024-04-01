@@ -814,3 +814,16 @@ func IsMinderHook(hook *github.Hook, hostURL string) (bool, error) {
 
 	return false, nil
 }
+
+// CanHandleOwner checks if the GitHub provider has the right credentials to handle the owner
+func CanHandleOwner(_ context.Context, prov db.Provider, owner string) bool {
+	// TODO: this is fragile and does not handle organization renames, in the future we can make sure the credential
+	// has admin permissions on the owner
+	if prov.Name == fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, owner) {
+		return true
+	}
+	if prov.Class.ProviderClass == db.ProviderClassGithub {
+		return true
+	}
+	return false
+}
