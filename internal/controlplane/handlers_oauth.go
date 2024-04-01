@@ -26,6 +26,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
@@ -448,6 +449,39 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = in.GetContext().GetProvider()
+	logger.BusinessRecord(ctx).Project = projectID
+
+	// Provider Enroll probes this endpoint to see whether the provider has
+	// been set up.  GitHub Apps don't create a provider row until it the
+	// install for a particular app has been created, so return "not ready"
+	// in the meantime.
+	if in.GetContext().GetProvider() == string(db.ProviderClassGithubApp) {
+		// TODO: factor this into a method someplace better.
+
+		// We don't know which app the user is trying to register, but see if there's
+		// a recently-created one.
+		prov, err := s.store.FindProviders(ctx, db.FindProvidersParams{
+			Projects: []uuid.UUID{projectID},
+			Trait: db.NullProviderType{
+				ProviderType: db.ProviderTypeGithub,
+				Valid:        true,
+			},
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error finding GitHub App provider: %v", err)
+		}
+		for _, p := range prov {
+			// Recently-created, let's use it.
+			if p.Class.ProviderClass == db.ProviderClassGithubApp && p.CreatedAt.After(in.GetTimestamp().AsTime()) {
+				return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
+			}
+		}
+		// Try again later
+		return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil
+	}
+
 	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
 	if err != nil {
 		return nil, providerError(err)
@@ -462,10 +496,6 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		}
 		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
-	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
 }
