@@ -51,6 +51,7 @@ type Querier interface {
 	// filter by name as well.
 	FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error)
 	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
+	GetAccessTokenByEnrollmentNonce(ctx context.Context, arg GetAccessTokenByEnrollmentNonceParams) (ProviderAccessToken, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
@@ -62,6 +63,7 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
+	GetInstallationIDByEnrollmentNonce(ctx context.Context, arg GetInstallationIDByEnrollmentNonceParams) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)

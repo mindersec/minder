@@ -568,6 +568,21 @@ func (mr *MockStoreMockRecorder) FlushCache(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FlushCache", reflect.TypeOf((*MockStore)(nil).FlushCache), arg0, arg1)
 }
 
+// GetAccessTokenByEnrollmentNonce mocks base method.
+func (m *MockStore) GetAccessTokenByEnrollmentNonce(arg0 context.Context, arg1 db.GetAccessTokenByEnrollmentNonceParams) (db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccessTokenByEnrollmentNonce", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccessTokenByEnrollmentNonce indicates an expected call of GetAccessTokenByEnrollmentNonce.
+func (mr *MockStoreMockRecorder) GetAccessTokenByEnrollmentNonce(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenByEnrollmentNonce", reflect.TypeOf((*MockStore)(nil).GetAccessTokenByEnrollmentNonce), arg0, arg1)
+}
+
 // GetAccessTokenByProjectID mocks base method.
 func (m *MockStore) GetAccessTokenByProjectID(arg0 context.Context, arg1 db.GetAccessTokenByProjectIDParams) (db.ProviderAccessToken, error) {
 	m.ctrl.T.Helper()
@@ -701,6 +716,21 @@ func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeature
 func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
+}
+
+// GetInstallationIDByEnrollmentNonce mocks base method.
+func (m *MockStore) GetInstallationIDByEnrollmentNonce(arg0 context.Context, arg1 db.GetInstallationIDByEnrollmentNonceParams) (db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInstallationIDByEnrollmentNonce", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInstallationIDByEnrollmentNonce indicates an expected call of GetInstallationIDByEnrollmentNonce.
+func (mr *MockStoreMockRecorder) GetInstallationIDByEnrollmentNonce(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallationIDByEnrollmentNonce", reflect.TypeOf((*MockStore)(nil).GetInstallationIDByEnrollmentNonce), arg0, arg1)
 }
 
 // GetInstallationIDByProviderID mocks base method.

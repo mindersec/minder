@@ -351,6 +351,52 @@
         ]
       }
     },
+    "/api/v1/auth/verify": {
+      "get": {
+        "summary": "VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce",
+        "operationId": "OAuthService_VerifyProviderCredential",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1VerifyProviderCredentialResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "enrollmentNonce",
+            "description": "enrollment_nonce is the state parameter returned when enrolling the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "OAuthService"
+        ]
+      }
+    },
     "/api/v1/auth/verify/{provider}/{timestamp}": {
       "get": {
         "summary": "VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp",
@@ -3164,6 +3210,9 @@
       "properties": {
         "url": {
           "type": "string"
+        },
+        "state": {
+          "type": "string"
         }
       }
     },
@@ -4099,6 +4148,18 @@
         }
       },
       "title": "user record to be returned"
+    },
+    "v1VerifyProviderCredentialResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "boolean"
+        },
+        "providerName": {
+          "type": "string"
+        }
+      },
+      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created"
     },
     "v1VerifyProviderTokenFromResponse": {
       "type": "object",

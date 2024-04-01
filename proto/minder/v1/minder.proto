@@ -293,11 +293,24 @@ service OAuthService {
 
     // VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
     rpc VerifyProviderTokenFrom (VerifyProviderTokenFromRequest) returns (VerifyProviderTokenFromResponse) {
+        option deprecated = true;
         option (google.api.http) = {
             get: "/api/v1/auth/verify/{provider}/{timestamp}"
             additional_bindings {
                 get: "/api/v1/auth/verify/{timestamp}"
             }
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_UPDATE
+        };
+    }
+
+    // VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce
+    rpc VerifyProviderCredential (VerifyProviderCredentialRequest) returns (VerifyProviderCredentialResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/auth/verify"
         };
 
         option (rpc_options) = {
@@ -826,6 +839,7 @@ message GetAuthorizationURLRequest {
 
 message GetAuthorizationURLResponse {
     string url = 1;
+    string state = 2;
 }
 
 message StoreProviderTokenRequest {
@@ -988,6 +1002,21 @@ message VerifyProviderTokenFromRequest {
 
 message VerifyProviderTokenFromResponse {
     string status = 1;
+}
+
+// VerifyProviderCredentialRequest contains the enrollment nonce (aka state) that was used when enrolling the provider
+message VerifyProviderCredentialRequest {
+    Context context = 1;
+
+    // enrollment_nonce is the state parameter returned when enrolling the provider
+    string enrollment_nonce = 2;
+}
+
+// VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
+// name, if it has been created
+message VerifyProviderCredentialResponse {
+    bool created = 1;
+    string provider_name = 2;
 }
 
 message BranchProtection {

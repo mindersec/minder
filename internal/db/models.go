@@ -529,14 +529,15 @@ type Provider struct {
 }
 
 type ProviderAccessToken struct {
-	ID             int32          `json:"id"`
-	Provider       string         `json:"provider"`
-	ProjectID      uuid.UUID      `json:"project_id"`
-	OwnerFilter    sql.NullString `json:"owner_filter"`
-	EncryptedToken string         `json:"encrypted_token"`
-	ExpirationTime time.Time      `json:"expiration_time"`
-	CreatedAt      time.Time      `json:"created_at"`
-	UpdatedAt      time.Time      `json:"updated_at"`
+	ID              int32          `json:"id"`
+	Provider        string         `json:"provider"`
+	ProjectID       uuid.UUID      `json:"project_id"`
+	OwnerFilter     sql.NullString `json:"owner_filter"`
+	EncryptedToken  string         `json:"encrypted_token"`
+	ExpirationTime  time.Time      `json:"expiration_time"`
+	CreatedAt       time.Time      `json:"created_at"`
+	UpdatedAt       time.Time      `json:"updated_at"`
+	EnrollmentNonce sql.NullString `json:"enrollment_nonce"`
 }
 
 type ProviderGithubAppInstallation struct {
@@ -546,6 +547,8 @@ type ProviderGithubAppInstallation struct {
 	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
+	EnrollmentNonce   sql.NullString `json:"enrollment_nonce"`
+	ProjectID         uuid.NullUUID  `json:"project_id"`
 }
 
 type PullRequest struct {

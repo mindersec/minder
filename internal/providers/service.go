@@ -45,9 +45,9 @@ import (
 // ProviderService encapsulates methods for creating and updating providers
 type ProviderService interface {
 	CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
-		token oauth2.Token, stateData db.GetProjectIDBySessionStateRow) (*db.Provider, error)
+		token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, state string) (*db.Provider, error)
 	CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow,
-		installationID int64) (*db.Provider, error)
+		installationID int64, state string) (*db.Provider, error)
 	CreateUnclaimedGitHubAppInstallation(ctx context.Context, token *oauth2.Token,
 		installationID int64) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
@@ -80,8 +80,14 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 }
 
 // CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential
-func (p *providerService) CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
-	token oauth2.Token, stateData db.GetProjectIDBySessionStateRow) (*db.Provider, error) {
+func (p *providerService) CreateGitHubOAuthProvider(
+	ctx context.Context,
+	providerName string,
+	providerClass db.ProviderClass,
+	token oauth2.Token,
+	stateData db.GetProjectIDBySessionStateRow,
+	state string,
+) (*db.Provider, error) {
 	tx, err := p.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
@@ -154,6 +160,10 @@ func (p *providerService) CreateGitHubOAuthProvider(ctx context.Context, provide
 		Provider:       providerName,
 		EncryptedToken: encodedToken,
 		OwnerFilter:    stateData.OwnerFilter,
+		EnrollmentNonce: sql.NullString{
+			Valid:  true,
+			String: state,
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error inserting access token: %w", err)
@@ -171,6 +181,7 @@ func (p *providerService) CreateGitHubAppProvider(
 	token oauth2.Token,
 	stateData db.GetProjectIDBySessionStateRow,
 	installationID int64,
+	state string,
 ) (*db.Provider, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
@@ -206,8 +217,16 @@ func (p *providerService) CreateGitHubAppProvider(
 				UUID:  savedProvider.ID,
 				Valid: true,
 			},
+			ProjectID: uuid.NullUUID{
+				UUID:  stateData.ProjectID,
+				Valid: true,
+			},
 			OrganizationID:    installationOwner.GetID(),
 			AppInstallationID: strconv.FormatInt(installationID, 10),
+			EnrollmentNonce: sql.NullString{
+				Valid:  true,
+				String: state,
+			},
 		})
 		if err != nil {
 			return nil, err
