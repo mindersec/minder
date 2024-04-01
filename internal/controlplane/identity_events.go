@@ -22,13 +22,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -79,41 +76,7 @@ func HandleEvents(
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
 
-	parsedURL, err := url.Parse(cfg.Identity.Server.IssuerUrl)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Msgf("events chron: error parsing issuer URL: %v", err)
-		return
-	}
-
-	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
-
-	clientSecret, err := cfg.Identity.Server.GetClientSecret()
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Msgf("failed to get client secret: %v", err)
-		return
-	}
-
-	clientCredentials := clientcredentials.Config{
-		ClientID:     cfg.Identity.Server.ClientId,
-		ClientSecret: clientSecret,
-		TokenURL:     tokenUrl.String(),
-	}
-
-	token, err := clientCredentials.Token(ctx)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Msgf("events chron: error getting access token: %v", err)
-		return
-	}
-
-	eventsUrl := parsedURL.JoinPath("admin/realms/stacklok/events")
-	request, err := http.NewRequest("GET", eventsUrl.String(), nil)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Msgf("events chron: error constructing events request: %v", err)
-		return
-	}
-
-	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(token))
-	resp, err := client.Do(request)
+	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/events", nil)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Msgf("events chron: error getting events: %v", err)
 		return
