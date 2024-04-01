@@ -16,12 +16,18 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/stacklok/minder/internal/config"
 )
@@ -59,4 +65,58 @@ func (sic *IdentityConfig) GetClientSecret() (string, error) {
 func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	return config.BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
 		"The base URL where the identity server is running", flags.String)
+}
+
+// Path returns a URL for the given path on the identity server
+func (sic *IdentityConfig) Path(path string) (*url.URL, error) {
+	parsedUrl, err := url.Parse(sic.IssuerUrl)
+	if err != nil {
+		return nil, err
+	}
+	return parsedUrl.JoinPath(path), nil
+}
+
+func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) {
+	tokenUrl, err := sic.Path("realms/stacklok/protocol/openid-connect/token")
+	if err != nil {
+		return nil, err
+	}
+
+	clientSecret, err := sic.GetClientSecret()
+	if err != nil {
+		return nil, err
+	}
+
+	clientCredentials := clientcredentials.Config{
+		ClientID:     sic.ClientId,
+		ClientSecret: clientSecret,
+		TokenURL:     tokenUrl.String(),
+	}
+
+	token, err := clientCredentials.Token(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)), nil
+}
+
+// Do sends an HTTP request to the identity server, using the configured client credentials.
+func (sic *IdentityConfig) Do(ctx context.Context, method string, path string, body io.Reader) (*http.Response, error) {
+	parsedUrl, err := sic.Path(path)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, parsedUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := sic.getClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Do(req)
 }

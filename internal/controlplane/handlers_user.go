@@ -19,12 +19,10 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"net/url"
+	"path"
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -124,42 +122,12 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	parsedURL, err := url.Parse(s.cfg.Identity.Server.IssuerUrl)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to parse issuer URL: %v", err)
-	}
-
 	err = DeleteUser(ctx, s.store, s.authzClient, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
-	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
-
-	clientSecret, err := s.cfg.Identity.Server.GetClientSecret()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get client secret: %v", err)
-	}
-
-	clientCredentials := clientcredentials.Config{
-		ClientID:     s.cfg.Identity.Server.ClientId,
-		ClientSecret: clientSecret,
-		TokenURL:     tokenUrl.String(),
-	}
-
-	ccToken, err := clientCredentials.Token(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get client access token: %v", err)
-	}
-
-	deleteUrl := parsedURL.JoinPath("admin/realms/stacklok/users", subject)
-	request, err := http.NewRequest("DELETE", deleteUrl.String(), nil)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to construct account deletion request: %v", err)
-	}
-
-	client := oauth2.NewClient(ctx, oauth2.StaticTokenSource(ccToken))
-	resp, err := client.Do(request)
+	resp, err := s.cfg.Identity.Server.Do(ctx, "DELETE", path.Join("admin/realms/stacklok/users", subject), nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
 	}
