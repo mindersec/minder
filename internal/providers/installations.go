@@ -49,22 +49,16 @@ const (
 
 // InstallationManager is a struct representing the installation manager
 type InstallationManager struct {
-	evt     events.Publisher
-	svc     ProviderService
-	querier db.Querier
+	svc ProviderService
 }
 
 // NewInstallationManager creates a new installation manager
 func NewInstallationManager(
-	evt events.Publisher,
-	querier db.Querier,
 	svc ProviderService,
-) (*InstallationManager, error) {
+) *InstallationManager {
 	return &InstallationManager{
-		evt:     evt,
-		svc:     svc,
-		querier: querier,
-	}, nil
+		svc: svc,
+	}
 }
 
 // Register implements the Consumer interface.
@@ -80,17 +74,11 @@ func (im *InstallationManager) handleProviderInstallationEvent(msg *message.Mess
 	if event == ProviderInstanceRemovedEvent {
 		return im.handleProviderInstanceRemovedEvent(ctx, msg)
 	}
+	zerolog.Ctx(ctx).Error().Msgf("Unknown event: %s", event)
 	return nil
 }
 
 func (im *InstallationManager) handleProviderInstanceRemovedEvent(ctx context.Context, msg *message.Message) error {
-	class := msg.Metadata.Get(ClassKey)
-
-	if db.ProviderClass(class) != db.ProviderClassGithubApp {
-		zerolog.Ctx(ctx).Error().Str("class", class).Msg("Provider class is not supported")
-		return nil
-	}
-
 	var payload GitHubAppInstallationDeletedPayload
 
 	err := json.Unmarshal(msg.Payload, &payload)

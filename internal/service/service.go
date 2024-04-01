@@ -83,10 +83,7 @@ func AllInOneServerService(
 
 	evt.ConsumeEvents(rec)
 
-	im, err := providers.NewInstallationManager(evt, store, s.GetProviderService())
-	if err != nil {
-		return fmt.Errorf("unable to create installation manager: %w", err)
-	}
+	im := providers.NewInstallationManager(s.GetProviderService())
 	evt.ConsumeEvents(im)
 
 	// Start the gRPC and HTTP server in separate goroutines
