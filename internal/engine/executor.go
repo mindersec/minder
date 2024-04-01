@@ -45,6 +45,9 @@ const (
 	// DefaultExecutionTimeout is the timeout for execution of a set
 	// of profiles on an entity.
 	DefaultExecutionTimeout = 5 * time.Minute
+	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
+	// before proceeding with evaluation.
+	ArtifactSignatureWaitPeriod = 10 * time.Second
 )
 
 // Executor is the engine that executes the rules for a given event
@@ -144,6 +147,9 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	e.wgEntityEventExecution.Add(1)
 	go func() {
 		defer e.wgEntityEventExecution.Done()
+		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+			time.Sleep(ArtifactSignatureWaitPeriod)
+		}
 		// TODO: Make this timeout configurable
 		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
 		defer cancel()
@@ -232,10 +238,19 @@ func (e *Executor) evalEntityEvent(
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String())
 	logger.Msg("entity evaluation - started")
-	// this is a cache so we can avoid querying the ingester upstream
+
+	// This is a cache, so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.
-	ingestCache := ingestcache.NewCache()
+	var ingestCache ingestcache.Cache
+	if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+		// We use a noop cache for artifacts because we don't want to cache
+		// anything for them. The signature information is essentially another artifact version,
+		// and so we don't want to cache that.
+		ingestCache = ingestcache.NewNoopCache()
+	} else {
+		ingestCache = ingestcache.NewCache()
+	}
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
