@@ -17,6 +17,11 @@ DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
 RUN_DOCKER_NO_TEARDOWN?=false
 
+YQ_BUILD_REPLACE_STRING := 'del(.services.minder.build) | \
+.services.minder.image |= "ko://github.com/stacklok/minder/cmd/server" | \
+del(.services.migrate.build) | \
+.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server"'
+
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
@@ -26,29 +31,29 @@ run-server: ## run the app
 	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 .PHONY: run-docker-teardown
-run-docker-teardown: ## teardown the docker-compose environment
+run-docker-teardown: ## teardown the docker compose environment
 ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
-	@echo "Running docker-compose down"
+	@echo "Running docker compose down"
 	@$(COMPOSE) down
 else
-	@echo "Skipping docker-compose down"
+	@echo "Skipping docker compose down"
 endif
 
 .PHONY: run-docker
-run-docker: run-docker-teardown ## run the app under docker-compose
-	@echo "Running docker-compose up $(services)..."
+run-docker: run-docker-teardown ## run the app under docker compose
+	@echo "Running docker compose up $(services)..."
 	@echo "Building the minder-server image (KO_DOCKER_REPO=$(KO_DOCKER_REPO))..."
 
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	@# We also need to remove the build: directives to use ko builds
 	@# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	@sed -e '/^  *build:/d'  -e 's|  image: minder:latest|  image: ko://github.com/stacklok/minder/cmd/server|' docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	@yq e $(YQ_BUILD_REPLACE_STRING) docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@$(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	@rm .resolved-compose.yaml*
 
 .PHONY: stop-docker
-stop-docker: ## stop the app under docker-compose
-	@echo "Running docker-compose down $(services)..."
+stop-docker: ## stop the app under docker compose
+	@echo "Running docker compose down $(services)..."
 	@$(COMPOSE) down
 
 .PHONY: pre-commit
@@ -67,7 +72,8 @@ bootstrap: ## install build deps
 			github.com/sqlc-dev/sqlc \
 			github.com/norwoodj/helm-docs/cmd/helm-docs \
 			github.com/openfga/cli/cmd/fga \
-			go.uber.org/mock/mockgen
+			go.uber.org/mock/mockgen \
+			github.com/mikefarah/yq/v4
 	# Create a config.yaml and server-config.yaml if they don't exist
 	# TODO: remove this when all config is handled in internal/config
 	cp -n config/config.yaml.example ./config.yaml || echo "config.yaml already exists, not overwriting"

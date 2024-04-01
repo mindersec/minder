@@ -17,6 +17,7 @@ package container
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -25,8 +26,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
@@ -70,7 +73,7 @@ func CmdVerify() *cobra.Command {
 		os.Exit(1)
 	}
 
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	return verifyCmd
 }
@@ -91,7 +94,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		tufRoot.Value.String(),
-		container.WithAccessToken(token), container.WithGitHubClient(ghcli))
+		container.WithGitHubClient(ghcli))
 	if err != nil {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
@@ -121,8 +124,9 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 				"github": {}
 			}`),
 		},
-		db.ProviderAccessToken{},
-		token,
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential(token),
+		&serverconfig.ProviderConfig{},
 	)
 
 	return pbuild.GetGitHub()

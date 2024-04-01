@@ -20,7 +20,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProviderCmd is the root command for the provider subcommands
@@ -38,4 +39,36 @@ func init() {
 	// Flags for all subcommands
 	ProviderCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
 	ProviderCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
+}
+
+func getImplementsAsStrings(p *minderv1.Provider) []string {
+	if p == nil {
+		return nil
+	}
+
+	var impls []string
+	for _, impl := range p.GetImplements() {
+		i := impl.ToString()
+		if i != "" {
+			impls = append(impls, i)
+		}
+	}
+
+	return impls
+}
+
+func getAuthFlowsAsStrings(p *minderv1.Provider) []string {
+	if p == nil {
+		return nil
+	}
+
+	var afs []string
+	for _, impl := range p.GetAuthFlows() {
+		i := impl.ToString()
+		if i != "" {
+			afs = append(afs, i)
+		}
+	}
+
+	return afs
 }

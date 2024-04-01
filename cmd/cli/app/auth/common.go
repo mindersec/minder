@@ -124,6 +124,7 @@ func login(
 	cmd *cobra.Command,
 	cfg *clientconfig.Config,
 	extraScopes []string,
+	skipBroswer bool,
 ) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
 	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
 	clientID := cfg.Identity.CLI.ClientId
@@ -193,6 +194,7 @@ func login(
 			cmd.Println("Authentication Successful")
 		}
 	}
+
 	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
 	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
 
@@ -214,14 +216,19 @@ func login(
 	// get the OAuth authorization URL
 	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
-	// Redirect user to provider to log in
-	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
-	cmd.Println("Please follow the instructions on the page to log in.")
+	if !skipBroswer {
+		// Redirect user to provider to log in
+		cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
 
-	// open user's browser to login page
-	if err := browser.OpenURL(loginUrl); err != nil {
-		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+		// open user's browser to login page
+		if err := browser.OpenURL(loginUrl); err != nil {
+			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
+		}
+	} else {
+		cmd.Printf("Skipping browser login. You may login by pasting this URL into your browser: %s\n", loginUrl)
 	}
+
+	cmd.Println("Please follow the instructions on the page to log in.")
 
 	cmd.Println("Waiting for token...")
 

@@ -49,8 +49,6 @@ var (
 	// ErrProvenanceNotFoundOrIncomplete is returned when there's no provenance info (missing .sig or attestation) or
 	// has incomplete data
 	ErrProvenanceNotFoundOrIncomplete = errors.New("provenance not found or incomplete")
-	// ErrAuthNotProvided is returned when the selected authentication is not provided
-	ErrAuthNotProvided = errors.New("selected auth method not provided")
 )
 
 // AuthMethod is an option for containerAuth
@@ -58,8 +56,7 @@ type AuthMethod func(auth *containerAuth)
 
 // containerAuth is the authentication for the container
 type containerAuth struct {
-	accessToken string
-	ghClient    provifv1.GitHub
+	ghClient provifv1.GitHub
 }
 
 func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
@@ -68,13 +65,6 @@ func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
 		opt(&auth)
 	}
 	return &auth
-}
-
-// WithAccessToken sets the access token as an authentication option we want to use during verification
-func WithAccessToken(accessToken string) AuthMethod {
-	return func(auth *containerAuth) {
-		auth.accessToken = accessToken
-	}
 }
 
 // WithGitHubClient sets the GitHub client as an authentication option we want to use during verification
@@ -172,8 +162,8 @@ func getSigstoreBundles(
 ) ([]sigstoreBundle, error) {
 	imageRef := BuildImageRef(registry, owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
-	bundles, err := bundleFromOCIImage(ctx, imageRef, newGithubAuthenticator(owner, auth.accessToken))
-	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) || errors.Is(err, ErrAuthNotProvided) {
+	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.ghClient.GetCredential().GetAsContainerAuthenticator(owner))
+	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
 		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)
 	}
@@ -238,7 +228,7 @@ func bundleFromGHAttestationEndpoint(
 
 func getAttestationReply(ctx context.Context, ghCli provifv1.GitHub, owner, version string) (*AttestationReply, error) {
 	if ghCli == nil {
-		return nil, fmt.Errorf("%w: no github client available", ErrAuthNotProvided)
+		return nil, fmt.Errorf("no github client available")
 	}
 
 	url := fmt.Sprintf("orgs/%s/attestations/%s", owner, version)
@@ -300,7 +290,7 @@ func getDigestFromVersion(version string) ([]byte, error) {
 
 // bundleFromOCIImage returns a ProtobufBundle based on OCI image reference.
 func bundleFromOCIImage(ctx context.Context,
-	imageRef string, auth githubAuthenticator) ([]sigstoreBundle, error) {
+	imageRef string, auth authn.Authenticator) ([]sigstoreBundle, error) {
 	logger := zerolog.Ctx(ctx)
 
 	// Get the signature manifest from the OCI image reference
@@ -370,7 +360,7 @@ func bundleFromOCIImage(ctx context.Context,
 }
 
 // getSignatureReferenceFromOCIImage returns the simple signing layer from the OCI image reference
-func getSignatureReferenceFromOCIImage(imageRef string, auth githubAuthenticator) (string, error) {
+func getSignatureReferenceFromOCIImage(imageRef string, auth authn.Authenticator) (string, error) {
 	// 0. Get the auth options
 	opts := []remote.Option{remote.WithAuth(auth)}
 
@@ -401,7 +391,7 @@ func getSignatureReferenceFromOCIImage(imageRef string, auth githubAuthenticator
 }
 
 // getSimpleSigningLayersFromSignatureManifest returns the identity and issuer from the certificate
-func getSimpleSigningLayersFromSignatureManifest(manifestRef string, auth githubAuthenticator) ([]v1.Descriptor, error) {
+func getSimpleSigningLayersFromSignatureManifest(manifestRef string, auth authn.Authenticator) ([]v1.Descriptor, error) {
 	craneOpts := []crane.Option{crane.WithAuth(auth)}
 
 	// Get the manifest of the signature
@@ -576,26 +566,6 @@ func getBundleMsgSignature(simpleSigningLayer v1.Descriptor) (*protobundle.Bundl
 			Signature: sig,
 		},
 	}, nil
-}
-
-// githubAuthenticator is an authenticator for GitHub
-type githubAuthenticator struct{ username, password string }
-
-// Authorization returns the username and password for the githubAuthenticator
-func (g githubAuthenticator) Authorization() (*authn.AuthConfig, error) {
-	if len(g.password) == 0 || len(g.username) == 0 {
-		return nil, ErrAuthNotProvided
-	}
-
-	return &authn.AuthConfig{
-		Username: g.username,
-		Password: g.password,
-	}, nil
-}
-
-// newGithubAuthenticator returns a new githubAuthenticator
-func newGithubAuthenticator(username, password string) githubAuthenticator {
-	return githubAuthenticator{username, password}
 }
 
 // BuildImageRef returns the OCI image reference

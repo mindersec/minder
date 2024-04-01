@@ -16,9 +16,12 @@
 package crypto
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -86,7 +89,7 @@ func TestIsNonceValid(t *testing.T) {
 func TestEncryptDecryptString(t *testing.T) {
 	t.Parallel()
 
-	engine := Engine{
+	engine := AesCfbEngine{
 		encryptionKey: "test",
 	}
 
@@ -96,4 +99,28 @@ func TestEncryptDecryptString(t *testing.T) {
 	decrypted, err := engine.DecryptString(encrypted)
 	assert.Nil(t, err)
 	assert.Equal(t, originalString, decrypted)
+}
+
+func TestEncryptDecryptOAuthToken(t *testing.T) {
+	t.Parallel()
+
+	engine := AesCfbEngine{
+		encryptionKey: "test",
+	}
+
+	oauthToken := oauth2.Token{AccessToken: "AUTH"}
+	jsonToken, err := json.Marshal(oauthToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encryptedToken, err := engine.EncryptOAuthToken(jsonToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
+	assert.Nil(t, err)
+
+	decrypted, err := engine.DecryptOAuthToken(encodedToken)
+	assert.Nil(t, err)
+	assert.Equal(t, oauthToken, decrypted)
 }

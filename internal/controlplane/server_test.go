@@ -49,10 +49,6 @@ func init() {
 	s := grpc.NewServer()
 	// RegisterAuthUrlServiceServer
 	pb.RegisterHealthServiceServer(s, &Server{}) //
-	pb.RegisterOAuthServiceServer(s, &Server{
-		ClientID:     "test",
-		ClientSecret: "test",
-	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatal().Err(err).Msg("Server exited with error")
@@ -67,7 +63,7 @@ func init() {
 	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
-func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
+func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, opts ...ServerOption) (*Server, events.Interface) {
 	t.Helper()
 
 	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
@@ -87,9 +83,9 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore) *Server {
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, c, mockJwt)
+	server, err := NewServer(mockStore, evt, c, mockJwt, opts...)
 	require.NoError(t, err, "failed to create server")
-	return server
+	return server, evt
 }
 
 func generateTokenKey(t *testing.T) string {

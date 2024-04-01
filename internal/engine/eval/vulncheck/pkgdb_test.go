@@ -167,37 +167,40 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		line         string
-		pj           *packageJson
-		expectRetval bool
+		name        string
+		versionPack string
+		pkgJson     *packageJson
+		want        bool
 	}{
 		{
-			name: "MatchWithScope",
-			line: "\"node_modules/@types/node\": {",
-			pj: &packageJson{
-				Name:    "@types/node",
-				Version: "20.9.0",
-			},
-			expectRetval: true,
+			name:        "empty versionPack",
+			versionPack: "",
+			pkgJson:     &packageJson{Name: "@next/swc-linux-arm64-gnu"},
+			want:        false,
 		},
 		{
-			name: "MatchNoScope",
-			line: "\"node_modules/lodash\": {",
-			pj: &packageJson{
-				Name:    "lodash",
-				Version: "4.17.21",
-			},
-			expectRetval: true,
+			name: "versionPack with containing a mismatching package name but matching versions",
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.18`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-x64-musl"},
+			want:    false,
 		},
 		{
-			name: "NoMatch",
-			line: "\"node_modules/other\": {",
-			pj: &packageJson{
-				Name:    "lodash",
-				Version: "4.17.21",
-			},
-			expectRetval: false,
+			name: "versionPack with a matching package name but mismatching versions",
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.20`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
+			want:    false,
+		},
+		{
+			name: "versionPack with matching package name and version",
+			versionPack: `"node_modules/@next/swc-linux-arm64-gnu": {
+  "version": "13.4.18",
+13.4.18`,
+			pkgJson: &packageJson{Name: "@next/swc-linux-arm64-gnu"},
+			want:    true,
 		},
 	}
 
@@ -205,9 +208,11 @@ func TestPackageJsonLineHasDependency(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-		})
 
-		require.Equal(t, tt.expectRetval, tt.pj.LineHasDependency(tt.line), "expected reply to match mock data")
+			if got := tt.pkgJson.LineHasDependency(tt.versionPack); got != tt.want {
+				t.Errorf("packageJson.LineHasDependency() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

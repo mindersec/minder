@@ -17,13 +17,11 @@ package ruletype
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -39,16 +37,10 @@ var deleteCmd = &cobra.Command{
 func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 	deleteAll := viper.GetBool("all")
 	yesFlag := viper.GetBool("yes")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -71,7 +63,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	if !deleteAll {
 		// Fetch the rule type from the DB, so we can get its name
 		rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Context: &minderv1.Context{Project: &project},
 			Id:      id,
 		})
 		if err != nil {
@@ -82,7 +74,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	} else {
 		// List all rule types
 		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Context: &minderv1.Context{Project: &project},
 		})
 		if err != nil {
 			return cli.MessageAndError("Error listing rule types", err)
@@ -91,7 +83,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, provider, project)
+	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
 	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
@@ -118,13 +110,13 @@ func deleteRuleTypes(
 	ctx context.Context,
 	client minderv1.ProfileServiceClient,
 	rulesToDelete []*minderv1.RuleType,
-	provider, project string,
+	project string,
 ) ([]string, []string) {
 	var deletedRuleTypes []string
 	var remainingRuleTypes []string
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
-			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			Context: &minderv1.Context{Project: &project},
 			Id:      ruleType.GetId(),
 		})
 		if err != nil {

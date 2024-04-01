@@ -17,6 +17,7 @@ package rule_type
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -34,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -69,7 +72,7 @@ func CmdTest() *cobra.Command {
 		os.Exit(1)
 	}
 	// bind environment variable
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.AutomaticEnv()
 	return testCmd
 }
@@ -132,8 +135,9 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 				"github": {}
 			}`),
 		},
-		db.ProviderAccessToken{},
-		token,
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential(token),
+		&serverconfig.ProviderConfig{},
 	))
 	inf := &entities.EntityInfoWrapper{
 		Entity: ent,

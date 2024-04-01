@@ -36,9 +36,10 @@ import (
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
+	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/marketplaces"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -50,7 +51,7 @@ const (
 func TestCreateUserDBMock(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
+	rootID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -69,27 +70,22 @@ func TestCreateUserDBMock(t *testing.T) {
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				returnedUser := db.User{
 					ID:              1,
-					OrganizationID:  orgID,
 					IdentitySubject: "subject1",
 					CreatedAt:       time.Now(),
 					UpdatedAt:       time.Now(),
 				}
 				store.EXPECT().
-					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Project{ID: orgID}, nil)
-				store.EXPECT().
 					CreateProjectWithID(gomock.Any(), gomock.Any()).
 					Return(db.Project{
 						ID: projectID,
 						ParentID: uuid.NullUUID{
-							UUID:  orgID,
+							UUID:  rootID,
 							Valid: true,
 						},
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
-					CreateUser(gomock.Any(), db.CreateUserParams{OrganizationID: orgID,
-						IdentitySubject: "subject1"}).
+					CreateUser(gomock.Any(), "subject1").
 					Return(returnedUser, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
@@ -102,7 +98,6 @@ func TestCreateUserDBMock(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, orgID.String(), res.OrganizationId)
 			},
 		},
 	}
@@ -126,7 +121,7 @@ func TestCreateUserDBMock(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
-			crypeng := crypto.NewEngine("test")
+			crypeng := mockcrypto.NewMockEngine(ctrl)
 
 			server := &Server{
 				store:        mockStore,
@@ -134,6 +129,7 @@ func TestCreateUserDBMock(t *testing.T) {
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
 				authzClient:  &mock.NoopClient{Authorized: true},
+				marketplace:  marketplaces.NewNoopMarketplace(),
 			}
 
 			resp, err := server.CreateUser(ctx, tc.req)
@@ -145,7 +141,6 @@ func TestCreateUserDBMock(t *testing.T) {
 func TestCreateUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
 	projectID := uuid.New()
 
 	testCases := []struct {
@@ -163,25 +158,17 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().
-					CreateOrganization(gomock.Any(), gomock.Any()).
-					Return(db.Project{ID: orgID}, nil)
-				store.EXPECT().
 					CreateProjectWithID(gomock.Any(), gomock.Any()).
 					Return(db.Project{
 						ID: projectID,
-						ParentID: uuid.NullUUID{
-							UUID:  orgID,
-							Valid: true,
-						},
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(db.User{
-						ID:             1,
-						OrganizationID: orgID,
-						CreatedAt:      time.Now(),
-						UpdatedAt:      time.Now(),
+						ID:        1,
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
 					}, nil).
 					Times(1)
 				store.EXPECT().Commit(gomock.Any())
@@ -194,7 +181,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)
 				assert.Equal(t, int32(1), res.Id)
-				assert.Equal(t, orgID.String(), res.OrganizationId)
 				assert.Equal(t, projectID.String(), res.ProjectId)
 				assert.NotNil(t, res.CreatedAt)
 			},
@@ -250,8 +236,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	request := &pb.DeleteUserRequest{}
 
-	orgID := uuid.New()
-
 	// Create header metadata
 	md := metadata.New(map[string]string{
 		"authorization": "bearer some-access-token",
@@ -288,16 +272,13 @@ func TestDeleteUserDBMock(t *testing.T) {
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "subject1").
-		Return(db.User{
-			OrganizationID: orgID,
-		}, nil)
+		Return(db.User{IdentitySubject: "subject1"}, nil)
 	mockStore.EXPECT().
-		DeleteOrganization(gomock.Any(), orgID).
+		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
 
-	crypeng := crypto.NewEngine("test")
+	crypeng := mockcrypto.NewMockEngine(ctrl)
 
 	server := &Server{
 		store: mockStore,
@@ -324,8 +305,6 @@ func TestDeleteUserDBMock(t *testing.T) {
 func TestDeleteUser_gRPC(t *testing.T) {
 	t.Parallel()
 
-	orgID := uuid.New()
-
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
@@ -346,13 +325,12 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					GetUserBySubject(gomock.Any(), "subject1").
 					Return(db.User{
-						OrganizationID: orgID,
+						IdentitySubject: "subject1",
 					}, nil)
 				store.EXPECT().
-					DeleteOrganization(gomock.Any(), orgID).
+					DeleteUser(gomock.Any(), gomock.Any()).
 					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
-				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				t.Helper()

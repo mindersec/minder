@@ -3,7 +3,7 @@
 INSERT INTO rule_evaluations (
     profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, rule_name)
+ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, lower(rule_name))
   DO UPDATE SET profile_id = $1
 RETURNING id;
 
@@ -28,13 +28,15 @@ INSERT INTO rule_details_remediate (
     rule_eval_id,
     status,
     details,
+    metadata,
     last_updated
 )
-VALUES ($1, $2, $3, NOW())
+VALUES ($1, $2, $3, sqlc.arg(metadata)::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
                   status = $2,
                   details = $3,
+                  metadata = sqlc.arg(metadata)::jsonb,
                   last_updated = NOW()
     WHERE rule_details_remediate.rule_eval_id = $1
 RETURNING id;
@@ -50,9 +52,9 @@ INSERT INTO rule_details_alert (
 VALUES ($1, $2, $3, sqlc.arg(metadata)::jsonb, NOW())
 ON CONFLICT(rule_eval_id)
     DO UPDATE SET
-                  status = CASE WHEN $2 != 'skipped' THEN $2 ELSE rule_details_alert.status END,
-                  details = CASE WHEN $2 != 'skipped' THEN $3 ELSE rule_details_alert.details END,
-                  metadata = CASE WHEN $2 != 'skipped' THEN sqlc.arg(metadata)::jsonb ELSE rule_details_alert.metadata END,
+                  status = $2,
+                  details = $3,
+                  metadata = sqlc.arg(metadata)::jsonb,
                   last_updated = NOW()
     WHERE rule_details_alert.rule_eval_id = $1
 RETURNING id;
@@ -65,7 +67,7 @@ WHERE p.id = $1 AND p.project_id = $2;
 -- name: GetProfileStatusByNameAndProject :one
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
-WHERE p.name = $1 AND p.project_id = $2;
+WHERE lower(p.name) = lower(sqlc.arg(name)) AND p.project_id = $1;
 
 -- name: GetProfileStatusByProject :many
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
@@ -96,6 +98,7 @@ WITH
            rule_eval_id,
            status AS rem_status,
            details AS rem_details,
+           metadata AS rem_metadata,
            last_updated AS rem_last_updated
        FROM rule_details_remediate
    ),
@@ -115,11 +118,13 @@ SELECT
     ed.eval_details,
     rd.rem_status,
     rd.rem_details,
+    rd.rem_metadata,
     rd.rem_last_updated,
     ad.alert_status,
     ad.alert_details,
     ad.alert_metadata,
     ad.alert_last_updated,
+    res.id AS rule_evaluation_id,
     res.repository_id,
     res.entity,
     res.rule_name,
@@ -127,7 +132,9 @@ SELECT
     repo.repo_owner,
     repo.provider,
     rt.name AS rule_type_name,
-    rt.id AS rule_type_id
+    rt.severity_value as rule_type_severity_value,
+    rt.id AS rule_type_id,
+    rt.guidance as rule_type_guidance
 FROM rule_evaluations res
          LEFT JOIN eval_details ed ON ed.rule_eval_id = res.id
          LEFT JOIN remediation_details rd ON rd.rule_eval_id = res.id
@@ -145,5 +152,5 @@ WHERE res.profile_id = $1 AND
             ELSE false
             END
         ) AND (rt.name = sqlc.narg(rule_type_name) OR sqlc.narg(rule_type_name) IS NULL)
-          AND (res.rule_name = sqlc.narg(rule_name) OR sqlc.narg(rule_name) IS NULL)
+          AND (lower(res.rule_name) = lower(sqlc.narg(rule_name)) OR sqlc.narg(rule_name) IS NULL)
 ;

@@ -48,13 +48,14 @@ that need to authenticate to the control plane.`,
 		}
 
 		f := viper.GetString("file")
+		skipBrowser := viper.GetBool("offline.get.skip-browser")
 
 		// No longer print usage on returned error, since we've parsed our inputs
 		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 		cmd.SilenceUsage = true
 
 		// wait for the token to be received
-		token, err := login(ctx, cmd, clientConfig, []string{"offline_access"})
+		token, err := login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
 		if err != nil {
 			return err
 		}
@@ -76,6 +77,11 @@ func init() {
 	offlineTokenGetCmd.Flags().StringP("file", "f", "offline.token", "The file to write the offline token to")
 
 	if err := viper.BindPFlag("file", offlineTokenGetCmd.Flag("file")); err != nil {
+		panic(err)
+	}
+
+	offlineTokenGetCmd.Flags().BoolP("skip-browser", "", false, "Skip opening the browser for OAuth flow")
+	if err := viper.BindPFlag("offline.get.skip-browser", offlineTokenGetCmd.Flag("skip-browser")); err != nil {
 		panic(err)
 	}
 }

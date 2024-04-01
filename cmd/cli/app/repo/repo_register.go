@@ -26,10 +26,10 @@ import (
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -49,10 +49,6 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	inputRepoList := viper.GetString("name")
-
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -87,10 +83,10 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	}
 	printWarnings(cmd, warnings)
 
-	results, warnings := registerSelectedRepos(provider, project, client, selectedRepos)
+	results, warnings := registerSelectedRepos(project, client, selectedRepos)
 	printWarnings(cmd, warnings)
 
-	printRepoRegistrationStatus(results)
+	printRepoRegistrationStatus(cmd, results)
 	return nil
 }
 
@@ -130,8 +126,15 @@ func getUnregisteredInputRepos(inputRepoList string, alreadyRegisteredRepos sets
 
 func fetchRemoteRepositoriesFromProvider(ctx context.Context, provider, project string, client minderv1.RepositoryServiceClient) (
 	[]*minderv1.UpstreamRepositoryRef, error) {
+	var provPtr *string
+	if provider != "" {
+		provPtr = &provider
+	}
 	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &minderv1.ListRemoteRepositoriesFromProviderRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{
+			Provider: provPtr,
+			Project:  &project,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -145,9 +148,10 @@ func getUnregisteredRemoteRepositories(remoteRepositories []*minderv1.UpstreamRe
 	for _, remoteRepo := range remoteRepositories {
 		if !alreadyRegisteredRepos.Has(cli.GetRepositoryName(remoteRepo.Owner, remoteRepo.Name)) {
 			unregisteredRepos = append(unregisteredRepos, &minderv1.UpstreamRepositoryRef{
-				Owner:  remoteRepo.Owner,
-				Name:   remoteRepo.Name,
-				RepoId: remoteRepo.RepoId,
+				Owner:   remoteRepo.Owner,
+				Name:    remoteRepo.Name,
+				RepoId:  remoteRepo.RepoId,
+				Context: remoteRepo.Context,
 			})
 		}
 	}
@@ -167,10 +171,14 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 	// Map of repo names to IDs
 	repoIDs := make(map[string]int64)
 
-	// Populate the repoNames slice and repoIDs map
+	// Map of repo names to repo objects
+	repoMap := make(map[string]*minderv1.UpstreamRepositoryRef)
+
+	// Populate the repoNames slice, repoIDs map and repoMap
 	for i, repo := range repoList {
 		repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
 		repoIDs[repoNames[i]] = repo.RepoId
+		repoMap[repoNames[i]] = repo
 	}
 
 	// If the --name flag is set, use it to select repos
@@ -211,13 +219,16 @@ func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRe
 			Owner:  splitRepo[0],
 			Name:   splitRepo[1],
 			RepoId: repoIDs[repo],
+			Context: &minderv1.Context{
+				Provider: ptr.Ptr(repoMap[repo].GetContext().GetProvider()),
+			},
 		}
 	}
 	return protoRepos, warnings, nil
 }
 
 func registerSelectedRepos(
-	provider, project string,
+	project string,
 	client minderv1.RepositoryServiceClient,
 	selectedRepos []*minderv1.UpstreamRepositoryRef) ([]*minderv1.RegisterRepoResult, []string) {
 	var results []*minderv1.RegisterRepoResult
@@ -226,22 +237,29 @@ func registerSelectedRepos(
 		repo := selectedRepos[idx]
 
 		result, err := client.RegisterRepository(context.Background(), &minderv1.RegisterRepositoryRequest{
-			Context:    &minderv1.Context{Provider: &provider, Project: &project},
+			Context: &minderv1.Context{
+				Provider: ptr.Ptr(repo.GetContext().GetProvider()),
+				Project:  &project,
+			},
 			Repository: repo,
 		})
+
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Error registering repository %s: %s", repo.Name, err))
 			continue
 		}
-
 		results = append(results, result.Result)
 	}
 	return results, warnings
 }
 
-func printRepoRegistrationStatus(results []*minderv1.RegisterRepoResult) {
+func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.RegisterRepoResult) {
 	t := table.New(table.Simple, layouts.Default, []string{"Repository", "Status", "Message"})
 	for _, result := range results {
+		// in the case of a malformed response, skip over it to avoid segfaulting
+		if result.Repository == nil {
+			cmd.Printf("Skipping malformed response: %v", result)
+		}
 		row := []string{cli.GetRepositoryName(result.Repository.Owner, result.Repository.Name)}
 		if result.Status.Success {
 			row = append(row, "Registered")

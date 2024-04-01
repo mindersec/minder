@@ -19,6 +19,7 @@ package mock
 import (
 	"context"
 	"slices"
+	"sync/atomic"
 
 	"github.com/google/uuid"
 
@@ -28,7 +29,14 @@ import (
 
 // SimpleClient maintains a list of authorized projects, suitable for use in tests.
 type SimpleClient struct {
-	Allowed []uuid.UUID
+	Allowed     []uuid.UUID
+	Assignments map[uuid.UUID][]*minderv1.RoleAssignment
+
+	// Adoptions is a map of child project to parent project
+	Adoptions map[uuid.UUID]uuid.UUID
+
+	// OrphanCalls is a counter for the number of times Orphan is called
+	OrphanCalls atomic.Int32
 }
 
 var _ authz.Client = &SimpleClient{}
@@ -58,13 +66,23 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 }
 
 // DeleteUser implements authz.Client
-func (_ *SimpleClient) DeleteUser(_ context.Context, _ string) error {
+func (n *SimpleClient) DeleteUser(_ context.Context, _ string) error {
+	n.Assignments = nil
+	n.Allowed = nil
 	return nil
 }
 
 // AssignmentsToProject implements authz.Client
-func (_ *SimpleClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
-	return []*minderv1.RoleAssignment{}, nil
+func (n *SimpleClient) AssignmentsToProject(_ context.Context, p uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+	if n.Assignments == nil {
+		return nil, nil
+	}
+
+	if _, ok := n.Assignments[p]; !ok {
+		return nil, nil
+	}
+
+	return n.Assignments[p], nil
 }
 
 // ProjectsForUser implements authz.Client
@@ -79,5 +97,28 @@ func (_ *SimpleClient) PrepareForRun(_ context.Context) error {
 
 // MigrateUp implements authz.Client
 func (_ *SimpleClient) MigrateUp(_ context.Context) error {
+	return nil
+}
+
+// Adopt implements authz.Client
+func (n *SimpleClient) Adopt(_ context.Context, p, c uuid.UUID) error {
+
+	if n.Adoptions == nil {
+		n.Adoptions = make(map[uuid.UUID]uuid.UUID)
+	}
+
+	n.Adoptions[c] = p
+	return nil
+}
+
+// Orphan implements authz.Client
+func (n *SimpleClient) Orphan(_ context.Context, _, c uuid.UUID) error {
+	n.OrphanCalls.Add(int32(1))
+	if n.Adoptions == nil {
+		return nil
+	}
+
+	delete(n.Adoptions, c)
+
 	return nil
 }

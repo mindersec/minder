@@ -26,7 +26,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/auth/keycloak"
@@ -36,13 +35,12 @@ import (
 	"github.com/stacklok/minder/internal/controlplane"
 	cpmetrics "github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/service"
 )
 
 var serveCmd = &cobra.Command{
@@ -50,7 +48,6 @@ var serveCmd = &cobra.Command{
 	Short: "Start the minder platform",
 	Long:  `Starts the minder platform, which includes the gRPC server and the HTTP gateway.`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 		defer cancel()
 
@@ -80,14 +77,6 @@ var serveCmd = &cobra.Command{
 		}(dbConn)
 
 		store := db.NewStore(dbConn)
-
-		errg, ctx := errgroup.WithContext(ctx)
-
-		evt, err := events.Setup(ctx, &cfg.Events)
-		if err != nil {
-			log.Printf("Failed to set up eventer: %v", err)
-			return err
-		}
 
 		// webhook config validation
 		webhookURL := cfg.WebhookConfig.ExternalWebhookURL
@@ -133,8 +122,7 @@ var serveCmd = &cobra.Command{
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
 
-		s, err := controlplane.NewServer(
-			store, evt, cfg, vldtr,
+		serverOpts := []controlplane.ServerOption{
 			controlplane.WithServerMetrics(cpmetrics.NewMetrics()),
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
@@ -145,55 +133,20 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create server: %w", err)
 		}
 
-		aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
-
-		s.ConsumeEvents(aggr)
-
 		tsmdw := logger.NewTelemetryStoreWMMiddleware(l)
-
-		exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, evt,
+		executorOpts := []engine.ExecutorOption{
 			engine.WithProviderMetrics(providerMetrics),
-			engine.WithMiddleware(aggr.AggregateMiddleware),
 			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
 			engine.WithRestClientCache(restClientCache),
-		)
-		if err != nil {
-			return fmt.Errorf("unable to create executor: %w", err)
 		}
 
-		s.ConsumeEvents(exec)
-
-		rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth,
+		reconcilerOpts := []reconcilers.ReconcilerOption{
 			reconcilers.WithProviderMetrics(providerMetrics),
-			reconcilers.WithRestClientCache(restClientCache))
-		if err != nil {
-			return fmt.Errorf("unable to create reconciler: %w", err)
+			reconcilers.WithRestClientCache(restClientCache),
 		}
 
-		s.ConsumeEvents(rec)
-
-		// Start the gRPC and HTTP server in separate goroutines
-		errg.Go(func() error {
-			return s.StartGRPCServer(ctx)
-		})
-
-		errg.Go(func() error {
-			return s.StartHTTPServer(ctx)
-		})
-
-		errg.Go(s.HandleEvents(ctx))
-
-		// Wait for event handlers to start running
-		<-evt.Running()
-
-		if err := aggr.FlushAll(ctx); err != nil {
-			return fmt.Errorf("error flushing cache: %w", err)
-		}
-
-		// Wait for all entity events to be executed
-		exec.Wait()
-
-		return errg.Wait()
+		return service.AllInOneServerService(ctx, cfg, store, vldtr,
+			serverOpts, executorOpts, reconcilerOpts)
 	},
 }
 

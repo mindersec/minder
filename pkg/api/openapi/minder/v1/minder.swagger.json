@@ -30,6 +30,9 @@
       "name": "PermissionsService"
     },
     {
+      "name": "ProjectsService"
+    },
+    {
       "name": "ProvidersService"
     }
   ],
@@ -49,12 +52,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetArtifactByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -62,7 +59,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -98,12 +96,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetArtifactByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -148,12 +140,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListArtifactsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -205,12 +191,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListArtifactsResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -260,12 +240,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1StoreProviderTokenResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -322,12 +296,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetAuthorizationURLResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -393,12 +361,6 @@
             "schema": {
               "$ref": "#/definitions/v1VerifyProviderTokenFromResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -451,12 +413,6 @@
             "schema": {
               "$ref": "#/definitions/v1VerifyProviderTokenFromResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -508,12 +464,6 @@
             "schema": {
               "$ref": "#/definitions/v1StoreProviderTokenResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -546,16 +496,49 @@
             "schema": {
               "$ref": "#/definitions/v1CheckHealthResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
           "HealthService"
+        ]
+      }
+    },
+    "/api/v1/my/providers": {
+      "get": {
+        "summary": "GetUnclaimedProviders returns a list of known provider configurations\nthat this user could claim based on their identity.  This is a read-only\noperation for use by clients which wish to present a menu of options.",
+        "operationId": "ProvidersService_GetUnclaimedProviders",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUnclaimedProvidersResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
         ]
       }
     },
@@ -567,12 +550,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1AssignRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -599,12 +576,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRoleAssignmentsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -643,12 +614,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1RemoveRoleResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -709,12 +674,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRolesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -753,12 +712,6 @@
             "schema": {
               "$ref": "#/definitions/v1CreateProfileResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -782,12 +735,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1UpdateProfileResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -814,12 +761,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetProfileStatusByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -913,12 +854,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetProfileByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -962,12 +897,6 @@
             "schema": {
               "$ref": "#/definitions/v1DeleteProfileResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -977,6 +906,58 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileService_PatchProfile",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProfileResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "The id of the profile to patch. Same explanation about explicitness\nas for the context",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "patch",
+            "description": "The patch to apply to the profile",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1Profile"
+            }
           },
           {
             "name": "context.provider",
@@ -1012,12 +993,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetProfileStatusByProjectResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1057,12 +1032,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListProfilesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1099,6 +1068,215 @@
         ]
       }
     },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "ProjectsService_ListProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListProjectsResponse"
+            }
+          }
+        },
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "delete": {
+        "operationId": "ProjectsService_DeleteProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "post": {
+        "operationId": "ProjectsService_CreateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "put": {
+        "operationId": "ProjectsService_UpdateProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateProjectRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      },
+      "patch": {
+        "operationId": "ProjectsService_PatchProject",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProjectResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "patch",
+            "description": "patch is the patch to apply to the project",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ProjectPatch"
+            }
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      }
+    },
+    "/api/v1/projects/entity/reconcile": {
+      "post": {
+        "operationId": "ProjectsService_CreateEntityReconciliationTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateEntityReconciliationTaskRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      }
+    },
+    "/api/v1/provider_classes": {
+      "get": {
+        "operationId": "ProvidersService_ListProviderClasses",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListProviderClassesResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/providers": {
       "get": {
         "operationId": "ProvidersService_ListProviders",
@@ -1107,12 +1285,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListProvidersResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1156,6 +1328,111 @@
         "tags": [
           "ProvidersService"
         ]
+      },
+      "delete": {
+        "operationId": "ProvidersService_DeleteProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      },
+      "post": {
+        "operationId": "ProvidersService_CreateProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateProviderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
+    "/api/v1/providers/{name}": {
+      "get": {
+        "operationId": "ProvidersService_GetProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "name is the name of the provider to get.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
       }
     },
     "/api/v1/repositories": {
@@ -1166,12 +1443,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRepositoriesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1186,8 +1457,8 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "int64"
           },
           {
             "name": "context.provider",
@@ -1230,12 +1501,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRepositoriesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1249,8 +1514,8 @@
             "name": "limit",
             "in": "query",
             "required": false,
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "format": "int64"
           },
           {
             "name": "context.provider",
@@ -1292,12 +1557,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListRemoteRepositoriesFromProviderResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1343,12 +1602,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRemoteRepositoriesFromProviderResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1393,12 +1646,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1440,12 +1687,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByIdResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1491,12 +1732,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1504,7 +1739,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "provider",
@@ -1545,12 +1781,6 @@
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1558,7 +1788,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "provider",
@@ -1601,12 +1832,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRepositoryByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1620,7 +1845,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -1655,12 +1881,6 @@
             "schema": {
               "$ref": "#/definitions/v1DeleteRepositoryByNameResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1674,7 +1894,8 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -1711,12 +1932,6 @@
             "schema": {
               "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1749,12 +1964,6 @@
             "schema": {
               "$ref": "#/definitions/v1RegisterRepositoryResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1783,6 +1992,26 @@
             "required": false,
             "type": "string",
             "format": "int64"
+          },
+          {
+            "name": "repository.context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "repository.context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "repository.context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "context.provider",
@@ -1818,12 +2047,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListEvaluationResultsResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1888,12 +2111,6 @@
             "schema": {
               "$ref": "#/definitions/v1CreateRuleTypeResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -1918,12 +2135,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1UpdateRuleTypeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -1951,12 +2162,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetRuleTypeByNameResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2003,12 +2208,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetRuleTypeByIdResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2051,12 +2250,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1DeleteRuleTypeResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2103,12 +2296,6 @@
             "schema": {
               "$ref": "#/definitions/v1ListRuleTypesResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "parameters": [
@@ -2147,12 +2334,6 @@
             "schema": {
               "$ref": "#/definitions/v1GetUserResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -2167,12 +2348,6 @@
             "schema": {
               "$ref": "#/definitions/v1DeleteUserResponse"
             }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
           }
         },
         "tags": [
@@ -2186,12 +2361,6 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1CreateUserResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
             }
           }
         },
@@ -2384,6 +2553,38 @@
         }
       }
     },
+    "ListEvaluationResultsResponseEntityEvaluationResults": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityTypedId"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityProfileEvaluationResults"
+          }
+        }
+      }
+    },
+    "ListEvaluationResultsResponseEntityProfileEvaluationResults": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile - id, name, status, last_updated"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "Note that some fields like profile_id and entity might be empty\nEventually we might replace this type with another one that fits the API better"
+        }
+      }
+    },
     "OAuthServiceStoreProviderTokenBody": {
       "type": "object",
       "properties": {
@@ -2543,34 +2744,6 @@
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
     },
-    "googlerpcStatus": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/protobufAny"
-          }
-        }
-      }
-    },
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
     "protobufNullValue": {
       "type": "string",
       "enum": [
@@ -2661,6 +2834,26 @@
         }
       }
     },
+    "v1AuthorizationFlow": {
+      "type": "string",
+      "enum": [
+        "AUTHORIZATION_FLOW_UNSPECIFIED",
+        "AUTHORIZATION_FLOW_NONE",
+        "AUTHORIZATION_FLOW_USER_INPUT",
+        "AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW",
+        "AUTHORIZATION_FLOW_GITHUB_APP_FLOW"
+      ],
+      "default": "AUTHORIZATION_FLOW_UNSPECIFIED"
+    },
+    "v1AuthorizationParams": {
+      "type": "object",
+      "properties": {
+        "authorizationUrl": {
+          "type": "string",
+          "description": "authorization_url is an external URL to use to authorize the provider."
+        }
+      }
+    },
     "v1BuiltinType": {
       "type": "object",
       "properties": {
@@ -2695,6 +2888,22 @@
       },
       "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
     },
+    "v1CreateEntityReconciliationTaskRequest": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityTypedId",
+          "description": "entity is the entity to be reconciled."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the entity reconciliation task is created."
+        }
+      }
+    },
+    "v1CreateEntityReconciliationTaskResponse": {
+      "type": "object"
+    },
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
@@ -2709,6 +2918,54 @@
       "properties": {
         "profile": {
           "$ref": "#/definitions/v1Profile"
+        }
+      }
+    },
+    "v1CreateProjectRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the project is created."
+        },
+        "name": {
+          "type": "string",
+          "description": "name is the name of the project to create."
+        }
+      }
+    },
+    "v1CreateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was created."
+        }
+      }
+    },
+    "v1CreateProviderRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the provider is created."
+        },
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider to be created."
+        }
+      }
+    },
+    "v1CreateProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider that was created."
+        },
+        "authorization": {
+          "$ref": "#/definitions/v1AuthorizationParams",
+          "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
         }
       }
     },
@@ -2768,6 +3025,18 @@
       }
     },
     "v1DeleteProfileResponse": {
+      "type": "object"
+    },
+    "v1DeleteProjectResponse": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "project_id is the id of the project that was deleted."
+        }
+      }
+    },
+    "v1DeleteProviderResponse": {
       "type": "object"
     },
     "v1DeleteRepositoryByIdResponse": {
@@ -2836,6 +3105,29 @@
         }
       },
       "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+    },
+    "v1EvalResultAlert": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "status is the status of the alert"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the alert was performed or attempted"
+        },
+        "details": {
+          "type": "string",
+          "title": "details is the description of the alert attempt if any"
+        },
+        "url": {
+          "type": "string",
+          "title": "url is the URL to the alert"
+        }
+      },
+      "title": "EvalResultAlert holds the alert details for a given rule evaluation"
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -2913,6 +3205,15 @@
         }
       }
     },
+    "v1GetProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider",
+          "description": "provider is the provider that was retrieved."
+        }
+      }
+    },
     "v1GetRepositoryByIdResponse": {
       "type": "object",
       "properties": {
@@ -2949,6 +3250,19 @@
       },
       "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
     },
+    "v1GetUnclaimedProvidersResponse": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProviderParameter"
+          },
+          "description": "providers is a set of parameters which can be supplied to allow the user\nto assign existing unclaimed credentials to a new provider in the project\nvia CreateProvider()."
+        }
+      }
+    },
     "v1GetUserResponse": {
       "type": "object",
       "properties": {
@@ -2963,6 +3277,26 @@
           }
         }
       }
+    },
+    "v1GitHubAppParams": {
+      "type": "object",
+      "properties": {
+        "installationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub installation ID for the app.  On create, this is the only\nparameter used; the organization parameters are ignored."
+        },
+        "organization": {
+          "type": "string",
+          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        },
+        "organizationId": {
+          "type": "string",
+          "format": "int64",
+          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+        }
+      },
+      "description": "GitHubAppParams is the parameters for a GitHub App provider."
     },
     "v1GitType": {
       "type": "object",
@@ -2993,13 +3327,13 @@
     "v1ListEvaluationResultsResponse": {
       "type": "object",
       "properties": {
-        "status": {
+        "entities": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1RuleEvaluationStatus"
+            "$ref": "#/definitions/ListEvaluationResultsResponseEntityEvaluationResults"
           },
-          "description": "status is the list of evaluation results.\nResults will typically be grouped by profile and project."
+          "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
         }
       }
     },
@@ -3012,6 +3346,30 @@
             "type": "object",
             "$ref": "#/definitions/v1Profile"
           }
+        }
+      }
+    },
+    "v1ListProjectsResponse": {
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Project"
+          }
+        }
+      }
+    },
+    "v1ListProviderClassesResponse": {
+      "type": "object",
+      "properties": {
+        "providerClasses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "provider_classes is the list of provider classes."
         }
       }
     },
@@ -3097,6 +3455,23 @@
       },
       "description": "ListRuleTypesResponse is the response to list rule types."
     },
+    "v1PatchProfileResponse": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
+        }
+      }
+    },
+    "v1PatchProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
+        }
+      }
+    },
     "v1Profile": {
       "type": "object",
       "properties": {
@@ -3150,11 +3525,11 @@
         },
         "remediate": {
           "type": "string",
-          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional and defaults to \"off\""
         },
         "alert": {
           "type": "string",
-          "title": "whether and how to alert (on,off,dry_run)\nthis is optional as the default is set by the system"
+          "title": "whether and how to alert (on,off,dry_run)\nthis is optional and defaults to \"on\""
         },
         "type": {
           "type": "string",
@@ -3163,6 +3538,10 @@
         "version": {
           "type": "string",
           "title": "version is the version of the profile type. In this case, it is \"v1\""
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the profile."
         }
       },
       "description": "Profile defines a profile that is user defined."
@@ -3186,6 +3565,10 @@
           "type": "string",
           "format": "date-time",
           "title": "last_updated is the last time the profile was updated"
+        },
+        "profileDisplayName": {
+          "type": "string",
+          "title": "profile_display_name is the display name of the profile"
         }
       },
       "title": "get the overall profile status"
@@ -3209,9 +3592,26 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
         }
       },
       "title": "Project API Objects"
+    },
+    "v1ProjectPatch": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
     },
     "v1Provider": {
       "type": "object",
@@ -3220,9 +3620,13 @@
           "type": "string",
           "description": "name is the name of the provider."
         },
+        "class": {
+          "type": "string",
+          "description": "class is the name of the provider implementation, eg. 'github' or 'gh-app'."
+        },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is."
+          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
         },
         "version": {
           "type": "string",
@@ -3238,6 +3642,29 @@
         "config": {
           "type": "object",
           "description": "config is the configuration of the provider."
+        },
+        "authFlows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1AuthorizationFlow"
+          },
+          "description": "auth_flows is the list of authorization flows that the provider supports."
+        },
+        "parameters": {
+          "$ref": "#/definitions/v1ProviderParameter",
+          "description": "parameters is the list of parameters that the provider requires."
+        },
+        "credentialsState": {
+          "type": "string",
+          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+        }
+      }
+    },
+    "v1ProviderParameter": {
+      "type": "object",
+      "properties": {
+        "githubApp": {
+          "$ref": "#/definitions/v1GitHubAppParams"
         }
       }
     },
@@ -3252,7 +3679,7 @@
         "PROVIDER_TYPE_REPO_LISTER"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
-      "description": "ProviderType is the type of the provider."
+      "description": "ProviderTrait is the type of the provider."
     },
     "v1RegisterRepoResult": {
       "type": "object",
@@ -3353,6 +3780,9 @@
           "format": "date-time"
         },
         "defaultBranch": {
+          "type": "string"
+        },
+        "license": {
           "type": "string"
         }
       }
@@ -3487,6 +3917,18 @@
         "ruleDescriptionName": {
           "type": "string",
           "title": "rule_description_name is the name to describe the rule"
+        },
+        "alert": {
+          "$ref": "#/definitions/v1EvalResultAlert",
+          "title": "alert holds the alert details if the rule generated an alert in an external system"
+        },
+        "severity": {
+          "$ref": "#/definitions/v1Severity",
+          "title": "severity is the severity of the rule"
+        },
+        "ruleEvaluationId": {
+          "type": "string",
+          "title": "rule_evaluation_id is the id of the rule evaluation"
         }
       },
       "title": "get the status of the rules for a given profile"
@@ -3501,6 +3943,10 @@
         "name": {
           "type": "string",
           "description": "name is the name of the rule type."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the rule type."
         },
         "context": {
           "$ref": "#/definitions/v1Context",
@@ -3568,6 +4014,32 @@
         }
       }
     },
+    "v1UpdateProjectRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the project is updated."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the project to update."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the project to update."
+        }
+      }
+    },
+    "v1UpdateProjectResponse": {
+      "type": "object",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/v1Project",
+          "description": "project is the project that was updated."
+        }
+      }
+    },
     "v1UpdateRuleTypeRequest": {
       "type": "object",
       "properties": {
@@ -3601,6 +4073,9 @@
           "type": "string",
           "format": "int64",
           "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },
@@ -3610,9 +4085,6 @@
         "id": {
           "type": "integer",
           "format": "int32"
-        },
-        "organizationId": {
-          "type": "string"
         },
         "identitySubject": {
           "type": "string"

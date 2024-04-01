@@ -31,7 +31,7 @@ SELECT artifacts.id, artifacts.repository_id, artifacts.artifact_name, artifacts
        artifacts.artifact_visibility, artifacts.created_at,
        repositories.provider, repositories.project_id, repositories.repo_owner, repositories.repo_name
 FROM artifacts INNER JOIN repositories ON repositories.id = artifacts.repository_id
-WHERE artifacts.artifact_name = $1 AND artifacts.repository_id = $2;
+WHERE lower(artifacts.artifact_name) = lower(sqlc.arg(artifact_name)) AND artifacts.repository_id = $1;
 
 -- name: ListArtifactsByRepoID :many
 SELECT * FROM artifacts

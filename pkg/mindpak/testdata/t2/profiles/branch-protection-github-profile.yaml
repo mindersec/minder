@@ -1,0 +1,84 @@
+#
+# Copyright 2024 Stacklok, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+# A profile to verify branch protection settings
+version: v1
+type: profile
+name: branch-protection-github-profile
+context:
+  provider: github
+alert: "off"
+remediate: "off"
+repository:
+  - type: branch_protection_enabled
+    params:
+      branch: ""
+    def: {}
+  - type: branch_protection_allow_deletions
+    params:
+      branch: ""
+    def:
+      allow_deletions: false
+  - type: branch_protection_allow_force_pushes
+    params:
+      branch: ""
+    def:
+      allow_force_pushes: false
+  - type: branch_protection_enforce_admins
+    params:
+      branch: ""
+    def:
+      enforce_admins: true
+  - type: branch_protection_lock_branch
+    params:
+      branch: ""
+    def:
+      lock_branch: false
+  - type: branch_protection_require_conversation_resolution
+    params:
+      branch: ""
+    def:
+      required_conversation_resolution: false
+  - type: branch_protection_require_pull_request_approving_review_count
+    params:
+      branch: ""
+    def:
+      required_approving_review_count: 1
+  - type: branch_protection_require_pull_request_code_owners_review
+    params:
+      branch: ""
+    def:
+      require_code_owner_reviews: false
+  - type: branch_protection_require_pull_request_dismiss_stale_reviews
+    params:
+      branch: ""
+    def:
+      dismiss_stale_reviews: true
+  - type: branch_protection_require_pull_request_last_push_approval
+    params:
+      branch: ""
+    def:
+      require_last_push_approval: true
+  - type: branch_protection_require_pull_requests
+    params:
+      branch: ""
+    def:
+      required_pull_request_reviews: true
+  - type: branch_protection_require_signatures
+    params:
+      branch: ""
+    def:
+      required_signatures: false

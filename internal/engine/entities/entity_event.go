@@ -48,7 +48,7 @@ import (
 // - VersionedArtifactEventEntityType - versioned_artifact
 type EntityInfoWrapper struct {
 	Provider      string
-	ProjectID     *uuid.UUID
+	ProjectID     uuid.UUID
 	Entity        protoreflect.ProtoMessage
 	Type          minderv1.Entity
 	OwnershipData map[string]string
@@ -121,7 +121,7 @@ func (eiw *EntityInfoWrapper) WithPullRequest(p *minderv1.PullRequest) *EntityIn
 
 // WithProjectID sets the project ID
 func (eiw *EntityInfoWrapper) WithProjectID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.ProjectID = &id
+	eiw.ProjectID = id
 
 	return eiw
 }
@@ -192,7 +192,7 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 }
 
 // Publish builds a message.Message and publishes it to the event bus
-func (eiw *EntityInfoWrapper) Publish(evt *events.Eventer) error {
+func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
 	msg, err := eiw.BuildMessage()
 	if err != nil {
 		return err
@@ -212,7 +212,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return err
 	}
 
-	if eiw.ProjectID == nil {
+	if eiw.ProjectID == uuid.Nil {
 		return fmt.Errorf("project ID is required")
 	}
 
@@ -273,7 +273,7 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 		return fmt.Errorf("error parsing project ID: %w", err)
 	}
 
-	eiw.ProjectID = &id
+	eiw.ProjectID = id
 	return nil
 }
 

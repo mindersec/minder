@@ -932,6 +932,7 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ProfileService_CreateProfile_FullMethodName             = "/minder.v1.ProfileService/CreateProfile"
 	ProfileService_UpdateProfile_FullMethodName             = "/minder.v1.ProfileService/UpdateProfile"
+	ProfileService_PatchProfile_FullMethodName              = "/minder.v1.ProfileService/PatchProfile"
 	ProfileService_DeleteProfile_FullMethodName             = "/minder.v1.ProfileService/DeleteProfile"
 	ProfileService_ListProfiles_FullMethodName              = "/minder.v1.ProfileService/ListProfiles"
 	ProfileService_GetProfileById_FullMethodName            = "/minder.v1.ProfileService/GetProfileById"
@@ -951,6 +952,7 @@ const (
 type ProfileServiceClient interface {
 	CreateProfile(ctx context.Context, in *CreateProfileRequest, opts ...grpc.CallOption) (*CreateProfileResponse, error)
 	UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error)
+	PatchProfile(ctx context.Context, in *PatchProfileRequest, opts ...grpc.CallOption) (*PatchProfileResponse, error)
 	DeleteProfile(ctx context.Context, in *DeleteProfileRequest, opts ...grpc.CallOption) (*DeleteProfileResponse, error)
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
@@ -984,6 +986,15 @@ func (c *profileServiceClient) CreateProfile(ctx context.Context, in *CreateProf
 func (c *profileServiceClient) UpdateProfile(ctx context.Context, in *UpdateProfileRequest, opts ...grpc.CallOption) (*UpdateProfileResponse, error) {
 	out := new(UpdateProfileResponse)
 	err := c.cc.Invoke(ctx, ProfileService_UpdateProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) PatchProfile(ctx context.Context, in *PatchProfileRequest, opts ...grpc.CallOption) (*PatchProfileResponse, error) {
+	out := new(PatchProfileResponse)
+	err := c.cc.Invoke(ctx, ProfileService_PatchProfile_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1095,6 +1106,7 @@ func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRul
 type ProfileServiceServer interface {
 	CreateProfile(context.Context, *CreateProfileRequest) (*CreateProfileResponse, error)
 	UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error)
+	PatchProfile(context.Context, *PatchProfileRequest) (*PatchProfileResponse, error)
 	DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error)
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
@@ -1118,6 +1130,9 @@ func (UnimplementedProfileServiceServer) CreateProfile(context.Context, *CreateP
 }
 func (UnimplementedProfileServiceServer) UpdateProfile(context.Context, *UpdateProfileRequest) (*UpdateProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfile not implemented")
+}
+func (UnimplementedProfileServiceServer) PatchProfile(context.Context, *PatchProfileRequest) (*PatchProfileResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchProfile not implemented")
 }
 func (UnimplementedProfileServiceServer) DeleteProfile(context.Context, *DeleteProfileRequest) (*DeleteProfileResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProfile not implemented")
@@ -1197,6 +1212,24 @@ func _ProfileService_UpdateProfile_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProfileServiceServer).UpdateProfile(ctx, req.(*UpdateProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_PatchProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).PatchProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_PatchProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).PatchProfile(ctx, req.(*PatchProfileRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1413,6 +1446,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateProfile",
 			Handler:    _ProfileService_UpdateProfile_Handler,
+		},
+		{
+			MethodName: "PatchProfile",
+			Handler:    _ProfileService_PatchProfile_Handler,
 		},
 		{
 			MethodName: "DeleteProfile",
@@ -1755,14 +1792,302 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProvidersService_ListProviders_FullMethodName = "/minder.v1.ProvidersService/ListProviders"
+	ProjectsService_ListProjects_FullMethodName                   = "/minder.v1.ProjectsService/ListProjects"
+	ProjectsService_CreateProject_FullMethodName                  = "/minder.v1.ProjectsService/CreateProject"
+	ProjectsService_DeleteProject_FullMethodName                  = "/minder.v1.ProjectsService/DeleteProject"
+	ProjectsService_UpdateProject_FullMethodName                  = "/minder.v1.ProjectsService/UpdateProject"
+	ProjectsService_PatchProject_FullMethodName                   = "/minder.v1.ProjectsService/PatchProject"
+	ProjectsService_CreateEntityReconciliationTask_FullMethodName = "/minder.v1.ProjectsService/CreateEntityReconciliationTask"
+)
+
+// ProjectsServiceClient is the client API for ProjectsService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type ProjectsServiceClient interface {
+	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
+	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
+	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error)
+	PatchProject(ctx context.Context, in *PatchProjectRequest, opts ...grpc.CallOption) (*PatchProjectResponse, error)
+	CreateEntityReconciliationTask(ctx context.Context, in *CreateEntityReconciliationTaskRequest, opts ...grpc.CallOption) (*CreateEntityReconciliationTaskResponse, error)
+}
+
+type projectsServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewProjectsServiceClient(cc grpc.ClientConnInterface) ProjectsServiceClient {
+	return &projectsServiceClient{cc}
+}
+
+func (c *projectsServiceClient) ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error) {
+	out := new(ListProjectsResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_ListProjects_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error) {
+	out := new(CreateProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_CreateProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error) {
+	out := new(DeleteProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_DeleteProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error) {
+	out := new(UpdateProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_UpdateProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) PatchProject(ctx context.Context, in *PatchProjectRequest, opts ...grpc.CallOption) (*PatchProjectResponse, error) {
+	out := new(PatchProjectResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_PatchProject_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) CreateEntityReconciliationTask(ctx context.Context, in *CreateEntityReconciliationTaskRequest, opts ...grpc.CallOption) (*CreateEntityReconciliationTaskResponse, error) {
+	out := new(CreateEntityReconciliationTaskResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_CreateEntityReconciliationTask_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ProjectsServiceServer is the server API for ProjectsService service.
+// All implementations must embed UnimplementedProjectsServiceServer
+// for forward compatibility
+type ProjectsServiceServer interface {
+	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
+	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
+	UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error)
+	PatchProject(context.Context, *PatchProjectRequest) (*PatchProjectResponse, error)
+	CreateEntityReconciliationTask(context.Context, *CreateEntityReconciliationTaskRequest) (*CreateEntityReconciliationTaskResponse, error)
+	mustEmbedUnimplementedProjectsServiceServer()
+}
+
+// UnimplementedProjectsServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProjectsServiceServer struct {
+}
+
+func (UnimplementedProjectsServiceServer) ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProjects not implemented")
+}
+func (UnimplementedProjectsServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) PatchProject(context.Context, *PatchProjectRequest) (*PatchProjectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PatchProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) CreateEntityReconciliationTask(context.Context, *CreateEntityReconciliationTaskRequest) (*CreateEntityReconciliationTaskResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateEntityReconciliationTask not implemented")
+}
+func (UnimplementedProjectsServiceServer) mustEmbedUnimplementedProjectsServiceServer() {}
+
+// UnsafeProjectsServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProjectsServiceServer will
+// result in compilation errors.
+type UnsafeProjectsServiceServer interface {
+	mustEmbedUnimplementedProjectsServiceServer()
+}
+
+func RegisterProjectsServiceServer(s grpc.ServiceRegistrar, srv ProjectsServiceServer) {
+	s.RegisterService(&ProjectsService_ServiceDesc, srv)
+}
+
+func _ProjectsService_ListProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).ListProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_ListProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).ListProjects(ctx, req.(*ListProjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_CreateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).CreateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_CreateProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).CreateProject(ctx, req.(*CreateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_DeleteProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).DeleteProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_DeleteProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).DeleteProject(ctx, req.(*DeleteProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_UpdateProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).UpdateProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_UpdateProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).UpdateProject(ctx, req.(*UpdateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_PatchProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PatchProjectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).PatchProject(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_PatchProject_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).PatchProject(ctx, req.(*PatchProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_CreateEntityReconciliationTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateEntityReconciliationTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).CreateEntityReconciliationTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_CreateEntityReconciliationTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).CreateEntityReconciliationTask(ctx, req.(*CreateEntityReconciliationTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ProjectsService_ServiceDesc is the grpc.ServiceDesc for ProjectsService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ProjectsService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.ProjectsService",
+	HandlerType: (*ProjectsServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListProjects",
+			Handler:    _ProjectsService_ListProjects_Handler,
+		},
+		{
+			MethodName: "CreateProject",
+			Handler:    _ProjectsService_CreateProject_Handler,
+		},
+		{
+			MethodName: "DeleteProject",
+			Handler:    _ProjectsService_DeleteProject_Handler,
+		},
+		{
+			MethodName: "UpdateProject",
+			Handler:    _ProjectsService_UpdateProject_Handler,
+		},
+		{
+			MethodName: "PatchProject",
+			Handler:    _ProjectsService_PatchProject_Handler,
+		},
+		{
+			MethodName: "CreateEntityReconciliationTask",
+			Handler:    _ProjectsService_CreateEntityReconciliationTask_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
+
+const (
+	ProvidersService_GetProvider_FullMethodName           = "/minder.v1.ProvidersService/GetProvider"
+	ProvidersService_ListProviders_FullMethodName         = "/minder.v1.ProvidersService/ListProviders"
+	ProvidersService_CreateProvider_FullMethodName        = "/minder.v1.ProvidersService/CreateProvider"
+	ProvidersService_DeleteProvider_FullMethodName        = "/minder.v1.ProvidersService/DeleteProvider"
+	ProvidersService_GetUnclaimedProviders_FullMethodName = "/minder.v1.ProvidersService/GetUnclaimedProviders"
+	ProvidersService_ListProviderClasses_FullMethodName   = "/minder.v1.ProvidersService/ListProviderClasses"
 )
 
 // ProvidersServiceClient is the client API for ProvidersService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ProvidersServiceClient interface {
+	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error)
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
+	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
+	DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error)
+	// GetUnclaimedProviders returns a list of known provider configurations
+	// that this user could claim based on their identity.  This is a read-only
+	// operation for use by clients which wish to present a menu of options.
+	GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error)
+	ListProviderClasses(ctx context.Context, in *ListProviderClassesRequest, opts ...grpc.CallOption) (*ListProviderClassesResponse, error)
 }
 
 type providersServiceClient struct {
@@ -1771,6 +2096,15 @@ type providersServiceClient struct {
 
 func NewProvidersServiceClient(cc grpc.ClientConnInterface) ProvidersServiceClient {
 	return &providersServiceClient{cc}
+}
+
+func (c *providersServiceClient) GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error) {
+	out := new(GetProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_GetProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error) {
@@ -1782,11 +2116,55 @@ func (c *providersServiceClient) ListProviders(ctx context.Context, in *ListProv
 	return out, nil
 }
 
+func (c *providersServiceClient) CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error) {
+	out := new(CreateProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_CreateProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *providersServiceClient) DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error) {
+	out := new(DeleteProviderResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_DeleteProvider_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *providersServiceClient) GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error) {
+	out := new(GetUnclaimedProvidersResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_GetUnclaimedProviders_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *providersServiceClient) ListProviderClasses(ctx context.Context, in *ListProviderClassesRequest, opts ...grpc.CallOption) (*ListProviderClassesResponse, error) {
+	out := new(ListProviderClassesResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_ListProviderClasses_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvidersServiceServer is the server API for ProvidersService service.
 // All implementations must embed UnimplementedProvidersServiceServer
 // for forward compatibility
 type ProvidersServiceServer interface {
+	GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error)
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
+	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
+	DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error)
+	// GetUnclaimedProviders returns a list of known provider configurations
+	// that this user could claim based on their identity.  This is a read-only
+	// operation for use by clients which wish to present a menu of options.
+	GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error)
+	ListProviderClasses(context.Context, *ListProviderClassesRequest) (*ListProviderClassesResponse, error)
 	mustEmbedUnimplementedProvidersServiceServer()
 }
 
@@ -1794,8 +2172,23 @@ type ProvidersServiceServer interface {
 type UnimplementedProvidersServiceServer struct {
 }
 
+func (UnimplementedProvidersServiceServer) GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProvider not implemented")
+}
 func (UnimplementedProvidersServiceServer) ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProviders not implemented")
+}
+func (UnimplementedProvidersServiceServer) CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateProvider not implemented")
+}
+func (UnimplementedProvidersServiceServer) DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProvider not implemented")
+}
+func (UnimplementedProvidersServiceServer) GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUnclaimedProviders not implemented")
+}
+func (UnimplementedProvidersServiceServer) ListProviderClasses(context.Context, *ListProviderClassesRequest) (*ListProviderClassesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListProviderClasses not implemented")
 }
 func (UnimplementedProvidersServiceServer) mustEmbedUnimplementedProvidersServiceServer() {}
 
@@ -1808,6 +2201,24 @@ type UnsafeProvidersServiceServer interface {
 
 func RegisterProvidersServiceServer(s grpc.ServiceRegistrar, srv ProvidersServiceServer) {
 	s.RegisterService(&ProvidersService_ServiceDesc, srv)
+}
+
+func _ProvidersService_GetProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).GetProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_GetProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).GetProvider(ctx, req.(*GetProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ProvidersService_ListProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1828,6 +2239,78 @@ func _ProvidersService_ListProviders_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvidersService_CreateProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).CreateProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_CreateProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).CreateProvider(ctx, req.(*CreateProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvidersService_DeleteProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).DeleteProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_DeleteProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).DeleteProvider(ctx, req.(*DeleteProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvidersService_GetUnclaimedProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUnclaimedProvidersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).GetUnclaimedProviders(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_GetUnclaimedProviders_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).GetUnclaimedProviders(ctx, req.(*GetUnclaimedProvidersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProvidersService_ListProviderClasses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListProviderClassesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).ListProviderClasses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_ListProviderClasses_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).ListProviderClasses(ctx, req.(*ListProviderClassesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvidersService_ServiceDesc is the grpc.ServiceDesc for ProvidersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1836,8 +2319,28 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ProvidersServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetProvider",
+			Handler:    _ProvidersService_GetProvider_Handler,
+		},
+		{
 			MethodName: "ListProviders",
 			Handler:    _ProvidersService_ListProviders_Handler,
+		},
+		{
+			MethodName: "CreateProvider",
+			Handler:    _ProvidersService_CreateProvider_Handler,
+		},
+		{
+			MethodName: "DeleteProvider",
+			Handler:    _ProvidersService_DeleteProvider_Handler,
+		},
+		{
+			MethodName: "GetUnclaimedProviders",
+			Handler:    _ProvidersService_GetUnclaimedProviders_Handler,
+		},
+		{
+			MethodName: "ListProviderClasses",
+			Handler:    _ProvidersService_ListProviderClasses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

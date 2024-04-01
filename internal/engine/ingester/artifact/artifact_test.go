@@ -17,17 +17,20 @@ package artifact
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	mockverify "github.com/stacklok/minder/internal/verifier/mock"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -55,8 +58,9 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 }
 

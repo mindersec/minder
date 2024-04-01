@@ -68,7 +68,7 @@ func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID
 }
 
 // handleRepoReconcilerEvent handles events coming from the reconciler topic
-func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
+func (r *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 	var evt RepoReconcilerEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
@@ -85,32 +85,29 @@ func (e *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 
 	ctx := msg.Context()
 	log.Printf("handling reconciler event for project %s and repository %d", evt.Project.String(), evt.Repository)
-	return e.handleArtifactsReconcilerEvent(ctx, &evt)
+	return r.handleArtifactsReconcilerEvent(ctx, &evt)
 }
 
 // HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
 // nolint: gocyclo
-func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *RepoReconcilerEvent) error {
+func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *RepoReconcilerEvent) error {
 	// first retrieve data for the repository
-	repository, err := e.store.GetRepositoryByRepoID(ctx, evt.Repository)
+	repository, err := r.store.GetRepositoryByRepoID(ctx, evt.Repository)
 	if err != nil {
 		return fmt.Errorf("error retrieving repository: %w", err)
 	}
 
-	prov, err := e.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      repository.Provider,
-		ProjectID: evt.Project,
-	})
+	prov, err := r.store.GetProviderByID(ctx, repository.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
 	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(e.provMt),
-		providers.WithRestClientCache(e.restClientCache),
+		providers.WithProviderMetrics(r.provMt),
+		providers.WithRestClientCache(r.restClientCache),
 	}
-	p, err := providers.GetProviderBuilder(ctx, prov, evt.Project, e.store, e.crypteng, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, prov, r.store, r.crypteng, r.provCfg, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -123,7 +120,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		WithRepository(repo).
 		WithProjectID(evt.Project).
 		WithRepositoryID(repository.ID).
-		Publish(e.evt)
+		Publish(r.evt)
 	if err != nil {
 		return fmt.Errorf("error publishing message: %w", err)
 	}
@@ -154,7 +151,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	for _, artifact := range artifacts {
 		// store information if we do not have it
 		typeLower := strings.ToLower(artifact.GetPackageType())
-		newArtifact, err := e.store.UpsertArtifact(ctx,
+		newArtifact, err := r.store.UpsertArtifact(ctx,
 			db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),
 				ArtifactType: typeLower, ArtifactVisibility: artifact.GetVisibility()})
 
@@ -181,7 +178,7 @@ func (e *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			WithProjectID(evt.Project).
 			WithArtifactID(newArtifact.ID).
 			WithRepositoryID(repository.ID).
-			Publish(e.evt)
+			Publish(r.evt)
 		if err != nil {
 			return fmt.Errorf("error publishing message: %w", err)
 		}

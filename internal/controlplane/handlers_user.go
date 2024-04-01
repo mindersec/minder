@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -32,12 +31,12 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/projects"
+	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CreateUser is a service for user self registration
-//
-//gocyclo:ignore
 func (s *Server) CreateUser(ctx context.Context,
 	_ *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 
@@ -63,40 +62,31 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	var userOrg uuid.UUID
 	var userProject uuid.UUID
-
-	orgmeta := &OrgMeta{
-		Company: subject + " - Self enrolled",
-	}
-
-	marshaled, err := json.Marshal(orgmeta)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to marshal org metadata: %s", err)
-	}
 
 	baseName := subject
 	if token.PreferredUsername() != "" {
 		baseName = token.PreferredUsername()
 	}
 
-	// otherwise self-enroll user, by creating a new org and project and making the user an admin of those
-	organization, err := qtx.CreateOrganization(ctx, db.CreateOrganizationParams{
-		Name:     baseName + "-org",
-		Metadata: marshaled,
-	})
+	orgProject, err := projects.ProvisionSelfEnrolledProject(
+		ctx,
+		s.authzClient,
+		qtx,
+		baseName,
+		subject,
+		s.marketplace,
+		s.cfg.DefaultProfiles,
+	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create organization: %s", err)
-	}
-	orgProject, err := s.CreateDefaultRecordsForOrg(ctx, qtx, organization, baseName, subject)
-	if err != nil {
+		if errors.Is(err, projects.ErrProjectAlreadyExists) {
+			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", baseName)
+		}
 		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
 	}
 
-	userOrg = organization.ID
 	userProject = uuid.MustParse(orgProject.ProjectId)
-	user, err := qtx.CreateUser(ctx, db.CreateUserParams{OrganizationID: userOrg,
-		IdentitySubject: subject})
+	user, err := qtx.CreateUser(ctx, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
@@ -111,8 +101,6 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID.String(),
-		OrganizatioName: organization.Name,
 		ProjectId:       userProject.String(),
 		ProjectName:     orgProject.Name,
 		IdentitySubject: user.IdentitySubject,
@@ -186,15 +174,19 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.Project, error) {
 	// get all the projects associated with that user
-	projects, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
+	projs, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
 	if err != nil {
 		return nil, err
 	}
 
 	var projectsPB []*pb.Project
-	for _, proj := range projects {
+	for _, proj := range projs {
 		pinfo, err := s.store.GetProjectByID(ctx, proj)
 		if err != nil {
+			// if the project was deleted while iterating, skip it
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
 			return nil, err
 		}
 
@@ -234,17 +226,16 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	var resp pb.GetUserResponse
 	resp.User = &pb.UserRecord{
 		Id:              user.ID,
-		OrganizationId:  user.OrganizationID.String(),
 		IdentitySubject: user.IdentitySubject,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	projects, err := s.getUserDependencies(ctx, user)
+	projs, err := s.getUserDependencies(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
-	resp.Projects = projects
+	resp.Projects = projs
 
 	return &resp, nil
 }

@@ -43,7 +43,7 @@ func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Act
 		if alertCfg.GetSecurityAdvisory() == nil {
 			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, alertCfg.GetSecurityAdvisory(), pbuild)
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), pbuild)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

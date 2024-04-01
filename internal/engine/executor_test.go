@@ -101,16 +101,17 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	// get project information
 	mockStore.EXPECT().
-		GetProjectByID(gomock.Any(), projectID).
-		Return(db.Project{
-			ID:   projectID,
-			Name: "test",
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{
+			projectID,
 		}, nil)
 
 	mockStore.EXPECT().
 		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:      providerName,
-			ProjectID: projectID,
+			Name: providerName,
+			Projects: []uuid.UUID{
+				projectID,
+			},
 		}).
 		Return(db.Provider{
 			ID:        providerID,
@@ -127,7 +128,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			}).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: authtoken,
-		}, nil)
+		}, nil).Times(2)
 
 	// list one profile
 	crs := []*minderv1.Profile_Rule{
@@ -145,14 +146,18 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		ListProfilesByProjectID(gomock.Any(), projectID).
 		Return([]db.ListProfilesByProjectIDRow{
 			{
-				ID:              profileID,
-				Name:            "test-profile",
-				Entity:          db.EntitiesRepository,
-				Provider:        providerName,
-				ProjectID:       projectID,
-				CreatedAt:       time.Now(),
-				UpdatedAt:       time.Now(),
-				ContextualRules: json.RawMessage(marshalledCRS),
+				Profile: db.Profile{
+					ID:        profileID,
+					Name:      "test-profile",
+					Provider:  providerName,
+					ProjectID: projectID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+				},
+				EntityProfile: db.EntityProfile{
+					Entity:          db.EntitiesRepository,
+					ContextualRules: json.RawMessage(marshalledCRS),
+				},
 			},
 		}, nil)
 
@@ -181,13 +186,11 @@ default allow = true`,
 
 	mockStore.EXPECT().
 		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Provider:  providerName,
 			ProjectID: projectID,
 			Name:      passthroughRuleType,
 		}).Return(db.RuleType{
 		ID:         ruleTypeID,
 		Name:       passthroughRuleType,
-		Provider:   providerName,
 		ProjectID:  projectID,
 		Definition: json.RawMessage(marshalledRTD),
 	}, nil)
@@ -224,6 +227,7 @@ default allow = true`,
 			RuleEvalID: ruleEvalId,
 			Status:     db.RemediationStatusTypesSkipped,
 			Details:    "",
+			Metadata:   json.RawMessage("{}"),
 		}).Return(ruleEvalRemediationId, nil)
 	// Empty metadata
 	meta, _ := json.Marshal(map[string]any{})
@@ -291,7 +295,7 @@ default allow = true`,
 
 	e, err := engine.NewExecutor(ctx, mockStore, &serverconfig.AuthConfig{
 		TokenKey: tokenKeyPath,
-	}, evt)
+	}, nil, evt)
 	require.NoError(t, err, "expected no error")
 
 	eiw := entities.NewEntityInfoWrapper().

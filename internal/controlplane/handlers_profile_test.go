@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine"
+	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -224,10 +225,14 @@ func TestCreateProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating project: %v", err)
 	}
-	provider, err := dbStore.CreateProvider(ctx, db.CreateProviderParams{
+
+	// The provider is used in the profile definition
+	_, err = dbStore.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       "github",
 		ProjectID:  dbproj.ID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: []byte(`{}`),
 	})
 	if err != nil {
@@ -235,9 +240,8 @@ func TestCreateProfile(t *testing.T) {
 	}
 	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          "rule_type_1",
-		Provider:      provider.Name,
 		ProjectID:     dbproj.ID,
-		Definition:    []byte(`{"ruleSchema":{}}`),
+		Definition:    []byte(`{"in_entity": "repository","ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,
 	})
 	if err != nil {
@@ -264,7 +268,7 @@ func TestCreateProfile(t *testing.T) {
 				Name: "colon:invalid",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile names may only contain letters, numbers, hyphens and underscores`,
+		wantErr: `Couldn't create profile: validation failed: name may only contain letters, numbers, hyphens and underscores`,
 	}, {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
@@ -273,28 +277,58 @@ func TestCreateProfile(t *testing.T) {
 			},
 		},
 		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
-	}, {
-		name: "Create profile with valid name and rules",
-		profile: &minderv1.CreateProfileRequest{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+	},
+		{
+			name: "Create profile with valid name and rules",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test",
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test",
+					Alert:     proto.String("on"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-		result: &minderv1.CreateProfileResponse{
-			Profile: &minderv1.Profile{
-				Name: "test",
-				Repository: []*minderv1.Profile_Rule{{
-					Type: "rule_type_1",
-					Name: "rule_type_1",
-					Def:  &structpb.Struct{},
-				}},
+		{
+			name: "Create profile with explicit alert and remediate",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test_explicit",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("on"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
 			},
 		},
-	}}
+	}
 
 	for _, tc := range tests {
 		tc := tc
@@ -316,10 +350,12 @@ func TestCreateProfile(t *testing.T) {
 				Project:  engine.Project{ID: dbproj.ID},
 				Provider: engine.Provider{Name: "github"},
 			})
+			evts := &stubeventer.StubEventer{}
 			s := &Server{
-				store:            dbStore,
-				profileValidator: profiles.NewValidator(dbStore),
-				evt:              &StubEventer{},
+				store: dbStore,
+				// Do not replace this with a mock - these tests are used to test ProfileService as well
+				profiles: profiles.NewProfileService(evts),
+				evt:      evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)

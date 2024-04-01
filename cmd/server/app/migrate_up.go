@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/database"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -73,10 +74,9 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		configPath := getMigrateConfigPath()
-		m, err := migrate.New(configPath, connString)
+		m, err := database.NewFromConnectionString(connString)
 		if err != nil {
-			cmd.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
+			cmd.Printf("Error while creating migration instance: %v\n", err)
 			os.Exit(1)
 		}
 

@@ -20,6 +20,8 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -44,6 +46,8 @@ type DatabaseConfig struct {
 func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, error) {
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		c.User, url.QueryEscape(c.Password), c.Host, c.Port, c.Name, c.SSLMode)
+	zerolog.Ctx(ctx).Info().Str("host", c.Host).Int("port", c.Port).Str("user", c.User).
+		Str("dbname", c.Name).Msg("Connecting to DB")
 
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
@@ -51,19 +55,28 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 	}
 
 	for i := 0; i < 8; i++ {
-		// Ensure we actually connected to the database, per Go docs
-		err = conn.Ping()
+		zerolog.Ctx(ctx).Info().Int("try number", i).Msg("Trying to connect to DB")
+		// we don't defer canceling the context because we want to cancel it as soon as we're done
+		// and we might overwrite the context in the loop
+		pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+
+		err = conn.PingContext(pingCtx)
 		if err != nil {
 			zerolog.Ctx(ctx).Warn().Err(err).Msgf("Unable to initialize connection to DB, retry %d", i)
-			time.Sleep(1 * time.Second)
-			continue
+			time.Sleep(1 * time.Second) // Consider exponential backoff here
+		} else {
+			zerolog.Ctx(ctx).Info().Msg("Connected to DB")
+			cancel()
+			return conn, uri, nil
 		}
-		zerolog.Ctx(ctx).Info().Msg("Connected to DB")
-		return conn, uri, err
+
+		cancel()
 	}
 
-	//nolint:gosec // Not much we can do about an error here.
-	conn.Close()
+	// Handle the closing of the connection outside the loop if all retries fail
+	if closeErr := conn.Close(); closeErr != nil {
+		zerolog.Ctx(ctx).Error().Err(closeErr).Msg("Failed to close DB connection")
+	}
 	return nil, "", err
 }
 
@@ -131,4 +144,15 @@ func RegisterGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	return BindConfigFlag(v, flags, "grpc_server.insecure", "grpc-insecure", false,
 		"Allow establishing insecure connections", flags.Bool)
+}
+
+// ReadKey reads a key from a file
+func ReadKey(keypath string) ([]byte, error) {
+	cleankeypath := filepath.Clean(keypath)
+	data, err := os.ReadFile(cleankeypath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key: %w", err)
+	}
+
+	return data, nil
 }

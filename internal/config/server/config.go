@@ -31,18 +31,21 @@ import (
 
 // Config is the top-level configuration structure.
 type Config struct {
-	HTTPServer    HTTPServerConfig      `mapstructure:"http_server"`
-	GRPCServer    GRPCServerConfig      `mapstructure:"grpc_server"`
-	MetricServer  MetricServerConfig    `mapstructure:"metric_server"`
-	LoggingConfig LoggingConfig         `mapstructure:"logging"`
-	Tracing       TracingConfig         `mapstructure:"tracing"`
-	Metrics       MetricsConfig         `mapstructure:"metrics"`
-	Database      config.DatabaseConfig `mapstructure:"database"`
-	Identity      IdentityConfigWrapper `mapstructure:"identity"`
-	Auth          AuthConfig            `mapstructure:"auth"`
-	WebhookConfig WebhookConfig         `mapstructure:"webhook-config"`
-	Events        EventConfig           `mapstructure:"events"`
-	Authz         AuthzConfig           `mapstructure:"authz"`
+	HTTPServer      HTTPServerConfig      `mapstructure:"http_server"`
+	GRPCServer      GRPCServerConfig      `mapstructure:"grpc_server"`
+	MetricServer    MetricServerConfig    `mapstructure:"metric_server"`
+	LoggingConfig   LoggingConfig         `mapstructure:"logging"`
+	Tracing         TracingConfig         `mapstructure:"tracing"`
+	Metrics         MetricsConfig         `mapstructure:"metrics"`
+	Database        config.DatabaseConfig `mapstructure:"database"`
+	Identity        IdentityConfigWrapper `mapstructure:"identity"`
+	Auth            AuthConfig            `mapstructure:"auth"`
+	WebhookConfig   WebhookConfig         `mapstructure:"webhook-config"`
+	Events          EventConfig           `mapstructure:"events"`
+	Authz           AuthzConfig           `mapstructure:"authz"`
+	Provider        ProviderConfig        `mapstructure:"provider"`
+	Marketplace     MarketplaceConfig     `mapstructure:"marketplace"`
+	DefaultProfiles DefaultProfilesConfig `mapstructure:"default_profiles"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,
@@ -61,7 +64,7 @@ func DefaultConfigForTest() *Config {
 // up by viper
 func SetViperDefaults(v *viper.Viper) {
 	v.SetEnvPrefix("minder")
-	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	setViperStructDefaults(v, "", Config{})
 }
 
@@ -85,9 +88,20 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			panic(fmt.Sprintf("Untagged config struct field %q", field.Name))
 		}
 		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
+		fieldType := field.Type
 
-		if field.Type.Kind() == reflect.Struct {
-			setViperStructDefaults(v, valueName+".", reflect.Zero(field.Type).Interface())
+		// Dereference one level of pointers, if present
+		if fieldType.Kind() == reflect.Ptr {
+			fieldType = fieldType.Elem()
+		}
+
+		if fieldType.Kind() == reflect.Struct {
+			setViperStructDefaults(v, valueName+".", reflect.Zero(fieldType).Interface())
+			// TODO: we could allow `default` tags on structs to override the defaults inside the type.
+			// for now, we just warn about setting the tag, because it's ignored.
+			if _, ok := field.Tag.Lookup("default"); ok {
+				panic(fmt.Sprintf("Unsupported default on struct field: %q", valueName))
+			}
 			continue
 		}
 
@@ -96,9 +110,8 @@ func setViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		value := field.Tag.Get("default")
 		defaultValue := reflect.Zero(field.Type).Interface()
 		var err error // We handle errors at the end of the switch
-		fieldType := field.Type.Kind()
 		//nolint:golint,exhaustive
-		switch fieldType {
+		switch fieldType.Kind() {
 		case reflect.String:
 			defaultValue = value
 		case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,

@@ -20,10 +20,6 @@ deps:
 breaking:
   use:
     - WIRE_JSON
-  except:
-    # Upgrading an int32 to an int64; still accept int32 input, output shape changes
-    # Undo after #2415
-    - FIELD_WIRE_JSON_COMPATIBLE_TYPE
 lint:
   use:
     - DEFAULT

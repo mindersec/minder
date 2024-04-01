@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -49,5 +50,14 @@ func NewInvisibleCharactersEvaluator(pbuild *providers.ProviderBuilder) (*Invisi
 
 // Eval evaluates the invisible characters rule type
 func (ice *InvisibleCharactersEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
-	return evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
+	hasFoundViolations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
+	if err != nil {
+		return err
+	}
+
+	if hasFoundViolations {
+		return evalerrors.NewErrEvaluationFailed("found invisible characters violations")
+	}
+
+	return nil
 }

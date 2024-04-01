@@ -55,6 +55,9 @@ var (
 	PyRequestsVersionRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)\s*(\d+(\.\d+)*(\*)?)`)
 	// PyRequestsNameRegexp is a regexp to match a line in a requirements.txt file, parsing out the package name
 	PyRequestsNameRegexp = regexp.MustCompile(`\s*(>=|<=|==|>|<|!=)`)
+	// MinderAuthTokenEnvVar is the environment variable for the minder auth token
+	//nolint:gosec // This is not a hardcoded credential
+	MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
 )
 
 // OpenIdCredentials is a struct to hold the access and refresh tokens
@@ -109,9 +112,13 @@ func GetGrpcConnection(
 
 	// read credentials
 	token := ""
-	t, err := GetToken(issuerUrl, clientId)
-	if err == nil {
-		token = t
+	if os.Getenv(MinderAuthTokenEnvVar) != "" {
+		token = os.Getenv(MinderAuthTokenEnvVar)
+	} else {
+		t, err := GetToken(issuerUrl, clientId)
+		if err == nil {
+			token = t
+		}
 	}
 
 	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
@@ -473,6 +480,7 @@ func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
 		DeployUrl:     dbrepo.DeployUrl,
 		CloneUrl:      dbrepo.CloneUrl,
 		DefaultBranch: dbrepo.DefaultBranch.String,
+		License:       dbrepo.License.String,
 		CreatedAt:     timestamppb.New(dbrepo.CreatedAt),
 		UpdatedAt:     timestamppb.New(dbrepo.UpdatedAt),
 	}
@@ -480,8 +488,16 @@ func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
 
 // GetRepository retrieves a repository from the database
 // and converts it to a protobuf
-func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID) (*minderv1.Repository, error) {
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+func GetRepository(
+	ctx context.Context,
+	store db.ExtendQuerier,
+	projectID uuid.UUID,
+	repoID uuid.UUID,
+) (*minderv1.Repository, error) {
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
@@ -491,9 +507,17 @@ func GetRepository(ctx context.Context, store db.ExtendQuerier, repoID uuid.UUID
 
 // GetArtifact retrieves an artifact and its versions from the database
 func GetArtifact(
-	ctx context.Context, store db.ExtendQuerier, repoID, artifactID uuid.UUID) (*minderv1.Artifact, error) {
+	ctx context.Context,
+	store db.ExtendQuerier,
+	projectID,
+	repoID,
+	artifactID uuid.UUID,
+) (*minderv1.Artifact, error) {
 	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("repository not found")
 	} else if err != nil {
@@ -525,10 +549,15 @@ func GetArtifact(
 func GetPullRequest(
 	ctx context.Context,
 	store db.ExtendQuerier,
-	repoID, pullRequestID uuid.UUID,
+	projectID,
+	repoID,
+	pullRequestID uuid.UUID,
 ) (*minderv1.PullRequest, error) {
 	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByID(ctx, repoID)
+	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("repository not found")
 	} else if err != nil {

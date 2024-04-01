@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,26 +33,20 @@ import (
 )
 
 // Validator encapsulates the logic for validating profiles
-type Validator struct {
-	store db.Store
-}
-
-// NewValidator is a factory method for the Validator struct
-func NewValidator(store db.Store) *Validator {
-	return &Validator{store}
-}
+type Validator struct{}
 
 // ValidateAndExtractRules validates a profile to ensure it is well-formed
 // it also returns information about the rules in the profile
 func (v *Validator) ValidateAndExtractRules(
 	ctx context.Context,
+	qtx db.Querier,
+	projectID uuid.UUID,
 	profile *minderv1.Profile,
-	entityCtx engine.EntityContext,
 ) (RuleMapping, error) {
 
 	// ensure that the profile has all required fields
 	if err := profile.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
 	// ensure that the rule names follow all naming constraints
@@ -59,8 +54,18 @@ func (v *Validator) ValidateAndExtractRules(
 		return nil, err
 	}
 
+	// validate that the rule invocations match what the rule types expect
+	if err := validateEntities(ctx, qtx, profile, projectID); err != nil {
+		var violation *engine.RuleValidationError
+		if errors.As(err, &violation) {
+			return nil, util.UserVisibleError(codes.InvalidArgument,
+				"profile failed rule validation: %s", violation)
+		}
+		return nil, status.Errorf(codes.Internal, "error validating profile")
+	}
+
 	// validate that the parameters for the rules match the expected schema
-	rulesInProf, err := v.validateRuleParams(ctx, profile, &entityCtx)
+	rulesInProf, err := v.validateRuleParams(ctx, qtx, profile, projectID)
 	if err != nil {
 		var violation *engine.RuleValidationError
 		if errors.As(err, &violation) {
@@ -77,10 +82,11 @@ func (v *Validator) ValidateAndExtractRules(
 	return rulesInProf, nil
 }
 
-func (v *Validator) validateRuleParams(
+func (_ *Validator) validateRuleParams(
 	ctx context.Context,
+	qtx db.Querier,
 	prof *minderv1.Profile,
-	entityCtx *engine.EntityContext,
+	projectID uuid.UUID,
 ) (RuleMapping, error) {
 	// We capture the rule instantiations here, so we can
 	// track them in the db later.
@@ -89,9 +95,8 @@ func (v *Validator) validateRuleParams(
 	err := engine.TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
-		ruleType, err := v.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Provider:  entityCtx.Provider.Name,
-			ProjectID: entityCtx.Project.ID,
+		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+			ProjectID: projectID,
 			Name:      profileRule.GetType(),
 		})
 
@@ -253,5 +258,52 @@ func validateRuleWithNonEmptyName(
 	}
 
 	ruleNameToType[ruleName] = ruleType
+	return nil
+}
+
+func validateEntities(
+	ctx context.Context,
+	qtx db.Querier,
+	profile *minderv1.Profile,
+	projectID uuid.UUID,
+) error {
+	// validate that the entities in the profile match the entities in the project
+	err := engine.TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
+		// TODO: This will need to be updated to support
+		// the hierarchy tree once that's settled in.
+		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+			ProjectID: projectID,
+			Name:      rule.GetType(),
+		})
+
+		if err != nil {
+			// This is checked elsewhere. We probably want to converge and
+			// do a single check, but that would require a wider refactor.
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil
+			}
+
+			return fmt.Errorf("error getting rule type %s: %w", rule.GetType(), err)
+		}
+
+		ruleTypePB, err := engine.RuleTypePBFromDB(&ruleType)
+		if err != nil {
+			return fmt.Errorf("cannot convert rule type %s to minderv1: %w", ruleType.Name, err)
+		}
+
+		if ruleTypePB.Def.InEntity != entity.ToString() {
+			return &engine.RuleValidationError{
+				Err: fmt.Sprintf("rule type %s expects entity %s, but was given entity %s",
+					ruleTypePB.Name, ruleTypePB.Def.InEntity, entity.ToString()),
+				RuleType: ruleTypePB.Name,
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

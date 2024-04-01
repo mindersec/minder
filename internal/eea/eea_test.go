@@ -157,21 +157,24 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	require.NoError(t, err, "expected no error when creating project")
 
 	// setup provider
-	_, err = testQueries.CreateProvider(ctx, db.CreateProviderParams{
+	prov, err := testQueries.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       providerName,
 		ProjectID:  proj.ID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
 		Implements: []db.ProviderType{db.ProviderTypeRest},
+		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 		Definition: json.RawMessage(`{}`),
 	})
 	require.NoError(t, err, "expected no error when creating provider")
 
 	// setup repo
 	repo, err := testQueries.CreateRepository(ctx, db.CreateRepositoryParams{
-		ProjectID: proj.ID,
-		Provider:  providerName,
-		RepoName:  "test-repo",
-		RepoOwner: "test-owner",
-		RepoID:    123,
+		ProjectID:  proj.ID,
+		Provider:   prov.Name,
+		ProviderID: prov.ID,
+		RepoName:   "test-repo",
+		RepoOwner:  "test-owner",
+		RepoID:     123,
 	})
 	require.NoError(t, err, "expected no error when creating repo")
 
@@ -210,7 +213,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent repo fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,
@@ -251,7 +254,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,
@@ -297,7 +300,7 @@ func TestFlushAll(t *testing.T) {
 						Provider:  providerName,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
 						ID:        repoID,
 						ProjectID: projectID,

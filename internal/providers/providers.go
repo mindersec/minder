@@ -18,15 +18,21 @@ package providers
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
+	githubapp "github.com/stacklok/minder/internal/providers/github/app"
+	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
@@ -34,38 +40,41 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// ErrInvalidCredential is returned when the credential is not of the required type
+var ErrInvalidCredential = errors.New("invalid credential type")
+
 // GetProviderBuilder is a utility function which allows for the creation of
 // a provider factory.
 func GetProviderBuilder(
 	ctx context.Context,
 	prov db.Provider,
-	projectID uuid.UUID,
 	store db.Store,
-	crypteng *crypto.Engine,
+	crypteng crypto.Engine,
+	provCfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
-	encToken, err := store.GetAccessTokenByProjectID(ctx,
-		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: projectID})
+	credential, err := getCredentialForProvider(ctx, prov, crypteng, store, provCfg)
 	if err != nil {
-		return nil, fmt.Errorf("error getting access token: %w", err)
+		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	ownerFilter, err := getOwnerFilterForProvider(ctx, prov, store)
 	if err != nil {
-		return nil, fmt.Errorf("error decrypting access token: %w", err)
+		return nil, fmt.Errorf("error getting owner filter: %w", err)
 	}
 
-	return NewProviderBuilder(&prov, encToken, decryptedToken.AccessToken, opts...), nil
+	return NewProviderBuilder(&prov, ownerFilter, credential, provCfg, opts...), nil
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
 // provider clients.
 type ProviderBuilder struct {
 	p               *db.Provider
-	tokenInf        db.ProviderAccessToken
+	ownerFilter     sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
 	restClientCache ratecache.RestClientCache
-	tok             string
+	credential      provinfv1.Credential
 	metrics         telemetry.ProviderMetrics
+	cfg             *serverconfig.ProviderConfig
 }
 
 // ProviderBuilderOption is a function which can be used to set options on the ProviderBuilder.
@@ -88,15 +97,17 @@ func WithRestClientCache(cache ratecache.RestClientCache) ProviderBuilderOption 
 // NewProviderBuilder creates a new provider builder.
 func NewProviderBuilder(
 	p *db.Provider,
-	tokenInf db.ProviderAccessToken,
-	tok string,
+	ownerFilter sql.NullString,
+	credential provinfv1.Credential,
+	cfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
-		p:        p,
-		tokenInf: tokenInf,
-		tok:      tok,
-		metrics:  telemetry.NewNoopMetrics(),
+		p:           p,
+		cfg:         cfg,
+		ownerFilter: ownerFilter,
+		credential:  credential,
+		metrics:     telemetry.NewNoopMetrics(),
 	}
 
 	for _, opt := range opts {
@@ -117,18 +128,22 @@ func (pb *ProviderBuilder) GetName() string {
 	return pb.p.Name
 }
 
-// GetToken returns the token for the provider.
-func (pb *ProviderBuilder) GetToken() string {
-	return pb.tok
-}
-
 // GetGit returns a git client for the provider.
-func (pb *ProviderBuilder) GetGit() (*gitclient.Git, error) {
+func (pb *ProviderBuilder) GetGit() (provinfv1.Git, error) {
 	if !pb.Implements(db.ProviderTypeGit) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}
 
-	return gitclient.NewGit(pb.tok), nil
+	if pb.Implements(db.ProviderTypeGithub) {
+		return pb.GetGitHub()
+	}
+
+	gitCredential, ok := pb.credential.(provinfv1.GitCredential)
+	if !ok {
+		return nil, ErrInvalidCredential
+	}
+
+	return gitclient.NewGit(gitCredential), nil
 }
 
 // GetHTTP returns a github client for the provider.
@@ -154,7 +169,12 @@ func (pb *ProviderBuilder) GetHTTP() (provinfv1.REST, error) {
 		return nil, fmt.Errorf("error parsing http config: %w", err)
 	}
 
-	return httpclient.NewREST(cfg, pb.metrics, pb.tok)
+	restCredential, ok := pb.credential.(provinfv1.RestCredential)
+	if !ok {
+		return nil, ErrInvalidCredential
+	}
+
+	return httpclient.NewREST(cfg, pb.metrics, restCredential)
 }
 
 // GetGitHub returns a github client for the provider.
@@ -167,24 +187,42 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
+	gitHubCredential, ok := pb.credential.(provinfv1.GitHubCredential)
+	if !ok {
+		return nil, ErrInvalidCredential
+	}
+
 	if pb.restClientCache != nil {
-		client, ok := pb.restClientCache.Get(pb.tokenInf.OwnerFilter.String, pb.GetToken(), db.ProviderTypeGithub)
+		client, ok := pb.restClientCache.Get(pb.ownerFilter.String, gitHubCredential.GetCacheKey(), db.ProviderTypeGithub)
 		if ok {
 			return client.(provinfv1.GitHub), nil
 		}
 	}
 
-	// TODO: Parsing will change based on version
-	cfg, err := ghclient.ParseV1Config(pb.p.Definition)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing github config: %w", err)
+	// TODO: use provider class once it's available
+	if pb.p.Name == ghclient.Github {
+		// TODO: Parsing will change based on version
+		cfg, err := ghclient.ParseV1Config(pb.p.Definition)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing github config: %w", err)
+		}
+
+		cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
+		if err != nil {
+			return nil, fmt.Errorf("error creating github client: %w", err)
+		}
+		return cli, nil
 	}
 
-	cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, pb.GetToken(), pb.tokenInf.OwnerFilter.String)
+	cfg, err := githubapp.ParseV1Config(pb.p.Definition)
 	if err != nil {
-		return nil, fmt.Errorf("error creating github client: %w", err)
+		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential)
+	if err != nil {
+		return nil, fmt.Errorf("error creating github app client: %w", err)
+	}
 	return cli, nil
 }
 
@@ -222,4 +260,122 @@ func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 	default:
 		return minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
 	}
+}
+
+// DBToPBAuthFlow converts a database authorization flow to a protobuf authorization flow.
+func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
+	switch t {
+	case db.AuthorizationFlowNone:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_NONE, true
+	case db.AuthorizationFlowUserInput:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT, true
+	case db.AuthorizationFlowOauth2AuthorizationCodeFlow:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW, true
+	case db.AuthorizationFlowGithubAppFlow:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW, true
+	default:
+		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_UNSPECIFIED, false
+	}
+}
+
+// GetCredentialStateForProvider returns the credential state for the given provider.
+func GetCredentialStateForProvider(
+	ctx context.Context,
+	prov db.Provider,
+	s db.Store,
+	cryptoEngine crypto.Engine,
+	provCfg *serverconfig.ProviderConfig,
+) string {
+	var credState string
+	// if the provider doesn't support any auth flow
+	// credentials state is not applicable
+	if slices.Equal(prov.AuthFlows, []db.AuthorizationFlow{db.AuthorizationFlowNone}) {
+		credState = provinfv1.CredentialStateNotApplicable
+	} else {
+		credState = provinfv1.CredentialStateUnset
+		cred, err := getCredentialForProvider(ctx, prov, cryptoEngine, s, provCfg)
+		if err != nil {
+			// This is non-fatal
+			zerolog.Ctx(ctx).Error().Err(err).Str("provider", prov.Name).Msg("error getting credential")
+		} else {
+			// check if the credential is EmptyCredential
+			// if it is, then the state is not applicable
+			if _, ok := cred.(*credentials.EmptyCredential); ok {
+				credState = provinfv1.CredentialStateUnset
+			} else {
+				credState = provinfv1.CredentialStateSet
+			}
+		}
+	}
+
+	return credState
+}
+
+func getCredentialForProvider(
+	ctx context.Context,
+	prov db.Provider,
+	crypteng crypto.Engine,
+	store db.Store,
+	cfg *serverconfig.ProviderConfig,
+) (provinfv1.Credential, error) {
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
+
+		// If we don't have an access token, check if we have an installation ID
+		return getInstallationTokenCredential(ctx, prov, store, cfg)
+	} else if err != nil {
+		return nil, fmt.Errorf("error getting credential: %w", err)
+	}
+
+	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting access token: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Msg("access token found for provider")
+	return credentials.NewGitHubTokenCredential(decryptedToken.AccessToken), nil
+}
+
+// getInstallationTokenCredential returns a GitHub installation token credential if the provider has an installation ID
+func getInstallationTokenCredential(
+	ctx context.Context,
+	prov db.Provider,
+	store db.Store,
+	provCfg *serverconfig.ProviderConfig,
+) (provinfv1.Credential, error) {
+	installation, err := store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
+		UUID:  prov.ID,
+		Valid: true,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return credentials.NewEmptyCredential(), nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error getting installation ID: %w", err)
+	}
+	cfg, err := githubapp.ParseV1Config(prov.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing github app config: %w", err)
+	}
+
+	privateKey, err := provCfg.GitHubApp.GetPrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("error reading private key: %w", err)
+	}
+
+	return credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,
+		installation.AppInstallationID), nil
+}
+
+func getOwnerFilterForProvider(ctx context.Context, prov db.Provider, store db.Store) (sql.NullString, error) {
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return sql.NullString{}, nil
+		}
+		return sql.NullString{}, fmt.Errorf("error getting access token: %w", err)
+	}
+
+	return encToken.OwnerFilter, nil
 }

@@ -25,21 +25,18 @@ import (
 	"github.com/stacklok/minder/internal/util/rand"
 )
 
-func createRandomUser(t *testing.T, org Project) User {
+func createRandomUser(t *testing.T) User {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
-	arg := CreateUserParams{
-		OrganizationID:  org.ID,
-		IdentitySubject: rand.RandomString(10, seed),
-	}
+	sub := rand.RandomString(10, seed)
 
-	user, err := testQueries.CreateUser(context.Background(), arg)
+	user, err := testQueries.CreateUser(context.Background(), sub)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
-	require.Equal(t, arg.OrganizationID, user.OrganizationID)
+	require.Equal(t, sub, user.IdentitySubject)
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
@@ -51,15 +48,13 @@ func createRandomUser(t *testing.T, org Project) User {
 func TestUser(t *testing.T) {
 	t.Parallel()
 
-	org := createRandomOrganization(t)
-	createRandomUser(t, org)
+	createRandomUser(t)
 }
 
 func TestGetUser(t *testing.T) {
 	t.Parallel()
 
-	org := createRandomOrganization(t)
-	user1 := createRandomUser(t, org)
+	user1 := createRandomUser(t)
 
 	user2, err := testQueries.GetUserByID(context.Background(), user1.ID)
 
@@ -67,7 +62,7 @@ func TestGetUser(t *testing.T) {
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, user1.ID, user2.ID)
-	require.Equal(t, user1.OrganizationID, user2.OrganizationID)
+	require.Equal(t, user1.IdentitySubject, user2.IdentitySubject)
 
 	require.NotZero(t, user2.CreatedAt)
 	require.NotZero(t, user2.UpdatedAt)

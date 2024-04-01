@@ -19,7 +19,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -52,7 +52,7 @@ func newPrStatusHandler(
 	case pr_actions.ActionProfileOnly:
 		return newProfileOnlyPrHandler(), nil
 	case pr_actions.ActionSummary:
-		return newSummaryPrHandler(ctx, pr, client)
+		return newSummaryPrHandler(ctx, pr, client), nil
 	default:
 		return nil, fmt.Errorf("unknown action: %s", action)
 	}

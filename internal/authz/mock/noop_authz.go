@@ -78,3 +78,13 @@ func (_ *NoopClient) PrepareForRun(_ context.Context) error {
 func (_ *NoopClient) MigrateUp(_ context.Context) error {
 	return nil
 }
+
+// Adopt implements authz.Client
+func (_ *NoopClient) Adopt(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}
+
+// Orphan implements authz.Client
+func (_ *NoopClient) Orphan(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}

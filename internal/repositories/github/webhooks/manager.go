@@ -22,26 +22,27 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/config/server"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 )
 
 // WebhookManager encapsulates logic for creating and deleting GitHub webhooks
 type WebhookManager interface {
 	CreateWebhook(
 		ctx context.Context,
-		client GitHubWebhookClient,
+		client ghclient.GitHubRepoClient,
 		repoOwner string,
 		repoName string,
 	) (string, *github.Hook, error)
 
 	DeleteWebhook(
 		ctx context.Context,
-		client GitHubWebhookClient,
+		client ghclient.GitHubRepoClient,
 		repoOwner string,
 		repoName string,
 		hookID int64,
@@ -66,9 +67,10 @@ var (
 // before attempting to make a new one.
 // Returns the UUID of this webhook, along with the API response from GitHub
 // with details of the new webhook
+// https://docs.github.com/en/rest/reference/repos#create-a-repository-webhook
 func (w *webhookManager) CreateWebhook(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 ) (string, *github.Hook, error) {
@@ -89,14 +91,15 @@ func (w *webhookManager) CreateWebhook(
 	// Attempt to register new webhook
 	ping := w.webhookConfig.ExternalPingURL
 	secret := w.webhookConfig.WebhookSecret
+	jsonCT := "json"
 	newHook := &github.Hook{
-		Config: map[string]any{
-			"url":          webhookURL,
-			"content_type": "json",
-			"ping_url":     ping,
-			"secret":       secret,
+		Config: &github.HookConfig{
+			URL:         &webhookURL,
+			ContentType: &jsonCT,
+			Secret:      &secret,
 		},
-		Events: targetedEvents,
+		PingURL: &ping,
+		Events:  targetedEvents,
 	}
 
 	webhook, err := client.CreateHook(ctx, repoOwner, repoName, newHook)
@@ -111,7 +114,7 @@ func (w *webhookManager) CreateWebhook(
 // Note that deletions of non-existent webhooks are treated as no-ops
 func (_ *webhookManager) DeleteWebhook(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 	hookID int64,
@@ -130,7 +133,7 @@ func (_ *webhookManager) DeleteWebhook(
 
 func (w *webhookManager) cleanupStaleHooks(
 	ctx context.Context,
-	client GitHubWebhookClient,
+	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
 	webhookHost string,
@@ -146,7 +149,7 @@ func (w *webhookManager) cleanupStaleHooks(
 
 	for _, hook := range hooks {
 		// it is our hook, we can remove it
-		shouldDelete, err := isMinderHook(hook, webhookHost)
+		shouldDelete, err := ghprovider.IsMinderHook(hook, webhookHost)
 		// If err != nil, shouldDelete == false - use one error check for both calls
 		if shouldDelete {
 			err = w.DeleteWebhook(ctx, client, repoOwner, repoName, hook.GetID())
@@ -157,20 +160,4 @@ func (w *webhookManager) cleanupStaleHooks(
 	}
 
 	return nil
-}
-
-func isMinderHook(hook *github.Hook, hostURL string) (bool, error) {
-	configURL, ok := hook.Config["url"].(string)
-	if !ok || configURL == "" {
-		return false, fmt.Errorf("unexpected hook config structure: %v", hook.Config)
-	}
-	parsedURL, err := url.Parse(configURL)
-	if err != nil {
-		return false, err
-	}
-	if parsedURL.Host == hostURL {
-		return true, nil
-	}
-
-	return false, nil
 }

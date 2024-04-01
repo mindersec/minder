@@ -24,10 +24,12 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -115,6 +117,26 @@ func GetRulesForEntity(p *pb.Profile, entity pb.Entity) ([]*pb.Profile_Rule, err
 	}
 }
 
+// TraverseRuleTypesForEntities traverses the rules for the given entities and calls the given function
+func TraverseRuleTypesForEntities(p *pb.Profile, fn func(pb.Entity, *pb.Profile_Rule) error) error {
+	pairs := map[pb.Entity][]*pb.Profile_Rule{
+		pb.Entity_ENTITY_REPOSITORIES:       p.Repository,
+		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: p.BuildEnvironment,
+		pb.Entity_ENTITY_ARTIFACTS:          p.Artifact,
+		pb.Entity_ENTITY_PULL_REQUESTS:      p.PullRequest,
+	}
+
+	for entity, rules := range pairs {
+		for _, rule := range rules {
+			if err := fn(entity, rule); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // TraverseAllRulesForPipeline traverses all rules for the given pipeline profile
 func TraverseAllRulesForPipeline(p *pb.Profile, fn func(*pb.Profile_Rule) error) error {
 	if err := TraverseRules(p.Repository, fn); err != nil {
@@ -153,7 +175,7 @@ func TraverseRules(rules []*pb.Profile_Rule, fn func(*pb.Profile_Rule) error) er
 // profiles map. This assumes that the profiles belong to the same project.
 //
 // TODO(jaosorior): This will have to consider the project tree once we	migrate to that
-func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[string]*pb.Profile {
+func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Profile {
 	profiles := map[string]*pb.Profile{}
 
 	for idx := range ppl {
@@ -162,30 +184,41 @@ func MergeDatabaseListIntoProfiles(ppl []db.ListProfilesByProjectIDRow) map[stri
 		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 		// first we check if profile already exists, if not we create a new one
-		if _, ok := profiles[p.Name]; !ok {
-			profileID := p.ID.String()
-			project := p.ProjectID.String()
-			profiles[p.Name] = &pb.Profile{
-				Id:   &profileID,
-				Name: p.Name,
+		if _, ok := profiles[p.GetProfile().Name]; !ok {
+			profileID := p.GetProfile().ID.String()
+			project := p.GetProfile().ProjectID.String()
+
+			displayName := p.GetProfile().DisplayName
+			if displayName == "" {
+				displayName = p.GetProfile().Name
+			}
+
+			profiles[p.GetProfile().Name] = &pb.Profile{
+				Id:          &profileID,
+				Name:        p.GetProfile().Name,
+				DisplayName: displayName,
 				Context: &pb.Context{
-					Provider: &p.Provider,
+					Provider: ptr.Ptr[string](p.GetProfile().Provider),
 					Project:  &project,
 				},
 			}
 
-			if p.Remediate.Valid {
-				sRem := string(p.Remediate.ActionType)
-				profiles[p.Name].Remediate = &sRem
+			if p.GetProfile().Remediate.Valid {
+				profiles[p.GetProfile().Name].Remediate = proto.String(string(p.GetProfile().Remediate.ActionType))
+			} else {
+				profiles[p.GetProfile().Name].Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
-			if p.Alert.Valid {
-				sAlert := string(p.Alert.ActionType)
-				profiles[p.Name].Alert = &sAlert
+			if p.GetProfile().Alert.Valid {
+				profiles[p.GetProfile().Name].Alert = proto.String(string(p.GetProfile().Alert.ActionType))
+			} else {
+				profiles[p.GetProfile().Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
-		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {
-			profiles[p.Name] = pm
+		if pm := rowInfoToProfileMap(
+			profiles[p.GetProfile().Name], p.GetEntityProfile().Entity,
+			p.GetEntityProfile().ContextualRules); pm != nil {
+			profiles[p.GetProfile().Name] = pm
 		}
 	}
 
@@ -209,9 +242,16 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 		if _, ok := profiles[p.Name]; !ok {
 			profileID := p.ID.String()
 			project := p.ProjectID.String()
+
+			displayName := p.DisplayName
+			if displayName == "" {
+				displayName = p.Name
+			}
+
 			profiles[p.Name] = &pb.Profile{
-				Id:   &profileID,
-				Name: p.Name,
+				Id:          &profileID,
+				Name:        p.Name,
+				DisplayName: displayName,
 				Context: &pb.Context{
 					Provider: &p.Provider,
 					Project:  &project,
@@ -219,8 +259,15 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 			}
 
 			if p.Remediate.Valid {
-				sRem := string(p.Remediate.ActionType)
-				profiles[p.Name].Remediate = &sRem
+				profiles[p.Name].Remediate = proto.String(string(p.Remediate.ActionType))
+			} else {
+				profiles[p.Name].Remediate = proto.String(string(db.ActionTypeOff))
+			}
+
+			if p.Alert.Valid {
+				profiles[p.Name].Alert = proto.String(string(p.Alert.ActionType))
+			} else {
+				profiles[p.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
 		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {

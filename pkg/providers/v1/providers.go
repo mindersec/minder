@@ -25,7 +25,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -37,8 +37,6 @@ const (
 
 // Provider is the general interface for all providers
 type Provider interface {
-	// GetToken returns the token for the provider
-	GetToken() string
 }
 
 // Git is the interface for git providers
@@ -67,8 +65,7 @@ type REST interface {
 type RepoLister interface {
 	Provider
 
-	ListUserRepositories(context.Context, string) ([]*minderv1.Repository, error)
-	ListOrganizationRepsitories(context.Context, string) ([]*minderv1.Repository, error)
+	ListAllRepositories(context.Context) ([]*minderv1.Repository, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API
@@ -77,12 +74,12 @@ type GitHub interface {
 	Provider
 	RepoLister
 	REST
+	Git
 
+	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
-	ListAllRepositories(context.Context, bool, string) ([]*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
-	ListAllPackages(context.Context, bool, string, string, int, int) ([]*github.Package, error)
 	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
 	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
 	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
@@ -90,6 +87,7 @@ type GitHub interface {
 	GetPackageVersionById(context.Context, bool, string, string, string, int64) (*github.PackageVersion, error)
 	GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error)
 	CreateReview(context.Context, string, string, int, *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
+	UpdateReview(context.Context, string, string, int, int64, string) (*github.PullRequestReview, error)
 	ListReviews(context.Context, string, string, int, *github.ListOptions) ([]*github.PullRequestReview, error)
 	DismissReview(context.Context, string, string, int, int64,
 		*github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
@@ -99,16 +97,24 @@ type GitHub interface {
 	GetOwner() string
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
+	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,
 		v []*github.AdvisoryVulnerability) (string, error)
 	CloseSecurityAdvisory(ctx context.Context, owner, repo, id string) error
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
+	ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
-	CreateComment(ctx context.Context, owner, repo string, number int, comment string) error
 	GetUserId(ctx context.Context) (int64, error)
-	GetUsername(ctx context.Context) (string, error)
+	GetName(ctx context.Context) (string, error)
+	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
+	CreateIssueComment(ctx context.Context, owner, repo string, number int, comment string) (*github.IssueComment, error)
+	ListIssueComments(ctx context.Context, owner, repo string, number int,
+		opts *github.IssueListCommentsOptions,
+	) ([]*github.IssueComment, error)
+	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
+	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

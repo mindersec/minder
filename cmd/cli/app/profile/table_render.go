@@ -59,17 +59,7 @@ func NewProfileSettingsTable() table.Table {
 
 // RenderProfileSettingsTable renders the profile settings table
 func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
-	// if alert is not set in the profile definition, default to its minder behaviour which is "on"
-	alert := p.GetAlert()
-	if alert == "" {
-		alert = "on"
-	}
-	// if remediation is not set in the profile definition, default to its minder behaviour which is "off"
-	remediate := p.GetRemediate()
-	if remediate == "" {
-		remediate = "off"
-	}
-	t.AddRow(p.GetId(), p.GetName(), p.GetContext().GetProvider(), alert, remediate)
+	t.AddRow(p.GetId(), p.GetName(), p.GetContext().GetProvider(), p.GetAlert(), p.GetRemediate())
 }
 
 // NewProfileTable creates a new table for rendering profiles
@@ -199,7 +189,7 @@ func getEvalStatusText(status string) string {
 
 // Gets a friendly status text with an emoji
 func getRemediationStatusText(status string) string {
-	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
+	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'pending' or 'not supported'
 	switch strings.ToLower(status) {
 	case successStatus:
 		return "Success"
@@ -209,6 +199,8 @@ func getRemediationStatusText(status string) string {
 		return "Error"
 	case skippedStatus:
 		return "Skipped" // visually empty as we didn't have to remediate
+	case pendingStatus:
+		return "Pending"
 	case notAvailableStatus:
 		return "Not Available"
 	default:

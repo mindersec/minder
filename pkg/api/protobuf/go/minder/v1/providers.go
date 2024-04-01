@@ -14,21 +14,19 @@
 
 package v1
 
-import (
-	"google.golang.org/protobuf/proto"
-)
+import "slices"
 
 // ToString returns the string representation of the ProviderType
 func (provt ProviderType) ToString() string {
-	implVal := provt.Descriptor().Values().ByNumber(provt.Number())
-	if implVal == nil {
-		return ""
-	}
-	extension := proto.GetExtension(implVal.Options(), E_Name)
-	implName, ok := extension.(string)
-	if !ok {
-		return ""
-	}
+	return enumToStringViaDescriptor(provt.Descriptor(), provt.Number())
+}
 
-	return implName
+// ToString returns the string representation of the AuthorizationFlow
+func (a AuthorizationFlow) ToString() string {
+	return enumToStringViaDescriptor(a.Descriptor(), a.Number())
+}
+
+// SupportsAuthFlow returns true if the provider supports the given auth flow
+func (p *Provider) SupportsAuthFlow(flow AuthorizationFlow) bool {
+	return slices.Contains(p.GetAuthFlows(), flow)
 }

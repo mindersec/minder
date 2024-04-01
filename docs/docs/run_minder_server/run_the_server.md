@@ -16,7 +16,7 @@ PostgreSQL is used as the database.
 Keycloak is used as the identity provider.
 
 There are two methods to get started with Minder, either by downloading the
-latest release, building from source or (quickest) using the provided `docker-compose`
+latest release, building from source or (quickest) using the provided `docker-compose.yaml`
 file.
 
 ## Prerequisites
@@ -72,10 +72,10 @@ database:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 ### Create the database
@@ -120,10 +120,10 @@ identity:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d keycloak
+docker compose up -d keycloak
 ```
 
 ### Social login
@@ -167,10 +167,10 @@ authz:
 
 ### Using a container
 
-A simple way to get started is to use the provided `docker-compose` file.
+A simple way to get started is to use the provided `docker-compose.yaml` file.
 
 ```bash
-docker-compose up -d openfga
+docker compose up -d openfga
 ```
 
 ### Create the model
@@ -248,6 +248,23 @@ webhook-config:
 ```
 
 After these steps, your Minder server should be ready to receive webhook events from GitHub, and add webhooks to repositories.
+
+In case you need to update the webhook secret, you can do so by putting the
+new secret in `webhook-config.webhook_secret` and for the duration of the
+migration, the old secret(s) in a file referenced by
+`webhook-config.previous_webhook_secret_file`. The old webhook secrets will
+then only be used to verify incoming webhooks messages, not for creating or
+updating webhooks and can be removed after the migration is complete.
+
+In order to rotate webhook secrets, you can use the `minder-server` CLI tool to update the webhook secret.
+
+```bash
+minder-server webhook update -p github
+```
+
+Note that the command simply replaces the webhook secret on the provider
+side. You will still need to update the webhook secret in the server configuration
+to match the provider's secret.
 
 ## Run the application
 

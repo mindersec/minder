@@ -81,6 +81,7 @@ replies with OK
 | ----------- | ------------ | ------------- | ------------|
 | CreateProfile | [CreateProfileRequest](#minder-v1-CreateProfileRequest) | [CreateProfileResponse](#minder-v1-CreateProfileResponse) |  |
 | UpdateProfile | [UpdateProfileRequest](#minder-v1-UpdateProfileRequest) | [UpdateProfileResponse](#minder-v1-UpdateProfileResponse) |  |
+| PatchProfile | [PatchProfileRequest](#minder-v1-PatchProfileRequest) | [PatchProfileResponse](#minder-v1-PatchProfileResponse) |  |
 | DeleteProfile | [DeleteProfileRequest](#minder-v1-DeleteProfileRequest) | [DeleteProfileResponse](#minder-v1-DeleteProfileResponse) |  |
 | ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
@@ -94,6 +95,21 @@ replies with OK
 | DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
+<a name="minder-v1-ProjectsService"></a>
+
+#### ProjectsService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
+| CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
+| DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
+| UpdateProject | [UpdateProjectRequest](#minder-v1-UpdateProjectRequest) | [UpdateProjectResponse](#minder-v1-UpdateProjectResponse) |  |
+| PatchProject | [PatchProjectRequest](#minder-v1-PatchProjectRequest) | [PatchProjectResponse](#minder-v1-PatchProjectResponse) |  |
+| CreateEntityReconciliationTask | [CreateEntityReconciliationTaskRequest](#minder-v1-CreateEntityReconciliationTaskRequest) | [CreateEntityReconciliationTaskResponse](#minder-v1-CreateEntityReconciliationTaskResponse) |  |
+
+
 <a name="minder-v1-ProvidersService"></a>
 
 #### ProvidersService
@@ -101,7 +117,12 @@ replies with OK
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| GetProvider | [GetProviderRequest](#minder-v1-GetProviderRequest) | [GetProviderResponse](#minder-v1-GetProviderResponse) |  |
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
+| CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
+| DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
+| GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
+| ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -195,6 +216,17 @@ ArtifactType defines the artifact data evaluation.
 | role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
 
 
+<a name="minder-v1-AuthorizationParams"></a>
+
+#### AuthorizationParams
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
+
+
 <a name="minder-v1-BranchProtection"></a>
 
 #### BranchProtection
@@ -252,6 +284,24 @@ buf compatibility checks.
 | retired_organization | [string](#string) | optional |  |
 
 
+<a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
+
+#### CreateEntityReconciliationTaskRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  | entity is the entity to be reconciled. |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the entity reconciliation task is created. |
+
+
+<a name="minder-v1-CreateEntityReconciliationTaskResponse"></a>
+
+#### CreateEntityReconciliationTaskResponse
+
+
+
 <a name="minder-v1-CreateProfileRequest"></a>
 
 #### CreateProfileRequest
@@ -272,6 +322,53 @@ Profile service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | [Profile](#minder-v1-Profile) |  |  |
+
+
+<a name="minder-v1-CreateProjectRequest"></a>
+
+#### CreateProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is created. |
+| name | [string](#string) |  | name is the name of the project to create. |
+
+
+<a name="minder-v1-CreateProjectResponse"></a>
+
+#### CreateProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was created. |
+
+
+<a name="minder-v1-CreateProviderRequest"></a>
+
+#### CreateProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is created. |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider to be created. |
+
+
+<a name="minder-v1-CreateProviderResponse"></a>
+
+#### CreateProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was created. |
+| authorization | [AuthorizationParams](#minder-v1-AuthorizationParams) |  | authorization provides additional authorization information needed to complete the initialization of the provider. |
 
 
 <a name="minder-v1-CreateRuleTypeRequest"></a>
@@ -311,8 +408,8 @@ User service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [string](#string) |  |  |
-| organizatio_name | [string](#string) |  |  |
+| organization_id | [string](#string) |  | **Deprecated.**  |
+| organizatio_name | [string](#string) |  | **Deprecated.**  |
 | project_id | [string](#string) |  |  |
 | project_name | [string](#string) |  |  |
 | identity_subject | [string](#string) |  |  |
@@ -335,6 +432,45 @@ User service
 <a name="minder-v1-DeleteProfileResponse"></a>
 
 #### DeleteProfileResponse
+
+
+
+<a name="minder-v1-DeleteProjectRequest"></a>
+
+#### DeleteProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is deleted. |
+
+
+<a name="minder-v1-DeleteProjectResponse"></a>
+
+#### DeleteProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | project_id is the id of the project that was deleted. |
+
+
+<a name="minder-v1-DeleteProviderRequest"></a>
+
+#### DeleteProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is deleted. Both project and provider are required in this context. |
+
+
+<a name="minder-v1-DeleteProviderResponse"></a>
+
+#### DeleteProviderResponse
 
 
 
@@ -463,6 +599,20 @@ such as (repo, 1), (artifact, 2), ...
 | ----- | ---- | ----- | ----------- |
 | type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
 | id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
+
+
+<a name="minder-v1-EvalResultAlert"></a>
+
+#### EvalResultAlert
+EvalResultAlert holds the alert details for a given rule evaluation
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is the status of the alert |
+| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
+| details | [string](#string) |  | details is the description of the alert attempt if any |
+| url | [string](#string) |  | url is the URL to the alert |
 
 
 <a name="minder-v1-GetArtifactByIdRequest"></a>
@@ -613,6 +763,29 @@ get profile by id
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
 
 
+<a name="minder-v1-GetProviderRequest"></a>
+
+#### GetProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is evaluated. |
+| name | [string](#string) |  | name is the name of the provider to get. |
+
+
+<a name="minder-v1-GetProviderResponse"></a>
+
+#### GetProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was retrieved. |
+
+
 <a name="minder-v1-GetRepositoryByIdRequest"></a>
 
 #### GetRepositoryByIdRequest
@@ -706,6 +879,28 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
 
 
+<a name="minder-v1-GetUnclaimedProvidersRequest"></a>
+
+#### GetUnclaimedProvidersRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the set of providers are evaluated. |
+
+
+<a name="minder-v1-GetUnclaimedProvidersResponse"></a>
+
+#### GetUnclaimedProvidersResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| providers | [ProviderParameter](#minder-v1-ProviderParameter) | repeated | providers is a set of parameters which can be supplied to allow the user to assign existing unclaimed credentials to a new provider in the project via CreateProvider(). |
+
+
 <a name="minder-v1-GetUserRequest"></a>
 
 #### GetUserRequest
@@ -723,6 +918,30 @@ get user
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#minder-v1-UserRecord) | optional |  |
 | projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-GitHubAppParams"></a>
+
+#### GitHubAppParams
+GitHubAppParams is the parameters for a GitHub App provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| installation_id | [int64](#int64) |  | The GitHub installation ID for the app. On create, this is the only parameter used; the organization parameters are ignored. |
+| organization | [string](#string) |  | The GitHub organization slug where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
+| organization_id | [int64](#int64) |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
+
+
+<a name="minder-v1-GitHubAppProviderConfig"></a>
+
+#### GitHubAppProviderConfig
+GitHubAppProviderConfig contains the configuration for the GitHub App provider
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
 <a name="minder-v1-GitHubProviderConfig"></a>
@@ -803,7 +1022,31 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | status is the list of evaluation results. Results will typically be grouped by profile and project. |
+| entities | [ListEvaluationResultsResponse.EntityEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults) | repeated | Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile. |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults"></a>
+
+#### ListEvaluationResultsResponse.EntityEvaluationResults
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
+| profiles | [ListEvaluationResultsResponse.EntityProfileEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults) | repeated |  |
+
+
+<a name="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults"></a>
+
+#### ListEvaluationResultsResponse.EntityProfileEvaluationResults
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile - id, name, status, last_updated |
+| results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -829,6 +1072,45 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profiles | [Profile](#minder-v1-Profile) | repeated |  |
+
+
+<a name="minder-v1-ListProjectsRequest"></a>
+
+#### ListProjectsRequest
+
+
+
+<a name="minder-v1-ListProjectsResponse"></a>
+
+#### ListProjectsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-ListProviderClassesRequest"></a>
+
+#### ListProviderClassesRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider classes are evaluated. |
+
+
+<a name="minder-v1-ListProviderClassesResponse"></a>
+
+#### ListProviderClassesResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider_classes | [string](#string) | repeated | provider_classes is the list of provider classes. |
 
 
 <a name="minder-v1-ListProvidersRequest"></a>
@@ -888,7 +1170,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | [string](#string) |  | **Deprecated.**  |
-| limit | [int32](#int32) |  |  |
+| limit | [int64](#int64) |  |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | cursor | [string](#string) |  |  |
 
@@ -969,6 +1251,55 @@ ListRuleTypesResponse is the response to list rule types.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
+
+
+<a name="minder-v1-PatchProfileRequest"></a>
+
+#### PatchProfileRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | The context in which the patch is applied. Provided explicitly so that the patch itself can be minimal and contain only the attribute to set, e.g. remediate=true |
+| id | [string](#string) |  | The id of the profile to patch. Same explanation about explicitness as for the context |
+| patch | [Profile](#minder-v1-Profile) |  | The patch to apply to the profile |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+
+
+<a name="minder-v1-PatchProfileResponse"></a>
+
+#### PatchProfileResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | [Profile](#minder-v1-Profile) |  |  |
+
+
+<a name="minder-v1-PatchProjectRequest"></a>
+
+#### PatchProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| patch | [ProjectPatch](#minder-v1-ProjectPatch) |  | patch is the patch to apply to the project |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+
+
+<a name="minder-v1-PatchProjectResponse"></a>
+
+#### PatchProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
 
 
 <a name="minder-v1-PrContents"></a>
@@ -1064,10 +1395,11 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
 | pull_request | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
-| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional as the default is set by the system |
-| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional as the default is set by the system |
+| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
+| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
 | type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
 | version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
+| display_name | [string](#string) |  | display_name is the display name of the profile. |
 
 
 <a name="minder-v1-Profile-Rule"></a>
@@ -1096,6 +1428,7 @@ get the overall profile status
 | profile_name | [string](#string) |  | profile_name is the name of the profile |
 | profile_status | [string](#string) |  | profile_status is the status of the profile |
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
+| profile_display_name | [string](#string) |  | profile_display_name is the display name of the profile |
 
 
 <a name="minder-v1-Project"></a>
@@ -1111,6 +1444,19 @@ Project API Objects
 | description | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| display_name | [string](#string) |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
+
+
+<a name="minder-v1-ProjectPatch"></a>
+
+#### ProjectPatch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| display_name | [string](#string) | optional | display_name is the display name of the project to update. |
+| description | [string](#string) | optional | description is the description of the project to update. |
 
 
 <a name="minder-v1-Provider"></a>
@@ -1122,10 +1468,25 @@ Project API Objects
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | name is the name of the provider. |
-| project | [string](#string) |  | project is the project where the provider is. |
+| class | [string](#string) |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
+| project | [string](#string) |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
 | version | [string](#string) |  | version is the version of the provider. |
 | implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
 | config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
+| auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
+| parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
+| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
+
+
+<a name="minder-v1-ProviderParameter"></a>
+
+#### ProviderParameter
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| github_app | [GitHubAppParams](#minder-v1-GitHubAppParams) |  |  |
 
 
 <a name="minder-v1-PullRequest"></a>
@@ -1253,6 +1614,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | default_branch | [string](#string) |  |  |
+| license | [string](#string) |  |  |
 
 
 <a name="minder-v1-RestType"></a>
@@ -1344,6 +1706,9 @@ get the status of the rules for a given profile
 | remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
 | rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
 | rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
+| alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
+| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
+| rule_evaluation_id | [string](#string) |  | rule_evaluation_id is the id of the rule evaluation |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
@@ -1369,6 +1734,7 @@ The version is assumed from the folder's version.
 | ----- | ---- | ----- | ----------- |
 | id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | [string](#string) |  | name is the name of the rule type. |
+| display_name | [string](#string) |  | display_name is the display name of the rule type. |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the rule is evaluated. |
 | def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
 | description | [string](#string) |  | description is the description of the rule type. |
@@ -1632,6 +1998,30 @@ Severity defines the severity of the rule.
 | profile | [Profile](#minder-v1-Profile) |  |  |
 
 
+<a name="minder-v1-UpdateProjectRequest"></a>
+
+#### UpdateProjectRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
+| display_name | [string](#string) |  | display_name is the display name of the project to update. |
+| description | [string](#string) |  | description is the description of the project to update. |
+
+
+<a name="minder-v1-UpdateProjectResponse"></a>
+
+#### UpdateProjectResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
+
+
 <a name="minder-v1-UpdateRuleTypeRequest"></a>
 
 #### UpdateRuleTypeRequest
@@ -1665,6 +2055,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | owner | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-UserRecord"></a>
@@ -1676,7 +2067,6 @@ user record to be returned
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | [int32](#int32) |  |  |
-| organization_id | [string](#string) |  |  |
 | identity_subject | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
@@ -1713,6 +2103,20 @@ user record to be returned
 
 
 
+
+
+<a name="minder-v1-AuthorizationFlow"></a>
+
+### AuthorizationFlow
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| AUTHORIZATION_FLOW_UNSPECIFIED | 0 |  |
+| AUTHORIZATION_FLOW_NONE | 1 |  |
+| AUTHORIZATION_FLOW_USER_INPUT | 2 |  |
+| AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW | 3 |  |
+| AUTHORIZATION_FLOW_GITHUB_APP_FLOW | 4 |  |
 
 
 <a name="minder-v1-DepEcosystem"></a>
@@ -1757,7 +2161,7 @@ Entity defines the entity that is supported by the provider.
 <a name="minder-v1-ProviderType"></a>
 
 ### ProviderType
-ProviderType is the type of the provider.
+ProviderTrait is the type of the provider.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -1811,6 +2215,7 @@ ProviderType is the type of the provider.
 | RELATION_PROFILE_DELETE | 32 |  |
 | RELATION_PROFILE_STATUS_GET | 33 |  |
 | RELATION_REMOTE_REPO_GET | 34 |  |
+| RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 
 
 <a name="minder-v1-Severity-Value"></a>

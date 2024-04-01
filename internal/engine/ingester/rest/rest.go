@@ -26,7 +26,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -163,23 +163,18 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 func (rdi *Ingestor) doRequest(ctx context.Context, req *http.Request) (io.ReadCloser, error) {
 	resp, err := rdi.cli.Do(ctx, req)
 	if err == nil {
+		// Early-exit on success
 		return resp.Body, nil
-	} else if fallbackBody := errorToFallback(err, rdi.fallback); fallbackBody != nil {
+	}
+
+	if fallbackBody := errorToFallback(err, rdi.fallback); fallbackBody != nil {
 		// the go-github REST API has a funny way of returning HTTP status codes,
 		// on a non-200 status it will return a github.ErrorResponse
 		// whereas the standard library will return nil error and the HTTP status code in the response
 		return fallbackBody, nil
-	} else if err != nil {
-		return nil, fmt.Errorf("cannot make request: %w", err)
 	}
 
-	// handles the usual case of http clients that return nil error and the HTTP status code in the response
-	if fallbackBody := httpStatusToFallback(resp.StatusCode, rdi.fallback); fallbackBody != nil {
-		return fallbackBody, nil
-	}
-
-	// this should be dead code, but better return error than crash
-	return nil, nil
+	return nil, fmt.Errorf("cannot make request: %w", err)
 }
 
 func errorToFallback(err error, fallback []ingestorFallback) io.ReadCloser {

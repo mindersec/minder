@@ -17,18 +17,21 @@
 package remediate_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -48,8 +51,9 @@ var (
 	}
 }`),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 )
 

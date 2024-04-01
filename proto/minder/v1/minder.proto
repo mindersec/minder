@@ -19,6 +19,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -65,6 +66,7 @@ enum Relation {
     RELATION_PROFILE_DELETE = 32 [(name) = "profile_delete"];
     RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
+    RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -132,7 +134,7 @@ service ArtifactService {
 
     rpc GetArtifactByName (GetArtifactByNameRequest) returns (GetArtifactByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/artifact/name/{name}"
+            get: "/api/v1/artifact/name/{name=**}"
         };
 
         option (rpc_options) = {
@@ -360,9 +362,9 @@ service RepositoryService {
 
     rpc GetRepositoryByName (GetRepositoryByNameRequest) returns (GetRepositoryByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/repository/provider/{provider}/name/{name}"
+            get: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
-                get: "/api/v1/repository/name/{name}"
+                get: "/api/v1/repository/name/{name=**}"
             }
         };
 
@@ -385,9 +387,9 @@ service RepositoryService {
 
     rpc DeleteRepositoryByName (DeleteRepositoryByNameRequest) returns (DeleteRepositoryByNameResponse) {
         option (google.api.http) = {
-            delete: "/api/v1/repository/provider/{provider}/name/{name}"
+            delete: "/api/v1/repository/provider/{provider}/name/{name=**}"
             additional_bindings {
-                delete: "/api/v1/repository/name/{name}"
+                delete: "/api/v1/repository/name/{name=**}"
             }
         };
 
@@ -450,6 +452,18 @@ service ProfileService {
         option (google.api.http) = {
             put: "/api/v1/profile"
             body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_UPDATE
+        };
+    }
+
+    rpc PatchProfile (PatchProfileRequest) returns (PatchProfileResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/profile/{id}"
+            body: "patch"
         };
 
         option (rpc_options) = {
@@ -646,10 +660,144 @@ service PermissionsService {
     }
 }
 
+service ProjectsService {
+
+    rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/projects"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_USER
+            relation: RELATION_GET
+        };
+    }
+
+    rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/projects"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_CREATE
+        };
+    }
+
+    rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/projects"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DELETE
+        };
+    }
+
+    rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/projects"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_UPDATE
+        };
+    }
+
+    rpc PatchProject(PatchProjectRequest) returns (PatchProjectResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/projects"
+            body: "patch"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_UPDATE
+        };
+    }
+
+    rpc CreateEntityReconciliationTask(CreateEntityReconciliationTaskRequest) returns (CreateEntityReconciliationTaskResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/projects/entity/reconcile"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_RECONCILIATION_TASK_CREATE
+        };
+    }
+}
+
 service ProvidersService {
+    rpc GetProvider(GetProviderRequest) returns (GetProviderResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/providers/{name}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
+
     rpc ListProviders (ListProvidersRequest) returns (ListProvidersResponse) {
         option (google.api.http) = {
             get: "/api/v1/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_GET
+        };
+    }
+
+    rpc CreateProvider (CreateProviderRequest) returns (CreateProviderResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/providers"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_CREATE
+        };
+    }
+
+    rpc DeleteProvider (DeleteProviderRequest) returns (DeleteProviderResponse) {
+        option (google.api.http) = {
+            // TODO: it would be nice to be able to use context.project and
+            // context.provider here, but they are optional and cannot be used
+            // in the path.  Change this for v2.
+            delete: "/api/v1/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_DELETE
+        };
+    }
+
+    // GetUnclaimedProviders returns a list of known provider configurations
+    // that this user could claim based on their identity.  This is a read-only
+    // operation for use by clients which wish to present a menu of options.
+    rpc GetUnclaimedProviders (GetUnclaimedProvidersRequest) returns (GetUnclaimedProvidersResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/my/providers"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_USER
+        };
+    }
+
+    rpc ListProviderClasses (ListProviderClassesRequest) returns (ListProviderClassesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/provider_classes"
         };
 
         option (rpc_options) = {
@@ -699,6 +847,10 @@ message Project {
     string description = 4;
     google.protobuf.Timestamp created_at = 6;
     google.protobuf.Timestamp updated_at = 7;
+    // display_name allows for a human-readable name to be used.
+    // display_names are short *non-unique* strings to provide
+    // a user-friendly name for presentation in lists, etc.
+    string display_name = 5;
 }
 
 // Repositories API objects
@@ -720,6 +872,7 @@ message UpstreamRepositoryRef {
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3;
+    Context context = 4;
 }
 
 message Repository {
@@ -741,6 +894,7 @@ message Repository {
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;
+    string license = 19;
 }
 
 message RegisterRepositoryRequest {
@@ -809,7 +963,7 @@ message DeleteRepositoryByNameResponse {
 
 message ListRepositoriesRequest {
     string provider = 1 [deprecated=true];
-    int32 limit = 3;
+    int64 limit = 3;
     Context context = 5;
     string cursor = 6;
 
@@ -847,8 +1001,8 @@ message CreateUserRequest { }
 
 message CreateUserResponse {
     int32 id = 1;
-    string organization_id = 2;
-    string organizatio_name = 3;
+    string organization_id = 2 [deprecated=true];
+    string organizatio_name =3 [deprecated=true];
     string project_id = 4;
     string project_name = 5;
     string identity_subject = 6;
@@ -866,10 +1020,12 @@ message DeleteUserResponse {
 // user record to be returned
 message UserRecord {
     int32 id = 1;
-    string organization_id = 2;
     string identity_subject = 3;
     google.protobuf.Timestamp created_at = 4;
     google.protobuf.Timestamp updated_at = 5;
+
+    reserved 2; // deprecated organization_id
+    reserved "organization_id";
 }
 
 // list users
@@ -899,6 +1055,25 @@ message UpdateProfileRequest {
 }
 
 message UpdateProfileResponse {
+    Profile profile = 1;
+}
+
+message PatchProfileRequest {
+    // The context in which the patch is applied. Provided explicitly
+    // so that the patch itself can be minimal and contain only
+    // the attribute to set, e.g. remediate=true
+    Context context = 1;
+    // The id of the profile to patch. Same explanation about explicitness
+    // as for the context
+    string id = 2;
+    // The patch to apply to the profile
+    Profile patch = 3;
+    // needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/
+    // is not exposed to the API user
+    google.protobuf.FieldMask update_mask = 4;
+}
+
+message PatchProfileResponse {
     Profile profile = 1;
 }
 
@@ -950,6 +1125,21 @@ message ProfileStatus {
     string profile_status = 3;
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
+
+    // profile_display_name is the display name of the profile
+    string profile_display_name = 5;
+}
+
+// EvalResultAlert holds the alert details for a given rule evaluation
+message EvalResultAlert {
+    // status is the status of the alert
+    string status = 1;
+    // last_updated is the last time the alert was performed or attempted
+    google.protobuf.Timestamp last_updated = 2;
+    // details is the description of the alert attempt if any
+    string details = 3;
+    // url is the URL to the alert
+    string url = 4;
 }
 
 // get the status of the rules for a given profile
@@ -982,6 +1172,12 @@ message RuleEvaluationStatus {
     string rule_type_name = 13;
     // rule_description_name is the name to describe the rule
     string rule_description_name = 14;
+    // alert holds the alert details if the rule generated an alert in an external system
+    EvalResultAlert alert = 15;
+    // severity is the severity of the rule
+    Severity severity = 16;
+    // rule_evaluation_id is the id of the rule evaluation
+    string rule_evaluation_id = 17;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -1051,6 +1247,14 @@ message RESTProviderConfig {
 message GitHubProviderConfig {
     // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
 	string endpoint = 1;
+}
+
+// GitHubAppProviderConfig contains the configuration for the GitHub App provider
+message GitHubAppProviderConfig {
+  // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
+  string endpoint = 1;
+  reserved 2, 3, 4;
+  reserved "app_name", "app_id", "user_id";
 }
 
 // Context defines the context in which a rule is evaluated.
@@ -1179,9 +1383,25 @@ message ListEvaluationResultsRequest{
 }
 
 message ListEvaluationResultsResponse {
-    // status is the list of evaluation results.
-    // Results will typically be grouped by profile and project.
-    repeated RuleEvaluationStatus status = 1;
+    reserved 1; // deprecated status
+    reserved "status";
+
+    message EntityProfileEvaluationResults {
+        // profile_status is the status of the profile - id, name, status, last_updated
+        ProfileStatus profile_status = 1;
+
+        // Note that some fields like profile_id and entity might be empty
+        // Eventually we might replace this type with another one that fits the API better
+        repeated RuleEvaluationStatus results = 2;
+    }
+
+    message EntityEvaluationResults {
+        EntityTypedId entity = 1;
+        repeated EntityProfileEvaluationResults profiles = 2;
+    }
+
+    // Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile.
+    repeated EntityEvaluationResults entities = 2;
 }
 
 // --- END EvaluationResults definitions
@@ -1295,6 +1515,9 @@ message RuleType {
 
     // name is the name of the rule type.
     string name = 2;
+
+    // display_name is the display name of the rule type.
+    string display_name = 8;
 
     // context is the context in which the rule is evaluated.
     Context context = 3;
@@ -1534,11 +1757,11 @@ message Profile {
     repeated Rule pull_request = 7;
 
     // whether and how to remediate (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "off"
     optional string remediate = 8;
 
     // whether and how to alert (on,off,dry_run)
-    // this is optional as the default is set by the system
+    // this is optional and defaults to "on"
     optional string alert = 9;
 
     // type is a placeholder for the object type. It should always be set to "profile".
@@ -1546,6 +1769,92 @@ message Profile {
 
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11;
+
+    // display_name is the display name of the profile.
+    string display_name = 13;
+}
+
+message ListProjectsRequest {
+
+}
+
+message ListProjectsResponse {
+    repeated Project projects = 1;
+}
+
+message CreateProjectRequest {
+    // context is the context in which the project is created.
+    Context context = 1;
+
+    // name is the name of the project to create.
+    string name = 2;
+}
+
+message CreateProjectResponse {
+    // project is the project that was created.
+    Project project = 1;
+}
+
+message DeleteProjectRequest {
+    // context is the context in which the project is deleted.
+    Context context = 1;
+}
+
+message DeleteProjectResponse {
+    // project_id is the id of the project that was deleted.
+    string project_id = 1;
+}
+
+message UpdateProjectRequest {
+    // context is the context in which the project is updated.
+    Context context = 1;
+
+    // display_name is the display name of the project to update.
+    string display_name = 2;
+
+    // description is the description of the project to update.
+    string description = 3;
+}
+
+message UpdateProjectResponse {
+    // project is the project that was updated.
+    Project project = 1;
+}
+
+message ProjectPatch {
+    // display_name is the display name of the project to update.
+    optional string display_name = 1;
+
+    // description is the description of the project to update.
+    optional string description = 2;
+}
+
+message PatchProjectRequest {
+    // context is the context in which the project is updated.
+    Context context = 1;
+
+    // patch is the patch to apply to the project
+    ProjectPatch patch = 3;
+
+    // needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/
+    // is not exposed to the API user
+    google.protobuf.FieldMask update_mask = 4;
+}
+
+message PatchProjectResponse {
+    // project is the project that was updated.
+    Project project = 1;
+}
+
+message CreateEntityReconciliationTaskRequest {
+    // entity is the entity to be reconciled.
+    EntityTypedId entity = 1;
+
+    // context is the context in which the entity reconciliation task is created.
+    Context context = 2;
+}
+
+message CreateEntityReconciliationTaskResponse {
 }
 
 message ListRolesRequest {
@@ -1608,6 +1917,18 @@ message RoleAssignment {
     reserved 3; // deprecated context
 }
 
+message GetProviderRequest {
+    // context is the context in which the provider is evaluated.
+    Context context = 1;
+    // name is the name of the provider to get.
+    string name = 2;
+}
+
+message GetProviderResponse {
+    // provider is the provider that was retrieved.
+    Provider provider = 1;
+}
+
 message ListProvidersRequest {
     // context is the context in which the providers are evaluated.
     Context context = 1;
@@ -1626,7 +1947,82 @@ message ListProvidersResponse {
     string cursor = 2;
 }
 
-// ProviderType is the type of the provider.
+message CreateProviderRequest {
+    // context is the context in which the provider is created.
+    Context context = 1;
+    // provider is the provider to be created.
+    Provider provider = 2;
+}
+
+message CreateProviderResponse {
+    // provider is the provider that was created.
+    Provider provider = 1;
+
+    // authorization provides additional authorization information needed
+    // to complete the initialization of the provider.
+    AuthorizationParams authorization = 2;
+}
+
+message DeleteProviderRequest {
+    // context is the context in which the provider is deleted.  Both
+    // project and provider are required in this context.
+    Context context = 1;
+}
+
+message DeleteProviderResponse {
+}
+
+message GetUnclaimedProvidersRequest {
+    // context is the context in which the set of providers are evaluated.
+    Context context = 1;
+}
+
+message GetUnclaimedProvidersResponse {
+    // providers is a set of parameters which can be supplied to allow the user
+    // to assign existing unclaimed credentials to a new provider in the project
+    // via CreateProvider().
+    repeated ProviderParameter providers = 1;
+}
+
+message ListProviderClassesRequest {
+    // context is the context in which the provider classes are evaluated.
+    Context context = 1;
+}
+
+message ListProviderClassesResponse {
+    // provider_classes is the list of provider classes.
+    repeated string provider_classes = 1;
+}
+
+message AuthorizationParams {
+    // authorization_url is an external URL to use to authorize the provider.
+    string authorization_url = 1;
+
+}
+
+message ProviderParameter {
+    oneof parameters {
+        GitHubAppParams github_app = 1;
+    }
+}
+
+// GitHubAppParams is the parameters for a GitHub App provider.
+message GitHubAppParams {
+    // The GitHub installation ID for the app.  On create, this is the only
+    // parameter used; the organization parameters are ignored.
+    int64 installation_id = 1;
+
+    // The GitHub organization slug where the app is installed.  This is an
+    // output-only parameter, and is validated on input if set (i.e. the value
+    // must be either empty or match the org of the installation_id).
+    string organization = 2;
+    // The GitHub organization ID where the app is installed.  This is an
+    // output-only parameter, and is validated on input if set (i.e. the value
+    // must be either empty or match the org of the installation_id).
+    int64 organization_id = 3;
+}
+
+// ProviderTrait is the type of the provider.
 enum ProviderType {
     PROVIDER_TYPE_UNSPECIFIED = 0;
     PROVIDER_TYPE_GITHUB = 1 [(name) = "github"];
@@ -1636,10 +2032,21 @@ enum ProviderType {
     PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
 }
 
+enum AuthorizationFlow {
+    AUTHORIZATION_FLOW_UNSPECIFIED = 0;
+    AUTHORIZATION_FLOW_NONE = 1 [(name) = "none"];
+    AUTHORIZATION_FLOW_USER_INPUT = 2 [(name) = "user_input"];
+    AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW = 3 [(name) = "oauth2_authorization_code_flow"];
+    AUTHORIZATION_FLOW_GITHUB_APP_FLOW = 4 [(name) = "github_app_flow"];
+}
+
 message Provider {
     // name is the name of the provider.
     string name = 1;
-    // project is the project where the provider is.
+    // class is the name of the provider implementation, eg. 'github' or 'gh-app'.
+    string class = 7;
+    // project is the project where the provider is.  This is ignored on input
+    // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
     string version = 3;
@@ -1649,4 +2056,14 @@ message Provider {
 
     // config is the configuration of the provider.
     google.protobuf.Struct config = 5;
+
+    // auth_flows is the list of authorization flows that the provider supports.
+    repeated AuthorizationFlow auth_flows = 6;
+
+    // parameters is the list of parameters that the provider requires.
+    ProviderParameter parameters = 8;
+
+    // credentials_state is the state of the credentials for the provider.
+    // This is an output-only field. It may be: "set", "unset", "not_applicable".
+    string credentials_state = 9;
 }

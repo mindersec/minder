@@ -4,14 +4,21 @@ INSERT INTO profiles (
     project_id,
     remediate,
     alert,
-    name) VALUES ($1, $2, $3, $4, $5) RETURNING *;
+    name,
+    provider_id,
+    subscription_id,
+    display_name,
+    labels
+) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name), COALESCE(sqlc.arg(labels)::text[], '{}'::text[])) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET
-    remediate = $2,
-    alert = $3,
-    updated_at = NOW()
-WHERE id = $1 RETURNING *;
+    remediate = $3,
+    alert = $4,
+    updated_at = NOW(),
+    display_name = sqlc.arg(display_name),
+    labels = COALESCE(sqlc.arg(labels)::TEXT[], '{}'::TEXT[])
+WHERE id = $1 AND project_id = $2 RETURNING *;
 
 -- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (
@@ -39,25 +46,43 @@ SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.pro
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one
-SELECT * FROM profiles WHERE id = $1;
+SELECT * FROM profiles WHERE id = $1 AND project_id = $2;
 
 -- name: GetProfileByIDAndLock :one
-SELECT * FROM profiles WHERE id = $1 FOR UPDATE;
+SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
-SELECT * FROM profiles WHERE name = $1 AND project_id = $2 FOR UPDATE;
+SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
 
 -- name: GetEntityProfileByProjectAndName :many
 SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND profiles.name = $2;
+WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
 
 -- name: ListProfilesByProjectID :many
-SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
 WHERE profiles.project_id = $1;
+
+-- name: ListProfilesByProjectIDAndLabel :many
+SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+WHERE profiles.project_id = $1
+AND (
+    -- the most common case first, if the include_labels is empty, we list profiles with no labels
+    -- we use coalesce to handle the case where the include_labels is null
+    (COALESCE(cardinality(sqlc.arg(include_labels)::TEXT[]), 0) = 0 AND profiles.labels = ARRAY[]::TEXT[]) OR
+    -- if the include_labels arg is equal to '*', we list all profiles
+    sqlc.arg(include_labels)::TEXT[] = ARRAY['*'] OR
+    -- if the include_labels arg is not empty and not a wildcard, we list profiles whose labels are a subset of include_labels
+    (COALESCE(cardinality(sqlc.arg(include_labels)::TEXT[]), 0) > 0 AND profiles.labels @> sqlc.arg(include_labels)::TEXT[])
+) AND (
+    -- if the exclude_labels arg is empty, we list all profiles
+    COALESCE(cardinality(sqlc.arg(exclude_labels)::TEXT[]), 0) = 0 OR
+    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
+    NOT profiles.labels @> sqlc.arg(exclude_labels)::TEXT[]
+);
 
 -- name: DeleteProfile :exec
 DELETE FROM profiles
-WHERE id = $1;
+WHERE id = $1 AND project_id = $2;
 
 -- name: UpsertRuleInstantiation :one
 INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
@@ -85,4 +110,4 @@ FROM profiles AS p
 GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
-SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE name = $1;
+SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));

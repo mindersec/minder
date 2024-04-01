@@ -17,20 +17,23 @@ package gh_branch_protect
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -64,8 +67,9 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 }
 
@@ -94,23 +98,23 @@ func (m *protectionRequestMatcher) Matches(x interface{}) bool {
 			return false
 		}
 
-		if len(req.RequiredStatusChecks.Contexts) != len(m.exp.RequiredStatusChecks.Contexts) {
+		if len(req.GetRequiredStatusChecks().GetContexts()) != len(m.exp.GetRequiredStatusChecks().GetContexts()) {
 			return false
 		}
 
-		for i, c := range req.RequiredStatusChecks.Contexts {
-			if c != m.exp.RequiredStatusChecks.Contexts[i] {
+		for i, c := range req.GetRequiredStatusChecks().GetContexts() {
+			if c != m.exp.GetRequiredStatusChecks().GetContexts()[i] {
 				return false
 			}
 		}
 
-		if len(req.RequiredStatusChecks.Checks) != len(m.exp.RequiredStatusChecks.Checks) {
+		if len(req.GetRequiredStatusChecks().GetChecks()) != len(m.exp.GetRequiredStatusChecks().GetChecks()) {
 			return false
 		}
 
-		for i, c := range req.RequiredStatusChecks.Checks {
-			if c.Context != m.exp.RequiredStatusChecks.Checks[i].Context ||
-				*c.AppID != *m.exp.RequiredStatusChecks.Checks[i].AppID {
+		for i, c := range req.GetRequiredStatusChecks().GetChecks() {
+			if c.Context != m.exp.GetRequiredStatusChecks().GetChecks()[i].Context ||
+				*c.AppID != *m.exp.GetRequiredStatusChecks().GetChecks()[i].AppID {
 				return false
 			}
 		}
@@ -255,8 +259,8 @@ func TestBranchProtectionRemediate(t *testing.T) {
 							},
 							AllowForcePushes: &github.AllowForcePushes{Enabled: true},
 							RequiredStatusChecks: &github.RequiredStatusChecks{
-								Contexts: []string{"ci"},
-								Checks: []*github.RequiredStatusCheck{
+								Contexts: &[]string{"ci"},
+								Checks: &[]*github.RequiredStatusCheck{
 									{
 										Context: "ci",
 										AppID:   github.Int64(1234),
@@ -276,7 +280,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 								},
 								AllowForcePushes: github.Bool(true),
 								RequiredStatusChecks: &github.RequiredStatusChecks{
-									Checks: []*github.RequiredStatusCheck{
+									Checks: &[]*github.RequiredStatusCheck{
 										{
 											Context: "ci",
 											AppID:   github.Int64(1234),

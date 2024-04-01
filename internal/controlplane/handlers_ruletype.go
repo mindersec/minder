@@ -28,8 +28,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/schemaupdate"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -40,15 +40,12 @@ func (s *Server) ListRuleTypes(
 ) (*minderv1.ListRuleTypesResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	lrt, err := s.store.ListRuleTypesByProviderAndProject(ctx, db.ListRuleTypesByProviderAndProjectParams{
-		Provider:  entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID,
-	})
+	lrt, err := s.store.ListRuleTypesByProject(ctx, entityCtx.Project.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule types: %s", err)
 	}
@@ -66,7 +63,6 @@ func (s *Server) ListRuleTypes(
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return resp, nil
@@ -79,7 +75,7 @@ func (s *Server) GetRuleTypeByName(
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -87,7 +83,6 @@ func (s *Server) GetRuleTypeByName(
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.Provider.Name,
 		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
@@ -103,7 +98,6 @@ func (s *Server) GetRuleTypeByName(
 	resp.RuleType = rt
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
@@ -117,7 +111,7 @@ func (s *Server) GetRuleTypeById(
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -142,7 +136,6 @@ func (s *Server) GetRuleTypeById(
 	resp.RuleType = rt
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
@@ -154,71 +147,28 @@ func (s *Server) CreateRuleType(
 	ctx context.Context,
 	crt *minderv1.CreateRuleTypeRequest,
 ) (*minderv1.CreateRuleTypeResponse, error) {
-	in := crt.GetRuleType()
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't create rule: %s", err)
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %v", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
-
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	_, err = s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.GetName(),
-	})
-	if err == nil {
-		return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", in.GetName())
-	}
+	projectID := entityCtx.Project.ID
 
-	if !errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
-	}
-
-	def, err := util.GetBytesFromProto(in.GetDef())
-	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule definition to db: %v", err)
-	}
-
-	sev := in.GetSeverity().InitializedStringValue()
-	var seval db.Severity
-
-	if err := seval.Scan(sev); err != nil {
-		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
-	}
-
-	rtdb, err := s.store.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:          in.GetName(),
-		Provider:      entityCtx.Provider.Name,
-		ProjectID:     entityCtx.Project.ID,
-		Description:   in.GetDescription(),
-		Definition:    def,
-		Guidance:      in.GetGuidance(),
-		SeverityValue: seval,
+	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
+		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
 	if err != nil {
+		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
+		} else if errors.Is(err, ruletypes.ErrRuleAlreadyExists) {
+			return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", crt.RuleType.GetName())
+		}
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&rtdb)
-	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
-	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
-
 	return &minderv1.CreateRuleTypeResponse{
-		RuleType: rt,
+		RuleType: newRuleType,
 	}, nil
 }
 
@@ -227,91 +177,28 @@ func (s *Server) UpdateRuleType(
 	ctx context.Context,
 	urt *minderv1.UpdateRuleTypeRequest,
 ) (*minderv1.UpdateRuleTypeResponse, error) {
-	in := urt.GetRuleType()
-	// First we validate that the incoming rule is valid
-	if err := in.Validate(); err != nil {
-		if errors.Is(err, minderv1.ErrInvalidRuleType) || errors.Is(err, minderv1.ErrInvalidRuleTypeDefinition) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "Couldn't update rule: %s", err)
-		}
-		return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
-	}
-
 	entityCtx := engine.EntityFromContext(ctx)
-
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  entityCtx.Provider.Name,
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.GetName(),
+	projectID := entityCtx.Project.ID
+
+	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
+		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "rule type %s not found", in.GetName())
+		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
+		} else if errors.Is(err, ruletypes.ErrRuleNotFound) {
+			return nil, status.Errorf(codes.NotFound, "rule type %s not found", urt.RuleType.GetName())
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get rule type: %s", err)
+		return nil, status.Errorf(codes.Unknown, "failed to update rule type: %s", err)
 	}
-
-	oldrt, err := engine.RuleTypePBFromDB(&rtdb)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot convert rule type %s to pb: %v", in.GetName(), err)
-	}
-
-	_, err = s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
-	if err != nil {
-		// We don't need to worry about sql.ErrNoRows, because that only applies for single-row queries
-		return nil, util.UserVisibleError(codes.Unknown, "failed to get profiles used by rule: %s", err)
-	}
-	// We have profiles that use this rule type, so we need to
-	// validate that the incoming rule is valid against the old rule
-	if err := schemaupdate.ValidateSchemaUpdate(
-		oldrt.GetDef().GetRuleSchema(), in.GetDef().GetRuleSchema()); err != nil {
-		return nil, util.UserVisibleError(
-			codes.InvalidArgument, "Couldn't update rule: Rule schema update is invalid: %s", err)
-	}
-	if err := schemaupdate.ValidateSchemaUpdate(
-		oldrt.GetDef().GetParamSchema(), in.GetDef().GetParamSchema()); err != nil {
-		return nil, util.UserVisibleError(
-			codes.InvalidArgument, "Couldn't update rule: Parameter schema update is invalid: %s", err)
-	}
-
-	def, err := util.GetBytesFromProto(in.GetDef())
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot convert rule definition to db: %s", err)
-	}
-
-	sev := in.GetSeverity().InitializedStringValue()
-	var seval db.Severity
-
-	if err := seval.Scan(sev); err != nil {
-		return nil, fmt.Errorf("cannot convert severity to db: %v", err)
-	}
-
-	err = s.store.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:            rtdb.ID,
-		Description:   in.GetDescription(),
-		Definition:    def,
-		SeverityValue: seval,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
-	}
-
-	rt, err := engine.RuleTypePBFromDB(&rtdb)
-	if err != nil {
-		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
-	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return &minderv1.UpdateRuleTypeResponse{
-		RuleType: rt,
+		RuleType: updatedRuleType,
 	}, nil
 }
 
@@ -334,19 +221,16 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      rtdb.Provider,
-		ProjectID: rtdb.ProjectID,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to get provider: %s", err)
+	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+	// rule types yet, reject them in the API
+	// TODO: Move this deletion logic to RuleTypeService
+	if rtdb.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
 	}
-
-	in.Context.Provider = &prov.Name
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err = entityCtx.Validate(ctx, s.store)
+	err = entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -379,7 +263,6 @@ func (s *Server) DeleteRuleType(
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = rtdb.Provider
 	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 

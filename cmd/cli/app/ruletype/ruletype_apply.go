@@ -26,7 +26,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -43,13 +42,7 @@ var applyCmd = &cobra.Command{
 func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")
 	if err != nil {
@@ -107,7 +100,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, provider, applyFunc); err != nil {
+		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, applyFunc); err != nil {
 			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f), err)
 		}
 	}

@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	fgasdk "github.com/openfga/go-sdk"
 	"github.com/openfga/openfga/cmd/run"
 	"github.com/openfga/openfga/pkg/logger"
@@ -102,7 +103,9 @@ func TestVerifyOneProject(t *testing.T) {
 	prj := uuid.New()
 	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to write project")
 
-	userctx := auth.WithUserSubjectContext(ctx, "user-1")
+	userJWT := openid.New()
+	assert.NoError(t, userJWT.Set("sub", "user-1"))
+	userctx := auth.WithAuthTokenContext(ctx, userJWT)
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj), "failed to check project")
@@ -154,7 +157,9 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	prj1 := uuid.New()
 	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj1), "failed to write project")
 
-	userctx := auth.WithUserSubjectContext(ctx, "user-1")
+	user1JWT := openid.New()
+	assert.NoError(t, user1JWT.Set("sub", "user-1"))
+	userctx := auth.WithAuthTokenContext(ctx, user1JWT)
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj1), "failed to check project")
@@ -171,7 +176,9 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	assert.NoError(t, c.Write(ctx, "user-2", authz.AuthzRoleAdmin, prj3), "failed to write project")
 
 	// verify the project
-	assert.NoError(t, c.Check(auth.WithUserSubjectContext(ctx, "user-2"), "get", prj3), "failed to check project")
+	user2JWT := openid.New()
+	assert.NoError(t, user2JWT.Set("sub", "user-2"))
+	assert.NoError(t, c.Check(auth.WithAuthTokenContext(ctx, user2JWT), "get", prj3), "failed to check project")
 
 	// verify user-1 cannot operate on project 3
 	assert.Error(t, c.Check(userctx, "get", prj3), "expected user-1 to not be able to operate on project 3")
@@ -232,7 +239,7 @@ func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
 		require.NoError(t, err)
 	}()
 
-	testutils.EnsureServiceHealthy(t, cfg.GRPC.Addr, cfg.HTTP.Addr, nil, false)
+	testutils.EnsureServiceHealthy(t, cfg.GRPC.Addr, cfg.HTTP.Addr, nil, true)
 
 	testw := zerolog.NewTestWriter(t)
 	l := zerolog.New(testw)

@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -55,10 +54,14 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -71,35 +74,38 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store           db.Store
-	cfg             *serverconfig.Config
-	evt             events.Interface
-	mt              metrics.Metrics
-	provMt          provtelemetry.ProviderMetrics
-	grpcServer      *grpc.Server
-	vldtr           auth.JwtValidator
-	OAuth2          *oauth2.Config
-	ClientID        string
-	ClientSecret    string
-	authzClient     authz.Client
-	cryptoEngine    *crypto.Engine
-	restClientCache ratecache.RestClientCache
-	idClient        *auth.IdentityClient
+	store               db.Store
+	cfg                 *serverconfig.Config
+	evt                 events.Interface
+	mt                  metrics.Metrics
+	provMt              provtelemetry.ProviderMetrics
+	grpcServer          *grpc.Server
+	vldtr               auth.JwtValidator
+	providerAuthFactory func(string, bool) (*oauth2.Config, error)
+	authzClient         authz.Client
+	cryptoEngine        *crypto.Engine
+	restClientCache     ratecache.RestClientCache
+	idClient            *auth.IdentityClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	profileValidator *profiles.Validator
-	webhookManager   webhooks.WebhookManager
+	ruleTypes   ruletypes.RuleTypeService
+	repos       github.RepositoryService
+	profiles    profiles.ProfileService
+	providers   providers.ProviderService
+	marketplace marketplaces.Marketplace
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
 	pb.UnimplementedOAuthServiceServer
 	pb.UnimplementedUserServiceServer
 	pb.UnimplementedRepositoryServiceServer
+	pb.UnimplementedProjectsServiceServer
 	pb.UnimplementedProfileServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
+	pb.UnimplementedEvalResultsServiceServer
 }
 
 // ServerOption is a function that modifies a server
@@ -142,7 +148,7 @@ func WithServerMetrics(mt metrics.Metrics) ServerOption {
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
-	evt *events.Eventer,
+	evt events.Publisher,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
 	opts ...ServerOption,
@@ -151,16 +157,30 @@ func NewServer(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
+
+	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
+	profileSvc := profiles.NewProfileService(evt)
+	mt := metrics.NewNoopMetrics()
+	provMt := provtelemetry.NewNoopMetrics()
+	ruleSvc := ruletypes.NewRuleTypeService()
+	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create marketplace: %w", err)
+	}
+
 	s := &Server{
-		store:            store,
-		cfg:              cfg,
-		evt:              evt,
-		cryptoEngine:     eng,
-		vldtr:            vldtr,
-		mt:               metrics.NewNoopMetrics(),
-		provMt:           provtelemetry.NewNoopMetrics(),
-		profileValidator: profiles.NewValidator(store),
-		webhookManager:   webhooks.NewWebhookManager(cfg.WebhookConfig),
+		store:               store,
+		cfg:                 cfg,
+		evt:                 evt,
+		cryptoEngine:        eng,
+		vldtr:               vldtr,
+		providerAuthFactory: auth.NewOAuthConfig,
+		mt:                  mt,
+		provMt:              provMt,
+		profiles:            profileSvc,
+		ruleTypes:           ruleSvc,
+		repos:               github.NewRepositoryService(whManager, store, evt),
+		marketplace:         marketplace,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
@@ -171,10 +191,11 @@ func NewServer(
 		opt(s)
 	}
 
+	// Moved here because we have a dependency on s.restClientCache
+	s.providers = providers.NewProviderService(store, eng, mt, provMt, &cfg.Provider, s.restClientCache)
+
 	return s, nil
 }
-
-var _ (events.Registrar) = (*Server)(nil)
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
@@ -193,16 +214,6 @@ func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
 	return tp, nil
-}
-
-// Register implements events.Registrar
-func (s *Server) Register(topic string, handler events.Handler, mdw ...message.HandlerMiddleware) {
-	s.evt.Register(topic, handler, mdw...)
-}
-
-// ConsumeEvents implements events.Registrar
-func (s *Server) ConsumeEvents(c ...events.Consumer) {
-	s.evt.ConsumeEvents(c...)
 }
 
 func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
@@ -336,13 +347,17 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	mw := otelhttp.NewMiddleware("webhook")
 
 	// Explicitly handle HTTP only requests
-	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleProviderCallback())
+	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleOAuthCallback())
 	if err != nil {
 		return fmt.Errorf("failed to register provider callback handler: %w", err)
 	}
-	err = gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/web", s.HandleProviderCallback())
+	err = gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/web", s.HandleOAuthCallback())
 	if err != nil {
 		return fmt.Errorf("failed to register provider callback handler: %w", err)
+	}
+	err = gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/app", s.HandleGitHubAppCallback())
+	if err != nil {
+		return fmt.Errorf("failed to register GitHub App callback handler: %w", err)
 	}
 
 	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
@@ -463,14 +478,6 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 		log.Printf("shutting down 'Metric server'")
 
 		return server.Shutdown(shutdownCtx)
-	}
-}
-
-// HandleEvents starts the event handler and blocks while handling events.
-func (s *Server) HandleEvents(ctx context.Context) func() error {
-	return func() error {
-		defer s.evt.Close()
-		return s.evt.Run(ctx)
 	}
 }
 

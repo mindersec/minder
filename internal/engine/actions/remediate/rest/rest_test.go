@@ -18,6 +18,7 @@ package rest
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -30,9 +31,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -54,8 +57,9 @@ var (
 	}
 }`),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 	invalidProviderBuilder = providers.NewProviderBuilder(
 		&db.Provider{
@@ -69,8 +73,9 @@ var (
 		"base_url": "https://api.github.com/"
 }`),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 	TestActionTypeValid interfaces.ActionType = "remediate-test"
 )
@@ -93,8 +98,9 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 }
 

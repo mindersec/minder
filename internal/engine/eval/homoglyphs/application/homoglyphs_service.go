@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
@@ -65,23 +65,23 @@ func evaluateHomoglyphs(
 	processor domain.HomoglyphProcessor,
 	res *engif.Result,
 	reviewHandler *communication.GhReviewPrHandler,
-) error {
+) (bool, error) {
 	if res == nil {
-		return fmt.Errorf("result is nil")
+		return false, fmt.Errorf("result is nil")
 	}
 
 	//nolint:govet
-	prContents, ok := res.Object.(pb.PrContents)
+	prContents, ok := res.Object.(*pb.PrContents)
 	if !ok {
-		return fmt.Errorf("invalid object type for homoglyphs evaluator")
+		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}
 
 	if prContents.Pr == nil || prContents.Files == nil {
-		return fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
+		return false, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
 	}
 
 	if len(prContents.Files) == 0 {
-		return nil
+		return false, nil
 	}
 
 	// Note: This is a mandatory step to reassign certain fields in the handler.
@@ -113,11 +113,13 @@ func evaluateHomoglyphs(
 	}
 
 	var reviewText string
+	var hasFoundViolations bool
 	if len(reviewHandler.GetComments()) > 0 {
 		reviewText = processor.GetFailedReviewText()
+		hasFoundViolations = true
 	} else {
 		reviewText = processor.GetPassedReviewText()
 	}
 
-	return reviewHandler.SubmitReview(ctx, reviewText)
+	return hasFoundViolations, reviewHandler.SubmitReview(ctx, reviewText)
 }

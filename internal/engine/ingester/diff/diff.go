@@ -123,7 +123,7 @@ func (di *Diff) Ingest(
 		}
 
 		return &engif.Result{
-			Object: pb.PrDependencies{
+			Object: &pb.PrDependencies{
 				Pr:   pr,
 				Deps: allDiffs,
 			},
@@ -153,7 +153,7 @@ func (di *Diff) Ingest(
 		}
 
 		return &engif.Result{
-			Object: pb.PrContents{
+			Object: &pb.PrContents{
 				Pr:    pr,
 				Files: allDiffs,
 			},

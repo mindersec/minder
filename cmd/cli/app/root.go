@@ -28,7 +28,6 @@ import (
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/constants"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -115,7 +114,7 @@ func init() {
 
 func initConfig() {
 	viper.SetEnvPrefix("minder")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	cfgFile := viper.GetString("config")
 	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "config.yaml"))
@@ -167,19 +166,4 @@ func IsOutputFormatSupported(output string) bool {
 // SupportedOutputFormats returns the supported output formats
 func SupportedOutputFormats() []string {
 	return []string{JSON, YAML, Table}
-}
-
-// IsProviderSupported returns true if the provider is supported
-func IsProviderSupported(provider string) bool {
-	for _, p := range SupportedProviders() {
-		if provider == p {
-			return true
-		}
-	}
-	return false
-}
-
-// SupportedProviders returns the supported providers list
-func SupportedProviders() []string {
-	return []string{ghclient.Github}
 }

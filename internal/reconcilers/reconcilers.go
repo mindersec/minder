@@ -35,9 +35,10 @@ const (
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
 	store           db.Store
-	evt             *events.Eventer
-	crypteng        *crypto.Engine
+	evt             events.Publisher
+	crypteng        crypto.Engine
 	restClientCache ratecache.RestClientCache
+	provCfg         *serverconfig.ProviderConfig
 	provMt          providertelemetry.ProviderMetrics
 }
 
@@ -61,8 +62,9 @@ func WithRestClientCache(cache ratecache.RestClientCache) ReconcilerOption {
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
-	evt *events.Eventer,
+	evt events.Publisher,
 	authCfg *serverconfig.AuthConfig,
+	provCfg *serverconfig.ProviderConfig,
 	opts ...ReconcilerOption,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -74,6 +76,7 @@ func NewReconciler(
 		store:    store,
 		evt:      evt,
 		crypteng: crypteng,
+		provCfg:  provCfg,
 		provMt:   providertelemetry.NewNoopMetrics(),
 	}
 
@@ -85,7 +88,7 @@ func NewReconciler(
 }
 
 // Register implements the Consumer interface.
-func (e *Reconciler) Register(r events.Registrar) {
-	r.Register(InternalReconcilerEventTopic, e.handleRepoReconcilerEvent)
-	r.Register(InternalProfileInitEventTopic, e.handleProfileInitEvent)
+func (r *Reconciler) Register(reg events.Registrar) {
+	reg.Register(InternalReconcilerEventTopic, r.handleRepoReconcilerEvent)
+	reg.Register(InternalProfileInitEventTopic, r.handleProfileInitEvent)
 }

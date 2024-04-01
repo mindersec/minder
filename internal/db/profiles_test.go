@@ -4,45 +4,61 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/util/rand"
 )
 
-func createRandomProfile(t *testing.T, provName string, projectID uuid.UUID) Profile {
+func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID, labels []string) Profile {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
 	arg := CreateProfileParams{
-		Name:      rand.RandomName(seed),
-		Provider:  provName,
-		ProjectID: projectID,
+		Name:       rand.RandomName(seed),
+		Provider:   prov.Name,
+		ProviderID: prov.ID,
+		ProjectID:  projectID,
 		Remediate: NullActionType{
 			ActionType: "on",
 			Valid:      true,
 		},
+		Alert: NullActionType{
+			ActionType: "on",
+			Valid:      true,
+		},
+		Labels: labels,
 	}
 
 	prof, err := testQueries.CreateProfile(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, prof)
 
+	// listProfilesLabels doesn't join properly without the entityProfile entries
+	ent, err := testQueries.CreateProfileForEntity(context.Background(), CreateProfileForEntityParams{
+		ProfileID:       prof.ID,
+		Entity:          EntitiesRepository,
+		ContextualRules: json.RawMessage(`{"key": "value"}`),
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ent)
+
 	return prof
 }
 
-func createRandomRuleType(t *testing.T, provName string, projectID uuid.UUID) RuleType {
+func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
 	arg := CreateRuleTypeParams{
 		Name:          rand.RandomName(seed),
-		Provider:      provName,
 		ProjectID:     projectID,
 		Description:   rand.RandomString(64, seed),
 		Guidance:      rand.RandomString(64, seed),
@@ -98,7 +114,7 @@ func upsertEvalStatus(
 
 func upsertRemediationStatus(
 	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	remStatus RemediationStatusTypes, details string,
+	remStatus RemediationStatusTypes, details string, metadata json.RawMessage,
 ) {
 	t.Helper()
 
@@ -118,6 +134,7 @@ func upsertRemediationStatus(
 		RuleEvalID: id,
 		Status:     remStatus,
 		Details:    details,
+		Metadata:   metadata,
 	})
 	require.NoError(t, err)
 }
@@ -164,9 +181,9 @@ func createTestRandomEntities(t *testing.T) *testRandomEntities {
 	org := createRandomOrganization(t)
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
-	repo := createRandomRepository(t, proj.ID, prov.Name)
-	ruleType1 := createRandomRuleType(t, prov.Name, proj.ID)
-	ruleType2 := createRandomRuleType(t, prov.Name, proj.ID)
+	repo := createRandomRepository(t, proj.ID, prov)
+	ruleType1 := createRandomRuleType(t, proj.ID)
+	ruleType2 := createRandomRuleType(t, proj.ID)
 
 	return &testRandomEntities{
 		prov:      prov,
@@ -174,6 +191,100 @@ func createTestRandomEntities(t *testing.T) *testRandomEntities {
 		repo:      repo,
 		ruleType1: ruleType1,
 		ruleType2: ruleType2,
+	}
+}
+
+func TestProfileLabels(t *testing.T) {
+	t.Parallel()
+
+	randomEntities := createTestRandomEntities(t)
+
+	health1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health"})
+	require.NotEmpty(t, health1)
+	health2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health", "obsolete"})
+	require.NotEmpty(t, health2)
+	obsolete := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"obsolete"})
+	require.NotEmpty(t, obsolete)
+	p1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	require.NotEmpty(t, p1)
+	p2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	require.NotEmpty(t, p2)
+
+	tests := []struct {
+		name          string
+		includeLabels []string
+		excludeLabels []string
+		expectedNames []string
+	}{
+		{
+			name:          "list all profiles",
+			includeLabels: []string{"*"},
+			expectedNames: []string{health1.Name, health2.Name, obsolete.Name, p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles with no labels",
+			includeLabels: []string{},
+			expectedNames: []string{p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles with no labels using nil - default ",
+			includeLabels: nil,
+			expectedNames: []string{p1.Name, p2.Name},
+		},
+		{
+			name:          "list profiles that have the obsolete label",
+			includeLabels: []string{"obsolete"},
+			expectedNames: []string{health2.Name, obsolete.Name},
+		},
+		{
+			name:          "list profiles with the stacklok:health label",
+			includeLabels: []string{"stacklok:health"},
+			expectedNames: []string{health1.Name, health2.Name},
+		},
+		{
+			name:          "list profile having both obsolete and stacklok:health labels",
+			includeLabels: []string{"stacklok:health", "obsolete"},
+			expectedNames: []string{health2.Name},
+		},
+		{
+			name:          "list profiles with nonexistent labels",
+			includeLabels: []string{"nonexistent"},
+			expectedNames: []string{},
+		},
+		{
+			name:          "both include and exclude",
+			includeLabels: []string{"stacklok:health"},
+			excludeLabels: []string{"obsolete"},
+			expectedNames: []string{health1.Name},
+		},
+		{
+			name:          "include all labels but exclude one",
+			includeLabels: []string{"*"},
+			excludeLabels: []string{"obsolete"},
+			expectedNames: []string{health1.Name, p1.Name, p2.Name},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rows, err := testQueries.ListProfilesByProjectIDAndLabel(
+				context.Background(), ListProfilesByProjectIDAndLabelParams{
+					ProjectID:     randomEntities.proj.ID,
+					IncludeLabels: tt.includeLabels,
+					ExcludeLabels: tt.excludeLabels,
+				})
+			require.NoError(t, err)
+
+			names := make([]string, 0, len(rows))
+			for _, row := range rows {
+				names = append(names, row.Profile.Name)
+			}
+			require.True(t, slices.Equal(names, tt.expectedNames), "expected %v, got %v", tt.expectedNames, names)
+		})
 	}
 }
 
@@ -364,7 +475,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
+			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
 			tt.ruleStatusSetupFn(profile, randomEntities)
@@ -375,7 +486,10 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
 
-			err := testQueries.DeleteProfile(context.Background(), profile.ID)
+			err := testQueries.DeleteProfile(context.Background(), DeleteProfileParams{
+				ID:        profile.ID,
+				ProjectID: randomEntities.proj.ID,
+			})
 			require.NoError(t, err)
 		})
 	}
@@ -494,10 +608,10 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
+			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
-			delRepo := createRandomRepository(t, randomEntities.proj.ID, randomEntities.prov.Name)
+			delRepo := createRandomRepository(t, randomEntities.proj.ID, randomEntities.prov)
 
 			tt.ruleStatusSetupFn(profile, randomEntities, &delRepo)
 			prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
@@ -507,7 +621,11 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
 			require.Equal(t, tt.expectedStatusAfterModify, prfStatusRow.ProfileStatus)
 
-			err := testQueries.DeleteProfile(context.Background(), profile.ID)
+			err := testQueries.DeleteProfile(context.Background(), DeleteProfileParams{
+				ID:        profile.ID,
+				ProjectID: randomEntities.proj.ID,
+			})
+
 			require.NoError(t, err)
 		})
 	}
@@ -533,8 +651,10 @@ func compareRows(t *testing.T, a, b *ListRuleEvaluationsByProfileIdRow) {
 	require.Equal(t, a.EvalDetails, b.EvalDetails)
 	require.Equal(t, a.RemStatus, b.RemStatus)
 	require.Equal(t, a.RemDetails, b.RemDetails)
+	require.Equal(t, a.RemMetadata, b.RemMetadata)
 	require.Equal(t, a.AlertStatus, b.AlertStatus)
 	require.Equal(t, a.AlertDetails, b.AlertDetails)
+	require.Equal(t, a.AlertMetadata, b.AlertMetadata)
 	require.Equal(t, a.Entity, b.Entity)
 }
 
@@ -668,7 +788,7 @@ func TestListRuleEvaluations(t *testing.T) {
 					EvalStatusTypesFailure, "this rule failed")
 				upsertRemediationStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
-					RemediationStatusTypesSuccess, "this rule was remediated")
+					RemediationStatusTypesSuccess, "this rule was remediated", json.RawMessage(`{"pr_number": "56"}`))
 				upsertAlertStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
 					AlertStatusTypesOn, "we alerted about this rule", json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`))
@@ -694,6 +814,10 @@ func TestListRuleEvaluations(t *testing.T) {
 					String: "this rule was remediated",
 					Valid:  true,
 				},
+				RemMetadata: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`{"pr_number": "56"}`),
+					Valid:      true,
+				},
 				AlertStatus: NullAlertStatusTypes{
 					AlertStatusTypes: AlertStatusTypesOn,
 					Valid:            true,
@@ -701,6 +825,10 @@ func TestListRuleEvaluations(t *testing.T) {
 				AlertDetails: sql.NullString{
 					String: "we alerted about this rule",
 					Valid:  true,
+				},
+				AlertMetadata: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+					Valid:      true,
 				},
 				Entity: EntitiesRepository,
 			},
@@ -715,7 +843,7 @@ func TestListRuleEvaluations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.profile = createRandomProfile(t, randomEntities.prov.Name, randomEntities.proj.ID)
+			tt.profile = createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, tt.profile)
 
 			tt.ruleStatusSetupFn(tt.profile, randomEntities)

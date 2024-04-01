@@ -16,15 +16,12 @@
 package vulncheck
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	htmltemplate "html/template"
 	"io"
 	"strings"
-	"text/template"
 
-	"github.com/google/go-github/v56/github"
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -32,60 +29,12 @@ import (
 )
 
 const (
-	reviewBodyMagicComment = "<!-- minder: pr-review-body -->"
-	commitStatusContext    = "minder.stacklok.dev/pr-vulncheck"
-	vulnsFoundText         = `
-Minder found vulnerable dependencies in this PR. Either push an updated
-version or accept the proposed changes. Note that accepting the changes will
-include Minder as a co-author of this PR.
-`
-	vulnsFoundTextShort = `
-Vulnerable dependencies found.
-`
-	noVulsFoundText = `
-Minder analyzed this PR and found no vulnerable dependencies.
-`
-	reviewBodyDismissCommentText = `
-Previous Minder review was dismissed because the PR was updated.
-`
-	vulnFoundWithNoPatch = "Vulnerability found, but no patched version exists yet."
-)
-
-const (
-	reviewTemplateName = "reviewBody"
-	reviewTmplStr      = "{{.MagicComment}}\n\n{{.ReviewText}}"
+	commitStatusContext = "minder.stacklok.dev/pr-vulncheck"
 )
 
 const (
 	tabSize = 8
 )
-
-type reviewTemplateData struct {
-	MagicComment string
-	ReviewText   string
-}
-
-func createReviewBody(reviewText string) (string, error) {
-	// Create and parse the template
-	tmpl, err := template.New(reviewTemplateName).Option("missingkey=error").Parse(reviewTmplStr)
-	if err != nil {
-		return "", err
-	}
-
-	// Define the data for the template
-	data := reviewTemplateData{
-		MagicComment: reviewBodyMagicComment,
-		ReviewText:   reviewText,
-	}
-
-	// Execute the template
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", err
-	}
-
-	return buf.String(), nil
-}
 
 type reviewLocation struct {
 	line              string
@@ -132,9 +81,19 @@ func locateDepInPr(
 	loc := reviewLocation{}
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
+		// if the dependency is an NPM dependency, we need to look for the next line
+		// since the patch diff part covers the version, but not the name. This
+		// was causing 422 issues with GitHub when trying to submit a review.
+		// Also, to ensure we are grabbing the correct line, we need to check if the
+		// versions align.
+		if dep.Dep.Ecosystem == pb.DepEcosystem_DEP_ECOSYSTEM_NPM && i+1 < len(lines) {
+			line = strings.Join([]string{line, lines[i+1], dep.Dep.Version}, "\n")
+			loc.lineToChange = i + 2
+		} else {
+			loc.lineToChange = i + 1
+		}
 		if patch.LineHasDependency(line) {
 			loc.leadingWhitespace = countLeadingWhitespace(line)
-			loc.lineToChange = i + 1
 			loc.line = line
 			break
 		}
@@ -155,12 +114,15 @@ type reviewPrHandler struct {
 	cli provifv1.GitHub
 	pr  *pb.PullRequest
 
-	minderReview *github.PullRequestReview
-	failStatus   *string
+	trackedDeps []dependencyVulnerabilities
 
-	comments []*github.DraftReviewComment
-	status   *string
-	text     *string
+	authorizedUser     int64
+	minderStatusReport *github.IssueComment
+	comments           []*github.DraftReviewComment
+
+	status     *string
+	text       *string
+	failStatus *string
 
 	logger zerolog.Logger
 }
@@ -206,11 +168,13 @@ func newReviewPrHandler(
 	}
 
 	handler := &reviewPrHandler{
-		cli:        cli,
-		pr:         pr,
-		comments:   []*github.DraftReviewComment{},
-		logger:     logger,
-		failStatus: failStatus,
+		cli:            cli,
+		pr:             pr,
+		comments:       []*github.DraftReviewComment{},
+		logger:         logger,
+		failStatus:     failStatus,
+		trackedDeps:    []dependencyVulnerabilities{},
+		authorizedUser: cliUserId,
 	}
 
 	for _, opt := range opts {
@@ -223,7 +187,7 @@ func newReviewPrHandler(
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
 	dep *pb.PrDependencies_ContextualDependency,
-	_ *VulnerabilityResponse,
+	vulnResp *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
 	location, err := locateDepInPr(ctx, ra.cli, dep, patch)
@@ -259,40 +223,37 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		Str("dep-name", dep.Dep.Name).
 		Msg("vulnerable dependency found")
 
+	ra.trackedDeps = append(ra.trackedDeps, dependencyVulnerabilities{
+		Dependency:      dep.Dep,
+		Vulnerabilities: vulnResp.Vulns,
+		PatchVersion:    patch.GetPatchedVersion(),
+	})
+
 	return nil
 }
 
 func (ra *reviewPrHandler) submit(ctx context.Context) error {
-	if err := ra.findPreviousReview(ctx); err != nil {
-		return fmt.Errorf("could not find previous review: %w", err)
+	if err := ra.findPreviousStatusComment(ctx); err != nil {
+		return fmt.Errorf("could not find previous status comment: %w", err)
 	}
 
-	if ra.minderReview != nil {
-		if ra.minderReview.CommitID != nil && *ra.minderReview.CommitID == ra.pr.CommitSha {
-			// if the previous review was on the same commit, keep it
-			ra.logger.Debug().
-				Int64("review-id", ra.minderReview.GetID()).
-				Msg("previous review was on the same commit, will keep it")
-			return nil
-		}
-
-		err := ra.dismissReview(ctx)
-		if err != nil {
-			ra.logger.Error().Err(err).
-				Int64("review-id", ra.minderReview.GetID()).
-				Msg("could not dismiss previous review")
-		}
-		ra.logger.Debug().
-			Int64("review-id", ra.minderReview.GetID()).
-			Msg("dismissed previous review")
-	}
-
-	// either there are changes to request or just send the first review mentioning that everything is ok
 	ra.setStatus()
-	if err := ra.submitReview(ctx); err != nil {
+
+	mci := ra.getMagicCommentInfo()
+
+	var err error
+	mci.ReviewID, err = ra.submitReview(ctx, mci)
+	if err != nil {
+		// this should be fatal. In case we can't submit the review, we can't proceed
 		return fmt.Errorf("could not submit review: %w", err)
 	}
 	ra.logger.Debug().Msg("submitted review")
+
+	// If no status comment exists, post one immediately
+	if err := ra.updateStatusReportComment(ctx, mci); err != nil {
+		return fmt.Errorf("could not create status report: %w", err)
+	}
+
 	return nil
 }
 
@@ -312,16 +273,21 @@ func (ra *reviewPrHandler) setStatus() {
 	ra.logger.Debug().Str("status", *ra.status).Msg("will set review status")
 }
 
-func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
-	reviews, err := ra.cli.ListReviews(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number), nil)
+func (ra *reviewPrHandler) findPreviousStatusComment(ctx context.Context) error {
+	comments, err := ra.cli.ListIssueComments(ctx, ra.pr.RepoOwner, ra.pr.RepoName, int(ra.pr.Number),
+		&github.IssueListCommentsOptions{
+			Sort:      github.String("updated"),
+			Direction: github.String("asc"),
+		})
 	if err != nil {
-		return fmt.Errorf("could not list reviews: %w", err)
+		return fmt.Errorf("could not list comments: %w", err)
 	}
 
-	ra.minderReview = nil
-	for _, r := range reviews {
-		if strings.HasPrefix(r.GetBody(), reviewBodyMagicComment) && r.GetState() != "DISMISSED" {
-			ra.minderReview = r
+	ra.minderStatusReport = nil
+	for _, comment := range comments {
+		isMinder := comment.GetUser().GetID() == ra.authorizedUser
+		if isMinder && strings.HasPrefix(comment.GetBody(), statusBodyMagicCommentPrefix) {
+			ra.minderStatusReport = comment
 			break
 		}
 	}
@@ -329,20 +295,50 @@ func (ra *reviewPrHandler) findPreviousReview(ctx context.Context) error {
 	return nil
 }
 
-func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
-	body, err := createReviewBody(*ra.text)
+func (ra *reviewPrHandler) getMagicCommentInfo() magicCommentInfo {
+	if ra.minderStatusReport == nil {
+		return magicCommentInfo{}
+	}
+
+	mci, err := extractContentShaAndReviewID(ra.minderStatusReport.GetBody())
 	if err != nil {
-		return fmt.Errorf("could not create review body: %w", err)
+		ra.logger.Warn().Msg("could not extract content sha and review id from previous status comment")
+		// non-fatal error, we can still post the status report
+		// and worst case we will add a duplicate comment
+	}
+	return mci
+}
+
+func (ra *reviewPrHandler) submitReview(ctx context.Context, mci magicCommentInfo) (int64, error) {
+	// if the previous review was on the same commit, keep it
+	if mci.ContentSha == ra.pr.GetCommitSha() {
+		ra.logger.Debug().
+			Int64("review-id", mci.ReviewID).
+			Msg("previous review was on the same commit, will keep it")
+		return 0, nil
+	}
+
+	if err := ra.dismissReview(ctx, mci); err != nil {
+		ra.logger.Warn().Msg("could not dismiss previous review")
+	}
+
+	return ra.createReview(ctx)
+}
+
+func (ra *reviewPrHandler) createReview(ctx context.Context) (int64, error) {
+	var err error
+
+	if len(ra.comments) == 0 {
+		return 0, nil
 	}
 
 	review := &github.PullRequestReviewRequest{
 		CommitID: github.String(ra.pr.CommitSha),
 		Event:    ra.status,
 		Comments: ra.comments,
-		Body:     github.String(body),
 	}
 
-	_, err = ra.cli.CreateReview(
+	r, err := ra.cli.CreateReview(
 		ctx,
 		ra.pr.RepoOwner,
 		ra.pr.RepoName,
@@ -350,14 +346,20 @@ func (ra *reviewPrHandler) submitReview(ctx context.Context) error {
 		review,
 	)
 	if err != nil {
-		return fmt.Errorf("could not create review: %w", err)
+		return 0, fmt.Errorf("could not create review: %w", err)
 	}
 
-	return nil
+	return r.GetID(), nil
 }
 
-func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
-	if ra.minderReview == nil {
+func (ra *reviewPrHandler) dismissReview(ctx context.Context, mci magicCommentInfo) error {
+	if mci.ReviewID == 0 {
+		ra.logger.Debug().Msg("no previous review to dismiss")
+		return nil
+	}
+
+	if ra.pr.GetAuthorId() == ra.authorizedUser {
+		ra.logger.Warn().Msg("author is the same as the authenticated user, can't dismiss")
 		return nil
 	}
 
@@ -370,12 +372,55 @@ func (ra *reviewPrHandler) dismissReview(ctx context.Context) error {
 		ra.pr.RepoOwner,
 		ra.pr.RepoName,
 		int(ra.pr.Number),
-		ra.minderReview.GetID(),
+		mci.ReviewID,
 		dismissReview)
 	if err != nil {
 		return fmt.Errorf("could not dismiss review: %w", err)
 	}
 	return nil
+}
+
+func (ra *reviewPrHandler) updateStatusReportComment(ctx context.Context, mci magicCommentInfo) error {
+	report := &statusReport{
+		StatusText:          *ra.text,
+		CommitSHA:           ra.pr.CommitSha,
+		TrackedDependencies: ra.trackedDeps,
+		ReviewID:            mci.ReviewID,
+	}
+
+	statusBody, err := report.render()
+	if err != nil {
+		return fmt.Errorf("failed to render status from templates: %w", err)
+	}
+
+	if ra.minderStatusReport == nil {
+		if ra.minderStatusReport, err = ra.cli.CreateIssueComment(
+			ctx,
+			ra.pr.RepoOwner,
+			ra.pr.RepoName,
+			int(ra.pr.GetNumber()),
+			statusBody,
+		); err != nil {
+			return fmt.Errorf("failed to create minder status report comment: %w", err)
+		}
+
+		return nil
+	}
+
+	if mci.ContentSha != ra.pr.GetCommitSha() {
+		if err := ra.cli.UpdateIssueComment(
+			ctx,
+			ra.pr.RepoOwner,
+			ra.pr.RepoName,
+			ra.minderStatusReport.GetID(),
+			statusBody,
+		); err != nil {
+			return fmt.Errorf("failed to update minder status report comment: %w", err)
+		}
+	}
+
+	return nil
+
 }
 
 type commitStatusPrHandler struct {
@@ -407,7 +452,9 @@ func newCommitStatusPrHandler(
 func (csh *commitStatusPrHandler) submit(ctx context.Context) error {
 	// first submit the review, we force the status to be COMMENT to not block
 	if err := csh.reviewPrHandler.submit(ctx); err != nil {
-		return fmt.Errorf("could not submit review: %w", err)
+		csh.logger.Error().Err(err).Msg("could not submit review")
+		// since in this case the mechanism that blocks the PR is the commit status,
+		// we should not return an error here but try to set the commit status anyway
 	}
 
 	// next either pass or fail the commit status to eventually block the PR
@@ -449,67 +496,39 @@ type summaryPrHandler struct {
 
 	logger      zerolog.Logger
 	trackedDeps []dependencyVulnerabilities
-	headerTmpl  *htmltemplate.Template
-	rowsTmpl    *htmltemplate.Template
 }
-
-const (
-	tableVulnerabilitiesHeaderName = "vulnerabilitiesTableHeader"
-	tableVulnerabilitiesHeader     = `### Summary of vulnerabilities found
-Minder found the following vulnerabilities in this PR:
-<table>
-  <tr>
-    <th>Ecosystem</th>
-    <th>Name</th>
-    <th>Version</th>
-    <th>Vulnerability ID</th>
-    <th>Summary</th>
-    <th>Introduced</th>
-    <th>Fixed</th>
-  </tr>
-`
-	tableVulnerabilitiesRowsName = "vulnerabilitiesTableRow"
-	tableVulnerabilitiesRows     = `
-  {{ range .Vulnerabilities }}
-  <tr>
-    <td>{{ $.Ecosystem }}</td>
-    <td>{{ $.Name }}</td>
-    <td>{{ $.Version }}</td>
-    <td>{{ .ID }}</td>
-    <td>{{ .Summary }}</td>
-    <td>{{ .Introduced }}</td>
-    <td>{{ .Fixed }}</td>
-  </tr>
-  {{ end }}
-`
-	tableVulnerabilitiesFooter = "</table>"
-)
 
 type dependencyVulnerabilities struct {
 	Dependency      *pb.Dependency
 	Vulnerabilities []Vulnerability
+	PatchVersion    string
 }
 
 func (sph *summaryPrHandler) trackVulnerableDep(
 	_ context.Context,
 	dep *pb.PrDependencies_ContextualDependency,
 	vulnResp *VulnerabilityResponse,
-	_ patchLocatorFormatter,
+	patch patchLocatorFormatter,
 ) error {
 	sph.trackedDeps = append(sph.trackedDeps, dependencyVulnerabilities{
 		Dependency:      dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
+		PatchVersion:    patch.GetPatchedVersion(),
 	})
 	return nil
 }
 
 func (sph *summaryPrHandler) submit(ctx context.Context) error {
-	summary, err := sph.generateSummary()
+	report := &vulnSummaryReport{
+		TrackedDependencies: sph.trackedDeps,
+	}
+
+	summary, err := report.render()
 	if err != nil {
 		return fmt.Errorf("could not generate summary: %w", err)
 	}
 
-	err = sph.cli.CreateComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
+	_, err = sph.cli.CreateIssueComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
 	if err != nil {
 		return fmt.Errorf("could not create comment: %w", err)
 	}
@@ -517,70 +536,23 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 	return nil
 }
 
-func (sph *summaryPrHandler) generateSummary() (string, error) {
-	var summary strings.Builder
-	if len(sph.trackedDeps) == 0 {
-		summary.WriteString(noVulsFoundText)
-		return summary.String(), nil
-	}
-
-	var headerBuf bytes.Buffer
-	if err := sph.headerTmpl.Execute(&headerBuf, nil); err != nil {
-		return "", fmt.Errorf("could not execute template: %w", err)
-	}
-	summary.WriteString(headerBuf.String())
-
-	for i := range sph.trackedDeps {
-		var rowBuf bytes.Buffer
-
-		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
-			Ecosystem       string
-			Name            string
-			Version         string
-			Vulnerabilities []Vulnerability
-		}{
-			Ecosystem:       sph.trackedDeps[i].Dependency.Ecosystem.AsString(),
-			Name:            sph.trackedDeps[i].Dependency.Name,
-			Version:         sph.trackedDeps[i].Dependency.Version,
-			Vulnerabilities: sph.trackedDeps[i].Vulnerabilities,
-		}); err != nil {
-			return "", fmt.Errorf("could not execute template: %w", err)
-		}
-		summary.WriteString(rowBuf.String())
-	}
-	summary.WriteString(tableVulnerabilitiesFooter)
-
-	return summary.String(), nil
-}
-
 func newSummaryPrHandler(
 	ctx context.Context,
 	pr *pb.PullRequest,
 	cli provifv1.GitHub,
-) (prStatusHandler, error) {
+) *summaryPrHandler {
 	logger := zerolog.Ctx(ctx).With().
 		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).
 		Str("repo-name", pr.RepoName).
 		Logger()
 
-	headerTmpl, err := htmltemplate.New(tableVulnerabilitiesHeaderName).Parse(tableVulnerabilitiesHeader)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse dependency template: %w", err)
-	}
-	rowsTmpl, err := htmltemplate.New(tableVulnerabilitiesRowsName).Parse(tableVulnerabilitiesRows)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
-	}
-
 	return &summaryPrHandler{
 		cli:         cli,
 		pr:          pr,
 		logger:      logger,
-		headerTmpl:  headerTmpl,
-		rowsTmpl:    rowsTmpl,
 		trackedDeps: make([]dependencyVulnerabilities, 0),
-	}, nil
+	}
 }
 
 // just satisfies the interface but really does nothing. Useful for testing.

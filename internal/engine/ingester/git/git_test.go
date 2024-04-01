@@ -17,14 +17,17 @@ package git_test
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -36,16 +39,15 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
-		"",
+		sql.NullString{},
+		credentials.NewEmptyCredential(),
+		&serverconfig.ProviderConfig{},
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -75,16 +77,15 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
-		"",
+		sql.NullString{},
+		credentials.NewEmptyCredential(),
+		&serverconfig.ProviderConfig{},
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -114,16 +115,15 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
-		"",
+		sql.NullString{},
+		credentials.NewEmptyCredential(),
+		&serverconfig.ProviderConfig{},
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -153,16 +153,15 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 	gi, err := gitengine.NewGitIngester(&pb.GitType{},
 		providers.NewProviderBuilder(
 			&db.Provider{
-				Name:    "github",
+				Name:    "git-provider",
 				Version: provifv1.V1,
 				Implements: []db.ProviderType{
 					"git",
-					"rest",
-					"github",
 				},
 			},
-			db.ProviderAccessToken{},
-			"",
+			sql.NullString{},
+			credentials.NewEmptyCredential(),
+			&serverconfig.ProviderConfig{},
 		))
 	require.NoError(t, err, "expected no error")
 
@@ -194,16 +193,15 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
-		"",
+		sql.NullString{},
+		credentials.NewEmptyCredential(),
+		&serverconfig.ProviderConfig{},
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -224,16 +222,15 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 		Branch: "master",
 	}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
-		"foobar",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("foobar"),
+		&serverconfig.ProviderConfig{},
 	),
 	)
 	require.NoError(t, err, "expected no error")
@@ -251,17 +248,16 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	// foobar is not a valid token
 	gi, err := gitengine.NewGitIngester(&pb.GitType{}, providers.NewProviderBuilder(
 		&db.Provider{
-			Name:    "github",
+			Name:    "git-provider",
 			Version: provifv1.V1,
 			Implements: []db.ProviderType{
 				"git",
-				"rest",
-				"github",
 			},
 		},
-		db.ProviderAccessToken{},
+		sql.NullString{},
 		// No authentication is the right thing in this case.
-		"",
+		credentials.NewEmptyCredential(),
+		&serverconfig.ProviderConfig{},
 	))
 	require.NoError(t, err, "expected no error")
 

@@ -36,7 +36,7 @@ import (
 	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
 	"github.com/stacklok/minder/internal/engine"
-	ghclient "github.com/stacklok/minder/internal/providers/github"
+	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -160,11 +160,6 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
-
-	// Ensure provider is supported
-	if !app.IsProviderSupported(provider) {
-		return cli.MessageAndError(fmt.Sprintf("Provider %s is not supported yet", provider), fmt.Errorf("invalid argument"))
-	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413

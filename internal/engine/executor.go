@@ -27,6 +27,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
@@ -43,13 +45,16 @@ const (
 	// DefaultExecutionTimeout is the timeout for execution of a set
 	// of profiles on an entity.
 	DefaultExecutionTimeout = 5 * time.Minute
+	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
+	// before proceeding with evaluation.
+	ArtifactSignatureWaitPeriod = 10 * time.Second
 )
 
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
 	querier                db.Store
-	evt                    *events.Eventer
-	crypteng               *crypto.Engine
+	evt                    events.Publisher
+	crypteng               crypto.Engine
 	provMt                 providertelemetry.ProviderMetrics
 	mdws                   []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
@@ -57,6 +62,7 @@ type Executor struct {
 	// when the server is shutting down.
 	terminationcontext context.Context
 	restClientCache    ratecache.RestClientCache
+	provCfg            *serverconfig.ProviderConfig
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -88,7 +94,8 @@ func NewExecutor(
 	ctx context.Context,
 	querier db.Store,
 	authCfg *serverconfig.AuthConfig,
-	evt *events.Eventer,
+	provCfg *serverconfig.ProviderConfig,
+	evt events.Publisher,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -104,6 +111,7 @@ func NewExecutor(
 		wgEntityEventExecution: &sync.WaitGroup{},
 		terminationcontext:     ctx,
 		mdws:                   []message.HandlerMiddleware{},
+		provCfg:                provCfg,
 	}
 
 	for _, opt := range opts {
@@ -139,6 +147,9 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	e.wgEntityEventExecution.Add(1)
 	go func() {
 		defer e.wgEntityEventExecution.Done()
+		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+			time.Sleep(ArtifactSignatureWaitPeriod)
+		}
 		// TODO: Make this timeout configurable
 		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
 		defer cancel()
@@ -181,15 +192,15 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	projectID := inf.ProjectID
 
-	// get project info
-	project, err := e.querier.GetProjectByID(ctx, *projectID)
+	// get project hierarchy
+	ph, err := e.querier.GetParentProjects(ctx, projectID)
 	if err != nil {
 		return fmt.Errorf("error getting project: %w", err)
 	}
 
 	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:      inf.Provider,
-		ProjectID: *projectID,
+		Name:     inf.Provider,
+		Projects: ph,
 	})
 
 	if err != nil {
@@ -200,14 +211,14 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	cli, err := providers.GetProviderBuilder(ctx, provider, *projectID, e.querier, e.crypteng, pbOpts...)
+	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID: project.ID,
+			ID: projectID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
@@ -223,15 +234,28 @@ func (e *Executor) evalEntityEvent(
 	ectx *EntityContext,
 	cli *providers.ProviderBuilder,
 ) error {
-	// this is a cache so we can avoid querying the ingester upstream
+	logger := zerolog.Ctx(ctx).Info().
+		Str("entity_type", inf.Type.ToString()).
+		Str("execution_id", inf.ExecutionID.String())
+	logger.Msg("entity evaluation - started")
+
+	// This is a cache, so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.
-	ingestCache := ingestcache.NewCache()
+	var ingestCache ingestcache.Cache
+	if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+		// We use a noop cache for artifacts because we don't want to cache
+		// anything for them. The signature information is essentially another artifact version,
+		// and so we don't want to cache that.
+		ingestCache = ingestcache.NewNoopCache()
+	} else {
+		ingestCache = ingestcache.NewCache()
+	}
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
 	// Get profiles relevant to project
-	dbpols, err := e.querier.ListProfilesByProjectID(ctx, *inf.ProjectID)
+	dbpols, err := e.querier.ListProfilesByProjectID(ctx, inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting profiles: %w", err)
 	}
@@ -283,6 +307,7 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
+
 	cli *providers.ProviderBuilder,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
@@ -298,7 +323,6 @@ func (e *Executor) getEvaluator(
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Provider:  ectx.Provider.Name,
 		ProjectID: ectx.Project.ID,
 		Name:      rule.Type,
 	})
@@ -338,16 +362,8 @@ func (e *Executor) updateLockLease(
 	executionID uuid.UUID,
 	params *engif.EvalStatusParams,
 ) {
-	logger := zerolog.Ctx(ctx).Info().
-		Str("entity_type", string(params.EntityType)).
-		Str("execution_id", executionID.String()).
-		Str("repo_id", params.RepoID.String())
-	if params.ArtifactID.Valid {
-		logger = logger.Str("artifact_id", params.ArtifactID.UUID.String())
-	}
-	if params.PullRequestID.Valid {
-		logger = logger.Str("pull_request_id", params.PullRequestID.UUID.String())
-	}
+	logger := params.DecorateLogger(
+		zerolog.Ctx(ctx).With().Str("execution_id", executionID.String()).Logger())
 
 	if err := e.querier.UpdateLease(ctx, db.UpdateLeaseParams{
 		Entity:        params.EntityType,
@@ -360,7 +376,7 @@ func (e *Executor) updateLockLease(
 		return
 	}
 
-	logger.Msg("lock lease updated")
+	logger.Info().Msg("lock lease updated")
 }
 
 func (e *Executor) releaseLockAndFlush(
@@ -408,42 +424,20 @@ func logEval(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	params *engif.EvalStatusParams) {
-	logger := zerolog.Ctx(ctx)
-	evalLog := logger.Debug().
-		Str("profile", params.Profile.Name).
-		Str("ruleType", params.Rule.Type).
-		Str("ruleName", params.Rule.Name).
-		Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
-		Str("projectId", inf.ProjectID.String()).
-		Str("repositoryId", params.RepoID.String())
+	evalLog := params.DecorateLogger(
+		zerolog.Ctx(ctx).With().
+			Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
+			Str("project_id", inf.ProjectID.String()).
+			Logger())
 
-	if params.ArtifactID.Valid {
-		evalLog = evalLog.Str("artifactId", params.ArtifactID.UUID.String())
-	}
-
-	// log evaluation
-	evalLog.Err(params.GetEvalErr()).Msg("result - evaluation")
-
-	// log remediation
-	logger.Err(filterActionErrorForLogging(params.GetActionsErr().RemediateErr)).
-		Str("action", "remediate").
+	// log evaluation result and actions status
+	evalLog.Info().
+		Str("action", string(remediate.ActionType)).
 		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
-		Msg("result - action")
-
-	// log alert
-	logger.Err(filterActionErrorForLogging(params.GetActionsErr().AlertErr)).
-		Str("action", "alert").
+		Str("action", string(alert.ActionType)).
 		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
-		Msg("result - action")
+		Msg("entity evaluation - completed")
 
 	// log business logic
 	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
-}
-
-func filterActionErrorForLogging(err error) error {
-	if evalerrors.IsActionFatalError(err) {
-		return err
-	}
-
-	return nil
 }

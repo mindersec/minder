@@ -17,6 +17,7 @@ package rest
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -27,9 +28,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -65,8 +68,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: false,
@@ -90,8 +94,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -115,8 +120,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -135,8 +141,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 							"rest",
 						},
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -160,8 +167,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }`),
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -184,8 +192,9 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 		"base_url": "https://api.github.com/"
 }`),
 					},
-					db.ProviderAccessToken{},
-					"token",
+					sql.NullString{},
+					credentials.NewGitHubTokenCredential("token"),
+					&serverconfig.ProviderConfig{},
 				),
 			},
 			wantErr: true,
@@ -228,8 +237,9 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
 			Definition: json.RawMessage(definitionJSON),
 		},
-		db.ProviderAccessToken{},
-		"token",
+		sql.NullString{},
+		credentials.NewGitHubTokenCredential("token"),
+		&serverconfig.ProviderConfig{},
 	)
 }
 

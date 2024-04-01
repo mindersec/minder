@@ -30,16 +30,16 @@ include .mk/build.mk
 include .mk/authz.mk
 
 
-# OS detection for docker-compose
+# OS detection for docker compose
 OS := $(shell uname -s)
 
-COMPOSE?=docker-compose
+COMPOSE?=docker compose
 CONTAINER?=docker
 
-# Services to run in docker-compose. Defaults to all
+# Services to run in docker compose. Defaults to all
 services?=
 
-# Arguments to pass to docker-compose
+# Arguments to pass to docker compose
 COMPOSE_ARGS?=-d
 
 # Flags and env vars for ko

@@ -96,13 +96,7 @@ func ListProviderCommand(ctx context.Context, _ *cobra.Command, conn *grpc.Clien
 	case app.Table:
 		t := table.New(table.Simple, layouts.ProviderList, nil)
 		for _, v := range out.Providers {
-			var impls []string
-			for _, impl := range v.GetImplements() {
-				i := impl.ToString()
-				if i != "" {
-					impls = append(impls, i)
-				}
-			}
+			impls := getImplementsAsStrings(v)
 
 			t.AddRow(v.GetName(), v.GetProject(), v.GetVersion(), strings.Join(impls, ", "))
 		}

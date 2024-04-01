@@ -28,9 +28,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -121,11 +119,13 @@ func TestValidatorScenarios(t *testing.T) {
 			// if rule name is empty in the profile, it should be set to the name of the rule type by the validator
 			ExpectedResult: expectation(ruleTypeName),
 		},
-	}
-
-	entityCtx := engine.EntityContext{
-		Project:  engine.Project{ID: uuid.New()},
-		Provider: engine.Provider{Name: github.Github},
+		{
+			Name: "Validator rejects profile with with rule type that doesn't match entity",
+			// Note that this should fail since the default rule definition we have is for a repo entity and not for artifacts
+			Profile:       makeProfile(withBasicProfileData, withArtifactRules(makeRule(withRuleDefs, withRuleParams))),
+			DBSetup:       dbReturnsRuleType,
+			ExpectedError: "expects entity repository, but was given entity artifact",
+		},
 	}
 
 	// some of this boilerplate can probably be shared across multiple tests
@@ -141,8 +141,8 @@ func TestValidatorScenarios(t *testing.T) {
 				testScenario.DBSetup(store)
 			}
 
-			result, err := profiles.NewValidator(store).
-				ValidateAndExtractRules(context.Background(), testScenario.Profile, entityCtx)
+			v := &profiles.Validator{}
+			result, err := v.ValidateAndExtractRules(context.Background(), store, projectID, testScenario.Profile)
 
 			if testScenario.ExpectedError != "" && testScenario.ExpectedResult == nil {
 				require.Nil(t, result)
@@ -162,6 +162,7 @@ func TestValidatorScenarios(t *testing.T) {
 var ruleTypeName = "branch_protection_allow_force_pushes"
 var ruleName = "MyRule"
 var ruleUUID = uuid.New()
+var projectID = uuid.New()
 
 func withBasicProfileData(profile *minderv1.Profile) {
 	profile.Name = "MyProfile"
@@ -177,10 +178,17 @@ func withRules(rules ...*minderv1.Profile_Rule) func(*minderv1.Profile) {
 	}
 }
 
+func withArtifactRules(rules ...*minderv1.Profile_Rule) func(*minderv1.Profile) {
+	return func(profile *minderv1.Profile) {
+		profile.Artifact = rules
+	}
+}
+
 func dbReturnsError(store *mockdb.MockStore) {
 	store.EXPECT().
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
-		Return(db.RuleType{}, sql.ErrNoRows)
+		Return(db.RuleType{}, sql.ErrNoRows).
+		AnyTimes()
 }
 
 func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStore) {
@@ -193,7 +201,8 @@ func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStor
 
 		store.EXPECT().
 			GetRuleTypeByName(gomock.Any(), gomock.Any()).
-			Return(ruleType, nil)
+			Return(ruleType, nil).
+			AnyTimes()
 	}
 }
 

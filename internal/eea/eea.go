@@ -39,12 +39,12 @@ import (
 // EEA is the Event Execution Aggregator
 type EEA struct {
 	querier db.Store
-	evt     *events.Eventer
+	evt     events.Publisher
 	cfg     *serverconfig.AggregatorConfig
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt *events.Eventer, cfg *serverconfig.AggregatorConfig) *EEA {
+func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig) *EEA {
 	return &EEA{
 		querier: querier,
 		evt:     evt,
@@ -84,24 +84,31 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	}
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
+	projectID := inf.ProjectID
 
-	logger := zerolog.Ctx(ctx).Info()
-	logger = logger.Str("event", msg.UUID).
+	logger := zerolog.Ctx(ctx).With().
+		Str("component", "EEA").
+		Str("event", msg.UUID).
 		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String())
+		Str("repository_id", repoID.String()).
+		Logger()
 
 	// We need to check that the resources still exist before attempting to lock them.
 	// TODO: consider whether we need foreign key checks on the locks.
-	if _, err := e.querier.GetRepositoryByID(ctx, repoID); err != nil {
+	_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+		ID:        repoID,
+		ProjectID: projectID,
+	})
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			logger.Msg("Skipping event because repository no longer exists")
+			logger.Debug().Msg("Skipping event because repository no longer exists")
 			return nil, nil
 		}
 	}
 	if artifactID.Valid {
 		if _, err := e.querier.GetArtifactByID(ctx, artifactID.UUID); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				logger.Msg("Skipping event because artifact no longer exists")
+				logger.Debug().Msg("Skipping event because artifact no longer exists")
 				return nil, nil
 			}
 		}
@@ -109,7 +116,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	if pullRequestID.Valid {
 		if _, err := e.querier.GetPullRequestByID(ctx, pullRequestID.UUID); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				logger.Msg("Skipping event because pull request no longer exists")
+				logger.Debug().Msg("Skipping event because pull request no longer exists")
 				return nil, nil
 			}
 		}
@@ -124,17 +131,17 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	})
 
 	if artifactID.Valid {
-		logger = logger.Str("artifact_id", artifactID.UUID.String())
+		logger = logger.With().Str("artifact_id", artifactID.UUID.String()).Logger()
 	}
 
 	if pullRequestID.Valid {
-		logger = logger.Str("pull_request_id", pullRequestID.UUID.String())
+		logger = logger.With().Str("pull_request_id", pullRequestID.UUID.String()).Logger()
 	}
 
 	// if nothing was retrieved from the database, then we can assume
 	// that the event is not ready to be executed.
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		logger.Msg("event not ready to be executed")
+		logger.Info().Msg("executor not ready to process event. Queuing in flush cache.")
 
 		_, err := e.querier.EnqueueFlush(ctx, db.EnqueueFlushParams{
 			Entity:        entities.EntityTypeToDB(inf.Type),
@@ -156,7 +163,7 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		return nil, fmt.Errorf("error locking: %w", err)
 	}
 
-	logger.Str("execution_id", res.LockedBy.String()).Msg("event ready to be executed")
+	logger.Info().Str("execution_id", res.LockedBy.String()).Msg("event ready to be executed")
 	msg.Metadata.Set(entities.ExecutionIDKey, res.LockedBy.String())
 
 	return msg, nil
@@ -174,10 +181,14 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 
 	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
 
-	zerolog.Ctx(ctx).Info().
+	logger := zerolog.Ctx(ctx).With().
+		Str("component", "EEA").
+		Str("function", "FlushMessageHandler").
 		Str("event", msg.UUID).
 		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String()).Msg("flushing event")
+		Str("repository_id", repoID.String()).Logger()
+
+	logger.Debug().Msg("flushing event")
 
 	_, err = e.querier.FlushCache(ctx, db.FlushCacheParams{
 		Entity:        entities.EntityTypeToDB(inf.Type),
@@ -188,19 +199,13 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 	// Nothing to do here. If we can't flush the cache, it means
 	// that the event has already been executed.
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		zerolog.Ctx(ctx).Info().
-			Str("event", msg.UUID).
-			Str("entity", inf.Type.ToString()).
-			Str("repository_id", repoID.String()).Msg("no flushing needed")
+		zerolog.Ctx(ctx).Debug().Msg("no flushing needed")
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("error flushing cache: %w", err)
 	}
 
-	zerolog.Ctx(ctx).Info().
-		Str("event", msg.UUID).
-		Str("entity", inf.Type.ToString()).
-		Str("repository_id", repoID.String()).Msg("re-publishing event because of flush")
+	logger.Debug().Msg("re-publishing event because of flush")
 
 	// Now that we've flushed the event, let's try to publish it again
 	// which means, go through the locking process again.
@@ -282,7 +287,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	projID uuid.UUID,
 	provider string,
 ) (*entities.EntityInfoWrapper, error) {
-	r, err := util.GetRepository(ctx, e.querier, repoID)
+	r, err := util.GetRepository(ctx, e.querier, projID, repoID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
@@ -301,7 +306,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 	provider string,
 	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	a, err := util.GetArtifact(ctx, e.querier, repoID, artID.UUID)
+	a, err := util.GetArtifact(ctx, e.querier, projID, repoID, artID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
@@ -321,7 +326,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	provider string,
 	prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	pr, err := util.GetPullRequest(ctx, e.querier, repoID, prID.UUID)
+	pr, err := util.GetPullRequest(ctx, e.querier, projID, repoID, prID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}

@@ -18,17 +18,20 @@
 package ingester
 
 import (
+	"database/sql"
 	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
 	"github.com/stacklok/minder/internal/engine/ingester/builtin"
 	"github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -175,8 +178,9 @@ func TestNewRuleDataIngest(t *testing.T) {
 	"github": {}
 }`),
 				},
-				db.ProviderAccessToken{},
-				"token",
+				sql.NullString{},
+				credentials.NewGitHubTokenCredential("token"),
+				&serverconfig.ProviderConfig{},
 			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")

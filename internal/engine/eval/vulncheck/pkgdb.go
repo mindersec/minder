@@ -115,9 +115,18 @@ func (pj *packageJson) IndentedString(indent int, oldDepLine string, _ *pb.Depen
 	return data
 }
 
-func (pj *packageJson) LineHasDependency(line string) bool {
-	pkgLine := fmt.Sprintf(`%s": {`, pj.Name)
-	return strings.Contains(line, pkgLine)
+func (pj *packageJson) LineHasDependency(versionPack string) bool {
+	// In npmVersionPack we are searching for the following:
+	// 0: the current file line (presumably the npm package name)
+	// 1: the version of the npm package
+	// 2: the version line that we are looking for
+	npmVersionPack := strings.Split(versionPack, "\n")
+	if npmVersionPack == nil || len(npmVersionPack) != 3 {
+		return false
+	}
+
+	pkgLine := fmt.Sprintf(`/%s": {`, pj.Name)
+	return strings.Contains(npmVersionPack[0], pkgLine) && strings.Contains(npmVersionPack[1], npmVersionPack[2])
 }
 
 func (pj *packageJson) HasPatchedVersion() bool {
