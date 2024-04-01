@@ -26,6 +26,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
@@ -151,7 +152,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Return the authorization URL and state
 	return &pb.GetAuthorizationURLResponse{
-		Url: authorizationURL,
+		Url:   authorizationURL,
+		State: state,
 	}, nil
 }
 
@@ -233,7 +235,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	_, err = s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData)
+	_, err = s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
 	if err != nil {
 		if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
@@ -304,7 +306,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
-		_, err = s.providers.CreateGitHubAppProvider(ctx, *token, stateData, installationID)
+		_, err = s.providers.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
 			if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
@@ -443,6 +445,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 }
 
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
+// Deprecated: Use VerifyProviderCredential instead
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
@@ -468,6 +471,59 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
+}
+
+// VerifyProviderCredential verifies the provider credential has been created for the matching enrollment nonce
+func (s *Server) VerifyProviderCredential(ctx context.Context,
+	in *pb.VerifyProviderCredentialRequest) (*pb.VerifyProviderCredentialResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	enrollmentNonce := in.EnrollmentNonce
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = projectID
+
+	// check if a token has been created matching the nonce
+	accessToken, err := s.store.GetAccessTokenByEnrollmentNonce(ctx, db.GetAccessTokenByEnrollmentNonceParams{
+		ProjectID:       projectID,
+		EnrollmentNonce: sql.NullString{Valid: true, String: enrollmentNonce},
+	})
+
+	if err == nil {
+		return &pb.VerifyProviderCredentialResponse{
+			Created:      true,
+			ProviderName: accessToken.Provider,
+		}, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
+	}
+
+	// if there's no token, check for an installation ID
+	installation, err := s.store.GetInstallationIDByEnrollmentNonce(ctx,
+		db.GetInstallationIDByEnrollmentNonceParams{
+			ProjectID: uuid.NullUUID{
+				Valid: true,
+				UUID:  projectID,
+			},
+			EnrollmentNonce: sql.NullString{Valid: true, String: enrollmentNonce},
+		},
+	)
+
+	if err == nil {
+		provider, err := s.store.GetProviderByID(ctx, installation.ProviderID.UUID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+		}
+		return &pb.VerifyProviderCredentialResponse{
+			Created:      true,
+			ProviderName: provider.Name,
+		}, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Internal, "error getting installation ID: %v", err)
+	}
+
+	return &pb.VerifyProviderCredentialResponse{Created: false}, nil
 }
 
 type httpResponseError struct {

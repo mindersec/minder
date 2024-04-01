@@ -57,6 +57,7 @@ replies with OK
 | GetAuthorizationURL | [GetAuthorizationURLRequest](#minder-v1-GetAuthorizationURLRequest) | [GetAuthorizationURLResponse](#minder-v1-GetAuthorizationURLResponse) |  |
 | StoreProviderToken | [StoreProviderTokenRequest](#minder-v1-StoreProviderTokenRequest) | [StoreProviderTokenResponse](#minder-v1-StoreProviderTokenResponse) |  |
 | VerifyProviderTokenFrom | [VerifyProviderTokenFromRequest](#minder-v1-VerifyProviderTokenFromRequest) | [VerifyProviderTokenFromResponse](#minder-v1-VerifyProviderTokenFromResponse) | VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp |
+| VerifyProviderCredential | [VerifyProviderCredentialRequest](#minder-v1-VerifyProviderCredentialRequest) | [VerifyProviderCredentialResponse](#minder-v1-VerifyProviderCredentialResponse) | VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce |
 
 
 <a name="minder-v1-PermissionsService"></a>
@@ -687,6 +688,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | url | [string](#string) |  |  |
+| state | [string](#string) |  |  |
 
 
 <a name="minder-v1-GetProfileByIdRequest"></a>
@@ -2070,6 +2072,31 @@ user record to be returned
 | identity_subject | [string](#string) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+<a name="minder-v1-VerifyProviderCredentialRequest"></a>
+
+#### VerifyProviderCredentialRequest
+VerifyProviderCredentialRequest contains the enrollment nonce (aka state) that was used when enrolling the provider
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| enrollment_nonce | [string](#string) |  | enrollment_nonce is the state parameter returned when enrolling the provider |
+
+
+<a name="minder-v1-VerifyProviderCredentialResponse"></a>
+
+#### VerifyProviderCredentialResponse
+VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
+name, if it has been created
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| created | [bool](#bool) |  |  |
+| provider_name | [string](#string) |  |  |
 
 
 <a name="minder-v1-VerifyProviderTokenFromRequest"></a>

@@ -12,8 +12,33 @@ import (
 	"github.com/google/uuid"
 )
 
+const getInstallationIDByEnrollmentNonce = `-- name: GetInstallationIDByEnrollmentNonce :one
+SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id FROM provider_github_app_installations WHERE project_id = $1 AND enrollment_nonce = $2
+`
+
+type GetInstallationIDByEnrollmentNonceParams struct {
+	ProjectID       uuid.NullUUID  `json:"project_id"`
+	EnrollmentNonce sql.NullString `json:"enrollment_nonce"`
+}
+
+func (q *Queries) GetInstallationIDByEnrollmentNonce(ctx context.Context, arg GetInstallationIDByEnrollmentNonceParams) (ProviderGithubAppInstallation, error) {
+	row := q.db.QueryRowContext(ctx, getInstallationIDByEnrollmentNonce, arg.ProjectID, arg.EnrollmentNonce)
+	var i ProviderGithubAppInstallation
+	err := row.Scan(
+		&i.AppInstallationID,
+		&i.ProviderID,
+		&i.OrganizationID,
+		&i.EnrollingUserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EnrollmentNonce,
+		&i.ProjectID,
+	)
+	return i, err
+}
+
 const getInstallationIDByProviderID = `-- name: GetInstallationIDByProviderID :one
-SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at FROM provider_github_app_installations WHERE provider_id = $1
+SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id FROM provider_github_app_installations WHERE provider_id = $1
 `
 
 func (q *Queries) GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error) {
@@ -26,22 +51,26 @@ func (q *Queries) GetInstallationIDByProviderID(ctx context.Context, providerID 
 		&i.EnrollingUserID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EnrollmentNonce,
+		&i.ProjectID,
 	)
 	return i, err
 }
 
 const upsertInstallationID = `-- name: UpsertInstallationID :one
 INSERT INTO provider_github_app_installations
-    (provider_id, app_installation_id, organization_id, enrolling_user_id)
-VALUES ($1, $2, $3, $4) ON CONFLICT (provider_id)
+    (provider_id, app_installation_id, organization_id, enrolling_user_id, enrollment_nonce, project_id)
+VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (provider_id)
     DO
 UPDATE SET
     app_installation_id = $2,
     organization_id = $3,
     enrolling_user_id = $4,
+    enrollment_nonce = $5,
+    project_id = $6,
     updated_at = NOW()
 WHERE provider_github_app_installations.provider_id = $1
-    RETURNING app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at
+    RETURNING app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id
 `
 
 type UpsertInstallationIDParams struct {
@@ -49,6 +78,8 @@ type UpsertInstallationIDParams struct {
 	AppInstallationID string         `json:"app_installation_id"`
 	OrganizationID    int64          `json:"organization_id"`
 	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
+	EnrollmentNonce   sql.NullString `json:"enrollment_nonce"`
+	ProjectID         uuid.NullUUID  `json:"project_id"`
 }
 
 func (q *Queries) UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error) {
@@ -57,6 +88,8 @@ func (q *Queries) UpsertInstallationID(ctx context.Context, arg UpsertInstallati
 		arg.AppInstallationID,
 		arg.OrganizationID,
 		arg.EnrollingUserID,
+		arg.EnrollmentNonce,
+		arg.ProjectID,
 	)
 	var i ProviderGithubAppInstallation
 	err := row.Scan(
@@ -66,6 +99,8 @@ func (q *Queries) UpsertInstallationID(ctx context.Context, arg UpsertInstallati
 		&i.EnrollingUserID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EnrollmentNonce,
+		&i.ProjectID,
 	)
 	return i, err
 }
