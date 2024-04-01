@@ -41,12 +41,9 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-const defaultProvider = oauth.Github
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
@@ -152,7 +149,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Return the authorization URL and state
 	return &pb.GetAuthorizationURLResponse{
-		Url: authorizationURL,
+		Url:   authorizationURL,
+		State: state,
 	}, nil
 }
 
@@ -234,7 +232,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	_, err = s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData)
+	_, err = s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
 	if err != nil {
 		if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
@@ -305,7 +303,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
-		_, err = s.providers.CreateGitHubAppProvider(ctx, *token, stateData, installationID)
+		_, err = s.providers.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
 			if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
@@ -383,8 +381,17 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	if providerName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		// We don't check parent projects here because subprojects should not update the credentials of their parent
+		Projects: []uuid.UUID{projectID},
+		Name:     providerName,
+	})
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -444,14 +451,20 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 }
 
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
+// Deprecated: Use VerifyProviderCredential instead
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = in.GetContext().GetProvider()
 	logger.BusinessRecord(ctx).Project = projectID
+
+	if providerName == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name is required")
+	}
 
 	// Provider Enroll probes this endpoint to see whether the provider has
 	// been set up.  GitHub Apps don't create a provider row until it the
@@ -482,7 +495,11 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil
 	}
 
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, in, projectID)
+	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		// We don't check parent projects here because subprojects should not check the credentials of their parent
+		Projects: []uuid.UUID{projectID},
+		Name:     providerName,
+	})
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -498,6 +515,59 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	}
 
 	return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
+}
+
+// VerifyProviderCredential verifies the provider credential has been created for the matching enrollment nonce
+func (s *Server) VerifyProviderCredential(ctx context.Context,
+	in *pb.VerifyProviderCredentialRequest) (*pb.VerifyProviderCredentialResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	enrollmentNonce := in.EnrollmentNonce
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = projectID
+
+	// check if a token has been created matching the nonce
+	accessToken, err := s.store.GetAccessTokenByEnrollmentNonce(ctx, db.GetAccessTokenByEnrollmentNonceParams{
+		ProjectID:       projectID,
+		EnrollmentNonce: sql.NullString{Valid: true, String: enrollmentNonce},
+	})
+
+	if err == nil {
+		return &pb.VerifyProviderCredentialResponse{
+			Created:      true,
+			ProviderName: accessToken.Provider,
+		}, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Internal, "error getting access token: %v", err)
+	}
+
+	// if there's no token, check for an installation ID
+	installation, err := s.store.GetInstallationIDByEnrollmentNonce(ctx,
+		db.GetInstallationIDByEnrollmentNonceParams{
+			ProjectID: uuid.NullUUID{
+				Valid: true,
+				UUID:  projectID,
+			},
+			EnrollmentNonce: sql.NullString{Valid: true, String: enrollmentNonce},
+		},
+	)
+
+	if err == nil {
+		provider, err := s.store.GetProviderByID(ctx, installation.ProviderID.UUID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+		}
+		return &pb.VerifyProviderCredentialResponse{
+			Created:      true,
+			ProviderName: provider.Name,
+		}, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Internal, "error getting installation ID: %v", err)
+	}
+
+	return &pb.VerifyProviderCredentialResponse{Created: false}, nil
 }
 
 type httpResponseError struct {

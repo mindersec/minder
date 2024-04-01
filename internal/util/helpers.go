@@ -235,14 +235,14 @@ func RefreshCredentials(refreshToken string, issuerUrl string, clientId string) 
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
+	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
 
 	data := url.Values{}
 	data.Set("client_id", clientId)
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)
 
-	req, err := http.NewRequest("POST", logoutUrl.String(), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", tokenUrl.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error creating: %v", err)
 	}

@@ -288,9 +288,10 @@ var ArtifactService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	OAuthService_GetAuthorizationURL_FullMethodName     = "/minder.v1.OAuthService/GetAuthorizationURL"
-	OAuthService_StoreProviderToken_FullMethodName      = "/minder.v1.OAuthService/StoreProviderToken"
-	OAuthService_VerifyProviderTokenFrom_FullMethodName = "/minder.v1.OAuthService/VerifyProviderTokenFrom"
+	OAuthService_GetAuthorizationURL_FullMethodName      = "/minder.v1.OAuthService/GetAuthorizationURL"
+	OAuthService_StoreProviderToken_FullMethodName       = "/minder.v1.OAuthService/StoreProviderToken"
+	OAuthService_VerifyProviderTokenFrom_FullMethodName  = "/minder.v1.OAuthService/VerifyProviderTokenFrom"
+	OAuthService_VerifyProviderCredential_FullMethodName = "/minder.v1.OAuthService/VerifyProviderCredential"
 )
 
 // OAuthServiceClient is the client API for OAuthService service.
@@ -299,8 +300,11 @@ const (
 type OAuthServiceClient interface {
 	GetAuthorizationURL(ctx context.Context, in *GetAuthorizationURLRequest, opts ...grpc.CallOption) (*GetAuthorizationURLResponse, error)
 	StoreProviderToken(ctx context.Context, in *StoreProviderTokenRequest, opts ...grpc.CallOption) (*StoreProviderTokenResponse, error)
+	// Deprecated: Do not use.
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error)
+	// VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce
+	VerifyProviderCredential(ctx context.Context, in *VerifyProviderCredentialRequest, opts ...grpc.CallOption) (*VerifyProviderCredentialResponse, error)
 }
 
 type oAuthServiceClient struct {
@@ -329,9 +333,19 @@ func (c *oAuthServiceClient) StoreProviderToken(ctx context.Context, in *StorePr
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *VerifyProviderTokenFromRequest, opts ...grpc.CallOption) (*VerifyProviderTokenFromResponse, error) {
 	out := new(VerifyProviderTokenFromResponse)
 	err := c.cc.Invoke(ctx, OAuthService_VerifyProviderTokenFrom_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *oAuthServiceClient) VerifyProviderCredential(ctx context.Context, in *VerifyProviderCredentialRequest, opts ...grpc.CallOption) (*VerifyProviderCredentialResponse, error) {
+	out := new(VerifyProviderCredentialResponse)
+	err := c.cc.Invoke(ctx, OAuthService_VerifyProviderCredential_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -344,8 +358,11 @@ func (c *oAuthServiceClient) VerifyProviderTokenFrom(ctx context.Context, in *Ve
 type OAuthServiceServer interface {
 	GetAuthorizationURL(context.Context, *GetAuthorizationURLRequest) (*GetAuthorizationURLResponse, error)
 	StoreProviderToken(context.Context, *StoreProviderTokenRequest) (*StoreProviderTokenResponse, error)
+	// Deprecated: Do not use.
 	// VerifyProviderTokenFrom verifies that a token has been created for a provider since given timestamp
 	VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error)
+	// VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce
+	VerifyProviderCredential(context.Context, *VerifyProviderCredentialRequest) (*VerifyProviderCredentialResponse, error)
 	mustEmbedUnimplementedOAuthServiceServer()
 }
 
@@ -361,6 +378,9 @@ func (UnimplementedOAuthServiceServer) StoreProviderToken(context.Context, *Stor
 }
 func (UnimplementedOAuthServiceServer) VerifyProviderTokenFrom(context.Context, *VerifyProviderTokenFromRequest) (*VerifyProviderTokenFromResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderTokenFrom not implemented")
+}
+func (UnimplementedOAuthServiceServer) VerifyProviderCredential(context.Context, *VerifyProviderCredentialRequest) (*VerifyProviderCredentialResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyProviderCredential not implemented")
 }
 func (UnimplementedOAuthServiceServer) mustEmbedUnimplementedOAuthServiceServer() {}
 
@@ -429,6 +449,24 @@ func _OAuthService_VerifyProviderTokenFrom_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OAuthService_VerifyProviderCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyProviderCredentialRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OAuthServiceServer).VerifyProviderCredential(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OAuthService_VerifyProviderCredential_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OAuthServiceServer).VerifyProviderCredential(ctx, req.(*VerifyProviderCredentialRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OAuthService_ServiceDesc is the grpc.ServiceDesc for OAuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -447,6 +485,10 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyProviderTokenFrom",
 			Handler:    _OAuthService_VerifyProviderTokenFrom_Handler,
+		},
+		{
+			MethodName: "VerifyProviderCredential",
+			Handler:    _OAuthService_VerifyProviderCredential_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -55,7 +55,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner:     repoOwner,
 			RepoName:      repoName,
 			ProviderFails: true,
-			ExpectedError: "cannot retrieve providers",
+			ExpectedError: "error getting provider",
 		},
 		{
 			Name:          "Repo creation fails when repo name is missing",
@@ -145,10 +145,11 @@ func TestServer_DeleteRepository(t *testing.T) {
 		ExpectedError    string
 	}{
 		{
-			Name:          "deletion fails when provider cannot be found",
-			RepoName:      repoOwnerAndName,
-			ProviderFails: true,
-			ExpectedError: "cannot retrieve providers",
+			Name:             "deletion fails when provider cannot be found",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName),
+			ProviderFails:    true,
+			ExpectedError:    "error getting provider",
 		},
 		{
 			Name:          "delete by name fails when name is malformed",
@@ -163,30 +164,30 @@ func TestServer_DeleteRepository(t *testing.T) {
 		{
 			Name:             "deletion fails when repo is not found",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withFailedDeleteByName(sql.ErrNoRows)),
+			RepoServiceSetup: newRepoService(withFailedGetRepoByName(sql.ErrNoRows)),
 			ExpectedError:    "repository not found",
 		},
 		{
 			Name:             "deletion fails when repo service returns error",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withFailedDeleteByName(errDefault)),
+			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName, withFailedDelete(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
 		},
 		{
 			Name:             "delete by ID fails when repo service returns error",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withFailedDeleteByID(errDefault)),
+			RepoServiceSetup: newRepoService(withSuccessfulGetRepoById, withFailedDelete(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
 		},
 		{
 			Name:             "delete by name succeeds",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withSuccessfulDeleteByName),
+			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName, withSuccessfulDelete),
 		},
 		{
 			Name:             "delete by ID succeeds",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withSuccessfulDeleteByID),
+			RepoServiceSetup: newRepoService(withSuccessfulGetRepoById, withSuccessfulDelete),
 		},
 	}
 
@@ -291,35 +292,39 @@ func withFailedCreate(err error) func(repoServiceMock) {
 	}
 }
 
-func withSuccessfulDeleteByName(mock repoServiceMock) {
-	withFailedDeleteByName(nil)(mock)
+func withSuccessfulDelete(mock repoServiceMock) {
+	withFailedDelete(nil)(mock)
 }
 
-func withFailedDeleteByName(err error) func(repoServiceMock) {
+func withFailedDelete(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepositoryByName(gomock.Any(), gomock.Any(), projectID, gomock.Any(), repoOwner, repoName).
+			DeleteRepository(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(err)
 	}
 }
 
-func withSuccessfulDeleteByID(mock repoServiceMock) {
-	withFailedDeleteByID(nil)(mock)
+func withSuccessfulGetRepoById(mock repoServiceMock) {
+	mock.EXPECT().
+		GetRepositoryById(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, nil)
 }
 
-func withFailedDeleteByID(err error) func(repoServiceMock) {
+func withSuccessfulGetRepoByName(mock repoServiceMock) {
+	mock.EXPECT().
+		GetRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, nil)
+}
+
+func withFailedGetRepoByName(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepositoryByID(gomock.Any(), gomock.Any(), projectID, gomock.Any()).
-			Return(err)
+			GetRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(db.Repository{}, err)
 	}
 }
 
-func createServer(
-	ctrl *gomock.Controller,
-	repoServiceSetup repoMockBuilder,
-	providerFails bool,
-) *Server {
+func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, providerFails bool) *Server {
 	var svc ghrepo.RepositoryService
 	if repoServiceSetup != nil {
 		svc = repoServiceSetup(ctrl)
@@ -348,12 +353,12 @@ func createServer(
 
 	if providerFails {
 		store.EXPECT().
-			FindProviders(gomock.Any(), gomock.Any()).
-			Return(nil, errDefault)
+			GetProviderByName(gomock.Any(), gomock.Any()).
+			Return(db.Provider{}, errDefault)
 	} else {
 		store.EXPECT().
-			FindProviders(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{provider}, nil).AnyTimes()
+			GetProviderByName(gomock.Any(), gomock.Any()).
+			Return(provider, nil).AnyTimes()
 		store.EXPECT().
 			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 			Return(db.ProviderAccessToken{

@@ -27,9 +27,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+const defaultProvider = oauth.Github
 
 // HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
@@ -60,10 +63,10 @@ func filteredResultNotFoundError(name sql.NullString, trait db.NullProviderType)
 func getProviderFromRequestOrDefault(
 	ctx context.Context,
 	store db.Store,
-	in HasProtoContext,
+	providerName string,
 	projectId uuid.UUID,
 ) (db.Provider, error) {
-	name := getNameFilterParam(in.GetContext())
+	name := getNameFilterParam(providerName)
 	providers, err := findProvider(ctx, name, db.NullProviderType{}, projectId, store)
 	if err != nil {
 		return db.Provider{}, err
@@ -79,7 +82,7 @@ func getProvidersByTrait(
 	projectId uuid.UUID,
 	trait db.ProviderType,
 ) ([]db.Provider, error) {
-	name := getNameFilterParam(in.GetContext())
+	name := getNameFilterParam(in.GetContext().GetProvider())
 	t := db.NullProviderType{ProviderType: trait, Valid: true}
 	providers, err := findProvider(ctx, name, t, projectId, store)
 	if err != nil {
@@ -120,10 +123,10 @@ func findProvider(
 }
 
 // getNameFilterParam allows us to build a name filter for our provider queries
-func getNameFilterParam(in *pb.Context) sql.NullString {
+func getNameFilterParam(providerName string) sql.NullString {
 	return sql.NullString{
-		String: in.GetProvider(),
-		Valid:  in.GetProvider() != "",
+		String: providerName,
+		Valid:  providerName != "",
 	}
 }
 

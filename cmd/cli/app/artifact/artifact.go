@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // ArtifactCmd is the artifact subcommand
@@ -36,6 +35,6 @@ var ArtifactCmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(ArtifactCmd)
 	// Flags for all subcommands
-	ArtifactCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
+	ArtifactCmd.PersistentFlags().StringP("provider", "p", "", "Name of the provider, i.e. github")
 	ArtifactCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

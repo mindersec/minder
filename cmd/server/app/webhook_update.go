@@ -141,7 +141,10 @@ func updateGithubWebhooks(
 ) error {
 	repos, err := store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
-			Provider:  provider.Name,
+			Provider: sql.NullString{
+				String: provider.Name,
+				Valid:  true,
+			},
 			ProjectID: provider.ProjectID,
 		})
 	if err != nil {

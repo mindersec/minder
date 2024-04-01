@@ -26,7 +26,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/rand"
@@ -157,7 +156,7 @@ func enrollUsingOAuth2Flow(
 
 	done := make(chan bool)
 
-	go callBackServer(oAuthCallbackCtx, cmd, provider, project, fmt.Sprintf("%d", port), done, client, openTime)
+	go callBackServer(oAuthCallbackCtx, cmd, project, port, done, client, openTime, resp.GetState())
 
 	success := <-done
 
@@ -171,15 +170,15 @@ func enrollUsingOAuth2Flow(
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
 // It will wait for either a success or failure response from the server.
-func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, project string, port string,
-	done chan bool, client minderv1.OAuthServiceClient, openTime time.Time) {
+func callBackServer(ctx context.Context, cmd *cobra.Command, project string, port int, done chan bool,
+	client minderv1.OAuthServiceClient, openTime time.Time, state string) {
 	server := &http.Server{
-		Addr:              fmt.Sprintf(":%s", port),
+		Addr:              fmt.Sprintf(":%d", port),
 		ReadHeaderTimeout: time.Second * 10, // Set an appropriate timeout value
 	}
 
 	// Start the server in a goroutine
-	cmd.Println("Listening for OAuth Login flow to complete on port", port)
+	cmd.Println("Listening for enrollment flow to complete on port", port)
 	go func() {
 		_ = server.ListenAndServe()
 	}()
@@ -200,22 +199,22 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, provider string, pr
 		clientCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		// todo: check if token has been created. We need an endpoint to pass an state and check if token is created
-		res, err := client.VerifyProviderTokenFrom(clientCtx, &minderv1.VerifyProviderTokenFromRequest{
-			Context:   &minderv1.Context{Provider: &provider, Project: &project},
-			Timestamp: timestamppb.New(openTime),
+		res, err := client.VerifyProviderCredential(clientCtx, &minderv1.VerifyProviderCredentialRequest{
+			// do not set the provider because it may not be created yet
+			Context:         &minderv1.Context{Project: &project},
+			EnrollmentNonce: state,
 		})
-		if err == nil && res.Status == "OK" {
+		if err == nil && res.Created {
 			done <- true
 			return
 		}
-		if err != nil || res.Status == "OK" {
+		if err != nil || res.Created {
 			cmd.Printf("Error calling server: %s\n", err)
 			done <- false
 			break
 		}
 		if time.Now().After(openTime.Add(MAX_WAIT)) {
-			cmd.Printf("Timeout waiting for OAuth flow to complete...\n")
+			cmd.Printf("Timeout waiting for enrollment flow to complete...\n")
 			done <- false
 			break
 		}

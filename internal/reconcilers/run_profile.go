@@ -127,7 +127,10 @@ func (r *Reconciler) publishProfileInitEvents(
 ) error {
 	dbrepos, err := r.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
-			Provider:  ectx.Provider.Name,
+			Provider: sql.NullString{
+				String: ectx.Provider.Name,
+				Valid:  ectx.Provider.Name != "",
+			},
 			ProjectID: ectx.Project.ID,
 		})
 	if err != nil {

@@ -142,51 +142,18 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 		ShouldSucceed bool
 	}{
 		{
-			Name:       "Delete by ID fails when repo does not exist in DB",
-			DBSetup:    newDBMock(withNotFoundByID),
-			DeleteType: ByID,
-		},
-		{
-			Name:       "Delete by Name fails when repo does not exist in DB",
-			DBSetup:    newDBMock(withNotFoundByName),
-			DeleteType: ByName,
-		},
-		{
-			Name:         "Delete by ID fails when webhook cannot be deleted",
-			DBSetup:      newDBMock(withRepoByID),
+			Name:         "Delete fails when webhook cannot be deleted",
 			WebhookSetup: newWebhookMock(withFailedWebhookDelete),
-			DeleteType:   ByID,
-		},
-		{
-			Name:         "Delete by Name fails when webhook cannot be deleted",
-			DBSetup:      newDBMock(withRepoByName),
-			WebhookSetup: newWebhookMock(withFailedWebhookDelete),
-			DeleteType:   ByName,
 		},
 		{
 			Name:         "Delete by ID fails when repo cannot be deleted from DB",
-			DBSetup:      newDBMock(withRepoByID, withFailedDelete),
+			DBSetup:      newDBMock(withFailedDelete),
 			WebhookSetup: newWebhookMock(withSuccessfulWebhookDelete),
-			DeleteType:   ByID,
 		},
 		{
-			Name:         "Delete by Name fails when repo cannot be deleted from DB",
-			DBSetup:      newDBMock(withRepoByName, withFailedDelete),
-			WebhookSetup: newWebhookMock(withSuccessfulWebhookDelete),
-			DeleteType:   ByName,
-		},
-		{
-			Name:          "Delete by ID succeeds",
-			DBSetup:       newDBMock(withRepoByID, withSuccessfulDelete),
+			Name:          "Delete succeeds",
+			DBSetup:       newDBMock(withSuccessfulDelete),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookDelete),
-			DeleteType:    ByID,
-			ShouldSucceed: true,
-		},
-		{
-			Name:          "Delete by Name succeeds",
-			DBSetup:       newDBMock(withRepoByName, withSuccessfulDelete),
-			WebhookSetup:  newWebhookMock(withSuccessfulWebhookDelete),
-			DeleteType:    ByName,
 			ShouldSucceed: true,
 		},
 	}
@@ -204,15 +171,93 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			var ghClient clients.GitHubRepoClient
 
 			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, false)
-			var err error
-			switch scenario.DeleteType {
-			case ByID:
-				err = svc.DeleteRepositoryByID(ctx, ghClient, projectID, repoID)
-			case ByName:
-				err = svc.DeleteRepositoryByName(ctx, ghClient, projectID, providerName, repoOwner, repoName)
-			default:
-				t.Fatalf("Unknown deletion type: %d", scenario.DeleteType)
+			err := svc.DeleteRepository(ctx, ghClient, &dbRepo)
+
+			if scenario.ShouldSucceed {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
 			}
+		})
+	}
+}
+
+func TestRepositoryService_GetRepositoryById(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name          string
+		DBSetup       dbMockBuilder
+		DeleteType    DeleteCallType
+		ShouldSucceed bool
+	}{
+		{
+			Name:    "Get by ID fails when DB call fails",
+			DBSetup: newDBMock(withFailedGetById),
+		},
+		{
+			Name:          "Get by ID succeeds",
+			DBSetup:       newDBMock(withSuccessfulGetById),
+			ShouldSucceed: true,
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			// For the purposes of this test, we do not need to attach any
+			// mock behaviour to the client. We can leave it as a nil pointer.
+
+			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, false)
+			_, err := svc.GetRepositoryById(ctx, repoID, projectID)
+
+			if scenario.ShouldSucceed {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestRepositoryService_GetRepositoryByName(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name          string
+		DBSetup       dbMockBuilder
+		DeleteType    DeleteCallType
+		ShouldSucceed bool
+	}{
+		{
+			Name:    "Get by name fails when DB call fails",
+			DBSetup: newDBMock(withFailedGetByName),
+		},
+		{
+			Name:          "Get by name succeeds",
+			DBSetup:       newDBMock(withSuccessfulGetByName),
+			ShouldSucceed: true,
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			// For the purposes of this test, we do not need to attach any
+			// mock behaviour to the client. We can leave it as a nil pointer.
+
+			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, false)
+			_, err := svc.GetRepositoryByName(ctx, repoOwner, repoName, projectID, providerName)
 
 			if scenario.ShouldSucceed {
 				require.NoError(t, err)
@@ -346,31 +391,6 @@ func withFailedWebhookDelete(mock whMock) {
 		Return(errDefault)
 }
 
-func withNotFoundByID(mock dbMock) {
-	mock.EXPECT().
-		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
-}
-
-func withNotFoundByName(mock dbMock) {
-	mock.EXPECT().
-		// TODO: do we want more strict assertions here?
-		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
-}
-
-func withRepoByID(mock dbMock) {
-	mock.EXPECT().
-		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
-}
-
-func withRepoByName(mock dbMock) {
-	mock.EXPECT().
-		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
-}
-
 func withFailedDelete(mock dbMock) {
 	mock.EXPECT().
 		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
@@ -381,6 +401,30 @@ func withSuccessfulDelete(mock dbMock) {
 	mock.EXPECT().
 		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
 		Return(nil)
+}
+
+func withFailedGetById(mock dbMock) {
+	mock.EXPECT().
+		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, errDefault)
+}
+
+func withSuccessfulGetById(mock dbMock) {
+	mock.EXPECT().
+		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
+		Return(dbRepo, nil)
+}
+
+func withFailedGetByName(mock dbMock) {
+	mock.EXPECT().
+		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
+		Return(db.Repository{}, errDefault)
+}
+
+func withSuccessfulGetByName(mock dbMock) {
+	mock.EXPECT().
+		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
+		Return(dbRepo, nil)
 }
 
 func withFailedCreate(mock dbMock) {

@@ -203,22 +203,24 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repo
 }
 
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE provider = $1 AND repo_owner = $2 AND repo_name = $3 AND project_id = $4
+SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
+    WHERE repo_owner = $1 AND repo_name = $2 AND project_id = $3
+    AND lower(provider) = lower($4::text) OR $4::text IS NULL
 `
 
 type GetRepositoryByRepoNameParams struct {
-	Provider  string    `json:"provider"`
-	RepoOwner string    `json:"repo_owner"`
-	RepoName  string    `json:"repo_name"`
-	ProjectID uuid.UUID `json:"project_id"`
+	RepoOwner string         `json:"repo_owner"`
+	RepoName  string         `json:"repo_name"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	Provider  sql.NullString `json:"provider"`
 }
 
 func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error) {
 	row := q.db.QueryRowContext(ctx, getRepositoryByRepoName,
-		arg.Provider,
 		arg.RepoOwner,
 		arg.RepoName,
 		arg.ProjectID,
+		arg.Provider,
 	)
 	var i Repository
 	err := row.Scan(
@@ -245,17 +247,18 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
-WHERE provider = $1 AND project_id = $2 AND webhook_id IS NOT NULL
+WHERE project_id = $1 AND webhook_id IS NOT NULL
+    AND lower(provider) = lower($2::text) OR $2::text IS NULL
 ORDER BY repo_name
 `
 
 type ListRegisteredRepositoriesByProjectIDAndProviderParams struct {
-	Provider  string    `json:"provider"`
-	ProjectID uuid.UUID `json:"project_id"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	Provider  sql.NullString `json:"provider"`
 }
 
 func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error) {
-	rows, err := q.db.QueryContext(ctx, listRegisteredRepositoriesByProjectIDAndProvider, arg.Provider, arg.ProjectID)
+	rows, err := q.db.QueryContext(ctx, listRegisteredRepositoriesByProjectIDAndProvider, arg.ProjectID, arg.Provider)
 	if err != nil {
 		return nil, err
 	}
@@ -297,24 +300,25 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
-WHERE provider = $1 AND project_id = $2
-  AND (repo_id >= $3 OR $3 IS NULL)
+WHERE project_id = $1
+  AND (repo_id >= $2 OR $2 IS NULL)
+  AND lower(provider) = lower(COALESCE($3, provider)::text)
 ORDER BY project_id, provider, repo_id
 LIMIT $4::bigint
 `
 
 type ListRepositoriesByProjectIDParams struct {
-	Provider  string        `json:"provider"`
-	ProjectID uuid.UUID     `json:"project_id"`
-	RepoID    sql.NullInt64 `json:"repo_id"`
-	Limit     sql.NullInt64 `json:"limit"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	RepoID    sql.NullInt64  `json:"repo_id"`
+	Provider  sql.NullString `json:"provider"`
+	Limit     sql.NullInt64  `json:"limit"`
 }
 
 func (q *Queries) ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error) {
 	rows, err := q.db.QueryContext(ctx, listRepositoriesByProjectID,
-		arg.Provider,
 		arg.ProjectID,
 		arg.RepoID,
+		arg.Provider,
 		arg.Limit,
 	)
 	if err != nil {

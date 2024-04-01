@@ -520,7 +520,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 						ProjectID: uuid.New(),
 					}, nil)
 				service.EXPECT().
-					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID).
+					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID, gomock.Any()).
 					Return(&db.Provider{}, nil)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
@@ -567,7 +567,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 						ProjectID: uuid.New(),
 					}, nil)
 				service.EXPECT().
-					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID).
+					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID, gomock.Any()).
 					Return(nil, providers.ErrInvalidTokenIdentity)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
@@ -640,6 +640,151 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			s.HandleGitHubAppCallback()(&resp, &req, params)
 
 			tc.checkResponse(t, resp)
+		})
+	}
+}
+
+func TestVerifyProviderCredential(t *testing.T) {
+	t.Parallel()
+	projectID := uuid.New()
+	enrollmentNonce := "enrollmentNonce"
+	githubAppProviderName := "github-app-my-org"
+
+	testCases := []struct {
+		name          string
+		buildStubs    func(store *mockdb.MockStore)
+		checkResponse func(t *testing.T, resp *pb.VerifyProviderCredentialResponse, err error)
+	}{
+		{
+			name: "Success with access token",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccessTokenByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderAccessToken{
+						Provider: "github",
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, resp *pb.VerifyProviderCredentialResponse, err error) {
+				t.Helper()
+				assert.NoError(t, err)
+				assert.Equal(t, "github", resp.ProviderName)
+				assert.True(t, resp.Created)
+			},
+		}, {
+			name: "Success with installation ID",
+			buildStubs: func(store *mockdb.MockStore) {
+				providerId := uuid.New()
+				store.EXPECT().
+					GetAccessTokenByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderAccessToken{}, sql.ErrNoRows)
+				store.EXPECT().
+					GetInstallationIDByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderGithubAppInstallation{
+						ProviderID: uuid.NullUUID{
+							Valid: true,
+							UUID:  providerId,
+						},
+					}, nil)
+				store.EXPECT().
+					GetProviderByID(gomock.Any(), providerId).
+					Return(db.Provider{
+						Name: githubAppProviderName,
+					}, nil)
+			},
+			checkResponse: func(t *testing.T, resp *pb.VerifyProviderCredentialResponse, err error) {
+				t.Helper()
+				assert.NoError(t, err)
+				assert.Equal(t, githubAppProviderName, resp.ProviderName)
+				assert.True(t, resp.Created)
+			},
+		}, {
+			name: "No credential",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccessTokenByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderAccessToken{}, sql.ErrNoRows)
+				store.EXPECT().
+					GetInstallationIDByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderGithubAppInstallation{}, sql.ErrNoRows)
+			},
+			checkResponse: func(t *testing.T, resp *pb.VerifyProviderCredentialResponse, err error) {
+				t.Helper()
+				assert.NoError(t, err)
+				assert.False(t, resp.Created)
+			},
+		}, {
+			name: "Failure due to error",
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetAccessTokenByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderAccessToken{}, sql.ErrNoRows)
+				store.EXPECT().
+					GetInstallationIDByEnrollmentNonce(gomock.Any(), gomock.Any()).
+					Return(db.ProviderGithubAppInstallation{}, errors.New("error"))
+			},
+			checkResponse: func(t *testing.T, _ *pb.VerifyProviderCredentialResponse, err error) {
+				t.Helper()
+				assert.Error(t, err)
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		tc := tt
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
+				Project: engine.Project{ID: projectID},
+			})
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err, "failed to setup eventer")
+
+			oauthServer := httptest.NewServer(http.HandlerFunc(
+				func(w http.ResponseWriter, _ *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					err := json.NewEncoder(w).Encode(map[string]interface{}{
+						"access_token": "anAccessToken",
+					})
+					if err != nil {
+						t.Fatalf("Failed to write response: %v", err)
+					}
+				}))
+			defer oauthServer.Close()
+			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
+				return &oauth2.Config{
+					Endpoint: oauth2.Endpoint{
+						TokenURL: oauthServer.URL,
+					},
+				}, nil
+			}
+
+			store := mockdb.NewMockStore(ctrl)
+
+			tc.buildStubs(store)
+
+			s := &Server{
+				store:               store,
+				evt:                 evt,
+				providerAuthFactory: providerAuthFactory,
+				cfg: &serverconfig.Config{
+					Auth: serverconfig.AuthConfig{},
+				},
+			}
+
+			resp, err := s.VerifyProviderCredential(ctx, &pb.VerifyProviderCredentialRequest{
+				Context:         &pb.Context{},
+				EnrollmentNonce: enrollmentNonce,
+			})
+
+			tc.checkResponse(t, resp, err)
 		})
 	}
 }
