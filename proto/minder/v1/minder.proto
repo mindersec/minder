@@ -281,6 +281,7 @@ service OAuthService {
             post: "/api/v1/auth/{provider}/token"
             additional_bindings {
                 post: "/api/v1/auth/token"
+                body: "*"
             }
             body: "*"
         };
@@ -326,7 +327,8 @@ service RepositoryService {
         option (google.api.http) = {
             post: "/api/v1/repository/provider/{provider}/register"
             additional_bindings {
-                post: "/api/v1/repository/register"
+                post: "/api/v1/repository/register",
+                body: "*"
             }
             body: "*"
         };
