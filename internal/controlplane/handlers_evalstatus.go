@@ -228,6 +228,8 @@ func buildProjectsProfileList(
 	for _, projectID := range projects {
 		listParams.ProjectID = projectID
 
+		zerolog.Ctx(ctx).Debug().Interface("listParams", listParams).Msg("profile list parameters")
+
 		profiles, err := store.ListProfilesByProjectIDAndLabel(ctx, listParams)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error listing profiles")
