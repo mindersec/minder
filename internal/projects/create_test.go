@@ -51,7 +51,7 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(
+	_, err := projects.ProvisionSelfEnrolledOAuthProject(
 		ctx,
 		authzClient,
 		mockStore,
@@ -80,7 +80,7 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(
+	_, err := projects.ProvisionSelfEnrolledOAuthProject(
 		ctx,
 		authzClient,
 		mockStore,

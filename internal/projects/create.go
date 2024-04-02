@@ -39,8 +39,8 @@ var (
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
-// ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
-func ProvisionSelfEnrolledProject(
+// ProvisionSelfEnrolledOAuthProject creates the default records, such as projects, roles and provider for the organization
+func ProvisionSelfEnrolledOAuthProject(
 	ctx context.Context,
 	authzClient authz.Client,
 	qtx db.Querier,
@@ -53,23 +53,65 @@ func ProvisionSelfEnrolledProject(
 	marketplace marketplaces.Marketplace,
 	profilesCfg server.DefaultProfilesConfig,
 ) (outproj *pb.Project, projerr error) {
+	project, projectmeta, err := ProvisionSelfEnrolledProject(ctx, authzClient, qtx, projectName, userSub, marketplace, profilesCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create GitHub provider
+	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       github.Github,
+		ProjectID:  project.ID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
+		Implements: github.Implements,
+		Definition: json.RawMessage(`{"github": {}}`),
+		AuthFlows:  github.AuthorizationFlows,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provider: %v", err)
+	}
+
+	return &pb.Project{
+		ProjectId:   project.ID.String(),
+		Name:        project.Name,
+		Description: projectmeta.Public.Description,
+		DisplayName: projectmeta.Public.DisplayName,
+		CreatedAt:   timestamppb.New(project.CreatedAt),
+		UpdatedAt:   timestamppb.New(project.UpdatedAt),
+	}, nil
+}
+
+// ProvisionSelfEnrolledProject creates the core default components of the project (project,
+// marketplace subscriptions, etc.) but *does not* create a project.
+func ProvisionSelfEnrolledProject(
+	ctx context.Context,
+	authzClient authz.Client,
+	qtx db.Querier,
+	projectName string,
+	userSub string,
+	// Passing these as arguments to minimize code changes. In future, it may
+	// make sense to hang these project create/delete methods off a struct or
+	// interface to reduce the amount of dependencies which need to be passed
+	// to individual methods.
+	marketplace marketplaces.Marketplace,
+	profilesCfg server.DefaultProfilesConfig,
+) (outproj *db.Project, projmeta *Metadata, projerr error) {
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal meta: %w", err)
+		return nil, nil, fmt.Errorf("failed to marshal meta: %w", err)
 	}
 
 	projectID := uuid.New()
 
 	// Create authorization tuple
-	// NOTE: This is only creating a tuple for the project, not the organization
-	//       We currently have no use for the organization and it might be
-	//       removed in the future.
 	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
+		return nil, nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
+		// TODO: this can't be part of a transaction, so we should probably find a saga-ish
+		// way to reverse this operation if the transaction fails.
 		if outproj == nil && projerr != nil {
 			if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
@@ -86,31 +128,9 @@ func ProvisionSelfEnrolledProject(
 	if err != nil {
 		// Check if `project_name_lower_idx` unique constraint was violated
 		if db.ErrIsUniqueViolation(err) {
-			return nil, ErrProjectAlreadyExists
+			return nil, nil, ErrProjectAlreadyExists
 		}
-		return nil, fmt.Errorf("failed to create default project: %v", err)
-	}
-
-	prj := pb.Project{
-		ProjectId:   project.ID.String(),
-		Name:        project.Name,
-		Description: projectmeta.Public.Description,
-		DisplayName: projectmeta.Public.DisplayName,
-		CreatedAt:   timestamppb.New(project.CreatedAt),
-		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}
-
-	// Create GitHub provider
-	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       github.Github,
-		ProjectID:  project.ID,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
-		Implements: github.Implements,
-		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.AuthorizationFlows,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provider: %v", err)
+		return nil, nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
 	// Enable any default profiles and rule types in the project.
@@ -118,13 +138,13 @@ func ProvisionSelfEnrolledProject(
 	// Both are specified in the service config.
 	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
 	if err := marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
-		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
+		return nil, nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
 	}
 	for _, profileName := range profilesCfg.GetProfiles() {
 		if err := marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
-			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
+			return nil, nil, fmt.Errorf("unable to enable bundle profile: %w", err)
 		}
 	}
 
-	return &prj, nil
+	return &project, &projectmeta, nil
 }
