@@ -39,14 +39,14 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/providers/github/app"
+	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
-	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
 	mockratecache "github.com/stacklok/minder/internal/providers/ratecache/mock"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 )
 
 type testMocks struct {
-	svcMock     *mockprofsvc.MockGitHubClientService
+	svcMock     *mockgh.MockClientService
 	cryptoMocks *mockcrypto.MockEngine
 	fakeStore   db.Store
 	cancelFunc  embedded.CancelFunc
@@ -64,7 +64,7 @@ func testNewProviderService(
 		t.Cleanup(cancelFunc)
 	}
 	mocks := &testMocks{
-		svcMock:     mockprofsvc.NewMockGitHubClientService(mockCtrl),
+		svcMock:     mockgh.NewMockClientService(mockCtrl),
 		fakeStore:   fakeStore,
 		cancelFunc:  cancelFunc,
 		cryptoMocks: mockcrypto.NewMockEngine(mockCtrl),

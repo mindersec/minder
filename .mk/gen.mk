@@ -45,8 +45,9 @@ mock: ## generate mocks
 	mockgen -package mockrulesvc -destination internal/ruletypes/mock/service.go github.com/stacklok/minder/internal/ruletypes RuleTypeService
 	mockgen -package mockbundle -destination internal/marketplaces/bundles/mock/source.go github.com/stacklok/minder/pkg/mindpak/sources BundleSource
 	mockgen -package mocksubscription -destination internal/marketplaces/subscriptions/mock/subscription.go github.com/stacklok/minder/internal/marketplaces/subscriptions SubscriptionService
-	mockgen -package mockprofsvc -destination internal/providers/mock/service.go github.com/stacklok/minder/internal/providers ProviderService,GitHubClientService
+	mockgen -package mockprofsvc -destination internal/providers/mock/service.go github.com/stacklok/minder/internal/providers ProviderService
 	mockgen -package mockratecache -destination internal/providers/ratecache/mock/restcache.go github.com/stacklok/minder/internal/providers/ratecache RestClientCache
+	mockgen -package mockgh -destination internal/providers/github/mock/common.go github.com/stacklok/minder/internal/providers/github ClientService
 
 
 .PHONY: cli-docs

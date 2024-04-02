@@ -30,6 +30,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
+	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -64,6 +65,46 @@ type GitHub struct {
 
 // Ensure that the GitHub client implements the GitHub interface
 var _ provifv1.GitHub = (*GitHub)(nil)
+
+// ClientService is an interface for GitHub operations inside this module
+// It is used to mock GitHub operations in tests, but in order to generate
+// mocks, the interface must be exported
+type ClientService interface {
+	GetInstallation(ctx context.Context, id int64, jwt string) (*github.Installation, *github.Response, error)
+	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
+	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
+}
+
+var _ ClientService = (*ClientServiceImplementation)(nil)
+
+type ClientServiceImplementation struct{}
+
+func (ClientServiceImplementation) GetInstallation(
+	ctx context.Context,
+	installationID int64,
+	jwt string,
+) (*github.Installation, *github.Response, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(jwt)
+	return ghClient.Apps.GetInstallation(ctx, installationID)
+}
+
+func (ClientServiceImplementation) GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+
+	user, _, err := ghClient.Users.Get(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	return user.ID, nil
+}
+
+func (ClientServiceImplementation) ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+
+	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
+	return installations, err
+}
 
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)
 type Delegate interface {

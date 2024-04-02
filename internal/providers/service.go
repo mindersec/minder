@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -57,44 +58,6 @@ type ProviderService interface {
 // from the state
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 
-// GitHubClientService is an interface for GitHub operations inside this module
-// It is used to mock GitHub operations in tests, but in order to generate
-// mocks, the interface must be exported
-type GitHubClientService interface {
-	GetInstallation(ctx context.Context, id int64, jwt string) (*github.Installation, *github.Response, error)
-	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
-	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
-}
-
-type provSvcGhOpsImpl struct{}
-
-func (provSvcGhOpsImpl) GetInstallation(
-	ctx context.Context,
-	installationID int64,
-	jwt string,
-) (*github.Installation, *github.Response, error) {
-	ghClient := github.NewClient(nil).WithAuthToken(jwt)
-	return ghClient.Apps.GetInstallation(ctx, installationID)
-}
-
-func (provSvcGhOpsImpl) GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	user, _, err := ghClient.Users.Get(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	return user.ID, nil
-}
-
-func (provSvcGhOpsImpl) ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error) {
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
-	return installations, err
-}
-
 type providerService struct {
 	store           db.Store
 	cryptoEngine    crypto.Engine
@@ -102,7 +65,7 @@ type providerService struct {
 	provMt          provtelemetry.ProviderMetrics
 	config          *server.ProviderConfig
 	restClientCache ratecache.RestClientCache
-	ghClientService GitHubClientService
+	ghClientService ghprov.ClientService
 }
 
 // NewProviderService creates an instance of ProviderService
@@ -115,7 +78,7 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 		provMt:          provMt,
 		config:          config,
 		restClientCache: restClientCache,
-		ghClientService: provSvcGhOpsImpl{},
+		ghClientService: ghprov.ClientServiceImplementation{},
 	}
 }
 
