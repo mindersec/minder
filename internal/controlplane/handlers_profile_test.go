@@ -16,6 +16,7 @@ package controlplane
 
 import (
 	"context"
+	"github.com/stacklok/minder/internal/providers"
 	"reflect"
 	"testing"
 
@@ -354,8 +355,9 @@ func TestCreateProfile(t *testing.T) {
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles: profiles.NewProfileService(evts),
-				evt:      evts,
+				profiles:      profiles.NewProfileService(evts),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)

@@ -58,13 +58,13 @@ func (s *Server) CreateProfile(ctx context.Context,
 	}
 
 	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, entityCtx.Provider.Name, entityCtx.Project.ID)
+	provider, err := s.providerStore.GetByName(ctx, entityCtx.Project.ID, in.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
 
 	newProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.CreateProfile(ctx, entityCtx.Project.ID, &provider, uuid.Nil, in, qtx)
+		return s.profiles.CreateProfile(ctx, entityCtx.Project.ID, provider, uuid.Nil, in, qtx)
 	})
 	if err != nil {
 		// assumption: service layer is setting meaningful errors
@@ -634,13 +634,13 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	}
 
 	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := getProviderFromRequestOrDefault(ctx, s.store, entityCtx.Provider.Name, entityCtx.Project.ID)
+	provider, err := s.providerStore.GetByName(ctx, entityCtx.Project.ID, in.GetContext().GetProvider())
 	if err != nil {
 		return nil, providerError(err)
 	}
 
 	updatedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, &provider, uuid.Nil, in, qtx)
+		return s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, provider, uuid.Nil, in, qtx)
 	})
 
 	if err != nil {
