@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -30,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/util"
 )
 
@@ -44,7 +42,7 @@ type ProfileInitEvent struct {
 }
 
 // NewProfileInitMessage creates a new repos init event
-func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Message, error) {
+func NewProfileInitMessage(projectID uuid.UUID) (*message.Message, error) {
 	evt := &ProfileInitEvent{
 		Project: projectID,
 	}
@@ -55,7 +53,6 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set(events.ProviderTypeKey, provider)
 	return msg, nil
 }
 
@@ -64,7 +61,6 @@ func NewProfileInitMessage(provider string, projectID uuid.UUID) (*message.Messa
 // for the project and sending a profile evaluation event for each one.
 func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 	ctx := msg.Context()
-	prov := msg.Metadata.Get(events.ProviderTypeKey)
 
 	var evt ProfileInitEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
@@ -81,40 +77,17 @@ func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		return nil
 	}
 
-	projHierarchy, err := r.store.GetParentProjects(ctx, evt.Project)
-	if err != nil {
-		return fmt.Errorf("error getting project hierarchy: %w", err)
-	}
-
-	provInfo, err := r.store.GetProviderByName(context.Background(), db.GetProviderByNameParams{
-		Name:     prov,
-		Projects: projHierarchy,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// We don't return the event since there's no use
-			// retrying it if the provider doesn't exist.
-			zerolog.Ctx(ctx).Error().Str("provider", prov).Msg("provider not found")
-			return nil
-		}
-
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
 	ectx := &engine.EntityContext{
 		Project: engine.Project{
 			ID: evt.Project,
 		},
-		Provider: engine.Provider{
-			Name: provInfo.Name,
-		},
 	}
 
-	zerolog.Ctx(ctx).Debug().Str("provider", prov).Msg("handling profile init event")
+	zerolog.Ctx(ctx).Debug().Msg("handling profile init event")
 	if err := r.publishProfileInitEvents(ctx, ectx); err != nil {
 		// We don't return an error since watermill will retry
 		// the message.
-		zerolog.Ctx(ctx).Error().Str("provider", prov).Msg("error publishing profile events")
+		zerolog.Ctx(ctx).Error().Msg("error publishing profile events")
 		return nil
 	}
 
@@ -141,7 +114,7 @@ func (r *Reconciler) publishProfileInitEvents(
 		// protobufs are our API, so we always execute on these instead of the DB directly.
 		repo := util.PBRepositoryFromDB(dbrepo)
 		err := entities.NewEntityInfoWrapper().
-			WithProvider(ectx.Provider.Name).
+			WithProvider(dbrepo.Provider).
 			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
@@ -188,7 +161,7 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 		}
 
 		err = entities.NewEntityInfoWrapper().
-			WithProvider(ectx.Provider.Name).
+			WithProvider(dbrepo.Provider).
 			WithProjectID(ectx.Project.ID).
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).

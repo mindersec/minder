@@ -29,7 +29,7 @@ import (
 )
 
 // ExecOnOneProfile is a helper function to execute a function on a single profile
-func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.Reader, project string, provider string,
+func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.Reader, project string,
 	exec func(context.Context, string, *minderv1.Profile) (*minderv1.Profile, error),
 ) (*minderv1.Profile, error) {
 	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
@@ -41,7 +41,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 	}
 	defer closer()
 
-	p, err := parseProfile(reader, project, provider)
+	p, err := parseProfile(reader, project)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing profile: %w", err)
 	}
@@ -56,7 +56,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 	return profile, nil
 }
 
-func parseProfile(r io.Reader, proj string, provider string) (*minderv1.Profile, error) {
+func parseProfile(r io.Reader, proj string) (*minderv1.Profile, error) {
 	p, err := engine.ParseYAML(r)
 	if err != nil {
 		return nil, fmt.Errorf("error reading profile from file: %w", err)
@@ -69,15 +69,6 @@ func parseProfile(r io.Reader, proj string, provider string) (*minderv1.Profile,
 		}
 
 		p.Context.Project = &proj
-	}
-
-	// Override the YAML specified provider with the command line argument
-	if provider != "" {
-		if p.Context == nil {
-			p.Context = &minderv1.Context{}
-		}
-
-		p.Context.Provider = &provider
 	}
 
 	return p, nil

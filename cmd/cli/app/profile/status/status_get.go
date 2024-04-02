@@ -43,7 +43,6 @@ var getCmd = &cobra.Command{
 func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
 	entityId := viper.GetString("entity")
@@ -56,7 +55,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	}
 
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{Project: &project},
 		Name:    profileName,
 		Entity: &minderv1.EntityTypedId{
 			Id:   entityId,

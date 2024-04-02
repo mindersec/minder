@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"time"
 
@@ -62,25 +63,21 @@ func (q *Queries) CountProfilesByName(ctx context.Context, name string) (int64, 
 
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (  
-    provider,
     project_id,
     remediate,
     alert,
     name,
-    provider_id,
     subscription_id,
     display_name,
     labels
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9::text[], '{}'::text[])) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+) VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::text[], '{}'::text[])) RETURNING id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
 `
 
 type CreateProfileParams struct {
-	Provider       string         `json:"provider"`
 	ProjectID      uuid.UUID      `json:"project_id"`
 	Remediate      NullActionType `json:"remediate"`
 	Alert          NullActionType `json:"alert"`
 	Name           string         `json:"name"`
-	ProviderID     uuid.UUID      `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
 	DisplayName    string         `json:"display_name"`
 	Labels         []string       `json:"labels"`
@@ -88,12 +85,10 @@ type CreateProfileParams struct {
 
 func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error) {
 	row := q.db.QueryRowContext(ctx, createProfile,
-		arg.Provider,
 		arg.ProjectID,
 		arg.Remediate,
 		arg.Alert,
 		arg.Name,
-		arg.ProviderID,
 		arg.SubscriptionID,
 		arg.DisplayName,
 		pq.Array(arg.Labels),
@@ -199,13 +194,13 @@ type GetEntityProfileByProjectAndNameParams struct {
 type GetEntityProfileByProjectAndNameRow struct {
 	ID              uuid.UUID       `json:"id"`
 	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
+	Provider        sql.NullString  `json:"provider"`
 	ProjectID       uuid.UUID       `json:"project_id"`
 	Remediate       NullActionType  `json:"remediate"`
 	Alert           NullActionType  `json:"alert"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
-	ProviderID      uuid.UUID       `json:"provider_id"`
+	ProviderID      uuid.NullUUID   `json:"provider_id"`
 	SubscriptionID  uuid.NullUUID   `json:"subscription_id"`
 	DisplayName     string          `json:"display_name"`
 	Labels          []string        `json:"labels"`
@@ -359,13 +354,13 @@ type GetProfileByProjectAndIDParams struct {
 type GetProfileByProjectAndIDRow struct {
 	ID              uuid.UUID       `json:"id"`
 	Name            string          `json:"name"`
-	Provider        string          `json:"provider"`
+	Provider        sql.NullString  `json:"provider"`
 	ProjectID       uuid.UUID       `json:"project_id"`
 	Remediate       NullActionType  `json:"remediate"`
 	Alert           NullActionType  `json:"alert"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
-	ProviderID      uuid.UUID       `json:"provider_id"`
+	ProviderID      uuid.NullUUID   `json:"provider_id"`
 	SubscriptionID  uuid.NullUUID   `json:"subscription_id"`
 	DisplayName     string          `json:"display_name"`
 	Labels          []string        `json:"labels"`

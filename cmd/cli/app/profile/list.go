@@ -41,7 +41,6 @@ var listCmd = &cobra.Command{
 func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 
@@ -55,7 +54,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	cmd.SilenceUsage = true
 
 	resp, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{Project: &project},
 	})
 	if err != nil {
 		return cli.MessageAndError("Error getting profiles", err)

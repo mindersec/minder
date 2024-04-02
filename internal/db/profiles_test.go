@@ -15,16 +15,14 @@ import (
 	"github.com/stacklok/minder/internal/util/rand"
 )
 
-func createRandomProfile(t *testing.T, prov Provider, projectID uuid.UUID, labels []string) Profile {
+func createRandomProfile(t *testing.T, projectID uuid.UUID, labels []string) Profile {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
 
 	arg := CreateProfileParams{
-		Name:       rand.RandomName(seed),
-		Provider:   prov.Name,
-		ProviderID: prov.ID,
-		ProjectID:  projectID,
+		Name:      rand.RandomName(seed),
+		ProjectID: projectID,
 		Remediate: NullActionType{
 			ActionType: "on",
 			Valid:      true,
@@ -199,15 +197,15 @@ func TestProfileLabels(t *testing.T) {
 
 	randomEntities := createTestRandomEntities(t)
 
-	health1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health"})
+	health1 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health"})
 	require.NotEmpty(t, health1)
-	health2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"stacklok:health", "obsolete"})
+	health2 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health", "obsolete"})
 	require.NotEmpty(t, health2)
-	obsolete := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{"obsolete"})
+	obsolete := createRandomProfile(t, randomEntities.proj.ID, []string{"obsolete"})
 	require.NotEmpty(t, obsolete)
-	p1 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	p1 := createRandomProfile(t, randomEntities.proj.ID, []string{})
 	require.NotEmpty(t, p1)
-	p2 := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+	p2 := createRandomProfile(t, randomEntities.proj.ID, []string{})
 	require.NotEmpty(t, p2)
 
 	tests := []struct {
@@ -475,7 +473,7 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
 			tt.ruleStatusSetupFn(profile, randomEntities)
@@ -608,7 +606,7 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			profile := createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, profile)
 
 			delRepo := createRandomRepository(t, randomEntities.proj.ID, randomEntities.prov)
@@ -843,7 +841,7 @@ func TestListRuleEvaluations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.profile = createRandomProfile(t, randomEntities.prov, randomEntities.proj.ID, []string{})
+			tt.profile = createRandomProfile(t, randomEntities.proj.ID, []string{})
 			require.NotEmpty(t, tt.profile)
 
 			tt.ruleStatusSetupFn(tt.profile, randomEntities)

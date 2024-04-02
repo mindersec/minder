@@ -51,20 +51,14 @@ func (s *Server) CreateProfile(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	// validate that project and provider are valid and exist in the db
-	err := entityCtx.Validate(ctx, s.store)
+	// validate that project is valid and exist in the db
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := s.providerStore.GetByName(ctx, entityCtx.Project.ID, in.GetContext().GetProvider())
-	if err != nil {
-		return nil, providerError(err)
-	}
-
 	newProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.CreateProfile(ctx, entityCtx.Project.ID, provider, uuid.Nil, in, qtx)
+		return s.profiles.CreateProfile(ctx, entityCtx.Project.ID, uuid.Nil, in, qtx)
 	})
 	if err != nil {
 		// assumption: service layer is setting meaningful errors
@@ -83,7 +77,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	in *minderv1.DeleteProfileRequest) (*minderv1.DeleteProfileResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -120,7 +114,6 @@ func (s *Server) DeleteProfile(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = profile.Provider
 	logger.BusinessRecord(ctx).Project = profile.ProjectID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: profile.ID}
 
@@ -132,7 +125,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 	req *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -164,7 +157,6 @@ func (s *Server) ListProfiles(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return &resp, nil
@@ -176,7 +168,7 @@ func (s *Server) GetProfileById(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -196,7 +188,6 @@ func (s *Server) GetProfileById(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: parsedProfileID}
 
@@ -240,17 +231,15 @@ func getRuleEvalEntityInfo(
 	entityType *db.NullEntities,
 	selector *uuid.NullUUID,
 	rs db.ListRuleEvaluationsByProfileIdRow,
-	providerName string,
 ) map[string]string {
 	l := zerolog.Ctx(ctx)
-	entityInfo := map[string]string{
-		"provider": providerName,
-	}
+	entityInfo := map[string]string{}
 
 	if rs.RepositoryID.Valid {
 		// this is always true now but might not be when we support entities not tied to a repo
 		entityInfo["repo_name"] = rs.RepoName
 		entityInfo["repo_owner"] = rs.RepoOwner
+		entityInfo["provider"] = rs.Provider
 		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
 	}
 
@@ -267,6 +256,7 @@ func getRuleEvalEntityInfo(
 		entityInfo["artifact_id"] = artifact.ID.String()
 		entityInfo["artifact_name"] = artifact.ArtifactName
 		entityInfo["artifact_type"] = artifact.ArtifactType
+		entityInfo["provider"] = artifact.Provider
 	}
 
 	return entityInfo
@@ -279,7 +269,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -351,13 +341,12 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
 			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-			dbEntity, selector, entityCtx.Provider.Name,
+			dbEntity, selector,
 		)
 		// TODO: Add other entities once we have database entries for them
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: dbProfileStatus.Name, ID: dbProfileStatus.ID}
 
@@ -378,7 +367,6 @@ func (s *Server) getRuleEvaluationStatuses(
 	profileId string,
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
-	providerName string,
 ) []*minderv1.RuleEvaluationStatus {
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
@@ -387,7 +375,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, providerName, dbRuleEvalStat)
+		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat)
 		if err != nil {
 			l.Err(err).Msg("error getting rule evaluation status")
 			continue
@@ -407,7 +395,6 @@ func getRuleEvalStatus(
 	profileID string,
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
-	providerName string,
 	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
@@ -443,7 +430,7 @@ func getRuleEvalStatus(
 		Entity:              string(dbRuleEvalStat.Entity),
 		Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
 		Details:             dbRuleEvalStat.EvalDetails.String,
-		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, providerName),
+		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat),
 		Guidance:            guidance,
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
@@ -502,7 +489,7 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -529,7 +516,6 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = entityCtx.Provider.Name
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 
 	return res, nil
@@ -540,7 +526,7 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 	patch := ppr.GetPatch()
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -628,19 +614,13 @@ func (s *Server) UpdateProfile(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// TODO: This will be removed once we decouple providers from profiles
-	provider, err := s.providerStore.GetByName(ctx, entityCtx.Project.ID, in.GetContext().GetProvider())
-	if err != nil {
-		return nil, providerError(err)
-	}
-
 	updatedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, provider, uuid.Nil, in, qtx)
+		return s.profiles.UpdateProfile(ctx, entityCtx.Project.ID, uuid.Nil, in, qtx)
 	})
 
 	if err != nil {

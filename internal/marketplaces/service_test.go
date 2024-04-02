@@ -22,14 +22,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces"
 	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
 	bsf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
 	ssf "github.com/stacklok/minder/internal/marketplaces/subscriptions/mock/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/pkg/mindpak"
 	"github.com/stacklok/minder/pkg/mindpak/sources"
 )
@@ -115,9 +113,9 @@ func testHarness(t *testing.T, method testMethod, scenarios []testScenario) {
 
 			switch method {
 			case subscribe:
-				err = marketplace.Subscribe(ctx, projectContext, bundleID, store)
+				err = marketplace.Subscribe(ctx, projectID, bundleID, store)
 			case createProfile:
-				err = marketplace.AddProfile(ctx, projectContext, bundleID, profileName, store)
+				err = marketplace.AddProfile(ctx, projectID, bundleID, profileName, store)
 			default:
 				t.Fatalf("unknown method %d", method)
 			}
@@ -133,12 +131,9 @@ func testHarness(t *testing.T, method testMethod, scenarios []testScenario) {
 
 // use nil controller - we do not need to mock any methods on this type
 var (
-	bundleReader   = mockbundle.NewMockBundleReader(nil)
-	projectContext = types.ProjectContext{
-		ID:       uuid.New(),
-		Provider: &db.Provider{},
-	}
-	bundleID = mindpak.ID("stacklok", "healthcheck")
+	bundleReader = mockbundle.NewMockBundleReader(nil)
+	projectID    = uuid.New()
+	bundleID     = mindpak.ID("stacklok", "healthcheck")
 )
 
 const (

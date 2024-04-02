@@ -59,7 +59,7 @@ func NewProfileSettingsTable() table.Table {
 
 // RenderProfileSettingsTable renders the profile settings table
 func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
-	t.AddRow(p.GetId(), p.GetName(), p.GetContext().GetProvider(), p.GetAlert(), p.GetRemediate())
+	t.AddRow(p.GetId(), p.GetName(), p.GetAlert(), p.GetRemediate())
 }
 
 // NewProfileTable creates a new table for rendering profiles

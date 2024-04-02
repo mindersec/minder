@@ -33,7 +33,6 @@ minder profile status get [flags]
   -n, --name string              Profile name to get profile status for
   -o, --output string            Output format (one of json,yaml,table) (default "table")
   -j, --project string           ID of the project
-  -p, --provider string          Name of the provider, i.e. github (default "github")
 ```
 
 ### SEE ALSO

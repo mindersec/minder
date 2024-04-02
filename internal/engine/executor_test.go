@@ -149,7 +149,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				Profile: db.Profile{
 					ID:        profileID,
 					Name:      "test-profile",
-					Provider:  providerName,
 					ProjectID: projectID,
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),

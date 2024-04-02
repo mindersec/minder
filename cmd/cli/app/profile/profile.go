@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 )
 
 // ProfileCmd is the root command for the profile subcommands
@@ -36,6 +35,5 @@ var ProfileCmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(ProfileCmd)
 	// Flags for all subcommands
-	ProfileCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
 	ProfileCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }
