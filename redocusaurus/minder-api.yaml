@@ -2863,6 +2863,9 @@ definitions:
         title: >-
           remediation_url is a url to get more data about a remediation, for PRs
           is the link to the PR
+      ruleDisplayName:
+        type: string
+        title: rule_display_name captures the display name of the rule
     title: get the status of the rules for a given profile
   v1RuleType:
     type: object
