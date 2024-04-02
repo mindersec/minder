@@ -144,9 +144,10 @@ func (p *providerStore) findProvider(
 	trait db.NullProviderType,
 	projectID uuid.UUID,
 ) ([]db.Provider, error) {
-	projectHierarchy, err := p.getProjectHierarchy(ctx, projectID)
+	// Allows us to take into account the hierarchy to find the provider
+	projectHierarchy, err := p.store.GetParentProjects(ctx, projectID)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
 	}
 
 	provs, err := p.store.FindProviders(ctx, db.FindProvidersParams{
@@ -163,15 +164,6 @@ func (p *providerStore) findProvider(
 	}
 
 	return provs, nil
-}
-
-// Allows us to take into account the hierarchy to find the provider
-func (p *providerStore) getProjectHierarchy(ctx context.Context, projectID uuid.UUID) ([]uuid.UUID, error) {
-	parents, err := p.store.GetParentProjects(ctx, projectID)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
-	}
-	return parents, nil
 }
 
 // getNameFilterParam allows us to build a name filter for our provider queries
