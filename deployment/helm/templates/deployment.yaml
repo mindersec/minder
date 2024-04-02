@@ -23,6 +23,10 @@ spec:
   selector:
     matchLabels:
       app: '{{ include "common.names.name" . }}'
+  strategy:
+    {{- if .Values.deploymentSettings.strategy }}
+    {{- toYaml .Values.deploymentSettings.strategy | nindent 4 }}
+    {{- end }}
   template:
     metadata:
       labels:
