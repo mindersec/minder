@@ -167,7 +167,8 @@ events:
 	require.Equal(t, 5432, cfg.Events.SQLPubSub.Connection.Port)
 	require.Equal(t, "myuser", cfg.Events.SQLPubSub.Connection.User)
 	require.Equal(t, "postgres", cfg.Events.SQLPubSub.Connection.Password)
-	require.Equal(t, "minder", cfg.Events.SQLPubSub.Connection.Name)
+	// This is set as an override in SQLEventConfig
+	require.Equal(t, "watermill", cfg.Events.SQLPubSub.Connection.Name)
 	require.Equal(t, "disable", cfg.Events.SQLPubSub.Connection.SSLMode)
 }
 
