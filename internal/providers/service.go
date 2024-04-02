@@ -260,7 +260,8 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		return newProvider, nil
 	}
 
-	_, err = factory(ctx, qtx, installationOwner.GetLogin(), *userID, providerMaker)
+	projectName := fmt.Sprintf("github-%s", installationOwner.GetLogin())
+	_, err = factory(ctx, qtx, projectName, *userID, providerMaker)
 	if err != nil {
 		// This _can_ be normal if someone enrolls the app without ever logging in to Minder, but should be rare.
 		zerolog.Ctx(ctx).Warn().Err(err).Int64("install", installationID).Msg("Error constructing project for install")
