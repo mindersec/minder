@@ -52,6 +52,10 @@ var knownProviders = []string{Google, Github, GitHubApp}
 func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	redirectURL := func(provider string, cli bool) string {
 		base := viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
+		if provider == GitHubApp {
+			// GitHub App does not distinguish between CLI and web clients
+			return base
+		}
 		if cli {
 			return fmt.Sprintf("%s/cli", base)
 		}
