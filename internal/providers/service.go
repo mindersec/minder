@@ -57,10 +57,10 @@ type ProviderService interface {
 // from the state
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 
-// ProvSvcGhOps is an interface for GitHub operations inside this module
+// GitHubClientService is an interface for GitHub operations inside this module
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
-type ProvSvcGhOps interface {
+type GitHubClientService interface {
 	GetInstallation(ctx context.Context, id int64, jwt string) (*github.Installation, *github.Response, error)
 	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
 	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
@@ -102,7 +102,7 @@ type providerService struct {
 	provMt          provtelemetry.ProviderMetrics
 	config          *server.ProviderConfig
 	restClientCache ratecache.RestClientCache
-	provSvcGhOps    ProvSvcGhOps
+	provSvcGhOps    GitHubClientService
 }
 
 // NewProviderService creates an instance of ProviderService

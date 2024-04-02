@@ -46,7 +46,7 @@ import (
 )
 
 type testMocks struct {
-	svcMock     *mockprofsvc.MockProvSvcGhOps
+	svcMock     *mockprofsvc.MockGitHubClientService
 	cryptoMocks *mockcrypto.MockEngine
 	fakeStore   db.Store
 	cancelFunc  embedded.CancelFunc
@@ -64,7 +64,7 @@ func testNewProviderService(
 		t.Cleanup(cancelFunc)
 	}
 	mocks := &testMocks{
-		svcMock:     mockprofsvc.NewMockProvSvcGhOps(mockCtrl),
+		svcMock:     mockprofsvc.NewMockGitHubClientService(mockCtrl),
 		fakeStore:   fakeStore,
 		cancelFunc:  cancelFunc,
 		cryptoMocks: mockcrypto.NewMockEngine(mockCtrl),
@@ -107,6 +107,10 @@ func testCreatePrivateKeyFile(t *testing.T) *os.File {
 func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	t.Parallel()
 
+	const (
+		stateNonce       = "test-oauth-nonce"
+		stateNonceUpdate = "test-oauth-nonce-update"
+	)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -141,7 +145,8 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 			RemoteUser: sql.NullString{
 				Valid: false,
 			},
-		})
+		},
+		stateNonce)
 	require.NoError(t, err)
 	require.NotNil(t, dbProv)
 	require.Equal(t, dbProv.ProjectID, dbproj.ID)
@@ -153,6 +158,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	require.Len(t, dbToken, 1)
 	require.Equal(t, dbToken[0].EncryptedToken, base64.StdEncoding.EncodeToString([]byte("my-encrypted-token")))
 	require.Equal(t, dbToken[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
+	require.Equal(t, dbToken[0].EnrollmentNonce, sql.NullString{String: stateNonce, Valid: true})
 
 	// test updating token
 	mocks.cryptoMocks.EXPECT().
@@ -176,12 +182,20 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 			RemoteUser: sql.NullString{
 				Valid: false,
 			},
-		})
+		},
+		stateNonceUpdate)
 	require.NoError(t, err)
 	require.NotNil(t, dbProv)
 	require.Equal(t, dbProvUpdated.ProjectID, dbProv.ProjectID)
 	require.Equal(t, dbProvUpdated.AuthFlows, dbProv.AuthFlows)
 	require.Equal(t, dbProvUpdated.Implements, dbProv.Implements)
+
+	dbTokenUpdate, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
+	require.NoError(t, err)
+	require.Len(t, dbTokenUpdate, 1)
+	require.Equal(t, dbTokenUpdate[0].EncryptedToken, base64.StdEncoding.EncodeToString([]byte("my-new-encrypted-token")))
+	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
+	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
 }
 
 func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
@@ -191,6 +205,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 		installationID = 123
 		accountLogin   = "test-user"
 		accountID      = 456
+		stateNonce     = "test-githubapp-nonce"
 	)
 
 	ctrl := gomock.NewController(t)
@@ -229,7 +244,8 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 				Valid: false,
 			},
 		},
-		installationID)
+		installationID,
+		stateNonce)
 	require.NoError(t, err)
 	require.NotNil(t, dbProv)
 
@@ -246,6 +262,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, dbInstall.AppInstallationID, strconv.FormatInt(installationID, 10))
 	require.Equal(t, dbInstall.OrganizationID, int64(accountID))
+	require.Equal(t, dbInstall.EnrollmentNonce, sql.NullString{Valid: true, String: stateNonce})
 }
 
 func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
