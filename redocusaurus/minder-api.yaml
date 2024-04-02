@@ -152,32 +152,11 @@ paths:
           schema:
             $ref: '#/definitions/v1StoreProviderTokenResponse'
       parameters:
-        - name: provider
-          in: query
-          required: false
-          type: string
-        - name: accessToken
-          in: query
-          required: false
-          type: string
-        - name: owner
-          in: query
-          required: false
-          type: string
-        - name: context.provider
-          description: name of the provider
-          in: query
-          required: false
-          type: string
-        - name: context.project
-          description: ID of the project
-          in: query
-          required: false
-          type: string
-        - name: context.retiredOrganization
-          in: query
-          required: false
-          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1StoreProviderTokenRequest'
       tags:
         - OAuthService
   /api/v1/auth/url:
@@ -1350,54 +1329,11 @@ paths:
           schema:
             $ref: '#/definitions/v1RegisterRepositoryResponse'
       parameters:
-        - name: provider
-          in: query
-          required: false
-          type: string
-        - name: repository.owner
-          in: query
-          required: false
-          type: string
-        - name: repository.name
-          in: query
-          required: false
-          type: string
-        - name: repository.repoId
-          description: |-
-            The upstream identity of the repository, as an integer.
-            This is only set on output, and is ignored on input.
-          in: query
-          required: false
-          type: string
-          format: int64
-        - name: repository.context.provider
-          description: name of the provider
-          in: query
-          required: false
-          type: string
-        - name: repository.context.project
-          description: ID of the project
-          in: query
-          required: false
-          type: string
-        - name: repository.context.retiredOrganization
-          in: query
-          required: false
-          type: string
-        - name: context.provider
-          description: name of the provider
-          in: query
-          required: false
-          type: string
-        - name: context.project
-          description: ID of the project
-          in: query
-          required: false
-          type: string
-        - name: context.retiredOrganization
-          in: query
-          required: false
-          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1RegisterRepositoryRequest'
       tags:
         - RepositoryService
   /api/v1/results:
@@ -2733,6 +2669,15 @@ definitions:
         type: boolean
       error:
         type: string
+  v1RegisterRepositoryRequest:
+    type: object
+    properties:
+      provider:
+        type: string
+      repository:
+        $ref: '#/definitions/v1UpstreamRepositoryRef'
+      context:
+        $ref: '#/definitions/v1Context'
   v1RegisterRepositoryResponse:
     type: object
     properties:
@@ -2984,6 +2929,17 @@ definitions:
       significant risk.
        - VALUE_CRITICAL: critical severity means that the severity is critical and
       requires immediate attention.
+  v1StoreProviderTokenRequest:
+    type: object
+    properties:
+      provider:
+        type: string
+      accessToken:
+        type: string
+      owner:
+        type: string
+      context:
+        $ref: '#/definitions/v1Context'
   v1StoreProviderTokenResponse:
     type: object
   v1UpdateProfileRequest:
