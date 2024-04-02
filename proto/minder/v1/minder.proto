@@ -2063,12 +2063,25 @@ enum ProviderType {
     PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
 }
 
+enum ProviderClass {
+    PROVIDER_CLASS_UNSPECIFIED = 0;
+    PROVIDER_CLASS_GITHUB = 1 [(name) = "github"];
+    PROVIDER_CLASS_GITHUB_APP = 2 [(name) = "github-app"];
+}
+
 enum AuthorizationFlow {
     AUTHORIZATION_FLOW_UNSPECIFIED = 0;
     AUTHORIZATION_FLOW_NONE = 1 [(name) = "none"];
     AUTHORIZATION_FLOW_USER_INPUT = 2 [(name) = "user_input"];
     AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW = 3 [(name) = "oauth2_authorization_code_flow"];
     AUTHORIZATION_FLOW_GITHUB_APP_FLOW = 4 [(name) = "github_app_flow"];
+}
+
+enum CredentialsState {
+    CREDENTIALS_STATE_UNSPECIFIED = 0;
+    CREDENTIALS_STATE_SET = 1 [(name) = "set"];
+    CREDENTIALS_STATE_UNSET = 2 [(name) = "unset"];
+    CREDENTIALS_STATE_NOT_APPLICABLE = 3 [(name) = "not_applicable"];
 }
 
 message Provider {
