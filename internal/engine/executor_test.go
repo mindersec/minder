@@ -16,6 +16,7 @@ package engine_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -38,6 +39,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -107,17 +109,16 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	mockStore.EXPECT().
-		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name: providerName,
-			Projects: []uuid.UUID{
-				projectID,
-			},
+		FindProviders(gomock.Any(), db.FindProvidersParams{
+			Name:     sql.NullString{String: providerName, Valid: true},
+			Projects: []uuid.UUID{projectID},
+			Trait:    db.NullProviderType{},
 		}).
-		Return(db.Provider{
+		Return([]db.Provider{{
 			ID:        providerID,
 			Name:      providerName,
 			ProjectID: projectID,
-		}, nil)
+		}}, nil)
 
 	// get access token
 	mockStore.EXPECT().
@@ -294,7 +295,7 @@ default allow = true`,
 
 	e, err := engine.NewExecutor(ctx, mockStore, &serverconfig.AuthConfig{
 		TokenKey: tokenKeyPath,
-	}, nil, evt)
+	}, nil, evt, providers.NewProviderStore(mockStore))
 	require.NoError(t, err, "expected no error")
 
 	eiw := entities.NewEntityInfoWrapper().

@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
+	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -238,8 +239,9 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			stubEventer := stubeventer.StubEventer{}
 
 			s := &Server{
-				store: mockStore,
-				evt:   &stubEventer,
+				store:         mockStore,
+				evt:           &stubEventer,
+				providerStore: providers.NewProviderStore(mockStore),
 			}
 
 			ctx := engine.WithEntityContext(context.Background(), tt.entityContext)
@@ -268,8 +270,9 @@ func setupTestingEntityContextValidation(store *mockdb.MockStore, projId uuid.UU
 		GetParentProjects(gomock.Any(), projId).
 		Return([]uuid.UUID{projId}, nil)
 	store.EXPECT().
-		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name:     prov,
+		FindProviders(gomock.Any(), db.FindProvidersParams{
+			Name:     sql.NullString{String: prov, Valid: true},
 			Projects: []uuid.UUID{projId},
-		}).Return(db.Provider{Name: prov}, nil)
+			Trait:    db.NullProviderType{},
+		}).Return([]db.Provider{{Name: prov}}, nil)
 }

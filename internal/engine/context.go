@@ -21,6 +21,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 )
 
 type key int
@@ -65,21 +66,13 @@ type EntityContext struct {
 }
 
 // Validate validates that the entity context contains values that are present in the DB
-func (c *EntityContext) Validate(ctx context.Context, q db.Querier) error {
+func (c *EntityContext) Validate(ctx context.Context, q db.Querier, providerStore providers.ProviderStore) error {
 	_, err := q.GetProjectByID(ctx, c.Project.ID)
 	if err != nil {
 		return fmt.Errorf("unable to get context: failed getting project: %w", err)
 	}
 
-	ph, err := q.GetParentProjects(ctx, c.Project.ID)
-	if err != nil {
-		return fmt.Errorf("unable to get context: failed getting project hierarchy: %w", err)
-	}
-
-	_, err = q.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     c.Provider.Name,
-		Projects: ph,
-	})
+	_, err = providerStore.GetByName(ctx, c.Project.ID, c.Provider.Name)
 	if err != nil {
 		return fmt.Errorf("unable to get context: failed getting provider: %w", err)
 	}

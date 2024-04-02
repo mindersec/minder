@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/marketplaces"
+	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -216,7 +217,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				Auth: serverconfig.AuthConfig{
 					TokenKey: generateTokenKey(t),
 				},
-			}, mockJwtValidator)
+			}, mockJwtValidator, providers.NewProviderStore(mockStore))
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateUser(ctx, tc.req)
@@ -399,7 +400,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 						ClientSecret: "client-secret",
 					},
 				},
-			}, mockJwtValidator)
+			}, mockJwtValidator, providers.NewProviderStore(mockStore))
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteUser(ctx, tc.req)
