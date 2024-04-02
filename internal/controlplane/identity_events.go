@@ -76,7 +76,7 @@ func HandleEvents(
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
 
-	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/events", nil)
+	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/events", nil, nil)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Msgf("events chron: error getting events: %v", err)
 		return

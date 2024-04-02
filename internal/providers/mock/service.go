@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	db "github.com/stacklok/minder/internal/db"
+	providers "github.com/stacklok/minder/internal/providers"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -56,6 +57,21 @@ func (mr *MockProviderServiceMockRecorder) CreateGitHubAppProvider(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubAppProvider", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubAppProvider), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CreateGitHubAppWithoutInvitation mocks base method.
+func (m *MockProviderService) CreateGitHubAppWithoutInvitation(arg0 context.Context, arg1 *oauth2.Token, arg2 int64, arg3 providers.ProjectFactory) (*db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGitHubAppWithoutInvitation", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateGitHubAppWithoutInvitation indicates an expected call of CreateGitHubAppWithoutInvitation.
+func (mr *MockProviderServiceMockRecorder) CreateGitHubAppWithoutInvitation(arg0, arg1, arg2, arg3 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubAppWithoutInvitation", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubAppWithoutInvitation), arg0, arg1, arg2, arg3)
+}
+
 // CreateGitHubOAuthProvider mocks base method.
 func (m *MockProviderService) CreateGitHubOAuthProvider(arg0 context.Context, arg1 string, arg2 db.ProviderClass, arg3 oauth2.Token, arg4 db.GetProjectIDBySessionStateRow, arg5 string) (*db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -69,21 +85,6 @@ func (m *MockProviderService) CreateGitHubOAuthProvider(arg0 context.Context, ar
 func (mr *MockProviderServiceMockRecorder) CreateGitHubOAuthProvider(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubOAuthProvider", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubOAuthProvider), arg0, arg1, arg2, arg3, arg4, arg5)
-}
-
-// CreateUnclaimedGitHubAppInstallation mocks base method.
-func (m *MockProviderService) CreateUnclaimedGitHubAppInstallation(arg0 context.Context, arg1 *oauth2.Token, arg2 int64) (*db.ProviderGithubAppInstallation, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUnclaimedGitHubAppInstallation", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*db.ProviderGithubAppInstallation)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateUnclaimedGitHubAppInstallation indicates an expected call of CreateUnclaimedGitHubAppInstallation.
-func (mr *MockProviderServiceMockRecorder) CreateUnclaimedGitHubAppInstallation(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUnclaimedGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).CreateUnclaimedGitHubAppInstallation), arg0, arg1, arg2)
 }
 
 // ValidateGitHubInstallationId mocks base method.

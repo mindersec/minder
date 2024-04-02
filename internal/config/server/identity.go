@@ -102,11 +102,13 @@ func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) 
 }
 
 // Do sends an HTTP request to the identity server, using the configured client credentials.
-func (sic *IdentityConfig) Do(ctx context.Context, method string, path string, body io.Reader) (*http.Response, error) {
+func (sic *IdentityConfig) Do(
+	ctx context.Context, method string, path string, query url.Values, body io.Reader) (*http.Response, error) {
 	parsedUrl, err := sic.Path(path)
 	if err != nil {
 		return nil, err
 	}
+	parsedUrl.RawQuery = query.Encode()
 
 	req, err := http.NewRequest(method, parsedUrl.String(), body)
 	if err != nil {

@@ -42,14 +42,23 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
+// ProviderFactory is a function which creates the first provider for a project.
+type ProviderFactory func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error)
+
+// ProjectFactory may create a project named name for the specified userid if
+// present in the system.  If a db.Project is returned, it should be used as the
+// location to create a Provider corresponding to the GitHub App installation.
+type ProjectFactory func(
+	ctx context.Context, qtx db.Querier, name string, user int64, makeProvider ProviderFactory) (*db.Project, error)
+
 // ProviderService encapsulates methods for creating and updating providers
 type ProviderService interface {
 	CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
 		token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, state string) (*db.Provider, error)
 	CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow,
 		installationID int64, state string) (*db.Provider, error)
-	CreateUnclaimedGitHubAppInstallation(ctx context.Context, token *oauth2.Token,
-		installationID int64) (*db.ProviderGithubAppInstallation, error)
+	CreateGitHubAppWithoutInvitation(ctx context.Context, token *oauth2.Token,
+		installationID int64, factory ProjectFactory) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 }
 
@@ -189,57 +198,42 @@ func (p *providerService) CreateGitHubAppProvider(
 	}
 
 	return db.WithTransaction(p.store, func(qtx db.ExtendQuerier) (*db.Provider, error) {
-		// Save the installation ID and create a provider
-		savedProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
-			Name:       fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, installationOwner.GetLogin()),
-			ProjectID:  stateData.ProjectID,
-			Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true},
-			Implements: app.Implements,
-			Definition: json.RawMessage(`{"github-app": {}}`),
-			AuthFlows:  app.AuthorizationFlows,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
-		p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
-		if stateData.RemoteUser.Valid {
-			if err := p.verifyProviderTokenIdentity(ctx, stateData, savedProvider, token.AccessToken); err != nil {
-				return nil, ErrInvalidTokenIdentity
+		validateOwnership := func(ctx context.Context, provider db.Provider) error {
+			// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
+			p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
+			if stateData.RemoteUser.Valid {
+				if err := p.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
+					return ErrInvalidTokenIdentity
+				}
+			} else {
+				zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
 			}
-		} else {
-			zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
+			return nil
 		}
 
-		_, err = qtx.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
-			ProviderID: uuid.NullUUID{
-				UUID:  savedProvider.ID,
-				Valid: true,
-			},
-			ProjectID: uuid.NullUUID{
-				UUID:  stateData.ProjectID,
-				Valid: true,
-			},
-			OrganizationID:    installationOwner.GetID(),
-			AppInstallationID: strconv.FormatInt(installationID, 10),
-			EnrollmentNonce: sql.NullString{
-				Valid:  true,
+		provider, err := createGitHubApp(
+			ctx,
+			qtx,
+			stateData.ProjectID,
+			installationOwner,
+			installationID,
+			validateOwnership,
+			sql.NullString{
 				String: state,
+				Valid:  true,
 			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		return &savedProvider, nil
+		)
+
+		return &provider, err
 	})
 }
 
-// CreateUnclaimedGitHubAppInstallation creates an GitHub App installation that doesn't belong to a project yet
-func (p *providerService) CreateUnclaimedGitHubAppInstallation(
+// CreateGitHubAppWithoutInvitation creates an GitHub App installation that doesn't belong to a project yet
+func (p *providerService) CreateGitHubAppWithoutInvitation(
 	ctx context.Context,
 	token *oauth2.Token,
 	installationID int64,
+	factory ProjectFactory,
 ) (*db.ProviderGithubAppInstallation, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
@@ -247,22 +241,107 @@ func (p *providerService) CreateUnclaimedGitHubAppInstallation(
 	}
 
 	userID, err := getUserIdFromToken(ctx, token)
-	if err != nil {
+	if err != nil || userID == nil || *userID == 0 {
 		return nil, fmt.Errorf("error getting user ID from token: %w", err)
 	}
-	gitHubAppInstallation, err := p.store.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
-		ProviderID:        uuid.NullUUID{},
-		AppInstallationID: strconv.FormatInt(installationID, 10),
-		OrganizationID:    installationOwner.GetID(),
-		EnrollingUserID: sql.NullString{
-			Valid:  true,
-			String: strconv.FormatInt(*userID, 10),
-		},
+
+	tx, err := p.store.BeginTransaction()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer p.store.Rollback(tx)
+	qtx := p.store.GetQuerierWithTransaction(tx)
+
+	// Note: this is filled in by providerMaker, below
+	var newProvider db.Provider
+
+	providerMaker := func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
+		newProvider, err = createGitHubApp(ctx, qtx, projectID, installationOwner, installationID, nil, sql.NullString{})
+		return newProvider, nil
+	}
+
+	_, err = factory(ctx, qtx, installationOwner.GetLogin(), *userID, providerMaker)
+	if err != nil {
+		// This _can_ be normal if someone enrolls the app without ever logging in to Minder, but should be rare.
+		zerolog.Ctx(ctx).Warn().Err(err).Int64("install", installationID).Msg("Error constructing project for install")
+		// We couldn't create the project, so create a stand-alone (unclaimed) installation
+		gitHubAppInstallation, err := p.store.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
+			ProviderID:        uuid.NullUUID{},
+			AppInstallationID: strconv.FormatInt(installationID, 10),
+			OrganizationID:    installationOwner.GetID(),
+			EnrollingUserID: sql.NullString{
+				Valid:  true,
+				String: strconv.FormatInt(*userID, 10),
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error saving installation ID: %w", err)
+		}
+		return &gitHubAppInstallation, nil
+	}
+
+	if err = p.store.Commit(tx); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	install, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
+		UUID:  newProvider.ID,
+		Valid: true,
+	})
+
+	return &install, err
+}
+
+// Internal shared implementation between CreateGitHubAppProvider and CreateGitHubAppWithoutInvitation.
+// Note that this does not validate the projectId, and assumes the caller does so!
+func createGitHubApp(
+	ctx context.Context,
+	qtx db.Querier,
+	projectId uuid.UUID,
+	installationOwner *github.User,
+	installationID int64,
+	validateOwnership func(ctx context.Context, provider db.Provider) error,
+	nonce sql.NullString,
+) (db.Provider, error) {
+	// Save the installation ID and create a provider
+	savedProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, installationOwner.GetLogin()),
+		ProjectID:  projectId,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true},
+		Implements: app.Implements,
+		Definition: json.RawMessage(`{"github-app": {}}`),
+		AuthFlows:  app.AuthorizationFlows,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error saving installation ID: %w", err)
+		return db.Provider{}, err
 	}
-	return &gitHubAppInstallation, nil
+
+	if validateOwnership != nil {
+		// TODO: it would be nice if validateOwnership didn't need to use a provider to get a
+		// github.Client, because then we could call it _before_ createGitHubApp, rather than
+		// in the middle...
+		if err := validateOwnership(ctx, savedProvider); err != nil {
+			return db.Provider{}, err
+		}
+	}
+
+	_, err = qtx.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
+		ProviderID: uuid.NullUUID{
+			UUID:  savedProvider.ID,
+			Valid: true,
+		},
+		ProjectID: uuid.NullUUID{
+			UUID:  projectId,
+			Valid: true,
+		},
+		OrganizationID:    installationOwner.GetID(),
+		AppInstallationID: strconv.FormatInt(installationID, 10),
+		EnrollmentNonce:   nonce,
+	})
+	if err != nil {
+		return db.Provider{}, err
+	}
+	return savedProvider, nil
 }
 
 // ValidateGitHubInstallationId checks if the user has access to the installation ID

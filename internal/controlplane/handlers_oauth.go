@@ -28,6 +28,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -40,6 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -326,7 +328,10 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			return nil
 		}
 	} else {
-		_, err := s.providers.CreateUnclaimedGitHubAppInstallation(ctx, token, installationID)
+		// We weren't expecting this install, maybe it matches an existing user
+		// and we'll create a new project to match.
+		zerolog.Ctx(ctx).Info().Int64("install", installationID).Msg("Unmatched GitHub App install, trying to create project")
+		_, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, token, installationID, s.makeProjectForGitHubApp)
 		if err != nil {
 			return fmt.Errorf("error saving installation ID: %w", err)
 		}
@@ -568,6 +573,57 @@ func (s *Server) VerifyProviderCredential(ctx context.Context,
 	}
 
 	return &pb.VerifyProviderCredentialResponse{Created: false}, nil
+}
+
+// makeProjectForGitHubApp constructs a project for a GitHub App installation which was
+// created by a user through the app installation flow on GitHub.  The flow on GitHub
+// cannot be tied back to a specific project, so we create a new project for the provider.
+//
+// This is a callback because we want to encapsulate components like s.cfg.Identity,
+// s.marketplace, s.authzClient and the like from the the providers implementation.
+// In the future, this should be some sort of up-call which includes a template provider,
+// but the current design of ProvisionSelfEnrolledProject needs a way to feed the created
+// provider into the middle of the flow, so that the marketplace (managed profiles) can
+// reference the newly-created provider in the project.
+//
+// TODO: when profiles.CreateProfile no longer needs a provider, ProvisionSelfEnrolledProject
+// can move the makeProvider call to after the end of the project creation, and we can remove
+// the makeProvider parameter.  The others are probably still needed, though.
+func (s *Server) makeProjectForGitHubApp(
+	ctx context.Context,
+	qtx db.Querier,
+	name string,
+	ghUser int64,
+	makeProvider providers.ProviderFactory,
+) (*db.Project, error) {
+	user, err := auth.GetUserForGitHubId(ctx, s.cfg.Identity, ghUser)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user for GitHub ID: %w", err)
+	}
+	// Ensure the user already exists in the database
+	if _, err := qtx.GetUserBySubject(ctx, user); err != nil {
+		return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
+	}
+
+	topLevelProject, err := projects.ProvisionSelfEnrolledProject(
+		ctx,
+		s.authzClient,
+		qtx,
+		name,
+		user,
+		makeProvider,
+		s.marketplace,
+		s.cfg.DefaultProfiles,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating project: %w", err)
+	}
+	// ProvisionSelfEnrolledProject returns a pb.Project, but we need a db.Project
+	project, err := qtx.GetProjectByID(ctx, uuid.MustParse(topLevelProject.ProjectId))
+	if err != nil {
+		return nil, fmt.Errorf("error fetching project: %w", err)
+	}
+	return &project, nil
 }
 
 type httpResponseError struct {

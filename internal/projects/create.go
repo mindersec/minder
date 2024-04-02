@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/marketplaces/types"
+	"github.com/stacklok/minder/internal/providers"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
@@ -40,6 +41,18 @@ var (
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
+// DefaultProviderFactory creates the default GitHub provider for a project.
+func DefaultProviderFactory(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
+	return qtx.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       github.Github,
+		ProjectID:  projectID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
+		Implements: github.Implements,
+		Definition: json.RawMessage(`{"github": {}}`),
+		AuthFlows:  github.AuthorizationFlows,
+	})
+}
+
 // ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
 func ProvisionSelfEnrolledProject(
 	ctx context.Context,
@@ -47,6 +60,7 @@ func ProvisionSelfEnrolledProject(
 	qtx db.Querier,
 	projectName string,
 	userSub string,
+	providerFactory providers.ProviderFactory,
 	// Passing these as arguments to minimize code changes. In future, it may
 	// make sense to hang these project create/delete methods off a struct or
 	// interface to reduce the amount of dependencies which need to be passed
@@ -102,14 +116,7 @@ func ProvisionSelfEnrolledProject(
 	}
 
 	// Create GitHub provider
-	dbProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       github.Github,
-		ProjectID:  project.ID,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
-		Implements: github.Implements,
-		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.AuthorizationFlows,
-	})
+	dbProvider, err := providerFactory(ctx, qtx, project.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}

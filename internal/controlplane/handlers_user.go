@@ -73,6 +73,9 @@ func (s *Server) CreateUser(ctx context.Context,
 		qtx,
 		baseName,
 		subject,
+		// TODO: this currently creates the github OAuth provider -- should we search
+		// for unclaimed GHA providers and use one of those instead?
+		projects.DefaultProviderFactory,
 		s.marketplace,
 		s.cfg.DefaultProfiles,
 	)
@@ -127,7 +130,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
-	resp, err := s.cfg.Identity.Server.Do(ctx, "DELETE", path.Join("admin/realms/stacklok/users", subject), nil)
+	resp, err := s.cfg.Identity.Server.Do(ctx, "DELETE", path.Join("admin/realms/stacklok/users", subject), nil, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
 	}

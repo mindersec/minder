@@ -57,6 +57,7 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 		mockStore,
 		"test-proj",
 		"test-user",
+		projects.DefaultProviderFactory,
 		marketplaces.NewNoopMarketplace(),
 		server.DefaultProfilesConfig{},
 	)
@@ -86,6 +87,7 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 		mockStore,
 		"test-proj",
 		"test-user",
+		projects.DefaultProviderFactory,
 		marketplaces.NewNoopMarketplace(),
 		server.DefaultProfilesConfig{},
 	)
