@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/rs/zerolog"
 	"github.com/stacklok/minder/internal/config/server"
 )
 
@@ -63,6 +62,5 @@ func GetUserForGitHubId(ctx context.Context, sic server.IdentityConfigWrapper, g
 	if len(users) > 1 {
 		return "", fmt.Errorf("expected 1 user, got %d", len(users))
 	}
-	zerolog.Ctx(ctx).Debug().Int64("gh_id", ghUser).Str("user", users[0].Id).Msgf("found user: %+v", users[0])
 	return users[0].Id, nil
 }
