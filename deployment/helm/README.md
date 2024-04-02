@@ -69,6 +69,7 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.secrets.githubAppSecretName | string | `"minder-github-app-secrets"` | Name of the secret containing the GitHub App configuration |
 | deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` | Name of the secret containing the identity configuration |
 | deploymentSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
+| deploymentSettings.terminationGracePeriodSeconds | int | `30` | Termination grace period for the main deployment |
 | extra_config | string | `"# Add content here\n"` | Additional configuration yaml beyond what's in server-config.yaml.example |
 | extra_config_migrate | string | `"# Add even more content here\n"` | Additional configuration yaml that's applied to the migration job |
 | hostname | string | `"minder.example.com"` | Hostname to use for the ingress configuration |

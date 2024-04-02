@@ -31,6 +31,7 @@ spec:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccounts.server | default "minder" }}
+      terminationGracePeriodSeconds: {{ .Values.deploymentSettings.terminationGracePeriodSeconds }}
       initContainers:
         {{- if .Values.deploymentSettings.initContainers }}
         {{- toYaml .Values.deploymentSettings.initContainers | nindent 8 }}

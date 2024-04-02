@@ -109,6 +109,8 @@ deploymentSettings:
     limits:
       cpu: 4
       memory: 1.5Gi
+  # -- (int) Termination grace period for the main deployment
+  terminationGracePeriodSeconds: 30
   # -- (array, optional) Additional volumes to mount
   extraVolumes: null
   # -- (array, optional) Additional volume mounts
