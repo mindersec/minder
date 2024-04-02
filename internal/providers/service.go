@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strconv"
 
@@ -53,6 +54,7 @@ type ProviderService interface {
 		installationID int64) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
+	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
 }
 
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
@@ -312,6 +314,10 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 		Str("providerID", installation.ProviderID.UUID.String()).
 		Msg("Deleting claimed installation")
 	return p.store.DeleteProvider(ctx, installation.ProviderID.UUID)
+}
+
+func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
+	return github.ValidatePayload(r, []byte(p.config.GitHubApp.WebhookSecret))
 }
 
 func (p *providerService) verifyProviderTokenIdentity(

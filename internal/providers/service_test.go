@@ -16,13 +16,16 @@
 package providers
 
 import (
+	"bytes"
 	"context"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
+	"net/http"
 	"os"
 	"strconv"
 	"testing"
@@ -342,4 +345,44 @@ func TestProviderService_ValidateGithubInstallationId(t *testing.T) {
 		&oauth2.Token{},
 		123)
 	require.NoError(t, err)
+}
+
+func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
+	t.Parallel()
+
+	event := github.PingEvent{}
+	pingJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal ping event")
+
+	req, err := http.NewRequest("POST", "https://stacklok.webhook", bytes.NewBuffer(pingJson))
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "ping")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	// the ping event has an empty body ({}), the value below is a SHA256 hmac of the empty body with the shared key "test"
+	req.Header.Add("X-Hub-Signature-256", "sha256=5f5863b9805ad4e66e954a260f9cab3f2e95718798dec0bb48a655195893d10e")
+	req.Header.Add("Content-Type", "application/json")
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pvtKeyFile := testCreatePrivateKeyFile(t)
+	defer os.Remove(pvtKeyFile.Name())
+	cfg := &server.ProviderConfig{
+		GitHubApp: &server.GitHubAppConfig{
+			WebhookSecret: "test",
+		},
+	}
+
+	provSvc, _ := testNewProviderService(t, ctrl, cfg)
+	payload, err := provSvc.ValidateGitHubAppWebhookPayload(req)
+	require.NoError(t, err)
+
+	var payloadEvent github.PingEvent
+	err = json.Unmarshal(payload, &payloadEvent)
+	require.NoError(t, err)
+
+	cfg.GitHubApp.WebhookSecret = "wrong"
+	_, err = provSvc.ValidateGitHubAppWebhookPayload(req)
+	require.Error(t, err)
 }
