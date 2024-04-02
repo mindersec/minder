@@ -227,8 +227,9 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
 
+	// TODO: move this lookup logic out of the controlplane
+	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
 	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
 		Provider:  providerFilter,
 		RepoOwner: fragments[0],
@@ -320,7 +321,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = projectID
 
-	provs, err := getProvidersByTrait(ctx, s.store, in, projectID, db.ProviderTypeRepoLister)
+	providerName := in.GetContext().GetProvider()
+	provs, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeRepoLister)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -440,13 +442,14 @@ func (s *Server) deleteRepository(
 	return nil
 }
 
+// TODO: move out of controlplane
 // inferProviderByOwner returns the provider to use for a given repo owner
 func (s *Server) inferProviderByOwner(ctx context.Context, owner string, projectID uuid.UUID, providerName string,
 ) (db.Provider, error) {
 	if providerName != "" {
 		return s.findProviderByName(ctx, providerName, projectID)
 	}
-	opts, err := getProvidersByTrait(ctx, s.store, nil, projectID, db.ProviderTypeGithub)
+	opts, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeGithub)
 	if err != nil {
 		return db.Provider{}, fmt.Errorf("error getting providers: %v", err)
 	}
