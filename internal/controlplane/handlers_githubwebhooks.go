@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stacklok/minder/internal/providers"
 	"io"
 	"mime"
 	"net/http"
@@ -468,7 +467,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	cli, err := s.instantiator.GetGitHub(ctx, provider, nil)
+	cli, err := s.instantiator.AsGitHub(ctx, provider, nil)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return err
@@ -514,7 +513,7 @@ func (s *Server) parsePullRequestModEvent(
 	store db.Store,
 	provider *db.Provider,
 ) error {
-	cli, err := s.instantiator.GetGitHub(ctx, provider, nil)
+	cli, err := s.instantiator.AsGitHub(ctx, provider, nil)
 	if err != nil {
 		log.Printf("error creating github provider: %v", err)
 		return err

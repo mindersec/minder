@@ -34,10 +34,22 @@ import (
 // interfaces defined in `github.com/stacklok/minder/pkg/providers/v1` from
 // the providers stored in the database.
 type TraitInstantiator interface {
-	GetGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error)
-	GetHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error)
-	GetGitHub(ctx context.Context, provider *db.Provider, options *GitHubOptions) (provinfv1.GitHub, error)
-	GetRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error)
+	// AsGit takes a provider, and attempts to instantiate it as the Git
+	// provider interface. Returns an error if the provider does not implement
+	// the correct trait.
+	AsGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error)
+	// AsHTTP takes a provider, and attempts to instantiate it as the HTTP
+	// provider interface. Returns an error if the provider does not implement
+	// the correct trait.
+	AsHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error)
+	// AsGitHub takes a provider, and attempts to instantiate it as the GitHub
+	// provider interface. Returns an error if the provider does not implement
+	// the correct trait.
+	AsGitHub(ctx context.Context, provider *db.Provider, options *GitHubOptions) (provinfv1.GitHub, error)
+	// AsRepoLister takes a provider, and attempts to instantiate it as the
+	// RepoLister provider interface. Returns an error if the provider does
+	// not implement the correct trait.
+	AsRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error)
 }
 
 // GitHubOptions contains options used when creating a GitHub instance
@@ -73,13 +85,13 @@ func NewTraitInstantiator(
 }
 
 // GetGit returns a git client for the provider.
-func (t *traitInstantiator) GetGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error) {
+func (t *traitInstantiator) AsGit(ctx context.Context, provider *db.Provider) (provinfv1.Git, error) {
 	if !provider.CanImplement(db.ProviderTypeGit) {
 		return nil, fmt.Errorf("provider does not implement git")
 	}
 
 	if provider.CanImplement(db.ProviderTypeGithub) {
-		return t.GetGitHub(ctx, provider, nil)
+		return t.AsGitHub(ctx, provider, nil)
 	}
 
 	gitCredential, err := getCredential[provinfv1.GitCredential](ctx, t, provider, nil)
@@ -91,7 +103,7 @@ func (t *traitInstantiator) GetGit(ctx context.Context, provider *db.Provider) (
 }
 
 // GetHTTP returns a github client for the provider.
-func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error) {
+func (t *traitInstantiator) AsHTTP(ctx context.Context, provider *db.Provider) (provinfv1.REST, error) {
 	if !provider.CanImplement(db.ProviderTypeRest) {
 		return nil, fmt.Errorf("provider does not implement rest")
 	}
@@ -100,7 +112,7 @@ func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) 
 	// The client gives us the ability to handle rate limiting and other
 	// things.
 	if provider.CanImplement(db.ProviderTypeGithub) {
-		return t.GetGitHub(ctx, provider, nil)
+		return t.AsGitHub(ctx, provider, nil)
 	}
 
 	if provider.Version != provinfv1.V1 {
@@ -122,7 +134,7 @@ func (t *traitInstantiator) GetHTTP(ctx context.Context, provider *db.Provider) 
 }
 
 // GetGitHub returns a github client for the provider.
-func (t *traitInstantiator) GetGitHub(
+func (t *traitInstantiator) AsGitHub(
 	ctx context.Context,
 	provider *db.Provider,
 	options *GitHubOptions,
@@ -180,7 +192,7 @@ func (t *traitInstantiator) GetGitHub(
 }
 
 // GetRepoLister returns a repo lister for the provider.
-func (t *traitInstantiator) GetRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error) {
+func (t *traitInstantiator) AsRepoLister(ctx context.Context, provider *db.Provider) (provinfv1.RepoLister, error) {
 	if !provider.CanImplement(db.ProviderTypeRepoLister) {
 		return nil, fmt.Errorf("provider does not implement repo lister")
 	}
@@ -190,7 +202,7 @@ func (t *traitInstantiator) GetRepoLister(ctx context.Context, provider *db.Prov
 	}
 
 	if provider.CanImplement(db.ProviderTypeGithub) {
-		return t.GetGitHub(ctx, provider, nil)
+		return t.AsGitHub(ctx, provider, nil)
 	}
 
 	// TODO: We'll need to add support for other providers here

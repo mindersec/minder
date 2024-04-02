@@ -402,7 +402,7 @@ func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payl
 func (p *providerService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
 	opts := GitHubOptions{Credential: credentials.NewGitHubTokenCredential(token), OwnerFilter: ptr.Ptr("")}
-	ghClient, err := p.instantiator.GetGitHub(ctx, &provider, &opts)
+	ghClient, err := p.instantiator.AsGitHub(ctx, &provider, &opts)
 	if err != nil {
 		return fmt.Errorf("error creating GitHub client: %w", err)
 	}
