@@ -113,6 +113,69 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 	return pb.Entity_ENTITY_UNSPECIFIED
 }
 
+// HandleGitHubAppWebhook handles incoming GitHub App webhooks
+func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		wes := &metrics.WebhookEventState{
+			Typ:      "unknown",
+			Accepted: false,
+			Error:    true,
+		}
+		defer func() {
+			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
+		}()
+
+		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
+		if err != nil {
+			log.Printf("Error validating webhook payload: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		wes.Typ = github.WebHookType(r)
+		if wes.Typ == "ping" {
+			log.Printf("ping received")
+			wes.Error = false
+			return
+		}
+
+		m := message.NewMessage(uuid.New().String(), nil)
+		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
+		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
+		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
+
+		ctx := r.Context()
+		l := zerolog.Ctx(ctx).With().
+			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
+			Str("providertype", m.Metadata[events.ProviderTypeKey]).
+			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			Logger()
+
+		if err := s.parseGithubAppEventForProcessing(rawWBPayload, m); err != nil {
+			wes = handleParseError(wes.Typ, err)
+			if wes.Error {
+				w.WriteHeader(http.StatusInternalServerError)
+			} else {
+				w.WriteHeader(http.StatusOK)
+			}
+			return
+		}
+
+		wes.Accepted = true
+		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
+
+		if err := s.evt.Publish(providers.ProviderInstallationTopic, m); err != nil {
+			wes.Error = true
+			log.Printf("Error publishing message: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		wes.Error = false
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
@@ -280,6 +343,51 @@ func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
 	}
 	log.Print(logMsg)
 	return state
+}
+
+func (_ *Server) parseGithubAppEventForProcessing(
+	rawWHPayload []byte,
+	msg *message.Message,
+) error {
+	var event github.InstallationEvent
+
+	if msg.Metadata.Get(events.GithubWebhookEventTypeKey) != "installation" {
+		return newErrNotHandled("github app event %s not handled", msg.Metadata.Get(events.GithubWebhookEventTypeKey))
+	}
+
+	err := json.Unmarshal(rawWHPayload, &event)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling payload: %w", err)
+	}
+
+	action := event.GetAction()
+	if action == "" {
+		return fmt.Errorf("action is empty")
+	}
+
+	if action != "deleted" {
+		return newErrNotHandled("event %s with action %s not handled",
+			msg.Metadata.Get(events.GithubWebhookEventTypeKey), action)
+	}
+
+	installationID := event.GetInstallation().GetID()
+	if installationID == 0 {
+		return fmt.Errorf("installation ID is 0")
+	}
+
+	payloadBytes, err := json.Marshal(providers.GitHubAppInstallationDeletedPayload{
+		InstallationID: installationID,
+	})
+	if err != nil {
+		return fmt.Errorf("error marshalling payload: %w", err)
+	}
+
+	providers.ProviderInstanceRemovedMessage(
+		msg,
+		db.ProviderClassGithubApp,
+		payloadBytes)
+
+	return nil
 }
 
 func (s *Server) parseGithubEventForProcessing(

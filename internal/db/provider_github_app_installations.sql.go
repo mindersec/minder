@@ -12,6 +12,35 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteInstallationIDByAppID = `-- name: DeleteInstallationIDByAppID :exec
+DELETE FROM provider_github_app_installations WHERE app_installation_id = $1
+`
+
+func (q *Queries) DeleteInstallationIDByAppID(ctx context.Context, appInstallationID string) error {
+	_, err := q.db.ExecContext(ctx, deleteInstallationIDByAppID, appInstallationID)
+	return err
+}
+
+const getInstallationIDByAppID = `-- name: GetInstallationIDByAppID :one
+SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id FROM provider_github_app_installations WHERE app_installation_id = $1
+`
+
+func (q *Queries) GetInstallationIDByAppID(ctx context.Context, appInstallationID string) (ProviderGithubAppInstallation, error) {
+	row := q.db.QueryRowContext(ctx, getInstallationIDByAppID, appInstallationID)
+	var i ProviderGithubAppInstallation
+	err := row.Scan(
+		&i.AppInstallationID,
+		&i.ProviderID,
+		&i.OrganizationID,
+		&i.EnrollingUserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EnrollmentNonce,
+		&i.ProjectID,
+	)
+	return i, err
+}
+
 const getInstallationIDByEnrollmentNonce = `-- name: GetInstallationIDByEnrollmentNonce :one
 SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id FROM provider_github_app_installations WHERE project_id = $1 AND enrollment_nonce = $2
 `

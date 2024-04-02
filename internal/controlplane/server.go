@@ -191,6 +191,11 @@ func NewServer(
 	return s, nil
 }
 
+// GetProviderService returns the provider service
+func (s *Server) GetProviderService() providers.ProviderService {
+	return s.providers
+}
+
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
 	exporter, err := stdout.New(stdout.WithPrettyPrint())
@@ -356,6 +361,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
+	mux.Handle("/api/v1/ghapp/", mw(s.HandleGitHubAppWebhook()))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
