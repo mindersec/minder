@@ -3978,6 +3978,10 @@
         "ruleEvaluationId": {
           "type": "string",
           "title": "rule_evaluation_id is the id of the rule evaluation"
+        },
+        "remediationUrl": {
+          "type": "string",
+          "title": "remediation_url is a url to get more data about a remediation, for PRs is the link to the PR"
         }
       },
       "title": "get the status of the rules for a given profile"

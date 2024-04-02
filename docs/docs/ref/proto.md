@@ -1711,6 +1711,7 @@ get the status of the rules for a given profile
 | alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
 | severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
 | rule_evaluation_id | [string](#string) |  | rule_evaluation_id is the id of the rule evaluation |
+| remediation_url | [string](#string) |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 
 
 <a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
