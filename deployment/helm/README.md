@@ -69,6 +69,12 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.secrets.githubAppSecretName | string | `"minder-github-app-secrets"` | Name of the secret containing the GitHub App configuration |
 | deploymentSettings.secrets.identitySecretName | string | `"minder-identity-secrets"` | Name of the secret containing the identity configuration |
 | deploymentSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
+| deploymentSettings.strategy | object, optional | `{"rollingUpdate":{"maxSurge":2,"maxUnavailable":0},"type":"RollingUpdate"}` | Allow for configuring the deployment's strategy |
+| deploymentSettings.strategy.rollingUpdate | object, optional | `{"maxSurge":2,"maxUnavailable":0}` | RollingUpdate strategy settings |
+| deploymentSettings.strategy.rollingUpdate.maxSurge | int | `2` | Max surge pods during a rolling update |
+| deploymentSettings.strategy.rollingUpdate.maxUnavailable | int | `0` | Max unavailable pods during a rolling update |
+| deploymentSettings.strategy.type | string | `"RollingUpdate"` | Type of deployment strategy to use |
+| deploymentSettings.terminationGracePeriodSeconds | int | `30` | Termination grace period for the main deployment |
 | extra_config | string | `"# Add content here\n"` | Additional configuration yaml beyond what's in server-config.yaml.example |
 | extra_config_migrate | string | `"# Add even more content here\n"` | Additional configuration yaml that's applied to the migration job |
 | hostname | string | `"minder.example.com"` | Hostname to use for the ingress configuration |
