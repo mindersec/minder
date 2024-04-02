@@ -1207,6 +1207,8 @@ message RuleEvaluationStatus {
     Severity severity = 16;
     // rule_evaluation_id is the id of the rule evaluation
     string rule_evaluation_id = 17;
+    // remediation_url is a url to get more data about a remediation, for PRs is the link to the PR
+    string remediation_url = 18;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
