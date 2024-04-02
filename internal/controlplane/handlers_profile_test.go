@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"github.com/stacklok/minder/internal/providers"
 	"reflect"
 	"testing"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
