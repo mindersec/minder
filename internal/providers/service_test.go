@@ -25,6 +25,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"net/http"
 	"os"
 	"strconv"
@@ -59,6 +60,7 @@ func testNewProviderService(
 	t *testing.T,
 	mockCtrl *gomock.Controller,
 	config *server.ProviderConfig,
+	projectFactory ProjectFactory,
 ) (*providerService, *testMocks) {
 	t.Helper()
 
@@ -80,6 +82,7 @@ func testNewProviderService(
 		metrics.NewNoopMetrics(),
 		telemetry.NewNoopMetrics(),
 		config,
+		projectFactory,
 		mockratecache.NewMockRestClientCache(mockCtrl),
 	)
 
@@ -119,7 +122,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 
 	cfg := &server.ProviderConfig{}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg)
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
 	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
 		db.CreateProjectParams{
 			Name:     "test",
@@ -222,7 +225,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg)
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
 	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
 		db.CreateProjectParams{
 			Name:     "test",
@@ -269,6 +272,68 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 
 }
 
+func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
+	t.Parallel()
+
+	const (
+		installationID = 1234
+		accountLogin   = "existing-user"
+		accountID      = 9876
+	)
+	newProject := uuid.New()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pvtKeyFile := testCreatePrivateKeyFile(t)
+	defer os.Remove(pvtKeyFile.Name())
+	cfg := &server.ProviderConfig{
+		GitHubApp: &server.GitHubAppConfig{
+			PrivateKey: pvtKeyFile.Name(),
+		},
+	}
+	factory := func(_ context.Context, qtx db.Querier, name string, _ int64) (*db.Project, error) {
+		project, err := qtx.CreateProject(context.Background(), db.CreateProjectParams{
+			Name:     name,
+			Metadata: []byte(`{}`),
+		})
+		if err != nil {
+			t.Fatalf("Failed to create project: %v", err)
+			return nil, err
+		}
+		newProject = project.ID
+		return &project, nil
+	}
+
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, factory)
+
+	mocks.svcMock.EXPECT().
+		GetInstallation(gomock.Any(), int64(installationID), gomock.Any()).
+		Return(&github.Installation{
+			Account: &github.User{
+				Login: github.String(accountLogin),
+				ID:    github.Int64(accountID),
+			},
+		}, nil, nil)
+
+	mocks.svcMock.EXPECT().
+		GetUserIdFromToken(gomock.Any(), gomock.Any()).
+		Return(github.Int64(accountID), nil)
+
+	newProviderInstall, err := provSvc.CreateGitHubAppWithoutInvitation(
+		context.Background(), &oauth2.Token{},
+		installationID)
+	require.NoError(t, err)
+	require.NotNil(t, newProviderInstall)
+
+	require.Equal(t, newProject, newProviderInstall.ProjectID.UUID)
+
+	require.NotEqual(t, uuid.NullUUID{}, newProviderInstall.ProviderID)
+	require.Equal(t, strconv.FormatInt(installationID, 10), newProviderInstall.AppInstallationID)
+	require.Equal(t, int64(accountID), newProviderInstall.OrganizationID)
+	require.Equal(t, sql.NullString{}, newProviderInstall.EnrollingUserID)
+}
+
 func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 	t.Parallel()
 
@@ -289,7 +354,11 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg)
+	factory := func(context.Context, db.Querier, string, int64) (*db.Project, error) {
+		return nil, errors.New("error getting user for GitHub ID: 404 not found")
+	}
+
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, factory)
 
 	mocks.svcMock.EXPECT().
 		GetInstallation(gomock.Any(), int64(installationID), gomock.Any()).
@@ -304,7 +373,7 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 		GetUserIdFromToken(gomock.Any(), gomock.Any()).
 		Return(github.Int64(accountID), nil)
 
-	dbUnclaimed, err := provSvc.CreateUnclaimedGitHubAppInstallation(
+	dbUnclaimed, err := provSvc.CreateGitHubAppWithoutInvitation(
 		context.Background(), &oauth2.Token{},
 		installationID)
 	require.NoError(t, err)
@@ -330,7 +399,7 @@ func TestProviderService_ValidateGithubInstallationId(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg)
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
 
 	mocks.svcMock.EXPECT().
 		ListUserInstallations(gomock.Any(), gomock.Any()).
@@ -374,7 +443,7 @@ func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
 		},
 	}
 
-	provSvc, _ := testNewProviderService(t, ctrl, cfg)
+	provSvc, _ := testNewProviderService(t, ctrl, cfg, nil)
 	payload, err := provSvc.ValidateGitHubAppWebhookPayload(req)
 	require.NoError(t, err)
 

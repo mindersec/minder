@@ -32,7 +32,7 @@ type GitHubAppConfig struct {
 	AppID int64 `mapstructure:"app_id" default:"0"`
 	// UserID is the ID of the GitHub App user
 	UserID int64 `mapstructure:"user_id" default:"0"`
-	// PrivateKey is the GitHub App's private key
+	// PrivateKey is the path to the GitHub App's private key in PEM format
 	PrivateKey string `mapstructure:"private_key"`
 	// WebhookSecret is the GitHub App's webhook secret
 	WebhookSecret string `mapstructure:"webhook_secret"`

@@ -186,7 +186,8 @@ func NewServer(
 	}
 
 	// Moved here because we have a dependency on s.restClientCache
-	s.providers = providers.NewProviderService(store, eng, mt, provMt, &cfg.Provider, s.restClientCache)
+	s.providers = providers.NewProviderService(
+		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache)
 
 	return s, nil
 }
