@@ -265,7 +265,7 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		// We couldn't create the project, so create a stand-alone (unclaimed) installation
 		gitHubAppInstallation, err := p.store.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
 			ProviderID:        uuid.NullUUID{},
-			AppInstallationID: strconv.FormatInt(installationID, 10),
+			AppInstallationID: installationID,
 			OrganizationID:    installationOwner.GetID(),
 			EnrollingUserID: sql.NullString{
 				Valid:  true,
@@ -339,7 +339,7 @@ func createGitHubApp(
 			Valid: true,
 		},
 		OrganizationID:    installationOwner.GetID(),
-		AppInstallationID: strconv.FormatInt(installationID, 10),
+		AppInstallationID: installationID,
 		EnrollmentNonce:   nonce,
 	})
 	if err != nil {
@@ -374,7 +374,7 @@ type GitHubAppInstallationDeletedPayload struct {
 }
 
 func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
-	installation, err := p.store.GetInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+	installation, err := p.store.GetInstallationIDByAppID(ctx, installationID)
 	if err != nil {
 		return fmt.Errorf("error getting installation: %w", err)
 	}
@@ -383,7 +383,7 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 		zerolog.Ctx(ctx).Info().
 			Int64("installationID", installationID).
 			Msg("Installation not claimed, deleting the installation")
-		return p.store.DeleteInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+		return p.store.DeleteInstallationIDByAppID(ctx, installationID)
 	}
 
 	zerolog.Ctx(ctx).Info().

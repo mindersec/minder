@@ -266,7 +266,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 		uuid.NullUUID{UUID: dbProv.ID, Valid: true},
 	)
 	require.NoError(t, err)
-	require.Equal(t, dbInstall.AppInstallationID, strconv.FormatInt(installationID, 10))
+	require.Equal(t, dbInstall.AppInstallationID, int64(installationID))
 	require.Equal(t, dbInstall.OrganizationID, int64(accountID))
 	require.Equal(t, dbInstall.EnrollmentNonce, sql.NullString{Valid: true, String: stateNonce})
 
@@ -329,7 +329,7 @@ func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
 	require.Equal(t, newProject, newProviderInstall.ProjectID.UUID)
 
 	require.NotEqual(t, uuid.NullUUID{}, newProviderInstall.ProviderID)
-	require.Equal(t, strconv.FormatInt(installationID, 10), newProviderInstall.AppInstallationID)
+	require.Equal(t, int64(installationID), newProviderInstall.AppInstallationID)
 	require.Equal(t, int64(accountID), newProviderInstall.OrganizationID)
 	require.Equal(t, sql.NullString{}, newProviderInstall.EnrollingUserID)
 }
@@ -380,7 +380,7 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 	require.NotNil(t, dbUnclaimed)
 
 	require.Equal(t, dbUnclaimed.ProviderID, uuid.NullUUID{})
-	require.Equal(t, dbUnclaimed.AppInstallationID, strconv.FormatInt(installationID, 10))
+	require.Equal(t, dbUnclaimed.AppInstallationID, int64(installationID))
 	require.Equal(t, dbUnclaimed.OrganizationID, int64(accountID))
 	require.Equal(t, dbUnclaimed.EnrollingUserID, sql.NullString{Valid: true, String: strconv.FormatInt(accountID, 10)})
 }

@@ -35,7 +35,7 @@ import (
 
 var (
 	generatedToken               = "test_token"
-	installationId               = "987654"
+	installationId               = int64(987654)
 	gitHubInstallationCredential = GitHubInstallationTokenCredential{
 		installationId: installationId,
 		token:          generatedToken,
@@ -136,5 +136,6 @@ func TestGitHubInstallationTokenCredentialGetAsOAuth2TokenSource(t *testing.T) {
 func TestGitHubInstallationTokenCredentialGetCacheKey(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, installationId, gitHubInstallationCredential.GetCacheKey())
+	// we still want to compare against string(ID) because the cache key is supposed to return a string
+	require.Equal(t, fmt.Sprint(installationId), gitHubInstallationCredential.GetCacheKey())
 }
