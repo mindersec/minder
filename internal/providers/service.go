@@ -102,7 +102,7 @@ type providerService struct {
 	provMt          provtelemetry.ProviderMetrics
 	config          *server.ProviderConfig
 	restClientCache ratecache.RestClientCache
-	provSvcGhOps    GitHubClientService
+	ghClientService GitHubClientService
 }
 
 // NewProviderService creates an instance of ProviderService
@@ -115,7 +115,7 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 		provMt:          provMt,
 		config:          config,
 		restClientCache: restClientCache,
-		provSvcGhOps:    provSvcGhOpsImpl{},
+		ghClientService: provSvcGhOpsImpl{},
 	}
 }
 
@@ -286,7 +286,7 @@ func (p *providerService) CreateUnclaimedGitHubAppInstallation(
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 
-	userID, err := p.provSvcGhOps.GetUserIdFromToken(ctx, token)
+	userID, err := p.ghClientService.GetUserIdFromToken(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user ID from token: %w", err)
 	}
@@ -307,7 +307,7 @@ func (p *providerService) CreateUnclaimedGitHubAppInstallation(
 
 // ValidateGitHubInstallationId checks if the user has access to the installation ID
 func (p *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
-	installations, err := p.provSvcGhOps.ListUserInstallations(ctx, token)
+	installations, err := p.ghClientService.ListUserInstallations(ctx, token)
 	if err != nil {
 		return fmt.Errorf("error getting user installations: %w", err)
 	}
@@ -359,7 +359,7 @@ func (p *providerService) getInstallationOwner(ctx context.Context, installation
 		return nil, fmt.Errorf("error creating GitHub App JWT: %w", err)
 	}
 
-	installation, _, err := p.provSvcGhOps.GetInstallation(ctx, installationID, jwt)
+	installation, _, err := p.ghClientService.GetInstallation(ctx, installationID, jwt)
 	if err != nil {
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}

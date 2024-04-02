@@ -82,7 +82,7 @@ func testNewProviderService(
 
 	ps, ok := psi.(*providerService)
 	require.True(t, ok)
-	ps.provSvcGhOps = mocks.svcMock
+	ps.ghClientService = mocks.svcMock
 	return ps, mocks
 }
 
@@ -263,6 +263,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.Equal(t, dbInstall.AppInstallationID, strconv.FormatInt(installationID, 10))
 	require.Equal(t, dbInstall.OrganizationID, int64(accountID))
 	require.Equal(t, dbInstall.EnrollmentNonce, sql.NullString{Valid: true, String: stateNonce})
+
 }
 
 func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
