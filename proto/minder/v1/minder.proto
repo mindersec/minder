@@ -1211,6 +1211,8 @@ message RuleEvaluationStatus {
     string rule_evaluation_id = 17;
     // remediation_url is a url to get more data about a remediation, for PRs is the link to the PR
     string remediation_url = 18;
+    // rule_display_name captures the display name of the rule 
+    string rule_display_name = 19;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
