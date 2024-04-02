@@ -51,13 +51,12 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(
+	_, err := projects.ProvisionSelfEnrolledOAuthProject(
 		ctx,
 		authzClient,
 		mockStore,
 		"test-proj",
 		"test-user",
-		projects.DefaultProviderFactory,
 		marketplaces.NewNoopMarketplace(),
 		server.DefaultProfilesConfig{},
 	)
@@ -81,13 +80,12 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledProject(
+	_, err := projects.ProvisionSelfEnrolledOAuthProject(
 		ctx,
 		authzClient,
 		mockStore,
 		"test-proj",
 		"test-user",
-		projects.DefaultProviderFactory,
 		marketplaces.NewNoopMarketplace(),
 		server.DefaultProfilesConfig{},
 	)

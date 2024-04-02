@@ -331,9 +331,9 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		// We weren't expecting this install, maybe it matches an existing user
 		// and we'll create a new project to match.
 		zerolog.Ctx(ctx).Info().Int64("install", installationID).Msg("Unmatched GitHub App install, trying to create project")
-		_, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, token, installationID, s.makeProjectForGitHubApp)
+		_, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, token, installationID)
 		if err != nil {
-			return fmt.Errorf("error saving installation ID: %w", err)
+			return fmt.Errorf("error handling app without minder state: %w", err)
 		}
 	}
 
@@ -594,7 +594,6 @@ func (s *Server) makeProjectForGitHubApp(
 	qtx db.Querier,
 	name string,
 	ghUser int64,
-	makeProvider providers.ProviderFactory,
 ) (*db.Project, error) {
 	user, err := auth.GetUserForGitHubId(ctx, s.cfg.Identity, ghUser)
 	if err != nil {
@@ -605,25 +604,19 @@ func (s *Server) makeProjectForGitHubApp(
 		return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
 	}
 
-	topLevelProject, err := projects.ProvisionSelfEnrolledProject(
+	topLevelProject, _, err := projects.ProvisionSelfEnrolledProject(
 		ctx,
 		s.authzClient,
 		qtx,
 		name,
 		user,
-		makeProvider,
 		s.marketplace,
 		s.cfg.DefaultProfiles,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating project: %w", err)
 	}
-	// ProvisionSelfEnrolledProject returns a pb.Project, but we need a db.Project
-	project, err := qtx.GetProjectByID(ctx, uuid.MustParse(topLevelProject.ProjectId))
-	if err != nil {
-		return nil, fmt.Errorf("error fetching project: %w", err)
-	}
-	return &project, nil
+	return topLevelProject, nil
 }
 
 type httpResponseError struct {

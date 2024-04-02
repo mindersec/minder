@@ -42,15 +42,6 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
-// ProviderFactory is a function which creates the first provider for a project.
-type ProviderFactory func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error)
-
-// ProjectFactory may create a project named name for the specified userid if
-// present in the system.  If a db.Project is returned, it should be used as the
-// location to create a Provider corresponding to the GitHub App installation.
-type ProjectFactory func(
-	ctx context.Context, qtx db.Querier, name string, user int64, makeProvider ProviderFactory) (*db.Project, error)
-
 // ProviderService encapsulates methods for creating and updating providers
 type ProviderService interface {
 	CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
@@ -58,13 +49,20 @@ type ProviderService interface {
 	CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow,
 		installationID int64, state string) (*db.Provider, error)
 	CreateGitHubAppWithoutInvitation(ctx context.Context, token *oauth2.Token,
-		installationID int64, factory ProjectFactory) (*db.ProviderGithubAppInstallation, error)
+		installationID int64) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
+	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 }
 
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
 // from the state
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
+
+// ProjectFactory may create a project named name for the specified userid if
+// present in the system.  If a db.Project is returned, it should be used as the
+// location to create a Provider corresponding to the GitHub App installation.
+type ProjectFactory func(
+	ctx context.Context, qtx db.Querier, name string, user int64) (*db.Project, error)
 
 type providerService struct {
 	store           db.Store
@@ -72,18 +70,21 @@ type providerService struct {
 	mt              metrics.Metrics
 	provMt          provtelemetry.ProviderMetrics
 	config          *server.ProviderConfig
+	projectFactory  ProjectFactory
 	restClientCache ratecache.RestClientCache
 }
 
 // NewProviderService creates an instance of ProviderService
 func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.Metrics,
-	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig, restClientCache ratecache.RestClientCache) ProviderService {
+	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig,
+	projectFactory ProjectFactory, restClientCache ratecache.RestClientCache) ProviderService {
 	return &providerService{
 		store:           store,
 		cryptoEngine:    cryptoEngine,
 		mt:              mt,
 		provMt:          provMt,
 		config:          config,
+		projectFactory:  projectFactory,
 		restClientCache: restClientCache,
 	}
 }
@@ -233,7 +234,6 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 	ctx context.Context,
 	token *oauth2.Token,
 	installationID int64,
-	factory ProjectFactory,
 ) (*db.ProviderGithubAppInstallation, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
@@ -252,16 +252,13 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 	defer p.store.Rollback(tx)
 	qtx := p.store.GetQuerierWithTransaction(tx)
 
-	// Note: this is filled in by providerMaker, below
-	var newProvider db.Provider
-
-	providerMaker := func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
-		newProvider, err = createGitHubApp(ctx, qtx, projectID, installationOwner, installationID, nil, sql.NullString{})
-		return newProvider, nil
-	}
+	// providerMaker := func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
+	// 	newProvider, err = createGitHubApp(ctx, qtx, projectID, installationOwner, installationID, nil, sql.NullString{})
+	// 	return newProvider, nil
+	// }
 
 	projectName := fmt.Sprintf("github-%s", installationOwner.GetLogin())
-	_, err = factory(ctx, qtx, projectName, *userID, providerMaker)
+	project, err := p.projectFactory(ctx, qtx, projectName, *userID /*, providerMaker*/)
 	if err != nil {
 		// This _can_ be normal if someone enrolls the app without ever logging in to Minder, but should be rare.
 		zerolog.Ctx(ctx).Warn().Err(err).Int64("install", installationID).Msg("Error constructing project for install")
@@ -281,12 +278,18 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		return &gitHubAppInstallation, nil
 	}
 
+	provider, err := createGitHubApp(ctx, qtx, project.ID, installationOwner, installationID, nil, sql.NullString{})
+	if err != nil {
+		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
+
+	}
+
 	if err = p.store.Commit(tx); err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	install, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
-		UUID:  newProvider.ID,
+		UUID:  provider.ID,
 		Valid: true,
 	})
 
@@ -366,6 +369,31 @@ func (_ *providerService) ValidateGitHubInstallationId(ctx context.Context, toke
 	}
 
 	return nil
+}
+
+// GitHubAppInstallationDeletedPayload represents the payload of a GitHub App installation deleted event
+type GitHubAppInstallationDeletedPayload struct {
+	InstallationID int64 `json:"installation_id"`
+}
+
+func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
+	installation, err := p.store.GetInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+	if err != nil {
+		return fmt.Errorf("error getting installation: %w", err)
+	}
+
+	if installation.ProviderID.UUID == uuid.Nil {
+		zerolog.Ctx(ctx).Info().
+			Int64("installationID", installationID).
+			Msg("Installation not claimed, deleting the installation")
+		return p.store.DeleteInstallationIDByAppID(ctx, strconv.FormatInt(installationID, 10))
+	}
+
+	zerolog.Ctx(ctx).Info().
+		Int64("installationID", installationID).
+		Str("providerID", installation.ProviderID.UUID.String()).
+		Msg("Deleting claimed installation")
+	return p.store.DeleteProvider(ctx, installation.ProviderID.UUID)
 }
 
 func (p *providerService) verifyProviderTokenIdentity(

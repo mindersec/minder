@@ -486,13 +486,13 @@ type MigrationProfileBackfillLog struct {
 type Profile struct {
 	ID             uuid.UUID      `json:"id"`
 	Name           string         `json:"name"`
-	Provider       string         `json:"provider"`
+	Provider       sql.NullString `json:"provider"`
 	ProjectID      uuid.UUID      `json:"project_id"`
 	Remediate      NullActionType `json:"remediate"`
 	Alert          NullActionType `json:"alert"`
 	CreatedAt      time.Time      `json:"created_at"`
 	UpdatedAt      time.Time      `json:"updated_at"`
-	ProviderID     uuid.UUID      `json:"provider_id"`
+	ProviderID     uuid.NullUUID  `json:"provider_id"`
 	SubscriptionID uuid.NullUUID  `json:"subscription_id"`
 	DisplayName    string         `json:"display_name"`
 	Labels         []string       `json:"labels"`

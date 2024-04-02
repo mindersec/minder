@@ -42,7 +42,6 @@ var applyCmd = &cobra.Command{
 func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	f := viper.GetString("file")
 
@@ -85,7 +84,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
-	profile, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, provider, applyFunc)
+	profile, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, applyFunc)
 	if err != nil {
 		return cli.MessageAndError(fmt.Sprintf("error applying profile from %s", f), err)
 	}

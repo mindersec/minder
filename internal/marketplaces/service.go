@@ -20,9 +20,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/stacklok/minder/internal/db"
 	sub "github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/pkg/mindpak"
 	"github.com/stacklok/minder/pkg/mindpak/reader"
 	"github.com/stacklok/minder/pkg/mindpak/sources"
@@ -36,14 +37,14 @@ type Marketplace interface {
 	// bundle and adds all rules from that bundle to the project.
 	Subscribe(
 		ctx context.Context,
-		project types.ProjectContext,
+		projectID uuid.UUID,
 		bundleID mindpak.BundleID,
 		qtx db.Querier,
 	) error
 	// AddProfile adds the specified profile from the bundle to the project.
 	AddProfile(
 		ctx context.Context,
-		project types.ProjectContext,
+		projectID uuid.UUID,
 		bundleID mindpak.BundleID,
 		profileName string,
 		qtx db.Querier,
@@ -61,7 +62,7 @@ type marketplace struct {
 
 func (s *marketplace) Subscribe(
 	ctx context.Context,
-	project types.ProjectContext,
+	projectID uuid.UUID,
 	bundleID mindpak.BundleID,
 	qtx db.Querier,
 ) error {
@@ -69,7 +70,7 @@ func (s *marketplace) Subscribe(
 	if err != nil {
 		return err
 	}
-	if err = s.subscriptions.Subscribe(ctx, project, bundle, qtx); err != nil {
+	if err = s.subscriptions.Subscribe(ctx, projectID, bundle, qtx); err != nil {
 		return fmt.Errorf("error while creating subscription: %w", err)
 	}
 	return nil
@@ -77,7 +78,7 @@ func (s *marketplace) Subscribe(
 
 func (s *marketplace) AddProfile(
 	ctx context.Context,
-	project types.ProjectContext,
+	projectID uuid.UUID,
 	bundleID mindpak.BundleID,
 	profileName string,
 	qtx db.Querier,
@@ -87,7 +88,7 @@ func (s *marketplace) AddProfile(
 		return err
 	}
 
-	if err = s.subscriptions.CreateProfile(ctx, project, bundle, profileName, qtx); err != nil {
+	if err = s.subscriptions.CreateProfile(ctx, projectID, bundle, profileName, qtx); err != nil {
 		return fmt.Errorf("error while creating profile in project: %w", err)
 	}
 
@@ -110,13 +111,13 @@ func (s *marketplace) getBundle(bundleID mindpak.BundleID) (reader.BundleReader,
 // This is used when the Marketplace functionality is disabled
 type noopMarketplace struct{}
 
-func (_ *noopMarketplace) Subscribe(_ context.Context, _ types.ProjectContext, _ mindpak.BundleID, _ db.Querier) error {
+func (_ *noopMarketplace) Subscribe(_ context.Context, _ uuid.UUID, _ mindpak.BundleID, _ db.Querier) error {
 	return nil
 }
 
 func (_ *noopMarketplace) AddProfile(
 	_ context.Context,
-	_ types.ProjectContext,
+	_ uuid.UUID,
 	_ mindpak.BundleID,
 	_ string,
 	_ db.Querier,

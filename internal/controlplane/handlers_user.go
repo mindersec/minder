@@ -67,15 +67,14 @@ func (s *Server) CreateUser(ctx context.Context,
 		baseName = token.PreferredUsername()
 	}
 
-	orgProject, err := projects.ProvisionSelfEnrolledProject(
+	// TODO: this currently creates the github OAuth provider -- should we search
+	// for unclaimed GHA providers and use one of those instead?
+	orgProject, err := projects.ProvisionSelfEnrolledOAuthProject(
 		ctx,
 		s.authzClient,
 		qtx,
 		baseName,
 		subject,
-		// TODO: this currently creates the github OAuth provider -- should we search
-		// for unclaimed GHA providers and use one of those instead?
-		projects.DefaultProviderFactory,
 		s.marketplace,
 		s.cfg.DefaultProfiles,
 	)

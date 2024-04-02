@@ -535,7 +535,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(nil)
 				service.EXPECT().
-					CreateGitHubAppWithoutInvitation(gomock.Any(), gomock.Any(), installationID, gomock.Any()).
+					CreateGitHubAppWithoutInvitation(gomock.Any(), gomock.Any(), installationID).
 					Return(&db.ProviderGithubAppInstallation{}, nil)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {

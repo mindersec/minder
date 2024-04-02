@@ -29,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
-	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -198,8 +197,7 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 				Name:        p.GetProfile().Name,
 				DisplayName: displayName,
 				Context: &pb.Context{
-					Provider: ptr.Ptr[string](p.GetProfile().Provider),
-					Project:  &project,
+					Project: &project,
 				},
 			}
 
@@ -253,8 +251,7 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 				Name:        p.Name,
 				DisplayName: displayName,
 				Context: &pb.Context{
-					Provider: &p.Provider,
-					Project:  &project,
+					Project: &project,
 				},
 			}
 

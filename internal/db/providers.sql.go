@@ -60,16 +60,11 @@ func (q *Queries) CreateProvider(ctx context.Context, arg CreateProviderParams) 
 }
 
 const deleteProvider = `-- name: DeleteProvider :exec
-DELETE FROM providers WHERE id = $1 AND project_id = $2
+DELETE FROM providers WHERE id = $1
 `
 
-type DeleteProviderParams struct {
-	ID        uuid.UUID `json:"id"`
-	ProjectID uuid.UUID `json:"project_id"`
-}
-
-func (q *Queries) DeleteProvider(ctx context.Context, arg DeleteProviderParams) error {
-	_, err := q.db.ExecContext(ctx, deleteProvider, arg.ID, arg.ProjectID)
+func (q *Queries) DeleteProvider(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteProvider, id)
 	return err
 }
 

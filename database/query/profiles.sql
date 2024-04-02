@@ -1,15 +1,13 @@
 -- name: CreateProfile :one
 INSERT INTO profiles (  
-    provider,
     project_id,
     remediate,
     alert,
     name,
-    provider_id,
     subscription_id,
     display_name,
     labels
-) VALUES ($1, $2, $3, $4, $5, sqlc.arg(provider_id), sqlc.narg(subscription_id), sqlc.arg(display_name), COALESCE(sqlc.arg(labels)::text[], '{}'::text[])) RETURNING *;
+) VALUES ($1, $2, $3, $4, sqlc.narg(subscription_id), sqlc.arg(display_name), COALESCE(sqlc.arg(labels)::text[], '{}'::text[])) RETURNING *;
 
 -- name: UpdateProfile :one
 UPDATE profiles SET

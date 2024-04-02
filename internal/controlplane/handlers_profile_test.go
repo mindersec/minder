@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -226,18 +227,6 @@ func TestCreateProfile(t *testing.T) {
 		t.Fatalf("Error creating project: %v", err)
 	}
 
-	// The provider is used in the profile definition
-	_, err = dbStore.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       "github",
-		ProjectID:  dbproj.ID,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
-		Implements: []db.ProviderType{db.ProviderTypeGithub},
-		AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
-		Definition: []byte(`{}`),
-	})
-	if err != nil {
-		t.Fatalf("Error creating provider: %v", err)
-	}
 	_, err = dbStore.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:          "rule_type_1",
 		ProjectID:     dbproj.ID,
@@ -338,8 +327,7 @@ func TestCreateProfile(t *testing.T) {
 
 			if tc.profile.GetContext() == nil {
 				tc.profile.Profile.Context = &minderv1.Context{
-					Project:  proto.String(dbproj.ID.String()),
-					Provider: proto.String("github"),
+					Project: proto.String(dbproj.ID.String()),
 				}
 				if tc.result != nil {
 					tc.result.GetProfile().Context = tc.profile.GetContext()
@@ -347,15 +335,15 @@ func TestCreateProfile(t *testing.T) {
 			}
 
 			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project:  engine.Project{ID: dbproj.ID},
-				Provider: engine.Provider{Name: "github"},
+				Project: engine.Project{ID: dbproj.ID},
 			})
 			evts := &stubeventer.StubEventer{}
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles: profiles.NewProfileService(evts),
-				evt:      evts,
+				profiles:      profiles.NewProfileService(evts),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
 			}
 
 			res, err := s.CreateProfile(ctx, tc.profile)

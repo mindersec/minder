@@ -29,8 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/internal/marketplaces/types"
-	"github.com/stacklok/minder/internal/providers"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
@@ -41,26 +39,13 @@ var (
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
-// DefaultProviderFactory creates the default GitHub provider for a project.
-func DefaultProviderFactory(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
-	return qtx.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       github.Github,
-		ProjectID:  projectID,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
-		Implements: github.Implements,
-		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.AuthorizationFlows,
-	})
-}
-
 // ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
-func ProvisionSelfEnrolledProject(
+func ProvisionSelfEnrolledOAuthProject(
 	ctx context.Context,
 	authzClient authz.Client,
 	qtx db.Querier,
 	projectName string,
 	userSub string,
-	providerFactory providers.ProviderFactory,
 	// Passing these as arguments to minimize code changes. In future, it may
 	// make sense to hang these project create/delete methods off a struct or
 	// interface to reduce the amount of dependencies which need to be passed
@@ -68,11 +53,55 @@ func ProvisionSelfEnrolledProject(
 	marketplace marketplaces.Marketplace,
 	profilesCfg server.DefaultProfilesConfig,
 ) (outproj *pb.Project, projerr error) {
+	project, projectmeta, err := ProvisionSelfEnrolledProject(ctx, authzClient, qtx, projectName, userSub, marketplace, profilesCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	prj := pb.Project{
+		ProjectId:   project.ID.String(),
+		Name:        project.Name,
+		Description: projectmeta.Public.Description,
+		DisplayName: projectmeta.Public.DisplayName,
+		CreatedAt:   timestamppb.New(project.CreatedAt),
+		UpdatedAt:   timestamppb.New(project.UpdatedAt),
+	}
+
+	// Create GitHub provider
+	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       github.Github,
+		ProjectID:  project.ID,
+		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithub, Valid: true},
+		Implements: github.Implements,
+		Definition: json.RawMessage(`{"github": {}}`),
+		AuthFlows:  github.AuthorizationFlows,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provider: %v", err)
+	}
+	return &prj, nil
+}
+
+// ProvisionSelfEnrolledProject creates the core default components of the project (project,
+// marketplace subscriptions, etc.) but *does not* create a project.
+func ProvisionSelfEnrolledProject(
+	ctx context.Context,
+	authzClient authz.Client,
+	qtx db.Querier,
+	projectName string,
+	userSub string,
+	// Passing these as arguments to minimize code changes. In future, it may
+	// make sense to hang these project create/delete methods off a struct or
+	// interface to reduce the amount of dependencies which need to be passed
+	// to individual methods.
+	marketplace marketplaces.Marketplace,
+	profilesCfg server.DefaultProfilesConfig,
+) (outproj *db.Project, projmeta *Metadata, projerr error) {
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal meta: %w", err)
+		return nil, nil, fmt.Errorf("failed to marshal meta: %w", err)
 	}
 
 	projectID := uuid.New()
@@ -82,7 +111,7 @@ func ProvisionSelfEnrolledProject(
 	//       We currently have no use for the organization and it might be
 	//       removed in the future.
 	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
+		return nil, nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
 		if outproj == nil && projerr != nil {
@@ -101,39 +130,23 @@ func ProvisionSelfEnrolledProject(
 	if err != nil {
 		// Check if `project_name_lower_idx` unique constraint was violated
 		if db.ErrIsUniqueViolation(err) {
-			return nil, ErrProjectAlreadyExists
+			return nil, nil, ErrProjectAlreadyExists
 		}
-		return nil, fmt.Errorf("failed to create default project: %v", err)
-	}
-
-	prj := pb.Project{
-		ProjectId:   project.ID.String(),
-		Name:        project.Name,
-		Description: projectmeta.Public.Description,
-		DisplayName: projectmeta.Public.DisplayName,
-		CreatedAt:   timestamppb.New(project.CreatedAt),
-		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}
-
-	// Create GitHub provider
-	dbProvider, err := providerFactory(ctx, qtx, project.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provider: %v", err)
+		return nil, nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
 	// Enable any default profiles and rule types in the project.
 	// For now, we subscribe to a single bundle and a single profile.
 	// Both are specified in the service config.
-	projectContext := types.NewProjectContext(project.ID, &dbProvider)
 	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
-	if err := marketplace.Subscribe(ctx, projectContext, bundleID, qtx); err != nil {
-		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
+	if err := marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
+		return nil, nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
 	}
 	for _, profileName := range profilesCfg.GetProfiles() {
-		if err := marketplace.AddProfile(ctx, projectContext, bundleID, profileName, qtx); err != nil {
-			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
+		if err := marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
+			return nil, nil, fmt.Errorf("unable to enable bundle profile: %w", err)
 		}
 	}
 
-	return &prj, nil
+	return &project, &projectmeta, nil
 }

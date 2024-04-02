@@ -88,11 +88,12 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes   ruletypes.RuleTypeService
-	repos       github.RepositoryService
-	profiles    profiles.ProfileService
-	providers   providers.ProviderService
-	marketplace marketplaces.Marketplace
+	ruleTypes     ruletypes.RuleTypeService
+	repos         github.RepositoryService
+	profiles      profiles.ProfileService
+	providers     providers.ProviderService
+	marketplace   marketplaces.Marketplace
+	providerStore providers.ProviderStore
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -174,6 +175,7 @@ func NewServer(
 		ruleTypes:           ruleSvc,
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		marketplace:         marketplace,
+		providerStore:       providers.NewProviderStore(store),
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
@@ -184,9 +186,15 @@ func NewServer(
 	}
 
 	// Moved here because we have a dependency on s.restClientCache
-	s.providers = providers.NewProviderService(store, eng, mt, provMt, &cfg.Provider, s.restClientCache)
+	s.providers = providers.NewProviderService(
+		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache)
 
 	return s, nil
+}
+
+// GetProviderService returns the provider service
+func (s *Server) GetProviderService() providers.ProviderService {
+	return s.providers
 }
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
@@ -354,6 +362,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
+	mux.Handle("/api/v1/ghapp/", mw(s.HandleGitHubAppWebhook()))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)

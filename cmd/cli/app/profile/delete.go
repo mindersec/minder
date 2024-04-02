@@ -38,7 +38,6 @@ var deleteCmd = &cobra.Command{
 func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
-	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 
@@ -48,7 +47,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 
 	// Delete profile
 	_, err := client.DeleteProfile(ctx, &minderv1.DeleteProfileRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
+		Context: &minderv1.Context{Project: &project},
 		Id:      id,
 	})
 	if err != nil {

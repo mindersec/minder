@@ -354,6 +354,20 @@ func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredSessionStates", reflect.TypeOf((*MockStore)(nil).DeleteExpiredSessionStates), arg0)
 }
 
+// DeleteInstallationIDByAppID mocks base method.
+func (m *MockStore) DeleteInstallationIDByAppID(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInstallationIDByAppID", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteInstallationIDByAppID indicates an expected call of DeleteInstallationIDByAppID.
+func (mr *MockStoreMockRecorder) DeleteInstallationIDByAppID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallationIDByAppID", reflect.TypeOf((*MockStore)(nil).DeleteInstallationIDByAppID), arg0, arg1)
+}
+
 // DeleteProfile mocks base method.
 func (m *MockStore) DeleteProfile(arg0 context.Context, arg1 db.DeleteProfileParams) error {
 	m.ctrl.T.Helper()
@@ -398,7 +412,7 @@ func (mr *MockStoreMockRecorder) DeleteProject(arg0, arg1 any) *gomock.Call {
 }
 
 // DeleteProvider mocks base method.
-func (m *MockStore) DeleteProvider(arg0 context.Context, arg1 db.DeleteProviderParams) error {
+func (m *MockStore) DeleteProvider(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteProvider", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -716,6 +730,21 @@ func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeature
 func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
+}
+
+// GetInstallationIDByAppID mocks base method.
+func (m *MockStore) GetInstallationIDByAppID(arg0 context.Context, arg1 string) (db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInstallationIDByAppID", arg0, arg1)
+	ret0, _ := ret[0].(db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInstallationIDByAppID indicates an expected call of GetInstallationIDByAppID.
+func (mr *MockStoreMockRecorder) GetInstallationIDByAppID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallationIDByAppID", reflect.TypeOf((*MockStore)(nil).GetInstallationIDByAppID), arg0, arg1)
 }
 
 // GetInstallationIDByEnrollmentNonce mocks base method.

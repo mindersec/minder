@@ -28,7 +28,6 @@ import (
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
 	brf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	"github.com/stacklok/minder/internal/marketplaces/types"
 	"github.com/stacklok/minder/internal/profiles"
 	psf "github.com/stacklok/minder/internal/profiles/mock/fixtures"
 	"github.com/stacklok/minder/internal/ruletypes"
@@ -106,7 +105,7 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			querier := getQuerier(ctrl, scenario.DBSetup)
 
 			svc := createService(ctrl, nil, scenario.RuleTypeSetup)
-			err := svc.Subscribe(ctx, projectContext, bundle, querier)
+			err := svc.Subscribe(ctx, projectID, bundle, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -171,7 +170,7 @@ func TestSubscriptionService_CreateProfile(t *testing.T) {
 			querier := getQuerier(ctrl, scenario.DBSetup)
 
 			svc := createService(ctrl, scenario.ProfileSetup, nil)
-			err := svc.CreateProfile(ctx, projectContext, bundle, profileName, querier)
+			err := svc.CreateProfile(ctx, projectID, bundle, profileName, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 			} else {
@@ -190,11 +189,6 @@ var (
 	subscriptionID = uuid.New()
 	projectID      = uuid.New()
 	bundleID       = uuid.New()
-	provider       = db.Provider{
-		ID:   uuid.New(),
-		Name: "github",
-	}
-	projectContext = types.NewProjectContext(projectID, &provider)
 )
 
 func withNotFoundFindSubscription(mock dbf.DBMock) {
