@@ -58,15 +58,6 @@ func ProvisionSelfEnrolledOAuthProject(
 		return nil, err
 	}
 
-	prj := pb.Project{
-		ProjectId:   project.ID.String(),
-		Name:        project.Name,
-		Description: projectmeta.Public.Description,
-		DisplayName: projectmeta.Public.DisplayName,
-		CreatedAt:   timestamppb.New(project.CreatedAt),
-		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}
-
 	// Create GitHub provider
 	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       github.Github,
@@ -79,7 +70,15 @@ func ProvisionSelfEnrolledOAuthProject(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
-	return &prj, nil
+
+	return &pb.Project{
+		ProjectId:   project.ID.String(),
+		Name:        project.Name,
+		Description: projectmeta.Public.Description,
+		DisplayName: projectmeta.Public.DisplayName,
+		CreatedAt:   timestamppb.New(project.CreatedAt),
+		UpdatedAt:   timestamppb.New(project.UpdatedAt),
+	}, nil
 }
 
 // ProvisionSelfEnrolledProject creates the core default components of the project (project,
@@ -107,13 +106,12 @@ func ProvisionSelfEnrolledProject(
 	projectID := uuid.New()
 
 	// Create authorization tuple
-	// NOTE: This is only creating a tuple for the project, not the organization
-	//       We currently have no use for the organization and it might be
-	//       removed in the future.
 	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 		return nil, nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
+		// TODO: this can't be part of a transaction, so we should probably find a saga-ish
+		// way to reverse this operation if the transaction fails.
 		if outproj == nil && projerr != nil {
 			if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")

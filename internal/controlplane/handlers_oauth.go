@@ -581,14 +581,6 @@ func (s *Server) VerifyProviderCredential(ctx context.Context,
 //
 // This is a callback because we want to encapsulate components like s.cfg.Identity,
 // s.marketplace, s.authzClient and the like from the the providers implementation.
-// In the future, this should be some sort of up-call which includes a template provider,
-// but the current design of ProvisionSelfEnrolledProject needs a way to feed the created
-// provider into the middle of the flow, so that the marketplace (managed profiles) can
-// reference the newly-created provider in the project.
-//
-// TODO: when profiles.CreateProfile no longer needs a provider, ProvisionSelfEnrolledProject
-// can move the makeProvider call to after the end of the project creation, and we can remove
-// the makeProvider parameter.  The others are probably still needed, though.
 func (s *Server) makeProjectForGitHubApp(
 	ctx context.Context,
 	qtx db.Querier,

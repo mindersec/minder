@@ -252,13 +252,8 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 	defer p.store.Rollback(tx)
 	qtx := p.store.GetQuerierWithTransaction(tx)
 
-	// providerMaker := func(ctx context.Context, qtx db.Querier, projectID uuid.UUID) (db.Provider, error) {
-	// 	newProvider, err = createGitHubApp(ctx, qtx, projectID, installationOwner, installationID, nil, sql.NullString{})
-	// 	return newProvider, nil
-	// }
-
 	projectName := fmt.Sprintf("github-%s", installationOwner.GetLogin())
-	project, err := p.projectFactory(ctx, qtx, projectName, *userID /*, providerMaker*/)
+	project, err := p.projectFactory(ctx, qtx, projectName, *userID)
 	if err != nil {
 		// This _can_ be normal if someone enrolls the app without ever logging in to Minder, but should be rare.
 		zerolog.Ctx(ctx).Warn().Err(err).Int64("install", installationID).Msg("Error constructing project for install")
