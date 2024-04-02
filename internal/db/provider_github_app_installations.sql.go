@@ -16,7 +16,7 @@ const deleteInstallationIDByAppID = `-- name: DeleteInstallationIDByAppID :exec
 DELETE FROM provider_github_app_installations WHERE app_installation_id = $1
 `
 
-func (q *Queries) DeleteInstallationIDByAppID(ctx context.Context, appInstallationID string) error {
+func (q *Queries) DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteInstallationIDByAppID, appInstallationID)
 	return err
 }
@@ -25,7 +25,7 @@ const getInstallationIDByAppID = `-- name: GetInstallationIDByAppID :one
 SELECT app_installation_id, provider_id, organization_id, enrolling_user_id, created_at, updated_at, enrollment_nonce, project_id FROM provider_github_app_installations WHERE app_installation_id = $1
 `
 
-func (q *Queries) GetInstallationIDByAppID(ctx context.Context, appInstallationID string) (ProviderGithubAppInstallation, error) {
+func (q *Queries) GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error) {
 	row := q.db.QueryRowContext(ctx, getInstallationIDByAppID, appInstallationID)
 	var i ProviderGithubAppInstallation
 	err := row.Scan(
@@ -104,7 +104,7 @@ WHERE provider_github_app_installations.provider_id = $1
 
 type UpsertInstallationIDParams struct {
 	ProviderID        uuid.NullUUID  `json:"provider_id"`
-	AppInstallationID string         `json:"app_installation_id"`
+	AppInstallationID int64          `json:"app_installation_id"`
 	OrganizationID    int64          `json:"organization_id"`
 	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`
 	EnrollmentNonce   sql.NullString `json:"enrollment_nonce"`

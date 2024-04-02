@@ -33,7 +33,7 @@ import (
 
 // GitHubInstallationTokenCredential is a credential that uses a GitHub installation access token
 type GitHubInstallationTokenCredential struct {
-	installationId string
+	installationId int64
 	token          string
 }
 
@@ -46,7 +46,7 @@ func NewGitHubInstallationTokenCredential(
 	appId int64,
 	privateKey *rsa.PrivateKey,
 	endpoint string,
-	installationId string,
+	installationId int64,
 ) *GitHubInstallationTokenCredential {
 	token, err := generateInstallationAccessToken(ctx, appId, privateKey, endpoint, installationId)
 	if err != nil {
@@ -90,7 +90,7 @@ func (t *GitHubInstallationTokenCredential) AddToCloneOptions(options *git.Clone
 
 // GetCacheKey returns the cache key used to look up the REST client
 func (t *GitHubInstallationTokenCredential) GetCacheKey() string {
-	return t.installationId
+	return strconv.FormatInt(t.installationId, 10)
 }
 
 // GetAsOAuth2TokenSource returns the token as an OAuth2 token source
@@ -107,13 +107,8 @@ func generateInstallationAccessToken(
 	appId int64,
 	privateKey *rsa.PrivateKey,
 	endpoint string,
-	installationId string,
+	installationId int64,
 ) (string, error) {
-	installationIdInt, err := strconv.ParseInt(installationId, 10, 64)
-	if err != nil {
-		return "", fmt.Errorf("unable to parse installationId to integer: %v", err)
-	}
-
 	jwtToken, err := CreateGitHubAppJWT(appId, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("unable to create JWT token: %v", err)
@@ -134,7 +129,7 @@ func generateInstallationAccessToken(
 	}
 
 	// Create the installation access token
-	token, _, err := appClient.Apps.CreateInstallationToken(ctx, installationIdInt, nil)
+	token, _, err := appClient.Apps.CreateInstallationToken(ctx, installationId, nil)
 	if err != nil {
 		return "", err
 	}
