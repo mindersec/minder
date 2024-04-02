@@ -76,12 +76,12 @@ func (s *Server) RegisterRepository(
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	client, err := s.getClientForProvider(ctx, provider)
+	client, err := s.getClientForProvider(ctx, *provider)
 	if err != nil {
 		return nil, err
 	}
 
-	newRepo, err := s.repos.CreateRepository(ctx, client, &provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
+	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
 		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
@@ -425,12 +425,12 @@ func (s *Server) deleteRepository(
 		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
 	}
 
-	provider, err := s.findProviderByName(ctx, repo.Provider, projectID)
+	provider, err := s.providerStore.GetByName(ctx, projectID, repo.Provider)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	client, err := s.getClientForProvider(ctx, provider)
+	client, err := s.getClientForProvider(ctx, *provider)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get client for provider: %v", err)
 	}
@@ -445,13 +445,13 @@ func (s *Server) deleteRepository(
 // TODO: move out of controlplane
 // inferProviderByOwner returns the provider to use for a given repo owner
 func (s *Server) inferProviderByOwner(ctx context.Context, owner string, projectID uuid.UUID, providerName string,
-) (db.Provider, error) {
+) (*db.Provider, error) {
 	if providerName != "" {
-		return s.findProviderByName(ctx, providerName, projectID)
+		return s.providerStore.GetByName(ctx, projectID, providerName)
 	}
 	opts, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeGithub)
 	if err != nil {
-		return db.Provider{}, fmt.Errorf("error getting providers: %v", err)
+		return nil, fmt.Errorf("error getting providers: %v", err)
 	}
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
@@ -467,11 +467,11 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 
 	for _, prov := range opts {
 		if github.CanHandleOwner(ctx, prov, owner) {
-			return prov, nil
+			return &prov, nil
 		}
 	}
 
-	return db.Provider{}, fmt.Errorf("no providers can handle repo owned by %s", owner)
+	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
 }
 
 func (s *Server) getClientForProvider(
@@ -494,22 +494,6 @@ func (s *Server) getClientForProvider(
 	}
 
 	return client, nil
-}
-
-func (s *Server) findProviderByName(ctx context.Context, providerName string, projectID uuid.UUID) (db.Provider, error) {
-	ph, err := s.store.GetParentProjects(ctx, projectID)
-	if err != nil {
-		return db.Provider{}, fmt.Errorf("error getting project hierarchy: %v", err)
-	}
-
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     providerName,
-		Projects: ph,
-	})
-	if err != nil {
-		return db.Provider{}, fmt.Errorf("error getting provider: %v", err)
-	}
-	return provider, nil
 }
 
 func getProjectID(ctx context.Context) uuid.UUID {

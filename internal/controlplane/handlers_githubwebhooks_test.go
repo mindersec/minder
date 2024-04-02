@@ -276,16 +276,17 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		}, nil)
 
 	mockStore.EXPECT().
-		GetProviderByName(gomock.Any(), db.GetProviderByNameParams{
-			Name: providerName,
+		FindProviders(gomock.Any(), db.FindProvidersParams{
+			Name: sql.NullString{String: providerName, Valid: true},
 			Projects: []uuid.UUID{
 				projectID,
 			},
+			Trait: db.NullProviderType{},
 		}).
-		Return(db.Provider{
+		Return([]db.Provider{{
 			ProjectID: projectID,
 			Name:      providerName,
-		}, nil)
+		}}, nil)
 
 	hook := srv.HandleGitHubWebHook()
 	port, err := rand.GetRandomPort()

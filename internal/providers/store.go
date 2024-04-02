@@ -30,11 +30,22 @@ import (
 
 // ProviderStore provides methods for retrieving Providers from the database
 type ProviderStore interface {
-	// GetByName returns the provider instance in the database as identified
-	// by its project ID and name.
+	// GetByID returns the provider identified by its UUID primary key.
+	// It is assumed that the caller carries out some kind of validation to
+	// ensure that whoever made the request is authorized to access this
+	// provider.
+	GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error)
+	// GetByName returns the provider instance in the database as
+	// identified by its project ID and name. All parent projects of the
+	// specified project are included in the search.
 	GetByName(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error)
+	// GetByNameInSpecificProject returns the provider instance in the database as
+	// identified by its project ID and name. Unlike `GetByName` it will only
+	// search in the specified project, and ignore the project hierarchy.
+	GetByNameInSpecificProject(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error)
 	// GetByNameAndTrait returns the providers in the project which match the
-	// specified trait.
+	// specified trait. All parent projects of the specified project are
+	// included in the search.
 	// Note that if error is nil, there will always be at least one element
 	// in the list of providers which is returned.
 	GetByNameAndTrait(
@@ -54,8 +65,17 @@ func NewProviderStore(store db.Store) ProviderStore {
 	return &providerStore{store: store}
 }
 
+func (p *providerStore) GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error) {
+	provider, err := p.store.GetProviderByID(ctx, providerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find provider by ID: %w", err)
+	}
+	return &provider, nil
+}
+
 func (p *providerStore) GetByName(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error) {
 	nameFilter := getNameFilterParam(name)
+
 	providers, err := p.findProvider(ctx, nameFilter, db.NullProviderType{}, projectID)
 	if err != nil {
 		return nil, err
@@ -75,6 +95,17 @@ func (p *providerStore) GetByName(ctx context.Context, projectID uuid.UUID, name
 	}
 
 	return &providers[0], nil
+}
+
+func (p *providerStore) GetByNameInSpecificProject(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error) {
+	provider, err := p.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+		Name:     name,
+		Projects: []uuid.UUID{projectID},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot retrieve provider: %w", err)
+	}
+	return &provider, nil
 }
 
 func (p *providerStore) GetByNameAndTrait(
@@ -111,16 +142,15 @@ func (p *providerStore) findProvider(
 	ctx context.Context,
 	name sql.NullString,
 	trait db.NullProviderType,
-	projectId uuid.UUID,
+	projectID uuid.UUID,
 ) ([]db.Provider, error) {
-	// Allows us to take into account the hierarchy to find the provider
-	parents, err := p.store.GetParentProjects(ctx, projectId)
+	projectHierarchy, err := p.getProjectHierarchy(ctx, projectID)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
+		return nil, err
 	}
 
 	provs, err := p.store.FindProviders(ctx, db.FindProvidersParams{
-		Projects: parents,
+		Projects: projectHierarchy,
 		Name:     name,
 		Trait:    trait,
 	})
@@ -133,6 +163,15 @@ func (p *providerStore) findProvider(
 	}
 
 	return provs, nil
+}
+
+// Allows us to take into account the hierarchy to find the provider
+func (p *providerStore) getProjectHierarchy(ctx context.Context, projectID uuid.UUID) ([]uuid.UUID, error) {
+	parents, err := p.store.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot retrieve parent projects: %s", err)
+	}
+	return parents, nil
 }
 
 // getNameFilterParam allows us to build a name filter for our provider queries

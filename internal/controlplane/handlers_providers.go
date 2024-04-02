@@ -19,7 +19,6 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -39,12 +38,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name: req.Name,
-		// Note that this does not take the hierarchy into account in purpose.
-		// We want to get this call to be explicit for the given project.
-		Projects: []uuid.UUID{projectID},
-	})
+	prov, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, req.GetName())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
@@ -66,11 +60,11 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 			Name:             prov.Name,
 			Project:          projectID.String(),
 			Version:          prov.Version,
-			Implements:       protobufProviderImplementsFromDB(ctx, prov),
-			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, prov),
+			Implements:       protobufProviderImplementsFromDB(ctx, *prov),
+			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, *prov),
 			Config:           cfg,
-			CredentialsState: providers.GetCredentialStateForProvider(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider),
-			Class:            providers.GetProviderClassString(prov),
+			CredentialsState: providers.GetCredentialStateForProvider(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider),
+			Class:            providers.GetProviderClassString(*prov),
 		},
 	}, nil
 }
