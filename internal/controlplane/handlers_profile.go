@@ -468,21 +468,26 @@ func getRuleEvalStatus(
 
 // getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
 func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
+	if repo == "" {
+		return "", fmt.Errorf("cannot form alert URL, no repository defined")
+	}
 	// Define a struct to match the JSON structure
 	jsonMeta := struct {
 		GhsaId string `json:"ghsa_id"`
 	}{}
-	err := json.Unmarshal(data, &jsonMeta)
-	if err != nil {
+
+	if err := json.Unmarshal(data, &jsonMeta); err != nil {
 		return "", err
-	} else if jsonMeta.GhsaId != "" {
-		return fmt.Sprintf(
-			"https://github.com/%s/security/advisories/%s",
-			repo,
-			jsonMeta.GhsaId,
-		), nil
 	}
-	return "", fmt.Errorf("no alert ID found in alert metadata")
+
+	if jsonMeta.GhsaId == "" {
+		return "", fmt.Errorf("no alert ID found in alert metadata")
+	}
+
+	return fmt.Sprintf(
+		"https://github.com/%s/security/advisories/%s",
+		repo, jsonMeta.GhsaId,
+	), nil
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project
