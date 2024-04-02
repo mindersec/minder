@@ -30,3 +30,13 @@ func (a AuthorizationFlow) ToString() string {
 func (p *Provider) SupportsAuthFlow(flow AuthorizationFlow) bool {
 	return slices.Contains(p.GetAuthFlows(), flow)
 }
+
+// ToString returns the string representation of the ProviderClass
+func (p ProviderClass) ToString() string {
+	return enumToStringViaDescriptor(p.Descriptor(), p.Number())
+}
+
+// ToString returns the string representation of the CredentialsState
+func (c CredentialsState) ToString() string {
+	return enumToStringViaDescriptor(c.Descriptor(), c.Number())
+}
