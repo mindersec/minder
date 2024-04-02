@@ -2147,6 +2147,19 @@ name, if it has been created
 | AUTHORIZATION_FLOW_GITHUB_APP_FLOW | 4 |  |
 
 
+<a name="minder-v1-CredentialsState"></a>
+
+### CredentialsState
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CREDENTIALS_STATE_UNSPECIFIED | 0 |  |
+| CREDENTIALS_STATE_SET | 1 |  |
+| CREDENTIALS_STATE_UNSET | 2 |  |
+| CREDENTIALS_STATE_NOT_APPLICABLE | 3 |  |
+
+
 <a name="minder-v1-DepEcosystem"></a>
 
 ### DepEcosystem
@@ -2184,6 +2197,18 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_UNSPECIFIED | 0 |  |
 | OBJECT_OWNER_PROJECT | 2 |  |
 | OBJECT_OWNER_USER | 3 |  |
+
+
+<a name="minder-v1-ProviderClass"></a>
+
+### ProviderClass
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PROVIDER_CLASS_UNSPECIFIED | 0 |  |
+| PROVIDER_CLASS_GITHUB | 1 |  |
+| PROVIDER_CLASS_GITHUB_APP | 2 |  |
 
 
 <a name="minder-v1-ProviderType"></a>
