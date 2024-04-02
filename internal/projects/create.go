@@ -39,7 +39,7 @@ var (
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
-// ProvisionSelfEnrolledProject creates the default records, such as projects, roles and provider for the organization
+// ProvisionSelfEnrolledOAuthProject creates the default records, such as projects, roles and provider for the organization
 func ProvisionSelfEnrolledOAuthProject(
 	ctx context.Context,
 	authzClient authz.Client,
