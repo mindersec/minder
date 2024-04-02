@@ -63,6 +63,7 @@ type Executor struct {
 	terminationcontext context.Context
 	restClientCache    ratecache.RestClientCache
 	provCfg            *serverconfig.ProviderConfig
+	providerStore      providers.ProviderStore
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -96,6 +97,7 @@ func NewExecutor(
 	authCfg *serverconfig.AuthConfig,
 	provCfg *serverconfig.ProviderConfig,
 	evt events.Publisher,
+	providerStore providers.ProviderStore,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -112,6 +114,7 @@ func NewExecutor(
 		terminationcontext:     ctx,
 		mdws:                   []message.HandlerMiddleware{},
 		provCfg:                provCfg,
+		providerStore:          providerStore,
 	}
 
 	for _, opt := range opts {
@@ -189,20 +192,8 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	return nil
 }
 func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-
 	projectID := inf.ProjectID
-
-	// get project hierarchy
-	ph, err := e.querier.GetParentProjects(ctx, projectID)
-	if err != nil {
-		return fmt.Errorf("error getting project: %w", err)
-	}
-
-	provider, err := e.querier.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     inf.Provider,
-		Projects: ph,
-	})
-
+	provider, err := e.providerStore.GetByName(ctx, projectID, inf.Provider)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -211,7 +202,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	cli, err := providers.GetProviderBuilder(ctx, provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
+	cli, err := providers.GetProviderBuilder(ctx, *provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
