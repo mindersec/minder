@@ -49,13 +49,5 @@ LIMIT sqlc.arg('limit');
 -- name: GlobalListProviders :many
 SELECT * FROM providers;
 
--- name: GlobalListProvidersByClass :many
-SELECT * FROM providers WHERE class = $1;
-
--- name: UpdateProvider :exec
-UPDATE providers
-    SET implements = sqlc.arg(implements), definition = sqlc.arg(definition)::jsonb, auth_flows = sqlc.arg('auth_flows')
-    WHERE id = sqlc.arg('id') AND project_id = sqlc.arg('project_id');
-
 -- name: DeleteProvider :exec
 DELETE FROM providers WHERE id = $1;
