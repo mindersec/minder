@@ -135,6 +135,8 @@ func (s *Server) ListProfiles(ctx context.Context,
 	}
 	listParams.LabelsFromFilter(req.GetLabelFilter())
 
+	zerolog.Ctx(ctx).Debug().Interface("listParams", listParams).Msg("profile list parameters")
+
 	profiles, err := s.store.ListProfilesByProjectIDAndLabel(ctx, listParams)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
