@@ -77,8 +77,10 @@ type ClientService interface {
 
 var _ ClientService = (*ClientServiceImplementation)(nil)
 
+// ClientServiceImplementation is the implementation of the ClientService interface
 type ClientServiceImplementation struct{}
 
+// GetInstallation is a wrapper for the GitHub API to get an installation
 func (ClientServiceImplementation) GetInstallation(
 	ctx context.Context,
 	installationID int64,
@@ -88,6 +90,7 @@ func (ClientServiceImplementation) GetInstallation(
 	return ghClient.Apps.GetInstallation(ctx, installationID)
 }
 
+// GetUserIdFromToken is a wrapper for the GitHub API to get the user id from a token
 func (ClientServiceImplementation) GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
 	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
 
@@ -99,7 +102,10 @@ func (ClientServiceImplementation) GetUserIdFromToken(ctx context.Context, token
 	return user.ID, nil
 }
 
-func (ClientServiceImplementation) ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error) {
+// ListUserInstallations is a wrapper for the GitHub API to list user installations
+func (ClientServiceImplementation) ListUserInstallations(
+	ctx context.Context, token *oauth2.Token,
+) ([]*github.Installation, error) {
 	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
 
 	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
