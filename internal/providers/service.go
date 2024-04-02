@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strconv"
 
@@ -37,6 +38,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -52,6 +54,7 @@ type ProviderService interface {
 		installationID int64) (*db.ProviderGithubAppInstallation, error)
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
+	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
 }
 
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
@@ -72,6 +75,7 @@ type providerService struct {
 	config          *server.ProviderConfig
 	projectFactory  ProjectFactory
 	restClientCache ratecache.RestClientCache
+	ghClientService ghprov.ClientService
 }
 
 // NewProviderService creates an instance of ProviderService
@@ -86,6 +90,7 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 		config:          config,
 		projectFactory:  projectFactory,
 		restClientCache: restClientCache,
+		ghClientService: ghprov.ClientServiceImplementation{},
 	}
 }
 
@@ -240,7 +245,7 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 
-	userID, err := getUserIdFromToken(ctx, token)
+	userID, err := p.ghClientService.GetUserIdFromToken(ctx, token)
 	if err != nil || userID == nil || *userID == 0 {
 		return nil, fmt.Errorf("error getting user ID from token: %w", err)
 	}
@@ -344,11 +349,8 @@ func createGitHubApp(
 }
 
 // ValidateGitHubInstallationId checks if the user has access to the installation ID
-func (_ *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
-	// Get the installations this user has access to
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
+func (p *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
+	installations, err := p.ghClientService.ListUserInstallations(ctx, token)
 	if err != nil {
 		return fmt.Errorf("error getting user installations: %w", err)
 	}
@@ -391,6 +393,10 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 	return p.store.DeleteProvider(ctx, installation.ProviderID.UUID)
 }
 
+func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
+	return github.ValidatePayload(r, []byte(p.config.GitHubApp.WebhookSecret))
+}
+
 func (p *providerService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
 	pbOpts := []ProviderBuilderOption{
@@ -425,21 +431,9 @@ func (p *providerService) getInstallationOwner(ctx context.Context, installation
 		return nil, fmt.Errorf("error creating GitHub App JWT: %w", err)
 	}
 
-	ghClient := github.NewClient(nil).WithAuthToken(jwt)
-	installation, _, err := ghClient.Apps.GetInstallation(ctx, installationID)
+	installation, _, err := p.ghClientService.GetInstallation(ctx, installationID, jwt)
 	if err != nil {
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 	return installation.GetAccount(), nil
-}
-
-func getUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
-	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
-
-	user, _, err := ghClient.Users.Get(ctx, "")
-	if err != nil {
-		return nil, err
-	}
-
-	return user.ID, nil
 }

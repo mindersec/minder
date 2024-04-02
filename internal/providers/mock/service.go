@@ -11,6 +11,7 @@ package mockprofsvc
 
 import (
 	context "context"
+	http "net/http"
 	reflect "reflect"
 
 	db "github.com/stacklok/minder/internal/db"
@@ -98,6 +99,21 @@ func (m *MockProviderService) DeleteGitHubAppInstallation(arg0 context.Context, 
 func (mr *MockProviderServiceMockRecorder) DeleteGitHubAppInstallation(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).DeleteGitHubAppInstallation), arg0, arg1)
+}
+
+// ValidateGitHubAppWebhookPayload mocks base method.
+func (m *MockProviderService) ValidateGitHubAppWebhookPayload(arg0 *http.Request) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateGitHubAppWebhookPayload", arg0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateGitHubAppWebhookPayload indicates an expected call of ValidateGitHubAppWebhookPayload.
+func (mr *MockProviderServiceMockRecorder) ValidateGitHubAppWebhookPayload(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateGitHubAppWebhookPayload", reflect.TypeOf((*MockProviderService)(nil).ValidateGitHubAppWebhookPayload), arg0)
 }
 
 // ValidateGitHubInstallationId mocks base method.

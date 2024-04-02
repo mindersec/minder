@@ -245,42 +245,12 @@
         },
         "parameters": [
           {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "accessToken",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "owner",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1StoreProviderTokenRequest"
+            }
           }
         ],
         "tags": [
@@ -2014,70 +1984,12 @@
         },
         "parameters": [
           {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "repository.owner",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "repository.name",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "repository.repoId",
-            "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input.",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
-          },
-          {
-            "name": "repository.context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "repository.context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "repository.context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterRepositoryRequest"
+            }
           }
         ],
         "tags": [
@@ -3752,6 +3664,20 @@
         }
       }
     },
+    "v1RegisterRepositoryRequest": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        }
+      }
+    },
     "v1RegisterRepositoryResponse": {
       "type": "object",
       "properties": {
@@ -4047,6 +3973,23 @@
       ],
       "default": "VALUE_UNSPECIFIED",
       "description": "Value enumerates the severity values.\n\n - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't\nbeen set.\n - VALUE_INFO: info severity means that the severity is informational and\ndoes not incur risk.\n - VALUE_LOW: low severity means that the severity is low and does not\nincur significant risk.\n - VALUE_MEDIUM: medium severity means that the severity is medium and may\nincur some risk.\n - VALUE_HIGH: high severity means that the severity is high and may incur\nsignificant risk.\n - VALUE_CRITICAL: critical severity means that the severity is critical and\nrequires immediate attention."
+    },
+    "v1StoreProviderTokenRequest": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "accessToken": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        }
+      }
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"

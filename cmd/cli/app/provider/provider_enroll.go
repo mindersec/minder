@@ -37,8 +37,13 @@ type Response struct {
 	Status string `json:"status"`
 }
 
-// MAX_WAIT is the maximum number of calls to the gRPC server before stopping.
-const MAX_WAIT = time.Duration(5 * time.Minute)
+const (
+	// MAX_WAIT is the maximum number of calls to the gRPC server before stopping.
+	MAX_WAIT = time.Duration(5 * time.Minute)
+
+	// legacyGitHubProvider is the legacy GitHub OAuth provider class
+	legacyGitHubProvider = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB
+)
 
 var enrollCmd = &cobra.Command{
 	Use:   "enroll",
@@ -51,7 +56,8 @@ actions such as adding repositories.`,
 
 // EnrollProviderCommand is the command for enrolling a provider
 func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
-	client := minderv1.NewOAuthServiceClient(conn)
+	oauthClient := minderv1.NewOAuthServiceClient(conn)
+	providerClient := minderv1.NewProvidersServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -82,13 +88,13 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.C
 	}
 
 	if token != "" {
-		return enrollUsingToken(ctx, cmd, client, provider, project, token, owner)
+		return enrollUsingToken(ctx, cmd, oauthClient, provider, project, token, owner)
 	}
 
 	// This will have a different timeout
 	enrollemntCtx := cmd.Context()
 
-	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, client, provider, project, owner, skipBrowser)
+	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, oauthClient, providerClient, provider, project, owner, skipBrowser)
 }
 
 func enrollUsingToken(
@@ -116,7 +122,8 @@ func enrollUsingToken(
 func enrollUsingOAuth2Flow(
 	ctx context.Context,
 	cmd *cobra.Command,
-	client minderv1.OAuthServiceClient,
+	oauthClient minderv1.OAuthServiceClient,
+	providerClient minderv1.ProvidersServiceClient,
 	provider string,
 	project string,
 	owner string,
@@ -124,6 +131,18 @@ func enrollUsingOAuth2Flow(
 ) error {
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(ctx, MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
+	legacyProviderEnrolled, err := hasLegacyProvider(ctx, providerClient, project)
+	if err != nil {
+		return cli.MessageAndError("Error getting existing providers", err)
+	}
+
+	// If the user is using the legacy GitHub provider, don't let them enroll a new provider.
+	// However, they may update the credentials for the existing provider.
+	if legacyProviderEnrolled && provider != legacyGitHubProvider.ToString() {
+		return fmt.Errorf("it seems you are using the legacy github provider. " +
+			"If you would like to enroll a new provider, please delete your existing provider by " +
+			"running \"minder provider delete --name github\"")
+	}
 
 	// Get random port
 	port, err := rand.GetRandomPort()
@@ -131,7 +150,7 @@ func enrollUsingOAuth2Flow(
 		return cli.MessageAndError("Error getting random port", err)
 	}
 
-	resp, err := client.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
+	resp, err := oauthClient.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
 		Context: &minderv1.Context{Provider: &provider, Project: &project},
 		Cli:     true,
 		Port:    int32(port),
@@ -156,7 +175,7 @@ func enrollUsingOAuth2Flow(
 
 	done := make(chan bool)
 
-	go callBackServer(oAuthCallbackCtx, cmd, project, port, done, client, openTime, resp.GetState())
+	go callBackServer(oAuthCallbackCtx, cmd, project, port, done, oauthClient, openTime, resp.GetState())
 
 	success := <-done
 
@@ -166,6 +185,37 @@ func enrollUsingOAuth2Flow(
 		cmd.Println("Failed to enroll provider")
 	}
 	return nil
+}
+
+func hasLegacyProvider(ctx context.Context, providerClient minderv1.ProvidersServiceClient, project string) (bool, error) {
+	cursor := ""
+
+	for {
+		resp, err := providerClient.ListProviders(ctx, &minderv1.ListProvidersRequest{
+			Context: &minderv1.Context{
+				Project: &project,
+			},
+			Cursor: cursor,
+		})
+		if err != nil {
+			return false, err
+		}
+
+		// check if a legacy GitHub provider is already enrolled
+		for _, p := range resp.Providers {
+			if p.GetClass() == legacyGitHubProvider.ToString() &&
+				p.GetCredentialsState() == minderv1.CredentialsState_CREDENTIALS_STATE_SET.ToString() {
+				return true, nil
+			}
+		}
+
+		if resp.Cursor == "" {
+			break
+		}
+
+		cursor = resp.Cursor
+	}
+	return false, nil
 }
 
 // callBackServer starts a server and handler to listen for the OAuth callback.
