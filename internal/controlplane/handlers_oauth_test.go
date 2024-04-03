@@ -774,6 +774,7 @@ func TestVerifyProviderCredential(t *testing.T) {
 				store:               store,
 				evt:                 evt,
 				providerAuthFactory: providerAuthFactory,
+				providerStore:       providers.NewProviderStore(store),
 				cfg: &serverconfig.Config{
 					Auth: serverconfig.AuthConfig{},
 				},
