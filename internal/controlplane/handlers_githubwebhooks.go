@@ -412,16 +412,8 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 
-	ph, err := s.store.GetParentProjects(ctx, dbRepo.ProjectID)
-	if err != nil {
-		return fmt.Errorf("error getting project hierarchy: %w", err)
-	}
-
 	// get the provider for the repository
-	prov, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     dbRepo.Provider,
-		Projects: ph,
-	})
+	prov, err := s.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -430,7 +422,7 @@ func (s *Server) parseGithubEventForProcessing(
 		providers.WithProviderMetrics(s.provMt),
 		providers.WithRestClientCache(s.restClientCache),
 	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
