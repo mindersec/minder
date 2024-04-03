@@ -110,16 +110,12 @@ func (p *profileService) CreateProfile(
 	// Adds default rule names, if not present
 	PopulateRuleNames(profile)
 
-	displayName := profile.GetDisplayName()
-	// if empty use the name
-	if displayName == "" {
-		displayName = profile.GetName()
-	}
+	profile.ApplyDefaults()
 
 	params := db.CreateProfileParams{
 		ProjectID:      projectID,
 		Name:           profile.GetName(),
-		DisplayName:    displayName,
+		DisplayName:    profile.GetDisplayName(),
 		Labels:         profile.GetLabels(),
 		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
 		Alert:          db.ValidateAlertType(profile.GetAlert()),
@@ -218,17 +214,13 @@ func (p *profileService) UpdateProfile(
 		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
 	}
 
-	displayName := profile.GetDisplayName()
-	// if empty use the name
-	if displayName == "" {
-		displayName = profile.GetName()
-	}
+	profile.ApplyDefaults()
 
 	// Update top-level profile db object
 	updatedProfile, err := qtx.UpdateProfile(ctx, db.UpdateProfileParams{
 		ProjectID:   projectID,
 		ID:          oldDBProfile.ID,
-		DisplayName: displayName,
+		DisplayName: profile.GetDisplayName(),
 		Labels:      profile.GetLabels(),
 		Remediate:   db.ValidateRemediateType(profile.GetRemediate()),
 		Alert:       db.ValidateAlertType(profile.GetAlert()),

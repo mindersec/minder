@@ -36,3 +36,19 @@ func (r *UpdateProfileRequest) GetContext() *Context {
 	}
 	return nil
 }
+
+func (p *Profile) ApplyDefaults() {
+	if p == nil {
+		return
+	}
+
+	p.defaultDisplayName()
+}
+
+func (p *Profile) defaultDisplayName() {
+	displayName := p.GetDisplayName()
+	// if empty use the name
+	if displayName == "" {
+		p.DisplayName = p.GetName()
+	}
+}
