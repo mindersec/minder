@@ -23,6 +23,10 @@ spec:
   selector:
     matchLabels:
       app: '{{ include "common.names.name" . }}'
+  strategy:
+    {{- if .Values.deploymentSettings.strategy }}
+    {{- toYaml .Values.deploymentSettings.strategy | nindent 4 }}
+    {{- end }}
   template:
     metadata:
       labels:
@@ -31,6 +35,7 @@ spec:
         {{ include "common.annotations.pods" (dict "customAnnotationsPods" .Values.commonAnnotationsPods "context" $ ) | nindent 8 }}
     spec:
       serviceAccountName: {{ .Values.serviceAccounts.server | default "minder" }}
+      terminationGracePeriodSeconds: {{ .Values.deploymentSettings.terminationGracePeriodSeconds }}
       initContainers:
         {{- if .Values.deploymentSettings.initContainers }}
         {{- toYaml .Values.deploymentSettings.initContainers | nindent 8 }}

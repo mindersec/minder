@@ -47,7 +47,7 @@ type GoChannelEventConfig struct {
 type SQLEventConfig struct {
 	// InitSchema is whether or not to initialize the schema
 	InitSchema bool                  `mapstructure:"init_schema" default:"true"`
-	Connection config.DatabaseConfig `mapstructure:"connection"`
+	Connection config.DatabaseConfig `mapstructure:"connection" default:"{\"dbname\":\"watermill\"}"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware

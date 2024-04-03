@@ -31,7 +31,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) error
-	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID string) error
+	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
@@ -64,7 +64,7 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
-	GetInstallationIDByAppID(ctx context.Context, appInstallationID string) (ProviderGithubAppInstallation, error)
+	GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByEnrollmentNonce(ctx context.Context, arg GetInstallationIDByEnrollmentNonceParams) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)

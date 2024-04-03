@@ -188,7 +188,8 @@ SELECT
     rt.name AS rule_type_name,
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
-    rt.guidance as rule_type_guidance
+    rt.guidance as rule_type_guidance,
+    rt.display_name as rule_type_display_name
 FROM rule_evaluations res
          LEFT JOIN eval_details ed ON ed.rule_eval_id = res.id
          LEFT JOIN remediation_details rd ON rd.rule_eval_id = res.id
@@ -240,6 +241,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RuleTypeSeverityValue Severity                   `json:"rule_type_severity_value"`
 	RuleTypeID            uuid.UUID                  `json:"rule_type_id"`
 	RuleTypeGuidance      string                     `json:"rule_type_guidance"`
+	RuleTypeDisplayName   string                     `json:"rule_type_display_name"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -280,6 +282,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleTypeSeverityValue,
 			&i.RuleTypeID,
 			&i.RuleTypeGuidance,
+			&i.RuleTypeDisplayName,
 		); err != nil {
 			return nil, err
 		}

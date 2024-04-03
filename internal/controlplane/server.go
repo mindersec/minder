@@ -145,6 +145,7 @@ func NewServer(
 	evt events.Publisher,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
+	providerStore providers.ProviderStore,
 	opts ...ServerOption,
 ) (*Server, error) {
 	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
@@ -175,7 +176,7 @@ func NewServer(
 		ruleTypes:           ruleSvc,
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		marketplace:         marketplace,
-		providerStore:       providers.NewProviderStore(store),
+		providerStore:       providerStore,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
@@ -186,7 +187,8 @@ func NewServer(
 	}
 
 	// Moved here because we have a dependency on s.restClientCache
-	s.providers = providers.NewProviderService(store, eng, mt, provMt, &cfg.Provider, s.restClientCache)
+	s.providers = providers.NewProviderService(
+		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache)
 
 	return s, nil
 }

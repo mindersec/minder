@@ -125,7 +125,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
 		}()
 
-		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
+		rawWBPayload, err := s.providers.ValidateGitHubAppWebhookPayload(r)
 		if err != nil {
 			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)

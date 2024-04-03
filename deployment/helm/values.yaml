@@ -109,6 +109,8 @@ deploymentSettings:
     limits:
       cpu: 4
       memory: 1.5Gi
+  # -- (int) Termination grace period for the main deployment
+  terminationGracePeriodSeconds: 30
   # -- (array, optional) Additional volumes to mount
   extraVolumes: null
   # -- (array, optional) Additional volume mounts
@@ -126,6 +128,16 @@ deploymentSettings:
   sidecarContainers: null
   # -- (array, optional) Additional init containers to run
   initContainers: null
+  # -- (object, optional) Allow for configuring the deployment's strategy
+  strategy:
+    # -- (string) Type of deployment strategy to use
+    type: "RollingUpdate"
+    # -- (object, optional) RollingUpdate strategy settings
+    rollingUpdate:
+      # -- (int) Max unavailable pods during a rolling update
+      maxUnavailable: 0
+      # -- (int) Max surge pods during a rolling update
+      maxSurge: 2
 
 
 # -- (string) Additional configuration yaml beyond what's in server-config.yaml.example

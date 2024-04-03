@@ -313,7 +313,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			}
 			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-			server, err := NewServer(store, evt, c, mockJwt)
+			server, err := NewServer(store, evt, c, mockJwt, providers.NewProviderStore(store))
 			require.NoError(t, err, "failed to create server")
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
@@ -535,7 +535,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(nil)
 				service.EXPECT().
-					CreateUnclaimedGitHubAppInstallation(gomock.Any(), gomock.Any(), installationID).
+					CreateGitHubAppWithoutInvitation(gomock.Any(), gomock.Any(), installationID).
 					Return(&db.ProviderGithubAppInstallation{}, nil)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {

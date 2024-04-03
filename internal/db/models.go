@@ -541,7 +541,7 @@ type ProviderAccessToken struct {
 }
 
 type ProviderGithubAppInstallation struct {
-	AppInstallationID string         `json:"app_installation_id"`
+	AppInstallationID int64          `json:"app_installation_id"`
 	ProviderID        uuid.NullUUID  `json:"provider_id"`
 	OrganizationID    int64          `json:"organization_id"`
 	EnrollingUserID   sql.NullString `json:"enrolling_user_id"`

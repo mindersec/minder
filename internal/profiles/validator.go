@@ -51,7 +51,12 @@ func (v *Validator) ValidateAndExtractRules(
 
 	// ensure that the rule names follow all naming constraints
 	if err := validateRuleNames(profile); err != nil {
-		return nil, err
+		var violation *engine.RuleValidationError
+		if errors.As(err, &violation) {
+			return nil, util.UserVisibleError(codes.InvalidArgument,
+				"profile failed rule name validation: %s", violation)
+		}
+		return nil, status.Errorf(codes.Internal, "error validating rule names in profile")
 	}
 
 	// validate that the rule invocations match what the rule types expect

@@ -295,6 +295,12 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
 	}
 
+	// Default to the rule type name if no display_name is set
+	nString := eval.RuleTypeDisplayName
+	if nString == "" {
+		nString = eval.RuleTypeName
+	}
+
 	return &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
@@ -309,6 +315,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RemediationStatus:      string(eval.RemStatus.RemediationStatusTypes),
 		RemediationLastUpdated: timestamppb.New(eval.RemLastUpdated.Time),
 		RemediationDetails:     eval.RemDetails.String,
+		RuleDisplayName:        nString,
 		RuleTypeName:           eval.RuleTypeName,
 		Alert:                  buildEvalResultAlertFromLRERow(&eval),
 		Severity:               sev,

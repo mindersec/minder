@@ -39,7 +39,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 ) {
 	// Populated by EntityContextProjectInterceptor using incoming request
 	entityCtx := engine.EntityFromContext(ctx)
-	err := entityCtx.Validate(ctx, s.store)
+	err := entityCtx.Validate(ctx, s.store, s.providerStore)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}

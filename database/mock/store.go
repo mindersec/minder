@@ -355,7 +355,7 @@ func (mr *MockStoreMockRecorder) DeleteExpiredSessionStates(arg0 any) *gomock.Ca
 }
 
 // DeleteInstallationIDByAppID mocks base method.
-func (m *MockStore) DeleteInstallationIDByAppID(arg0 context.Context, arg1 string) error {
+func (m *MockStore) DeleteInstallationIDByAppID(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteInstallationIDByAppID", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -733,7 +733,7 @@ func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Cal
 }
 
 // GetInstallationIDByAppID mocks base method.
-func (m *MockStore) GetInstallationIDByAppID(arg0 context.Context, arg1 string) (db.ProviderGithubAppInstallation, error) {
+func (m *MockStore) GetInstallationIDByAppID(arg0 context.Context, arg1 int64) (db.ProviderGithubAppInstallation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInstallationIDByAppID", arg0, arg1)
 	ret0, _ := ret[0].(db.ProviderGithubAppInstallation)

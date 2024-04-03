@@ -11,6 +11,7 @@ package mockprofsvc
 
 import (
 	context "context"
+	http "net/http"
 	reflect "reflect"
 
 	db "github.com/stacklok/minder/internal/db"
@@ -56,6 +57,21 @@ func (mr *MockProviderServiceMockRecorder) CreateGitHubAppProvider(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubAppProvider", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubAppProvider), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CreateGitHubAppWithoutInvitation mocks base method.
+func (m *MockProviderService) CreateGitHubAppWithoutInvitation(arg0 context.Context, arg1 *oauth2.Token, arg2 int64) (*db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGitHubAppWithoutInvitation", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateGitHubAppWithoutInvitation indicates an expected call of CreateGitHubAppWithoutInvitation.
+func (mr *MockProviderServiceMockRecorder) CreateGitHubAppWithoutInvitation(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubAppWithoutInvitation", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubAppWithoutInvitation), arg0, arg1, arg2)
+}
+
 // CreateGitHubOAuthProvider mocks base method.
 func (m *MockProviderService) CreateGitHubOAuthProvider(arg0 context.Context, arg1 string, arg2 db.ProviderClass, arg3 oauth2.Token, arg4 db.GetProjectIDBySessionStateRow, arg5 string) (*db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -71,21 +87,6 @@ func (mr *MockProviderServiceMockRecorder) CreateGitHubOAuthProvider(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubOAuthProvider", reflect.TypeOf((*MockProviderService)(nil).CreateGitHubOAuthProvider), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
-// CreateUnclaimedGitHubAppInstallation mocks base method.
-func (m *MockProviderService) CreateUnclaimedGitHubAppInstallation(arg0 context.Context, arg1 *oauth2.Token, arg2 int64) (*db.ProviderGithubAppInstallation, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUnclaimedGitHubAppInstallation", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*db.ProviderGithubAppInstallation)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateUnclaimedGitHubAppInstallation indicates an expected call of CreateUnclaimedGitHubAppInstallation.
-func (mr *MockProviderServiceMockRecorder) CreateUnclaimedGitHubAppInstallation(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUnclaimedGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).CreateUnclaimedGitHubAppInstallation), arg0, arg1, arg2)
-}
-
 // DeleteGitHubAppInstallation mocks base method.
 func (m *MockProviderService) DeleteGitHubAppInstallation(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
@@ -98,6 +99,21 @@ func (m *MockProviderService) DeleteGitHubAppInstallation(arg0 context.Context, 
 func (mr *MockProviderServiceMockRecorder) DeleteGitHubAppInstallation(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).DeleteGitHubAppInstallation), arg0, arg1)
+}
+
+// ValidateGitHubAppWebhookPayload mocks base method.
+func (m *MockProviderService) ValidateGitHubAppWebhookPayload(arg0 *http.Request) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateGitHubAppWebhookPayload", arg0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateGitHubAppWebhookPayload indicates an expected call of ValidateGitHubAppWebhookPayload.
+func (mr *MockProviderServiceMockRecorder) ValidateGitHubAppWebhookPayload(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateGitHubAppWebhookPayload", reflect.TypeOf((*MockProviderService)(nil).ValidateGitHubAppWebhookPayload), arg0)
 }
 
 // ValidateGitHubInstallationId mocks base method.

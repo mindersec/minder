@@ -43,7 +43,6 @@ func AllInOneServerService(
 	serverOpts []controlplane.ServerOption,
 	executorOpts []engine.ExecutorOption,
 	reconcilerOpts []reconcilers.ReconcilerOption,
-
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
 
@@ -52,8 +51,9 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
 
+	providerStore := providers.NewProviderStore(store)
 	s, err := controlplane.NewServer(
-		store, evt, cfg, vldtr,
+		store, evt, cfg, vldtr, providerStore,
 		serverOpts...,
 	)
 	if err != nil {
@@ -69,7 +69,7 @@ func AllInOneServerService(
 	executorOpts = append([]engine.ExecutorOption{engine.WithMiddleware(aggr.AggregateMiddleware)},
 		executorOpts...)
 
-	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, executorOpts...)
+	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, providerStore, executorOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to create executor: %w", err)
 	}

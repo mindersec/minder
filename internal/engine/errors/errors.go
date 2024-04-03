@@ -157,7 +157,12 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 }
 
 // RemediationStatusAsError returns the remediation status for a given error
-func RemediationStatusAsError(s db.RemediationStatusTypes) error {
+func RemediationStatusAsError(ns db.NullRemediationStatusTypes) error {
+	if !ns.Valid {
+		return ErrActionSkipped
+	}
+
+	s := ns.RemediationStatusTypes
 	switch s {
 	case db.RemediationStatusTypesSuccess:
 		return nil
