@@ -262,10 +262,17 @@ func TestCreateProfile(t *testing.T) {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
 			Profile: &minderv1.Profile{
-				Name: "test",
+				Name: "test_norules",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
+		result: &minderv1.CreateProfileResponse{
+			Profile: &minderv1.Profile{
+				Name:        "test_norules",
+				DisplayName: "test_norules",
+				Alert:       proto.String("on"),
+				Remediate:   proto.String("off"),
+			},
+		},
 	},
 		{
 			name: "Create profile with valid name and rules",
@@ -280,9 +287,36 @@ func TestCreateProfile(t *testing.T) {
 			},
 			result: &minderv1.CreateProfileResponse{
 				Profile: &minderv1.Profile{
-					Name:      "test",
-					Alert:     proto.String("on"),
-					Remediate: proto.String("off"),
+					Name:        "test",
+					DisplayName: "test",
+					Alert:       proto.String("on"),
+					Remediate:   proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+		},
+		{
+			name: "Create profile with explicit display name",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:        "test_display",
+					DisplayName: "test_display_name_value",
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_display",
+					DisplayName: "test_display_name_value",
+					Alert:       proto.String("on"),
+					Remediate:   proto.String("off"),
 					Repository: []*minderv1.Profile_Rule{{
 						Type: "rule_type_1",
 						Name: "rule_type_1",
@@ -306,9 +340,10 @@ func TestCreateProfile(t *testing.T) {
 			},
 			result: &minderv1.CreateProfileResponse{
 				Profile: &minderv1.Profile{
-					Name:      "test_explicit",
-					Alert:     proto.String("off"),
-					Remediate: proto.String("on"),
+					Name:        "test_explicit",
+					DisplayName: "test_explicit",
+					Alert:       proto.String("off"),
+					Remediate:   proto.String("on"),
 					Repository: []*minderv1.Profile_Rule{{
 						Type: "rule_type_1",
 						Name: "rule_type_1",

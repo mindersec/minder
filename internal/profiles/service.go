@@ -252,6 +252,16 @@ func (p *profileService) UpdateProfile(
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
+	// special-case for updating to empty profile - insert a dummy repo rule
+	if profile.IsEmpty() {
+		if err := createProfileRulesForEntity(
+			ctx, minderv1.Entity_ENTITY_REPOSITORIES,
+			&updatedProfile, qtx, profile.GetRepository(),
+			make(RuleMapping)); err != nil {
+			return nil, status.Errorf(codes.Internal, "error creating dummy profile entity: %v", err)
+		}
+	}
+
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: updatedProfile.Name, ID: updatedProfile.ID}
 
 	profile.Id = ptr.Ptr(updatedProfile.ID.String())
