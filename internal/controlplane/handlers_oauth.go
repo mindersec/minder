@@ -392,11 +392,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		// We don't check parent projects here because subprojects should not update the credentials of their parent
-		Projects: []uuid.UUID{projectID},
-		Name:     providerName,
-	})
+	provider, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -500,11 +496,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		return &pb.VerifyProviderTokenFromResponse{Status: "KO"}, nil
 	}
 
-	provider, err := s.store.GetProviderByName(ctx, db.GetProviderByNameParams{
-		// We don't check parent projects here because subprojects should not check the credentials of their parent
-		Projects: []uuid.UUID{projectID},
-		Name:     providerName,
-	})
+	provider, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -560,7 +552,7 @@ func (s *Server) VerifyProviderCredential(ctx context.Context,
 	)
 
 	if err == nil {
-		provider, err := s.store.GetProviderByID(ctx, installation.ProviderID.UUID)
+		provider, err := s.providerStore.GetByID(ctx, installation.ProviderID.UUID)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
 		}
