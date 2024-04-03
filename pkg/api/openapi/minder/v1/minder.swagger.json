@@ -1406,6 +1406,51 @@
         ]
       }
     },
+    "/api/v1/providers/{id}": {
+      "delete": {
+        "operationId": "ProvidersService_DeleteProviderByID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteProviderByIDResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the provider to delete",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/providers/{name}": {
       "get": {
         "operationId": "ProvidersService_GetProvider",
@@ -2994,8 +3039,23 @@
         }
       }
     },
+    "v1DeleteProviderByIDResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "id is the id of the provider that was deleted"
+        }
+      }
+    },
     "v1DeleteProviderResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name is the name of the provider that was deleted"
+        }
+      }
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",

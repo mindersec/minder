@@ -101,6 +101,20 @@ func (mr *MockProviderServiceMockRecorder) DeleteGitHubAppInstallation(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitHubAppInstallation", reflect.TypeOf((*MockProviderService)(nil).DeleteGitHubAppInstallation), arg0, arg1)
 }
 
+// DeleteProvider mocks base method.
+func (m *MockProviderService) DeleteProvider(arg0 context.Context, arg1 *db.Provider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProvider", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteProvider indicates an expected call of DeleteProvider.
+func (mr *MockProviderServiceMockRecorder) DeleteProvider(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProvider", reflect.TypeOf((*MockProviderService)(nil).DeleteProvider), arg0, arg1)
+}
+
 // ValidateGitHubAppWebhookPayload mocks base method.
 func (m *MockProviderService) ValidateGitHubAppWebhookPayload(arg0 *http.Request) ([]byte, error) {
 	m.ctrl.T.Helper()

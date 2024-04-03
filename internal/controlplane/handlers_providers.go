@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // GetProvider gets a given provider available in a specific project.
@@ -154,6 +156,103 @@ func (_ *Server) ListProviderClasses(
 	return &minderv1.ListProviderClassesResponse{
 		ProviderClasses: classes,
 	}, nil
+}
+
+// DeleteProvider deletes a provider by name from a specific project.
+func (s *Server) DeleteProvider(
+	ctx context.Context,
+	_ *minderv1.DeleteProviderRequest,
+) (*minderv1.DeleteProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
+
+	if providerName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	provider, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+	}
+
+	err = s.deleteProvider(ctx, provider, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error deleting provider: %v", err)
+	}
+
+	return &minderv1.DeleteProviderResponse{
+		Name: providerName,
+	}, nil
+}
+
+// DeleteProviderByID deletes a provider by ID from a specific project.
+func (s *Server) DeleteProviderByID(
+	ctx context.Context,
+	in *minderv1.DeleteProviderByIDRequest,
+) (*minderv1.DeleteProviderByIDResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	parsedProviderID, err := uuid.Parse(in.Id)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider ID")
+	}
+
+	provider, err := s.providerStore.GetByID(ctx, parsedProviderID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+	}
+
+	err = s.deleteProvider(ctx, provider, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error deleting provider: %v", err)
+	}
+
+	return &minderv1.DeleteProviderByIDResponse{
+		Id: in.Id,
+	}, nil
+}
+
+func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, projectID uuid.UUID) error {
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(s.provMt),
+		providers.WithRestClientCache(s.restClientCache),
+	}
+
+	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+	}
+
+	// If the provider is a GitHub provider with a valid credential, delete all repositories associated with the provider
+	if p.Implements(db.ProviderTypeGithub) &&
+		providers.GetCredentialStateForProvider(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider) ==
+			provinfv1.CredentialStateSet {
+		client, err := p.GetGitHub()
+		if err != nil {
+			return status.Errorf(codes.Internal, "error creating github provider: %v", err)
+		}
+
+		// Delete all repositories associated with the provider and remove the webhooks
+		err = s.repos.DeleteRepositoriesByProvider(ctx, client, provider.Name, projectID)
+		if err != nil {
+			return status.Errorf(codes.Internal, "error deleting repositories: %v", err)
+		}
+	}
+
+	// Delete the provider itself
+	err = s.providers.DeleteProvider(ctx, provider)
+	if err != nil {
+		return status.Errorf(codes.Internal, "error deleting provider: %v", err)
+	}
+	return nil
 }
 
 func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []minderv1.ProviderType {
