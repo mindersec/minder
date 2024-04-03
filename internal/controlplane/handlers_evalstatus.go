@@ -317,7 +317,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RemediationDetails:     eval.RemDetails.String,
 		RuleDisplayName:        nString,
 		RuleTypeName:           eval.RuleTypeName,
-		Alert:                  buildEvalResultAlertFrom(&eval),
+		Alert:                  buildEvalResultAlertFromLRERow(&eval),
 		Severity:               sev,
 	}
 }
@@ -357,13 +357,29 @@ func buildProfileStatus(
 	}
 }
 
-// buildEvalResultAlertFrom
-func buildEvalResultAlertFrom(eval *db.ListRuleEvaluationsByProfileIdRow) *minderv1.EvalResultAlert {
-	return &minderv1.EvalResultAlert{
+// buildEvalResultAlertFromLRERow build the evaluation result alert from a
+// database row.
+func buildEvalResultAlertFromLRERow(eval *db.ListRuleEvaluationsByProfileIdRow) *minderv1.EvalResultAlert {
+	era := &minderv1.EvalResultAlert{
 		Status:      string(eval.AlertStatus.AlertStatusTypes),
 		LastUpdated: timestamppb.New(eval.AlertLastUpdated.Time),
 		Details:     eval.AlertDetails.String,
 	}
+
+	if eval.AlertMetadata.Valid && eval.AlertStatus.AlertStatusTypes == db.AlertStatusTypesOn {
+		repoSlug := ""
+		if eval.RepoOwner != "" && eval.RepoName != "" {
+			repoSlug = fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName)
+		}
+		urlString, err := getAlertURLFromMetadata(
+			eval.AlertMetadata.RawMessage, repoSlug,
+		)
+		if err == nil {
+			era.Url = urlString
+		}
+	}
+
+	return era
 }
 
 func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
