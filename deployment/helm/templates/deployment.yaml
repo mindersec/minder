@@ -77,6 +77,8 @@ spec:
             value: "{{ .Values.trusty.endpoint }}"
           - name: "MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY"
             value: "/secrets/github-app/github_app_private_key"
+          - name: "MINDER_PROVIDER_GITHUB_APP_WEBHOOK_SECRET"
+            value: "/secrets/github-app/github_app_webhook_secret"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
