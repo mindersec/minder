@@ -53,7 +53,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientCon
 		return cli.MessageAndError("Error deleting sub-project", err)
 	}
 
-	cmd.Println("Successfully deleted profile with id:", resp.ProjectId)
+	cmd.Println("Successfully deleted project with id:", resp.ProjectId)
 
 	return nil
 }
