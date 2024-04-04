@@ -27,6 +27,13 @@ var (
 
 	// Starts with a letter/digit, then a string of letter/digit and hypen or underscore
 	dnsStyleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
+	// ErrBadDNSStyleName is the error returned when a name fails the
+	// `dnsStyleNameRegex` regex.
+	// TODO: this is an overloaded error message - consider more fine
+	// grained validation so we can provide more fine grained errors.
+	ErrBadDNSStyleName = errors.New(
+		"name may only contain letters, numbers, hyphens and underscores, and is limited to a maximum of 63 characters",
+	)
 )
 
 // Validator is an interface which allows for the validation of a struct.
@@ -276,7 +283,7 @@ func validateNamespacedName(name string) error {
 	// if this is a namespaced name, validate both the namespace and the name
 	for _, component := range components {
 		if !dnsStyleNameRegex.MatchString(component) {
-			return errors.New("name may only contain letters, numbers, hyphens and underscores")
+			return ErrBadDNSStyleName
 		}
 	}
 	return nil
