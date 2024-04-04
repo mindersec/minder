@@ -198,8 +198,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	return nil
 }
 func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-	projectID := inf.ProjectID
-	provider, err := e.providerStore.GetByName(ctx, projectID, inf.Provider)
+	provider, err := e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -215,14 +214,55 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID: projectID,
+			ID: inf.ProjectID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
 		},
 	}
 
-	return e.evalEntityEvent(ctx, inf, ectx, cli)
+	// Channel the event based on the webhook action - create, update, delete, published, etc.
+	switch inf.ActionEvent {
+	case "deleted":
+		return e.deleteEntityEvent(ctx, inf, ectx)
+	default:
+		return e.evalEntityEvent(ctx, inf, ectx, cli)
+	}
+}
+
+//nolint:exhaustive
+func (e *Executor) deleteEntityEvent(
+	ctx context.Context,
+	inf *entities.EntityInfoWrapper,
+	ectx *EntityContext,
+) error {
+	l := zerolog.Ctx(ctx).With().
+		Str("provider", ectx.Provider.Name).
+		Str("project_id", ectx.Project.ID.String()).
+		Str("entity_type", inf.Type.ToString()).
+		Str("action", inf.ActionEvent).
+		Logger()
+
+	repoID, _, _ := inf.GetEntityDBIDs()
+
+	// Telemetry logging
+	minderlogger.BusinessRecord(ctx).Provider = ectx.Provider.Name
+	minderlogger.BusinessRecord(ctx).Project = ectx.Project.ID
+	switch inf.Type {
+	case pb.Entity_ENTITY_REPOSITORIES:
+		l.Info().Str("repo_id", repoID.String()).Msg("handling entity delete event")
+		// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
+		// will automatically remove them when the repository is deleted.
+		if err := e.querier.DeleteRepository(ctx, repoID); err != nil {
+			return fmt.Errorf("error deleting repository from DB: %w", err)
+		}
+		minderlogger.BusinessRecord(ctx).Repository = repoID
+		return nil
+	default:
+		err := fmt.Errorf("unsupported entity delete event for: %s", inf.Type)
+		l.Err(err).Msg("error handling entity delete event")
+		return err
+	}
 }
 
 func (e *Executor) evalEntityEvent(
@@ -233,9 +273,10 @@ func (e *Executor) evalEntityEvent(
 ) error {
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String())
+		Str("execution_id", inf.ExecutionID.String()).
+		Str("provider", inf.Provider).
+		Str("project_id", inf.ProjectID.String())
 	logger.Msg("entity evaluation - started")
-
 	// This is a cache, so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.

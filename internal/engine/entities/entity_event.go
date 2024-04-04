@@ -53,6 +53,7 @@ type EntityInfoWrapper struct {
 	Type          minderv1.Entity
 	OwnershipData map[string]string
 	ExecutionID   *uuid.UUID
+	ActionEvent   string
 }
 
 const (
@@ -79,6 +80,8 @@ const (
 	PullRequestIDEventKey = "pull_request_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
+	// ActionEventKey is the key for the action event
+	ActionEventKey = "action_event"
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -91,6 +94,13 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 // WithProvider sets the provider
 func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
 	eiw.Provider = provider
+
+	return eiw
+}
+
+// WithActionEvent sets the webhook action
+func (eiw *EntityInfoWrapper) WithActionEvent(action string) *EntityInfoWrapper {
+	eiw.ActionEvent = action
 
 	return eiw
 }
@@ -227,6 +237,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
+	msg.Metadata.Set(ActionEventKey, eiw.ActionEvent)
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
@@ -284,6 +295,13 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 	}
 
 	eiw.Provider = provider
+	return nil
+}
+
+//nolint:unparam
+func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) error {
+	action := msg.Metadata.Get(ActionEventKey)
+	eiw.ActionEvent = action
 	return nil
 }
 
@@ -375,6 +393,10 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 
 	// We always have the repository ID.
 	if err := out.withRepositoryIDFromMessage(msg); err != nil {
+		return nil, err
+	}
+
+	if err := out.withActionEventFromMessage(msg); err != nil {
 		return nil, err
 	}
 

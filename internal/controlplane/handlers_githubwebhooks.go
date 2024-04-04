@@ -437,13 +437,11 @@ func (s *Server) parseGithubEventForProcessing(
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
-		return s.parseArtifactPublishedEvent(
-			ctx, payload, msg, dbRepo, provBuilder)
+		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
-		return parsePullRequestModEvent(
-			ctx, payload, msg, dbRepo, s.store, provBuilder)
+		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+		return parseRepoEvent(msg, dbRepo, provBuilder.GetName(), action)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -454,6 +452,7 @@ func parseRepoEvent(
 	msg *message.Message,
 	dbrepo db.Repository,
 	providerName string,
+	action string,
 ) error {
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := util.PBRepositoryFromDB(dbrepo)
@@ -461,7 +460,8 @@ func parseRepoEvent(
 		WithProvider(providerName).
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
-		WithRepositoryID(dbrepo.ID)
+		WithRepositoryID(dbrepo.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
@@ -472,6 +472,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	msg *message.Message,
 	dbrepo db.Repository,
 	prov *providers.ProviderBuilder,
+	action string,
 ) error {
 	// we need to have information about package and repository
 	if whPayload["package"] == nil || whPayload["repository"] == nil {
@@ -518,7 +519,8 @@ func (s *Server) parseArtifactPublishedEvent(
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
-		WithArtifactID(dbArtifact.ID)
+		WithArtifactID(dbArtifact.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
@@ -530,6 +532,7 @@ func parsePullRequestModEvent(
 	dbrepo db.Repository,
 	store db.Store,
 	prov *providers.ProviderBuilder,
+	action string,
 ) error {
 	// NOTE(jaosorior): this webhook is very specific to github
 	if !prov.Implements(db.ProviderTypeGithub) {
@@ -567,7 +570,8 @@ func parsePullRequestModEvent(
 		WithPullRequestID(dbPr.ID).
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
-		WithRepositoryID(dbrepo.ID)
+		WithRepositoryID(dbrepo.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
