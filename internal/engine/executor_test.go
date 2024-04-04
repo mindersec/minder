@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
@@ -154,9 +155,15 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				},
-				EntityProfile: db.EntityProfile{
-					Entity:          db.EntitiesRepository,
-					ContextualRules: json.RawMessage(marshalledCRS),
+				ProfilesWithEntityProfile: db.ProfilesWithEntityProfile{
+					Entity: db.NullEntities{
+						Entities: db.EntitiesRepository,
+						Valid:    true,
+					},
+					ContextualRules: pqtype.NullRawMessage{
+						RawMessage: json.RawMessage(marshalledCRS),
+						Valid:      true,
+					},
 				},
 			},
 		}, nil)

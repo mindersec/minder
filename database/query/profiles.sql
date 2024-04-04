@@ -40,7 +40,7 @@ DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
 -- name: GetProfileByProjectAndID :many
-SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT * FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one
@@ -52,16 +52,12 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 -- name: GetProfileByNameAndLock :one
 SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
 
--- name: GetEntityProfileByProjectAndName :many
-SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
-
 -- name: ListProfilesByProjectID :many
-SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1;
 
 -- name: ListProfilesByProjectIDAndLabel :many
-SELECT sqlc.embed(profiles), sqlc.embed(entity_profiles) FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1
 AND (
     -- the most common case first, if the include_labels is empty, we list profiles with no labels

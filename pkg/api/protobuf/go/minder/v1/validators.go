@@ -208,16 +208,6 @@ func (p *Profile) Validate() error {
 		return fmt.Errorf("%w: %w", ErrValidationFailed, err)
 	}
 
-	repoRuleCount := len(p.GetRepository())
-	buildEnvRuleCount := len(p.GetBuildEnvironment())
-	artifactRuleCount := len(p.GetArtifact())
-	pullRequestRuleCount := len(p.GetPullRequest())
-	totalRuleCount := repoRuleCount + buildEnvRuleCount + artifactRuleCount + pullRequestRuleCount
-
-	if totalRuleCount == 0 {
-		return fmt.Errorf("%w: profile must have at least one rule", ErrValidationFailed)
-	}
-
 	// If the profile is nil or empty, we don't need to validate it
 	for i, r := range p.GetRepository() {
 		if err := validateRule(r); err != nil {

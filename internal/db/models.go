@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 type ActionType string
@@ -503,6 +504,16 @@ type ProfileStatus struct {
 	ProfileID     uuid.UUID       `json:"profile_id"`
 	ProfileStatus EvalStatusTypes `json:"profile_status"`
 	LastUpdated   time.Time       `json:"last_updated"`
+}
+
+type ProfilesWithEntityProfile struct {
+	ID              uuid.NullUUID         `json:"id"`
+	Entity          NullEntities          `json:"entity"`
+	ProfileID       uuid.NullUUID         `json:"profile_id"`
+	ContextualRules pqtype.NullRawMessage `json:"contextual_rules"`
+	CreatedAt       sql.NullTime          `json:"created_at"`
+	UpdatedAt       sql.NullTime          `json:"updated_at"`
+	Profid          uuid.UUID             `json:"profid"`
 }
 
 type Project struct {

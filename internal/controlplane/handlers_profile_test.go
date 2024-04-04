@@ -262,10 +262,16 @@ func TestCreateProfile(t *testing.T) {
 		name: "Create profile with no rules",
 		profile: &minderv1.CreateProfileRequest{
 			Profile: &minderv1.Profile{
-				Name: "test",
+				Name: "test_norules",
 			},
 		},
-		wantErr: `Couldn't create profile: validation failed: profile must have at least one rule`,
+		result: &minderv1.CreateProfileResponse{
+			Profile: &minderv1.Profile{
+				Name:      "test_norules",
+				Alert:     proto.String("on"),
+				Remediate: proto.String("off"),
+			},
+		},
 	},
 		{
 			name: "Create profile with valid name and rules",

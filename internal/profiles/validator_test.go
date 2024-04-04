@@ -56,11 +56,6 @@ func TestValidatorScenarios(t *testing.T) {
 			ExpectedError: "invalid profile",
 		},
 		{
-			Name:          "Validator rejects profile with no rules defined",
-			Profile:       makeProfile(withBasicProfileData),
-			ExpectedError: "profile must have at least one rule",
-		},
-		{
 			Name:          "Validator rejects profile with multiple unnamed rules of same type",
 			Profile:       makeProfile(withBasicProfileData, withRules(makeRule(withEmptyRuleName), makeRule(withEmptyRuleName))),
 			ExpectedError: "multiple rules with empty name and same type in entity",
