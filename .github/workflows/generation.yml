@@ -26,7 +26,7 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
       # Install the `buf` CLI
-      - uses: bufbuild/buf-setup-action@517ee23296d5caf38df31c21945e6a54bbc8a89f # v1
+      - uses: bufbuild/buf-setup-action@9990c72db080fa39cf561230b8d2d7b736681f85 # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       # Lint your Protobuf sources
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
-      - uses: bufbuild/buf-setup-action@517ee23296d5caf38df31c21945e6a54bbc8a89f # v1
+      - uses: bufbuild/buf-setup-action@9990c72db080fa39cf561230b8d2d7b736681f85 # v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - uses: bufbuild/buf-breaking-action@c57b3d842a5c3f3b454756ef65305a50a587c5ba # v1
