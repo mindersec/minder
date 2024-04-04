@@ -244,7 +244,7 @@ func (p *providerService) CreateGitHubAppProvider(
 	})
 }
 
-// CreateGitHubAppWithoutInvitation either creates a new project for the selected app, or stores
+// CreateGitHubAppWithoutInvitation either creates a new project for the selected app installation, or stores
 // it in preparation for creating a new project when the authorizing user logs in.
 //
 // Note that this function may return nil, nil if the installation user is not known to Minder.
@@ -284,7 +284,7 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		return nil, nil
 	}
 
-	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("org", installationOwner.GetID()).
+	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("owner", installationOwner.GetID()).
 		Msg("Creating GitHub App Provider")
 
 	_, err = createGitHubApp(ctx, qtx, project.ID, installationOwner, installationID, nil, sql.NullString{})

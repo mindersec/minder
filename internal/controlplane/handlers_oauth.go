@@ -386,22 +386,10 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 		return fmt.Errorf("error getting user ID from token: %w", err)
 	}
 
-	tx, err := s.store.BeginTransaction()
-	if err != nil {
-		return fmt.Errorf("error starting transaction: %w", err)
-	}
-	defer s.store.Rollback(tx)
-	qtx := s.store.GetQuerierWithTransaction(tx)
-
-	_, err = s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
-	if err != nil {
-		return fmt.Errorf("error handling app without minder state: %w", err)
-	}
-
-	if err = s.store.Commit(tx); err != nil {
-		return fmt.Errorf("error committing transaction: %w", err)
-	}
-	return nil
+	_, err = db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.Project, error) {
+		return s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
+	})
+	return err
 }
 
 // StoreProviderToken stores the provider token for a project
