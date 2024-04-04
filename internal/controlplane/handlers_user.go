@@ -20,13 +20,15 @@ import (
 	"errors"
 	"net/http"
 	"path"
+	"strconv"
 
-	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
@@ -60,52 +62,92 @@ func (s *Server) CreateUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	var userProject uuid.UUID
-
-	baseName := subject
-	if token.PreferredUsername() != "" {
-		baseName = token.PreferredUsername()
-	}
-
-	// TODO: this currently creates the github OAuth provider -- should we search
-	// for unclaimed GHA providers and use one of those instead?
-	orgProject, err := projects.ProvisionSelfEnrolledOAuthProject(
-		ctx,
-		s.authzClient,
-		qtx,
-		baseName,
-		subject,
-		s.marketplace,
-		s.cfg.DefaultProfiles,
-	)
-	if err != nil {
-		if errors.Is(err, projects.ErrProjectAlreadyExists) {
-			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", baseName)
-		}
-		return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
-	}
-
-	userProject = uuid.MustParse(orgProject.ProjectId)
 	user, err := qtx.CreateUser(ctx, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
+	var userProjects []*db.Project
+
+	userProjects = append(userProjects, s.claimGitHubInstalls(ctx, qtx)...)
+
+	if len(userProjects) == 0 {
+		// Set up the default project for the user
+		baseName := subject
+		if token.PreferredUsername() != "" {
+			baseName = token.PreferredUsername()
+		}
+
+		project, err := projects.ProvisionSelfEnrolledOAuthProject(
+			ctx,
+			s.authzClient,
+			qtx,
+			baseName,
+			subject,
+			s.marketplace,
+			s.cfg.DefaultProfiles,
+		)
+		if err != nil {
+			if errors.Is(err, projects.ErrProjectAlreadyExists) {
+				return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", baseName)
+			}
+			return nil, status.Errorf(codes.Internal, "failed to create default organization records: %s", err)
+		}
+		userProjects = append(userProjects, project)
+	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = userProjects[0].ID
 
 	err = s.store.Commit(tx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Project = userProject
+	if len(userProjects) == 0 {
+		return nil, status.Errorf(codes.Internal, "failed to create any projects for user")
+	}
 
 	return &pb.CreateUserResponse{
 		Id:              user.ID,
-		ProjectId:       userProject.String(),
-		ProjectName:     orgProject.Name,
+		ProjectId:       userProjects[0].ID.String(),
+		ProjectName:     userProjects[0].Name,
 		IdentitySubject: user.IdentitySubject,
 		CreatedAt:       timestamppb.New(user.CreatedAt),
 	}, nil
+}
+
+func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.Querier) []*db.Project {
+	ghId, ok := auth.GetUserClaimFromContext[string](ctx, "gh_id")
+	if !ok || ghId == "" {
+		return nil
+	}
+	installs, err := qtx.GetUnclaimedInstallationsByUser(ctx, sql.NullString{String: ghId, Valid: true})
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Str("gh_id", ghId).Msg("failed to get unclaimed installations")
+		return nil
+	}
+
+	userID, err := strconv.ParseInt(ghId, 10, 64)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Str("gh_id", ghId).Msg("failed to parse gh_id")
+		return nil
+	}
+
+	var userProjects []*db.Project
+
+	for _, i := range installs {
+		// TODO: if we can get an GitHub auth token for the user, we can do the rest with CreateGitHubAppWithoutInvitation
+		proj, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Int64("org_id", i.OrganizationID).Msg("failed to create GitHub app at first login")
+			continue
+		}
+		if proj != nil {
+			userProjects = append(userProjects, proj)
+		}
+	}
+
+	return userProjects
 }
 
 // DeleteUser is a service for user self deletion

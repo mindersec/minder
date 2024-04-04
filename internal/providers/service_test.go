@@ -316,18 +316,22 @@ func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
 			},
 		}, nil, nil)
 
-	mocks.svcMock.EXPECT().
-		GetUserIdFromToken(gomock.Any(), gomock.Any()).
-		Return(github.Int64(accountID), nil)
-
-	newProviderInstall, err := provSvc.CreateGitHubAppWithoutInvitation(
-		context.Background(), &oauth2.Token{},
-		installationID)
+	project, err := provSvc.CreateGitHubAppWithoutInvitation(
+		context.Background(), mocks.fakeStore, accountID, installationID)
 	require.NoError(t, err)
-	require.NotNil(t, newProviderInstall)
+	require.NotNil(t, project)
 
-	require.Equal(t, newProject, newProviderInstall.ProjectID.UUID)
+	require.Equal(t, newProject, project.ID)
 
+	provider, err := mocks.fakeStore.GetProviderByName(context.Background(), db.GetProviderByNameParams{
+		Name:     "github-app-existing-user",
+		Projects: []uuid.UUID{project.ID},
+	})
+	require.NoError(t, err)
+
+	newProviderInstall, err := mocks.fakeStore.GetInstallationIDByProviderID(
+		context.Background(), uuid.NullUUID{UUID: provider.ID, Valid: true})
+	require.NoError(t, err)
 	require.NotEqual(t, uuid.NullUUID{}, newProviderInstall.ProviderID)
 	require.Equal(t, int64(installationID), newProviderInstall.AppInstallationID)
 	require.Equal(t, int64(accountID), newProviderInstall.OrganizationID)
@@ -369,16 +373,17 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 			},
 		}, nil, nil)
 
-	mocks.svcMock.EXPECT().
-		GetUserIdFromToken(gomock.Any(), gomock.Any()).
-		Return(github.Int64(accountID), nil)
-
-	dbUnclaimed, err := provSvc.CreateGitHubAppWithoutInvitation(
-		context.Background(), &oauth2.Token{},
-		installationID)
+	project, err := provSvc.CreateGitHubAppWithoutInvitation(
+		context.Background(), mocks.fakeStore, accountID, installationID)
 	require.NoError(t, err)
-	require.NotNil(t, dbUnclaimed)
+	require.Nil(t, project)
 
+	installs, err := mocks.fakeStore.GetUnclaimedInstallationsByUser(
+		context.Background(), sql.NullString{String: strconv.FormatInt(accountID, 10), Valid: true})
+
+	require.NoError(t, err)
+	require.Len(t, installs, 1)
+	dbUnclaimed := installs[0]
 	require.Equal(t, dbUnclaimed.ProviderID, uuid.NullUUID{})
 	require.Equal(t, dbUnclaimed.AppInstallationID, int64(installationID))
 	require.Equal(t, dbUnclaimed.OrganizationID, int64(accountID))

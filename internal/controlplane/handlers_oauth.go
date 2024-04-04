@@ -331,9 +331,25 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		// We weren't expecting this install, maybe it matches an existing user
 		// and we'll create a new project to match.
 		zerolog.Ctx(ctx).Info().Int64("install", installationID).Msg("Unmatched GitHub App install, trying to create project")
-		_, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, token, installationID)
+		userID, err := s.ghClient.GetUserIdFromToken(ctx, token)
+		if err != nil || userID == nil || *userID == 0 {
+			return fmt.Errorf("error getting user ID from token: %w", err)
+		}
+
+		tx, err := s.store.BeginTransaction()
+		if err != nil {
+			return fmt.Errorf("error starting transaction: %w", err)
+		}
+		defer s.store.Rollback(tx)
+		qtx := s.store.GetQuerierWithTransaction(tx)
+
+		_, err = s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
 		if err != nil {
 			return fmt.Errorf("error handling app without minder state: %w", err)
+		}
+
+		if err = s.store.Commit(tx); err != nil {
+			return fmt.Errorf("error committing transaction: %w", err)
 		}
 	}
 
@@ -588,7 +604,7 @@ func (s *Server) makeProjectForGitHubApp(
 		return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
 	}
 
-	topLevelProject, _, err := projects.ProvisionSelfEnrolledProject(
+	topLevelProject, err := projects.ProvisionSelfEnrolledProject(
 		ctx,
 		s.authzClient,
 		qtx,
