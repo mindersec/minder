@@ -30,6 +30,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/google/go-github/v60/github"
 	"github.com/google/uuid"
@@ -47,6 +48,7 @@ import (
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	mockratecache "github.com/stacklok/minder/internal/providers/ratecache/mock"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 type testMocks struct {
@@ -459,4 +461,67 @@ func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
 	cfg.GitHubApp.WebhookSecret = "wrong"
 	_, err = provSvc.ValidateGitHubAppWebhookPayload(req)
 	require.Error(t, err)
+}
+
+func TestProviderService_DeleteProvider(t *testing.T) {
+	t.Parallel()
+
+	installationID := int64(123)
+
+	seed := time.Now().UnixNano()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pvtKeyFile := testCreatePrivateKeyFile(t)
+	defer os.Remove(pvtKeyFile.Name())
+	cfg := &server.ProviderConfig{
+		GitHubApp: &server.GitHubAppConfig{
+			PrivateKey: pvtKeyFile.Name(),
+		},
+	}
+
+	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
+
+	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
+		db.CreateProjectParams{
+			Name:     "test",
+			Metadata: []byte(`{}`),
+		})
+	require.NoError(t, err)
+
+	ghAppProvider, err := mocks.fakeStore.CreateProvider(context.Background(),
+		db.CreateProviderParams{
+			Name:       rand.RandomName(seed),
+			ProjectID:  dbproj.ID,
+			Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true},
+			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeGit},
+			AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
+			Definition: json.RawMessage("{}"),
+		})
+	require.NoError(t, err)
+
+	_, err = mocks.fakeStore.UpsertInstallationID(context.Background(),
+		db.UpsertInstallationIDParams{
+			ProviderID: uuid.NullUUID{
+				UUID:  ghAppProvider.ID,
+				Valid: true,
+			},
+			AppInstallationID: installationID,
+		},
+	)
+	require.NoError(t, err)
+
+	mocks.svcMock.EXPECT().
+		DeleteInstallation(gomock.Any(), installationID, gomock.Any()).
+		Return(nil)
+
+	err = provSvc.DeleteProvider(
+		context.Background(),
+		&ghAppProvider)
+	require.NoError(t, err)
+
+	// Ensure the provider is no longer in the database
+	_, err = mocks.fakeStore.GetProviderByID(context.Background(), ghAppProvider.ID)
+	require.ErrorIs(t, err, sql.ErrNoRows)
 }

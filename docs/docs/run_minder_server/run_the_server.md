@@ -24,6 +24,7 @@ file.
 - [Go 1.20](https://golang.org/doc/install)
 - [PostgreSQL](https://www.postgresql.org/download/)
 - [Keycloak](https://www.keycloak.org/guides)
+- [OpenFGA](https://openfga.dev/#quick-start)
 
 ## Download the latest release
 
@@ -54,6 +55,29 @@ You will also need a configuration file. You can copy the example configuration 
 If you prefer to use a different file name or location, you can specify this using the `--config` 
 flag, e.g. `minder-server --config /file/path/server-config.yaml serve` when you later run the application.
 
+## OpenFGA
+
+Minder requires a OpenFGA instance to be running. You can install this locally, or use a container.
+
+Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local OpenFGA configuration.
+
+```yaml
+authz:
+   api_url: http://localhost:8082
+   store_name: minder
+   auth:
+      # Set to token for production
+      method: none
+```
+
+### Using a container
+
+A simple way to get started is to use the provided `docker-compose.yaml` file.
+
+```bash
+docker compose up -d openfga
+```
+
 ## Database creation
 
 Minder requires a PostgreSQL database to be running. You can install this locally, or use a container.
@@ -78,9 +102,11 @@ A simple way to get started is to use the provided `docker-compose.yaml` file.
 docker compose up -d postgres
 ```
 
-### Create the database
+### Create the database and OpenFGA model
 
-Once you have a running database, you can create the database using the `minder-server` CLI tool or via the `make` command.
+Once you have a running database and OpenFGA instance, you can create the
+database and OpenFGA model using the `minder-server` CLI tool or via the `make`
+command.
 
 ```bash
 make migrateup
@@ -150,41 +176,6 @@ Using the client ID and client secret you created above, enable GitHub login you
 following command:
 ```bash
 make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
-```
-
-## OpenFGA
-Minder requires a OpenFGA instance to be running. You can install this locally, or use a container.
-
-Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local OpenFGA configuration.
-```yaml
-authz:
-   api_url: http://localhost:8082
-   store_name: minder
-   auth:
-      # Set to token for production
-      method: none
-```
-
-### Using a container
-
-A simple way to get started is to use the provided `docker-compose.yaml` file.
-
-```bash
-docker compose up -d openfga
-```
-
-### Create the model
-
-Once you have a running OpenFGA instance, you can create the model using the `minder-server` CLI tool or via the `make` command.
-
-```bash
-make migrateup
-```
-
-or:
-
-```bash
-minder-server migrate up
 ```
 
 ## Create token key passphrase

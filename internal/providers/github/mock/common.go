@@ -41,6 +41,20 @@ func (m *MockClientService) EXPECT() *MockClientServiceMockRecorder {
 	return m.recorder
 }
 
+// DeleteInstallation mocks base method.
+func (m *MockClientService) DeleteInstallation(arg0 context.Context, arg1 int64, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInstallation", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteInstallation indicates an expected call of DeleteInstallation.
+func (mr *MockClientServiceMockRecorder) DeleteInstallation(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallation", reflect.TypeOf((*MockClientService)(nil).DeleteInstallation), arg0, arg1, arg2)
+}
+
 // GetInstallation mocks base method.
 func (m *MockClientService) GetInstallation(arg0 context.Context, arg1 int64, arg2 string) (*github.Installation, *github.Response, error) {
 	m.ctrl.T.Helper()

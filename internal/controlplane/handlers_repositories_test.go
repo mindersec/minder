@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -36,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
+	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -105,7 +107,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails)
+			server := createServer(ctrl, scenario.RepoServiceSetup, newGitHub(), scenario.ProviderFails)
 
 			req := &pb.RegisterRepositoryRequest{
 				Repository: &pb.UpstreamRepositoryRef{
@@ -120,6 +122,71 @@ func TestServer_RegisterRepository(t *testing.T) {
 						Repository: creationResult,
 						Status: &pb.RegisterRepoResult_Status{
 							Success: true,
+						},
+					},
+				}
+				require.NoError(t, err)
+				require.Equal(t, res, expectation)
+			} else {
+				require.Nil(t, res)
+				require.Contains(t, err.Error(), scenario.ExpectedError)
+			}
+		})
+	}
+}
+
+func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name             string
+		RepoServiceSetup repoMockBuilder
+		GitHubSetup      githubMockBuilder
+		ProviderFails    bool
+		ExpectedError    string
+	}{
+		{
+			Name:          "List remote repositories fails when all providers error",
+			GitHubSetup:   newGitHub(withFailedListAllRepositories(errDefault)),
+			ExpectedError: "cannot list repositories for providers: [github]",
+		},
+		{
+			Name:        "List remote repositories succeeds when all providers succeed",
+			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
+				Project: engine.Project{ID: projectID},
+			})
+
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.GitHubSetup, scenario.ProviderFails)
+
+			projectIDStr := projectID.String()
+			req := &pb.ListRemoteRepositoriesFromProviderRequest{
+				Context: &pb.Context{
+					Project: &projectIDStr,
+				},
+			}
+			res, err := server.ListRemoteRepositoriesFromProvider(ctx, req)
+			if scenario.ExpectedError == "" {
+				expectation := &pb.ListRemoteRepositoriesFromProviderResponse{
+					Results: []*pb.UpstreamRepositoryRef{
+						{
+							Context: &pb.Context{
+								Provider: &provider.Name,
+								Project:  ptr.Ptr(projectID.String()),
+							},
+							Owner:  repoOwner,
+							Name:   repoName,
+							RepoId: remoteRepoId,
 						},
 					},
 				}
@@ -203,7 +270,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails)
+			server := createServer(ctrl, scenario.RepoServiceSetup, newGitHub(), scenario.ProviderFails)
 
 			var result string
 			var resultError error
@@ -242,8 +309,10 @@ func TestServer_DeleteRepository(t *testing.T) {
 }
 
 type (
-	repoServiceMock = *mockghrepo.MockRepositoryService
-	repoMockBuilder = func(*gomock.Controller) repoServiceMock
+	repoServiceMock   = *mockghrepo.MockRepositoryService
+	repoMockBuilder   = func(*gomock.Controller) repoServiceMock
+	githubMock        = *mockgh.MockGitHub
+	githubMockBuilder = func(*gomock.Controller) githubMock
 )
 
 const (
@@ -251,6 +320,7 @@ const (
 	repoName         = "api-gateway"
 	repoOwnerAndName = "acme-corp/api-gateway"
 	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
+	remoteRepoId     = 123456
 	accessToken      = "TOKEN"
 )
 
@@ -260,18 +330,33 @@ var (
 	provider   = db.Provider{
 		ID:         uuid.UUID{},
 		Name:       ghprovider.Github,
-		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRepoLister},
 		Version:    provinfv1.V1,
 	}
 	creationResult = &pb.Repository{
 		Owner: repoOwner,
 		Name:  repoName,
 	}
+	existingRepo = pb.Repository{
+		Owner:  repoOwner,
+		Name:   repoName,
+		RepoId: remoteRepoId,
+	}
 )
 
 func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
 	return func(ctrl *gomock.Controller) repoServiceMock {
 		mock := mockghrepo.NewMockRepositoryService(ctrl)
+		for _, opt := range opts {
+			opt(mock)
+		}
+		return mock
+	}
+}
+
+func newGitHub(opts ...func(mock githubMock)) githubMockBuilder {
+	return func(ctrl *gomock.Controller) githubMock {
+		mock := mockgh.NewMockGitHub(ctrl)
 		for _, opt := range opts {
 			opt(mock)
 		}
@@ -325,7 +410,21 @@ func withFailedGetRepoByName(err error) func(repoServiceMock) {
 	}
 }
 
-func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, providerFails bool) *Server {
+func withSuccessfulListAllRepositories(mock githubMock) {
+	mock.EXPECT().
+		ListAllRepositories(gomock.Any()).
+		Return([]*pb.Repository{&existingRepo}, nil)
+}
+
+func withFailedListAllRepositories(err error) func(githubMock) {
+	return func(mock githubMock) {
+		mock.EXPECT().
+			ListAllRepositories(gomock.Any()).
+			Return(nil, err)
+	}
+}
+
+func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, githubSetup githubMockBuilder, providerFails bool) *Server {
 	var svc ghrepo.RepositoryService
 	if repoServiceSetup != nil {
 		svc = repoServiceSetup(ctrl)
@@ -342,7 +441,10 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, pro
 	clientCache := ratecache.NewRestClientCache(cancelable)
 	defer cancel()
 
-	gh := mockgh.NewMockGitHub(ctrl)
+	var gh *mockgh.MockGitHub
+	if githubSetup != nil {
+		gh = githubSetup(ctrl)
+	}
 
 	clientCache.Set("", accessToken, db.ProviderTypeGithub, gh)
 
@@ -350,6 +452,10 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, pro
 	store.EXPECT().
 		GetParentProjects(gomock.Any(), projectID).
 		Return([]uuid.UUID{projectID}, nil).
+		AnyTimes()
+	store.EXPECT().
+		GetFeatureInProject(gomock.Any(), gomock.Any()).
+		Return(json.RawMessage{}, nil).
 		AnyTimes()
 
 	if providerFails {

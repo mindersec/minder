@@ -36,7 +36,7 @@ type Querier interface {
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
-	DeleteProvider(ctx context.Context, id uuid.UUID) error
+	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error

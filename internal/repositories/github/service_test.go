@@ -182,6 +182,58 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 	}
 }
 
+func TestRepositoryService_DeleteRepositoriesByProvider(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name          string
+		DBSetup       dbMockBuilder
+		WebhookSetup  whMockBuilder
+		DeleteType    DeleteCallType
+		ShouldSucceed bool
+	}{
+		{
+			Name:         "Delete fails when a webhook cannot be deleted",
+			DBSetup:      newDBMock(withSuccessfulListRepos),
+			WebhookSetup: newWebhookMock(withFailedWebhookDelete),
+		},
+		{
+			Name:         "Delete by ID fails when a repo cannot be deleted from DB",
+			DBSetup:      newDBMock(withSuccessfulListRepos, withFailedDelete),
+			WebhookSetup: newWebhookMock(withSuccessfulWebhookDelete),
+		},
+		{
+			Name:          "Delete succeeds",
+			DBSetup:       newDBMock(withSuccessfulListRepos, withTwoSuccessfulDeletes),
+			WebhookSetup:  newWebhookMock(withTwoSuccessfulWebhookDeletes),
+			ShouldSucceed: true,
+		},
+	}
+
+	for i := range scenarios {
+		scenario := scenarios[i]
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			// For the purposes of this test, we do not need to attach any
+			// mock behaviour to the client. We can leave it as a nil pointer.
+			var ghClient clients.GitHubRepoClient
+
+			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, false)
+			err := svc.DeleteRepositoriesByProvider(ctx, ghClient, providerName, projectID)
+
+			if scenario.ShouldSucceed {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestRepositoryService_GetRepositoryById(t *testing.T) {
 	t.Parallel()
 
@@ -385,6 +437,13 @@ func withSuccessfulWebhookDelete(mock whMock) {
 		Return(nil)
 }
 
+func withTwoSuccessfulWebhookDeletes(mock whMock) {
+	mock.EXPECT().
+		DeleteWebhook(gomock.Any(), gomock.Any(), repoOwner, gomock.Any(), gomock.Any()).
+		Return(nil).
+		Times(2)
+}
+
 func withFailedWebhookDelete(mock whMock) {
 	mock.EXPECT().
 		DeleteWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName, cf.HookID).
@@ -401,6 +460,13 @@ func withSuccessfulDelete(mock dbMock) {
 	mock.EXPECT().
 		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
 		Return(nil)
+}
+
+func withTwoSuccessfulDeletes(mock dbMock) {
+	mock.EXPECT().
+		DeleteRepository(gomock.Any(), gomock.Any()).
+		Return(nil).
+		Times(2)
 }
 
 func withFailedGetById(mock dbMock) {
@@ -449,6 +515,22 @@ func withPrivateReposDisabled(mock dbMock) {
 	mock.EXPECT().
 		GetFeatureInProject(gomock.Any(), gomock.Any()).
 		Return(json.RawMessage{}, sql.ErrNoRows)
+}
+
+func withSuccessfulListRepos(mock dbMock) {
+	dbRepo2 := db.Repository{
+		ID:        uuid.New(),
+		ProjectID: projectID,
+		RepoOwner: repoOwner,
+		RepoName:  "other-repo",
+		WebhookID: sql.NullInt64{
+			Valid: true,
+			Int64: int64(9876),
+		},
+	}
+	mock.EXPECT().
+		ListRegisteredRepositoriesByProjectIDAndProvider(gomock.Any(), gomock.Any()).
+		Return([]db.Repository{dbRepo, dbRepo2}, nil)
 }
 
 func newGithubRepo(isPrivate bool) *gh.Repository {
