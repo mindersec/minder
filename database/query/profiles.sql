@@ -52,10 +52,6 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 -- name: GetProfileByNameAndLock :one
 SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
 
--- name: GetEntityProfileByProjectAndName :many
-SELECT * FROM profiles JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
-WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
-
 -- name: ListProfilesByProjectID :many
 SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1;

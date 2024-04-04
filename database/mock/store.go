@@ -702,21 +702,6 @@ func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
 }
 
-// GetEntityProfileByProjectAndName mocks base method.
-func (m *MockStore) GetEntityProfileByProjectAndName(arg0 context.Context, arg1 db.GetEntityProfileByProjectAndNameParams) ([]db.GetEntityProfileByProjectAndNameRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityProfileByProjectAndName", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetEntityProfileByProjectAndNameRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntityProfileByProjectAndName indicates an expected call of GetEntityProfileByProjectAndName.
-func (mr *MockStoreMockRecorder) GetEntityProfileByProjectAndName(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityProfileByProjectAndName", reflect.TypeOf((*MockStore)(nil).GetEntityProfileByProjectAndName), arg0, arg1)
-}
-
 // GetFeatureInProject mocks base method.
 func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeatureInProjectParams) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
