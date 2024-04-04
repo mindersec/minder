@@ -34,7 +34,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.63.0
 	github.com/openfga/go-sdk v0.3.5
-	github.com/openfga/openfga v1.5.1
+	github.com/openfga/openfga v1.5.2
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.0
 	github.com/puzpuzpuz/xsync/v3 v3.1.0
