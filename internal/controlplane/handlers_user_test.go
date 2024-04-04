@@ -77,7 +77,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					CreateProjectWithID(gomock.Any(), gomock.Any()).
 					Return(db.Project{
-						ID: projectID,
+						ID:   projectID,
 						Name: "subject1",
 					}, nil)
 				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
