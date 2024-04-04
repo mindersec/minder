@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 // ExtendQuerier extends the Querier interface with custom queries
@@ -136,7 +137,8 @@ func WithTransaction[T any](store Store, fn func(querier ExtendQuerier) (T, erro
 // ProfileRow is an interface row in the profiles table
 type ProfileRow interface {
 	GetProfile() Profile
-	GetEntityProfile() EntityProfile
+	GetEntityProfile() NullEntities
+	GetContextualRules() pqtype.NullRawMessage
 }
 
 // GetProfile returns the profile
@@ -145,8 +147,13 @@ func (r ListProfilesByProjectIDAndLabelRow) GetProfile() Profile {
 }
 
 // GetEntityProfile returns the entity profile
-func (r ListProfilesByProjectIDAndLabelRow) GetEntityProfile() EntityProfile {
-	return r.EntityProfile
+func (r ListProfilesByProjectIDAndLabelRow) GetEntityProfile() NullEntities {
+	return r.ProfilesWithEntityProfile.Entity
+}
+
+// GetContextualRules returns the contextual rules
+func (r ListProfilesByProjectIDAndLabelRow) GetContextualRules() pqtype.NullRawMessage {
+	return r.ProfilesWithEntityProfile.ContextualRules
 }
 
 // GetProfile returns the profile
@@ -155,8 +162,13 @@ func (r ListProfilesByProjectIDRow) GetProfile() Profile {
 }
 
 // GetEntityProfile returns the entity profile
-func (r ListProfilesByProjectIDRow) GetEntityProfile() EntityProfile {
-	return r.EntityProfile
+func (r ListProfilesByProjectIDRow) GetEntityProfile() NullEntities {
+	return r.ProfilesWithEntityProfile.Entity
+}
+
+// GetContextualRules returns the contextual rules
+func (r ListProfilesByProjectIDRow) GetContextualRules() pqtype.NullRawMessage {
+	return r.ProfilesWithEntityProfile.ContextualRules
 }
 
 // LabelsFromFilter parses the filter string and populates the IncludeLabels and ExcludeLabels fields

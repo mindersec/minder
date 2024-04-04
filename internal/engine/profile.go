@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
+	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/db"
@@ -214,8 +215,8 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 			}
 		}
 		if pm := rowInfoToProfileMap(
-			profiles[p.GetProfile().Name], p.GetEntityProfile().Entity,
-			p.GetEntityProfile().ContextualRules); pm != nil {
+			profiles[p.GetProfile().Name], p.GetEntityProfile(),
+			p.GetContextualRules()); pm != nil {
 			profiles[p.GetProfile().Name] = pm
 		}
 	}
@@ -281,9 +282,16 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 // and thus the logic is targetted to that.
 func rowInfoToProfileMap(
 	profile *pb.Profile,
-	entity db.Entities,
-	contextualRules json.RawMessage,
+	maybeEntity db.NullEntities,
+	maybeContextualRules pqtype.NullRawMessage,
 ) *pb.Profile {
+	if !maybeEntity.Valid || !maybeContextualRules.Valid {
+		// empty profile. Just return without filling in the rules
+		return profile
+	}
+	entity := maybeEntity.Entities
+	contextualRules := maybeContextualRules.RawMessage
+
 	if !entities.EntityTypeFromDB(entity).IsValid() {
 		log.Printf("unknown entity found in database: %s", entity)
 		return nil
