@@ -22,7 +22,7 @@ SELECT * FROM repositories WHERE repo_id = $1;
 -- name: GetRepositoryByRepoName :one
 SELECT * FROM repositories
     WHERE repo_owner = $1 AND repo_name = $2 AND project_id = $3
-    AND lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL;
+    AND (lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL);
 
 -- avoid using this, where possible use GetRepositoryByIDAndProject instead
 -- name: GetRepositoryByID :one
@@ -42,7 +42,7 @@ LIMIT sqlc.narg('limit')::bigint;
 -- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT * FROM repositories
 WHERE project_id = $1 AND webhook_id IS NOT NULL
-    AND lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL
+    AND (lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL)
 ORDER BY repo_name;
 
 -- name: DeleteRepository :exec
