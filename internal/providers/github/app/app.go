@@ -57,6 +57,7 @@ type GitHubAppDelegate struct {
 	credential provifv1.GitHubCredential
 	appName    string
 	userId     int64
+	isOrg      bool
 }
 
 // NewGitHubAppProvider creates a new GitHub App API client
@@ -69,6 +70,7 @@ func NewGitHubAppProvider(
 	metrics telemetry.HttpClientMetrics,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
+	isOrg bool,
 ) (*github.GitHub, error) {
 	var err error
 
@@ -102,6 +104,7 @@ func NewGitHubAppProvider(
 		credential: credential,
 		appName:    appName,
 		userId:     userId,
+		isOrg:      isOrg,
 	}
 
 	return github.NewGitHub(
@@ -141,6 +144,11 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 // GetOwner returns the owner filter
 func (_ *GitHubAppDelegate) GetOwner() string {
 	return ""
+}
+
+// IsOrg returns true if the owner is an organization
+func (g *GitHubAppDelegate) IsOrg() bool {
+	return g.isOrg
 }
 
 // ListAllRepositories returns a list of all repositories accessible to the GitHub App installation

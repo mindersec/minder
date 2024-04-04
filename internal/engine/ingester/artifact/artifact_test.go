@@ -59,6 +59,7 @@ func testGithubProviderBuilder() *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
 	)
@@ -86,9 +87,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -124,9 +124,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-and-tag").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-and-tag").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -172,9 +171,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -211,9 +209,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -250,9 +247,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -289,9 +285,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -353,9 +348,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -391,9 +385,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -430,9 +423,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       false,
 			wantNonNilRes: true,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, mockVerifier *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -469,9 +461,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -499,9 +490,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{
@@ -549,9 +539,8 @@ func TestArtifactIngestMatching(t *testing.T) {
 			wantErr:       true,
 			wantNonNilRes: false,
 			mockSetup: func(mockGhClient *mock_ghclient.MockGitHub, _ *mockverify.MockArtifactVerifier) {
-				mockGhClient.EXPECT().GetOwner().Return("stacklok")
 				mockGhClient.EXPECT().
-					GetPackageVersions(gomock.Any(), true, "stacklok", "container", "matching-name-but-not-tags").
+					GetPackageVersions(gomock.Any(), "stacklok", "container", "matching-name-but-not-tags").
 					Return([]*github.PackageVersion{
 						{
 							Metadata: &github.PackageMetadata{

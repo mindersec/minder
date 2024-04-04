@@ -560,6 +560,7 @@ type ProviderGithubAppInstallation struct {
 	UpdatedAt         time.Time      `json:"updated_at"`
 	EnrollmentNonce   sql.NullString `json:"enrollment_nonce"`
 	ProjectID         uuid.NullUUID  `json:"project_id"`
+	IsOrg             bool           `json:"is_org"`
 }
 
 type PullRequest struct {

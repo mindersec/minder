@@ -67,6 +67,9 @@ type ProviderService interface {
 	DeleteProvider(ctx context.Context, provider *db.Provider) error
 }
 
+// TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
+const TypeGitHubOrganization = "Organization"
+
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
 // from the state
 var ErrInvalidTokenIdentity = errors.New("invalid token identity")
@@ -259,6 +262,7 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 		return nil, err
 	}
 
+	isOrg := installationOwner.GetType() == TypeGitHubOrganization
 	projectName := fmt.Sprintf("github-%s", installationOwner.GetLogin())
 	project, err := p.projectFactory(ctx, qtx, projectName, userID)
 	if err != nil {
@@ -277,6 +281,7 @@ func (p *providerService) CreateGitHubAppWithoutInvitation(
 				Valid:  true,
 				String: strconv.FormatInt(userID, 10),
 			},
+			IsOrg: isOrg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error saving installation ID: %w", err)
@@ -320,6 +325,8 @@ func createGitHubApp(
 		return db.Provider{}, err
 	}
 
+	isOrg := installationOwner.GetType() == TypeGitHubOrganization
+
 	if validateOwnership != nil {
 		// TODO: it would be nice if validateOwnership didn't need to use a provider to get a
 		// github.Client, because then we could call it _before_ createGitHubApp, rather than
@@ -341,6 +348,7 @@ func createGitHubApp(
 		OrganizationID:    installationOwner.GetID(),
 		AppInstallationID: installationID,
 		EnrollmentNonce:   nonce,
+		IsOrg:             isOrg,
 	})
 	if err != nil {
 		return db.Provider{}, err
@@ -447,7 +455,7 @@ func (p *providerService) verifyProviderTokenIdentity(
 		WithProviderMetrics(p.provMt),
 		WithRestClientCache(p.restClientCache),
 	}
-	builder := NewProviderBuilder(&provider, sql.NullString{}, credentials.NewGitHubTokenCredential(token),
+	builder := NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
 		p.config, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.

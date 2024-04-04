@@ -46,6 +46,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
 	))
@@ -84,6 +85,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
 	))
@@ -122,6 +124,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
 	))
@@ -160,6 +163,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 				},
 			},
 			sql.NullString{},
+			false,
 			credentials.NewEmptyCredential(),
 			&serverconfig.ProviderConfig{},
 		))
@@ -200,6 +204,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
 	))
@@ -229,6 +234,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("foobar"),
 		&serverconfig.ProviderConfig{},
 	),
@@ -255,6 +261,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 			},
 		},
 		sql.NullString{},
+		false,
 		// No authentication is the right thing in this case.
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},

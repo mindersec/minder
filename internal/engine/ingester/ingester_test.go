@@ -179,6 +179,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 }`),
 				},
 				sql.NullString{},
+				false,
 				credentials.NewGitHubTokenCredential("token"),
 				&serverconfig.ProviderConfig{},
 			))

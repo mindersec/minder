@@ -58,6 +58,7 @@ var (
 }`),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
 	)
@@ -74,6 +75,7 @@ var (
 }`),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
 	)
@@ -99,6 +101,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 			Definition: json.RawMessage(definitionJSON),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
 	)
