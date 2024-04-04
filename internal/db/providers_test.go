@@ -58,7 +58,7 @@ func TestCreateAndDeleteProvider(t *testing.T) {
 	require.NoError(t, err, "Error getting provider")
 	require.NotEmpty(t, getProv, "Empty provider returned")
 
-	err = testQueries.DeleteProvider(context.Background(), prov.ID)
+	err = testQueries.DeleteProvider(context.Background(), DeleteProviderParams{ID: prov.ID, ProjectID: proj.ID})
 	require.NoError(t, err, "Error deleting provider")
 
 	_, err = testQueries.GetProviderByID(context.Background(), prov.ID)

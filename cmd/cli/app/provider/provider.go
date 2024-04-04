@@ -37,6 +37,7 @@ var ProviderCmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(ProviderCmd)
 	// Flags for all subcommands
+	// TODO: remove the provider flag from here and add it only to the subcommands that need it
 	ProviderCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
 	ProviderCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

@@ -65,6 +65,13 @@ type RepositoryService interface {
 		projectID uuid.UUID,
 		providerName string,
 	) (db.Repository, error)
+	// DeleteRepositoriesByProvider cleans up the state (e.g. webhooks) for repositories associated with this provider
+	DeleteRepositoriesByProvider(
+		ctx context.Context,
+		client ghclient.GitHubRepoClient,
+		providerName string,
+		projectID uuid.UUID,
+	) error
 }
 
 var (
@@ -208,6 +215,33 @@ func (r *repositoryService) DeleteRepository(ctx context.Context, client ghclien
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
+	return nil
+}
+
+func (r *repositoryService) DeleteRepositoriesByProvider(
+	ctx context.Context,
+	client ghclient.GitHubRepoClient,
+	providerName string,
+	projectID uuid.UUID,
+) error {
+	params := db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
+		ProjectID: projectID,
+		Provider: sql.NullString{
+			String: providerName,
+			Valid:  true,
+		},
+	}
+	repos, err := r.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx, params)
+	if err != nil {
+		return fmt.Errorf("error listing repositories for provider: %w", err)
+	}
+
+	for i := range repos {
+		err := r.DeleteRepository(ctx, client, &repos[i]) // use index to avoid memory aliasing
+		if err != nil {
+			return fmt.Errorf("error deleting repository: %w", err)
+		}
+	}
 	return nil
 }
 

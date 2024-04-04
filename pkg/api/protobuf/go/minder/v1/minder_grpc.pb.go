@@ -2113,6 +2113,7 @@ const (
 	ProvidersService_ListProviders_FullMethodName         = "/minder.v1.ProvidersService/ListProviders"
 	ProvidersService_CreateProvider_FullMethodName        = "/minder.v1.ProvidersService/CreateProvider"
 	ProvidersService_DeleteProvider_FullMethodName        = "/minder.v1.ProvidersService/DeleteProvider"
+	ProvidersService_DeleteProviderByID_FullMethodName    = "/minder.v1.ProvidersService/DeleteProviderByID"
 	ProvidersService_GetUnclaimedProviders_FullMethodName = "/minder.v1.ProvidersService/GetUnclaimedProviders"
 	ProvidersService_ListProviderClasses_FullMethodName   = "/minder.v1.ProvidersService/ListProviderClasses"
 )
@@ -2125,6 +2126,7 @@ type ProvidersServiceClient interface {
 	ListProviders(ctx context.Context, in *ListProvidersRequest, opts ...grpc.CallOption) (*ListProvidersResponse, error)
 	CreateProvider(ctx context.Context, in *CreateProviderRequest, opts ...grpc.CallOption) (*CreateProviderResponse, error)
 	DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error)
+	DeleteProviderByID(ctx context.Context, in *DeleteProviderByIDRequest, opts ...grpc.CallOption) (*DeleteProviderByIDResponse, error)
 	// GetUnclaimedProviders returns a list of known provider configurations
 	// that this user could claim based on their identity.  This is a read-only
 	// operation for use by clients which wish to present a menu of options.
@@ -2176,6 +2178,15 @@ func (c *providersServiceClient) DeleteProvider(ctx context.Context, in *DeleteP
 	return out, nil
 }
 
+func (c *providersServiceClient) DeleteProviderByID(ctx context.Context, in *DeleteProviderByIDRequest, opts ...grpc.CallOption) (*DeleteProviderByIDResponse, error) {
+	out := new(DeleteProviderByIDResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_DeleteProviderByID_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *providersServiceClient) GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error) {
 	out := new(GetUnclaimedProvidersResponse)
 	err := c.cc.Invoke(ctx, ProvidersService_GetUnclaimedProviders_FullMethodName, in, out, opts...)
@@ -2202,6 +2213,7 @@ type ProvidersServiceServer interface {
 	ListProviders(context.Context, *ListProvidersRequest) (*ListProvidersResponse, error)
 	CreateProvider(context.Context, *CreateProviderRequest) (*CreateProviderResponse, error)
 	DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error)
+	DeleteProviderByID(context.Context, *DeleteProviderByIDRequest) (*DeleteProviderByIDResponse, error)
 	// GetUnclaimedProviders returns a list of known provider configurations
 	// that this user could claim based on their identity.  This is a read-only
 	// operation for use by clients which wish to present a menu of options.
@@ -2225,6 +2237,9 @@ func (UnimplementedProvidersServiceServer) CreateProvider(context.Context, *Crea
 }
 func (UnimplementedProvidersServiceServer) DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProvider not implemented")
+}
+func (UnimplementedProvidersServiceServer) DeleteProviderByID(context.Context, *DeleteProviderByIDRequest) (*DeleteProviderByIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProviderByID not implemented")
 }
 func (UnimplementedProvidersServiceServer) GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUnclaimedProviders not implemented")
@@ -2317,6 +2332,24 @@ func _ProvidersService_DeleteProvider_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvidersService_DeleteProviderByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProviderByIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).DeleteProviderByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_DeleteProviderByID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).DeleteProviderByID(ctx, req.(*DeleteProviderByIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProvidersService_GetUnclaimedProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetUnclaimedProvidersRequest)
 	if err := dec(in); err != nil {
@@ -2375,6 +2408,10 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteProvider",
 			Handler:    _ProvidersService_DeleteProvider_Handler,
+		},
+		{
+			MethodName: "DeleteProviderByID",
+			Handler:    _ProvidersService_DeleteProviderByID_Handler,
 		},
 		{
 			MethodName: "GetUnclaimedProviders",
