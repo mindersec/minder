@@ -24,8 +24,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -54,6 +56,8 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
 	testCmd.Flags().StringP("profile", "p", "", "YAML file containing a profile to test the rule against")
+	testCmd.Flags().StringP("remediate-status", "", "", "The previous remediate status (optional)")
+	testCmd.Flags().StringP("remediate-metadata", "", "", "YAML file containing the remediate metadata (optional)")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the AUTH_TOKEN environment variable.")
 
@@ -81,6 +85,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
 	ppath := cmd.Flag("profile")
+	rstatus := cmd.Flag("remediate-status")
+	rMetaPath := cmd.Flag("remediate-metadata")
 	token := viper.GetString("auth.token")
 
 	// set rego env variable for debugging
@@ -111,6 +117,33 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
+	remediateStatus := db.NullRemediationStatusTypes{}
+	if rstatus.Value.String() != "" {
+		remediateStatus = db.NullRemediationStatusTypes{
+			RemediationStatusTypes: db.RemediationStatusTypes(rstatus.Value.String()),
+			Valid:                  true,
+		}
+	}
+
+	remMetadata := pqtype.NullRawMessage{}
+	if rMetaPath.Value.String() != "" {
+		f, err := os.Open(filepath.Clean(rMetaPath.Value.String()))
+		if err != nil {
+			return fmt.Errorf("error opening file: %w", err)
+		}
+
+		jsonMetadata := json.RawMessage{}
+		err = json.NewDecoder(f).Decode(&jsonMetadata)
+		if err != nil {
+			return fmt.Errorf("error decoding json: %w", err)
+		}
+
+		remMetadata = pqtype.NullRawMessage{
+			RawMessage: jsonMetadata,
+			Valid:      true,
+		}
+	}
+
 	// Disable actions
 	off := "off"
 	p.Alert = &off
@@ -127,20 +160,25 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 			Version: "v1",
 			Implements: []db.ProviderType{
 				"rest",
+				"repo-lister",
 				"git",
 				"github",
 			},
 			Definition: json.RawMessage(`{
-				"rest": {},
-				"github": {}
+				"github-app": {}
 			}`),
 		},
 		sql.NullString{},
 		credentials.NewGitHubTokenCredential(token),
-		&serverconfig.ProviderConfig{},
+		&serverconfig.ProviderConfig{
+			GitHubApp: &serverconfig.GitHubAppConfig{
+				AppName: "test",
+			},
+		},
 	))
 	inf := &entities.EntityInfoWrapper{
-		Entity: ent,
+		Entity:      ent,
+		ExecutionID: &uuid.Nil,
 	}
 	if err != nil {
 		return fmt.Errorf("error creating rule type engine: %w", err)
@@ -150,13 +188,15 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", rt.Name)
 	}
 
-	return runEvaluationForRules(cmd, eng, inf, rules)
+	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules)
 }
 
 func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *engine.RuleTypeEngine,
 	inf *entities.EntityInfoWrapper,
+	remediateStatus db.NullRemediationStatusTypes,
+	remMetadata pqtype.NullRawMessage,
 	frags []*minderv1.Profile_Rule,
 ) error {
 	for idx := range frags {
@@ -176,6 +216,10 @@ func runEvaluationForRules(
 		// Create the eval status params
 		evalStatus := &engif.EvalStatusParams{
 			Rule: frag,
+			EvalStatusFromDb: &db.ListRuleEvaluationsByProfileIdRow{
+				RemStatus:   remediateStatus,
+				RemMetadata: remMetadata,
+			},
 		}
 		// Perform rule evaluation
 		evalStatus.SetEvalErr(eng.Eval(context.Background(), inf, evalStatus))
