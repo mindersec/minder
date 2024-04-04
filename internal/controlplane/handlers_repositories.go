@@ -331,6 +331,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: []*pb.UpstreamRepositoryRef{},
 	}
 
+	var erroringProviders []string
+
 	for _, provider := range provs {
 		zerolog.Ctx(ctx).Trace().
 			Str("provider", provider.Name).
@@ -343,15 +345,28 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		}
 		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
+			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot get provider builder")
+			erroringProviders = append(erroringProviders, provider.Name)
+
+			// skip over this provider
+			continue
 		}
 
 		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
 		if err != nil {
-			return nil, err
+			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot list repositories for provider")
+			erroringProviders = append(erroringProviders, provider.Name)
+
+			// skip over this provider
+			continue
 		}
 
 		out.Results = append(out.Results, results...)
+	}
+
+	// If all providers failed, return an error
+	if len(erroringProviders) > 0 && len(out.Results) == 0 {
+		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for providers: %v", erroringProviders)
 	}
 
 	return out, nil
@@ -366,11 +381,7 @@ func (s *Server) listRemoteRepositoriesForProvider(
 	// by now we've already checked that repo listed is implemented
 	client, err := p.GetRepoLister()
 	if err != nil {
-		if errors.Is(err, providers.ErrInvalidCredential) {
-			return nil, util.UserVisibleError(codes.PermissionDenied,
-				"cannot get credential for provider: did you run `minder provider enroll`?")
-		}
-		return nil, status.Errorf(codes.Internal, "cannot create github client: %v", err)
+		return nil, fmt.Errorf("cannot create github client: %v", err)
 	}
 
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
@@ -378,7 +389,7 @@ func (s *Server) listRemoteRepositoriesForProvider(
 
 	remoteRepos, err := client.ListAllRepositories(tmoutCtx)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories: %v", err)
+		return nil, fmt.Errorf("cannot list repositories: %v", err)
 	}
 
 	allowsPrivateRepos := features.ProjectAllowsPrivateRepos(ctx, s.store, projectID)
