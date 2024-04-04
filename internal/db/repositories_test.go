@@ -156,6 +156,38 @@ func TestGetRepositoryByRepoName(t *testing.T) {
 	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
 }
 
+func TestGetRepositoryByRepoNameNoProvider(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	project := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, project.ID)
+	createRandomRepository(t, project.ID, prov)
+	repo1 := createRandomRepository(t, project.ID, prov)
+
+	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
+		RepoOwner: repo1.RepoOwner,
+		RepoName:  repo1.RepoName,
+		ProjectID: project.ID,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, repo2)
+
+	require.Equal(t, repo1.ID, repo2.ID)
+	require.Equal(t, repo1.Provider, repo2.Provider)
+	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
+	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
+	require.Equal(t, repo1.RepoName, repo2.RepoName)
+	require.Equal(t, repo1.RepoID, repo2.RepoID)
+	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
+	require.Equal(t, repo1.IsFork, repo2.IsFork)
+	require.Equal(t, repo1.WebhookID, repo2.WebhookID)
+	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
+	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
+	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
+	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
+}
+
 func TestListRepositoriesByProjectID(t *testing.T) {
 	t.Parallel()
 
@@ -179,6 +211,37 @@ func TestListRepositoriesByProjectID(t *testing.T) {
 	}
 
 	repos, err := testQueries.ListRepositoriesByProjectID(context.Background(), arg)
+	require.NoError(t, err)
+	require.NotEmpty(t, repos)
+
+	for _, repo := range repos {
+		require.NotEmpty(t, repo)
+		require.Equal(t, arg.ProjectID, repo.ProjectID)
+	}
+}
+
+func TestListRepositoriesByProjectIDAndProvider(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	otherProject := createRandomProject(t, org.ID)
+	project := createRandomProject(t, org.ID)
+	otherProv := createRandomProvider(t, otherProject.ID)
+	prov := createRandomProvider(t, project.ID)
+	createRandomRepository(t, project.ID, otherProv)
+	createRandomRepository(t, otherProject.ID, prov)
+
+	for i := 1001; i < 1020; i++ {
+		createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
+			r.RepoID = int64(i)
+		})
+	}
+
+	arg := ListRegisteredRepositoriesByProjectIDAndProviderParams{
+		ProjectID: project.ID,
+	}
+
+	repos, err := testQueries.ListRegisteredRepositoriesByProjectIDAndProvider(context.Background(), arg)
 	require.NoError(t, err)
 	require.NotEmpty(t, repos)
 

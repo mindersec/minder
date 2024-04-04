@@ -205,7 +205,7 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repo
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
     WHERE repo_owner = $1 AND repo_name = $2 AND project_id = $3
-    AND lower(provider) = lower($4::text) OR $4::text IS NULL
+    AND (lower(provider) = lower($4::text) OR $4::text IS NULL)
 `
 
 type GetRepositoryByRepoNameParams struct {
@@ -248,7 +248,7 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
 WHERE project_id = $1 AND webhook_id IS NOT NULL
-    AND lower(provider) = lower($2::text) OR $2::text IS NULL
+    AND (lower(provider) = lower($2::text) OR $2::text IS NULL)
 ORDER BY repo_name
 `
 
