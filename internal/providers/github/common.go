@@ -73,6 +73,7 @@ type ClientService interface {
 	GetInstallation(ctx context.Context, id int64, jwt string) (*github.Installation, *github.Response, error)
 	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
 	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
+	DeleteInstallation(ctx context.Context, id int64, jwt string) error
 }
 
 var _ ClientService = (*ClientServiceImplementation)(nil)
@@ -110,6 +111,13 @@ func (ClientServiceImplementation) ListUserInstallations(
 
 	installations, _, err := ghClient.Apps.ListUserInstallations(ctx, nil)
 	return installations, err
+}
+
+// DeleteInstallation is a wrapper for the GitHub API to delete an installation
+func (ClientServiceImplementation) DeleteInstallation(ctx context.Context, id int64, jwt string) error {
+	ghClient := github.NewClient(nil).WithAuthToken(jwt)
+	_, err := ghClient.Apps.DeleteInstallation(ctx, id)
+	return err
 }
 
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)

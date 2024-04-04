@@ -55,6 +55,7 @@ type ProviderService interface {
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
+	DeleteProvider(ctx context.Context, provider *db.Provider) error
 }
 
 // ErrInvalidTokenIdentity is returned when the user identity in the token does not match the expected user identity
@@ -390,11 +391,55 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 		Int64("installationID", installationID).
 		Str("providerID", installation.ProviderID.UUID.String()).
 		Msg("Deleting claimed installation")
-	return p.store.DeleteProvider(ctx, installation.ProviderID.UUID)
+	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{
+		ID:        installation.ProviderID.UUID,
+		ProjectID: installation.ProjectID.UUID,
+	})
 }
 
 func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
 	return github.ValidatePayload(r, []byte(p.config.GitHubApp.WebhookSecret))
+}
+
+// DeleteProvider deletes a provider and removes the credentials from the downstream service, if possible
+func (p *providerService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
+	// Uninstall the GitHub App if it's a GitHub App provider
+	err := p.deleteInstallation(ctx, provider.ID)
+	if err != nil {
+		return fmt.Errorf("error deleting GitHub App installation: %w", err)
+	}
+
+	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{ID: provider.ID, ProjectID: provider.ProjectID})
+}
+
+// deleteInstallation deletes the installation from GitHub, if the provider has an associated installation
+func (p *providerService) deleteInstallation(ctx context.Context, providerID uuid.UUID) error {
+	installation, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
+		UUID:  providerID,
+		Valid: true,
+	})
+
+	// If there are no associated installations, return early
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error getting installation: %w", err)
+	}
+
+	privateKey, err := p.config.GitHubApp.GetPrivateKey()
+	if err != nil {
+		return fmt.Errorf("error getting GitHub App private key: %w", err)
+	}
+	jwt, err := credentials.CreateGitHubAppJWT(p.config.GitHubApp.AppID, privateKey)
+	if err != nil {
+		return fmt.Errorf("error creating GitHub App JWT: %w", err)
+	}
+
+	err = p.ghClientService.DeleteInstallation(ctx, installation.AppInstallationID, jwt)
+	if err != nil {
+		return fmt.Errorf("error deleting installation: %w", err)
+	}
+	return nil
 }
 
 func (p *providerService) verifyProviderTokenIdentity(

@@ -797,6 +797,17 @@ service ProvidersService {
         };
     }
 
+    rpc DeleteProviderByID (DeleteProviderByIDRequest) returns (DeleteProviderByIDResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/providers/{id}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_DELETE
+        };
+    }
+
     // GetUnclaimedProviders returns a list of known provider configurations
     // that this user could claim based on their identity.  This is a read-only
     // operation for use by clients which wish to present a menu of options.
@@ -2005,6 +2016,20 @@ message DeleteProviderRequest {
 }
 
 message DeleteProviderResponse {
+    // name is the name of the provider that was deleted
+    string name = 1;
+}
+
+message DeleteProviderByIDRequest {
+    // context is the context in which the provider is deleted. Only the project is required in this context.
+    Context context = 1;
+    // id is the id of the provider to delete
+    string id = 2;
+}
+
+message DeleteProviderByIDResponse {
+    // id is the id of the provider that was deleted
+    string id = 1;
 }
 
 message GetUnclaimedProvidersRequest {

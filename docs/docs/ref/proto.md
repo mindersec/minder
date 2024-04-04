@@ -122,6 +122,7 @@ replies with OK
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
 | CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
 | DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
+| DeleteProviderByID | [DeleteProviderByIDRequest](#minder-v1-DeleteProviderByIDRequest) | [DeleteProviderByIDResponse](#minder-v1-DeleteProviderByIDResponse) |  |
 | GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
 | ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
 
@@ -458,6 +459,29 @@ User service
 | project_id | [string](#string) |  | project_id is the id of the project that was deleted. |
 
 
+<a name="minder-v1-DeleteProviderByIDRequest"></a>
+
+#### DeleteProviderByIDRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is deleted. Only the project is required in this context. |
+| id | [string](#string) |  | id is the id of the provider to delete |
+
+
+<a name="minder-v1-DeleteProviderByIDResponse"></a>
+
+#### DeleteProviderByIDResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | id is the id of the provider that was deleted |
+
+
 <a name="minder-v1-DeleteProviderRequest"></a>
 
 #### DeleteProviderRequest
@@ -473,6 +497,11 @@ User service
 
 #### DeleteProviderResponse
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the provider that was deleted |
 
 
 <a name="minder-v1-DeleteRepositoryByIdRequest"></a>
