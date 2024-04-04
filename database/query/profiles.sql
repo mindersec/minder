@@ -40,7 +40,7 @@ DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
 -- name: GetProfileByProjectAndID :many
-SELECT * FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one

@@ -238,38 +238,42 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 		// so we don't need to worry about collisions.
 
 		// first we check if profile already exists, if not we create a new one
-		if _, ok := profiles[p.Name]; !ok {
-			profileID := p.ID.String()
-			project := p.ProjectID.String()
+		if _, ok := profiles[p.Profile.Name]; !ok {
+			profileID := p.Profile.ID.String()
+			project := p.Profile.ProjectID.String()
 
-			displayName := p.DisplayName
+			displayName := p.Profile.DisplayName
 			if displayName == "" {
-				displayName = p.Name
+				displayName = p.Profile.Name
 			}
 
-			profiles[p.Name] = &pb.Profile{
+			profiles[p.Profile.Name] = &pb.Profile{
 				Id:          &profileID,
-				Name:        p.Name,
+				Name:        p.Profile.Name,
 				DisplayName: displayName,
 				Context: &pb.Context{
 					Project: &project,
 				},
 			}
 
-			if p.Remediate.Valid {
-				profiles[p.Name].Remediate = proto.String(string(p.Remediate.ActionType))
+			if p.Profile.Remediate.Valid {
+				profiles[p.Profile.Name].Remediate = proto.String(string(p.Profile.Remediate.ActionType))
 			} else {
-				profiles[p.Name].Remediate = proto.String(string(db.ActionTypeOff))
+				profiles[p.Profile.Name].Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
-			if p.Alert.Valid {
-				profiles[p.Name].Alert = proto.String(string(p.Alert.ActionType))
+			if p.Profile.Alert.Valid {
+				profiles[p.Profile.Name].Alert = proto.String(string(p.Profile.Alert.ActionType))
 			} else {
-				profiles[p.Name].Alert = proto.String(string(db.ActionTypeOn))
+				profiles[p.Profile.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
 		}
-		if pm := rowInfoToProfileMap(profiles[p.Name], p.Entity, p.ContextualRules); pm != nil {
-			profiles[p.Name] = pm
+		if pm := rowInfoToProfileMap(
+			profiles[p.Profile.Name],
+			p.ProfilesWithEntityProfile.Entity,
+			p.ProfilesWithEntityProfile.ContextualRules,
+		); pm != nil {
+			profiles[p.Profile.Name] = pm
 		}
 	}
 

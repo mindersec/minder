@@ -7,13 +7,11 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
@@ -270,7 +268,7 @@ func (q *Queries) GetProfileByNameAndLock(ctx context.Context, arg GetProfileByN
 }
 
 const getProfileByProjectAndID = `-- name: GetProfileByProjectAndID :many
-SELECT profiles.id, name, provider, project_id, remediate, alert, profiles.created_at, profiles.updated_at, provider_id, subscription_id, display_name, labels, profiles_with_entity_profiles.id, entity, profile_id, contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profid FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2
 `
 
@@ -280,25 +278,8 @@ type GetProfileByProjectAndIDParams struct {
 }
 
 type GetProfileByProjectAndIDRow struct {
-	ID              uuid.UUID             `json:"id"`
-	Name            string                `json:"name"`
-	Provider        sql.NullString        `json:"provider"`
-	ProjectID       uuid.UUID             `json:"project_id"`
-	Remediate       NullActionType        `json:"remediate"`
-	Alert           NullActionType        `json:"alert"`
-	CreatedAt       time.Time             `json:"created_at"`
-	UpdatedAt       time.Time             `json:"updated_at"`
-	ProviderID      uuid.NullUUID         `json:"provider_id"`
-	SubscriptionID  uuid.NullUUID         `json:"subscription_id"`
-	DisplayName     string                `json:"display_name"`
-	Labels          []string              `json:"labels"`
-	ID_2            uuid.NullUUID         `json:"id_2"`
-	Entity          NullEntities          `json:"entity"`
-	ProfileID       uuid.NullUUID         `json:"profile_id"`
-	ContextualRules pqtype.NullRawMessage `json:"contextual_rules"`
-	CreatedAt_2     sql.NullTime          `json:"created_at_2"`
-	UpdatedAt_2     sql.NullTime          `json:"updated_at_2"`
-	Profid          uuid.UUID             `json:"profid"`
+	Profile                   Profile                   `json:"profile"`
+	ProfilesWithEntityProfile ProfilesWithEntityProfile `json:"profiles_with_entity_profile"`
 }
 
 func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error) {
@@ -311,25 +292,25 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 	for rows.Next() {
 		var i GetProfileByProjectAndIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.ProjectID,
-			&i.Remediate,
-			&i.Alert,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProviderID,
-			&i.SubscriptionID,
-			&i.DisplayName,
-			pq.Array(&i.Labels),
-			&i.ID_2,
-			&i.Entity,
-			&i.ProfileID,
-			&i.ContextualRules,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-			&i.Profid,
+			&i.Profile.ID,
+			&i.Profile.Name,
+			&i.Profile.Provider,
+			&i.Profile.ProjectID,
+			&i.Profile.Remediate,
+			&i.Profile.Alert,
+			&i.Profile.CreatedAt,
+			&i.Profile.UpdatedAt,
+			&i.Profile.ProviderID,
+			&i.Profile.SubscriptionID,
+			&i.Profile.DisplayName,
+			pq.Array(&i.Profile.Labels),
+			&i.ProfilesWithEntityProfile.ID,
+			&i.ProfilesWithEntityProfile.Entity,
+			&i.ProfilesWithEntityProfile.ProfileID,
+			&i.ProfilesWithEntityProfile.ContextualRules,
+			&i.ProfilesWithEntityProfile.CreatedAt,
+			&i.ProfilesWithEntityProfile.UpdatedAt,
+			&i.ProfilesWithEntityProfile.Profid,
 		); err != nil {
 			return nil, err
 		}
