@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -59,7 +60,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		topic = reconcilers.InternalReconcilerEventTopic
+		topic = events.TopicQueueReconcileRepoInit
 	} else {
 		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
 	}

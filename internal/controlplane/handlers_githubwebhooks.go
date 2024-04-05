@@ -227,6 +227,8 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			Logger()
 
 		l.Debug().Msg("parsing event")
+
+		// Parse the webhook event and construct a message for the event router
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
 			wes = handleParseError(wes.Typ, err)
 			if wes.Error {
@@ -236,17 +238,29 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			}
 			return
 		}
-
 		wes.Accepted = true
-
 		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
-		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
+
+		// Channel the event based on the webhook action
+		var watermillTopic string
+		switch m.Metadata.Get(entities.ActionEventKey) {
+		case "deleted":
+			// We got an entity delete event, so we need to reconcile and delete the entity from the DB
+			watermillTopic = events.TopicQueueReconcileEntityDelete
+		default:
+			// Default to evaluating the entity
+			watermillTopic = events.TopicQueueEntityEvaluate
+		}
+
+		// Publish the message to the event router
+		if err := s.evt.Publish(watermillTopic, m); err != nil {
 			wes.Error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		// We successfully published the message
 		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}

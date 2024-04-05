@@ -28,13 +28,6 @@ import (
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
-const (
-	// InternalReconcilerEventTopic is the topic for internal reconciler events
-	InternalReconcilerEventTopic = "internal.repo.reconciler.event"
-	// InternalProfileInitEventTopic is the topic for internal init events
-	InternalProfileInitEventTopic = "internal.profile.init.event"
-)
-
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
 	store               db.Store
@@ -96,6 +89,7 @@ func NewReconciler(
 
 // Register implements the Consumer interface.
 func (r *Reconciler) Register(reg events.Registrar) {
-	reg.Register(InternalReconcilerEventTopic, r.handleRepoReconcilerEvent)
-	reg.Register(InternalProfileInitEventTopic, r.handleProfileInitEvent)
+	reg.Register(events.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
+	reg.Register(events.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
+	reg.Register(events.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)
 }

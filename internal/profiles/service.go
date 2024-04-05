@@ -337,7 +337,7 @@ func (p *profileService) sendNewProfileEvent(
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := p.publisher.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
+	if err := p.publisher.Publish(events.TopicQueueReconcileProfileInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 }

@@ -208,7 +208,7 @@ func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
 		return err
 	}
 
-	if err := evt.Publish(events.ExecuteEntityEventTopic, msg); err != nil {
+	if err := evt.Publish(events.TopicQueueEntityEvaluate, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 

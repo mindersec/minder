@@ -132,7 +132,7 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
+	r.Register(events.TopicQueueEntityEvaluate, e.HandleEntityEvent, e.mdws...)
 }
 
 // Wait waits for all the entity executions to finish.
@@ -221,48 +221,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		},
 	}
 
-	// Channel the event based on the webhook action - create, update, delete, published, etc.
-	switch inf.ActionEvent {
-	case "deleted":
-		return e.deleteEntityEvent(ctx, inf, ectx)
-	default:
-		return e.evalEntityEvent(ctx, inf, ectx, cli)
-	}
-}
-
-//nolint:exhaustive
-func (e *Executor) deleteEntityEvent(
-	ctx context.Context,
-	inf *entities.EntityInfoWrapper,
-	ectx *EntityContext,
-) error {
-	l := zerolog.Ctx(ctx).With().
-		Str("provider", ectx.Provider.Name).
-		Str("project_id", ectx.Project.ID.String()).
-		Str("entity_type", inf.Type.ToString()).
-		Str("action", inf.ActionEvent).
-		Logger()
-
-	repoID, _, _ := inf.GetEntityDBIDs()
-
-	// Telemetry logging
-	minderlogger.BusinessRecord(ctx).Provider = ectx.Provider.Name
-	minderlogger.BusinessRecord(ctx).Project = ectx.Project.ID
-	switch inf.Type {
-	case pb.Entity_ENTITY_REPOSITORIES:
-		l.Info().Str("repo_id", repoID.String()).Msg("handling entity delete event")
-		// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
-		// will automatically remove them when the repository is deleted.
-		if err := e.querier.DeleteRepository(ctx, repoID); err != nil {
-			return fmt.Errorf("error deleting repository from DB: %w", err)
-		}
-		minderlogger.BusinessRecord(ctx).Repository = repoID
-		return nil
-	default:
-		err := fmt.Errorf("unsupported entity delete event for: %s", inf.Type)
-		l.Err(err).Msg("error handling entity delete event")
-		return err
-	}
+	return e.evalEntityEvent(ctx, inf, ectx, cli)
 }
 
 func (e *Executor) evalEntityEvent(
@@ -453,7 +412,7 @@ func (e *Executor) releaseLockAndFlush(
 		return
 	}
 
-	if err := e.evt.Publish(events.FlushEntityEventTopic, msg); err != nil {
+	if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
 		logger.Err(err).Msg("error publishing flush event")
 	}
 }

@@ -254,7 +254,7 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err = r.eventProducer.Publish(reconcilers.InternalReconcilerEventTopic, msg); err != nil {
+	if err = r.eventProducer.Publish(events.TopicQueueReconcileRepoInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 

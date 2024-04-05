@@ -97,7 +97,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -152,7 +152,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -226,7 +226,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -353,7 +353,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.ExecuteEntityEventTopic, pq.Pass)
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
