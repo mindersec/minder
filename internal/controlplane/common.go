@@ -85,3 +85,27 @@ func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error)
 
 	return fmt.Sprintf("https://github.com/%s/pull/%d", repoSlug, prData.Number), nil
 }
+
+// getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
+func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
+	if repo == "" {
+		return "", fmt.Errorf("cannot form alert URL, no repository defined")
+	}
+	// Define a struct to match the JSON structure
+	jsonMeta := struct {
+		GhsaId string `json:"ghsa_id"`
+	}{}
+
+	if err := json.Unmarshal(data, &jsonMeta); err != nil {
+		return "", err
+	}
+
+	if jsonMeta.GhsaId == "" {
+		return "", fmt.Errorf("no alert ID found in alert metadata")
+	}
+
+	return fmt.Sprintf(
+		"https://github.com/%s/security/advisories/%s",
+		repo, jsonMeta.GhsaId,
+	), nil
+}
