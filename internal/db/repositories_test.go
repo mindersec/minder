@@ -162,8 +162,14 @@ func TestGetRepositoryByRepoNameNoProvider(t *testing.T) {
 	org := createRandomOrganization(t)
 	project := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, project.ID)
-	createRandomRepository(t, project.ID, prov)
-	repo1 := createRandomRepository(t, project.ID, prov)
+
+	// Create repositories with hardcoded repo IDs because the random ID generation was still causing collisions
+	createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
+		r.RepoID = int64(100)
+	})
+	repo1 := createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
+		r.RepoID = int64(200)
+	})
 
 	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
 		RepoOwner: repo1.RepoOwner,
@@ -228,10 +234,9 @@ func TestListRepositoriesByProjectIDAndProvider(t *testing.T) {
 	project := createRandomProject(t, org.ID)
 	otherProv := createRandomProvider(t, otherProject.ID)
 	prov := createRandomProvider(t, project.ID)
-	createRandomRepository(t, project.ID, otherProv)
-	createRandomRepository(t, otherProject.ID, prov)
+	createRandomRepository(t, otherProject.ID, otherProv)
 
-	for i := 1001; i < 1020; i++ {
+	for i := 2001; i < 2010; i++ {
 		createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
 			r.RepoID = int64(i)
 		})
