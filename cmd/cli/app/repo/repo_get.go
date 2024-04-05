@@ -38,7 +38,7 @@ var getCmd = &cobra.Command{
 }
 
 // getCommand is the repo get subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
 	provider := viper.GetString("provider")

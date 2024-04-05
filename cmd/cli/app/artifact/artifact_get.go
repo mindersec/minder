@@ -46,7 +46,7 @@ var getCmd = &cobra.Command{
 }
 
 // getCommand is the artifact get subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewArtifactServiceClient(conn)
 
 	provider := viper.GetString("provider")

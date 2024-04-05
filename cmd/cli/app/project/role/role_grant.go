@@ -36,7 +36,7 @@ to a user (subject) on a particular project.`,
 }
 
 // GrantCommand is the command for granting roles
-func GrantCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
 	sub := viper.GetString("sub")

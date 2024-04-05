@@ -38,7 +38,7 @@ var whoamiCmd = &cobra.Command{
 }
 
 // whoamiCommand is the whoami subcommand
-func whoamiCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func whoamiCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
 
 	// No longer print usage on returned error, since we've parsed our inputs

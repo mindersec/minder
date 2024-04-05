@@ -40,7 +40,7 @@ var getCmd = &cobra.Command{
 }
 
 // getCommand is the profile "get" subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")

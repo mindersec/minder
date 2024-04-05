@@ -36,7 +36,7 @@ profiles and rules in a project.`,
 }
 
 // getCommand is the repo get subcommand
-func reconcileCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func reconcileCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	name := viper.GetString("name")
 	id := viper.GetString("id")
 	project := viper.GetString("project")

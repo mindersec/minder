@@ -43,7 +43,7 @@ var repoRegisterCmd = &cobra.Command{
 // RegisterCmd represents the register command to register a repo with minder
 //
 //nolint:gocyclo
-func RegisterCmd(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
 	provider := viper.GetString("provider")
