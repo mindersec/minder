@@ -522,7 +522,7 @@ service ProfileService {
 
     rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/profile/name/{name}/status"
+            get: "/api/v1/profile/name/{name=**}/status"
         };
 
         option (rpc_options) = {
@@ -555,7 +555,7 @@ service ProfileService {
 
     rpc GetRuleTypeByName (GetRuleTypeByNameRequest) returns (GetRuleTypeByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/rule_type/name/{name}"
+            get: "/api/v1/rule_type/name/{name=**}"
         };
 
         option (rpc_options) = {
