@@ -29,7 +29,10 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-const defaultProvider = oauth.Github
+const (
+	defaultProvider = oauth.Github
+	githubURL       = "https://github.com"
+)
 
 var validRepoSlugRe = regexp.MustCompile(`(?i)^[-a-z0-9_\.]+\/[-a-z0-9_\.]+$`)
 
@@ -83,7 +86,7 @@ func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error)
 		return "", fmt.Errorf("invalid repository slug")
 	}
 
-	return fmt.Sprintf("https://github.com/%s/pull/%d", repoSlug, prData.Number), nil
+	return fmt.Sprintf("%s/%s/pull/%d", githubURL, repoSlug, prData.Number), nil
 }
 
 // getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
@@ -105,7 +108,7 @@ func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"https://github.com/%s/security/advisories/%s",
-		repo, jsonMeta.GhsaId,
+		"%s/%s/security/advisories/%s",
+		githubURL, repo, jsonMeta.GhsaId,
 	), nil
 }

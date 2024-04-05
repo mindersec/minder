@@ -144,7 +144,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		if gitHubAppConfig == nil {
 			return nil, status.Errorf(codes.Internal, "error getting GitHub App config: %s", err)
 		}
-		authorizationURL = fmt.Sprintf("https://github.com/apps/%v/installations/new?state=%v", gitHubAppConfig.AppName, state)
+		authorizationURL = fmt.Sprintf("%s/apps/%v/installations/new?state=%v", githubURL, gitHubAppConfig.AppName, state)
 	} else if slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
 		authorizationURL = oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	}
