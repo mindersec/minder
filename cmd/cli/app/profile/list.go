@@ -43,6 +43,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+	label := viper.GetString("label")
 
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
@@ -54,7 +55,8 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 	cmd.SilenceUsage = true
 
 	resp, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
-		Context: &minderv1.Context{Project: &project},
+		Context:     &minderv1.Context{Project: &project},
+		LabelFilter: label,
 	})
 	if err != nil {
 		return cli.MessageAndError("Error getting profiles", err)
@@ -87,6 +89,8 @@ func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn)
 
 func init() {
 	ProfileCmd.AddCommand(listCmd)
+	listCmd.Flags().StringP("label", "l", "", "Profile label to filter on")
+
 	// Flags
 	listCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
