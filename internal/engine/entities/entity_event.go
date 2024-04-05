@@ -298,11 +298,9 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 	return nil
 }
 
-//nolint:unparam
-func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) error {
+func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) {
 	action := msg.Metadata.Get(ActionEventKey)
 	eiw.ActionEvent = action
-	return nil
 }
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
@@ -396,9 +394,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	if err := out.withActionEventFromMessage(msg); err != nil {
-		return nil, err
-	}
+	out.withActionEventFromMessage(msg)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
 	switch typ {
