@@ -44,7 +44,9 @@ func TestNewGitHubAppProvider(t *testing.T) {
 	},
 		&config.GitHubAppConfig{},
 		provtelemetry.NewNoopMetrics(),
-		nil, credentials.NewGitHubTokenCredential("token"))
+		nil, credentials.NewGitHubTokenCredential("token"),
+		false,
+	)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
@@ -67,7 +69,9 @@ func TestUserInfo(t *testing.T) {
 			UserID:  expectedUserId,
 		},
 		provtelemetry.NewNoopMetrics(),
-		nil, credentials.NewGitHubTokenCredential("token"))
+		nil, credentials.NewGitHubTokenCredential("token"),
+		false,
+	)
 	assert.NoError(t, err)
 
 	userId, err := client.GetUserId(ctx)
@@ -103,7 +107,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageByName(context.Background(), true, "stacklok", "container", "helm/mediator")
+				_, err := cli.GetPackageByName(context.Background(), "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
 		},
@@ -114,7 +118,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersions(context.Background(), true, "stacklok", "container", "helm/mediator")
+				_, err := cli.GetPackageVersions(context.Background(), "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
 		},
@@ -125,7 +129,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionByTag(context.Background(), true, "stacklok", "container", "helm/mediator", "v1.0.0")
+				_, err := cli.GetPackageVersionByTag(context.Background(), "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
 		},
@@ -136,7 +140,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionById(context.Background(), true, "stacklok", "container", "helm/mediator", 123)
+				_, err := cli.GetPackageVersionById(context.Background(), "stacklok", "container", "helm/mediator", 123)
 				assert.NoError(t, err)
 			},
 		},
@@ -156,7 +160,9 @@ func TestArtifactAPIEscapes(t *testing.T) {
 			},
 				&config.GitHubAppConfig{},
 				provtelemetry.NewNoopMetrics(),
-				nil, credentials.NewGitHubTokenCredential("token"))
+				nil, credentials.NewGitHubTokenCredential("token"),
+				true,
+			)
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
@@ -184,7 +190,14 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, &config.GitHubAppConfig{}, provtelemetry.NewNoopMetrics(), ratecache.NewRestClientCache(context.Background()), credentials.NewGitHubTokenCredential(token))
+	client, err := NewGitHubAppProvider(
+		&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
+		&config.GitHubAppConfig{},
+		provtelemetry.NewNoopMetrics(),
+		ratecache.NewRestClientCache(context.Background()),
+		credentials.NewGitHubTokenCredential(token),
+		false,
+	)
 	require.NoError(t, err)
 
 	_, err = client.CreateIssueComment(context.Background(), "mockOwner", "mockRepo", 1, "Test Comment")
@@ -228,7 +241,14 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 	// Start a goroutine that will make a request to the server, rate limiting the gh client
 	go func() {
 		defer wg.Done()
-		client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"}, &config.GitHubAppConfig{}, provtelemetry.NewNoopMetrics(), restClientCache, credentials.NewGitHubTokenCredential(token))
+		client, err := NewGitHubAppProvider(
+			&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
+			&config.GitHubAppConfig{},
+			provtelemetry.NewNoopMetrics(),
+			restClientCache,
+			credentials.NewGitHubTokenCredential(token),
+			false,
+		)
 		require.NoError(t, err)
 
 		_, err = client.CreateIssueComment(context.Background(), owner, "mockRepo", 1, "Test Comment")

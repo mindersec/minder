@@ -258,7 +258,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		ID:             1,
 		ProjectID:      projectID,
 		Provider:       providerName,
-	}, nil).Times(2)
+	}, nil)
 
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).

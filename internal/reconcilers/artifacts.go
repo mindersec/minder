@@ -135,10 +135,9 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error getting github client: %w", err)
 	}
 
-	isOrg := (cli.GetOwner() != "")
 	// todo: add another type of artifacts
-	artifacts, err := cli.ListPackagesByRepository(ctx, isOrg, repository.RepoOwner,
-		string(verifyif.ArtifactTypeContainer), int64(repository.RepoID), 1, 100)
+	artifacts, err := cli.ListPackagesByRepository(ctx, repository.RepoOwner, string(verifyif.ArtifactTypeContainer),
+		int64(repository.RepoID), 1, 100)
 	if err != nil {
 		if errors.Is(err, github.ErrNotFound) {
 			// we do not return error since it's a valid use case for a repository to not have artifacts

@@ -64,7 +64,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageByName(context.Background(), true, "stacklok", "container", "helm/mediator")
+				_, err := cli.GetPackageByName(context.Background(), "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
 		},
@@ -75,7 +75,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersions(context.Background(), true, "stacklok", "container", "helm/mediator")
+				_, err := cli.GetPackageVersions(context.Background(), "stacklok", "container", "helm/mediator")
 				assert.NoError(t, err)
 			},
 		},
@@ -86,7 +86,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionByTag(context.Background(), true, "stacklok", "container", "helm/mediator", "v1.0.0")
+				_, err := cli.GetPackageVersionByTag(context.Background(), "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
 		},
@@ -97,7 +97,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			},
 			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionById(context.Background(), true, "stacklok", "container", "helm/mediator", 123)
+				_, err := cli.GetPackageVersionById(context.Background(), "stacklok", "container", "helm/mediator", 123)
 				assert.NoError(t, err)
 			},
 		},
@@ -116,7 +116,7 @@ func TestArtifactAPIEscapes(t *testing.T) {
 				Endpoint: testServer.URL + "/",
 			},
 				provtelemetry.NewNoopMetrics(),
-				nil, credentials.NewGitHubTokenCredential("token"), "")
+				nil, credentials.NewGitHubTokenCredential("token"), "stacklok")
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 

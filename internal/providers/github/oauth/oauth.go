@@ -138,6 +138,11 @@ func (o *GitHubOAuthDelegate) GetOwner() string {
 	return o.owner
 }
 
+// IsOrg returns true if the owner is an organization
+func (o *GitHubOAuthDelegate) IsOrg() bool {
+	return o.owner != ""
+}
+
 // ListAllRepositories returns a list of all repositories for the authenticated user
 // Two APIs are available, contigent on whether the token is for a user or an organization
 func (o *GitHubOAuthDelegate) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {

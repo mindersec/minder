@@ -476,78 +476,64 @@ func (mr *MockGitHubMockRecorder) GetName(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockGitHub)(nil).GetName), ctx)
 }
 
-// GetOwner mocks base method.
-func (m *MockGitHub) GetOwner() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOwner")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// GetOwner indicates an expected call of GetOwner.
-func (mr *MockGitHubMockRecorder) GetOwner() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOwner", reflect.TypeOf((*MockGitHub)(nil).GetOwner))
-}
-
 // GetPackageByName mocks base method.
-func (m *MockGitHub) GetPackageByName(arg0 context.Context, arg1 bool, arg2, arg3, arg4 string) (*github.Package, error) {
+func (m *MockGitHub) GetPackageByName(arg0 context.Context, arg1, arg2, arg3 string) (*github.Package, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageByName", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GetPackageByName", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*github.Package)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPackageByName indicates an expected call of GetPackageByName.
-func (mr *MockGitHubMockRecorder) GetPackageByName(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockGitHubMockRecorder) GetPackageByName(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageByName", reflect.TypeOf((*MockGitHub)(nil).GetPackageByName), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageByName", reflect.TypeOf((*MockGitHub)(nil).GetPackageByName), arg0, arg1, arg2, arg3)
 }
 
 // GetPackageVersionById mocks base method.
-func (m *MockGitHub) GetPackageVersionById(arg0 context.Context, arg1 bool, arg2, arg3, arg4 string, arg5 int64) (*github.PackageVersion, error) {
+func (m *MockGitHub) GetPackageVersionById(arg0 context.Context, arg1, arg2, arg3 string, arg4 int64) (*github.PackageVersion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageVersionById", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetPackageVersionById", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*github.PackageVersion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPackageVersionById indicates an expected call of GetPackageVersionById.
-func (mr *MockGitHubMockRecorder) GetPackageVersionById(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockGitHubMockRecorder) GetPackageVersionById(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionById", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionById), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionById", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionById), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetPackageVersionByTag mocks base method.
-func (m *MockGitHub) GetPackageVersionByTag(arg0 context.Context, arg1 bool, arg2, arg3, arg4, arg5 string) (*github.PackageVersion, error) {
+func (m *MockGitHub) GetPackageVersionByTag(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*github.PackageVersion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageVersionByTag", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "GetPackageVersionByTag", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*github.PackageVersion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPackageVersionByTag indicates an expected call of GetPackageVersionByTag.
-func (mr *MockGitHubMockRecorder) GetPackageVersionByTag(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
+func (mr *MockGitHubMockRecorder) GetPackageVersionByTag(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionByTag", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionByTag), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionByTag", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionByTag), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetPackageVersions mocks base method.
-func (m *MockGitHub) GetPackageVersions(arg0 context.Context, arg1 bool, arg2, arg3, arg4 string) ([]*github.PackageVersion, error) {
+func (m *MockGitHub) GetPackageVersions(arg0 context.Context, arg1, arg2, arg3 string) ([]*github.PackageVersion, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageVersions", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "GetPackageVersions", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].([]*github.PackageVersion)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPackageVersions indicates an expected call of GetPackageVersions.
-func (mr *MockGitHubMockRecorder) GetPackageVersions(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockGitHubMockRecorder) GetPackageVersions(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersions", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersions), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersions", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersions), arg0, arg1, arg2, arg3)
 }
 
 // GetPrimaryEmail mocks base method.
@@ -608,6 +594,20 @@ func (m *MockGitHub) GetUserId(ctx context.Context) (int64, error) {
 func (mr *MockGitHubMockRecorder) GetUserId(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserId", reflect.TypeOf((*MockGitHub)(nil).GetUserId), ctx)
+}
+
+// IsOrg mocks base method.
+func (m *MockGitHub) IsOrg() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsOrg")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsOrg indicates an expected call of IsOrg.
+func (mr *MockGitHubMockRecorder) IsOrg() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsOrg", reflect.TypeOf((*MockGitHub)(nil).IsOrg))
 }
 
 // ListAllRepositories mocks base method.
@@ -672,18 +672,18 @@ func (mr *MockGitHubMockRecorder) ListIssueComments(ctx, owner, repo, number, op
 }
 
 // ListPackagesByRepository mocks base method.
-func (m *MockGitHub) ListPackagesByRepository(arg0 context.Context, arg1 bool, arg2, arg3 string, arg4 int64, arg5, arg6 int) ([]*github.Package, error) {
+func (m *MockGitHub) ListPackagesByRepository(arg0 context.Context, arg1, arg2 string, arg3 int64, arg4, arg5 int) ([]*github.Package, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPackagesByRepository", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "ListPackagesByRepository", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].([]*github.Package)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListPackagesByRepository indicates an expected call of ListPackagesByRepository.
-func (mr *MockGitHubMockRecorder) ListPackagesByRepository(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
+func (mr *MockGitHubMockRecorder) ListPackagesByRepository(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPackagesByRepository", reflect.TypeOf((*MockGitHub)(nil).ListPackagesByRepository), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPackagesByRepository", reflect.TypeOf((*MockGitHub)(nil).ListPackagesByRepository), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // ListPullRequests mocks base method.

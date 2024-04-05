@@ -80,11 +80,11 @@ type GitHub interface {
 	GetRepository(context.Context, string, string) (*github.Repository, error)
 	GetBranchProtection(context.Context, string, string, string) (*github.Protection, error)
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
-	ListPackagesByRepository(context.Context, bool, string, string, int64, int, int) ([]*github.Package, error)
-	GetPackageByName(context.Context, bool, string, string, string) (*github.Package, error)
-	GetPackageVersions(context.Context, bool, string, string, string) ([]*github.PackageVersion, error)
-	GetPackageVersionByTag(context.Context, bool, string, string, string, string) (*github.PackageVersion, error)
-	GetPackageVersionById(context.Context, bool, string, string, string, int64) (*github.PackageVersion, error)
+	ListPackagesByRepository(context.Context, string, string, int64, int, int) ([]*github.Package, error)
+	GetPackageByName(context.Context, string, string, string) (*github.Package, error)
+	GetPackageVersions(context.Context, string, string, string) ([]*github.PackageVersion, error)
+	GetPackageVersionByTag(context.Context, string, string, string, string) (*github.PackageVersion, error)
+	GetPackageVersionById(context.Context, string, string, string, int64) (*github.PackageVersion, error)
 	GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error)
 	CreateReview(context.Context, string, string, int, *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
 	UpdateReview(context.Context, string, string, int, int64, string) (*github.PullRequestReview, error)
@@ -94,7 +94,7 @@ type GitHub interface {
 	SetCommitStatus(context.Context, string, string, string, *github.RepoStatus) (*github.RepoStatus, error)
 	ListFiles(ctx context.Context, owner string, repo string, prNumber int,
 		perPage int, pageNumber int) ([]*github.CommitFile, *github.Response, error)
-	GetOwner() string
+	IsOrg() bool
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
 	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
 	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)

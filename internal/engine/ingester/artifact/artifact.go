@@ -246,8 +246,7 @@ func getAndFilterArtifactVersions(
 	}
 
 	// Fetch all available versions of the artifact
-	isOrg := (ghCli.GetOwner() != "")
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, isOrg, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
+	upstreamVersions, err := ghCli.GetPackageVersions(ctx, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}

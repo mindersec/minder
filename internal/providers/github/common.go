@@ -129,6 +129,7 @@ type Delegate interface {
 	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
 	GetOwner() string
+	IsOrg() bool
 }
 
 // NewGitHub creates a new GitHub client
@@ -145,8 +146,14 @@ func NewGitHub(
 }
 
 // ListPackagesByRepository returns a list of all packages for a specific repository
-func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner string, artifactType string,
-	repositoryId int64, pageNumber int, itemsPerPage int) ([]*github.Package, error) {
+func (c *GitHub) ListPackagesByRepository(
+	ctx context.Context,
+	owner string,
+	artifactType string,
+	repositoryId int64,
+	pageNumber int,
+	itemsPerPage int,
+) ([]*github.Package, error) {
 	opt := &github.PackageListOptions{
 		PackageType: &artifactType,
 		ListOptions: github.ListOptions{
@@ -161,7 +168,7 @@ func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner
 		var resp *github.Response
 		var err error
 
-		if isOrg {
+		if c.IsOrg() {
 			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
 		} else {
 			artifacts, resp, err = c.client.Users.ListPackages(ctx, owner, opt)
@@ -191,8 +198,8 @@ func (c *GitHub) ListPackagesByRepository(ctx context.Context, isOrg bool, owner
 }
 
 // GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string) ([]*github.PackageVersion, error) {
+func (c *GitHub) GetPackageVersions(ctx context.Context, owner string, package_type string, package_name string,
+) ([]*github.PackageVersion, error) {
 	state := "active"
 
 	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
@@ -215,7 +222,7 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner strin
 		var v []*github.PackageVersion
 		var resp *github.Response
 		var err error
-		if isOrg {
+		if c.IsOrg() {
 			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		} else {
 			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
@@ -241,14 +248,14 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, isOrg bool, owner strin
 }
 
 // GetPackageVersionByTag returns a single package version for the specific tag
-func (c *GitHub) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string, tag string) (*github.PackageVersion, error) {
+func (c *GitHub) GetPackageVersionByTag(ctx context.Context, owner string, package_type string, package_name string,
+	tag string) (*github.PackageVersion, error) {
 
 	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
 	package_type = strings.ToLower(package_type)
 
 	// get all versions
-	versions, err := c.GetPackageVersions(ctx, isOrg, owner, package_type, package_name)
+	versions, err := c.GetPackageVersions(ctx, owner, package_type, package_name)
 	if err != nil {
 		return nil, err
 	}
@@ -267,15 +274,15 @@ func (c *GitHub) GetPackageVersionByTag(ctx context.Context, isOrg bool, owner s
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org
-func (c *GitHub) GetPackageByName(ctx context.Context, isOrg bool, owner string, package_type string,
-	package_name string) (*github.Package, error) {
+func (c *GitHub) GetPackageByName(ctx context.Context, owner string, package_type string, package_name string,
+) (*github.Package, error) {
 	var pkg *github.Package
 	var err error
 
 	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
 	package_type = strings.ToLower(package_type)
 
-	if isOrg {
+	if c.IsOrg() {
 		pkg, _, err = c.client.Organizations.GetPackage(ctx, owner, package_type, package_name)
 		if err != nil {
 			return nil, err
@@ -290,18 +297,12 @@ func (c *GitHub) GetPackageByName(ctx context.Context, isOrg bool, owner string,
 }
 
 // GetPackageVersionById returns a single package version for the specific id
-func (c *GitHub) GetPackageVersionById(
-	ctx context.Context,
-	isOrg bool,
-	owner string,
-	packageType string,
-	packageName string,
-	version int64,
-) (*github.PackageVersion, error) {
+func (c *GitHub) GetPackageVersionById(ctx context.Context, owner string, packageType string, packageName string,
+	version int64) (*github.PackageVersion, error) {
 	var pkgVersion *github.PackageVersion
 	var err error
 
-	if isOrg {
+	if c.IsOrg() {
 		pkgVersion, _, err = c.client.Organizations.PackageGetVersion(ctx, owner, packageType, packageName, version)
 		if err != nil {
 			return nil, err
@@ -508,9 +509,9 @@ func (c *GitHub) GetCredential() provifv1.GitHubCredential {
 	return c.delegate.GetCredential()
 }
 
-// GetOwner returns the owner of the repository
-func (c *GitHub) GetOwner() string {
-	return c.delegate.GetOwner()
+// IsOrg returns true if the owner is an organization
+func (c *GitHub) IsOrg() bool {
+	return c.delegate.IsOrg()
 }
 
 // ListHooks lists all Hooks for the specified repository.

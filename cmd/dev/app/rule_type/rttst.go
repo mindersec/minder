@@ -169,6 +169,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 			}`),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential(token),
 		&serverconfig.ProviderConfig{
 			GitHubApp: &serverconfig.GitHubAppConfig{

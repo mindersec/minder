@@ -53,17 +53,18 @@ func GetProviderBuilder(
 	provCfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
-	credential, err := getCredentialForProvider(ctx, prov, crypteng, store, provCfg)
-	if err != nil {
+	encToken, err := store.GetAccessTokenByProjectID(ctx,
+		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
+
+		// If we don't have an access token, check if we have an installation ID
+		return createProviderWithInstallationToken(ctx, store, prov, provCfg, opts...)
+	} else if err != nil {
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	ownerFilter, err := getOwnerFilterForProvider(ctx, prov, store)
-	if err != nil {
-		return nil, fmt.Errorf("error getting owner filter: %w", err)
-	}
-
-	return NewProviderBuilder(&prov, ownerFilter, credential, provCfg, opts...), nil
+	return createProviderWithAccessToken(ctx, encToken, prov, crypteng, provCfg, opts...)
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
@@ -71,6 +72,7 @@ func GetProviderBuilder(
 type ProviderBuilder struct {
 	p               *db.Provider
 	ownerFilter     sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
+	isOrg           bool
 	restClientCache ratecache.RestClientCache
 	credential      provinfv1.Credential
 	metrics         telemetry.ProviderMetrics
@@ -98,6 +100,7 @@ func WithRestClientCache(cache ratecache.RestClientCache) ProviderBuilderOption 
 func NewProviderBuilder(
 	p *db.Provider,
 	ownerFilter sql.NullString,
+	isOrg bool,
 	credential provinfv1.Credential,
 	cfg *serverconfig.ProviderConfig,
 	opts ...ProviderBuilderOption,
@@ -106,6 +109,7 @@ func NewProviderBuilder(
 		p:           p,
 		cfg:         cfg,
 		ownerFilter: ownerFilter,
+		isOrg:       isOrg,
 		credential:  credential,
 		metrics:     telemetry.NewNoopMetrics(),
 	}
@@ -219,7 +223,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential)
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential, pb.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}
@@ -367,15 +371,61 @@ func getInstallationTokenCredential(
 		installation.AppInstallationID), nil
 }
 
-func getOwnerFilterForProvider(ctx context.Context, prov db.Provider, store db.Store) (sql.NullString, error) {
-	encToken, err := store.GetAccessTokenByProjectID(ctx,
-		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
+// createProviderWithAccessToken creates a provider with an access token.
+func createProviderWithAccessToken(
+	ctx context.Context,
+	encToken db.ProviderAccessToken,
+	prov db.Provider,
+	crypteng crypto.Engine,
+	provCfg *serverconfig.ProviderConfig,
+	opts ...ProviderBuilderOption,
+) (*ProviderBuilder, error) {
+	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return sql.NullString{}, nil
-		}
-		return sql.NullString{}, fmt.Errorf("error getting access token: %w", err)
+		return nil, fmt.Errorf("error decrypting access token: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Msg("access token found for provider")
+
+	credential := credentials.NewGitHubTokenCredential(decryptedToken.AccessToken)
+	ownerFilter := encToken.OwnerFilter
+	isOrg := ownerFilter != sql.NullString{} && ownerFilter.String != ""
+
+	return NewProviderBuilder(&prov, ownerFilter, isOrg, credential, provCfg, opts...), nil
+}
+
+// createProviderWithAccessToken creates a provider with an installation token.
+func createProviderWithInstallationToken(
+	ctx context.Context,
+	store db.Store,
+	prov db.Provider,
+	provCfg *serverconfig.ProviderConfig,
+	opts ...ProviderBuilderOption,
+) (*ProviderBuilder, error) {
+	installation, err := store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
+		UUID:  prov.ID,
+		Valid: true,
+	})
+
+	ownerFilter := sql.NullString{}
+	if errors.Is(err, sql.ErrNoRows) {
+		// If the provider doesn't have a known credential set the credential to empty
+		return NewProviderBuilder(&prov, ownerFilter, false, credentials.NewEmptyCredential(), provCfg, opts...), nil
+	} else if err != nil {
+		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	return encToken.OwnerFilter, nil
+	cfg, err := githubapp.ParseV1Config(prov.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing github app config: %w", err)
+	}
+
+	privateKey, err := provCfg.GitHubApp.GetPrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("error reading private key: %w", err)
+	}
+
+	credential := credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,
+		installation.AppInstallationID)
+
+	return NewProviderBuilder(&prov, ownerFilter, installation.IsOrg, credential, provCfg, opts...), nil
 }

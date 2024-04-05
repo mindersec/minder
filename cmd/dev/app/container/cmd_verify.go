@@ -125,6 +125,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 			}`),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential(token),
 		&serverconfig.ProviderConfig{},
 	)

@@ -52,6 +52,7 @@ var (
 }`),
 		},
 		sql.NullString{},
+		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
 	)
