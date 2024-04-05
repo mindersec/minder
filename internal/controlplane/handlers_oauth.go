@@ -328,12 +328,8 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			return nil
 		}
 	} else {
-		// We weren't expecting this install, maybe it matches an existing user
-		// and we'll create a new project to match.
-		zerolog.Ctx(ctx).Info().Int64("install", installationID).Msg("Unmatched GitHub App install, trying to create project")
-		_, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, token, installationID)
-		if err != nil {
-			return fmt.Errorf("error handling app without minder state: %w", err)
+		if err := s.handleAppInstallWithoutInvite(ctx, token, installationID); err != nil {
+			return fmt.Errorf("error handling app install without invite: %w", err)
 		}
 	}
 
@@ -379,6 +375,21 @@ func (s *Server) exchangeCodeForToken(ctx context.Context, providerName string, 
 		return nil, fmt.Errorf("error exchanging code for token: %w", err)
 	}
 	return token, nil
+}
+
+func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth2.Token, installationID int64) error {
+	// We weren't expecting this install, maybe it matches an existing user
+	// and we'll create a new project to match.
+	zerolog.Ctx(ctx).Info().Int64("install", installationID).Msg("Unmatched GitHub App install, trying to create project")
+	userID, err := s.ghClient.GetUserIdFromToken(ctx, token)
+	if err != nil || userID == nil || *userID == 0 {
+		return fmt.Errorf("error getting user ID from token: %w", err)
+	}
+
+	_, err = db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.Project, error) {
+		return s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
+	})
+	return err
 }
 
 // StoreProviderToken stores the provider token for a project
@@ -588,7 +599,7 @@ func (s *Server) makeProjectForGitHubApp(
 		return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
 	}
 
-	topLevelProject, _, err := projects.ProvisionSelfEnrolledProject(
+	topLevelProject, err := projects.ProvisionSelfEnrolledProject(
 		ctx,
 		s.authzClient,
 		qtx,

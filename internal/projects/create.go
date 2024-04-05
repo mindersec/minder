@@ -23,14 +23,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
 	github "github.com/stacklok/minder/internal/providers/github/oauth"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
 )
 
@@ -52,8 +50,8 @@ func ProvisionSelfEnrolledOAuthProject(
 	// to individual methods.
 	marketplace marketplaces.Marketplace,
 	profilesCfg server.DefaultProfilesConfig,
-) (outproj *pb.Project, projerr error) {
-	project, projectmeta, err := ProvisionSelfEnrolledProject(ctx, authzClient, qtx, projectName, userSub, marketplace, profilesCfg)
+) (outproj *db.Project, projerr error) {
+	project, err := ProvisionSelfEnrolledProject(ctx, authzClient, qtx, projectName, userSub, marketplace, profilesCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +68,7 @@ func ProvisionSelfEnrolledOAuthProject(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)
 	}
-
-	return &pb.Project{
-		ProjectId:   project.ID.String(),
-		Name:        project.Name,
-		Description: projectmeta.Public.Description,
-		DisplayName: projectmeta.Public.DisplayName,
-		CreatedAt:   timestamppb.New(project.CreatedAt),
-		UpdatedAt:   timestamppb.New(project.UpdatedAt),
-	}, nil
+	return project, nil
 }
 
 // ProvisionSelfEnrolledProject creates the core default components of the project (project,
@@ -95,19 +85,19 @@ func ProvisionSelfEnrolledProject(
 	// to individual methods.
 	marketplace marketplaces.Marketplace,
 	profilesCfg server.DefaultProfilesConfig,
-) (outproj *db.Project, projmeta *Metadata, projerr error) {
+) (outproj *db.Project, projerr error) {
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal meta: %w", err)
+		return nil, fmt.Errorf("failed to marshal meta: %w", err)
 	}
 
 	projectID := uuid.New()
 
 	// Create authorization tuple
 	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
-		return nil, nil, fmt.Errorf("failed to create authorization tuple: %w", err)
+		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
 		// TODO: this can't be part of a transaction, so we should probably find a saga-ish
@@ -128,9 +118,9 @@ func ProvisionSelfEnrolledProject(
 	if err != nil {
 		// Check if `project_name_lower_idx` unique constraint was violated
 		if db.ErrIsUniqueViolation(err) {
-			return nil, nil, ErrProjectAlreadyExists
+			return nil, ErrProjectAlreadyExists
 		}
-		return nil, nil, fmt.Errorf("failed to create default project: %v", err)
+		return nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
 	// Enable any default profiles and rule types in the project.
@@ -138,13 +128,13 @@ func ProvisionSelfEnrolledProject(
 	// Both are specified in the service config.
 	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
 	if err := marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
-		return nil, nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
+		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
 	}
 	for _, profileName := range profilesCfg.GetProfiles() {
 		if err := marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
-			return nil, nil, fmt.Errorf("unable to enable bundle profile: %w", err)
+			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
 		}
 	}
 
-	return &project, &projectmeta, nil
+	return &project, nil
 }

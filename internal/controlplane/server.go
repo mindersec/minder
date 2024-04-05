@@ -57,6 +57,7 @@ import (
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -94,6 +95,7 @@ type Server struct {
 	providers     providers.ProviderService
 	marketplace   marketplaces.Marketplace
 	providerStore providers.ProviderStore
+	ghClient      ghprov.ClientService
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -177,6 +179,7 @@ func NewServer(
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		marketplace:         marketplace,
 		providerStore:       providerStore,
+		ghClient:            &ghprov.ClientServiceImplementation{},
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},

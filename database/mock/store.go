@@ -1151,6 +1151,21 @@ func (mr *MockStoreMockRecorder) GetSubscriptionByProjectBundle(arg0, arg1 any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionByProjectBundle), arg0, arg1)
 }
 
+// GetUnclaimedInstallationsByUser mocks base method.
+func (m *MockStore) GetUnclaimedInstallationsByUser(arg0 context.Context, arg1 sql.NullString) ([]db.ProviderGithubAppInstallation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnclaimedInstallationsByUser", arg0, arg1)
+	ret0, _ := ret[0].([]db.ProviderGithubAppInstallation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnclaimedInstallationsByUser indicates an expected call of GetUnclaimedInstallationsByUser.
+func (mr *MockStoreMockRecorder) GetUnclaimedInstallationsByUser(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnclaimedInstallationsByUser", reflect.TypeOf((*MockStore)(nil).GetUnclaimedInstallationsByUser), arg0, arg1)
+}
+
 // GetUserByID mocks base method.
 func (m *MockStore) GetUserByID(arg0 context.Context, arg1 int32) (db.User, error) {
 	m.ctrl.T.Helper()

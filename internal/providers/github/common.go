@@ -66,7 +66,7 @@ type GitHub struct {
 // Ensure that the GitHub client implements the GitHub interface
 var _ provifv1.GitHub = (*GitHub)(nil)
 
-// ClientService is an interface for GitHub operations inside this module
+// ClientService is an interface for GitHub operations
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
 type ClientService interface {
