@@ -786,7 +786,8 @@
             "description": "name is the name of the profile to get",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",
@@ -2174,7 +2175,8 @@
             "description": "name is the name of the rule type.",
             "in": "path",
             "required": true,
-            "type": "string"
+            "type": "string",
+            "pattern": ".+"
           },
           {
             "name": "context.provider",

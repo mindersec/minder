@@ -3756,7 +3756,7 @@ func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name}/status"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name=**}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -3831,7 +3831,7 @@ func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5514,7 +5514,7 @@ func RegisterProfileServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name}/status"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusByName", runtime.WithHTTPPathPattern("/api/v1/profile/name/{name=**}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5580,7 +5580,7 @@ func RegisterProfileServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetRuleTypeByName", runtime.WithHTTPPathPattern("/api/v1/rule_type/name/{name=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5700,13 +5700,13 @@ var (
 
 	pattern_ProfileService_GetProfileById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "profile", "id"}, ""))
 
-	pattern_ProfileService_GetProfileStatusByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "name", "status"}, ""))
+	pattern_ProfileService_GetProfileStatusByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "name", "status"}, ""))
 
 	pattern_ProfileService_GetProfileStatusByProject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "profile_status"}, ""))
 
 	pattern_ProfileService_ListRuleTypes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "rule_types"}, ""))
 
-	pattern_ProfileService_GetRuleTypeByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "name"}, ""))
+	pattern_ProfileService_GetRuleTypeByName_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "name"}, ""))
 
 	pattern_ProfileService_GetRuleTypeById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "rule_type", "id"}, ""))
 
