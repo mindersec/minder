@@ -126,7 +126,10 @@ func sortEntitiesEvaluationStatus(
 				profileStatuses[p.Profile.ID] = buildProfileStatus(&p, profileStatusList)
 			}
 
-			stat := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
+			stat, err := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("building rule evaluation status: %w", err)
+			}
 			if _, ok := statusByEntity[entString]; !ok {
 				statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
 			}
@@ -270,7 +273,7 @@ func filterProfileLists(
 func buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
 	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
-) *minderv1.RuleEvaluationStatus {
+) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
 	if eval.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
@@ -288,11 +291,20 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	}
 
 	entityInfo := map[string]string{}
+	remediationURL := ""
+	var err error
 	if eval.Entity == db.EntitiesRepository {
 		entityInfo["provider"] = eval.Provider
 		entityInfo["repo_owner"] = eval.RepoOwner
 		entityInfo["repo_name"] = eval.RepoName
 		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
+
+		remediationURL, err = getRemediationURLFromMetadata(
+			eval.RemMetadata.RawMessage, fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
+		}
 	}
 
 	// Default to the rule type name if no display_name is set
@@ -315,11 +327,12 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RemediationStatus:      string(eval.RemStatus.RemediationStatusTypes),
 		RemediationLastUpdated: timestamppb.New(eval.RemLastUpdated.Time),
 		RemediationDetails:     eval.RemDetails.String,
+		RemediationUrl:         remediationURL,
 		RuleDisplayName:        nString,
 		RuleTypeName:           eval.RuleTypeName,
 		Alert:                  buildEvalResultAlertFromLRERow(&eval),
 		Severity:               sev,
-	}
+	}, nil
 }
 
 func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minderv1.EntityTypedId {
