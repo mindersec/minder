@@ -401,6 +401,7 @@ func getRuleEvalStatus(
 ) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
 	var guidance string
+	var err error
 
 	// make sure all fields are valid
 	if !dbRuleEvalStat.EvalStatus.Valid ||
@@ -422,6 +423,16 @@ func getRuleEvalStatus(
 			guidance = ruleTypeInfo.Guidance
 		}
 	}
+	remediationURL := ""
+	if dbRuleEvalStat.Entity == db.EntitiesRepository {
+		remediationURL, err = getRemediationURLFromMetadata(
+			dbRuleEvalStat.RemMetadata.RawMessage,
+			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner, dbRuleEvalStat.RepoName),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
+		}
+	}
 
 	st := &minderv1.RuleEvaluationStatus{
 		ProfileId:           profileID,
@@ -437,6 +448,7 @@ func getRuleEvalStatus(
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
 		RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+		RemediationUrl:      remediationURL,
 		Alert: &minderv1.EvalResultAlert{
 			Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
 			Details: dbRuleEvalStat.AlertDetails.String,
