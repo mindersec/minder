@@ -41,7 +41,7 @@ var listCmd = &cobra.Command{
 }
 
 // listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewArtifactServiceClient(conn)
 
 	provider := viper.GetString("provider")

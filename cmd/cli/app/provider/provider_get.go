@@ -51,7 +51,7 @@ func init() {
 }
 
 // GetProviderCommand lists the providers available in a specific project
-func GetProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProvidersServiceClient(conn)
 
 	project := viper.GetString("project")

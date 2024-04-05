@@ -153,7 +153,7 @@ var cmd = &cobra.Command{
 // quickstartCommand is the quickstart command
 //
 //nolint:gocyclo
-func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	var err error
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
@@ -212,7 +212,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	defer cancel()
 
 	// Enroll provider
-	err = minderprov.EnrollProviderCommand(ctx, cmd, conn)
+	err = minderprov.EnrollProviderCommand(ctx, cmd, []string{}, conn)
 	if err != nil {
 		return cli.MessageAndError("Error enrolling provider", err)
 	}
@@ -232,7 +232,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientC
 	defer cancel()
 
 	// Prompt to register repositories
-	err = repo.RegisterCmd(ctx, cmd, conn)
+	err = repo.RegisterCmd(ctx, cmd, []string{}, conn)
 	if err != nil {
 		return cli.MessageAndError("Error registering repositories", err)
 	}

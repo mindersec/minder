@@ -36,7 +36,7 @@ on a particular project.`,
 }
 
 // DenyCommand is the command for removing a role assignment from a project
-func DenyCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
 	sub := viper.GetString("sub")

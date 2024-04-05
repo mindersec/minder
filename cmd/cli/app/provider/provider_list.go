@@ -49,7 +49,7 @@ func init() {
 }
 
 // ListProviderCommand lists the providers available in a specific project
-func ListProviderCommand(ctx context.Context, _ *cobra.Command, conn *grpc.ClientConn) error {
+func ListProviderCommand(ctx context.Context, _ *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 
 	client := minderv1.NewProvidersServiceClient(conn)
 

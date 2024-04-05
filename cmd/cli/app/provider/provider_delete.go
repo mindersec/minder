@@ -44,7 +44,7 @@ func init() {
 }
 
 // DeleteProviderCommand deletes the provider in a specific project
-func DeleteProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func DeleteProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProvidersServiceClient(conn)
 
 	project := viper.GetString("project")

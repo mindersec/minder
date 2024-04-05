@@ -37,7 +37,7 @@ var createCmd = &cobra.Command{
 }
 
 // createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")

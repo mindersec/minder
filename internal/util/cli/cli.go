@@ -107,9 +107,9 @@ func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout 
 
 // GRPCClientWrapRunE is a wrapper for cobra commands that sets up the grpc client and context
 func GRPCClientWrapRunE(
-	runEFunc func(ctx context.Context, cmd *cobra.Command, c *grpc.ClientConn) error,
+	runEFunc func(ctx context.Context, cmd *cobra.Command, args []string, c *grpc.ClientConn) error,
 ) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, _ []string) error {
+	return func(cmd *cobra.Command, args []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %s", err)
 		}
@@ -124,7 +124,7 @@ func GRPCClientWrapRunE(
 
 		defer c.Close()
 
-		return runEFunc(ctx, cmd, c)
+		return runEFunc(ctx, cmd, args, c)
 	}
 }
 

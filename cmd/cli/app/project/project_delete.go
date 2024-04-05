@@ -35,7 +35,7 @@ var projectDeleteCmd = &cobra.Command{
 }
 
 // listCommand is the command for listing projects
-func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProjectsServiceClient(conn)
 
 	project := viper.GetString("project")

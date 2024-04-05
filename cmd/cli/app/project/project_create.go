@@ -41,7 +41,7 @@ var projectCreateCmd = &cobra.Command{
 }
 
 // listCommand is the command for listing projects
-func createCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProjectsServiceClient(conn)
 
 	format := viper.GetString("output")
