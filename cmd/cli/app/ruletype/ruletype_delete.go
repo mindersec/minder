@@ -34,7 +34,7 @@ var deleteCmd = &cobra.Command{
 }
 
 // deleteCommand is the rule type delete subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")

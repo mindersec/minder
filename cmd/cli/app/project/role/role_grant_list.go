@@ -41,7 +41,7 @@ on a particular project.`,
 }
 
 // GrantListCommand is the command for listing grants
-func GrantListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
 	project := viper.GetString("project")

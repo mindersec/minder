@@ -39,7 +39,7 @@ var applyCmd = &cobra.Command{
 }
 
 // applyCommand is the profile apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")

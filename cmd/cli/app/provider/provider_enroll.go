@@ -55,7 +55,7 @@ actions such as adding repositories.`,
 }
 
 // EnrollProviderCommand is the command for enrolling a provider
-func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	oauthClient := minderv1.NewOAuthServiceClient(conn)
 	providerClient := minderv1.NewProvidersServiceClient(conn)
 

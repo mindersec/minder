@@ -40,7 +40,7 @@ var listCmd = &cobra.Command{
 }
 
 // listCommand is the repo list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
 	provider := viper.GetString("provider")

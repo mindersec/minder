@@ -41,7 +41,7 @@ available on a particular project.`,
 }
 
 // ListCommand is the command for listing roles
-func ListCommand(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func ListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
 	project := viper.GetString("project")
