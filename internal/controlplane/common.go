@@ -17,8 +17,10 @@ package controlplane
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"google.golang.org/grpc/codes"
 
@@ -28,6 +30,8 @@ import (
 )
 
 const defaultProvider = oauth.Github
+
+var validRepoSlugRe = regexp.MustCompile(`(?i)^[-a-z0-9_\.]+\/[-a-z0-9_\.]+$`)
 
 // HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
@@ -48,4 +52,36 @@ func getNameFilterParam(name string) sql.NullString {
 		String: name,
 		Valid:  name != "",
 	}
+}
+
+// getRemediationURLFromMetadata returns the "remediation URL". For now, this is
+// the URL link to the PR
+func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error) {
+	// If no data, it means no PR is tracked.
+	// So no error and we return an empty string.
+	if len(data) == 0 {
+		return "", nil
+	}
+	prData := &struct {
+		Number int `json:"pr_number"`
+	}{}
+
+	if err := json.Unmarshal(data, prData); err != nil {
+		return "", fmt.Errorf("unmarshalling pull request metadata: %w", err)
+	}
+
+	if repoSlug == "" && prData.Number != 0 {
+		return "", fmt.Errorf("no repository defined")
+	}
+
+	// No pull equest found
+	if prData.Number == 0 {
+		return "", nil
+	}
+
+	if !validRepoSlugRe.MatchString(repoSlug) {
+		return "", fmt.Errorf("invalid repository slug")
+	}
+
+	return fmt.Sprintf("https://github.com/%s/pull/%d", repoSlug, prData.Number), nil
 }
