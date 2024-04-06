@@ -859,3 +859,52 @@ func TestListRuleEvaluations(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteRuleEvaluations(t *testing.T) {
+	t.Parallel()
+
+	randomEntities := createTestRandomEntities(t)
+	require.NotNil(t, randomEntities)
+
+	profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+	require.NotEmpty(t, profile)
+
+	_, err := testQueries.UpsertProfileForEntity(context.Background(), UpsertProfileForEntityParams{
+		ProfileID:       profile.ID,
+		Entity:          EntitiesRepository,
+		ContextualRules: json.RawMessage(`{"key": "value"}`), // the content doesn't matter
+	})
+	require.NoError(t, err)
+
+	id, err := testQueries.UpsertRuleEvaluations(context.Background(), UpsertRuleEvaluationsParams{
+		ProfileID: profile.ID,
+		RepositoryID: uuid.NullUUID{
+			UUID:  randomEntities.repo.ID,
+			Valid: true,
+		},
+		RuleTypeID: randomEntities.ruleType1.ID,
+		RuleName:   randomEntities.ruleType1.Name,
+		Entity:     EntitiesRepository,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, id)
+
+	_, err = testQueries.UpsertRuleDetailsEval(context.Background(), UpsertRuleDetailsEvalParams{
+		RuleEvalID: id,
+		Status:     EvalStatusTypesFailure,
+	})
+	require.NoError(t, err)
+
+	prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
+	require.Equal(t, EvalStatusTypesFailure, prfStatusRow.ProfileStatus)
+
+	err = testQueries.DeleteRuleStatusesForProfileAndRuleType(context.Background(), DeleteRuleStatusesForProfileAndRuleTypeParams{
+		ProfileID:  profile.ID,
+		RuleTypeID: randomEntities.ruleType1.ID,
+		RuleName:   randomEntities.ruleType1.Name,
+	})
+	require.NoError(t, err)
+
+	prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
+	require.Equal(t, EvalStatusTypesPending, prfStatusRow.ProfileStatus)
+}
