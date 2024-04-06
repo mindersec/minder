@@ -429,7 +429,8 @@ func getRuleEvalStatus(
 			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner, dbRuleEvalStat.RepoName),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
+			// A failure parsing the alert metadata points to a corrupt record. Log but don't err.
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error parsing remediation pull request data")
 		}
 	}
 

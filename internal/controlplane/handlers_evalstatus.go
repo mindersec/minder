@@ -128,7 +128,8 @@ func sortEntitiesEvaluationStatus(
 
 			stat, err := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("building rule evaluation status: %w", err)
+				// A failure parsing the PR metadata points to a corrupt record. Log but don't err.
+				zerolog.Ctx(ctx).Error().Err(err).Msg("error building rule evaluation status")
 			}
 			if _, ok := statusByEntity[entString]; !ok {
 				statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
