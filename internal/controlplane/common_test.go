@@ -34,7 +34,7 @@ func TestGetRemediationURLFromMetadata(t *testing.T) {
 		{"invalid-slug", validData, "example", "", true},
 		{"no-pr", []byte(`{}`), "example/test", "", false},
 		{"no-slug", validData, "", "", true},
-		{"no-slug-no-pr", []byte(`{}`), "", "", false},
+		{"no-slug-no-pr", []byte(`{}`), "", "", true},
 		{"invalid-json", []byte(`Yo!`), "", "", true},
 	} {
 		tc := tc
@@ -63,13 +63,11 @@ func TestGetAlertURLFromMetadata(t *testing.T) {
 		expected string
 		mustErr  bool
 	}{
-		{
-			name: "normal", data: validPayload, repo: "example/test",
-			expected: "https://github.com/example/test/security/advisories/GHAS-advisory_ID_here", mustErr: false,
-		},
-		{name: "no-repo", data: validPayload, repo: "", expected: "", mustErr: true},
-		{name: "bad-json", data: []byte(`invalid _`), repo: "", expected: "", mustErr: true},
-		{name: "no-advisory", data: []byte(`{"ghsa_id": ""}`), repo: "", expected: "", mustErr: true},
+		{"normal", validPayload, "example/test", "https://github.com/example/test/security/advisories/GHAS-advisory_ID_here", false},
+		{"no-repo", validPayload, "", "", true},
+		{"bad-json", []byte(`invalid _`), "", "", true},
+		{"no-advisory", []byte(`{"ghsa_id": ""}`), "", "", true},
+		{"invalid-slug", []byte(`{"ghsa_id": "abc"}`), "invalid slug", "", true},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

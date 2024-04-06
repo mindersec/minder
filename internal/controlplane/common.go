@@ -60,11 +60,16 @@ func getNameFilterParam(name string) sql.NullString {
 // getRemediationURLFromMetadata returns the "remediation URL". For now, this is
 // the URL link to the PR
 func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error) {
+	if !validRepoSlugRe.MatchString(repoSlug) {
+		return "", fmt.Errorf("invalid repository slug")
+	}
+
 	// If no data, it means no PR is tracked.
 	// So no error and we return an empty string.
 	if len(data) == 0 {
 		return "", nil
 	}
+
 	prData := &struct {
 		Number int `json:"pr_number"`
 	}{}
@@ -73,27 +78,25 @@ func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error)
 		return "", fmt.Errorf("unmarshalling pull request metadata: %w", err)
 	}
 
-	if repoSlug == "" && prData.Number != 0 {
-		return "", fmt.Errorf("no repository defined")
-	}
-
-	// No pull equest found
+	// No pull request found
 	if prData.Number == 0 {
 		return "", nil
-	}
-
-	if !validRepoSlugRe.MatchString(repoSlug) {
-		return "", fmt.Errorf("invalid repository slug")
 	}
 
 	return fmt.Sprintf("%s/%s/pull/%d", githubURL, repoSlug, prData.Number), nil
 }
 
 // getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
-func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
-	if repo == "" {
-		return "", fmt.Errorf("cannot form alert URL, no repository defined")
+func getAlertURLFromMetadata(data []byte, repoSlug string) (string, error) {
+	if !validRepoSlugRe.MatchString(repoSlug) {
+		return "", fmt.Errorf("invalid repository slug")
 	}
+
+	// If there is no metadata, we know there is no alert
+	if len(data) == 0 {
+		return "", nil
+	}
+
 	// Define a struct to match the JSON structure
 	jsonMeta := struct {
 		GhsaId string `json:"ghsa_id"`
@@ -104,11 +107,10 @@ func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
 	}
 
 	if jsonMeta.GhsaId == "" {
-		return "", fmt.Errorf("no alert ID found in alert metadata")
+		return "", nil
 	}
 
 	return fmt.Sprintf(
-		"%s/%s/security/advisories/%s",
-		githubURL, repo, jsonMeta.GhsaId,
+		"%s/%s/security/advisories/%s", githubURL, repoSlug, jsonMeta.GhsaId,
 	), nil
 }
