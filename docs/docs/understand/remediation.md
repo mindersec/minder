@@ -1,9 +1,9 @@
 ---
-title: Remediations
+title: Automated Remediations
 sidebar_position: 40
 ---
 
-# Alerts and Automatic Remediation in Minder
+# Alerts and Automated Remediation in Minder
 
 A profile in Minder offers a comprehensive view of your security posture, encompassing more than just the status report. 
 It actively responds to any rules that are not in compliance, taking specific actions. These actions can include the 
@@ -58,7 +58,7 @@ repository:
 In this profile, all repositories that do not meet the conditions specified in the `sample_rule` will automatically
 generate security advisories.
 
-### Enabling remediations in a profile
+### Enabling automated remediation in a profile
 To activate the remediation feature within a profile, you need to adjust the YAML definition.
 Specifically, you should set the remediate parameter to "on":
 ```yaml
