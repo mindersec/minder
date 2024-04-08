@@ -71,6 +71,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 }
 

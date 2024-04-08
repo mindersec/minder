@@ -79,6 +79,8 @@ spec:
             value: "/secrets/github-app/github_app_private_key"
           - name: "MINDER_PROVIDER_GITHUB_APP_WEBHOOK_SECRET"
             value: "/secrets/github-app/github_app_webhook_secret"
+          - name: "MINDER_PROVIDER_GITHUB_APP_FALLBACK_TOKEN"
+            value: "/secrets/github-app/github_app_fallback_token"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}

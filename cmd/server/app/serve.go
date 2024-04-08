@@ -131,8 +131,7 @@ var serveCmd = &cobra.Command{
 			reconcilers.WithRestClientCache(restClientCache),
 		}
 
-		return service.AllInOneServerService(ctx, cfg, store, vldtr,
-			serverOpts, executorOpts, reconcilerOpts)
+		return service.AllInOneServerService(ctx, cfg, store, vldtr, serverOpts, executorOpts, reconcilerOpts)
 	},
 }
 

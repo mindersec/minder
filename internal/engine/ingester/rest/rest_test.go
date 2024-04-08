@@ -72,6 +72,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: false,
@@ -99,6 +100,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: true,
@@ -126,6 +128,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: true,
@@ -148,6 +151,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: true,
@@ -175,6 +179,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: true,
@@ -201,6 +206,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 					false,
 					credentials.NewGitHubTokenCredential("token"),
 					&serverconfig.ProviderConfig{},
+					nil, // this is unused here
 				),
 			},
 			wantErr: true,
@@ -247,6 +253,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 }
 

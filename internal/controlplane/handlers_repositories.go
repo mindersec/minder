@@ -343,7 +343,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			providers.WithProviderMetrics(s.provMt),
 			providers.WithRestClientCache(s.restClientCache),
 		}
-		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider,
+			s.fallbackTokenClient, pbOpts...)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot get provider builder")
 			erroringProviders = append(erroringProviders, provider.Name)
@@ -494,7 +495,7 @@ func (s *Server) getClientForProvider(
 		providers.WithRestClientCache(s.restClientCache),
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, s.fallbackTokenClient, pbOpts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}

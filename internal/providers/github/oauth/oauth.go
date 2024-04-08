@@ -104,6 +104,7 @@ func NewRestClient(
 
 	return github.NewGitHub(
 		ghClient,
+		ghClient, // use the same client for listing packages and all other operations
 		restClientCache,
 		oauthDelegate,
 	), nil

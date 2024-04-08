@@ -17,9 +17,13 @@ package testserver
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"os/signal"
 
+	"github.com/google/go-github/v60/github"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -73,6 +77,17 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	cfg.Events.Aggregator.LockInterval = 30
 
 	vldtr := noopauth.NewJwtValidator("mindev")
+
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+	packageListingClient := github.NewClient(http.DefaultClient)
+	testServerUrl, err := url.Parse(testServer.URL + "/")
+	if err != nil {
+		return fmt.Errorf("unable to spawn embedded server: %w", err)
+	}
+	packageListingClient.BaseURL = testServerUrl
 
 	return service.AllInOneServerService(ctx, cfg, store, vldtr,
 		[]controlplane.ServerOption{
