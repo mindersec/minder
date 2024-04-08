@@ -29,6 +29,8 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -63,6 +65,19 @@ type ProfileService interface {
 		projectID uuid.UUID,
 		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
+		qtx db.Querier,
+	) (*minderv1.Profile, error)
+
+	// PatchProfile updates the profile in the specified project
+	// by applying the changes in the provided profile structure
+	// as specified by the updateMask
+	PatchProfile(
+		ctx context.Context,
+		projectID uuid.UUID,
+		profileID uuid.UUID,
+		subscriptionID uuid.UUID,
+		profile *minderv1.Profile,
+		updateMask *fieldmaskpb.FieldMask,
 		qtx db.Querier,
 	) (*minderv1.Profile, error)
 }
@@ -274,6 +289,63 @@ func (p *profileService) UpdateProfile(
 	p.sendNewProfileEvent(projectID)
 
 	return profile, nil
+}
+
+func (p *profileService) PatchProfile(
+	ctx context.Context,
+	projectID uuid.UUID,
+	profileID uuid.UUID,
+	subscriptionID uuid.UUID,
+	patch *minderv1.Profile,
+	updateMask *fieldmaskpb.FieldMask,
+	qtx db.Querier,
+) (*minderv1.Profile, error) {
+	oldProfilePb, err := getProfilePBFromDB(ctx, profileID, projectID, qtx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get profile: %w", err)
+	}
+
+	patchProfilePb(oldProfilePb, patch, updateMask)
+
+	return p.UpdateProfile(ctx, projectID, subscriptionID, oldProfilePb, qtx)
+}
+
+func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldmaskpb.FieldMask) {
+	// if there is no update mask, return the old profile. The grpc-rest gateway always sets the update mask
+	if updateMask == nil {
+		return
+	}
+
+	for _, attr := range updateMask.Paths {
+		oldReflect := oldProfilePb.ProtoReflect()
+		patchReflect := patchPb.ProtoReflect()
+
+		fieldDesc := patchReflect.Descriptor().Fields().ByName(protoreflect.Name(attr))
+		if fieldDesc == nil {
+			continue
+		}
+
+		copyFieldValue(oldReflect, patchReflect, fieldDesc)
+	}
+}
+
+// this is NOT a generic function, it only works because our Profiles only contain repeated or scalars.
+func copyFieldValue(dstReflect, srcReflect protoreflect.Message, fieldDesc protoreflect.FieldDescriptor) {
+	if fieldDesc.Cardinality() == protoreflect.Repeated {
+		srcList := srcReflect.Get(fieldDesc).List()
+
+		// truncate the destination list to zero
+		dstList := dstReflect.Mutable(fieldDesc).List()
+		dstList.Truncate(0)
+
+		// append all elements from the source list to the destination list
+		// effectivelly replacing the destination list with the source list
+		for i := 0; i < srcList.Len(); i++ {
+			dstList.Append(srcList.Get(i))
+		}
+	} else {
+		dstReflect.Set(fieldDesc, srcReflect.Get(fieldDesc))
+	}
 }
 
 func createProfileRulesForEntity(

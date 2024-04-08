@@ -31,10 +31,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -544,83 +542,17 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, util.UserVisibleError(codes.InvalidArgument, "Malformed UUID")
 	}
 
-	// The UpdateProfile accepts Null values for the remediate and alert fields as "the server default". Until
-	// we fix that, we need to fetch the old profile to get the current values and extend the patch with those
-	oldProfile, err := s.store.GetProfileByID(ctx, db.GetProfileByIDParams{
-		ProjectID: entityCtx.Project.ID,
-		ID:        profileID,
+	patchedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
+		return s.profiles.PatchProfile(ctx, entityCtx.Project.ID, profileID, uuid.Nil, patch, ppr.GetUpdateMask(), qtx)
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
+		// assumption: service layer sets sensible errors
+		return nil, err
 	}
 
-	// TEMPORARY HACK: Since we do not need to support this patch logic in the
-	// bundles yet, just reject any attempt to patch a profile from a bundle
-	// TODO: Move this patch logic to ProfileService
-	if oldProfile.SubscriptionID.Valid {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot patch profile from bundle")
-	}
-
-	params := db.UpdateProfileParams{
-		ID:        profileID,
-		ProjectID: entityCtx.Project.ID,
-		Labels:    oldProfile.Labels, // since labels are meant to be used by subscription profiles, just copy them over
-	}
-
-	// we check the pointers explicitly because the zero value of a string is valid
-	// value that means "use default" and we want to distinguish that from "not set in the patch"
-	if patch.Remediate != nil {
-		params.Remediate = db.ValidateRemediateType(patch.GetRemediate())
-	} else {
-		params.Remediate = oldProfile.Remediate
-	}
-
-	if patch.Alert != nil {
-		params.Alert = db.ValidateAlertType(patch.GetAlert())
-	} else {
-		params.Alert = oldProfile.Alert
-	}
-
-	// if the display name is set in the patch, use it, otherwise use the old display name or the name
-	if patch.GetDisplayName() != "" {
-		params.DisplayName = patch.GetDisplayName()
-	} else if oldProfile.DisplayName != "" {
-		params.DisplayName = oldProfile.DisplayName
-	} else {
-		params.DisplayName = oldProfile.Name
-	}
-
-	// Update top-level profile db object
-	_, err = s.store.UpdateProfile(ctx, params)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.Internal, "error updating profile: %v", err)
-	}
-
-	updatedProfile, err := getProfilePBFromDB(ctx, profileID, entityCtx, s.store)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
-	}
-
-	// This is temporary technical debt until we merge PR #2990
-	// re-trigger profile evaluation
-	msg, err := reconcilers.NewProfileInitMessage(entityCtx.Project.ID)
-	if err != nil {
-		zerolog.Ctx(ctx).Err(err).Msg("error creating reconciler event message")
-	} else {
-		// This is a non-fatal error, so we'll just log it and continue with the next ones
-		if err := s.evt.Publish(events.TopicQueueReconcileProfileInit, msg); err != nil {
-			zerolog.Ctx(ctx).Err(err).Msg("error publishing reconciler event message")
-		}
-	}
-
-	resp := &minderv1.PatchProfileResponse{
-		Profile: updatedProfile,
-	}
-
-	return resp, nil
+	return &minderv1.PatchProfileResponse{
+		Profile: patchedProfile,
+	}, nil
 }
 
 // UpdateProfile updates a profile for a project

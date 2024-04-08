@@ -17,6 +17,7 @@ import (
 	db "github.com/stacklok/minder/internal/db"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 // MockProfileService is a mock of ProfileService interface.
@@ -55,6 +56,21 @@ func (m *MockProfileService) CreateProfile(arg0 context.Context, arg1, arg2 uuid
 func (mr *MockProfileServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileService)(nil).CreateProfile), arg0, arg1, arg2, arg3, arg4)
+}
+
+// PatchProfile mocks base method.
+func (m *MockProfileService) PatchProfile(arg0 context.Context, arg1, arg2, arg3 uuid.UUID, arg4 *v1.Profile, arg5 *fieldmaskpb.FieldMask, arg6 db.Querier) (*v1.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchProfile", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret0, _ := ret[0].(*v1.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PatchProfile indicates an expected call of PatchProfile.
+func (mr *MockProfileServiceMockRecorder) PatchProfile(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchProfile", reflect.TypeOf((*MockProfileService)(nil).PatchProfile), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }
 
 // UpdateProfile mocks base method.
