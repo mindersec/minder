@@ -18,6 +18,7 @@ package auth
 import (
 	"context"
 	_ "embed"
+	"errors"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,6 +32,12 @@ import (
 
 //go:embed html/login_success.html
 var loginSuccessHtml []byte
+
+//go:embed html/access_denied.html
+var accessDeniedHtml []byte
+
+//go:embed html/generic_failure.html
+var genericAuthFailure []byte
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -57,8 +64,14 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
 	// wait for the token to be received
+	var loginErr loginError
 	token, err := login(ctx, cmd, clientConfig, nil, skipBrowser)
-	if err != nil {
+	if errors.As(err, &loginErr) {
+		if loginErr.isAccessDenied() {
+			cmd.Println("Access denied. Please run the command again and accept the terms and conditions.")
+			return nil
+		}
+	} else if err != nil {
 		return err
 	}
 
