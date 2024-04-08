@@ -182,6 +182,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 				false,
 				credentials.NewGitHubTokenCredential("token"),
 				&serverconfig.ProviderConfig{},
+				nil, // this is unused here
 			))
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")

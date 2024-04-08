@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 
+	gogithub "github.com/google/go-github/v60/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
@@ -51,6 +52,7 @@ func GetProviderBuilder(
 	store db.Store,
 	crypteng crypto.Engine,
 	provCfg *serverconfig.ProviderConfig,
+	fallbackTokenClient *gogithub.Client,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	encToken, err := store.GetAccessTokenByProjectID(ctx,
@@ -59,24 +61,25 @@ func GetProviderBuilder(
 		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
 
 		// If we don't have an access token, check if we have an installation ID
-		return createProviderWithInstallationToken(ctx, store, prov, provCfg, opts...)
+		return createProviderWithInstallationToken(ctx, store, prov, provCfg, fallbackTokenClient, opts...)
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	return createProviderWithAccessToken(ctx, encToken, prov, crypteng, provCfg, opts...)
+	return createProviderWithAccessToken(ctx, encToken, prov, crypteng, provCfg, fallbackTokenClient, opts...)
 }
 
 // ProviderBuilder is a utility struct which allows for the creation of
 // provider clients.
 type ProviderBuilder struct {
-	p               *db.Provider
-	ownerFilter     sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
-	isOrg           bool
-	restClientCache ratecache.RestClientCache
-	credential      provinfv1.Credential
-	metrics         telemetry.ProviderMetrics
-	cfg             *serverconfig.ProviderConfig
+	p                   *db.Provider
+	ownerFilter         sql.NullString // NOTE: we don't seem to actually use the null-ness anywhere.
+	isOrg               bool
+	restClientCache     ratecache.RestClientCache
+	credential          provinfv1.Credential
+	metrics             telemetry.ProviderMetrics
+	cfg                 *serverconfig.ProviderConfig
+	fallbackTokenClient *gogithub.Client
 }
 
 // ProviderBuilderOption is a function which can be used to set options on the ProviderBuilder.
@@ -103,15 +106,17 @@ func NewProviderBuilder(
 	isOrg bool,
 	credential provinfv1.Credential,
 	cfg *serverconfig.ProviderConfig,
+	fallbackTokenClient *gogithub.Client,
 	opts ...ProviderBuilderOption,
 ) *ProviderBuilder {
 	pb := &ProviderBuilder{
-		p:           p,
-		cfg:         cfg,
-		ownerFilter: ownerFilter,
-		isOrg:       isOrg,
-		credential:  credential,
-		metrics:     telemetry.NewNoopMetrics(),
+		p:                   p,
+		cfg:                 cfg,
+		ownerFilter:         ownerFilter,
+		isOrg:               isOrg,
+		credential:          credential,
+		metrics:             telemetry.NewNoopMetrics(),
+		fallbackTokenClient: fallbackTokenClient,
 	}
 
 	for _, opt := range opts {
@@ -223,7 +228,8 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential, pb.isOrg)
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential,
+		pb.fallbackTokenClient, pb.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}
@@ -378,6 +384,7 @@ func createProviderWithAccessToken(
 	prov db.Provider,
 	crypteng crypto.Engine,
 	provCfg *serverconfig.ProviderConfig,
+	fallbackTokenClient *gogithub.Client,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	decryptedToken, err := crypteng.DecryptOAuthToken(encToken.EncryptedToken)
@@ -390,7 +397,7 @@ func createProviderWithAccessToken(
 	ownerFilter := encToken.OwnerFilter
 	isOrg := ownerFilter != sql.NullString{} && ownerFilter.String != ""
 
-	return NewProviderBuilder(&prov, ownerFilter, isOrg, credential, provCfg, opts...), nil
+	return NewProviderBuilder(&prov, ownerFilter, isOrg, credential, provCfg, fallbackTokenClient, opts...), nil
 }
 
 // createProviderWithAccessToken creates a provider with an installation token.
@@ -399,6 +406,7 @@ func createProviderWithInstallationToken(
 	store db.Store,
 	prov db.Provider,
 	provCfg *serverconfig.ProviderConfig,
+	fallbackTokenClient *gogithub.Client,
 	opts ...ProviderBuilderOption,
 ) (*ProviderBuilder, error) {
 	installation, err := store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
@@ -409,7 +417,8 @@ func createProviderWithInstallationToken(
 	ownerFilter := sql.NullString{}
 	if errors.Is(err, sql.ErrNoRows) {
 		// If the provider doesn't have a known credential set the credential to empty
-		return NewProviderBuilder(&prov, ownerFilter, false, credentials.NewEmptyCredential(), provCfg, opts...), nil
+		return NewProviderBuilder(&prov, ownerFilter, false, credentials.NewEmptyCredential(), provCfg,
+			fallbackTokenClient, opts...), nil
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
@@ -427,5 +436,5 @@ func createProviderWithInstallationToken(
 	credential := credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,
 		installation.AppInstallationID)
 
-	return NewProviderBuilder(&prov, ownerFilter, installation.IsOrg, credential, provCfg, opts...), nil
+	return NewProviderBuilder(&prov, ownerFilter, installation.IsOrg, credential, provCfg, fallbackTokenClient, opts...), nil
 }

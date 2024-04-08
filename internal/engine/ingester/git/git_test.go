@@ -49,6 +49,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -88,6 +89,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -127,6 +129,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -166,6 +169,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 			false,
 			credentials.NewEmptyCredential(),
 			&serverconfig.ProviderConfig{},
+			nil, // this is unused here
 		))
 	require.NoError(t, err, "expected no error")
 
@@ -207,6 +211,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 		false,
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	))
 	require.NoError(t, err, "expected no error")
 
@@ -237,6 +242,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 		false,
 		credentials.NewGitHubTokenCredential("foobar"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	),
 	)
 	require.NoError(t, err, "expected no error")
@@ -265,6 +271,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 		// No authentication is the right thing in this case.
 		credentials.NewEmptyCredential(),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	))
 	require.NoError(t, err, "expected no error")
 

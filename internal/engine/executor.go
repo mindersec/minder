@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	gogithub "github.com/google/go-github/v60/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
@@ -36,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -60,10 +62,11 @@ type Executor struct {
 	wgEntityEventExecution *sync.WaitGroup
 	// terminationcontext is used to terminate the executor
 	// when the server is shutting down.
-	terminationcontext context.Context
-	restClientCache    ratecache.RestClientCache
-	provCfg            *serverconfig.ProviderConfig
-	providerStore      providers.ProviderStore
+	terminationcontext  context.Context
+	restClientCache     ratecache.RestClientCache
+	provCfg             *serverconfig.ProviderConfig
+	providerStore       providers.ProviderStore
+	fallbackTokenClient *gogithub.Client
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -105,6 +108,8 @@ func NewExecutor(
 		return nil, err
 	}
 
+	fallbackTokenClient := github.NewFallbackTokenClient(*provCfg)
+
 	e := &Executor{
 		querier:                querier,
 		crypteng:               crypteng,
@@ -115,6 +120,7 @@ func NewExecutor(
 		mdws:                   []message.HandlerMiddleware{},
 		provCfg:                provCfg,
 		providerStore:          providerStore,
+		fallbackTokenClient:    fallbackTokenClient,
 	}
 
 	for _, opt := range opts {
@@ -202,7 +208,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 		providers.WithProviderMetrics(e.provMt),
 		providers.WithRestClientCache(e.restClientCache),
 	}
-	cli, err := providers.GetProviderBuilder(ctx, *provider, e.querier, e.crypteng, e.provCfg, pbOpts...)
+	cli, err := providers.GetProviderBuilder(ctx, *provider, e.querier, e.crypteng, e.provCfg, e.fallbackTokenClient, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}

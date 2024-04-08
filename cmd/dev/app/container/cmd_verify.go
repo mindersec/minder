@@ -128,6 +128,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 		false,
 		credentials.NewGitHubTokenCredential(token),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 
 	return pbuild.GetGitHub()

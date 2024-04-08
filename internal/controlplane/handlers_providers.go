@@ -226,7 +226,8 @@ func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, proj
 		providers.WithRestClientCache(s.restClientCache),
 	}
 
-	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider, pbOpts...)
+	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider,
+		s.fallbackTokenClient, pbOpts...)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
 	}

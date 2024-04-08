@@ -32,6 +32,7 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
+	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
@@ -58,9 +59,10 @@ var (
 
 // GitHub is the struct that contains the shared GitHub client operations
 type GitHub struct {
-	client   *github.Client
-	cache    ratecache.RestClientCache
-	delegate Delegate
+	client               *github.Client
+	packageListingClient *github.Client
+	cache                ratecache.RestClientCache
+	delegate             Delegate
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -135,13 +137,15 @@ type Delegate interface {
 // NewGitHub creates a new GitHub client
 func NewGitHub(
 	client *github.Client,
+	packageListingClient *github.Client,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
 ) *GitHub {
 	return &GitHub{
-		client:   client,
-		cache:    cache,
-		delegate: delegate,
+		client:               client,
+		packageListingClient: packageListingClient,
+		cache:                cache,
+		delegate:             delegate,
 	}
 }
 
@@ -163,18 +167,42 @@ func (c *GitHub) ListPackagesByRepository(
 	}
 	// create a slice to hold the containers
 	var allContainers []*github.Package
-	for {
+
+	type listPackagesRespWrapper struct {
+		artifacts []*github.Package
+		resp      *github.Response
+	}
+	op := func() (listPackagesRespWrapper, error) {
 		var artifacts []*github.Package
 		var resp *github.Response
 		var err error
 
 		if c.IsOrg() {
-			artifacts, resp, err = c.client.Organizations.ListPackages(ctx, owner, opt)
+			artifacts, resp, err = c.packageListingClient.Organizations.ListPackages(ctx, owner, opt)
 		} else {
-			artifacts, resp, err = c.client.Users.ListPackages(ctx, owner, opt)
+			artifacts, resp, err = c.packageListingClient.Users.ListPackages(ctx, owner, opt)
 		}
+
+		listPackagesResp := listPackagesRespWrapper{
+			artifacts: artifacts,
+			resp:      resp,
+		}
+
+		if isRateLimitError(err) {
+			waitErr := c.waitForRateLimitReset(ctx, err)
+			if waitErr == nil {
+				return listPackagesResp, err
+			}
+			return listPackagesResp, backoffv4.Permanent(err)
+		}
+
+		return listPackagesResp, backoffv4.Permanent(err)
+	}
+
+	for {
+		result, err := performWithRetry(ctx, op)
 		if err != nil {
-			if resp.StatusCode == http.StatusNotFound {
+			if result.resp.StatusCode == http.StatusNotFound {
 				return allContainers, fmt.Errorf("packages not found for repository %d: %w", repositoryId, ErrNotFound)
 			}
 
@@ -182,16 +210,16 @@ func (c *GitHub) ListPackagesByRepository(
 		}
 
 		// now just append the ones belonging to the repository
-		for _, artifact := range artifacts {
+		for _, artifact := range result.artifacts {
 			if artifact.Repository.GetID() == repositoryId {
 				allContainers = append(allContainers, artifact)
 			}
 		}
 
-		if resp.NextPage == 0 {
+		if result.resp.NextPage == 0 {
 			break
 		}
-		opt.Page = resp.NextPage
+		opt.Page = result.resp.NextPage
 	}
 
 	return allContainers, nil
@@ -882,4 +910,26 @@ func CanHandleOwner(_ context.Context, prov db.Provider, owner string) bool {
 		return true
 	}
 	return false
+}
+
+// NewFallbackTokenClient creates a new GitHub client that uses the GitHub App's fallback token
+func NewFallbackTokenClient(appConfig config.ProviderConfig) *github.Client {
+	if appConfig.GitHubApp == nil || appConfig.GitHubApp.FallbackToken == "" {
+		return nil
+	}
+	fallbackToken := appConfig.GitHubApp.FallbackToken
+	var packageListingClient *github.Client
+
+	fallbackTokenSource := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: fallbackToken},
+	)
+	fallbackTokenTC := &http.Client{
+		Transport: &oauth2.Transport{
+			Base:   http.DefaultClient.Transport,
+			Source: fallbackTokenSource,
+		},
+	}
+
+	packageListingClient = github.NewClient(fallbackTokenTC)
+	return packageListingClient
 }

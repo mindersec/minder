@@ -96,9 +96,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to parse webhook url: %w", err)
 	}
 
+	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
+
 	for _, provider := range allProviders {
 		zerolog.Ctx(ctx).Info().Str("name", provider.Name).Str("uuid", provider.ID.String()).Msg("provider")
-		pb, err := providers.GetProviderBuilder(ctx, provider, store, cryptoEng, &cfg.Provider)
+		pb, err := providers.GetProviderBuilder(ctx, provider, store, cryptoEng, &cfg.Provider, fallbackTokenClient)
 		if err != nil {
 			return fmt.Errorf("unable to get provider builder: %w", err)
 		}
