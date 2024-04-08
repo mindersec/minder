@@ -59,6 +59,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	default:
 		err := fmt.Errorf("unsupported entity delete event for: %s", inf.Type)
 		l.Err(err).Msg("error handling entity delete event")
-		return err
+		// Do not return the error, as we don't want to nack the message and retry
+		return nil
 	}
 }
