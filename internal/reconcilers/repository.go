@@ -145,8 +145,18 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		// store information if we do not have it
 		typeLower := strings.ToLower(artifact.GetPackageType())
 		newArtifact, err := r.store.UpsertArtifact(ctx,
-			db.UpsertArtifactParams{RepositoryID: repository.ID, ArtifactName: artifact.GetName(),
-				ArtifactType: typeLower, ArtifactVisibility: artifact.GetVisibility()})
+			db.UpsertArtifactParams{
+				RepositoryID: uuid.NullUUID{
+					UUID:  repository.ID,
+					Valid: true,
+				},
+				ArtifactName:       artifact.GetName(),
+				ArtifactType:       typeLower,
+				ArtifactVisibility: artifact.GetVisibility(),
+				ProjectID:          evt.Project,
+				ProviderName:       prov.Name,
+				ProviderID:         prov.ID,
+			})
 
 		if err != nil {
 			// just log error and continue

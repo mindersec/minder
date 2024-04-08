@@ -384,8 +384,10 @@ func (e *Executor) releaseLockAndFlush(
 
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String()).
-		Str("repo_id", repoID.String())
+		Str("execution_id", inf.ExecutionID.String())
+	if repoID.Valid {
+		logger = logger.Str("repo_id", repoID.UUID.String())
+	}
 
 	if artID.Valid {
 		logger = logger.Str("artifact_id", artID.UUID.String())

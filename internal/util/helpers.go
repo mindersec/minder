@@ -46,6 +46,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -468,9 +469,12 @@ func Int32FromString(v string) (int32, error) {
 // Note this doesn't set the context as that's assumed to be set
 // on the caller's side.
 func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
-	strRepoID := dbrepo.ID.String()
 	return &minderv1.Repository{
-		Id:            &strRepoID,
+		Id: ptr.Ptr(dbrepo.ID.String()),
+		Context: &minderv1.Context{
+			Provider: &dbrepo.Provider,
+			Project:  ptr.Ptr(dbrepo.ProjectID.String()),
+		},
 		Owner:         dbrepo.RepoOwner,
 		Name:          dbrepo.RepoName,
 		RepoId:        dbrepo.RepoID,
@@ -509,37 +513,48 @@ func GetRepository(
 func GetArtifact(
 	ctx context.Context,
 	store db.ExtendQuerier,
-	projectID,
-	repoID,
+	projectID uuid.UUID,
 	artifactID uuid.UUID,
 ) (*minderv1.Artifact, error) {
-	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
+	// Retrieve artifact details
+	artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+		ID:        artifactID,
 		ProjectID: projectID,
 	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("repository not found")
-	} else if err != nil {
-		return nil, fmt.Errorf("cannot read repository: %v", err)
-	}
-
-	// Retrieve artifact details
-	artifact, err := store.GetArtifactByID(ctx, artifactID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("artifact not found")
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get artifact: %v", err)
 	}
 
+	var repoOwner, repoName string
+	if artifact.RepositoryID.Valid {
+		dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
+			ID:        artifact.RepositoryID.UUID,
+			ProjectID: projectID,
+		})
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("repository not found")
+		} else if err != nil {
+			return nil, fmt.Errorf("cannot read repository: %v", err)
+		}
+
+		repoOwner = dbrepo.RepoOwner
+		repoName = dbrepo.RepoName
+	}
+
 	// Build the artifact protobuf
 	return &minderv1.Artifact{
 		ArtifactPk: artifact.ID.String(),
-		Owner:      dbrepo.RepoOwner,
+		Context: &minderv1.Context{
+			Project:  ptr.Ptr(projectID.String()),
+			Provider: ptr.Ptr(artifact.ProviderName),
+		},
+		Owner:      repoOwner,
 		Name:       artifact.ArtifactName,
 		Type:       artifact.ArtifactType,
 		Visibility: artifact.ArtifactVisibility,
-		Repository: dbrepo.RepoName,
+		Repository: repoName,
 		CreatedAt:  timestamppb.New(artifact.CreatedAt),
 	}, nil
 }
@@ -573,6 +588,10 @@ func GetPullRequest(
 
 	// TODO: Do we need extra columns in the pull request table?
 	return &minderv1.PullRequest{
+		Context: &minderv1.Context{
+			Project:  ptr.Ptr(dbrepo.ProjectID.String()),
+			Provider: ptr.Ptr(dbrepo.Provider),
+		},
 		Number:    dbpr.PrNumber,
 		RepoOwner: dbrepo.RepoOwner,
 		RepoName:  dbrepo.RepoName,

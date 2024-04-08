@@ -116,7 +116,7 @@ func getEntityID(inf *entities.EntityInfoWrapper) (uuid.UUID, error) {
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return uuid.Nil, fmt.Errorf("build environments not supported")
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		ent = repoID
+		ent = repoID.UUID
 	case minderv1.Entity_ENTITY_ARTIFACTS:
 		ent = artID.UUID
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:

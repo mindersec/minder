@@ -234,6 +234,7 @@ func getRuleEvalEntityInfo(
 	entityType *db.NullEntities,
 	selector *uuid.NullUUID,
 	rs db.ListRuleEvaluationsByProfileIdRow,
+	projectID uuid.UUID,
 ) map[string]string {
 	l := zerolog.Ctx(ctx)
 	entityInfo := map[string]string{}
@@ -251,7 +252,10 @@ func getRuleEvalEntityInfo(
 	}
 
 	if entityType.Entities == db.EntitiesArtifact {
-		artifact, err := store.GetArtifactByID(ctx, selector.UUID)
+		artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+			ID:        selector.UUID,
+			ProjectID: projectID,
+		})
 		if err != nil {
 			l.Err(err).Msg("error getting artifact by ID")
 			return entityInfo
@@ -259,7 +263,7 @@ func getRuleEvalEntityInfo(
 		entityInfo["artifact_id"] = artifact.ID.String()
 		entityInfo["artifact_name"] = artifact.ArtifactName
 		entityInfo["artifact_type"] = artifact.ArtifactType
-		entityInfo["provider"] = artifact.Provider
+		entityInfo["provider"] = artifact.ProviderName
 	}
 
 	return entityInfo
@@ -271,6 +275,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
 
 	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -344,7 +349,7 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
 			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-			dbEntity, selector,
+			dbEntity, selector, projectID,
 		)
 		// TODO: Add other entities once we have database entries for them
 	}
@@ -370,6 +375,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	profileId string,
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
+	projectID uuid.UUID,
 ) []*minderv1.RuleEvaluationStatus {
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
@@ -378,7 +384,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat)
+		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
 		if err != nil {
 			l.Err(err).Msg("error getting rule evaluation status")
 			continue
@@ -399,6 +405,7 @@ func getRuleEvalStatus(
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
 	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
+	projectID uuid.UUID,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
 	var guidance string
@@ -445,7 +452,7 @@ func getRuleEvalStatus(
 		Entity:              string(dbRuleEvalStat.Entity),
 		Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
 		Details:             dbRuleEvalStat.EvalDetails.String,
-		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat),
+		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, projectID),
 		Guidance:            guidance,
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
