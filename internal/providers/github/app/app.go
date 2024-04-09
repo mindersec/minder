@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	gogithub "github.com/google/go-github/v60/github"
+	gogithub "github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/config/server"
@@ -70,6 +70,7 @@ func NewGitHubAppProvider(
 	metrics telemetry.HttpClientMetrics,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
+	packageListingClient *gogithub.Client,
 	isOrg bool,
 ) (*github.GitHub, error) {
 	var err error
@@ -109,6 +110,8 @@ func NewGitHubAppProvider(
 
 	return github.NewGitHub(
 		ghClient,
+		// Use the fallback token for package listing, since fine-grained tokens don't have access
+		packageListingClient,
 		restClientCache,
 		oauthDelegate,
 	), nil

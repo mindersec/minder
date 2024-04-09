@@ -176,6 +176,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 				AppName: "test",
 			},
 		},
+		nil, // this is unused here
 	))
 	inf := &entities.EntityInfoWrapper{
 		Entity:      ent,

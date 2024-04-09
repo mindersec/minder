@@ -201,7 +201,6 @@ WHERE res.profile_id = $1 AND
         CASE
             WHEN $2::entities = 'repository' AND res.repository_id = $3::UUID THEN true
             WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
-            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
             WHEN $2::entities  = 'pull_request' AND res.pull_request_id = $3::UUID THEN true
             WHEN $3::UUID IS NULL THEN true
             ELSE false

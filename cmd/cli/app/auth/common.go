@@ -117,6 +117,38 @@ func getProjectTableRows(projects []*minderv1.Project) [][]string {
 	return rows
 }
 
+type loginError struct {
+	ErrorType   string
+	Description string
+}
+
+func (e loginError) Error() string {
+	return fmt.Sprintf("Error: %s\nDescription: %s\n", e.ErrorType, e.Description)
+}
+
+func (e loginError) isAccessDenied() bool {
+	return e.ErrorType == "access_denied"
+}
+
+func writeError(w http.ResponseWriter, loginerr loginError) (string, error) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	htmlPage := genericAuthFailure
+	msg := "Access Denied."
+
+	if loginerr.isAccessDenied() {
+		htmlPage = accessDeniedHtml
+		msg = "Access Denied. Please accept the terms and conditions"
+	}
+
+	_, err := w.Write(htmlPage)
+	if err != nil {
+		return msg, err
+	}
+	return "", nil
+}
+
 // login is a helper function to handle the login process
 // and return the access token
 func login(
@@ -143,6 +175,22 @@ func login(
 
 	callbackPath := "/auth/callback"
 
+	errChan := make(chan loginError)
+
+	errorHandler := func(w http.ResponseWriter, _ *http.Request, errorType string, errorDesc string, _ string) {
+		loginerr := loginError{
+			ErrorType:   errorType,
+			Description: errorDesc,
+		}
+
+		msg, writeErr := writeError(w, loginerr)
+		if writeErr != nil {
+			// if we cannot display the access denied page, just print an error message
+			cmd.Println(msg)
+		}
+		errChan <- loginerr
+	}
+
 	// create encrypted cookie handler to mitigate CSRF attacks
 	hashKey := securecookie.GenerateRandomKey(32)
 	encryptKey := securecookie.GenerateRandomKey(32)
@@ -152,6 +200,7 @@ func login(
 		rp.WithCookieHandler(cookieHandler),
 		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
 		rp.WithPKCE(cookieHandler),
+		rp.WithErrorHandler(errorHandler),
 	}
 
 	// Get random port
@@ -233,7 +282,15 @@ func login(
 	cmd.Println("Waiting for token...")
 
 	// wait for the token to be received
-	token := <-tokenChan
+	var token *oidc.Tokens[*oidc.IDTokenClaims]
+	var loginErr error
 
-	return token, nil
+	select {
+	case token = <-tokenChan:
+		break
+	case loginErr = <-errChan:
+		break
+	}
+
+	return token, loginErr
 }

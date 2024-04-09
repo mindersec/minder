@@ -16,16 +16,19 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
@@ -45,6 +48,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 		&config.GitHubAppConfig{},
 		provtelemetry.NewNoopMetrics(),
 		nil, credentials.NewGitHubTokenCredential("token"),
+		github.NewClient(http.DefaultClient),
 		false,
 	)
 
@@ -70,6 +74,7 @@ func TestUserInfo(t *testing.T) {
 		},
 		provtelemetry.NewNoopMetrics(),
 		nil, credentials.NewGitHubTokenCredential("token"),
+		github.NewClient(http.DefaultClient),
 		false,
 	)
 	assert.NoError(t, err)
@@ -155,12 +160,18 @@ func TestArtifactAPIEscapes(t *testing.T) {
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
 
+			packageListingClient := github.NewClient(http.DefaultClient)
+			testServerUrl, err := url.Parse(testServer.URL + "/")
+			assert.NoError(t, err)
+			packageListingClient.BaseURL = testServerUrl
+
 			client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
 				Endpoint: testServer.URL + "/",
 			},
 				&config.GitHubAppConfig{},
 				provtelemetry.NewNoopMetrics(),
 				nil, credentials.NewGitHubTokenCredential("token"),
+				packageListingClient,
 				true,
 			)
 			assert.NoError(t, err)
@@ -170,6 +181,101 @@ func TestArtifactAPIEscapes(t *testing.T) {
 		})
 	}
 
+}
+
+func TestListPackagesByRepository(t *testing.T) {
+	t.Parallel()
+
+	accessToken := "token"
+	repositoryId := int64(1234)
+	gitHubPackage := github.Package{
+		Name: github.String("test-package"),
+		Repository: &github.Repository{
+			ID: github.Int64(repositoryId),
+		},
+	}
+
+	tests := []struct {
+		name          string
+		testHandler   http.HandlerFunc
+		ExpectedError string
+	}{
+		{
+			name: "ListPackagesByRepository returns matching package",
+			testHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/orgs/owner/packages?package_type=repo&page=1&per_page=1", r.URL.RequestURI())
+				data := []github.Package{gitHubPackage}
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+		{
+			name: "ListPackagesByRepository filters out non-matching packages",
+			testHandler: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "/orgs/owner/packages?package_type=repo&page=1&per_page=1", r.URL.RequestURI())
+				packageOtherRepo := github.Package{
+					Name: github.String("other-package"),
+					Repository: &github.Repository{
+						ID: github.Int64(5678),
+					},
+				}
+				data := []github.Package{gitHubPackage, packageOtherRepo}
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			testServer := httptest.NewServer(tt.testHandler)
+			defer testServer.Close()
+
+			packageListingClient := github.NewClient(http.DefaultClient)
+			testServerUrl, err := url.Parse(testServer.URL + "/")
+			assert.NoError(t, err)
+			packageListingClient.BaseURL = testServerUrl
+
+			provider, err := NewGitHubAppProvider(
+				&minderv1.GitHubAppProviderConfig{},
+				&config.GitHubAppConfig{
+					FallbackToken: accessToken,
+				},
+				provtelemetry.NewNoopMetrics(),
+				nil,
+				credentials.NewGitHubTokenCredential(accessToken),
+				packageListingClient,
+				true,
+			)
+			assert.NoError(t, err)
+			assert.NotNil(t, provider)
+
+			packages, err := provider.ListPackagesByRepository(context.Background(), "owner", "repo", repositoryId, 1, 1)
+			if tt.ExpectedError == "" {
+				assert.NoError(t, err)
+				assert.Len(t, packages, 1)
+				assert.Equal(t, gitHubPackage.Name, packages[0].Name)
+			} else {
+				assert.Error(t, err)
+			}
+
+		})
+	}
 }
 
 func TestWaitForRateLimitReset(t *testing.T) {
@@ -190,12 +296,18 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
+	packageListingClient := github.NewClient(http.DefaultClient)
+	testServerUrl, err := url.Parse(server.URL + "/")
+	assert.NoError(t, err)
+	packageListingClient.BaseURL = testServerUrl
+
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
 		&config.GitHubAppConfig{},
 		provtelemetry.NewNoopMetrics(),
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
+		packageListingClient,
 		false,
 	)
 	require.NoError(t, err)
@@ -235,6 +347,11 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 	}))
 	defer server.Close()
 
+	packageListingClient := github.NewClient(http.DefaultClient)
+	testServerUrl, err := url.Parse(server.URL + "/")
+	assert.NoError(t, err)
+	packageListingClient.BaseURL = testServerUrl
+
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
@@ -247,6 +364,7 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 			provtelemetry.NewNoopMetrics(),
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
+			packageListingClient,
 			false,
 		)
 		require.NoError(t, err)

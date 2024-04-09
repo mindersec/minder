@@ -26,7 +26,7 @@ import (
 	htmltemplate "html/template"
 	"strings"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 

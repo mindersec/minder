@@ -55,6 +55,7 @@ var (
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 )
 

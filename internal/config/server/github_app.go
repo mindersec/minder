@@ -36,6 +36,8 @@ type GitHubAppConfig struct {
 	PrivateKey string `mapstructure:"private_key"`
 	// WebhookSecret is the GitHub App's webhook secret
 	WebhookSecret string `mapstructure:"webhook_secret"`
+	// FallbackToken is the fallback token to use when listing packages
+	FallbackToken string `mapstructure:"fallback_token"`
 }
 
 // GetPrivateKey returns the GitHub App's private key

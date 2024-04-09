@@ -26,7 +26,7 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
@@ -81,29 +81,31 @@ type ProjectFactory func(
 	ctx context.Context, qtx db.Querier, name string, user int64) (*db.Project, error)
 
 type providerService struct {
-	store           db.Store
-	cryptoEngine    crypto.Engine
-	mt              metrics.Metrics
-	provMt          provtelemetry.ProviderMetrics
-	config          *server.ProviderConfig
-	projectFactory  ProjectFactory
-	restClientCache ratecache.RestClientCache
-	ghClientService ghprov.ClientService
+	store               db.Store
+	cryptoEngine        crypto.Engine
+	mt                  metrics.Metrics
+	provMt              provtelemetry.ProviderMetrics
+	config              *server.ProviderConfig
+	projectFactory      ProjectFactory
+	restClientCache     ratecache.RestClientCache
+	ghClientService     ghprov.ClientService
+	fallbackTokenClient *github.Client
 }
 
 // NewProviderService creates an instance of ProviderService
 func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.Metrics,
 	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig,
-	projectFactory ProjectFactory, restClientCache ratecache.RestClientCache) ProviderService {
+	projectFactory ProjectFactory, restClientCache ratecache.RestClientCache, fallbackTokenClient *github.Client) ProviderService {
 	return &providerService{
-		store:           store,
-		cryptoEngine:    cryptoEngine,
-		mt:              mt,
-		provMt:          provMt,
-		config:          config,
-		projectFactory:  projectFactory,
-		restClientCache: restClientCache,
-		ghClientService: ghprov.ClientServiceImplementation{},
+		store:               store,
+		cryptoEngine:        cryptoEngine,
+		mt:                  mt,
+		provMt:              provMt,
+		config:              config,
+		projectFactory:      projectFactory,
+		restClientCache:     restClientCache,
+		ghClientService:     ghprov.ClientServiceImplementation{},
+		fallbackTokenClient: fallbackTokenClient,
 	}
 }
 
@@ -456,7 +458,7 @@ func (p *providerService) verifyProviderTokenIdentity(
 		WithRestClientCache(p.restClientCache),
 	}
 	builder := NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
-		p.config, pbOpts...)
+		p.config, p.fallbackTokenClient, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
 	ghClient, err := builder.GetGitHub()

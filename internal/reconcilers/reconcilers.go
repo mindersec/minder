@@ -17,10 +17,13 @@
 package reconcilers
 
 import (
+	gogithub "github.com/google/go-github/v61/github"
+
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
@@ -34,12 +37,13 @@ const (
 
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
-	store           db.Store
-	evt             events.Publisher
-	crypteng        crypto.Engine
-	restClientCache ratecache.RestClientCache
-	provCfg         *serverconfig.ProviderConfig
-	provMt          providertelemetry.ProviderMetrics
+	store               db.Store
+	evt                 events.Publisher
+	crypteng            crypto.Engine
+	restClientCache     ratecache.RestClientCache
+	provCfg             *serverconfig.ProviderConfig
+	provMt              providertelemetry.ProviderMetrics
+	fallbackTokenClient *gogithub.Client
 }
 
 // ReconcilerOption is a function that modifies a reconciler
@@ -72,12 +76,15 @@ func NewReconciler(
 		return nil, err
 	}
 
+	fallbackTokenClient := github.NewFallbackTokenClient(*provCfg)
+
 	r := &Reconciler{
-		store:    store,
-		evt:      evt,
-		crypteng: crypteng,
-		provCfg:  provCfg,
-		provMt:   providertelemetry.NewNoopMetrics(),
+		store:               store,
+		evt:                 evt,
+		crypteng:            crypteng,
+		provCfg:             provCfg,
+		provMt:              providertelemetry.NewNoopMetrics(),
+		fallbackTokenClient: fallbackTokenClient,
 	}
 
 	for _, opt := range opts {

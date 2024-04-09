@@ -61,6 +61,7 @@ var (
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 	invalidProviderBuilder = providers.NewProviderBuilder(
 		&db.Provider{
@@ -78,6 +79,7 @@ var (
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 	TestActionTypeValid interfaces.ActionType = "remediate-test"
 )
@@ -104,6 +106,7 @@ func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
 		false,
 		credentials.NewGitHubTokenCredential("token"),
 		&serverconfig.ProviderConfig{},
+		nil, // this is unused here
 	)
 }
 

@@ -27,12 +27,14 @@ import (
 	"encoding/pem"
 	"errors"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -78,6 +80,15 @@ func testNewProviderService(
 	}
 	require.NoError(t, err)
 
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer testServer.Close()
+	packageListingClient := github.NewClient(http.DefaultClient)
+	testServerUrl, err := url.Parse(testServer.URL + "/")
+	require.NoError(t, err)
+	packageListingClient.BaseURL = testServerUrl
+
 	psi := NewProviderService(
 		mocks.fakeStore,
 		mocks.cryptoMocks,
@@ -86,6 +97,7 @@ func testNewProviderService(
 		config,
 		projectFactory,
 		mockratecache.NewMockRestClientCache(mockCtrl),
+		packageListingClient,
 	)
 
 	ps, ok := psi.(*providerService)
