@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -593,6 +594,18 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 	updatedProfile, err := getProfilePBFromDB(ctx, profileID, entityCtx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
+	}
+
+	// This is temporary technical debt until we merge PR #2990
+	// re-trigger profile evaluation
+	msg, err := reconcilers.NewProfileInitMessage(entityCtx.Project.ID)
+	if err != nil {
+		zerolog.Ctx(ctx).Err(err).Msg("error creating reconciler event message")
+	} else {
+		// This is a non-fatal error, so we'll just log it and continue with the next ones
+		if err := s.evt.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("error publishing reconciler event message")
+		}
 	}
 
 	resp := &minderv1.PatchProfileResponse{
