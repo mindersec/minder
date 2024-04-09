@@ -123,6 +123,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("ID", *rt.Id)
 	t.AddRow("Name", rt.Name)
 	t.AddRow("Description", rt.Description)
+	t.AddRow("Applicable Entity", rt.GetDef().InEntity)
 	t.AddRow("Project", *rt.Context.Project)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
