@@ -455,7 +455,7 @@ func (s *Server) parseGithubEventForProcessing(
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
 		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(msg, dbRepo, provBuilder.GetName(), action)
+		return parseRepoEvent(payload, msg, dbRepo, provBuilder.GetName(), action)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -463,11 +463,33 @@ func (s *Server) parseGithubEventForProcessing(
 }
 
 func parseRepoEvent(
+	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
 	providerName string,
 	action string,
 ) error {
+	if action == "deleted" {
+		// Find out what kind of repository event we are dealing with
+		if whPayload["hook"] != nil || whPayload["hook_id"] != nil {
+			// Having these means it's a repository event related to the webhook itself, i.e., deleted, created, etc.
+			// Get the webhook ID from the payload
+			whID := whPayload["hook_id"].(float64)
+			if dbrepo.WebhookID.Valid {
+				// Check if the payload webhook ID matches the one we have stored in the DB for this repository
+				if int64(whID) != dbrepo.WebhookID.Int64 {
+					// This means we got a deleted event for a webhook ID that doesn't correspond to the one we have stored in the DB.
+					return newErrNotHandled("delete event %s with action %s not handled, hook ID %d does not match stored webhook ID %d",
+						msg.Metadata.Get(events.GithubWebhookEventTypeKey), action, int64(whID), dbrepo.WebhookID.Int64)
+				}
+			}
+			// This means we got a deleted event for a webhook ID that corresponds to the one we have stored in the DB.
+			// We will remove the repo from the DB, so we can proceed with the deletion event for this entity (repository)
+			// TODO: perhaps handle this better by trying to re-create the webhook if it was deleted manually
+		}
+		// If we don't have hook/hook_id, continue with the deletion event for this entity (repository)
+	}
+
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := util.PBRepositoryFromDB(dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
