@@ -99,6 +99,15 @@ var repoEvents = []string{
 	"team_add",
 }
 
+// WebhookActionEventDeleted is the action for a deleted event
+const (
+	WebhookActionEventDeleted     = "deleted"
+	WebhookActionEventOpened      = "opened"
+	WebhookActionEventClosed      = "closed"
+	WebhookActionEventSynchronize = "synchronize"
+	WebhookActionEventPublished   = "published"
+)
+
 func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 	key := m.Metadata.Get(events.GithubWebhookEventTypeKey)
 	switch {
@@ -227,6 +236,8 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			Logger()
 
 		l.Debug().Msg("parsing event")
+
+		// Parse the webhook event and construct a message for the event router
 		if err := s.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
 			wes = handleParseError(wes.Typ, err)
 			if wes.Error {
@@ -236,17 +247,29 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			}
 			return
 		}
-
 		wes.Accepted = true
-
 		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
-		if err := s.evt.Publish(events.ExecuteEntityEventTopic, m); err != nil {
+
+		// Channel the event based on the webhook action
+		var watermillTopic string
+		switch m.Metadata.Get(entities.ActionEventKey) {
+		case WebhookActionEventDeleted:
+			// We got an entity delete event, so we need to reconcile and delete the entity from the DB
+			watermillTopic = events.TopicQueueReconcileEntityDelete
+		default:
+			// Default to evaluating the entity
+			watermillTopic = events.TopicQueueEntityEvaluate
+		}
+
+		// Publish the message to the event router
+		if err := s.evt.Publish(watermillTopic, m); err != nil {
 			wes.Error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		// We successfully published the message
 		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}
@@ -365,7 +388,7 @@ func (_ *Server) parseGithubAppEventForProcessing(
 		return fmt.Errorf("action is empty")
 	}
 
-	if action != "deleted" {
+	if action != WebhookActionEventDeleted {
 		return newErrNotHandled("event %s with action %s not handled",
 			msg.Metadata.Get(events.GithubWebhookEventTypeKey), action)
 	}
@@ -436,14 +459,12 @@ func (s *Server) parseGithubEventForProcessing(
 
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
-	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
-		return s.parseArtifactPublishedEvent(
-			ctx, payload, msg, dbRepo, provBuilder)
+	if ent == pb.Entity_ENTITY_ARTIFACTS && action == WebhookActionEventPublished {
+		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
-		return parsePullRequestModEvent(
-			ctx, payload, msg, dbRepo, s.store, provBuilder)
+		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(msg, dbRepo, provBuilder.GetName())
+		return parseRepoEvent(payload, msg, dbRepo, provBuilder.GetName(), action)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -451,17 +472,41 @@ func (s *Server) parseGithubEventForProcessing(
 }
 
 func parseRepoEvent(
+	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
 	providerName string,
+	action string,
 ) error {
+	if action == WebhookActionEventDeleted {
+		// Find out what kind of repository event we are dealing with
+		if whPayload["hook"] != nil || whPayload["hook_id"] != nil {
+			// Having these means it's a repository event related to the webhook itself, i.e., deleted, created, etc.
+			// Get the webhook ID from the payload
+			whID := whPayload["hook_id"].(float64)
+			if dbrepo.WebhookID.Valid {
+				// Check if the payload webhook ID matches the one we have stored in the DB for this repository
+				if int64(whID) != dbrepo.WebhookID.Int64 {
+					// This means we got a deleted event for a webhook ID that doesn't correspond to the one we have stored in the DB.
+					return newErrNotHandled("delete event %s with action %s not handled, hook ID %d does not match stored webhook ID %d",
+						msg.Metadata.Get(events.GithubWebhookEventTypeKey), action, int64(whID), dbrepo.WebhookID.Int64)
+				}
+			}
+			// This means we got a deleted event for a webhook ID that corresponds to the one we have stored in the DB.
+			// We will remove the repo from the DB, so we can proceed with the deletion event for this entity (repository)
+			// TODO: perhaps handle this better by trying to re-create the webhook if it was deleted manually
+		}
+		// If we don't have hook/hook_id, continue with the deletion event for this entity (repository)
+	}
+
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := util.PBRepositoryFromDB(dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
 		WithProvider(providerName).
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
-		WithRepositoryID(dbrepo.ID)
+		WithRepositoryID(dbrepo.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
@@ -472,6 +517,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	msg *message.Message,
 	dbrepo db.Repository,
 	prov *providers.ProviderBuilder,
+	action string,
 ) error {
 	// we need to have information about package and repository
 	if whPayload["package"] == nil || whPayload["repository"] == nil {
@@ -518,7 +564,8 @@ func (s *Server) parseArtifactPublishedEvent(
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
-		WithArtifactID(dbArtifact.ID)
+		WithArtifactID(dbArtifact.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
@@ -530,6 +577,7 @@ func parsePullRequestModEvent(
 	dbrepo db.Repository,
 	store db.Store,
 	prov *providers.ProviderBuilder,
+	action string,
 ) error {
 	// NOTE(jaosorior): this webhook is very specific to github
 	if !prov.Implements(db.ProviderTypeGithub) {
@@ -567,7 +615,8 @@ func parsePullRequestModEvent(
 		WithPullRequestID(dbPr.ID).
 		WithProvider(prov.GetName()).
 		WithProjectID(dbrepo.ProjectID).
-		WithRepositoryID(dbrepo.ID)
+		WithRepositoryID(dbrepo.ID).
+		WithActionEvent(action)
 
 	return eiw.ToMessage(msg)
 }
@@ -754,7 +803,7 @@ func reconcilePrWithDb(
 	var retPr *db.PullRequest
 
 	switch prEvalInfo.Action {
-	case "opened", "synchronize":
+	case WebhookActionEventOpened, WebhookActionEventSynchronize:
 		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
@@ -766,7 +815,7 @@ func reconcilePrWithDb(
 		}
 		retPr = &dbPr
 		retErr = nil
-	case "closed":
+	case WebhookActionEventClosed:
 		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,

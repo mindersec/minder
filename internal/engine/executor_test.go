@@ -291,7 +291,7 @@ default allow = true`,
 
 	go func() {
 		t.Log("Running eventer")
-		evt.Register(events.FlushEntityEventTopic, pq.Pass)
+		evt.Register(events.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()

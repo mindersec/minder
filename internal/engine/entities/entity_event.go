@@ -53,6 +53,7 @@ type EntityInfoWrapper struct {
 	Type          minderv1.Entity
 	OwnershipData map[string]string
 	ExecutionID   *uuid.UUID
+	ActionEvent   string
 }
 
 const (
@@ -79,6 +80,8 @@ const (
 	PullRequestIDEventKey = "pull_request_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
+	// ActionEventKey is the key for the action event
+	ActionEventKey = "action_event"
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -91,6 +94,13 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 // WithProvider sets the provider
 func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
 	eiw.Provider = provider
+
+	return eiw
+}
+
+// WithActionEvent sets the webhook action
+func (eiw *EntityInfoWrapper) WithActionEvent(action string) *EntityInfoWrapper {
+	eiw.ActionEvent = action
 
 	return eiw
 }
@@ -198,7 +208,7 @@ func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
 		return err
 	}
 
-	if err := evt.Publish(events.ExecuteEntityEventTopic, msg); err != nil {
+	if err := evt.Publish(events.TopicQueueEntityEvaluate, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 
@@ -227,6 +237,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
+	msg.Metadata.Set(ActionEventKey, eiw.ActionEvent)
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
@@ -285,6 +296,11 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 
 	eiw.Provider = provider
 	return nil
+}
+
+func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) {
+	action := msg.Metadata.Get(ActionEventKey)
+	eiw.ActionEvent = action
 }
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
@@ -377,6 +393,8 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	if err := out.withRepositoryIDFromMessage(msg); err != nil {
 		return nil, err
 	}
+
+	out.withActionEventFromMessage(msg)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
 	switch typ {

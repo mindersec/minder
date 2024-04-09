@@ -87,7 +87,7 @@ func TestAggregator(t *testing.T) {
 	aggr.Register(evt)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
 
 	go func() {
 		t.Log("Running eventer")
@@ -134,7 +134,7 @@ func TestAggregator(t *testing.T) {
 			msg, err := inf.BuildMessage()
 			require.NoError(t, err, "expected no error when building message")
 
-			err = evt.Publish(events.FlushEntityEventTopic, msg.Copy())
+			err = evt.Publish(events.TopicQueueEntityFlush, msg.Copy())
 			require.NoError(t, err, "expected no error when publishing message")
 		}()
 	}
@@ -338,7 +338,7 @@ func TestFlushAll(t *testing.T) {
 			require.NoError(t, err)
 
 			flushedMessages := newTestPubSub()
-			evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+			evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 			go func() {
 				t.Log("Running eventer")
@@ -395,7 +395,7 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 	flushedMessages := newTestPubSub()
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
 
 	t.Log("Flushing all")
 	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
@@ -423,7 +423,7 @@ func TestFlushAllListFlushFails(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 	go func() {
 		t.Log("Running eventer")
@@ -469,7 +469,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.ExecuteEntityEventTopic, flushedMessages.Add)
+	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 	go func() {
 		t.Log("Running eventer")

@@ -132,7 +132,7 @@ func NewExecutor(
 
 // Register implements the Consumer interface.
 func (e *Executor) Register(r events.Registrar) {
-	r.Register(events.ExecuteEntityEventTopic, e.HandleEntityEvent, e.mdws...)
+	r.Register(events.TopicQueueEntityEvaluate, e.HandleEntityEvent, e.mdws...)
 }
 
 // Wait waits for all the entity executions to finish.
@@ -198,8 +198,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	return nil
 }
 func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-	projectID := inf.ProjectID
-	provider, err := e.providerStore.GetByName(ctx, projectID, inf.Provider)
+	provider, err := e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -215,7 +214,7 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 
 	ectx := &EntityContext{
 		Project: Project{
-			ID: projectID,
+			ID: inf.ProjectID,
 		},
 		Provider: Provider{
 			Name: inf.Provider,
@@ -233,9 +232,10 @@ func (e *Executor) evalEntityEvent(
 ) error {
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String())
+		Str("execution_id", inf.ExecutionID.String()).
+		Str("provider", inf.Provider).
+		Str("project_id", inf.ProjectID.String())
 	logger.Msg("entity evaluation - started")
-
 	// This is a cache, so we can avoid querying the ingester upstream
 	// for every rule. We use a sync.Map because it's safe for concurrent
 	// access.
@@ -412,7 +412,7 @@ func (e *Executor) releaseLockAndFlush(
 		return
 	}
 
-	if err := e.evt.Publish(events.FlushEntityEventTopic, msg); err != nil {
+	if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
 		logger.Err(err).Msg("error publishing flush event")
 	}
 }

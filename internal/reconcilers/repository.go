@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
@@ -35,11 +34,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-)
-
-var (
-	// ArtifactTypeContainerRetentionPeriod represents the retention period for container artifacts
-	ArtifactTypeContainerRetentionPeriod = time.Now().AddDate(0, -6, 0)
 )
 
 // RepoReconcilerEvent is an event that is sent to the reconciler topic

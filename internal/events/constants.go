@@ -35,8 +35,14 @@ const (
 )
 
 const (
-	// ExecuteEntityEventTopic is the topic for internal webhook events
-	ExecuteEntityEventTopic = "execute.entity.event"
-	// FlushEntityEventTopic is the topic for flushing internal webhook events
-	FlushEntityEventTopic = "flush.entity.event"
+	// TopicQueueEntityEvaluate is the topic for entity evaluation events from webhooks
+	TopicQueueEntityEvaluate = "execute.entity.event"
+	// TopicQueueEntityFlush is the topic for flushing internal webhook events
+	TopicQueueEntityFlush = "flush.entity.event"
+	// TopicQueueReconcileRepoInit is the topic for reconciling repository events, i.e. when a new repository is registered
+	TopicQueueReconcileRepoInit = "internal.repo.reconciler.event"
+	// TopicQueueReconcileProfileInit is the topic for reconciling when a profile is created or updated
+	TopicQueueReconcileProfileInit = "internal.profile.init.event"
+	// TopicQueueReconcileEntityDelete is the topic for reconciling when an entity is deleted
+	TopicQueueReconcileEntityDelete = "internal.entity.delete.event"
 )

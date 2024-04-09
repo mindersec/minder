@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/reconcilers"
@@ -603,7 +604,7 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		zerolog.Ctx(ctx).Err(err).Msg("error creating reconciler event message")
 	} else {
 		// This is a non-fatal error, so we'll just log it and continue with the next ones
-		if err := s.evt.Publish(reconcilers.InternalProfileInitEventTopic, msg); err != nil {
+		if err := s.evt.Publish(events.TopicQueueReconcileProfileInit, msg); err != nil {
 			zerolog.Ctx(ctx).Err(err).Msg("error publishing reconciler event message")
 		}
 	}
