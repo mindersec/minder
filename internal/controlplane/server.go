@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	gh "github.com/google/go-github/v60/github"
+	gh "github.com/google/go-github/v61/github"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

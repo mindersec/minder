@@ -19,7 +19,7 @@ package clients
 import (
 	"context"
 
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 )
 
 // GitHubRepoClient defines a subset of the GitHub API client which we need for

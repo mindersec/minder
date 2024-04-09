@@ -25,7 +25,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/go-github/v60/github"
+	"github.com/google/go-github/v61/github"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
