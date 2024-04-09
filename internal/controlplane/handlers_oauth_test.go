@@ -504,6 +504,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 	testCases := []struct {
 		name          string
 		state         string
+		setupAction   string
 		buildStubs    func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService, gh *mockgh.MockClientService)
 		checkResponse func(t *testing.T, resp httptest.ResponseRecorder)
 	}{
@@ -581,6 +582,15 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 				t.Helper()
 				assert.Equal(t, 403, resp.Code)
 			},
+		}, {
+			name:        "Request to install",
+			state:       validState,
+			setupAction: "request",
+			buildStubs:  func(*mockdb.MockStore, *mockprofsvc.MockProviderService, *mockgh.MockClientService) {},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, 403, resp.Code)
+			},
 		},
 	}
 
@@ -592,12 +602,17 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			req := http.Request{}
 			resp := httptest.ResponseRecorder{Body: new(bytes.Buffer)}
 			params := map[string]string{"provider": "github-app"}
+			setupAction := "install"
+			if tc.setupAction != "" {
+				setupAction = tc.setupAction
+			}
 
 			req.URL = &url.URL{
 				RawQuery: url.Values{
 					"state":           {tc.state},
 					"code":            {code},
 					"installation_id": {fmt.Sprintf("%d", installationID)},
+					"setup_action":    {setupAction},
 				}.Encode(),
 			}
 
