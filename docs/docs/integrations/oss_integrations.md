@@ -63,7 +63,7 @@ $ minder ruletype get -i <ruletype_id>
 +-------------+---------------------------------------------------------------------------------------+
 ```
 
-If the rule type is enabled and automated remediation is configured, Minder will automatically create a pull request to enable Trivy scanning on your repository.
+If the rule type is enabled and automatic remediation is configured, Minder will automatically create a pull request to enable Trivy scanning on your repository.
 
 ## Dependabot
 
@@ -110,7 +110,7 @@ $ minder ruletype get -i <ruletype_id>
 +-------------+----------------------------------------------------------------------------------------------------------------------------------+
 ```
 
-If the rule type is enabled and automated remediation is configured, Minder will automatically create a pull request to enable Dependabot on your repository.
+If the rule type is enabled and automatic remediation is configured, Minder will automatically create a pull request to enable Dependabot on your repository.
 
 Note that you need to configure the ecosystem and package managers that dependabot should monitor. This is done by setting up
 the relevant parameters in the rule definition in the profile. For example:
