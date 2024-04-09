@@ -99,6 +99,15 @@ var repoEvents = []string{
 	"team_add",
 }
 
+// WebhookActionEventDeleted is the action for a deleted event
+const (
+	WebhookActionEventDeleted     = "deleted"
+	WebhookActionEventOpened      = "opened"
+	WebhookActionEventClosed      = "closed"
+	WebhookActionEventSynchronize = "synchronize"
+	WebhookActionEventPublished   = "published"
+)
+
 func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 	key := m.Metadata.Get(events.GithubWebhookEventTypeKey)
 	switch {
@@ -244,7 +253,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// Channel the event based on the webhook action
 		var watermillTopic string
 		switch m.Metadata.Get(entities.ActionEventKey) {
-		case "deleted":
+		case WebhookActionEventDeleted:
 			// We got an entity delete event, so we need to reconcile and delete the entity from the DB
 			watermillTopic = events.TopicQueueReconcileEntityDelete
 		default:
@@ -379,7 +388,7 @@ func (_ *Server) parseGithubAppEventForProcessing(
 		return fmt.Errorf("action is empty")
 	}
 
-	if action != "deleted" {
+	if action != WebhookActionEventDeleted {
 		return newErrNotHandled("event %s with action %s not handled",
 			msg.Metadata.Get(events.GithubWebhookEventTypeKey), action)
 	}
@@ -450,7 +459,7 @@ func (s *Server) parseGithubEventForProcessing(
 
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
-	if ent == pb.Entity_ENTITY_ARTIFACTS && action == "published" {
+	if ent == pb.Entity_ENTITY_ARTIFACTS && action == WebhookActionEventPublished {
 		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
 		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
@@ -469,7 +478,7 @@ func parseRepoEvent(
 	providerName string,
 	action string,
 ) error {
-	if action == "deleted" {
+	if action == WebhookActionEventDeleted {
 		// Find out what kind of repository event we are dealing with
 		if whPayload["hook"] != nil || whPayload["hook_id"] != nil {
 			// Having these means it's a repository event related to the webhook itself, i.e., deleted, created, etc.
@@ -794,7 +803,7 @@ func reconcilePrWithDb(
 	var retPr *db.PullRequest
 
 	switch prEvalInfo.Action {
-	case "opened", "synchronize":
+	case WebhookActionEventOpened, WebhookActionEventSynchronize:
 		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
@@ -806,7 +815,7 @@ func reconcilePrWithDb(
 		}
 		retPr = &dbPr
 		retErr = nil
-	case "closed":
+	case WebhookActionEventClosed:
 		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
