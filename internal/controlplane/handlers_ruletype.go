@@ -86,7 +86,9 @@ func (s *Server) GetRuleTypeByName(
 		ProjectID: entityCtx.Project.ID,
 		Name:      in.GetName(),
 	})
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetName())
+	} else if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
@@ -124,7 +126,9 @@ func (s *Server) GetRuleTypeById(
 	}
 
 	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+	} else if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
