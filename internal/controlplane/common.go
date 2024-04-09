@@ -17,8 +17,10 @@ package controlplane
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"google.golang.org/grpc/codes"
 
@@ -27,7 +29,12 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-const defaultProvider = oauth.Github
+const (
+	defaultProvider = oauth.Github
+	githubURL       = "https://github.com"
+)
+
+var validRepoSlugRe = regexp.MustCompile(`(?i)^[-a-z0-9_\.]+\/[-a-z0-9_\.]+$`)
 
 // HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
@@ -48,4 +55,62 @@ func getNameFilterParam(name string) sql.NullString {
 		String: name,
 		Valid:  name != "",
 	}
+}
+
+// getRemediationURLFromMetadata returns the "remediation URL". For now, this is
+// the URL link to the PR
+func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error) {
+	if !validRepoSlugRe.MatchString(repoSlug) {
+		return "", fmt.Errorf("invalid repository slug")
+	}
+
+	// If no data, it means no PR is tracked.
+	// So no error and we return an empty string.
+	if len(data) == 0 {
+		return "", nil
+	}
+
+	prData := &struct {
+		Number int `json:"pr_number"`
+	}{}
+
+	if err := json.Unmarshal(data, prData); err != nil {
+		return "", fmt.Errorf("unmarshalling pull request metadata: %w", err)
+	}
+
+	// No pull request found
+	if prData.Number == 0 {
+		return "", nil
+	}
+
+	return fmt.Sprintf("%s/%s/pull/%d", githubURL, repoSlug, prData.Number), nil
+}
+
+// getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
+func getAlertURLFromMetadata(data []byte, repoSlug string) (string, error) {
+	if !validRepoSlugRe.MatchString(repoSlug) {
+		return "", fmt.Errorf("invalid repository slug")
+	}
+
+	// If there is no metadata, we know there is no alert
+	if len(data) == 0 {
+		return "", nil
+	}
+
+	// Define a struct to match the JSON structure
+	jsonMeta := struct {
+		GhsaId string `json:"ghsa_id"`
+	}{}
+
+	if err := json.Unmarshal(data, &jsonMeta); err != nil {
+		return "", err
+	}
+
+	if jsonMeta.GhsaId == "" {
+		return "", nil
+	}
+
+	return fmt.Sprintf(
+		"%s/%s/security/advisories/%s", githubURL, repoSlug, jsonMeta.GhsaId,
+	), nil
 }

@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -401,6 +400,7 @@ func getRuleEvalStatus(
 ) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
 	var guidance string
+	var err error
 
 	// make sure all fields are valid
 	if !dbRuleEvalStat.EvalStatus.Valid ||
@@ -422,6 +422,17 @@ func getRuleEvalStatus(
 			guidance = ruleTypeInfo.Guidance
 		}
 	}
+	remediationURL := ""
+	if dbRuleEvalStat.Entity == db.EntitiesRepository {
+		remediationURL, err = getRemediationURLFromMetadata(
+			dbRuleEvalStat.RemMetadata.RawMessage,
+			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner, dbRuleEvalStat.RepoName),
+		)
+		if err != nil {
+			// A failure parsing the alert metadata points to a corrupt record. Log but don't err.
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error parsing remediation pull request data")
+		}
+	}
 
 	st := &minderv1.RuleEvaluationStatus{
 		ProfileId:           profileID,
@@ -437,6 +448,7 @@ func getRuleEvalStatus(
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
 		RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+		RemediationUrl:      remediationURL,
 		Alert: &minderv1.EvalResultAlert{
 			Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
 			Details: dbRuleEvalStat.AlertDetails.String,
@@ -464,30 +476,6 @@ func getRuleEvalStatus(
 		}
 	}
 	return st, nil
-}
-
-// getAlertURLFromMetadata is a helper function to get the alert URL from the alert metadata
-func getAlertURLFromMetadata(data []byte, repo string) (string, error) {
-	if repo == "" {
-		return "", fmt.Errorf("cannot form alert URL, no repository defined")
-	}
-	// Define a struct to match the JSON structure
-	jsonMeta := struct {
-		GhsaId string `json:"ghsa_id"`
-	}{}
-
-	if err := json.Unmarshal(data, &jsonMeta); err != nil {
-		return "", err
-	}
-
-	if jsonMeta.GhsaId == "" {
-		return "", fmt.Errorf("no alert ID found in alert metadata")
-	}
-
-	return fmt.Sprintf(
-		"https://github.com/%s/security/advisories/%s",
-		repo, jsonMeta.GhsaId,
-	), nil
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project

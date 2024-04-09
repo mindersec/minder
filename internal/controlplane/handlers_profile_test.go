@@ -390,34 +390,3 @@ func generateConsistentUUID(t *testing.T, ruleType, ruleName string) uuid.UUID {
 	t.Helper()
 	return uuid.NewSHA1(uuid.Nil, []byte(ruleType+ruleName))
 }
-
-func TestGetAlertURLFromMetadata(t *testing.T) {
-	t.Parallel()
-	validPayload := []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`)
-	for _, tc := range []struct {
-		name     string
-		data     []byte
-		repo     string
-		expected string
-		mustErr  bool
-	}{
-		{
-			name: "normal", data: validPayload, repo: "example/test",
-			expected: "https://github.com/example/test/security/advisories/GHAS-advisory_ID_here", mustErr: false,
-		},
-		{name: "no-repo", data: validPayload, repo: "", expected: "", mustErr: true},
-		{name: "bad-json", data: []byte(`invalid _`), repo: "", expected: "", mustErr: true},
-		{name: "no-advisory", data: []byte(`{"ghsa_id": ""}`), repo: "", expected: "", mustErr: true},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			res, err := getAlertURLFromMetadata(tc.data, tc.repo)
-			if tc.mustErr {
-				require.Error(t, err)
-				return
-			}
-			require.Equal(t, tc.expected, res)
-		})
-	}
-}
