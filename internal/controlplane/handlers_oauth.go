@@ -269,6 +269,8 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 	pathParams map[string]string) error {
 	state := r.URL.Query().Get("state")
 	code := r.URL.Query().Get("code")
+	setupAction := r.URL.Query().Get("setup_action")
+	installationIDParam := r.URL.Query().Get("installation_id")
 
 	// Configure tracing
 	span := trace.SpanFromContext(ctx)
@@ -281,12 +283,17 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Provider = provider
 
+	err := validateQueryParameters(setupAction, code, installationIDParam)
+	if err != nil {
+		return err
+	}
+
 	token, err := s.exchangeCodeForToken(ctx, provider, code)
 	if err != nil {
 		return err
 	}
 
-	installationID, err := strconv.ParseInt(r.URL.Query().Get("installation_id"), 10, 64)
+	installationID, err := strconv.ParseInt(installationIDParam, 10, 64)
 	if err != nil {
 		return fmt.Errorf("unable to parse installation ID to integer: %v", err)
 	}
@@ -339,6 +346,25 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		return fmt.Errorf("error writing OAuth success page: %w", err)
 	}
 
+	return nil
+}
+
+func validateQueryParameters(setupAction string, code string, installationIDParam string) error {
+	// If a non-owner requests the app installation, we can ignore it, since they don't have permissions to install
+	if setupAction == "request" {
+		return newHttpError(http.StatusForbidden, "User not owner").SetContents(
+			"The installing user must be an owner of the organization where the app is being installed.")
+	}
+
+	// Ensure required parameters are present
+	if code == "" {
+		return newHttpError(http.StatusBadRequest, "Missing authorization code").SetContents(
+			"Missing authorization code parameter. Cannot verify the installation.")
+	}
+	if installationIDParam == "" {
+		return newHttpError(http.StatusBadRequest, "Missing installation ID").SetContents(
+			"Missing installation ID parameter.")
+	}
 	return nil
 }
 
