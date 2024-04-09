@@ -215,7 +215,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 			RepoName:         repoOwnerAndName,
 			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName),
 			ProviderFails:    true,
-			ExpectedError:    "cannot retrieve provider",
+			ExpectedError:    "cannot get provider",
 		},
 		{
 			Name:          "delete by name fails when name is malformed",
@@ -455,14 +455,23 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, git
 		Return(json.RawMessage{}, nil).
 		AnyTimes()
 
+	// Stubbing both provider queries because different test cases will
+	// exercise different paths. When we better isolate the process of
+	// finding providers from the controlplane, this can be cleaned up.
 	if providerFails {
 		store.EXPECT().
+			GetProviderByID(gomock.Any(), gomock.Any()).
+			Return(db.Provider{}, errDefault).AnyTimes()
+		store.EXPECT().
 			FindProviders(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{}, errDefault)
+			Return([]db.Provider{}, errDefault).AnyTimes()
 	} else {
 		store.EXPECT().
 			FindProviders(gomock.Any(), gomock.Any()).
 			Return([]db.Provider{provider}, nil).AnyTimes()
+		store.EXPECT().
+			GetProviderByID(gomock.Any(), gomock.Any()).
+			Return(provider, nil).AnyTimes()
 		store.EXPECT().
 			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 			Return(db.ProviderAccessToken{

@@ -112,26 +112,25 @@ func (r *Reconciler) publishProfileInitEvents(
 
 	for _, dbrepo := range dbrepos {
 		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := util.PBRepositoryFromDB(dbrepo)
+		repo := util.PBRepositoryFromDB(dbrepo.Repository)
 		err := entities.NewEntityInfoWrapper().
-			WithProvider(dbrepo.Provider).
+			WithProvider(dbrepo.ProviderName).
 			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
-			WithRepositoryID(dbrepo.ID).
+			WithRepositoryID(dbrepo.Repository.ID).
 			Publish(r.evt)
 
 		// This is a non-fatal error, so we'll just log it
 		// and continue
 		if err != nil {
-			return fmt.Errorf("error publishing init event for repo %s: %v", dbrepo.ID, err)
+			return fmt.Errorf("error publishing init event for repo %s: %v", dbrepo.Repository.ID, err)
 		}
 	}
 
 	// after we've initialized repository profiles, let's initialize artifacts
 	// TODO(jakub): this should be done in an iterator of sorts
-	for i := range dbrepos {
-		pdb := &dbrepos[i]
-		err := r.publishArtifactProfileInitEvents(ctx, ectx, pdb)
+	for _, pdb := range dbrepos {
+		err := r.publishArtifactProfileInitEvents(ctx, ectx, &pdb.Repository, pdb.ProviderName)
 		if err != nil {
 			return fmt.Errorf("publishProfileInitEvents: error publishing artifact events: %v", err)
 		}
@@ -144,6 +143,7 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 	ctx context.Context,
 	ectx *engine.EntityContext,
 	dbrepo *db.Repository,
+	providerName string,
 ) error {
 	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, uuid.NullUUID{
 		UUID:  dbrepo.ID,
@@ -164,7 +164,7 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 		}
 
 		err = entities.NewEntityInfoWrapper().
-			WithProvider(dbrepo.Provider).
+			WithProvider(providerName).
 			WithProjectID(ectx.Project.ID).
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).

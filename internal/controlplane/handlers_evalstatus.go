@@ -295,7 +295,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	remediationURL := ""
 	var err error
 	if eval.Entity == db.EntitiesRepository {
-		entityInfo["provider"] = eval.Provider
+		entityInfo["provider"] = eval.ProviderName
 		entityInfo["repo_owner"] = eval.RepoOwner
 		entityInfo["repo_name"] = eval.RepoName
 		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()

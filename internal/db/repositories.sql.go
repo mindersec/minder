@@ -27,7 +27,7 @@ const createRepository = `-- name: CreateRepository :one
 INSERT INTO repositories (
     provider,
     project_id,
-    repo_owner, 
+    repo_owner,
     repo_name,
     repo_id,
     is_private,
@@ -39,7 +39,9 @@ INSERT INTO repositories (
     default_branch,
     license,
     provider_id
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+RETURNING id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id
 `
 
 type CreateRepositoryParams struct {
@@ -107,6 +109,100 @@ WHERE id = $1
 func (q *Queries) DeleteRepository(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteRepository, id)
 	return err
+}
+
+const getRepositoryAndProviderNameByIDAndProject = `-- name: GetRepositoryAndProviderNameByIDAndProject :one
+SELECT r.id, r.provider, r.project_id, r.repo_owner, r.repo_name, r.repo_id, r.is_private, r.is_fork, r.webhook_id, r.webhook_url, r.deploy_url, r.clone_url, r.created_at, r.updated_at, r.default_branch, r.license, r.provider_id, p.name AS provider_name FROM repositories as R
+INNER JOIN providers AS p ON p.id = r.provider_id
+WHERE r.id = $1 AND r.project_id = $2
+`
+
+type GetRepositoryAndProviderNameByIDAndProjectParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+type GetRepositoryAndProviderNameByIDAndProjectRow struct {
+	Repository   Repository `json:"repository"`
+	ProviderName string     `json:"provider_name"`
+}
+
+// for backwards compatibility purposes only, we should not use this in new places
+func (q *Queries) GetRepositoryAndProviderNameByIDAndProject(ctx context.Context, arg GetRepositoryAndProviderNameByIDAndProjectParams) (GetRepositoryAndProviderNameByIDAndProjectRow, error) {
+	row := q.db.QueryRowContext(ctx, getRepositoryAndProviderNameByIDAndProject, arg.ID, arg.ProjectID)
+	var i GetRepositoryAndProviderNameByIDAndProjectRow
+	err := row.Scan(
+		&i.Repository.ID,
+		&i.Repository.Provider,
+		&i.Repository.ProjectID,
+		&i.Repository.RepoOwner,
+		&i.Repository.RepoName,
+		&i.Repository.RepoID,
+		&i.Repository.IsPrivate,
+		&i.Repository.IsFork,
+		&i.Repository.WebhookID,
+		&i.Repository.WebhookUrl,
+		&i.Repository.DeployUrl,
+		&i.Repository.CloneUrl,
+		&i.Repository.CreatedAt,
+		&i.Repository.UpdatedAt,
+		&i.Repository.DefaultBranch,
+		&i.Repository.License,
+		&i.Repository.ProviderID,
+		&i.ProviderName,
+	)
+	return i, err
+}
+
+const getRepositoryAndProviderNameByRepoName = `-- name: GetRepositoryAndProviderNameByRepoName :one
+SELECT r.id, r.provider, r.project_id, r.repo_owner, r.repo_name, r.repo_id, r.is_private, r.is_fork, r.webhook_id, r.webhook_url, r.deploy_url, r.clone_url, r.created_at, r.updated_at, r.default_branch, r.license, r.provider_id, p.name AS provider_name FROM repositories AS r
+JOIN providers AS p ON p.id = r.provider_id
+WHERE r.repo_owner = $1 AND r.repo_name = $2 AND r.project_id = $3
+  AND (lower(p.name) = lower($4::text) OR $4::text IS NULL)
+`
+
+type GetRepositoryAndProviderNameByRepoNameParams struct {
+	RepoOwner string         `json:"repo_owner"`
+	RepoName  string         `json:"repo_name"`
+	ProjectID uuid.UUID      `json:"project_id"`
+	Provider  sql.NullString `json:"provider"`
+}
+
+type GetRepositoryAndProviderNameByRepoNameRow struct {
+	Repository   Repository `json:"repository"`
+	ProviderName string     `json:"provider_name"`
+}
+
+// for backwards compatibility purposes only, we should not use this in new places
+func (q *Queries) GetRepositoryAndProviderNameByRepoName(ctx context.Context, arg GetRepositoryAndProviderNameByRepoNameParams) (GetRepositoryAndProviderNameByRepoNameRow, error) {
+	row := q.db.QueryRowContext(ctx, getRepositoryAndProviderNameByRepoName,
+		arg.RepoOwner,
+		arg.RepoName,
+		arg.ProjectID,
+		arg.Provider,
+	)
+	var i GetRepositoryAndProviderNameByRepoNameRow
+	err := row.Scan(
+		&i.Repository.ID,
+		&i.Repository.Provider,
+		&i.Repository.ProjectID,
+		&i.Repository.RepoOwner,
+		&i.Repository.RepoName,
+		&i.Repository.RepoID,
+		&i.Repository.IsPrivate,
+		&i.Repository.IsFork,
+		&i.Repository.WebhookID,
+		&i.Repository.WebhookUrl,
+		&i.Repository.DeployUrl,
+		&i.Repository.CloneUrl,
+		&i.Repository.CreatedAt,
+		&i.Repository.UpdatedAt,
+		&i.Repository.DefaultBranch,
+		&i.Repository.License,
+		&i.Repository.ProviderID,
+		&i.ProviderName,
+	)
+	return i, err
 }
 
 const getRepositoryByID = `-- name: GetRepositoryByID :one
@@ -203,9 +299,10 @@ func (q *Queries) GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repo
 }
 
 const getRepositoryByRepoName = `-- name: GetRepositoryByRepoName :one
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
-    WHERE repo_owner = $1 AND repo_name = $2 AND project_id = $3
-    AND (lower(provider) = lower($4::text) OR $4::text IS NULL)
+SELECT r.id, r.provider, r.project_id, r.repo_owner, r.repo_name, r.repo_id, r.is_private, r.is_fork, r.webhook_id, r.webhook_url, r.deploy_url, r.clone_url, r.created_at, r.updated_at, r.default_branch, r.license, r.provider_id FROM repositories AS r
+JOIN providers AS p ON p.id = r.provider_id
+WHERE r.repo_owner = $1 AND r.repo_name = $2 AND r.project_id = $3
+  AND (lower(p.name) = lower($4::text) OR $4::text IS NULL)
 `
 
 type GetRepositoryByRepoNameParams struct {
@@ -246,10 +343,11 @@ func (q *Queries) GetRepositoryByRepoName(ctx context.Context, arg GetRepository
 }
 
 const listRegisteredRepositoriesByProjectIDAndProvider = `-- name: ListRegisteredRepositoriesByProjectIDAndProvider :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
-WHERE project_id = $1 AND webhook_id IS NOT NULL
-    AND (lower(provider) = lower($2::text) OR $2::text IS NULL)
-ORDER BY repo_name
+SELECT r.id, r.provider, r.project_id, r.repo_owner, r.repo_name, r.repo_id, r.is_private, r.is_fork, r.webhook_id, r.webhook_url, r.deploy_url, r.clone_url, r.created_at, r.updated_at, r.default_branch, r.license, r.provider_id, p.name AS provider_name FROM repositories AS r
+JOIN providers AS p ON p.id = r.provider_id
+WHERE r.project_id = $1 AND r.webhook_id IS NOT NULL
+  AND (lower(p.name) = lower($2::text) OR $2::text IS NULL)
+ORDER BY r.repo_name
 `
 
 type ListRegisteredRepositoriesByProjectIDAndProviderParams struct {
@@ -257,33 +355,39 @@ type ListRegisteredRepositoriesByProjectIDAndProviderParams struct {
 	Provider  sql.NullString `json:"provider"`
 }
 
-func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error) {
+type ListRegisteredRepositoriesByProjectIDAndProviderRow struct {
+	Repository   Repository `json:"repository"`
+	ProviderName string     `json:"provider_name"`
+}
+
+func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]ListRegisteredRepositoriesByProjectIDAndProviderRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRegisteredRepositoriesByProjectIDAndProvider, arg.ProjectID, arg.Provider)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Repository{}
+	items := []ListRegisteredRepositoriesByProjectIDAndProviderRow{}
 	for rows.Next() {
-		var i Repository
+		var i ListRegisteredRepositoriesByProjectIDAndProviderRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Provider,
-			&i.ProjectID,
-			&i.RepoOwner,
-			&i.RepoName,
-			&i.RepoID,
-			&i.IsPrivate,
-			&i.IsFork,
-			&i.WebhookID,
-			&i.WebhookUrl,
-			&i.DeployUrl,
-			&i.CloneUrl,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DefaultBranch,
-			&i.License,
-			&i.ProviderID,
+			&i.Repository.ID,
+			&i.Repository.Provider,
+			&i.Repository.ProjectID,
+			&i.Repository.RepoOwner,
+			&i.Repository.RepoName,
+			&i.Repository.RepoID,
+			&i.Repository.IsPrivate,
+			&i.Repository.IsFork,
+			&i.Repository.WebhookID,
+			&i.Repository.WebhookUrl,
+			&i.Repository.DeployUrl,
+			&i.Repository.CloneUrl,
+			&i.Repository.CreatedAt,
+			&i.Repository.UpdatedAt,
+			&i.Repository.DefaultBranch,
+			&i.Repository.License,
+			&i.Repository.ProviderID,
+			&i.ProviderName,
 		); err != nil {
 			return nil, err
 		}
@@ -299,11 +403,12 @@ func (q *Queries) ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.C
 }
 
 const listRepositoriesByProjectID = `-- name: ListRepositoriesByProjectID :many
-SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories
-WHERE project_id = $1
-  AND (repo_id >= $2 OR $2 IS NULL)
-  AND lower(provider) = lower(COALESCE($3, provider)::text)
-ORDER BY project_id, provider, repo_id
+SELECT r.id, r.provider, r.project_id, r.repo_owner, r.repo_name, r.repo_id, r.is_private, r.is_fork, r.webhook_id, r.webhook_url, r.deploy_url, r.clone_url, r.created_at, r.updated_at, r.default_branch, r.license, r.provider_id FROM repositories as r
+JOIN providers AS p ON p.id = r.provider_id
+WHERE r.project_id = $1
+AND (r.repo_id >= $2 OR $2 IS NULL)
+AND lower(p.name) = lower(COALESCE($3, p.name)::text)
+ORDER BY r.project_id, r.provider_id, r.repo_id
 LIMIT $4::bigint
 `
 

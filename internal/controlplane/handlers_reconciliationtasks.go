@@ -73,17 +73,25 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
 }
 
-func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
-	repoIdString string, entityCtx engine.EntityContext) (*message.Message, error) {
+func getRepositoryReconciliationMessage(
+	ctx context.Context,
+	store db.Store,
+	repoIdString string,
+	entityCtx engine.EntityContext,
+) (*message.Message, error) {
 	repoUUID, err := uuid.Parse(repoIdString)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
 	}
 
-	repo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoUUID,
-		ProjectID: entityCtx.Project.ID,
-	})
+	repoAndProviderName, err := store.GetRepositoryAndProviderNameByIDAndProject(ctx,
+		db.GetRepositoryAndProviderNameByIDAndProjectParams{
+			ID:        repoUUID,
+			ProjectID: entityCtx.Project.ID,
+		},
+	)
+	repo := repoAndProviderName.Repository
+	providerName := repoAndProviderName.ProviderName
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
@@ -95,11 +103,11 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
-	if repo.Provider != entityCtx.Provider.Name {
+	if providerName != entityCtx.Provider.Name {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	}
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(repo.Provider, repo.RepoID, repo.ProjectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(providerName, repo.RepoID, repo.ProjectID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
 	}

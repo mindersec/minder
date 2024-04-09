@@ -87,6 +87,10 @@ type Querier interface {
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
 	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
+	// for backwards compatibility purposes only, we should not use this in new places
+	GetRepositoryAndProviderNameByIDAndProject(ctx context.Context, arg GetRepositoryAndProviderNameByIDAndProjectParams) (GetRepositoryAndProviderNameByIDAndProjectRow, error)
+	// for backwards compatibility purposes only, we should not use this in new places
+	GetRepositoryAndProviderNameByRepoName(ctx context.Context, arg GetRepositoryAndProviderNameByRepoNameParams) (GetRepositoryAndProviderNameByRepoNameRow, error)
 	// avoid using this, where possible use GetRepositoryByIDAndProject instead
 	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
@@ -122,7 +126,7 @@ type Querier interface {
 	// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
-	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
+	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]ListRegisteredRepositoriesByProjectIDAndProviderRow, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)

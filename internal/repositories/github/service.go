@@ -237,7 +237,7 @@ func (r *repositoryService) DeleteRepositoriesByProvider(
 	}
 
 	for _, repo := range repos {
-		err := r.DeleteRepository(ctx, client, &repo)
+		err := r.DeleteRepository(ctx, client, &repo.Repository)
 		if err != nil {
 			return fmt.Errorf("error deleting repository: %w", err)
 		}

@@ -243,7 +243,7 @@ func getRuleEvalEntityInfo(
 		// this is always true now but might not be when we support entities not tied to a repo
 		entityInfo["repo_name"] = rs.RepoName
 		entityInfo["repo_owner"] = rs.RepoOwner
-		entityInfo["provider"] = rs.Provider
+		entityInfo["provider"] = rs.ProviderName
 		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
 	}
 

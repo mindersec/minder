@@ -1016,6 +1016,36 @@ func (mr *MockStoreMockRecorder) GetQuerierWithTransaction(arg0 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuerierWithTransaction", reflect.TypeOf((*MockStore)(nil).GetQuerierWithTransaction), arg0)
 }
 
+// GetRepositoryAndProviderNameByIDAndProject mocks base method.
+func (m *MockStore) GetRepositoryAndProviderNameByIDAndProject(arg0 context.Context, arg1 db.GetRepositoryAndProviderNameByIDAndProjectParams) (db.GetRepositoryAndProviderNameByIDAndProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryAndProviderNameByIDAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.GetRepositoryAndProviderNameByIDAndProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryAndProviderNameByIDAndProject indicates an expected call of GetRepositoryAndProviderNameByIDAndProject.
+func (mr *MockStoreMockRecorder) GetRepositoryAndProviderNameByIDAndProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryAndProviderNameByIDAndProject", reflect.TypeOf((*MockStore)(nil).GetRepositoryAndProviderNameByIDAndProject), arg0, arg1)
+}
+
+// GetRepositoryAndProviderNameByRepoName mocks base method.
+func (m *MockStore) GetRepositoryAndProviderNameByRepoName(arg0 context.Context, arg1 db.GetRepositoryAndProviderNameByRepoNameParams) (db.GetRepositoryAndProviderNameByRepoNameRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRepositoryAndProviderNameByRepoName", arg0, arg1)
+	ret0, _ := ret[0].(db.GetRepositoryAndProviderNameByRepoNameRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRepositoryAndProviderNameByRepoName indicates an expected call of GetRepositoryAndProviderNameByRepoName.
+func (mr *MockStoreMockRecorder) GetRepositoryAndProviderNameByRepoName(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryAndProviderNameByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryAndProviderNameByRepoName), arg0, arg1)
+}
+
 // GetRepositoryByID mocks base method.
 func (m *MockStore) GetRepositoryByID(arg0 context.Context, arg1 uuid.UUID) (db.Repository, error) {
 	m.ctrl.T.Helper()
@@ -1347,10 +1377,10 @@ func (mr *MockStoreMockRecorder) ListProvidersByProjectIDPaginated(arg0, arg1 an
 }
 
 // ListRegisteredRepositoriesByProjectIDAndProvider mocks base method.
-func (m *MockStore) ListRegisteredRepositoriesByProjectIDAndProvider(arg0 context.Context, arg1 db.ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]db.Repository, error) {
+func (m *MockStore) ListRegisteredRepositoriesByProjectIDAndProvider(arg0 context.Context, arg1 db.ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]db.ListRegisteredRepositoriesByProjectIDAndProviderRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRegisteredRepositoriesByProjectIDAndProvider", arg0, arg1)
-	ret0, _ := ret[0].([]db.Repository)
+	ret0, _ := ret[0].([]db.ListRegisteredRepositoriesByProjectIDAndProviderRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

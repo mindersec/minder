@@ -107,7 +107,6 @@ func TestGetRepositoryByID(t *testing.T) {
 	require.NotEmpty(t, repo2)
 
 	require.Equal(t, repo1.ID, repo2.ID)
-	require.Equal(t, repo1.Provider, repo2.Provider)
 	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
 	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
 	require.Equal(t, repo1.RepoName, repo2.RepoName)
@@ -252,7 +251,7 @@ func TestListRepositoriesByProjectIDAndProvider(t *testing.T) {
 
 	for _, repo := range repos {
 		require.NotEmpty(t, repo)
-		require.Equal(t, arg.ProjectID, repo.ProjectID)
+		require.Equal(t, arg.ProjectID, repo.Repository.ProjectID)
 	}
 }
 

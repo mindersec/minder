@@ -154,7 +154,7 @@ func updateGithubWebhooks(
 	}
 
 	for _, repo := range repos {
-		err := updateGithubRepoHooks(ctx, ghCli, repo, webhookHost, secret)
+		err := updateGithubRepoHooks(ctx, ghCli, repo.Repository, webhookHost, secret)
 		if err != nil {
 			zerolog.Ctx(ctx).Err(err).Msg("unable to update repo hooks")
 			continue

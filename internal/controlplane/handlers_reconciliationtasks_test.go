@@ -64,15 +64,22 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
 				store.EXPECT().
-					GetRepositoryByIDAndProject(gomock.Any(), db.GetRepositoryByIDAndProjectParams{
-						ID:        repoUuid,
-						ProjectID: projId,
-					}).
-					Return(db.Repository{
-						ID:        repoUuid,
-						Provider:  prov,
-						ProjectID: projId,
-					}, nil)
+					GetRepositoryAndProviderNameByIDAndProject(gomock.Any(),
+						db.GetRepositoryAndProviderNameByIDAndProjectParams{
+							ID:        repoUuid,
+							ProjectID: projId,
+						},
+					).
+					Return(
+						db.GetRepositoryAndProviderNameByIDAndProjectRow{
+							Repository: db.Repository{
+								ID:        repoUuid,
+								ProjectID: projId,
+							},
+							ProviderName: prov,
+						},
+						nil,
+					)
 			},
 			err: "",
 		},
@@ -121,11 +128,16 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
 				store.EXPECT().
-					GetRepositoryByIDAndProject(gomock.Any(), db.GetRepositoryByIDAndProjectParams{
-						ID:        repoUuid,
-						ProjectID: projId,
-					}).
-					Return(db.Repository{}, sql.ErrNoRows)
+					GetRepositoryAndProviderNameByIDAndProject(gomock.Any(),
+						db.GetRepositoryAndProviderNameByIDAndProjectParams{
+							ID:        repoUuid,
+							ProjectID: projId,
+						},
+					).
+					Return(
+						db.GetRepositoryAndProviderNameByIDAndProjectRow{},
+						sql.ErrNoRows,
+					)
 			},
 			err: "repository not found",
 		},
@@ -150,11 +162,13 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
 				store.EXPECT().
-					GetRepositoryByIDAndProject(gomock.Any(), db.GetRepositoryByIDAndProjectParams{
-						ID:        repoUuid,
-						ProjectID: projId,
-					}).
-					Return(db.Repository{}, sql.ErrConnDone)
+					GetRepositoryAndProviderNameByIDAndProject(gomock.Any(),
+						db.GetRepositoryAndProviderNameByIDAndProjectParams{
+							ID:        repoUuid,
+							ProjectID: projId,
+						},
+					).
+					Return(db.GetRepositoryAndProviderNameByIDAndProjectRow{}, sql.ErrConnDone)
 			},
 			err: sql.ErrConnDone.Error(),
 		},
@@ -270,9 +284,16 @@ func setupTestingEntityContextValidation(store *mockdb.MockStore, projId uuid.UU
 		GetParentProjects(gomock.Any(), projId).
 		Return([]uuid.UUID{projId}, nil)
 	store.EXPECT().
-		FindProviders(gomock.Any(), db.FindProvidersParams{
-			Name:     sql.NullString{String: prov, Valid: true},
-			Projects: []uuid.UUID{projId},
-			Trait:    db.NullProviderType{},
-		}).Return([]db.Provider{{Name: prov}}, nil)
+		GetProviderByID(gomock.Any(), gomock.Any()).
+		Return(db.Provider{Name: prov}, nil).
+		AnyTimes()
+	store.EXPECT().
+		FindProviders(gomock.Any(),
+			db.FindProvidersParams{
+				Name:     sql.NullString{String: prov, Valid: true},
+				Projects: []uuid.UUID{projId},
+				Trait:    db.NullProviderType{},
+			},
+		).Return([]db.Provider{{Name: prov}}, nil).
+		AnyTimes()
 }

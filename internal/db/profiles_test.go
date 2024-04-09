@@ -690,7 +690,7 @@ func verifyRow(
 	require.Equal(t, randomEntities.repo.RepoName, row.RepoName)
 	require.Equal(t, randomEntities.repo.RepoOwner, row.RepoOwner)
 
-	require.Equal(t, randomEntities.prov.Name, row.Provider)
+	require.Equal(t, randomEntities.prov.ID, row.ProviderID)
 }
 
 func TestListRuleEvaluations(t *testing.T) {

@@ -494,7 +494,7 @@ func (s *Server) parseGithubEventForProcessing(
 	}
 
 	// get the provider for the repository
-	prov, err := s.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
+	prov, err := s.providerStore.GetByID(ctx, dbRepo.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}

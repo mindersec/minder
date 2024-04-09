@@ -525,7 +525,19 @@ func withSuccessfulListRepos(mock dbMock) {
 	}
 	mock.EXPECT().
 		ListRegisteredRepositoriesByProjectIDAndProvider(gomock.Any(), gomock.Any()).
-		Return([]db.Repository{dbRepo, dbRepo2}, nil)
+		Return(
+			[]db.ListRegisteredRepositoriesByProjectIDAndProviderRow{
+				{
+					Repository:   dbRepo,
+					ProviderName: providerName,
+				},
+				{
+					Repository:   dbRepo2,
+					ProviderName: providerName,
+				},
+			},
+			nil,
+		)
 }
 
 func newGithubRepo(isPrivate bool) *gh.Repository {

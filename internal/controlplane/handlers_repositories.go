@@ -152,7 +152,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 		r := util.PBRepositoryFromDB(repo)
 		r.Context = &pb.Context{
 			Project:  &projID,
-			Provider: &repo.Provider,
+			Provider: &providerName,
 		}
 		results = append(results, r)
 	}
@@ -191,21 +191,26 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	projectID := getProjectID(ctx)
 
 	// read the repository
-	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        parsedRepositoryID,
-		ProjectID: projectID,
-	})
+	repoAndProviderName, err := s.store.GetRepositoryAndProviderNameByIDAndProject(ctx,
+		db.GetRepositoryAndProviderNameByIDAndProjectParams{
+			ID:        parsedRepositoryID,
+			ProjectID: projectID,
+		},
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
+	repo := repoAndProviderName.Repository
+	providerName := repoAndProviderName.ProviderName
+
 	projID := repo.ProjectID.String()
 	r := util.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
-		Provider: &repo.Provider,
+		Provider: &providerName,
 	}
 
 	// Telemetry logging
@@ -233,24 +238,28 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 	// TODO: move this lookup logic out of the controlplane
 	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
-	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  providerFilter,
-		RepoOwner: fragments[0],
-		RepoName:  fragments[1],
-		ProjectID: projectID,
-	})
-
+	repoAndProviderName, err := s.store.GetRepositoryAndProviderNameByRepoName(ctx,
+		db.GetRepositoryAndProviderNameByRepoNameParams{
+			Provider:  providerFilter,
+			RepoOwner: fragments[0],
+			RepoName:  fragments[1],
+			ProjectID: projectID,
+		},
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, err
 	}
 
+	repo := repoAndProviderName.Repository
+	providerName := repoAndProviderName.ProviderName
+
 	projID := repo.ProjectID.String()
 	r := util.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
-		Provider: &repo.Provider,
+		Provider: &providerName,
 	}
 
 	// Telemetry logging
@@ -435,8 +444,6 @@ func (s *Server) deleteRepository(
 	ctx context.Context,
 	repoQueryMethod func() (db.Repository, error),
 ) error {
-	projectID := getProjectID(ctx)
-
 	repo, err := repoQueryMethod()
 	if errors.Is(err, sql.ErrNoRows) {
 		return status.Errorf(codes.NotFound, "repository not found")
@@ -444,7 +451,7 @@ func (s *Server) deleteRepository(
 		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
 	}
 
-	provider, err := s.providerStore.GetByName(ctx, projectID, repo.Provider)
+	provider, err := s.providerStore.GetByID(ctx, repo.ProviderID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}

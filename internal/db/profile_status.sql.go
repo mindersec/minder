@@ -184,7 +184,8 @@ SELECT
     res.rule_name,
     repo.repo_name,
     repo.repo_owner,
-    repo.provider,
+    repo.provider_id,
+    p.name AS provider_name,
     rt.name AS rule_type_name,
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
@@ -196,6 +197,7 @@ FROM rule_evaluations res
          LEFT JOIN alert_details ad ON ad.rule_eval_id = res.id
          INNER JOIN repositories repo ON repo.id = res.repository_id
          INNER JOIN rule_type rt ON rt.id = res.rule_type_id
+         INNER JOIN providers p ON p.id = repo.provider_id
 WHERE res.profile_id = $1 AND
     (
         CASE
@@ -235,7 +237,8 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RuleName              string                     `json:"rule_name"`
 	RepoName              string                     `json:"repo_name"`
 	RepoOwner             string                     `json:"repo_owner"`
-	Provider              string                     `json:"provider"`
+	ProviderID            uuid.UUID                  `json:"provider_id"`
+	ProviderName          string                     `json:"provider_name"`
 	RuleTypeName          string                     `json:"rule_type_name"`
 	RuleTypeSeverityValue Severity                   `json:"rule_type_severity_value"`
 	RuleTypeID            uuid.UUID                  `json:"rule_type_id"`
@@ -276,7 +279,8 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleName,
 			&i.RepoName,
 			&i.RepoOwner,
-			&i.Provider,
+			&i.ProviderID,
+			&i.ProviderName,
 			&i.RuleTypeName,
 			&i.RuleTypeSeverityValue,
 			&i.RuleTypeID,
