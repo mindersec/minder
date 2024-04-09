@@ -22,7 +22,7 @@ import (
 	"errors"
 	"fmt"
 
-	gogithub "github.com/google/go-github/v60/github"
+	gogithub "github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"

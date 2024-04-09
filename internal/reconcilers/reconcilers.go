@@ -17,7 +17,7 @@
 package reconcilers
 
 import (
-	gogithub "github.com/google/go-github/v60/github"
+	gogithub "github.com/google/go-github/v61/github"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"

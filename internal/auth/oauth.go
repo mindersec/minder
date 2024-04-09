@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	go_github "github.com/google/go-github/v60/github"
+	go_github "github.com/google/go-github/v61/github"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"

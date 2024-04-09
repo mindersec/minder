@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	gogithub "github.com/google/go-github/v60/github"
+	gogithub "github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
