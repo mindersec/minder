@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/stacklok/minder/internal/logger"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -29,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
