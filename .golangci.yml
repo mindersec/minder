@@ -1,5 +1,5 @@
 run:
-  go: "1.20"
+  go: "1.22"
   issues-exit-code: 1
   timeout: 5m
 
@@ -36,8 +36,7 @@ linters-settings:
       - name: indent-error-flow
       - name: import-shadowing
       - name: package-comments
-      - name: range-val-in-closure
-      - name: range-val-address
+      # NOTE: range-val-address and range-val-in-closure are irrelevant in Go 1.22 and later
       - name: redefines-builtin-id
       - name: struct-tag
       - name: unconditional-recursion
@@ -52,6 +51,8 @@ linters-settings:
       - G114 # for the moment we need to use listenandserve that has no support for timeouts
       - G404 # use unsafe random generator until logic change is discussed
       - G307 # Deferring unsafe method "Close" on type "io.ReadCloser"
+      - G601 # Irrelevant for Go 1.22 and later, see: https://github.com/securego/gosec/issues/1099
+
   depguard:
     rules:
       prevent_unmaintained_packages:
@@ -95,6 +96,7 @@ issues:
       linters:
         - lll
 
+severity:
 output:
   format: colored-line-number
   print-issued-lines: true

@@ -88,8 +88,7 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 
@@ -157,8 +156,7 @@ func TestSubscriptionService_CreateProfile(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 

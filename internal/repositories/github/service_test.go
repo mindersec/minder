@@ -103,8 +103,7 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -158,8 +157,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -210,8 +208,7 @@ func TestRepositoryService_DeleteRepositoriesByProvider(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -254,8 +251,7 @@ func TestRepositoryService_GetRepositoryById(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -297,8 +293,7 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)

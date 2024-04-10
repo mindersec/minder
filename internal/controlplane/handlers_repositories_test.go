@@ -95,8 +95,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -156,8 +155,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -259,8 +257,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 		},
 	}
 
-	for i := range scenarios {
-		scenario := scenarios[i]
+	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)

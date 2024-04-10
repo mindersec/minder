@@ -245,8 +245,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	for i := range testCases {
-		tc := testCases[i]
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -408,8 +407,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	// Create a new context with added header metadata
 	ctx := metadata.NewIncomingContext(context.Background(), md)
 
-	for i := range testCases {
-		tc := testCases[i]
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
