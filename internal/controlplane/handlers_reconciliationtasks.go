@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/stacklok/minder/internal/logger"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -28,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -90,6 +90,11 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
+	logger.BusinessRecord(ctx).Project = repo.ProjectID
+	logger.BusinessRecord(ctx).Repository = repo.ID
+
 	if repo.Provider != entityCtx.Provider.Name {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	}
@@ -98,12 +103,6 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
 	}
-
-	// Telemetry logging
-	// TODO: Change to ProviderID
-	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
 
 	return msg, nil
 }

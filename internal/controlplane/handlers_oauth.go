@@ -499,6 +499,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	providerName := entityCtx.Provider.Name
 
 	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = in.GetContext().GetProvider()
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if providerName == "" {
