@@ -29,7 +29,7 @@ ALTER TABLE artifacts DROP COLUMN provider_id;
 ALTER TABLE artifacts DROP COLUMN provider_name;
 
 -- recreate index artifact_name_lower_idx on artifacts but without project_id
-DROP INDEX artifact_name_lower_idx;
+DROP INDEX IF EXISTS artifact_name_lower_idx;
 
 CREATE INDEX artifact_name_lower_idx ON artifacts (repository_id, LOWER(artifact_name));
 
@@ -56,8 +56,8 @@ COMMIT;
 
 BEGIN;
 
-DROP INDEX entity_execution_lock_idx;
-DROP INDEX flush_cache_idx;
+DROP INDEX IF EXISTS entity_execution_lock_idx;
+DROP INDEX IF EXISTS flush_cache_idx;
 
 -- recreate entity_execution_lock_idx and flush_cache_idx indexes with nullable repository_id
 CREATE UNIQUE INDEX IF NOT EXISTS entity_execution_lock_idx ON entity_execution_lock(
