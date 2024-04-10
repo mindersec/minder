@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
+	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
 )
 
 func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
@@ -47,12 +48,16 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 		Return([]db.DeleteProjectRow{
 			{ID: proj},
 		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{}, nil)
+
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -83,6 +88,8 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 				Valid: true,
 			},
 		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{}, nil)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -94,11 +101,13 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 			},
 		}, nil)
 
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -131,6 +140,8 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 				Valid: true,
 			},
 		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{}, nil)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -142,11 +153,13 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -185,6 +198,8 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 				Valid: true,
 			},
 		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{}, nil)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -203,11 +218,13 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
 	assert.NoError(t, err)
 
 	// Ensure there are two calls to the orphan cleanup function
@@ -217,4 +234,40 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 	assert.NotContains(t, authzClient.Adoptions, proj)
 	assert.NotContains(t, authzClient.Adoptions, child)
 	assert.Len(t, authzClient.Adoptions, 0)
+}
+
+func TestDeleteProjectWithProvider(t *testing.T) {
+	t.Parallel()
+
+	proj := uuid.New()
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), proj).Return(
+		db.Project{ID: proj}, nil)
+	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
+		Return([]db.DeleteProjectRow{
+			{ID: proj},
+		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{
+			{ID: uuid.UUID{}},
+		}, nil)
+
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+
+	ctx := context.Background()
+
+	tl := zerolog.NewTestWriter(t)
+	l := zerolog.New(tl)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	assert.NoError(t, err)
+
+	// Ensure there are no calls to the orphan cleanup function
+	assert.Equal(t, int32(0), authzClient.OrphanCalls.Load())
 }

@@ -60,6 +60,12 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to create server: %w", err)
 	}
 
+	// Subscribe to events from the identity server
+	err = controlplane.SubscribeToIdentityEvents(ctx, store, s.GetAuthzClient(), cfg, s.GetProviderService())
+	if err != nil {
+		return fmt.Errorf("unable to subscribe to identity server events: %w", err)
+	}
+
 	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
 
 	// consume flush-all events

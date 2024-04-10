@@ -386,6 +386,13 @@ type GitHubAppInstallationDeletedPayload struct {
 func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
 	installation, err := p.store.GetInstallationIDByAppID(ctx, installationID)
 	if err != nil {
+		// This installation has already been deleted
+		if errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Info().
+				Int64("installationID", installationID).
+				Msg("Installation already deleted")
+			return nil
+		}
 		return fmt.Errorf("error getting installation: %w", err)
 	}
 
