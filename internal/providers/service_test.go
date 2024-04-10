@@ -526,7 +526,7 @@ func TestProviderService_DeleteProvider(t *testing.T) {
 
 	mocks.svcMock.EXPECT().
 		DeleteInstallation(gomock.Any(), installationID, gomock.Any()).
-		Return(nil)
+		Return(nil, nil)
 
 	err = provSvc.DeleteProvider(
 		context.Background(),

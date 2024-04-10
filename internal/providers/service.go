@@ -451,8 +451,12 @@ func (p *providerService) deleteInstallation(ctx context.Context, providerID uui
 		return fmt.Errorf("error creating GitHub App JWT: %w", err)
 	}
 
-	err = p.ghClientService.DeleteInstallation(ctx, installation.AppInstallationID, jwt)
+	resp, err := p.ghClientService.DeleteInstallation(ctx, installation.AppInstallationID, jwt)
 	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			// if the installation is not found, we can ignore the error, user might have deleted it manually
+			return nil
+		}
 		return fmt.Errorf("error deleting installation: %w", err)
 	}
 	return nil
