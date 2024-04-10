@@ -173,6 +173,7 @@ manage Users CRUD
 | repository | [string](#string) |  |  |
 | versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-ArtifactType"></a>
@@ -1535,6 +1536,7 @@ Project API Objects
 | repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
 | author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
 | action | [string](#string) |  | The action that triggered the webhook |
+| context | [Context](#minder-v1-Context) |  |  |
 
 
 <a name="minder-v1-RESTProviderConfig"></a>

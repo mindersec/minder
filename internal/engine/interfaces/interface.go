@@ -133,7 +133,7 @@ type EvalStatusParams struct {
 	Rule             *pb.Profile_Rule
 	RuleType         *pb.RuleType
 	ProfileID        uuid.UUID
-	RepoID           uuid.UUID
+	RepoID           uuid.NullUUID
 	ArtifactID       uuid.NullUUID
 	PullRequestID    uuid.NullUUID
 	EntityType       db.Entities
@@ -240,8 +240,10 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 		Str("rule_type", e.GetRule().GetType()).
 		Str("rule_name", e.GetRule().GetName()).
 		Str("rule_type_id", e.GetRuleType().GetId()).
-		Str("repository_id", e.RepoID.String()).
 		Logger()
+	if e.RepoID.Valid {
+		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()
+	}
 
 	if e.ArtifactID.Valid {
 		outl = outl.With().Str("artifact_id", e.ArtifactID.UUID.String()).Logger()

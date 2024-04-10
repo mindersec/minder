@@ -146,21 +146,6 @@ func (mr *MockStoreMockRecorder) CountUsers(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), arg0)
 }
 
-// CreateArtifact mocks base method.
-func (m *MockStore) CreateArtifact(arg0 context.Context, arg1 db.CreateArtifactParams) (db.Artifact, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateArtifact", arg0, arg1)
-	ret0, _ := ret[0].(db.Artifact)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateArtifact indicates an expected call of CreateArtifact.
-func (mr *MockStoreMockRecorder) CreateArtifact(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateArtifact", reflect.TypeOf((*MockStore)(nil).CreateArtifact), arg0, arg1)
-}
-
 // CreateProfile mocks base method.
 func (m *MockStore) CreateProfile(arg0 context.Context, arg1 db.CreateProfileParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
@@ -643,10 +628,10 @@ func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(arg0, arg1 any) *gomock
 }
 
 // GetArtifactByID mocks base method.
-func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 uuid.UUID) (db.GetArtifactByIDRow, error) {
+func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 db.GetArtifactByIDParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactByID", arg0, arg1)
-	ret0, _ := ret[0].(db.GetArtifactByIDRow)
+	ret0, _ := ret[0].(db.Artifact)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -658,10 +643,10 @@ func (mr *MockStoreMockRecorder) GetArtifactByID(arg0, arg1 any) *gomock.Call {
 }
 
 // GetArtifactByName mocks base method.
-func (m *MockStore) GetArtifactByName(arg0 context.Context, arg1 db.GetArtifactByNameParams) (db.GetArtifactByNameRow, error) {
+func (m *MockStore) GetArtifactByName(arg0 context.Context, arg1 db.GetArtifactByNameParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetArtifactByName", arg0, arg1)
-	ret0, _ := ret[0].(db.GetArtifactByNameRow)
+	ret0, _ := ret[0].(db.Artifact)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1227,7 +1212,7 @@ func (mr *MockStoreMockRecorder) GlobalListProvidersByClass(arg0, arg1 any) *gom
 }
 
 // ListArtifactsByRepoID mocks base method.
-func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.UUID) ([]db.Artifact, error) {
+func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.NullUUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListArtifactsByRepoID", arg0, arg1)
 	ret0, _ := ret[0].([]db.Artifact)

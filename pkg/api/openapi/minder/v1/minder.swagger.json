@@ -2788,6 +2788,9 @@
         "createdAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
         }
       }
     },

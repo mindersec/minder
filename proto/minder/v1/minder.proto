@@ -165,6 +165,7 @@ message Artifact {
     string repository = 6;
     repeated ArtifactVersion versions = 7;
     google.protobuf.Timestamp created_at = 8;
+    Context context = 9;
 }
 
 message ArtifactVersion {
@@ -215,6 +216,8 @@ message PullRequest {
     int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
 
     string action = 7;      // The action that triggered the webhook
+
+    Context context = 8;
 }
 
 enum DepEcosystem {

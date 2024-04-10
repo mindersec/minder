@@ -51,10 +51,11 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 			defer wg.Done()
 			_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
 				Entity:        EntitiesRepository,
-				RepositoryID:  repo.ID,
+				RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
 				ArtifactID:    uuid.NullUUID{},
 				PullRequestID: uuid.NullUUID{},
 				Interval:      fmt.Sprintf("%d", threshold),
+				ProjectID:     project.ID,
 			})
 
 			if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -64,9 +65,10 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 
 				_, err := testQueries.EnqueueFlush(context.Background(), EnqueueFlushParams{
 					Entity:        EntitiesRepository,
-					RepositoryID:  repo.ID,
+					RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
 					ArtifactID:    uuid.NullUUID{},
 					PullRequestID: uuid.NullUUID{},
+					ProjectID:     project.ID,
 				})
 				if err == nil {
 					effectiveFlush.Add(1)
@@ -89,7 +91,7 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 
 	_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
 		Entity:        EntitiesRepository,
-		RepositoryID:  repo.ID,
+		RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
 		ArtifactID:    uuid.NullUUID{},
 		PullRequestID: uuid.NullUUID{},
 		Interval:      fmt.Sprintf("%d", threshold),

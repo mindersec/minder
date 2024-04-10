@@ -251,8 +251,14 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 
 // GetEntityDBIDs returns the repository, artifact and pull request IDs
 // from the ownership data
-func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.UUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
-	repoID = uuid.MustParse(eiw.OwnershipData[RepositoryIDEventKey])
+func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.NullUUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
+	strRepoID, ok := eiw.OwnershipData[RepositoryIDEventKey]
+	if ok {
+		repoID = uuid.NullUUID{
+			UUID:  uuid.MustParse(strRepoID),
+			Valid: true,
+		}
+	}
 
 	strArtifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
 	if ok {
