@@ -153,7 +153,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).ProviderID = provider.ID
 	logger.BusinessRecord(ctx).Project = projectID
 	logger.BusinessRecord(ctx).Repository = dbID
 
@@ -211,7 +211,7 @@ func (r *repositoryService) DeleteRepository(ctx context.Context, client ghclien
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 

@@ -103,11 +103,6 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to prepare authz client for run: %w", err)
 		}
 
-		err = controlplane.SubscribeToIdentityEvents(ctx, store, authzc, cfg)
-		if err != nil {
-			return fmt.Errorf("unable to subscribe to identity server events: %w", err)
-		}
-
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()

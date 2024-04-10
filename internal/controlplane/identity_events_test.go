@@ -35,6 +35,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
+	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -87,7 +88,7 @@ func TestHandleEvents(t *testing.T) {
 			},
 		},
 	}
-	HandleEvents(context.Background(), mockStore, &mock.NoopClient{Authorized: true}, &c)
+	HandleEvents(context.Background(), mockStore, &mock.NoopClient{Authorized: true}, &c, mockprofsvc.NewMockProviderService(ctrl))
 }
 
 func TestDeleteUserOneProject(t *testing.T) {
@@ -126,8 +127,11 @@ func TestDeleteUserOneProject(t *testing.T) {
 		},
 	}
 
+	ctrl := gomock.NewController(t)
+	providerService := mockprofsvc.NewMockProviderService(ctrl)
+
 	t.Log("Deleting user")
-	err = DeleteUser(ctx, store, &authzClient, u1.IdentitySubject)
+	err = DeleteUser(ctx, store, &authzClient, providerService, u1.IdentitySubject)
 	assert.NoError(t, err, "DeleteUser failed")
 
 	t.Log("Checking if user is removed from project")

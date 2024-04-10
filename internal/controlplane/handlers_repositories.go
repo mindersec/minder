@@ -170,6 +170,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	resp.Cursor = respRepoCursor.String()
 
 	// Telemetry logging
+	// TODO: Change to ProviderID
 	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
@@ -204,7 +205,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
@@ -249,7 +250,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
+	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
