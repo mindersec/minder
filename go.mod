@@ -48,7 +48,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/stacklok/frizbee v0.0.13
+	github.com/stacklok/frizbee v0.0.14
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.20.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -103,7 +103,6 @@ require (
 	github.com/go-sql-driver/mysql v1.8.1-0.20240317050433-65395d853d2c // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/cel-go v0.20.1 // indirect
-	github.com/google/go-github/v56 v56.0.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
