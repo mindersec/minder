@@ -33,7 +33,7 @@ ALTER TABLE artifacts ADD CONSTRAINT fk_artifacts_provider_id_and_name FOREIGN K
 DROP INDEX artifact_name_lower_idx;
 
 -- recreate index artifact_name_lower_idx on artifacts but with project_id
-CREATE INDEX artifact_name_lower_idx ON artifacts (project_id, LOWER(artifact_name));
+CREATE UNIQUE INDEX artifact_name_lower_idx ON artifacts (project_id, LOWER(artifact_name));
 
 COMMIT;
 
