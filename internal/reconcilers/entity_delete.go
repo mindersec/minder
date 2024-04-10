@@ -44,6 +44,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	repoID, _, _ := inf.GetEntityDBIDs()
 
 	// Telemetry logging
+	// TODO: Change to ProviderID
 	minderlogger.BusinessRecord(ctx).Provider = inf.Provider
 	minderlogger.BusinessRecord(ctx).Project = inf.ProjectID
 	switch inf.Type {

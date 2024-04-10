@@ -72,6 +72,9 @@ type TelemetryStore struct {
 	// Provider records the provider name that the request was associated with.
 	Provider string `json:"provider"`
 
+	// ProviderID records the provider name that the request was associated with.
+	ProviderID uuid.UUID `json:"provider_id"`
+
 	// Repository is the repository ID that the request was associated with.
 	Repository uuid.UUID `json:"repository"`
 
@@ -175,6 +178,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	if ts.Provider != "" {
 		e.Str("provider", ts.Provider)
+	}
+	if ts.ProviderID != uuid.Nil {
+		e.Str("provider_id", ts.ProviderID.String())
 	}
 	if ts.LoginHash != "" {
 		e.Str("login_sha", ts.LoginHash)

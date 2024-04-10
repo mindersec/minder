@@ -62,6 +62,10 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		provider = req.GetContext().GetProvider()
 	}
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = provider
+	logger.BusinessRecord(ctx).Project = projectID
+
 	// get provider info
 	providerDef, err := providers.GetProviderClassDefinition(provider)
 	if err != nil {
@@ -127,10 +131,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider
-	logger.BusinessRecord(ctx).Project = projectID
 
 	// Create a new OAuth2 config for the given provider
 	oauthConfig, err := s.providerAuthFactory(provider, req.Cli)
@@ -226,15 +226,15 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider
 	logger.BusinessRecord(ctx).Project = stateData.ProjectID
+	logger.BusinessRecord(ctx).Provider = provider
 
 	token, err := s.exchangeCodeForToken(ctx, provider, code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	_, err = s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
+	p, err := s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
 	if err != nil {
 		if errors.Is(err, providers.ErrInvalidTokenIdentity) {
 			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
@@ -242,6 +242,8 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		}
 		return fmt.Errorf("error creating provider: %w", err)
 	}
+
+	logger.BusinessRecord(ctx).ProviderID = p.ID
 
 	if stateData.RedirectUrl.Valid {
 		redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
@@ -482,7 +484,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider.Name
+	logger.BusinessRecord(ctx).ProviderID = provider.ID
 	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.StoreProviderTokenResponse{}, nil
@@ -497,7 +499,6 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	providerName := entityCtx.Provider.Name
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = in.GetContext().GetProvider()
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if providerName == "" {
@@ -537,6 +538,8 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	if err != nil {
 		return nil, providerError(err)
 	}
+
+	logger.BusinessRecord(ctx).ProviderID = provider.ID
 
 	// check if a token has been created since timestamp
 	_, err = s.store.GetAccessTokenSinceDate(ctx,

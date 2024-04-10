@@ -100,7 +100,8 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = repo.Provider
+	// TODO: Change to ProviderID
+	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
