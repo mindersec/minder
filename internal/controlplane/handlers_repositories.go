@@ -144,8 +144,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 	var results []*pb.Repository
 
 	for _, repo := range repos {
-		repo := repo
-
 		projID := repo.ProjectID.String()
 		r := util.PBRepositoryFromDB(repo)
 		r.Context = &pb.Context{

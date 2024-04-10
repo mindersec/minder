@@ -79,9 +79,7 @@ func newContentModification(
 
 func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) ([]*fsEntry, error) {
 	entries := make([]*fsEntry, len(prCfg.Contents))
-	for i := range prCfg.Contents {
-		cnt := prCfg.Contents[i]
-
+	for i, cnt := range prCfg.Contents {
 		contentTemplate, err := util.ParseNewTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)

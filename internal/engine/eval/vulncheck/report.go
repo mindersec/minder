@@ -136,7 +136,7 @@ func (r *vulnSummaryReport) render() (string, error) {
 	}
 	summary.WriteString(headerBuf.String())
 
-	for i := range r.TrackedDependencies {
+	for _, dep := range r.TrackedDependencies {
 		var rowBuf bytes.Buffer
 
 		if err := rowsTmpl.Execute(&rowBuf, struct {
@@ -145,10 +145,10 @@ func (r *vulnSummaryReport) render() (string, error) {
 			DependencyVersion   string
 			Vulnerabilities     []Vulnerability
 		}{
-			DependencyEcosystem: r.TrackedDependencies[i].Dependency.Ecosystem.AsString(),
-			DependencyName:      r.TrackedDependencies[i].Dependency.Name,
-			DependencyVersion:   r.TrackedDependencies[i].Dependency.Version,
-			Vulnerabilities:     r.TrackedDependencies[i].Vulnerabilities,
+			DependencyEcosystem: dep.Dependency.Ecosystem.AsString(),
+			DependencyName:      dep.Dependency.Name,
+			DependencyVersion:   dep.Dependency.Version,
+			Vulnerabilities:     dep.Vulnerabilities,
 		}); err != nil {
 			return "", fmt.Errorf("could not execute template: %w", err)
 		}

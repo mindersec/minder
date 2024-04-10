@@ -286,7 +286,6 @@ func artifactListRepoFilter(
 
 	var filterRepositories []*db.Repository
 	for _, repo := range repositories {
-		repo := repo
 		if repoInSlubList(&repo, repoSlubList) {
 			filterRepositories = append(filterRepositories, &repo)
 		}

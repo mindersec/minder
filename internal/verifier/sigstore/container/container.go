@@ -194,8 +194,7 @@ func bundleFromGHAttestationEndpoint(
 
 	var bundles []sigstoreBundle
 	// Loop through all available attestations and extract the bundle and the certificate identity information
-	for i := range attestationReply.Attestations {
-		att := attestationReply.Attestations[i]
+	for _, att := range attestationReply.Attestations {
 		protobufBundle, err := unmarhsalAttestationReply(&att)
 		if err != nil {
 			logger.Err(err).Msg("error unmarshalling attestation reply")

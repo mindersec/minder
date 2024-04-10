@@ -116,12 +116,12 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 	summary.WriteString(headerBuf.String())
 
-	for i := range sph.trackedAlternatives {
+	for _, alternative := range sph.trackedAlternatives {
 		var rowBuf bytes.Buffer
 
 		higherScoringAlternatives := make([]Alternative, 0)
-		for _, alt := range sph.trackedAlternatives[i].trustyReply.Alternatives.Packages {
-			if alt.Score > sph.trackedAlternatives[i].trustyReply.Summary.Score {
+		for _, alt := range alternative.trustyReply.Alternatives.Packages {
+			if alt.Score > alternative.trustyReply.Summary.Score {
 				alt.PackageNameURL = url.PathEscape(alt.PackageName)
 				higherScoringAlternatives = append(higherScoringAlternatives, alt)
 			}
@@ -142,10 +142,10 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			Alternatives []Alternative
 			BaseUrl      string
 		}{
-			Ecosystem:    strings.ToLower(sph.trackedAlternatives[i].Dependency.Ecosystem.AsString()),
-			Name:         sph.trackedAlternatives[i].Dependency.Name,
-			NameURL:      url.PathEscape(sph.trackedAlternatives[i].Dependency.Name),
-			Score:        sph.trackedAlternatives[i].trustyReply.Summary.Score,
+			Ecosystem:    strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+			Name:         alternative.Dependency.Name,
+			NameURL:      url.PathEscape(alternative.Dependency.Name),
+			Score:        alternative.trustyReply.Summary.Score,
 			Alternatives: higherScoringAlternatives,
 			BaseUrl:      constants.TrustyHttpURL,
 		}); err != nil {

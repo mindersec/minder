@@ -236,8 +236,8 @@ func (r *repositoryService) DeleteRepositoriesByProvider(
 		return fmt.Errorf("error listing repositories for provider: %w", err)
 	}
 
-	for i := range repos {
-		err := r.DeleteRepository(ctx, client, &repos[i]) // use index to avoid memory aliasing
+	for _, repo := range repos {
+		err := r.DeleteRepository(ctx, client, &repo)
 		if err != nil {
 			return fmt.Errorf("error deleting repository: %w", err)
 		}

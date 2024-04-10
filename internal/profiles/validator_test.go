@@ -124,8 +124,7 @@ func TestValidatorScenarios(t *testing.T) {
 	}
 
 	// some of this boilerplate can probably be shared across multiple tests
-	for i := range validatorTestScenarios {
-		testScenario := validatorTestScenarios[i]
+	for _, testScenario := range validatorTestScenarios {
 		t.Run(testScenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)

@@ -54,8 +54,7 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 		},
 	}
 
-	for i := range deletionScenarios {
-		scenario := deletionScenarios[i]
+	for _, scenario := range deletionScenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
@@ -125,8 +124,7 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 		},
 	}
 
-	for i := range creationScenarios {
-		scenario := creationScenarios[i]
+	for _, scenario := range creationScenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
