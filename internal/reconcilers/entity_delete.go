@@ -48,13 +48,13 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	minderlogger.BusinessRecord(ctx).Project = inf.ProjectID
 	switch inf.Type {
 	case pb.Entity_ENTITY_REPOSITORIES:
-		l.Info().Str("repo_id", repoID.String()).Msg("handling entity delete event")
+		l.Info().Str("repo_id", repoID.UUID.String()).Msg("handling entity delete event")
 		// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 		// will automatically remove them when the repository is deleted.
-		if err := r.store.DeleteRepository(ctx, repoID); err != nil {
+		if err := r.store.DeleteRepository(ctx, repoID.UUID); err != nil {
 			return fmt.Errorf("error deleting repository from DB: %w", err)
 		}
-		minderlogger.BusinessRecord(ctx).Repository = repoID
+		minderlogger.BusinessRecord(ctx).Repository = repoID.UUID
 		return nil
 	default:
 		err := fmt.Errorf("unsupported entity delete event for: %s", inf.Type)
