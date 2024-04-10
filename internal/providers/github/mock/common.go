@@ -42,11 +42,12 @@ func (m *MockClientService) EXPECT() *MockClientServiceMockRecorder {
 }
 
 // DeleteInstallation mocks base method.
-func (m *MockClientService) DeleteInstallation(arg0 context.Context, arg1 int64, arg2 string) error {
+func (m *MockClientService) DeleteInstallation(arg0 context.Context, arg1 int64, arg2 string) (*github.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteInstallation", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*github.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteInstallation indicates an expected call of DeleteInstallation.
