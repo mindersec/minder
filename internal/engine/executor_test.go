@@ -325,7 +325,8 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	ts := &logger.TelemetryStore{
-		Project:    projectID,
+		Project: projectID,
+		// TODO: Change to ProviderID
 		Provider:   providerName,
 		Repository: repositoryID,
 	}

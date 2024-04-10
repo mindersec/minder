@@ -42,6 +42,10 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = providerName
+	logger.BusinessRecord(ctx).Project = projectID
+
 	artifactFilter, err := parseArtifactListFrom(s.store, in.From)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse artifact list from: %w", err)
@@ -51,10 +55,6 @@ func (s *Server) ListArtifacts(ctx context.Context, in *pb.ListArtifactsRequest)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list artifacts: %w", err)
 	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = providerName
-	logger.BusinessRecord(ctx).Project = projectID
 
 	return &pb.ListArtifactsResponse{Results: results}, nil
 }
@@ -70,7 +70,10 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
+	providerName := entityCtx.Provider.Name
+	providerFilter := getNameFilterParam(providerName)
+
+	logger.BusinessRecord(ctx).Provider = providerName
 
 	// the artifact name is the rest of the parts
 	artifactName := strings.Join(nameParts[2:], "/")
@@ -108,7 +111,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = artifact.ProviderName
+	logger.BusinessRecord(ctx).ProviderID = artifact.ProviderID
 	logger.BusinessRecord(ctx).Project = artifact.ProjectID
 	logger.BusinessRecord(ctx).Artifact = artifact.ID
 
@@ -154,7 +157,7 @@ func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequ
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = artifact.ProviderName
+	logger.BusinessRecord(ctx).ProviderID = artifact.ProviderID
 	logger.BusinessRecord(ctx).Project = artifact.ProjectID
 	logger.BusinessRecord(ctx).Artifact = artifact.ID
 	if artifact.RepositoryID.Valid {
