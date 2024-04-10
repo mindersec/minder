@@ -205,6 +205,11 @@ func (s *Server) GetProviderService() providers.ProviderService {
 	return s.providers
 }
 
+// GetAuthzClient returns the authz client
+func (s *Server) GetAuthzClient() authz.Client {
+	return s.authzClient
+}
+
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
 	// create a stdout exporter to show collected spans out to stdout.
 	exporter, err := stdout.New(stdout.WithPrettyPrint())

@@ -26,11 +26,13 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 )
 
 // CleanUpUnmanagedProjects deletes a project if it has no role assignments left
 func CleanUpUnmanagedProjects(
-	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client, l zerolog.Logger,
+	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
+	providerService providers.ProviderService, l zerolog.Logger,
 ) error {
 	l = l.With().Str("project", proj.String()).Logger()
 	// Given that we've deleted the user from the authorization system,
@@ -42,7 +44,7 @@ func CleanUpUnmanagedProjects(
 
 	if len(as) == 0 {
 		l.Info().Msg("deleting project")
-		if err := DeleteProject(ctx, proj, querier, authzClient, l); err != nil {
+		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
@@ -50,7 +52,8 @@ func CleanUpUnmanagedProjects(
 }
 
 // DeleteProject deletes a project and authorization relationships
-func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client, l zerolog.Logger) error {
+func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
+	providerService providers.ProviderService, l zerolog.Logger) error {
 	_, err := querier.GetProjectByID(ctx, proj)
 	if err != nil {
 		// This project has already been deleted. Skip and go to the next one.
@@ -59,6 +62,17 @@ func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, auth
 			return nil
 		}
 		return fmt.Errorf("error getting project %v", err)
+	}
+
+	// delete associated providers and clean up their state (e.g. GitHub installations)
+	dbProviders, err := querier.ListProvidersByProjectID(ctx, []uuid.UUID{proj})
+	if err != nil {
+		l.Error().Err(err).Msg("error getting providers for project")
+	}
+	for i := range dbProviders {
+		if err := providerService.DeleteProvider(ctx, &dbProviders[i]); err != nil {
+			l.Error().Err(err).Msg("error deleting provider")
+		}
 	}
 
 	// no role assignments for this project

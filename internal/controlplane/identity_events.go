@@ -31,6 +31,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
+	"github.com/stacklok/minder/internal/providers"
 )
 
 const (
@@ -53,10 +54,11 @@ func SubscribeToIdentityEvents(
 	store db.Store,
 	authzClient authz.Client,
 	cfg *serverconfig.Config,
+	providerService providers.ProviderService,
 ) error {
 	c := cron.New()
 	_, err := c.AddFunc(eventFetchInterval, func() {
-		HandleEvents(ctx, store, authzClient, cfg)
+		HandleEvents(ctx, store, authzClient, cfg, providerService)
 	})
 	if err != nil {
 		return err
@@ -71,6 +73,7 @@ func HandleEvents(
 	store db.Store,
 	authzClient authz.Client,
 	cfg *serverconfig.Config,
+	providerService providers.ProviderService,
 ) {
 	d := time.Now().Add(time.Duration(10) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
@@ -97,14 +100,17 @@ func HandleEvents(
 	}
 	for _, event := range events {
 		if event.Type == deleteAccountEventType {
-			err := DeleteUser(ctx, store, authzClient, event.UserId)
-			zerolog.Ctx(ctx).Error().Msgf("events chron: error deleting user account: %v", err)
+			err := DeleteUser(ctx, store, authzClient, providerService, event.UserId)
+			if err != nil {
+				zerolog.Ctx(ctx).Error().Msgf("events chron: error deleting user account: %v", err)
+			}
 		}
 	}
 }
 
 // DeleteUser deletes a user and all their associated data from the minder database
-func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, userId string) (retErr error) {
+func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, providerService providers.ProviderService,
+	userId string) (retErr error) {
 	l := zerolog.Ctx(ctx).With().
 		Str("operation", "delete").
 		Str("subject", userId).
@@ -158,7 +164,7 @@ func DeleteUser(ctx context.Context, store db.Store, authzClient authz.Client, u
 
 	for _, proj := range projs {
 		l.Debug().Str("project_id", proj.String()).Msg("cleaning up project")
-		if err := projects.CleanUpUnmanagedProjects(ctx, proj, qtx, authzClient, l); err != nil {
+		if err := projects.CleanUpUnmanagedProjects(ctx, proj, qtx, authzClient, providerService, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
