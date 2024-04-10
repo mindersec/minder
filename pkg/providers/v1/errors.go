@@ -19,4 +19,6 @@ import "errors"
 var (
 	// ErrProviderGitBranchNotFound is returned when the branch is not found
 	ErrProviderGitBranchNotFound = errors.New("branch not found")
+	// ErrRepositoryEmpty is returned when the repository is empty
+	ErrRepositoryEmpty = errors.New("repository is empty")
 )

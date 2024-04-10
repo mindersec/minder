@@ -102,6 +102,8 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 		if errors.Is(err, provifv1.ErrProviderGitBranchNotFound) {
 			return nil, fmt.Errorf("%w: %s: branch %s", engerrors.ErrEvaluationFailed,
 				provifv1.ErrProviderGitBranchNotFound, branch)
+		} else if errors.Is(err, provifv1.ErrRepositoryEmpty) {
+			return nil, fmt.Errorf("%w: %s", engerrors.ErrEvaluationSkipped, provifv1.ErrRepositoryEmpty)
 		}
 		return nil, err
 	}
