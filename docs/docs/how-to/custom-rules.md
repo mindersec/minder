@@ -11,7 +11,7 @@ You can browse a curated collection of rule types in the [rules and profiles rep
 Some of the rules include:
 
 * Verifying if you have GitHub’s secret scanning enabled
-* Verifying if your artifacts are signed and pushed to Sigstore
+* Verifying if your artifacts are signed and verifiable on Sigstore
 * Verifying that your branch protection settings are secure
 
 ## Rule Types
