@@ -33,6 +33,7 @@ import (
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
+	mindergh "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -138,6 +139,8 @@ func (r *GhBranchProtectRemediator) Do(
 		// this will create a new branch protection using github's defaults
 		// which appear quite sensible
 		res = &github.Protection{}
+	} else if errors.Is(err, mindergh.ErrBranchNotFound) {
+		return nil, fmt.Errorf("branch %s not found: %w", branch, engerrors.ErrActionSkipped)
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting branch protection: %w", err)
 	}
