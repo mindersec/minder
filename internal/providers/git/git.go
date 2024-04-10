@@ -23,6 +23,7 @@ import (
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -71,6 +72,8 @@ func (g *Git) Clone(ctx context.Context, url, branch string) (*git.Repository, e
 		var refspecerr git.NoMatchingRefSpecError
 		if errors.Is(err, git.ErrBranchNotFound) || refspecerr.Is(err) {
 			return nil, provifv1.ErrProviderGitBranchNotFound
+		} else if errors.Is(err, transport.ErrEmptyRemoteRepository) {
+			return nil, provifv1.ErrRepositoryEmpty
 		}
 		return nil, fmt.Errorf("could not clone repo: %w", err)
 	}
