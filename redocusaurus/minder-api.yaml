@@ -1967,6 +1967,8 @@ definitions:
       createdAt:
         type: string
         format: date-time
+      context:
+        $ref: '#/definitions/v1Context'
   v1ArtifactType:
     type: object
     description: ArtifactType defines the artifact data evaluation.
