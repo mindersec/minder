@@ -244,7 +244,9 @@ func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, proj
 		// Delete all repositories associated with the provider and remove the webhooks
 		err = s.repos.DeleteRepositoriesByProvider(ctx, client, provider.Name, projectID)
 		if err != nil {
-			return status.Errorf(codes.Internal, "error deleting repositories: %v", err)
+			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
+			// The repositories will still be deleted by a cascade delete in the database
+			zerolog.Ctx(ctx).Error().Err(err).Str("projectID", projectID.String()).Msg("error deleting repositories")
 		}
 	}
 
