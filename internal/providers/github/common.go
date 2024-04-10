@@ -59,6 +59,8 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrBranchNotFound denotes if the branch was not found
 	ErrBranchNotFound = errors.New("branch not found")
+	// ErrNoPackageListingClient denotes if there is no package listing client available
+	ErrNoPackageListingClient = errors.New("no package listing client available")
 )
 
 // GitHub is the struct that contains the shared GitHub client operations
@@ -171,6 +173,11 @@ func (c *GitHub) ListPackagesByRepository(
 	// create a slice to hold the containers
 	var allContainers []*github.Package
 
+	if c.packageListingClient == nil {
+		zerolog.Ctx(ctx).Error().Msg("No client available for listing packages")
+		return allContainers, ErrNoPackageListingClient
+	}
+
 	type listPackagesRespWrapper struct {
 		artifacts []*github.Package
 		resp      *github.Response
@@ -205,7 +212,7 @@ func (c *GitHub) ListPackagesByRepository(
 	for {
 		result, err := performWithRetry(ctx, op)
 		if err != nil {
-			if result.resp.StatusCode == http.StatusNotFound {
+			if result.resp != nil && result.resp.StatusCode == http.StatusNotFound {
 				return allContainers, fmt.Errorf("packages not found for repository %d: %w", repositoryId, ErrNotFound)
 			}
 

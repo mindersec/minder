@@ -24,6 +24,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -136,6 +137,13 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		if errors.Is(err, github.ErrNotFound) {
 			// we do not return error since it's a valid use case for a repository to not have artifacts
 			log.Printf("error retrieving artifacts for RepoID %d: %v", repository.RepoID, err)
+			return nil
+		} else if errors.Is(err, github.ErrNoPackageListingClient) {
+			// not a hard error, just misconfiguration or the user doesn't want to put a token
+			// into the provider config
+			zerolog.Ctx(ctx).Info().
+				Str("provider", prov.ID.String()).
+				Msg("No package listing client available for provider")
 			return nil
 		}
 		return err
