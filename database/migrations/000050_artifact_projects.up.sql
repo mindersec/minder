@@ -62,7 +62,7 @@ ALTER TABLE artifacts ALTER COLUMN provider_id SET NOT NULL;
 ALTER TABLE artifacts ALTER COLUMN provider_name SET NOT NULL;
 
 -- Now that repository_id's are nullable, let's index artifacts by repository_id where the repository_id is not null
-CREATE INDEX artifacts_repository_id_idx ON artifacts (repository_id) WHERE repository_id IS NOT NULL;
+CREATE UNIQUE INDEX artifacts_repository_id_idx ON artifacts (repository_id) WHERE repository_id IS NOT NULL;
 
 COMMIT;
 
