@@ -96,7 +96,6 @@ issues:
       linters:
         - lll
 
-severity:
 output:
   format: colored-line-number
   print-issued-lines: true
