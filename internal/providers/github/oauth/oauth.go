@@ -34,8 +34,12 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-// Github is the string that represents the GitHubOAuth provider
-const Github = "github"
+const (
+	// Github is the string that represents the GitHubOAuth provider
+	Github = "github"
+	// GithubApp is the string that represents the GitHub App provider
+	GithubApp = "github-app"
+)
 
 // Implements is the list of provider types that the GitHubOAuth provider implements
 var Implements = []db.ProviderType{
