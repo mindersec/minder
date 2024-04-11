@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -37,9 +36,9 @@ var ProviderCmd = &cobra.Command{
 func init() {
 	app.RootCmd.AddCommand(ProviderCmd)
 	// Flags for all subcommands
-	// TODO: remove the provider flag from here and add it only to the subcommands that need it
-	ProviderCmd.PersistentFlags().StringP("provider", "p", ghclient.Github, "Name of the provider, i.e. github")
 	ProviderCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
+	// TODO: get rid of this
+	ProviderCmd.PersistentFlags().StringP("provider", "p", "", "DEPRECATED - use `class` flag of `enroll` instead")
 }
 
 func getImplementsAsStrings(p *minderv1.Provider) []string {
