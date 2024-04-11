@@ -88,12 +88,11 @@ repository:
 artifact:
   - type: artifact_signature
     params:
-      tags: [main]
+      tags: [latest]
       name: my-artifact
     def:
       is_signed: true
       is_verified: true
-      is_bundle_verified: true
 pull_request:
   - type: pr_vulnerability_check
     def:
@@ -111,4 +110,9 @@ pull_request:
             url: https://proxy.golang.org
           sum_repository:
             url: https://sum.golang.org
+        - name: pypi
+          vulnerability_database_type: osv
+          vulnerability_database_endpoint: https://api.osv.dev/v1/query
+          package_repository:
+            url: https://pypi.org/pypi
 ```
