@@ -18,6 +18,7 @@ package provider
 
 import (
 	"github.com/spf13/cobra"
+	"os"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -39,6 +40,10 @@ func init() {
 	ProviderCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 	// TODO: get rid of this
 	ProviderCmd.PersistentFlags().StringP("provider", "p", "", "DEPRECATED - use `class` flag of `enroll` instead")
+	if err := ProviderCmd.PersistentFlags().MarkHidden("provider"); err != nil {
+		ProviderCmd.Printf("Error binding flag: %s", err)
+		os.Exit(1)
+	}
 }
 
 func getImplementsAsStrings(p *minderv1.Provider) []string {
