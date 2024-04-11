@@ -45,7 +45,7 @@ const (
 	legacyGitHubProvider = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB
 
 	// githubAppProvider is the name used to identify the new GitHub App provider class
-	githubAppProivder = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB_APP
+	githubAppProvider = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB_APP
 )
 
 var enrollCmd = &cobra.Command{
@@ -290,7 +290,7 @@ func init() {
 	enrollCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment (Legacy GitHub only)")
 	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy GitHub only)")
 	enrollCmd.Flags().BoolP("yes", "y", false, "Bypass any yes/no prompts when enrolling a new provider")
-	enrollCmd.Flags().StringP("class", "c", githubAppProivder.String(), "Provider class, defaults to github-app")
+	enrollCmd.Flags().StringP("class", "c", githubAppProvider.String(), "Provider class, defaults to github-app")
 
 	// Bind flags
 	if err := viper.BindPFlag("token", enrollCmd.Flags().Lookup("token")); err != nil {
