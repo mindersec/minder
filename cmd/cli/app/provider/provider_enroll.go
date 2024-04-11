@@ -87,7 +87,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	// TODO: split this into multiple subcommands so we do not need to have
 	// checks like this per flag
 	// The Github App flow will ask these questions in the browser
-	if !yesFlag && provider == legacyGitHubProvider.String() {
+	if !yesFlag && provider == legacyGitHubProvider.ToString() {
 		yes := cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
 			"Do you confirm?",
@@ -99,7 +99,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	}
 
 	// the token only applies to the old flow
-	if token != "" && provider == legacyGitHubProvider.String() {
+	if token != "" && provider == legacyGitHubProvider.ToString() {
 		return enrollUsingToken(ctx, cmd, oauthClient, provider, project, token, owner)
 	}
 
@@ -290,7 +290,7 @@ func init() {
 	enrollCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment (Legacy GitHub only)")
 	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy GitHub only)")
 	enrollCmd.Flags().BoolP("yes", "y", false, "Bypass any yes/no prompts when enrolling a new provider")
-	enrollCmd.Flags().StringP("class", "c", githubAppProvider.String(), "Provider class, defaults to github-app")
+	enrollCmd.Flags().StringP("class", "c", githubAppProvider.ToString(), "Provider class, defaults to github-app")
 
 	// Bind flags
 	if err := viper.BindPFlag("token", enrollCmd.Flags().Lookup("token")); err != nil {
