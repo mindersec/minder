@@ -919,5 +919,10 @@ func parseRepoID(repoID any) (int64, error) {
 
 func shouldIssueDeletionEvent(m *message.Message) bool {
 	return m.Metadata.Get(entities.ActionEventKey) == WebhookActionEventDeleted &&
-		m.Metadata.Get(events.GithubWebhookEventTypeKey) == "repository"
+		deletionOfRelevantType(m)
+}
+
+func deletionOfRelevantType(m *message.Message) bool {
+	return m.Metadata.Get(events.GithubWebhookEventTypeKey) == "repository" ||
+		m.Metadata.Get(events.GithubWebhookEventTypeKey) == "meta"
 }
