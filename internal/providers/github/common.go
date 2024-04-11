@@ -50,11 +50,15 @@ const (
 	MaxRateLimitRetries = 1
 	// DefaultRateLimitWaitTime is the default time to wait for a rate limit to reset
 	DefaultRateLimitWaitTime = 1 * time.Minute
+
+	githubBranchNotFoundMsg = "Branch not found"
 )
 
 var (
-	// ErrNotFound Denotes if the call returned a 404
+	// ErrNotFound denotes if the call returned a 404
 	ErrNotFound = errors.New("not found")
+	// ErrBranchNotFound denotes if the branch was not found
+	ErrBranchNotFound = errors.New("branch not found")
 )
 
 // GitHub is the struct that contains the shared GitHub client operations
@@ -486,8 +490,14 @@ func (c *GitHub) GetRepository(ctx context.Context, owner string, name string) (
 // GetBranchProtection returns the branch protection for a given branch
 func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 	repo_name string, branch_name string) (*github.Protection, error) {
+	var respErr *github.ErrorResponse
+
 	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
-	if err != nil {
+	if errors.As(err, &respErr) {
+		if respErr.Message == githubBranchNotFoundMsg {
+			return nil, ErrBranchNotFound
+		}
+	} else if err != nil {
 		return nil, err
 	}
 	return protection, nil
