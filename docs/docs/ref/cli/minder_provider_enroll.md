@@ -18,7 +18,7 @@ minder provider enroll [flags]
 ### Options
 
 ```
-  -c, --class string   Provider class, defaults to github-app (default "PROVIDER_CLASS_GITHUB_APP")
+  -c, --class string   Provider class, defaults to github-app (default "github-app")
   -h, --help           help for enroll
   -o, --owner string   Owner to filter on for provider resources (Legacy GitHub only)
       --skip-browser   Skip opening the browser for OAuth flow
