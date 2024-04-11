@@ -50,10 +50,18 @@ mock: ## generate mocks
 	mockgen -package mockgh -destination internal/providers/github/mock/common.go github.com/stacklok/minder/internal/providers/github ClientService
 
 
+# Ugly hack: cobra uses tabs for code blocks in markdown in some places
+# This leads to some issues with MDX in the docs renderer
+# Use sed to get rid of lines which begin with tabs and swap in backticks.
 .PHONY: cli-docs
 cli-docs: ## generate cli-docs
-	@rm -rf docs/docs/ref/cli
+	$(eval DOC_PATH := docs/docs/ref/cli)
+	@rm -rf ${DOC_PATH}
 	@mkdir -p docs/docs/ref/cli
-	@echo 'label: Minder CLI' > docs/docs/ref/cli/_category_.yml
-	@echo 'position: 20' >> docs/docs/ref/cli/_category_.yml
+	@echo 'label: Minder CLI' > ${DOC_PATH}/_category_.yml
+	@echo 'position: 20' >> ${DOC_PATH}/_category_.yml
 	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
+	@# this sed is much uglier than it should be so that it can run on Mac
+	@sed -i.bak 's/^	\(.*\)$$/```\$\n\1\$\n```/g' ${DOC_PATH}/minder_completion_zsh.md ${DOC_PATH}/minder_completion_bash.md
+	@# clean up temporary files created by sed
+	@rm ${DOC_PATH}/*.bak

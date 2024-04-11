@@ -25,6 +25,7 @@ To load completions for every new session, execute once:
 ```
 minder completion bash > /etc/bash_completion.d/minder
 ```
+
 #### macOS:
 
 ```

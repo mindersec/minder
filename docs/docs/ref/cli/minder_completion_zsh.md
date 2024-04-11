@@ -31,6 +31,7 @@ minder completion zsh > "${fpath[1]}/_minder"
 ```
 
 #### macOS:
+
 ```
 minder completion zsh > $(brew --prefix)/share/zsh/site-functions/_minder
 ```
