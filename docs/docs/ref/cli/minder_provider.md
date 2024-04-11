@@ -18,7 +18,6 @@ minder provider [flags]
 ```
   -h, --help             help for provider
   -j, --project string   ID of the project
-  -p, --provider class   DEPRECATED - use class flag of `enroll` instead
 ```
 
 ### Options inherited from parent commands

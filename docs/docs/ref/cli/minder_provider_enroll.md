@@ -18,7 +18,7 @@ minder provider enroll [flags]
 ### Options
 
 ```
-  -c, --class string   Provider class, defaults to github-app (default "PROVIDER_CLASS_GITHUB_APP")
+  -c, --class string   Provider class, defaults to github-app (default "github-app")
   -h, --help           help for enroll
   -o, --owner string   Owner to filter on for provider resources (Legacy GitHub only)
       --skip-browser   Skip opening the browser for OAuth flow
@@ -36,7 +36,6 @@ minder provider enroll [flags]
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -j, --project string           ID of the project
-  -p, --provider class           DEPRECATED - use class flag of `enroll` instead
 ```
 
 ### SEE ALSO
