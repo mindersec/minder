@@ -18,6 +18,8 @@ package server
 import (
 	"crypto/rsa"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/golang-jwt/jwt/v4"
 
@@ -36,13 +38,17 @@ type GitHubAppConfig struct {
 	PrivateKey string `mapstructure:"private_key"`
 	// WebhookSecret is the GitHub App's webhook secret
 	WebhookSecret string `mapstructure:"webhook_secret"`
+	// WebhookSecretFile is the location of the file containing the GitHub App's webhook secret
+	WebhookSecretFile string `mapstructure:"webhook_secret_file"`
 	// FallbackToken is the fallback token to use when listing packages
 	FallbackToken string `mapstructure:"fallback_token"`
+	// FallbackTokenFile is the location of the file containing the fallback token to use when listing packages
+	FallbackTokenFile string `mapstructure:"fallback_token_file"`
 }
 
 // GetPrivateKey returns the GitHub App's private key
-func (acfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
-	privateKeyBytes, err := config.ReadKey(acfg.PrivateKey)
+func (ghcfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
+	privateKeyBytes, err := config.ReadKey(ghcfg.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error reading private key: %w", err)
 	}
@@ -53,4 +59,28 @@ func (acfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
 	}
 
 	return privateKey, err
+}
+
+// GetWebhookSecret returns the GitHub App's webhook secret
+func (ghcfg *GitHubAppConfig) GetWebhookSecret() (string, error) {
+	if ghcfg.WebhookSecretFile != "" {
+		data, err := os.ReadFile(filepath.Clean(ghcfg.WebhookSecretFile))
+		if err != nil {
+			return "", fmt.Errorf("failed to read GitHub App webhook secret from file: %w", err)
+		}
+		return string(data), nil
+	}
+	return ghcfg.WebhookSecret, nil
+}
+
+// GetFallbackToken returns the GitHub App's fallback token
+func (ghcfg *GitHubAppConfig) GetFallbackToken() (string, error) {
+	if ghcfg.FallbackTokenFile != "" {
+		data, err := os.ReadFile(filepath.Clean(ghcfg.FallbackTokenFile))
+		if err != nil {
+			return "", fmt.Errorf("failed to read GitHub App fallback token from file: %w", err)
+		}
+		return string(data), nil
+	}
+	return ghcfg.FallbackToken, nil
 }
