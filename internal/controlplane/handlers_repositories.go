@@ -73,6 +73,10 @@ func (s *Server) RegisterRepository(
 
 	provider, err := s.inferProviderByOwner(ctx, githubRepo.GetOwner(), projectID, providerName)
 	if err != nil {
+		pErr := providers.ErrProviderNotFoundBy{}
+		if errors.As(err, &pErr) {
+			return nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
+		}
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
@@ -323,6 +327,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	providerName := in.GetContext().GetProvider()
 	provs, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeRepoLister)
 	if err != nil {
+		pErr := providers.ErrProviderNotFoundBy{}
+		if errors.As(err, &pErr) {
+			return nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
+		}
 		return nil, providerError(err)
 	}
 

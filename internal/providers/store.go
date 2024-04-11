@@ -56,6 +56,24 @@ type ProviderStore interface {
 	) ([]db.Provider, error)
 }
 
+// ErrProviderNotFoundBy is an error type which is returned when a provider is not found
+type ErrProviderNotFoundBy struct {
+	Name  string
+	Trait string
+}
+
+func (e ErrProviderNotFoundBy) Error() string {
+	msgs := []string{}
+	if e.Name != "" {
+		msgs = append(msgs, fmt.Sprintf("name: %s", e.Name))
+	}
+	if e.Trait != "" {
+		msgs = append(msgs, fmt.Sprintf("trait: %s", e.Trait))
+	}
+
+	return fmt.Sprintf("provider not found with filters: %s", strings.Join(msgs, ", "))
+}
+
 type providerStore struct {
 	store db.Store
 }
@@ -126,15 +144,15 @@ func (p *providerStore) GetByNameAndTrait(
 
 // builds an error message based on the given filters.
 func filteredResultNotFoundError(name sql.NullString, trait db.NullProviderType) error {
-	msgs := []string{}
+	e := ErrProviderNotFoundBy{}
 	if name.Valid {
-		msgs = append(msgs, fmt.Sprintf("name: %s", name.String))
+		e.Name = name.String
 	}
 	if trait.Valid {
-		msgs = append(msgs, fmt.Sprintf("trait: %s", trait.ProviderType))
+		e.Trait = string(trait.ProviderType)
 	}
 
-	return util.UserVisibleError(codes.NotFound, "provider not found with filters: %s", strings.Join(msgs, ", "))
+	return e
 }
 
 // findProvider is a helper function to find a provider by name and trait
