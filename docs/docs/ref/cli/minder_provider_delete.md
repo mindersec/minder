@@ -31,7 +31,7 @@ minder provider delete [flags]
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -j, --project string           ID of the project
-  -p, --provider string          Name of the provider, i.e. github (default "github")
+  -p, --provider class           DEPRECATED - use class flag of `enroll` instead
 ```
 
 ### SEE ALSO

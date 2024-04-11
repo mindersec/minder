@@ -18,6 +18,7 @@ minder ruletype get [flags]
 ```
   -h, --help            help for get
   -i, --id string       ID for the rule type to query
+  -n, --name string     Name for the rule type to query
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
