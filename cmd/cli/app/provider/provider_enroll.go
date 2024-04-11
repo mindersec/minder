@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -44,6 +43,9 @@ const (
 
 	// legacyGitHubProvider is the legacy GitHub OAuth provider class
 	legacyGitHubProvider = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB
+
+	// githubAppProvider is the name used to identify the new GitHub App provider class
+	githubAppProivder = minderv1.ProviderClass_PROVIDER_CLASS_GITHUB_APP
 )
 
 var enrollCmd = &cobra.Command{
@@ -82,8 +84,10 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	}
 
 	// Only show this option for the legacy flow
+	// TODO: split this into multiple subcommands so we do not need to have
+	// checks like this per flag
 	// The Github App flow will ask these questions in the browser
-	if !yesFlag && provider == ghclient.Github {
+	if !yesFlag && provider == legacyGitHubProvider.String() {
 		yes := cli.PrintYesNoPrompt(cmd,
 			fmt.Sprintf("You are about to enroll repositories from %s.", ownerPromptStr),
 			"Do you confirm?",
@@ -94,7 +98,8 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 		}
 	}
 
-	if token != "" {
+	// the token only applies to the old flow
+	if token != "" && provider == legacyGitHubProvider.String() {
 		return enrollUsingToken(ctx, cmd, oauthClient, provider, project, token, owner)
 	}
 
@@ -282,10 +287,10 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 func init() {
 	ProviderCmd.AddCommand(enrollCmd)
 	// Flags
-	enrollCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment")
-	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy Github only)")
+	enrollCmd.Flags().StringP("token", "t", "", "Personal Access Token (PAT) to use for enrollment (Legacy GitHub only)")
+	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy GitHub only)")
 	enrollCmd.Flags().BoolP("yes", "y", false, "Bypass any yes/no prompts when enrolling a new provider")
-	enrollCmd.Flags().StringP("class", "c", ghclient.GithubApp, "Provider class, defaults to github-app")
+	enrollCmd.Flags().StringP("class", "c", githubAppProivder.String(), "Provider class, defaults to github-app")
 
 	// Bind flags
 	if err := viper.BindPFlag("token", enrollCmd.Flags().Lookup("token")); err != nil {
