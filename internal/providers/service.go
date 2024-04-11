@@ -414,7 +414,11 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 }
 
 func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
-	return github.ValidatePayload(r, []byte(p.config.GitHubApp.WebhookSecret))
+	secret, err := p.config.GitHubApp.GetWebhookSecret()
+	if err != nil {
+		return nil, err
+	}
+	return github.ValidatePayload(r, []byte(secret))
 }
 
 // DeleteProvider deletes a provider and removes the credentials from the downstream service, if possible

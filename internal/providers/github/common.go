@@ -930,10 +930,13 @@ func CanHandleOwner(_ context.Context, prov db.Provider, owner string) bool {
 
 // NewFallbackTokenClient creates a new GitHub client that uses the GitHub App's fallback token
 func NewFallbackTokenClient(appConfig config.ProviderConfig) *github.Client {
-	if appConfig.GitHubApp == nil || appConfig.GitHubApp.FallbackToken == "" {
+	if appConfig.GitHubApp == nil {
 		return nil
 	}
-	fallbackToken := appConfig.GitHubApp.FallbackToken
+	fallbackToken, err := appConfig.GitHubApp.GetFallbackToken()
+	if err != nil || fallbackToken == "" {
+		return nil
+	}
 	var packageListingClient *github.Client
 
 	fallbackTokenSource := oauth2.StaticTokenSource(
