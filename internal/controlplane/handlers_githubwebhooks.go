@@ -252,12 +252,9 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		// Channel the event based on the webhook action
 		var watermillTopic string
-		switch m.Metadata.Get(entities.ActionEventKey) {
-		case WebhookActionEventDeleted:
-			// We got an entity delete event, so we need to reconcile and delete the entity from the DB
+		if shouldIssueDeletionEvent(m) {
 			watermillTopic = events.TopicQueueReconcileEntityDelete
-		default:
-			// Default to evaluating the entity
+		} else {
 			watermillTopic = events.TopicQueueEntityEvaluate
 		}
 
@@ -918,4 +915,14 @@ func parseRepoID(repoID any) (int64, error) {
 	default:
 		return 0, fmt.Errorf("unknown type for repoID: %T", v)
 	}
+}
+
+func shouldIssueDeletionEvent(m *message.Message) bool {
+	return m.Metadata.Get(entities.ActionEventKey) == WebhookActionEventDeleted &&
+		deletionOfRelevantType(m)
+}
+
+func deletionOfRelevantType(m *message.Message) bool {
+	return m.Metadata.Get(events.GithubWebhookEventTypeKey) == "repository" ||
+		m.Metadata.Get(events.GithubWebhookEventTypeKey) == "meta"
 }
