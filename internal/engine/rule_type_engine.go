@@ -148,11 +148,11 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
 
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParamsReadWriter) error {
-	logger := zerolog.Ctx(ctx).Info().
+	logger := zerolog.Ctx(ctx).With().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String())
+		Str("execution_id", inf.ExecutionID.String()).Logger()
 
-	logger.Msg("entity evaluation - ingest started")
+	logger.Info().Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
 	if !ok {
@@ -166,15 +166,15 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapp
 		}
 		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
 	} else {
-		logger.Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
+		logger.Info().Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
 	}
-	logger.Msg("entity evaluation - ingest completed")
+	logger.Info().Msg("entity evaluation - ingest completed")
 	params.SetIngestResult(result)
 
 	// Process evaluation
-	logger.Msg("entity evaluation - evaluation started")
+	logger.Info().Msg("entity evaluation - evaluation started")
 	err := r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
-	logger.Msg("entity evaluation - evaluation completed")
+	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }
 
