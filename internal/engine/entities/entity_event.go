@@ -313,12 +313,15 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 		return fmt.Errorf("%s not found in metadata", ProviderEventKey)
 	}
 
-	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
 	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
-	providerID, err := uuid.Parse(rawProviderID)
-	if err != nil {
-		// TODO: this should return an error once ProviderID is mandatory
-		providerID = uuid.Nil
+	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
+	providerID := uuid.Nil
+	if rawProviderID != "" {
+		var err error
+		providerID, err = uuid.Parse(rawProviderID)
+		if err != nil {
+			return fmt.Errorf("malformed provider id %s", rawProviderID)
+		}
 	}
 
 	eiw.Provider = provider
