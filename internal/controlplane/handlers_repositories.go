@@ -372,7 +372,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		out.Results = append(out.Results, results...)
 	}
 
-	// If all ghProviders failed, return an error
+	// If all providers failed, return an error
 	if len(erroringProviders) > 0 && len(out.Results) == 0 {
 		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for ghProviders: %v", erroringProviders)
 	}
