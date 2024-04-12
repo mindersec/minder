@@ -31,6 +31,7 @@ require (
 	github.com/itchyny/gojq v0.12.15
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.63.0
 	github.com/openfga/go-sdk v0.3.5
@@ -127,6 +128,7 @@ require (
 	github.com/moby/sys/user v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
+	github.com/motemen/go-nuts v0.0.0-20220604134737-2658d0104f31 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
