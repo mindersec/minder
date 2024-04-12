@@ -406,6 +406,54 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	assert.Len(t, queued, 0)
 }
 
+// We should simply respond OK
+func (s *UnitTestSuite) TestNoopWebhookHandler() {
+	t := s.T()
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	srv, evt := newDefaultServer(t, mockStore)
+	defer evt.Close()
+
+	go func() {
+		err := evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	<-evt.Running()
+
+	hook := srv.NoopWebhookHandler()
+	port, err := rand.GetRandomPort()
+	require.NoError(t, err, "failed to get random port")
+
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.MarketplacePurchaseEvent{}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal marketplace event")
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "marketplace_purchase")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := httpDoWithRetry(client, req)
+
+	require.NoError(t, err, "failed to make request")
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+}
+
 func TestAll(t *testing.T) {
 	t.Parallel()
 

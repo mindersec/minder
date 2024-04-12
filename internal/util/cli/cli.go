@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -183,6 +185,26 @@ func GetRepositoryName(owner, name string) string {
 		return name
 	}
 	return fmt.Sprintf("%s/%s", owner, name)
+}
+
+var validRepoSlugRe = regexp.MustCompile(`(?i)^[-a-z0-9_\.]+\/[-a-z0-9_\.]+$`)
+
+// ValidateRepositoryName checks if a repository name is valid
+func ValidateRepositoryName(repository string) error {
+	if !validRepoSlugRe.MatchString(repository) {
+		return fmt.Errorf("invalid repository name: %s", repository)
+	}
+	return nil
+}
+
+// GetNameAndOwnerFromRepository returns the owner and name from a repository name in the format owner/name
+func GetNameAndOwnerFromRepository(repository string) (string, string) {
+	first, second, found := strings.Cut(repository, "/")
+	if !found {
+		return "", first
+	}
+
+	return first, second
 }
 
 // ConcatenateAndWrap takes a string and a maximum line length (maxLen),
