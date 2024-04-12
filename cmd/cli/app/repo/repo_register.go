@@ -80,19 +80,19 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	var selectedRepos []*minderv1.UpstreamRepositoryRef
 	if len(unregisteredInputRepos) > 0 {
-		var err error
-		selectedRepos, err = getSelectedReposToRegister(
-			ctx, cmd, provider, project, client, alreadyRegisteredRepos, unregisteredInputRepos)
-		if err != nil {
-			return cli.MessageAndError("Error getting selected repositories", err)
-		}
-	} else {
 		for _, repo := range unregisteredInputRepos {
 			owner, name := cli.GetNameAndOwnerFromRepository(repo)
 			selectedRepos = append(selectedRepos, &minderv1.UpstreamRepositoryRef{
 				Owner: owner,
 				Name:  name,
 			})
+		}
+	} else {
+		var err error
+		selectedRepos, err = getSelectedReposToRegister(
+			ctx, cmd, provider, project, client, alreadyRegisteredRepos, unregisteredInputRepos)
+		if err != nil {
+			return cli.MessageAndError("Error getting selected repositories", err)
 		}
 	}
 
