@@ -58,7 +58,7 @@ cli-docs: ## generate cli-docs
 	$(eval DOC_PATH := docs/docs/ref/cli)
 	@rm -rf ${DOC_PATH}
 	@mkdir -p docs/docs/ref/cli
-	@echo 'label: Minder CLI' > ${DOC_PATH}/_category_.yml
+	@echo 'label: CLI Commands' > ${DOC_PATH}/_category_.yml
 	@echo 'position: 20' >> ${DOC_PATH}/_category_.yml
 	@go run -tags '$(BUILDTAGS)' cmd/cli/main.go docs
 	@# this sed is much uglier than it should be so that it can run on Mac
