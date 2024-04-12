@@ -1,3 +1,8 @@
+---
+title: Minder Integrations
+sidebar_position: 10
+---
+
 # Minder Integrations
 
 Minder, as a platform, supports multiple integrations with different aspects of your supply chain,

@@ -1,3 +1,8 @@
+---
+title: Providers
+sidebar_position: 20
+---
+
 # Providers
 
 A provider connects Minder to your software supply chain. It lets Minder know where to look for your repositories, artifacts,
