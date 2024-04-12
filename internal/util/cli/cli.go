@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/erikgeiser/promptkit/confirmation"
@@ -183,6 +184,16 @@ func GetRepositoryName(owner, name string) string {
 		return name
 	}
 	return fmt.Sprintf("%s/%s", owner, name)
+}
+
+// GetNameAndOwnerFromRepository returns the owner and name from a repository name in the format owner/name
+func GetNameAndOwnerFromRepository(repository string) (string, string) {
+	first, second, found := strings.Cut(repository, "/")
+	if !found {
+		return "", first
+	}
+
+	return first, second
 }
 
 // ConcatenateAndWrap takes a string and a maximum line length (maxLen),

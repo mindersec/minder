@@ -100,14 +100,13 @@ func TestGetUnregisteredInputRepos(t *testing.T) {
 
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			unregisteredInputRepos, _ := getUnregisteredInputRepos(test.inputRepositories, test.alreadyRegisteredRepos)
-			if len(unregisteredInputRepos) != len(test.unregisteredInputRepos) {
-				t.Errorf("getUnregisteredInputRepos() = %v, unregisteredInputRepos %v", unregisteredInputRepos, test.unregisteredInputRepos)
-			}
+			inputrepolist := getInputRepoList(test.inputRepositories)
+			unregisteredInputRepos, _ := getUnregisteredInputRepos(inputrepolist, test.alreadyRegisteredRepos)
+
+			assert.Equal(t, len(test.unregisteredInputRepos), len(unregisteredInputRepos), "expected unregistered input repos to be equal")
+
 			for _, unregisteredInputRepo := range unregisteredInputRepos {
-				if test.alreadyRegisteredRepos.Has(unregisteredInputRepo) {
-					t.Errorf("getUnregisteredInputRepos() = %v, unregisteredInputRepos %v", unregisteredInputRepos, test.unregisteredInputRepos)
-				}
+				assert.NotContains(t, test.alreadyRegisteredRepos, unregisteredInputRepo, "expected unregistered input repo to be in already registered repos")
 			}
 		})
 	}

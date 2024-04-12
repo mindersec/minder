@@ -48,7 +48,11 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
-	inputRepoList := viper.GetString("name")
+	inputRepoListRaw := viper.GetString("name")
+	var inputRepoList []string
+	if inputRepoListRaw != "" {
+		inputRepoList = strings.Split(inputRepoListRaw, ",")
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -63,13 +67,46 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	printWarnings(cmd, warnings)
 
 	// All input repos are already registered
-	if inputRepoList != "" && len(unregisteredInputRepos) == 0 {
+	if len(inputRepoList) > 0 && len(unregisteredInputRepos) == 0 {
 		return nil
 	}
 
+	if len(unregisteredInputRepos) == 0 {
+		cmd.Println("No unregistered repositories found")
+		return nil
+	}
+
+	var selectedRepos []*minderv1.UpstreamRepositoryRef
+	if len(unregisteredInputRepos) > 0 {
+		var err error
+		selectedRepos, err = getSelectedReposToRegister(
+			ctx, cmd, provider, project, client, alreadyRegisteredRepos, unregisteredInputRepos)
+		if err != nil {
+			return cli.MessageAndError("Error getting selected repositories", err)
+		}
+	} else {
+		for _, repo := range unregisteredInputRepos {
+			owner, name := cli.GetNameAndOwnerFromRepository(repo)
+			selectedRepos = append(selectedRepos, &minderv1.UpstreamRepositoryRef{
+				Owner: owner,
+				Name:  name,
+			})
+		}
+	}
+
+	results, warnings := registerSelectedRepos(project, client, selectedRepos)
+	printWarnings(cmd, warnings)
+
+	printRepoRegistrationStatus(cmd, results)
+	return nil
+}
+
+func getSelectedReposToRegister(
+	ctx context.Context, cmd *cobra.Command, provider, project string, client minderv1.RepositoryServiceClient,
+	alreadyRegisteredRepos sets.Set[string], unregisteredInputRepos []string) ([]*minderv1.UpstreamRepositoryRef, error) {
 	remoteRepositories, err := fetchRemoteRepositoriesFromProvider(ctx, provider, project, client)
 	if err != nil {
-		return cli.MessageAndError("Error getting list of remote repos", err)
+		return nil, cli.MessageAndError("Error getting list of remote repos", err)
 	}
 
 	unregisteredRemoteRepositories := getUnregisteredRemoteRepositories(remoteRepositories, alreadyRegisteredRepos)
@@ -79,15 +116,11 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	selectedRepos, warnings, err := getSelectedRepositories(unregisteredRemoteRepositories, unregisteredInputRepos)
 	if err != nil {
-		return cli.MessageAndError("Error getting selected repositories", err)
+		return nil, cli.MessageAndError("Error getting selected repositories", err)
 	}
 	printWarnings(cmd, warnings)
 
-	results, warnings := registerSelectedRepos(project, client, selectedRepos)
-	printWarnings(cmd, warnings)
-
-	printRepoRegistrationStatus(cmd, results)
-	return nil
+	return selectedRepos, nil
 }
 
 func fetchAlreadyRegisteredRepos(ctx context.Context, provider, project string, client minderv1.RepositoryServiceClient) (
@@ -107,11 +140,10 @@ func fetchAlreadyRegisteredRepos(ctx context.Context, provider, project string, 
 	return alreadyRegisteredReposSet, nil
 }
 
-func getUnregisteredInputRepos(inputRepoList string, alreadyRegisteredRepos sets.Set[string]) (
+func getUnregisteredInputRepos(inputRepoList []string, alreadyRegisteredRepos sets.Set[string]) (
 	unregisteredInputRepos []string, warnings []string) {
-	if inputRepoList != "" {
-		inputReposSlice := strings.Split(inputRepoList, ",")
-		inputRepositoriesSet := sets.New(inputReposSlice...)
+	if len(inputRepoList) > 0 {
+		inputRepositoriesSet := sets.New(inputRepoList...)
 		for inputRepo := range inputRepositoriesSet {
 			// Input repos without owner are added to unregistered list, even if already registered
 			if alreadyRegisteredRepos.Has(inputRepo) {
@@ -292,6 +324,13 @@ func printWarnings(cmd *cobra.Command, warnings []string) {
 	for _, warning := range warnings {
 		cmd.Println(warning)
 	}
+}
+
+func getInputRepoList(raw string) []string {
+	if raw == "" {
+		return []string{}
+	}
+	return strings.Split(raw, ",")
 }
 
 func init() {
