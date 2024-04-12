@@ -143,7 +143,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 
 		wes.Typ = github.WebHookType(r)
 		if wes.Typ == "ping" {
-			log.Printf("ping received")
+			logPingReceivedEvent(r.Context(), rawWBPayload)
 			wes.Error = false
 			return
 		}
@@ -216,7 +216,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		wes.Typ = github.WebHookType(r)
 		if wes.Typ == "ping" {
-			log.Printf("ping received")
+			logPingReceivedEvent(r.Context(), rawWBPayload)
 			wes.Error = false
 			return
 		}
@@ -270,6 +270,46 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		wes.Error = false
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+// logPingReceivedEvent logs the type of token used to authenticate the webhook. The idea is to log a link between the
+// repo and the token type. Since this is done only for the ping event, we can assume that the sender is the app that
+// installed the webhook on the repository.
+func logPingReceivedEvent(ctx context.Context, rawWHPayload []byte) {
+	l := zerolog.Ctx(ctx).With().Logger()
+
+	var payload map[string]any
+	err := json.Unmarshal(rawWHPayload, &payload)
+	if err == nil {
+		repoInfo, ok := payload["repository"].(map[string]any)
+		if ok {
+			// Log the repository ID and URL if available
+			repoID, err := parseRepoID(repoInfo["id"])
+			if err == nil {
+				l = l.With().Int64("github-repository-id", repoID).Logger()
+			}
+			repoUrl := repoInfo["html_url"].(string)
+			l = l.With().Str("github-repository-url", repoUrl).Logger()
+		}
+
+		// During the ping event, the sender corresponds to the app that installed the webhook on the repository
+		if payload["sender"] != nil {
+			// Log the sender if available
+			senderLogin, err := util.JQReadFrom[string](ctx, ".sender.login", payload)
+			if err == nil {
+				l = l.With().Str("sender-login", senderLogin).Logger()
+			}
+			senderHTMLUrl, err := util.JQReadFrom[string](ctx, ".sender.html_url", payload)
+			if err == nil {
+				if strings.Contains(senderHTMLUrl, "github.com/apps") {
+					l = l.With().Str("sender-token-type", "github-app").Logger()
+				} else {
+					l = l.With().Str("sender-token-type", "oauth-app").Logger()
+				}
+			}
+		}
+	}
+	l.Debug().Msg("ping received")
 }
 
 // NoopWebhookHandler is a no-op handler for webhooks
