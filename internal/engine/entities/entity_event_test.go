@@ -178,6 +178,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			assert.Equal(t, tt.want.Type, got.Type, "entity type mismatch")
 			assert.Equal(t, tt.want.OwnershipData, got.OwnershipData, "ownership data mismatch")
 			assert.Equal(t, tt.want.Provider, got.Provider, "provider mismatch")
+			assert.Equal(t, tt.want.ProviderID, got.ProviderID, "provider ID mismatch")
 		})
 	}
 }
@@ -187,8 +188,10 @@ func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 
 	projectID := uuid.New()
 	repoID := uuid.New()
+	providerID := uuid.New()
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
+		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithRepository(&pb.Repository{
 			Owner:  "test",
@@ -199,6 +202,7 @@ func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
 	require.NoError(t, err, "unexpected error")
 
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
+	assert.Equal(t, providerID.String(), msg.Metadata.Get(ProviderIDEventKey), "provider ID mismatch")
 	assert.Equal(t, RepositoryEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
 	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
 	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
@@ -210,9 +214,11 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	projectID := uuid.New()
 	artifactID := uuid.New()
 	repoID := uuid.New()
+	providerID := uuid.New()
 
 	eiw := NewEntityInfoWrapper().
 		WithProvider("github").
+		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithArtifact(&pb.Artifact{
 			ArtifactPk: artifactID.String(),
@@ -230,6 +236,7 @@ func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
 	assert.Equal(t, "github", msg.Metadata.Get(ProviderEventKey), "provider mismatch")
 	assert.Equal(t, VersionedArtifactEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
 	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
+	assert.Equal(t, providerID.String(), msg.Metadata.Get(ProviderIDEventKey), "provider id mismatch")
 	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
 	assert.Equal(t, artifactID.String(), msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
 }

@@ -83,8 +83,8 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 	}
 
 	// Set the provider name and project ID
-	// TODO: Change to ProviderID
 	ts.Provider = inf.Provider
+	ts.ProviderID = inf.ProviderID
 	ts.Project = inf.ProjectID
 
 	// Set the entity telemetry field based on the entity type

@@ -36,6 +36,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 
 	l := zerolog.Ctx(ctx).With().
 		Str("provider", inf.Provider).
+		Str("provider_id", inf.ProviderID.String()).
 		Str("project_id", inf.ProjectID.String()).
 		Str("entity_type", inf.Type.ToString()).
 		Str("action", inf.ActionEvent).
@@ -44,8 +45,8 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	repoID, _, _ := inf.GetEntityDBIDs()
 
 	// Telemetry logging
-	// TODO: Change to ProviderID
 	minderlogger.BusinessRecord(ctx).Provider = inf.Provider
+	minderlogger.BusinessRecord(ctx).ProviderID = inf.ProviderID
 	minderlogger.BusinessRecord(ctx).Project = inf.ProjectID
 	switch inf.Type {
 	case pb.Entity_ENTITY_REPOSITORIES:
