@@ -108,7 +108,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 		return nil, err
 	}
 
-	zerolog.Ctx(ctx).Debug().Int("count", len(list)).Msg("ghProviders")
+	zerolog.Ctx(ctx).Debug().Int("count", len(list)).Msg("providers")
 
 	provs := make([]*minderv1.Provider, 0, len(list))
 	for _, p := range list {
