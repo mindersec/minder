@@ -21,8 +21,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	gogithub "github.com/google/go-github/v61/github"
+	"github.com/motemen/go-loghttp"
+	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/config/server"
@@ -82,11 +85,38 @@ func NewGitHubAppProvider(
 		},
 	}
 
-	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	transport, err := metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
 	if err != nil {
 		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
 	}
 
+	// If $MINDER_LOG_GITHUB_REQUESTS is set, wrap the transport in a logger
+	// to record all calls and responses to from GitHub:
+	if os.Getenv("MINDER_LOG_GITHUB_REQUESTS") != "" {
+		transport = &loghttp.Transport{
+			Transport: transport,
+			LogRequest: func(req *http.Request) {
+				zerolog.Ctx(req.Context()).Trace().
+					Str("type", "REQ").
+					Str("method", req.Method).
+					Msg(req.URL.String())
+			},
+			LogResponse: func(resp *http.Response) {
+				zerolog.Ctx(resp.Request.Context()).Trace().
+					Str("type", "RESP").
+					Str("method", resp.Request.Method).
+					Str("status", fmt.Sprintf("%d", resp.StatusCode)).
+					Str("rate-limit", fmt.Sprintf("%s/%s",
+						resp.Request.Header.Get("x-ratelimit-used"),
+						resp.Request.Header.Get("x-ratelimit-remaining"),
+					)).
+					Msg(resp.Request.URL.String())
+
+			},
+		}
+	}
+
+	tc.Transport = transport
 	ghClient := gogithub.NewClient(tc)
 
 	if providerConfig.Endpoint != "" {
