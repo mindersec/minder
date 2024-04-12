@@ -614,7 +614,7 @@ func (s *Server) VerifyProviderCredential(ctx context.Context,
 // cannot be tied back to a specific project, so we create a new project for the provider.
 //
 // This is a callback because we want to encapsulate components like s.cfg.Identity,
-// s.marketplace, s.authzClient and the like from the the ghProviders implementation.
+// s.marketplace, s.authzClient and the like from the providers implementation.
 func (s *Server) makeProjectForGitHubApp(
 	ctx context.Context,
 	qtx db.Querier,

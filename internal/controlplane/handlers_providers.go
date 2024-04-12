@@ -71,7 +71,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 	}, nil
 }
 
-// ListProviders lists the ghProviders available in a specific project.
+// ListProviders lists the providers available in a specific project.
 func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersRequest) (*minderv1.ListProvidersResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
@@ -151,7 +151,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 func (_ *Server) ListProviderClasses(
 	_ context.Context, _ *minderv1.ListProviderClassesRequest,
 ) (*minderv1.ListProviderClassesResponse, error) {
-	// Note: New provider classes should be added to the ghProviders package.
+	// Note: New provider classes should be added to the providers package.
 	classes := providers.ListProviderClasses()
 	return &minderv1.ListProviderClassesResponse{
 		ProviderClasses: classes,

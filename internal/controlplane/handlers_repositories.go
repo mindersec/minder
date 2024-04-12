@@ -490,7 +490,7 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 		}
 	}
 
-	return nil, fmt.Errorf("no ghProviders can handle repo owned by %s", owner)
+	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
 }
 
 func (s *Server) getClientForProvider(
