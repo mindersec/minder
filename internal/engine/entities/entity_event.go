@@ -47,8 +47,6 @@ import (
 // - RepositoryEventEntityType - repository
 // - VersionedArtifactEventEntityType - versioned_artifact
 type EntityInfoWrapper struct {
-	// TODO: remove this field
-	Provider      string
 	ProviderID    uuid.UUID
 	ProjectID     uuid.UUID
 	Entity        protoreflect.ProtoMessage
@@ -238,7 +236,6 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		msg.Metadata.Set(ExecutionIDKey, eiw.ExecutionID.String())
 	}
 
-	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(ProviderIDEventKey, eiw.ProviderID.String())
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
@@ -300,24 +297,16 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 }
 
 func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) error {
-	providerName := msg.Metadata.Get(ProviderEventKey)
 	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
-	// TODO: get rid of Provider name
-	if providerName == "" && rawProviderID == "" {
-		return fmt.Errorf("neither %s nor %s found in metadata", ProviderIDEventKey, ProviderEventKey)
+	if rawProviderID == "" {
+		return fmt.Errorf("%s not found in metadata", ProviderIDEventKey)
 	}
 
-	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
-	providerID := uuid.Nil
-	if rawProviderID != "" {
-		var err error
-		providerID, err = uuid.Parse(rawProviderID)
-		if err != nil {
-			return fmt.Errorf("malformed provider id %s", rawProviderID)
-		}
+	providerID, err := uuid.Parse(rawProviderID)
+	if err != nil {
+		return fmt.Errorf("malformed provider id %s", rawProviderID)
 	}
 
-	eiw.Provider = providerName
 	eiw.ProviderID = providerID
 	return nil
 }
