@@ -16,7 +16,6 @@
 package vulncheck
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -53,9 +52,44 @@ type config struct {
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
 }
 
+func defaultConfig() *config {
+	return &config{
+		Action: pr_actions.ActionReviewPr,
+		EcosystemConfig: []ecosystemConfig{
+			{
+				Name:       "npm",
+				DbType:     vulnDbTypeOsv,
+				DbEndpoint: "https://api.osv.dev/v1/query",
+				PackageRepository: packageRepository{
+					Url: "https://registry.npmjs.org",
+				},
+			},
+			{
+				Name:       "pypi",
+				DbType:     vulnDbTypeOsv,
+				DbEndpoint: "https://api.osv.dev/v1/query",
+				PackageRepository: packageRepository{
+					Url: "https://pypi.org/pypi",
+				},
+			},
+			{
+				Name:       "go",
+				DbType:     vulnDbTypeOsv,
+				DbEndpoint: "https://api.osv.dev/v1/query",
+				PackageRepository: packageRepository{
+					Url: "https://proxy.golang.org",
+				},
+				SumRepository: packageRepository{
+					Url: "https://sum.golang.org",
+				},
+			},
+		},
+	}
+}
+
 func parseConfig(ruleCfg map[string]any) (*config, error) {
-	if ruleCfg == nil {
-		return nil, errors.New("config was missing")
+	if len(ruleCfg) == 0 {
+		return defaultConfig(), nil
 	}
 
 	var conf config
