@@ -22,7 +22,7 @@ Examples of integrations include:
 - CI/CD tools (e.g. GitHub Actions)
 - Automated dependency update tools (e.g. Dependabot)
 
-For more information, see the [OSS Integrations](oss_integrations.md) documentation.
+For more information, see the [OSS Integrations](community_integrations.md) documentation.
 
 ## Trusty
 
