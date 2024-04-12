@@ -251,7 +251,7 @@ func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, proj
 	}
 
 	// Delete the provider itself
-	err = s.providers.DeleteProvider(ctx, provider)
+	err = s.ghProviders.DeleteProvider(ctx, provider)
 	if err != nil {
 		return status.Errorf(codes.Internal, "error deleting provider: %v", err)
 	}

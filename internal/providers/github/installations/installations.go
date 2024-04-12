@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+// Package installations contains logic relating to GitHub provider installations
+package installations
 
 import (
 	"context"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/github/service"
 )
 
 const (
@@ -49,12 +51,12 @@ const (
 
 // InstallationManager is a struct representing the installation manager
 type InstallationManager struct {
-	svc ProviderService
+	svc service.GitHubProviderService
 }
 
 // NewInstallationManager creates a new installation manager
 func NewInstallationManager(
-	svc ProviderService,
+	svc service.GitHubProviderService,
 ) *InstallationManager {
 	return &InstallationManager{
 		svc: svc,
@@ -79,7 +81,7 @@ func (im *InstallationManager) handleProviderInstallationEvent(msg *message.Mess
 }
 
 func (im *InstallationManager) handleProviderInstanceRemovedEvent(ctx context.Context, msg *message.Message) error {
-	var payload GitHubAppInstallationDeletedPayload
+	var payload service.GitHubAppInstallationDeletedPayload
 
 	err := json.Unmarshal(msg.Payload, &payload)
 	if err != nil {

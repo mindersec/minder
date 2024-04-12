@@ -59,6 +59,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -93,7 +94,7 @@ type Server struct {
 	ruleTypes           ruletypes.RuleTypeService
 	repos               github.RepositoryService
 	profiles            profiles.ProfileService
-	providers           providers.ProviderService
+	ghProviders         service.GitHubProviderService
 	marketplace         marketplaces.Marketplace
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
@@ -194,15 +195,15 @@ func NewServer(
 	}
 
 	// Moved here because we have a dependency on s.restClientCache
-	s.providers = providers.NewProviderService(
+	s.ghProviders = service.NewGithubProviderService(
 		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)
 
 	return s, nil
 }
 
 // GetProviderService returns the provider service
-func (s *Server) GetProviderService() providers.ProviderService {
-	return s.providers
+func (s *Server) GetProviderService() service.GitHubProviderService {
+	return s.ghProviders
 }
 
 // GetAuthzClient returns the authz client

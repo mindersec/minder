@@ -137,7 +137,7 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.Querier) []*db.
 
 	for _, i := range installs {
 		// TODO: if we can get an GitHub auth token for the user, we can do the rest with CreateGitHubAppWithoutInvitation
-		proj, err := s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
+		proj, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Int64("org_id", i.OrganizationID).Msg("failed to create GitHub app at first login")
 			continue
@@ -166,7 +166,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	err = DeleteUser(ctx, s.store, s.authzClient, s.providers, subject)
+	err = DeleteUser(ctx, s.store, s.authzClient, s.ghProviders, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}

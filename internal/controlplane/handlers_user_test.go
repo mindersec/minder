@@ -263,7 +263,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				cfg:          &serverconfig.Config{},
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
-				providers:    mockProviders,
+				ghProviders:  mockProviders,
 				authzClient:  &mock.NoopClient{Authorized: true},
 				marketplace:  marketplaces.NewNoopMarketplace(),
 			}
@@ -272,7 +272,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			// 	Auth: serverconfig.AuthConfig{
 			// 		TokenKey: generateTokenKey(t),
 			// 	},
-			// }, mockJwtValidator, providers.NewProviderStore(mockStore))
+			// }, mockJwtValidator, ghProviders.NewProviderStore(mockStore))
 			// require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.CreateUser(reqCtx, tc.req)
