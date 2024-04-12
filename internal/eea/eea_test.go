@@ -45,6 +45,10 @@ const (
 	providerName = "test-provider"
 )
 
+var (
+	providerID = uuid.New()
+)
+
 func TestAggregator(t *testing.T) {
 	t.Parallel()
 
@@ -100,7 +104,7 @@ func TestAggregator(t *testing.T) {
 		WithRepository(&minderv1.Repository{}).
 		WithRepositoryID(repoID).
 		WithProjectID(projectID).
-		WithProvider(providerName)
+		WithProviderID(providerID)
 
 	<-evt.Running()
 
@@ -208,16 +212,18 @@ func TestFlushAll(t *testing.T) {
 				// base repo info
 				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				// subsequent repo fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 
 				// There should be one flush in the end
@@ -252,22 +258,25 @@ func TestFlushAll(t *testing.T) {
 				// base repo info
 				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				mockStore.EXPECT().GetArtifactByID(ctx, gomock.Any()).
 					Return(db.Artifact{
 						ID:           artID,
 						ProjectID:    projectID,
 						ProviderName: providerName,
+						ProviderID:   providerID,
 						RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
 					}, nil)
 
@@ -306,15 +315,17 @@ func TestFlushAll(t *testing.T) {
 				// subsequent artifact fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				mockStore.EXPECT().GetArtifactByID(ctx, gomock.Any()).
 					Return(db.Artifact{
 						ID:           artID,
 						ProjectID:    projectID,
 						ProviderName: providerName,
+						ProviderID:   providerID,
 						RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
 					}, nil)
 
@@ -355,6 +366,7 @@ func TestFlushAll(t *testing.T) {
 						ID:           artID,
 						ProjectID:    projectID,
 						ProviderName: providerName,
+						ProviderID:   providerID,
 					}, nil)
 
 				// There should be one flush in the end
@@ -389,16 +401,18 @@ func TestFlushAll(t *testing.T) {
 				// base repo info
 				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				// subsequent artifact fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
-						ID:        repoID,
-						ProjectID: projectID,
-						Provider:  providerName,
+						ID:         repoID,
+						ProjectID:  projectID,
+						Provider:   providerName,
+						ProviderID: providerID,
 					}, nil)
 				mockStore.EXPECT().GetPullRequestByID(ctx, prID).
 					Return(db.PullRequest{

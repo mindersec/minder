@@ -238,6 +238,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	providerName := "github"
 	repositoryID := uuid.New()
 	projectID := uuid.New()
+	providerID := uuid.New()
 
 	// create a test oauth2 token
 	token := oauth2.Token{
@@ -263,30 +264,20 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
-			ID:        repositoryID,
-			ProjectID: projectID,
-			RepoID:    12345,
-			Provider:  providerName,
+			ID:         repositoryID,
+			ProjectID:  projectID,
+			RepoID:     12345,
+			Provider:   providerName,
+			ProviderID: providerID,
 		}, nil)
 
 	mockStore.EXPECT().
-		GetParentProjects(gomock.Any(), projectID).
-		Return([]uuid.UUID{
-			projectID,
-		}, nil)
-
-	mockStore.EXPECT().
-		FindProviders(gomock.Any(), db.FindProvidersParams{
-			Name: sql.NullString{String: providerName, Valid: true},
-			Projects: []uuid.UUID{
-				projectID,
-			},
-			Trait: db.NullProviderType{},
-		}).
-		Return([]db.Provider{{
+		GetProviderByID(gomock.Any(), gomock.Eq(providerID)).
+		Return(db.Provider{
+			ID:        providerID,
 			ProjectID: projectID,
 			Name:      providerName,
-		}}, nil)
+		}, nil)
 
 	hook := srv.HandleGitHubWebHook()
 	port, err := rand.GetRandomPort()
@@ -331,7 +322,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "12345", received.Metadata["id"])
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
-	assert.Equal(t, "github", received.Metadata["provider"])
+	assert.Equal(t, providerID.String(), received.Metadata["provider_id"])
 	assert.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 

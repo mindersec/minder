@@ -61,12 +61,12 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 
 	<-evt.Running()
 
-	providerName := "test-provider"
+	providerID := uuid.New()
 	projectID := uuid.New()
 	repositoryID := uuid.New()
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithProvider(providerName).
+		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{
 			Name:     "test",
@@ -88,7 +88,7 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 	t.Logf("logged: %v", logged)
 
 	require.Equal(t, projectID.String(), logged["project"], "expected project ID to be logged")
-	require.Equal(t, providerName, logged["provider"], "expected provider to be logged")
+	require.Equal(t, providerID.String(), logged["provider_id"], "expected provider to be logged")
 	require.Equal(t, repositoryID.String(), logged["repository"], "expected repository ID to be logged")
 	require.Equal(t, "true", logged["telemetry"], "expected telemetry to be logged")
 }

@@ -19,9 +19,7 @@ package util
 import (
 	"context"
 	"crypto/tls"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -34,7 +32,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/grpc"
@@ -42,12 +39,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
-	"github.com/stacklok/minder/internal/util/ptr"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -465,139 +458,6 @@ func Int32FromString(v string) (int32, error) {
 		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
 	return int32(asInt32), nil
-}
-
-// PBRepositoryFromDB converts a database repository to a protobuf
-// Note this doesn't set the context as that's assumed to be set
-// on the caller's side.
-func PBRepositoryFromDB(dbrepo db.Repository) *minderv1.Repository {
-	return &minderv1.Repository{
-		Id: ptr.Ptr(dbrepo.ID.String()),
-		Context: &minderv1.Context{
-			Provider: &dbrepo.Provider,
-			Project:  ptr.Ptr(dbrepo.ProjectID.String()),
-		},
-		Owner:         dbrepo.RepoOwner,
-		Name:          dbrepo.RepoName,
-		RepoId:        dbrepo.RepoID,
-		IsPrivate:     dbrepo.IsPrivate,
-		IsFork:        dbrepo.IsFork,
-		HookUrl:       dbrepo.WebhookUrl,
-		DeployUrl:     dbrepo.DeployUrl,
-		CloneUrl:      dbrepo.CloneUrl,
-		DefaultBranch: dbrepo.DefaultBranch.String,
-		License:       dbrepo.License.String,
-		CreatedAt:     timestamppb.New(dbrepo.CreatedAt),
-		UpdatedAt:     timestamppb.New(dbrepo.UpdatedAt),
-	}
-}
-
-// GetRepository retrieves a repository from the database
-// and converts it to a protobuf
-func GetRepository(
-	ctx context.Context,
-	store db.ExtendQuerier,
-	projectID uuid.UUID,
-	repoID uuid.UUID,
-) (*minderv1.Repository, error) {
-	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
-		ProjectID: projectID,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error getting repository: %w", err)
-	}
-
-	return PBRepositoryFromDB(dbrepo), nil
-}
-
-// GetArtifact retrieves an artifact and its versions from the database
-func GetArtifact(
-	ctx context.Context,
-	store db.ExtendQuerier,
-	projectID uuid.UUID,
-	artifactID uuid.UUID,
-) (*minderv1.Artifact, error) {
-	// Retrieve artifact details
-	artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
-		ID:        artifactID,
-		ProjectID: projectID,
-	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("artifact not found")
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to get artifact: %v", err)
-	}
-
-	var repoOwner, repoName string
-	if artifact.RepositoryID.Valid {
-		dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-			ID:        artifact.RepositoryID.UUID,
-			ProjectID: projectID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("repository not found")
-		} else if err != nil {
-			return nil, fmt.Errorf("cannot read repository: %v", err)
-		}
-
-		repoOwner = dbrepo.RepoOwner
-		repoName = dbrepo.RepoName
-	}
-
-	// Build the artifact protobuf
-	return &minderv1.Artifact{
-		ArtifactPk: artifact.ID.String(),
-		Context: &minderv1.Context{
-			Project:  ptr.Ptr(projectID.String()),
-			Provider: ptr.Ptr(artifact.ProviderName),
-		},
-		Owner:      repoOwner,
-		Name:       artifact.ArtifactName,
-		Type:       artifact.ArtifactType,
-		Visibility: artifact.ArtifactVisibility,
-		Repository: repoName,
-		CreatedAt:  timestamppb.New(artifact.CreatedAt),
-	}, nil
-}
-
-// GetPullRequest retrieves a pull request from the database
-// and converts it to a protobuf
-func GetPullRequest(
-	ctx context.Context,
-	store db.ExtendQuerier,
-	projectID,
-	repoID,
-	pullRequestID uuid.UUID,
-) (*minderv1.PullRequest, error) {
-	// Get repository data - we need the owner and name
-	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
-		ProjectID: projectID,
-	})
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("repository not found")
-	} else if err != nil {
-		return nil, fmt.Errorf("cannot read repository: %v", err)
-	}
-
-	dbpr, err := store.GetPullRequestByID(ctx, pullRequestID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("pull request not found")
-	} else if err != nil {
-		return nil, fmt.Errorf("cannot read pull request: %v", err)
-	}
-
-	// TODO: Do we need extra columns in the pull request table?
-	return &minderv1.PullRequest{
-		Context: &minderv1.Context{
-			Project:  ptr.Ptr(dbrepo.ProjectID.String()),
-			Provider: ptr.Ptr(dbrepo.Provider),
-		},
-		Number:    dbpr.PrNumber,
-		RepoOwner: dbrepo.RepoOwner,
-		RepoName:  dbrepo.RepoName,
-	}, nil
 }
 
 // ViperLogLevelToZerologLevel converts a viper log level to a zerolog log level
