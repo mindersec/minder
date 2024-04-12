@@ -376,6 +376,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
 	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
 	mux.Handle("/api/v1/ghapp/", mw(s.HandleGitHubAppWebhook()))
+	mux.Handle("/api/v1/gh-marketplace/", mw(s.NoopWebhookHandler()))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)

@@ -272,6 +272,25 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	}
 }
 
+// NoopWebhookHandler is a no-op handler for webhooks
+func (s *Server) NoopWebhookHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		wes := &metrics.WebhookEventState{
+			Typ:      "unknown",
+			Accepted: false,
+			Error:    true,
+		}
+		defer func() {
+			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
+		}()
+
+		wes.Typ = github.WebHookType(r)
+		wes.Accepted = true
+		wes.Error = false
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func validatePayloadSignature(r *http.Request, wc *server.WebhookConfig) (payload []byte, err error) {
 	var br *bytes.Reader
 	br, err = readerFromRequest(r)
