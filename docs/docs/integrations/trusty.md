@@ -1,4 +1,9 @@
-## Trusty Integration
+---
+title: Trusty
+sidebar_position: 40
+---
+
+# Trusty Integration
 
 Minder integrates directly with [Trusty by Stacklok](http://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 

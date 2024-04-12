@@ -1,3 +1,8 @@
+---
+title: Community Tooling Integrations
+sidebar_position: 30
+---
+
 # Community Tooling Integrations
 
 Minder's policy engine is flexible enough to integrate with a variety of open source tools.
