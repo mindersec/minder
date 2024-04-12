@@ -16,8 +16,8 @@ minder repo register [flags]
 ### Options
 
 ```
-  -h, --help          help for register
-  -n, --name string   List of repository names to register, i.e owner/repo,owner/repo
+  -h, --help           help for register
+  -n, --name strings   List of repository names to register, i.e owner/repo,owner/repo
 ```
 
 ### Options inherited from parent commands
