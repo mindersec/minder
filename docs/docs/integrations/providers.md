@@ -17,11 +17,6 @@ To enroll GitHub as a provider, use the following command:
 minder provider enroll
 ```
 
-To enroll a specific GitHub organization, use the following command:
-```
-minder provider enroll
-```
-
 Once a provider is enrolled, public repositories from that provider can be registered with Minder. Security profiles
 can then be applied to the registered repositories, giving you an overview of your security posture and providing
 remediations to improve your security posture.
