@@ -470,7 +470,7 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 	opts, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeGithub)
 	if err != nil {
-		return nil, fmt.Errorf("error getting ghProviders: %v", err)
+		return nil, fmt.Errorf("error getting providers: %v", err)
 	}
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
