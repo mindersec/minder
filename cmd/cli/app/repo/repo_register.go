@@ -73,11 +73,6 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		return nil
 	}
 
-	if len(unregisteredInputRepos) == 0 {
-		cmd.Println("Minder is already tracking all repositories in this organization")
-		return nil
-	}
-
 	var selectedRepos []*minderv1.UpstreamRepositoryRef
 	if len(unregisteredInputRepos) > 0 {
 		for _, repo := range unregisteredInputRepos {
