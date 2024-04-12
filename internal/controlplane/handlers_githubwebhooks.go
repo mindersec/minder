@@ -445,6 +445,8 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
+	logPayload(ctx, payload, msg)
+
 	// get information about the repository from the payload
 	dbRepo, err := getRepoInformationFromPayload(ctx, s.store, payload)
 	if err != nil {
@@ -485,6 +487,30 @@ func (s *Server) parseGithubEventForProcessing(
 
 	return newErrNotHandled("event %s with action %s not handled",
 		msg.Metadata.Get(events.GithubWebhookEventTypeKey), action)
+}
+
+func logPayload(ctx context.Context, payload map[string]any, msg *message.Message) {
+	l := zerolog.Ctx(ctx).With().Str("message-id", msg.UUID).Logger()
+	if payload["sender"] != nil {
+		senderLogin, err := util.JQReadFrom[string](ctx, ".sender.login", payload)
+		if err != nil {
+			l.Debug().Msg("error getting sender login from payload")
+			return
+		}
+		l = l.With().Str("sender-login", senderLogin).Logger()
+		senderHTMLUrl, err := util.JQReadFrom[string](ctx, ".sender.html_url", payload)
+		if err != nil {
+			l.Debug().Msg("error getting sender html_url from payload")
+			return
+		}
+		if strings.Contains(senderHTMLUrl, "github.com/apps") {
+			l.Debug().Str("sender-token-type", "github-app").Msg("payload sender login")
+		} else {
+			l.Debug().Str("sender-token-type", "oauth-app").Msg("payload sender login")
+		}
+		return
+	}
+	l.Debug().Msg("no sender information found in payload")
 }
 
 func parseRepoEvent(
