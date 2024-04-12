@@ -106,7 +106,12 @@ func NewGitHubAppProvider(
 					Str("type", "RESP").
 					Str("method", resp.Request.Method).
 					Str("status", fmt.Sprintf("%d", resp.StatusCode)).
+					Str("rate-limit", fmt.Sprintf("%s/%s",
+						resp.Request.Header.Get("x-ratelimit-used"),
+						resp.Request.Header.Get("x-ratelimit-remaining"),
+					)).
 					Msg(resp.Request.URL.String())
+
 			},
 		}
 	}
