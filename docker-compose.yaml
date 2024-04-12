@@ -48,7 +48,7 @@ services:
       # - ./.github_client_id:/secrets/github_client_id:z
       # - ./.github_client_secret:/secrets/github_client_secret:z
       # If you're using a GitHub App, you'll need to provide the private key:
-      - ./.secrets/github-app.pem:/app/.secrets/github-app.pem:z
+      - ./.secrets/:/app/.secrets/:z
       - ./.ssh:/app/.ssh:z
     environment:
       - KO_DATA_PATH=/app/
