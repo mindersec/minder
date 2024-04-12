@@ -147,7 +147,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:          "List remote repositories fails when all providers error",
 			GitHubSetup:   newGitHub(withFailedListAllRepositories(errDefault)),
-			ExpectedError: "cannot list repositories for ghProviders: [github]",
+			ExpectedError: "cannot list repositories for providers: [github]",
 		},
 		{
 			Name:        "List remote repositories succeeds when all providers succeed",
