@@ -48,11 +48,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
-	inputRepoListRaw := viper.GetString("name")
-	var inputRepoList []string
-	if inputRepoListRaw != "" {
-		inputRepoList = strings.Split(inputRepoListRaw, ",")
-	}
+	inputRepoList := viper.GetStringSlice("name")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -336,5 +332,5 @@ func getInputRepoList(raw string) []string {
 func init() {
 	RepoCmd.AddCommand(repoRegisterCmd)
 	// Flags
-	repoRegisterCmd.Flags().StringP("name", "n", "", "List of repository names to register, i.e owner/repo,owner/repo")
+	repoRegisterCmd.Flags().StringSliceP("name", "n", []string{}, "List of repository names to register, i.e owner/repo,owner/repo")
 }
