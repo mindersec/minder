@@ -374,7 +374,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 	// If all providers failed, return an error
 	if len(erroringProviders) > 0 && len(out.Results) == 0 {
-		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for ghProviders: %v", erroringProviders)
+		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for providers: %v", erroringProviders)
 	}
 
 	return out, nil
@@ -474,7 +474,7 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
-		// Sort GitHub OAuth provider after all GitHub App ghProviders
+		// Sort GitHub OAuth provider after all GitHub App providers
 		if a.Class.ProviderClass == db.ProviderClassGithub && b.Class.ProviderClass == db.ProviderClassGithubApp {
 			return 1
 		}
