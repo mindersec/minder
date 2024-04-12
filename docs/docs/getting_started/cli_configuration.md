@@ -1,8 +1,3 @@
----
-title: Minder CLI configuration
-sidebar_position: 80
----
-
 # Minder CLI configuration
 
 The Minder CLI application is configured using a YAML file. The default location for the configuration file
