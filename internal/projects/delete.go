@@ -26,13 +26,13 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github/service"
 )
 
 // CleanUpUnmanagedProjects deletes a project if it has no role assignments left
 func CleanUpUnmanagedProjects(
 	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
-	providerService providers.ProviderService, l zerolog.Logger,
+	providerService service.GitHubProviderService, l zerolog.Logger,
 ) error {
 	l = l.With().Str("project", proj.String()).Logger()
 	// Given that we've deleted the user from the authorization system,
@@ -53,7 +53,7 @@ func CleanUpUnmanagedProjects(
 
 // DeleteProject deletes a project and authorization relationships
 func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
-	providerService providers.ProviderService, l zerolog.Logger) error {
+	providerService service.GitHubProviderService, l zerolog.Logger) error {
 	_, err := querier.GetProjectByID(ctx, proj)
 	if err != nil {
 		// This project has already been deleted. Skip and go to the next one.

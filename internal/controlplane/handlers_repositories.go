@@ -372,9 +372,9 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		out.Results = append(out.Results, results...)
 	}
 
-	// If all providers failed, return an error
+	// If all ghProviders failed, return an error
 	if len(erroringProviders) > 0 && len(out.Results) == 0 {
-		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for providers: %v", erroringProviders)
+		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for ghProviders: %v", erroringProviders)
 	}
 
 	return out, nil
@@ -470,11 +470,11 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 	opts, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeGithub)
 	if err != nil {
-		return nil, fmt.Errorf("error getting providers: %v", err)
+		return nil, fmt.Errorf("error getting ghProviders: %v", err)
 	}
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
-		// Sort GitHub OAuth provider after all GitHub App providers
+		// Sort GitHub OAuth provider after all GitHub App ghProviders
 		if a.Class.ProviderClass == db.ProviderClassGithub && b.Class.ProviderClass == db.ProviderClassGithubApp {
 			return 1
 		}
@@ -490,7 +490,7 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 		}
 	}
 
-	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
+	return nil, fmt.Errorf("no ghProviders can handle repo owned by %s", owner)
 }
 
 func (s *Server) getClientForProvider(

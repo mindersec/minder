@@ -48,6 +48,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
+	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -575,7 +576,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 					}, nil)
 				service.EXPECT().
 					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID, gomock.Any()).
-					Return(nil, providers.ErrInvalidTokenIdentity)
+					Return(nil, ghService.ErrInvalidTokenIdentity)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
 				t.Helper()
@@ -651,7 +652,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 
 			s := &Server{
 				store:               store,
-				providers:           providerService,
+				ghProviders:         providerService,
 				evt:                 evt,
 				providerAuthFactory: providerAuthFactory,
 				ghClient:            gh,

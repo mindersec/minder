@@ -97,7 +97,7 @@ func TestDeleteProvider(t *testing.T) {
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
-		providers:       mockProvidersSvc,
+		ghProviders:     mockProvidersSvc,
 		repos:           mockRepoSvc,
 		authzClient:     authzClient,
 		providerStore:   providers.NewProviderStore(mockStore),
@@ -179,7 +179,7 @@ func TestDeleteProviderByID(t *testing.T) {
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
-		providers:       mockProvidersSvc,
+		ghProviders:     mockProvidersSvc,
 		repos:           mockRepoSvc,
 		authzClient:     authzClient,
 		providerStore:   providers.NewProviderStore(mockStore),

@@ -71,7 +71,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 	}, nil
 }
 
-// ListProviders lists the providers available in a specific project.
+// ListProviders lists the ghProviders available in a specific project.
 func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersRequest) (*minderv1.ListProvidersResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
@@ -108,7 +108,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 		return nil, err
 	}
 
-	zerolog.Ctx(ctx).Debug().Int("count", len(list)).Msg("providers")
+	zerolog.Ctx(ctx).Debug().Int("count", len(list)).Msg("ghProviders")
 
 	provs := make([]*minderv1.Provider, 0, len(list))
 	for _, p := range list {
@@ -151,7 +151,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 func (_ *Server) ListProviderClasses(
 	_ context.Context, _ *minderv1.ListProviderClassesRequest,
 ) (*minderv1.ListProviderClassesResponse, error) {
-	// Note: New provider classes should be added to the providers package.
+	// Note: New provider classes should be added to the ghProviders package.
 	classes := providers.ListProviderClasses()
 	return &minderv1.ListProviderClassesResponse{
 		ProviderClasses: classes,
@@ -251,7 +251,7 @@ func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, proj
 	}
 
 	// Delete the provider itself
-	err = s.providers.DeleteProvider(ctx, provider)
+	err = s.ghProviders.DeleteProvider(ctx, provider)
 	if err != nil {
 		return status.Errorf(codes.Internal, "error deleting provider: %v", err)
 	}

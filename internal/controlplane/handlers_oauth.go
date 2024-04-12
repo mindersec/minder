@@ -43,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -234,9 +235,9 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	p, err := s.providers.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
+	p, err := s.ghProviders.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
 	if err != nil {
-		if errors.Is(err, providers.ErrInvalidTokenIdentity) {
+		if errors.Is(err, service.ErrInvalidTokenIdentity) {
 			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
 				"The provided login token was associated with a different GitHub user.")
 		}
@@ -300,7 +301,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		return fmt.Errorf("unable to parse installation ID to integer: %v", err)
 	}
 
-	err = s.providers.ValidateGitHubInstallationId(ctx, token, installationID)
+	err = s.ghProviders.ValidateGitHubInstallationId(ctx, token, installationID)
 	if err != nil {
 		return newHttpError(http.StatusForbidden, "User installation ID mismatch").SetContents(
 			"The GitHub user does not have access to the requested installation.")
@@ -314,9 +315,9 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
-		_, err = s.providers.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
+		_, err = s.ghProviders.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
-			if errors.Is(err, providers.ErrInvalidTokenIdentity) {
+			if errors.Is(err, service.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
 					"The provided login token was associated with a different GitHub user.")
 			}
@@ -415,7 +416,7 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 	}
 
 	_, err = db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.Project, error) {
-		return s.providers.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
+		return s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
 	})
 	return err
 }
@@ -613,7 +614,7 @@ func (s *Server) VerifyProviderCredential(ctx context.Context,
 // cannot be tied back to a specific project, so we create a new project for the provider.
 //
 // This is a callback because we want to encapsulate components like s.cfg.Identity,
-// s.marketplace, s.authzClient and the like from the the providers implementation.
+// s.marketplace, s.authzClient and the like from the the ghProviders implementation.
 func (s *Server) makeProjectForGitHubApp(
 	ctx context.Context,
 	qtx db.Querier,

@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github/installations"
 	"github.com/stacklok/minder/internal/reconcilers"
 )
 
@@ -89,7 +90,7 @@ func AllInOneServerService(
 
 	evt.ConsumeEvents(rec)
 
-	im := providers.NewInstallationManager(s.GetProviderService())
+	im := installations.NewInstallationManager(s.GetProviderService())
 	evt.ConsumeEvents(im)
 
 	// Start the gRPC and HTTP server in separate goroutines

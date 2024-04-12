@@ -45,6 +45,8 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github/installations"
+	github2 "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -134,7 +136,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
 		}()
 
-		rawWBPayload, err := s.providers.ValidateGitHubAppWebhookPayload(r)
+		rawWBPayload, err := s.ghProviders.ValidateGitHubAppWebhookPayload(r)
 		if err != nil {
 			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -173,7 +175,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		wes.Accepted = true
 		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
 
-		if err := s.evt.Publish(providers.ProviderInstallationTopic, m); err != nil {
+		if err := s.evt.Publish(installations.ProviderInstallationTopic, m); err != nil {
 			wes.Error = true
 			log.Printf("Error publishing message: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -454,14 +456,14 @@ func (_ *Server) parseGithubAppEventForProcessing(
 		return fmt.Errorf("installation ID is 0")
 	}
 
-	payloadBytes, err := json.Marshal(providers.GitHubAppInstallationDeletedPayload{
+	payloadBytes, err := json.Marshal(github2.GitHubAppInstallationDeletedPayload{
 		InstallationID: installationID,
 	})
 	if err != nil {
 		return fmt.Errorf("error marshalling payload: %w", err)
 	}
 
-	providers.ProviderInstanceRemovedMessage(
+	installations.ProviderInstanceRemovedMessage(
 		msg,
 		db.ProviderClassGithubApp,
 		payloadBytes)

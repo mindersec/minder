@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+package service
 
 import (
 	"bytes"
@@ -65,7 +65,7 @@ func testNewProviderService(
 	mockCtrl *gomock.Controller,
 	config *server.ProviderConfig,
 	projectFactory ProjectFactory,
-) (*providerService, *testMocks) {
+) (*ghProviderService, *testMocks) {
 	t.Helper()
 
 	fakeStore, cancelFunc, err := embedded.GetFakeStore()
@@ -89,7 +89,7 @@ func testNewProviderService(
 	require.NoError(t, err)
 	packageListingClient.BaseURL = testServerUrl
 
-	psi := NewProviderService(
+	psi := NewGithubProviderService(
 		mocks.fakeStore,
 		mocks.cryptoMocks,
 		metrics.NewNoopMetrics(),
@@ -100,7 +100,7 @@ func testNewProviderService(
 		packageListingClient,
 	)
 
-	ps, ok := psi.(*providerService)
+	ps, ok := psi.(*ghProviderService)
 	require.True(t, ok)
 	ps.ghClientService = mocks.svcMock
 	return ps, mocks

@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+// Package service contains the github
+package service
 
 import (
 	"context"
@@ -37,15 +38,16 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	ghprov "github.com/stacklok/minder/internal/providers/github"
+	github2 "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
-// ProviderService encapsulates methods for creating and updating providers
-type ProviderService interface {
+// GitHubProviderService encapsulates methods for creating and updating providers
+type GitHubProviderService interface {
 	// CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential
 	CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
 		token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, state string) (*db.Provider, error)
@@ -80,7 +82,7 @@ var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 type ProjectFactory func(
 	ctx context.Context, qtx db.Querier, name string, user int64) (*db.Project, error)
 
-type providerService struct {
+type ghProviderService struct {
 	store               db.Store
 	cryptoEngine        crypto.Engine
 	mt                  metrics.Metrics
@@ -88,15 +90,22 @@ type providerService struct {
 	config              *server.ProviderConfig
 	projectFactory      ProjectFactory
 	restClientCache     ratecache.RestClientCache
-	ghClientService     ghprov.ClientService
+	ghClientService     github2.ClientService
 	fallbackTokenClient *github.Client
 }
 
-// NewProviderService creates an instance of ProviderService
-func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.Metrics,
-	provMt provtelemetry.ProviderMetrics, config *server.ProviderConfig,
-	projectFactory ProjectFactory, restClientCache ratecache.RestClientCache, fallbackTokenClient *github.Client) ProviderService {
-	return &providerService{
+// NewGithubProviderService creates an instance of GitHubProviderService
+func NewGithubProviderService(
+	store db.Store,
+	cryptoEngine crypto.Engine,
+	mt metrics.Metrics,
+	provMt provtelemetry.ProviderMetrics,
+	config *server.ProviderConfig,
+	projectFactory ProjectFactory,
+	restClientCache ratecache.RestClientCache,
+	fallbackTokenClient *github.Client,
+) GitHubProviderService {
+	return &ghProviderService{
 		store:               store,
 		cryptoEngine:        cryptoEngine,
 		mt:                  mt,
@@ -104,13 +113,13 @@ func NewProviderService(store db.Store, cryptoEngine crypto.Engine, mt metrics.M
 		config:              config,
 		projectFactory:      projectFactory,
 		restClientCache:     restClientCache,
-		ghClientService:     ghprov.ClientServiceImplementation{},
+		ghClientService:     github2.ClientServiceImplementation{},
 		fallbackTokenClient: fallbackTokenClient,
 	}
 }
 
 // CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential
-func (p *providerService) CreateGitHubOAuthProvider(
+func (p *ghProviderService) CreateGitHubOAuthProvider(
 	ctx context.Context,
 	providerName string,
 	providerClass db.ProviderClass,
@@ -134,7 +143,7 @@ func (p *providerService) CreateGitHubOAuthProvider(
 	if errors.Is(err, sql.ErrNoRows) {
 
 		// If the provider does not exist, create it
-		providerDef, err := GetProviderClassDefinition(providerName)
+		providerDef, err := providers.GetProviderClassDefinition(providerName)
 		if err != nil {
 			return nil, fmt.Errorf("error getting provider definition: %w", err)
 		}
@@ -206,7 +215,7 @@ func (p *providerService) CreateGitHubOAuthProvider(
 }
 
 // CreateGitHubAppProvider creates a GitHub App provider with an installation ID
-func (p *providerService) CreateGitHubAppProvider(
+func (p *ghProviderService) CreateGitHubAppProvider(
 	ctx context.Context,
 	token oauth2.Token,
 	stateData db.GetProjectIDBySessionStateRow,
@@ -253,7 +262,7 @@ func (p *providerService) CreateGitHubAppProvider(
 // it in preparation for creating a new project when the authorizing user logs in.
 //
 // Note that this function may return nil, nil if the installation user is not known to Minder.
-func (p *providerService) CreateGitHubAppWithoutInvitation(
+func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	ctx context.Context,
 	qtx db.Querier,
 	userID int64,
@@ -359,7 +368,7 @@ func createGitHubApp(
 }
 
 // ValidateGitHubInstallationId checks if the user has access to the installation ID
-func (p *providerService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
+func (p *ghProviderService) ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error {
 	installations, err := p.ghClientService.ListUserInstallations(ctx, token)
 	if err != nil {
 		return fmt.Errorf("error getting user installations: %w", err)
@@ -383,7 +392,7 @@ type GitHubAppInstallationDeletedPayload struct {
 	InstallationID int64 `json:"installation_id"`
 }
 
-func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
+func (p *ghProviderService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
 	installation, err := p.store.GetInstallationIDByAppID(ctx, installationID)
 	if err != nil {
 		// This installation has already been deleted
@@ -413,7 +422,7 @@ func (p *providerService) DeleteGitHubAppInstallation(ctx context.Context, insta
 	})
 }
 
-func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
+func (p *ghProviderService) ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error) {
 	secret, err := p.config.GitHubApp.GetWebhookSecret()
 	if err != nil {
 		return nil, err
@@ -422,7 +431,7 @@ func (p *providerService) ValidateGitHubAppWebhookPayload(r *http.Request) (payl
 }
 
 // DeleteProvider deletes a provider and removes the credentials from the downstream service, if possible
-func (p *providerService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
+func (p *ghProviderService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
 	// Uninstall the GitHub App if it's a GitHub App provider
 	err := p.deleteInstallation(ctx, provider.ID)
 	if err != nil {
@@ -433,7 +442,7 @@ func (p *providerService) DeleteProvider(ctx context.Context, provider *db.Provi
 }
 
 // deleteInstallation deletes the installation from GitHub, if the provider has an associated installation
-func (p *providerService) deleteInstallation(ctx context.Context, providerID uuid.UUID) error {
+func (p *ghProviderService) deleteInstallation(ctx context.Context, providerID uuid.UUID) error {
 	installation, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
 		UUID:  providerID,
 		Valid: true,
@@ -466,13 +475,13 @@ func (p *providerService) deleteInstallation(ctx context.Context, providerID uui
 	return nil
 }
 
-func (p *providerService) verifyProviderTokenIdentity(
+func (p *ghProviderService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
-	pbOpts := []ProviderBuilderOption{
-		WithProviderMetrics(p.provMt),
-		WithRestClientCache(p.restClientCache),
+	pbOpts := []providers.ProviderBuilderOption{
+		providers.WithProviderMetrics(p.provMt),
+		providers.WithRestClientCache(p.restClientCache),
 	}
-	builder := NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
+	builder := providers.NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
 		p.config, p.fallbackTokenClient, pbOpts...)
 	// NOTE: this is github-specific at the moment.  We probably need to generally
 	// re-think token enrollment when we add more providers.
@@ -490,7 +499,7 @@ func (p *providerService) verifyProviderTokenIdentity(
 	return nil
 }
 
-func (p *providerService) getInstallationOwner(ctx context.Context, installationID int64) (*github.User, error) {
+func (p *ghProviderService) getInstallationOwner(ctx context.Context, installationID int64) (*github.User, error) {
 	privateKey, err := p.config.GitHubApp.GetPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("error getting GitHub App private key: %w", err)

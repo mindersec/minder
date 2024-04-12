@@ -145,12 +145,12 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		ExpectedError    string
 	}{
 		{
-			Name:          "List remote repositories fails when all providers error",
+			Name:          "List remote repositories fails when all ghProviders error",
 			GitHubSetup:   newGitHub(withFailedListAllRepositories(errDefault)),
-			ExpectedError: "cannot list repositories for providers: [github]",
+			ExpectedError: "cannot list repositories for ghProviders: [github]",
 		},
 		{
-			Name:        "List remote repositories succeeds when all providers succeed",
+			Name:        "List remote repositories succeeds when all ghProviders succeed",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
 		},
 	}
@@ -427,7 +427,7 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, git
 		svc = repoServiceSetup(ctrl)
 	}
 
-	// stubs needed for providers to work
+	// stubs needed for ghProviders to work
 	// TODO: this provider logic should be better encapsulated from the controlplane
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	mockCryptoEngine.EXPECT().
