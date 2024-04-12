@@ -54,6 +54,12 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	for _, repo := range inputRepoList {
+		if err := cli.ValidateRepositoryName(repo); err != nil {
+			return cli.MessageAndError("Invalid repository name", err)
+		}
+	}
+
 	alreadyRegisteredRepos, err := fetchAlreadyRegisteredRepos(ctx, provider, project, client)
 	if err != nil {
 		return cli.MessageAndError("Error getting list of registered repos", err)
