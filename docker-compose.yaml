@@ -62,6 +62,7 @@ services:
       - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
       - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://api.trustypkg.dev
       - MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY=/app/.secrets/github-app.pem
+      - MINDER_LOG_GITHUB_REQUESTS=1
     networks:
       - app_net
     depends_on:
