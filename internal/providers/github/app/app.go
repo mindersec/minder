@@ -96,13 +96,13 @@ func NewGitHubAppProvider(
 		transport = &loghttp.Transport{
 			Transport: transport,
 			LogRequest: func(req *http.Request) {
-				zerolog.Ctx(req.Context()).Trace().
+				zerolog.Ctx(req.Context()).Debug().
 					Str("type", "REQ").
 					Str("method", req.Method).
 					Msg(req.URL.String())
 			},
 			LogResponse: func(resp *http.Response) {
-				zerolog.Ctx(resp.Request.Context()).Trace().
+				zerolog.Ctx(resp.Request.Context()).Debug().
 					Str("type", "RESP").
 					Str("method", resp.Request.Method).
 					Str("status", fmt.Sprintf("%d", resp.StatusCode)).
