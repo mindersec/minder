@@ -436,5 +436,12 @@ func createProviderWithInstallationToken(
 	credential := credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,
 		installation.AppInstallationID)
 
+	zerolog.Ctx(ctx).
+		Debug().
+		Str("github-app-name", provCfg.GitHubApp.AppName).
+		Int64("github-app-id", provCfg.GitHubApp.AppID).
+		Int64("github-app-installation-id", installation.AppInstallationID).
+		Msg("created provider with installation token")
+
 	return NewProviderBuilder(&prov, ownerFilter, installation.IsOrg, credential, provCfg, fallbackTokenClient, opts...), nil
 }
