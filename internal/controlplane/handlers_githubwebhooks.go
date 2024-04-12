@@ -46,7 +46,7 @@ import (
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
-	github2 "github.com/stacklok/minder/internal/providers/github/service"
+	ghprov "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -456,7 +456,7 @@ func (_ *Server) parseGithubAppEventForProcessing(
 		return fmt.Errorf("installation ID is 0")
 	}
 
-	payloadBytes, err := json.Marshal(github2.GitHubAppInstallationDeletedPayload{
+	payloadBytes, err := json.Marshal(ghprov.GitHubAppInstallationDeletedPayload{
 		InstallationID: installationID,
 	})
 	if err != nil {
