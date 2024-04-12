@@ -72,7 +72,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	if len(unregisteredInputRepos) == 0 {
-		cmd.Println("No unregistered repositories found")
+		cmd.Println("Minder is already tracking all repositories in this organization")
 		return nil
 	}
 
