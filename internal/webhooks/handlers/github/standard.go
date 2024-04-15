@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v61/github"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -29,94 +32,92 @@ import (
 	"strings"
 )
 
-type tokenHandler struct {
+type githubHandler struct {
+	publisher events.Publisher
+	metrics   metrics.Metrics
+	ghService providers.ProviderService
+	config    server.WebhookConfig
+	store     db.Store
 }
 
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
-func (s *tokenHandler) HandleGitHubWebHook() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		wes := &metrics.WebhookEventState{
-			Typ:      "unknown",
-			Accepted: false,
-			Error:    true,
-		}
-		defer func() {
-			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
-		}()
-
-		// Validate the payload signature. This is required for security reasons.
-		// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
-		// for more information. Note that this is not required for the GitHub App
-		// webhook secret, but it is required for OAuth2 App.
-		// it returns a uuid for the webhook, but we are not currently using it
-		segments := strings.Split(r.URL.Path, "/")
-		_ = segments[len(segments)-1]
-
-		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
-		if err != nil {
-			log.Printf("Error validating webhook payload: %v", err)
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		wes.Typ = github.WebHookType(r)
-		if wes.Typ == "ping" {
-			logPingReceivedEvent(r.Context(), rawWBPayload)
-			wes.Error = false
-			return
-		}
-
-		// TODO: extract sender and event time from payload portably
-		m := message.NewMessage(uid.New().String(), nil)
-		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
-		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
-		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
-
-		ctx := r.Context()
-		l := zerolog.Ctx(ctx).With().
-			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
-			Str("providertype", m.Metadata[events.ProviderTypeKey]).
-			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
-			Logger()
-
-		l.Debug().Msg("parsing event")
-
-		// Parse the webhook event and construct a message for the event router
-		if err := parseGithubEventForProcessing(rawWBPayload, m); err != nil {
-			wes = handleParseError(wes.Typ, err)
-			if wes.Error {
-				w.WriteHeader(http.StatusInternalServerError)
-			} else {
-				w.WriteHeader(http.StatusOK)
-			}
-			return
-		}
-		wes.Accepted = true
-		l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
-
-		// Channel the event based on the webhook action
-		var watermillTopic string
-		if shouldIssueDeletionEvent(m) {
-			watermillTopic = events.TopicQueueReconcileEntityDelete
-		} else {
-			watermillTopic = events.TopicQueueEntityEvaluate
-		}
-
-		// Publish the message to the event router
-		if err := s.evt.Publish(watermillTopic, m); err != nil {
-			wes.Error = true
-			log.Printf("Error publishing message: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// We successfully published the message
-		wes.Error = false
-		w.WriteHeader(http.StatusOK)
+func (g *githubHandler) Handle(ctx context.Context, r *http.Request) error {
+	wes := &metrics.WebhookEventState{
+		Typ:      "unknown",
+		Accepted: false,
+		Error:    true,
 	}
+	defer func() {
+		g.metrics.AddWebhookEventTypeCount(r.Context(), wes)
+	}()
+
+	// Validate the payload signature. This is required for security reasons.
+	// See https://docs.github.com/en/developers/webhooks-and-events/webhooks/securing-your-webhooks
+	// for more information. Note that this is not required for the GitHub App
+	// webhook secret, but it is required for OAuth2 App.
+	// it returns a uuid for the webhook, but we are not currently using it
+	segments := strings.Split(r.URL.Path, "/")
+	_ = segments[len(segments)-1]
+
+	rawWBPayload, err := validatePayloadSignature(r, &g.config)
+	if err != nil {
+		return err
+	}
+
+	wes.Typ = github.WebHookType(r)
+	if wes.Typ == "ping" {
+		logPingReceivedEvent(r.Context(), rawWBPayload)
+		wes.Error = false
+		return nil
+	}
+
+	// TODO: extract sender and event time from payload portably
+	m := message.NewMessage(uuid.New().String(), nil)
+	m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
+	m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
+	m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
+	m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
+
+	l := zerolog.Ctx(ctx).With().
+		Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
+		Str("providertype", m.Metadata[events.ProviderTypeKey]).
+		Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+		Logger()
+
+	l.Debug().Msg("parsing event")
+
+	// Parse the webhook event and construct a message for the event router
+	if err := g.parseGithubEventForProcessing(rawWBPayload, m); err != nil {
+		wes = handleParseError(wes.Typ, err)
+		if wes.Error {
+			return err
+		} else {
+			return nil
+		}
+	}
+	wes.Accepted = true
+	l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
+
+	// Channel the event based on the webhook action
+	var watermillTopic string
+	if shouldIssueDeletionEvent(m) {
+		watermillTopic = events.TopicQueueReconcileEntityDelete
+	} else {
+		watermillTopic = events.TopicQueueEntityEvaluate
+	}
+
+	// Publish the message to the event router
+	if err := g.publisher.Publish(watermillTopic, m); err != nil {
+		wes.Error = true
+		log.Printf("Error publishing message: %v", err)
+		return err
+	}
+
+	// We successfully published the message
+	wes.Error = false
+	return nil
 }
 
 func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
@@ -199,7 +200,7 @@ func validatePreviousSecrets(
 	return
 }
 
-func parseGithubEventForProcessing(
+func (g *githubHandler) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
@@ -222,17 +223,17 @@ func parseGithubEventForProcessing(
 	}
 
 	// get the provider for the repository
-	prov, err := s.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
+	prov, err := g.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
 
 	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
+		providers.WithProviderMetrics(g.provMt),
+		providers.WithRestClientCache(g.restClientCache),
 	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider,
-		s.fallbackTokenClient, pbOpts...)
+	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, g.store, g.cryptoEngine, &g.cfg.Provider,
+		g.fallbackTokenClient, pbOpts...)
 	if err != nil {
 		return fmt.Errorf("error building client: %w", err)
 	}
@@ -246,7 +247,7 @@ func parseGithubEventForProcessing(
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == WebhookActionEventPublished {
-		return parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
+		return g.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
 		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
@@ -297,7 +298,7 @@ func parseRepoEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parseArtifactPublishedEvent(
+func (g *githubHandler) parseArtifactPublishedEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
@@ -328,7 +329,7 @@ func parseArtifactPublishedEvent(
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
 
-	dbArtifact, err := s.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
+	dbArtifact, err := g.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
 		RepositoryID: uuid.NullUUID{
 			UUID:  dbrepo.ID,
 			Valid: true,
@@ -344,7 +345,7 @@ func parseArtifactPublishedEvent(
 		return fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbArtifact.ID)
+	pbArtifact, err := util.GetArtifact(ctx, g.store, dbrepo.ProjectID, dbArtifact.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifact with versions: %w", err)
 	}

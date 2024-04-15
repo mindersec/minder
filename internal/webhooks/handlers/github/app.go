@@ -13,32 +13,50 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/webhooks/handlers"
 	"net/http"
 )
 
+type githubAppHandler struct {
+	publisher events.Publisher
+	metrics   metrics.Metrics
+	ghService providers.ProviderService
+}
+
+func NewGitHubAppWebhookHandler(
+	publisher events.Publisher,
+	mt metrics.Metrics,
+	ghService providers.ProviderService,
+) handlers.WebhookHandler {
+	return &githubAppHandler{
+		publisher: publisher,
+		metrics:   mt,
+		ghService: ghService,
+	}
+}
+
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
-func HandleGitHubAppWebhook(ctx context.Context) error {
+func (g *githubAppHandler) Handle(ctx context.Context, r *http.Request) error {
 	wes := &metrics.WebhookEventState{
 		Typ:      "unknown",
 		Accepted: false,
 		Error:    true,
 	}
 	defer func() {
-		s.mt.AddWebhookEventTypeCount(r.Context(), wes)
+		g.metrics.AddWebhookEventTypeCount(ctx, wes)
 	}()
 
-	rawWBPayload, err := s.providers.ValidateGitHubAppWebhookPayload(r)
+	rawWBPayload, err := g.ghService.ValidateGitHubAppWebhookPayload(r)
 	if err != nil {
-		log.Printf("Error validating webhook payload: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		wes.Error = true // TODO: confirm this
+		return fmt.Errorf("error validating webhook payload: %w", err)
 	}
 
 	wes.Typ = github.WebHookType(r)
 	if wes.Typ == "ping" {
 		logPingReceivedEvent(r.Context(), rawWBPayload)
 		wes.Error = false
-		return
+		return nil
 	}
 
 	m := message.NewMessage(uuid.New().String(), nil)
@@ -55,17 +73,15 @@ func HandleGitHubAppWebhook(ctx context.Context) error {
 	if err := parseGithubAppEventForProcessing(rawWBPayload, m); err != nil {
 		wes = handleParseError(wes.Typ, err)
 		if wes.Error {
-			w.WriteHeader(http.StatusInternalServerError)
-		} else {
-			w.WriteHeader(http.StatusOK)
+			return fmt.Errorf("error during parsing: %w", err)
 		}
-		return
+		return nil
 	}
 
 	wes.Accepted = true
 	l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
 
-	if err := s.evt.Publish(providers.ProviderInstallationTopic, m); err != nil {
+	if err := g.publisher.Publish(providers.ProviderInstallationTopic, m); err != nil {
 		return err
 	}
 

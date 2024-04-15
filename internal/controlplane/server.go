@@ -18,6 +18,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"github.com/stacklok/minder/internal/webhooks/handlers/dispatcher"
 	"net"
 	"net/http"
 	"time"
@@ -98,6 +99,7 @@ type Server struct {
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
 	fallbackTokenClient *gh.Client
+	webhooks            dispatcher.WebhookHandlerDispatcher
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
