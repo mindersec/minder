@@ -66,8 +66,12 @@ func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project
 }
 
 // DeleteUser implements authz.Client
-func (n *SimpleClient) DeleteUser(_ context.Context, _ string) error {
-	n.Assignments = nil
+func (n *SimpleClient) DeleteUser(_ context.Context, user string) error {
+	for p, as := range n.Assignments {
+		n.Assignments[p] = slices.DeleteFunc(as, func(a *minderv1.RoleAssignment) bool {
+			return a.Subject == user
+		})
+	}
 	n.Allowed = nil
 	return nil
 }

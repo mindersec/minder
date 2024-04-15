@@ -333,6 +333,8 @@ func TestDeleteUserDBMock(t *testing.T) {
 		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
+	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	crypeng := mockcrypto.NewMockEngine(ctrl)
 
@@ -387,6 +389,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					DeleteUser(gomock.Any(), gomock.Any()).
 					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
+				// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				t.Helper()
