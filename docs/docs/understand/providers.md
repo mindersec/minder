@@ -19,11 +19,6 @@ To enroll GitHub as a provider, use the following command:
 minder provider enroll
 ```
 
-To enroll a specific GitHub organization, use the following command:
-```
-minder provider enroll --owner specific-org
-```
-
 Note: If you are enrolling an organization, the account you use to enroll must be an Owner in the organization
 or an Admin on the repositories you will be registering.
 
