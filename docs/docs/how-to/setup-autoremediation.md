@@ -1,5 +1,5 @@
 ---
-title: Setting up a profile for auto-remediation
+title: Setting up a Profile for Auto-remediation
 sidebar_position: 60
 ---
 

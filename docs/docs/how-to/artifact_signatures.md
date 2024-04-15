@@ -1,9 +1,9 @@
 ---
-title: Check artifact provenance
+title: Check Artifact Provenance
 sidebar_position: 55
 ---
 
-# Check artifact provenance
+# Check Artifact Provenance
 
 With Minder you can create rules that assert that artifacts built from your
 repositories are built from trusted sources and using trusted workflows based

@@ -1,5 +1,5 @@
 ---
-title: Auto-remediation via pull request
+title: Auto-remediation via Pull Request
 sidebar_position: 65
 ---
 

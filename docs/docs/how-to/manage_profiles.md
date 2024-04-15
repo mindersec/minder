@@ -1,5 +1,5 @@
 ---
-title: Manage profiles and violations
+title: Manage Profiles and Violations
 sidebar_position: 20
 ---
 

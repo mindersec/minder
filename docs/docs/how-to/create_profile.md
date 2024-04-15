@@ -1,5 +1,5 @@
 ---
-title: Creating a profile
+title: Creating a Profile
 sidebar_position: 10
 ---
 

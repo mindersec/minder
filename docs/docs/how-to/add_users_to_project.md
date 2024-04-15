@@ -1,5 +1,5 @@
 ---
-title: Adding users to your project
+title: Adding Users to your Project
 sidebar_position: 100
 ---
 
