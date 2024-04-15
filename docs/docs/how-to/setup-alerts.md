@@ -1,5 +1,5 @@
 ---
-title: Setting up a profile for alerts
+title: Setting up a Profile for Alerts
 sidebar_position: 70
 ---
 
