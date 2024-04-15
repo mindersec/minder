@@ -1,5 +1,5 @@
 ---
-title: Minder Integrations
+title: Overview
 sidebar_position: 10
 ---
 
