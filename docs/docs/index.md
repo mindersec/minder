@@ -20,7 +20,7 @@ Minder can be deployed as a Helm chart and provides a CLI tool ‘minder’. Min
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
 * **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](http://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-## SaaS
+## Minder Cloud
 
 Stacklok, the company behind Minder, also provides a free-to-use hosted version of Minder, allowing you to utilize Minder 
 without the need for managing your own infrastructure.

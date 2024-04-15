@@ -1,62 +1,15 @@
 ---
-title: Auto-remediation
-sidebar_position: 40
+title: Automatic Remediations
+sidebar_position: 60
 ---
 
 # Automatic Remediation in Minder
 
-A profile in Minder offers a comprehensive view of your security posture, encompassing more than just the status report. 
-It actively responds to any rules that are not in compliance, taking specific actions. These actions can include the 
-creation of alerts for rules that have failed, as well as the execution of remediations to fix the non-compliant 
-aspects.
+Minder can perform _automatic remediation_ for many rules in an attempt to resolve problems in your software supply chain, and bring your resources into compliance with your [profile](profiles).
 
-When alerting is turned on in a profile, Minder will open an alert to bring your attention to the non-compliance issue. 
-Conversely, when the rule evaluation passes, Minder will automatically close any previously opened alerts related to 
-that rule.
+The steps to take during automatic remediation are defined within the rule itself and can perform actions like sending a REST call to an endpoint to change configuration, or creating a pull request with a proposed fix.
 
-When remediation is turned on, Minder also supports the ability to automatically remediate failed rules based on their 
-type, i.e., by processing a REST call to enable/disable a non-compliant repository setting or creating a pull request 
-with a proposed fix. Note that not all rule types support automatic remediation yet.
-
-### Enabling alerts in a profile
-To activate the alert feature within a profile, you need to adjust the YAML definition. 
-Specifically, you should set the alert parameter to "on":
-```yaml
-alert: "on"
-```
-
-Enabling alerts at the profile level means that for any rules included in the profile, alerts will be generated for 
-any rule failures. For better clarity, consider this rule snippet:
-```yaml
----
-version: v1
-type: rule-type
-name: sample_rule
-def:
-  alert:
-      type: security_advisory
-      security_advisory:
-        severity: "medium"
-```
-In this example, the `sample_rule` defines an alert action that creates a medium severity security advisory in the 
-repository for any non-compliant repositories.
-
-Now, let's see how this works in practice within a profile. Consider the following profile configuration with alerts 
-turned on:
-```yaml
-version: v1
-type: profile
-name: sample-profile
-context:
-  provider: github
-alert: "on"
-repository:
-  - type: sample_rule
-    def:
-      enabled: true
-```
-In this profile, all repositories that do not meet the conditions specified in the `sample_rule` will automatically
-generate security advisories.
+For example, if you have a rule in your profile that specifies that [Secret Scanning should be enabled](../ref/rules/secret_scanning), and you have enabled automatic remediation in your profile, then Minder will attempt to turn Secret Scanning on in any repositories where it is not enabled.
 
 ### Enabling remediations in a profile
 To activate the remediation feature within a profile, you need to adjust the YAML definition.

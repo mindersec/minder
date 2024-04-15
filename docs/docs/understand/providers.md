@@ -1,14 +1,27 @@
 ---
 title: Providers
-sidebar_position: 10
+sidebar_position: 20
 ---
 
 # Providers in Minder
 
-Providers are integration points from Minder towards external services. They are Minder's way
-of fetching information about the different aspects of your supply chain. Taking an operating
-system analogy, providers are like device drivers.
+A _provider_ connects Minder to your software supply chain &mdash; giving Minder information about your source code repositories, and their pull requests, dependencies, and artifacts. Minder will apply your [profiles](profiles) to providers to analyze the security posture of your software supply chain, and then will create [alerts](alerts) and can automatically [remediate](remediation) problems that it finds.
 
-Providers are the backbone of Minder. They are the ones that fetch the data that Minder uses to
-provide you with insights and analytics. When you enroll a provider, Minder will fetch the data
-from the provider and store it in its database.
+The currently supported providers are:
+* GitHub
+
+Stay tuned as we add more providers in the future!
+
+## Enrolling a provider
+
+To enroll GitHub as a provider, use the following command:
+```
+minder provider enroll
+```
+
+Note: If you are enrolling an organization, the account you use to enroll must be an Owner in the organization
+or an Admin on the repositories you will be registering.
+
+Once a provider is enrolled, public repositories from that provider can be registered with Minder. Security profiles
+can then be applied to the registered repositories, giving you an overview of your security posture and providing
+remediations to improve your security posture.

@@ -1,9 +1,11 @@
 ---
 title: Alerting
-sidebar_position: 60
+sidebar_position: 40
 ---
 
 # Alerts from Minder
+
+Minder issues _alerts_ to notify you when the state of your software supply chain does not meet the criteria that you've defined in your [profile](profile).
 
 Alerts are a core feature of Minder providing you with notifications about the status of your registered
 repositories. These alerts automatically open and close based on the evaluation of the rules defined in your profiles.
@@ -17,6 +19,46 @@ In the alert, you'll be able to see details such as:
 * The profile that the rule belongs to
 * Guidance on how to remediate and also fix the issue
 * Severity of the issue. The severity of the alert is based on what is set in the rule type definition.
+
+### Enabling alerts in a profile
+To activate the alert feature within a profile, you need to adjust the YAML definition. 
+Specifically, you should set the alert parameter to "on":
+```yaml
+alert: "on"
+```
+
+Enabling alerts at the profile level means that for any rules included in the profile, alerts will be generated for 
+any rule failures. For better clarity, consider this rule snippet:
+```yaml
+---
+version: v1
+type: rule-type
+name: sample_rule
+def:
+  alert:
+      type: security_advisory
+      security_advisory:
+        severity: "medium"
+```
+In this example, the `sample_rule` defines an alert action that creates a medium severity security advisory in the 
+repository for any non-compliant repositories.
+
+Now, let's see how this works in practice within a profile. Consider the following profile configuration with alerts 
+turned on:
+```yaml
+version: v1
+type: profile
+name: sample-profile
+context:
+  provider: github
+alert: "on"
+repository:
+  - type: sample_rule
+    def:
+      enabled: true
+```
+In this profile, all repositories that do not meet the conditions specified in the `sample_rule` will automatically
+generate security advisories.
 
 ## Alert types
 
