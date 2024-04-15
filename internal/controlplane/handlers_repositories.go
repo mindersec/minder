@@ -434,8 +434,6 @@ func (s *Server) deleteRepository(
 	ctx context.Context,
 	repoQueryMethod func() (db.Repository, error),
 ) error {
-	projectID := getProjectID(ctx)
-
 	repo, err := repoQueryMethod()
 	if errors.Is(err, sql.ErrNoRows) {
 		return status.Errorf(codes.NotFound, "repository not found")
