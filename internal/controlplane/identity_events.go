@@ -121,9 +121,10 @@ func DeleteUser(
 		Str("subject", userId).
 		Logger()
 
-	// Fetching the projects for user before the deletion was made.
-	// This allows us to clean up the project from the database
-	// if there are no more role assignments for the project.
+	// Get the projects the user is associated with. We'll want to clean up any projects
+	// that the user is the only member of. Because projects are identified by UUIDs, if
+	// we end up deleting the project but for some reason fail to delete the role assignments
+	// in openFGA, we'll just end up with dangling role assignments to UUIDs that don't exist.
 	projs, err := authzClient.ProjectsForUser(ctx, userId)
 	if err != nil {
 		return fmt.Errorf("error getting projects for user %v", err)
@@ -131,29 +132,24 @@ func DeleteUser(
 	l.Debug().Int("projects", len(projs)).Msg("projects for user")
 
 	dbUser, err := db.WithTransaction(store, func(qtx db.ExtendQuerier) (db.User, error) {
-		var userDBID *int32
-
 		usr, err := qtx.GetUserBySubject(ctx, userId)
 		// If the user doesn't exist, we still want to clean up any associated data
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return db.User{}, fmt.Errorf("error retrieving user %v", err)
-		} else if err == nil {
-			userDBID = &usr.ID
-			l = l.With().Int32("user_id", usr.ID).Logger()
-		}
-
-		// We only delete the user if it still exists in the database
-		if userDBID != nil {
-			l.Debug().Msg("deleting user from database")
-			if err := qtx.DeleteUser(ctx, *userDBID); err != nil {
-				return db.User{}, fmt.Errorf("error deleting user %v", err)
-			}
 		}
 
 		for _, proj := range projs {
 			l.Debug().Str("project_id", proj.String()).Msg("cleaning up project")
 			if err := projects.CleanUpUnmanagedProjects(ctx, userId, proj, qtx, authzClient, providerService, l); err != nil {
 				return db.User{}, fmt.Errorf("error deleting project %v", err)
+			}
+		}
+
+		// We only delete the user if it still exists in the database
+		if usr.IdentitySubject != "" {
+			l = l.With().Int32("user_id", usr.ID).Logger()
+			if err := qtx.DeleteUser(ctx, usr.ID); err != nil {
+				return db.User{}, fmt.Errorf("error deleting user %v", err)
 			}
 		}
 

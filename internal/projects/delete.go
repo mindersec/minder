@@ -48,7 +48,7 @@ func CleanUpUnmanagedProjects(
 		return fmt.Errorf("error getting role assignments for project %v", err)
 	}
 
-	if !hasOtherRoleAssignmens(as, subject) {
+	if !hasOtherRoleAssignments(as, subject) {
 		l.Info().Msg("deleting project")
 		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
@@ -59,7 +59,7 @@ func CleanUpUnmanagedProjects(
 	return nil
 }
 
-func hasOtherRoleAssignmens(as []*v1.RoleAssignment, subject string) bool {
+func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
 		return a.Subject != subject
 	})
