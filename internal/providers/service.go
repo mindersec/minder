@@ -63,7 +63,7 @@ type ProviderService interface {
 	// DeleteGitHubAppInstallation deletes the GitHub App installation and provider from the database.
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 	// ValidateGitHubAppWebhookPayload validates the payload of a GitHub App webhook.
-	ValidateGitHubAppWebhookPayload(r *http.Request) ([]byte, error)
+	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
 	DeleteProvider(ctx context.Context, provider *db.Provider) error
 }
 
