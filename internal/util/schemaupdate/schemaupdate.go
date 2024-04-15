@@ -22,6 +22,7 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/barkimedes/go-deepcopy"
+	"github.com/google/go-cmp/cmp"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -119,13 +120,93 @@ func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
 		return fmt.Errorf("failed to merge old and new schema: %v", err)
 	}
 
+	// We need to ignore the description field when comparing the old and new schema to allow
+	// to update the ruletype text. We also need to ignore changing defaults as they are advisory
+	// for the UI at the moment
+	opts := []cmp.Option{
+		cmp.FilterPath(isScalarDescription, cmp.Ignore()),
+		cmp.FilterPath(isDefaultValue, cmp.Ignore()),
+	}
+
 	// The new schema should be a superset of the old schema
 	// if it's not, we may break profiles using this rule type
-	if !reflect.DeepEqual(newSchemaMap, castedDst) {
+	if !cmp.Equal(newSchemaMap, castedDst, opts...) {
 		return fmt.Errorf("cannot remove properties from rule schema")
 	}
 
 	return nil
+}
+
+func isScalarDescription(p cmp.Path) bool {
+	if mi, ok := p.Last().(cmp.MapIndex); ok {
+		key := mi.Key()
+		left, right := mi.Values()
+		// we can ignore description if it was a string and is a string
+		if key.String() == "description" && isValueString(left) && isValueString(right) {
+			return true
+		}
+	}
+	return false
+}
+
+func isDefaultValue(p cmp.Path) bool {
+	if mi, ok := p.Last().(cmp.MapIndex); ok {
+		key := mi.Key()
+		// we ignore default if it has a type sibling, assuming that this is a type default, not an attribute
+		// named default. Further down we also check that the type has a string value
+		if key.String() == "default" {
+			if hasTypeSibling(p.Index(len(p) - 2)) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func hasTypeSibling(p cmp.PathStep) bool {
+	left, right := p.Values()
+	return isMapWithKey(left, "type") && isMapWithKey(right, "type")
+}
+
+func isMapWithKey(value reflect.Value, key string) bool {
+	if !value.IsValid() {
+		return false
+	}
+
+	if !value.CanInterface() {
+		return false
+	}
+
+	valIf := value.Interface()
+	valMap, ok := valIf.(map[string]any)
+	if !ok {
+		return false
+	}
+
+	for k := range valMap {
+		if k == key {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isValueString(value reflect.Value) bool {
+	if !value.IsValid() {
+		return false
+	}
+
+	if !value.CanInterface() {
+		return false
+	}
+
+	valIf := value.Interface()
+	if _, ok := valIf.(string); ok {
+		return true
+	}
+	return false
 }
 
 func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
