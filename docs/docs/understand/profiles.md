@@ -1,11 +1,11 @@
 ---
 title: Profiles and Rules
-sidebar_position: 30
+sidebar_position: 10
 ---
 
 # Profiles in Minder
 
-Minder allows you to define profiles for your software supply chain.
+A _profile_ defines your security policies that you want to apply to your software supply chain. Profiles contain rules that query data in a [provider](provider), and specifies whether Minder will issue [alerts](alerts) or perform automatic [remediations](remediations) when an entity is not in compliance with the policy.
 
 Profiles in Minder allow you to group and manage
 rules for various entity types, such as repositories, pull requests, and artifacts, across your registered GitHub
