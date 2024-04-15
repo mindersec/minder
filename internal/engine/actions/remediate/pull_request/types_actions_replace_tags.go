@@ -67,9 +67,10 @@ func newFrizbeeTagResolveModification(
 
 func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context, _ interfaces.ActionsParams) error {
 	entries := []*fsEntry{}
+	cache := utils.NewRefCacher()
 
 	err := ghactions.TraverseGitHubActionWorkflows(ftr.fs, ".github/workflows", func(path string, wflow *yaml.Node) error {
-		m, err := ghactions.ModifyReferencesInYAML(ctx, ftr.ghCli, wflow, ftr.fzcfg)
+		m, err := ghactions.ModifyReferencesInYAMLWithCache(ctx, ftr.ghCli, wflow, ftr.fzcfg, cache)
 		if err != nil {
 			return fmt.Errorf("failed to process YAML file %s: %w", path, err)
 		}
