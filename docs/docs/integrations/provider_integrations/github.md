@@ -1,6 +1,6 @@
 ---
-title: Providers
-sidebar_position: 20
+title: GitHub
+sidebar_position: 10
 ---
 
 # Providers
@@ -25,5 +25,3 @@ minder provider enroll
 Once a provider is enrolled, public repositories from that provider can be registered with Minder. Security profiles
 can then be applied to the registered repositories, giving you an overview of your security posture and providing
 remediations to improve your security posture.
-
-
