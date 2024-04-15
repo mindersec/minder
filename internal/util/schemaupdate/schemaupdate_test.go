@@ -194,6 +194,122 @@ func TestValidateSchemaUpdate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "changing the description is allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string",
+							"description": "foo desc original"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string",
+							"description": "foo desc modified"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+			},
+			wantErr: false,
+		},
+		{
+			name: "changing a property named description is not allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"description": {
+							"type": "string"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"description": {
+							"type": "int"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "changing the default is allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string",
+							"default": "f-o-o"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string",
+							"default": "o-o-f"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+			},
+			wantErr: false,
+		},
+		{
+			name: "changing a property named default is not allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"default": {
+							"type": "string"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"default": {
+							"type": "int"
+						},
+						"bar": {
+							"type": "string"
+						}
+					}
+				}`,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
