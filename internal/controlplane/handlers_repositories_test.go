@@ -58,7 +58,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner:     repoOwner,
 			RepoName:      repoName,
 			ProviderFails: true,
-			ExpectedError: "cannot retrieve provider",
+			ExpectedError: "cannot get provider",
 		},
 		{
 			Name:          "Repo creation fails when repo name is missing",
@@ -222,7 +222,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 			RepoName:         repoOwnerAndName,
 			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName),
 			ProviderFails:    true,
-			ExpectedError:    "cannot retrieve provider",
+			ExpectedError:    "cannot get provider",
 		},
 		{
 			Name:          "delete by name fails when name is malformed",
@@ -464,8 +464,11 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, git
 
 	if providerFails {
 		store.EXPECT().
+			GetProviderByID(gomock.Any(), gomock.Any()).
+			Return(db.Provider{}, errDefault).AnyTimes()
+		store.EXPECT().
 			FindProviders(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{}, errDefault)
+			Return([]db.Provider{}, errDefault).AnyTimes()
 	} else {
 		store.EXPECT().
 			FindProviders(gomock.Any(), gomock.Any()).
@@ -475,6 +478,9 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, git
 			Return(db.ProviderAccessToken{
 				EncryptedToken: "encryptedToken",
 			}, nil).AnyTimes()
+		store.EXPECT().
+			GetProviderByID(gomock.Any(), gomock.Any()).
+			Return(provider, nil).AnyTimes()
 	}
 
 	return &Server{
