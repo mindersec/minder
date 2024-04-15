@@ -47,7 +47,9 @@ import (
 // - RepositoryEventEntityType - repository
 // - VersionedArtifactEventEntityType - versioned_artifact
 type EntityInfoWrapper struct {
+	// TODO: remove this field
 	Provider      string
+	ProviderID    uuid.UUID
 	ProjectID     uuid.UUID
 	Entity        protoreflect.ProtoMessage
 	Type          minderv1.Entity
@@ -68,6 +70,8 @@ const (
 const (
 	// EntityTypeEventKey is the key for the entity type
 	EntityTypeEventKey = "entity_type"
+	// ProviderIDEventKey is the key for the provider
+	ProviderIDEventKey = "provider_id"
 	// ProviderEventKey is the key for the provider
 	ProviderEventKey = "provider"
 	// ProjectIDEventKey is the key for the project ID
@@ -94,6 +98,13 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 // WithProvider sets the provider
 func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
 	eiw.Provider = provider
+
+	return eiw
+}
+
+// WithProviderID sets the provider
+func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWrapper {
+	eiw.ProviderID = providerID
 
 	return eiw
 }
@@ -226,6 +237,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return fmt.Errorf("project ID is required")
 	}
 
+	// TODO: make provider ID mandatory instead
 	if eiw.Provider == "" {
 		return fmt.Errorf("provider is required")
 	}
@@ -235,6 +247,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	}
 
 	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
+	msg.Metadata.Set(ProviderIDEventKey, eiw.ProviderID.String())
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
 	msg.Metadata.Set(ActionEventKey, eiw.ActionEvent)
@@ -300,7 +313,19 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 		return fmt.Errorf("%s not found in metadata", ProviderEventKey)
 	}
 
+	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
+	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
+	providerID := uuid.Nil
+	if rawProviderID != "" {
+		var err error
+		providerID, err = uuid.Parse(rawProviderID)
+		if err != nil {
+			return fmt.Errorf("malformed provider id %s", rawProviderID)
+		}
+	}
+
 	eiw.Provider = provider
+	eiw.ProviderID = providerID
 	return nil
 }
 
