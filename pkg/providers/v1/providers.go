@@ -20,6 +20,7 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -129,4 +130,13 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	}
 
 	return nil
+}
+
+// As is a type-cast function for Providers
+func As[T Provider](provider Provider) (T, error) {
+	result, ok := provider.(T)
+	if !ok {
+		return result, errors.New("provider type cast failed")
+	}
+	return result, nil
 }

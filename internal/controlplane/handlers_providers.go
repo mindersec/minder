@@ -171,6 +171,7 @@ func (s *Server) DeleteProvider(
 		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
 	}
 
+	// TODO: add `BuildByNameInSpecificProject` to factory interface, replace this
 	provider, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -221,26 +222,17 @@ func (s *Server) DeleteProviderByID(
 }
 
 func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, projectID uuid.UUID) error {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider,
-		s.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
 	// If the provider is a GitHub provider with a valid credential, delete all repositories associated with the provider
-	if p.Implements(db.ProviderTypeGithub) &&
+	// TODO: implement a "CanImplement" method on Providers for specific traits/classes
+	// current approach here is not 100% correct
+	provInstance, err := s.providers.BuildFromID(ctx, provider.ID)
+	if err != nil {
+		return status.Errorf(codes.Internal, "error creating provider: %v", err)
+	}
+	client, err := provinfv1.As[provinfv1.GitHub](provInstance)
+	if err == nil &&
 		providers.GetCredentialStateForProvider(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider) ==
 			provinfv1.CredentialStateSet {
-		client, err := p.GetGitHub()
-		if err != nil {
-			return status.Errorf(codes.Internal, "error creating github provider: %v", err)
-		}
-
 		// Delete all repositories associated with the provider and remove the webhooks
 		err = s.repos.DeleteRepositoriesByProvider(ctx, client, provider.Name, projectID)
 		if err != nil {

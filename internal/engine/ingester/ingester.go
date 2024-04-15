@@ -19,6 +19,7 @@ package ingester
 
 import (
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
 	"github.com/stacklok/minder/internal/engine/ingester/builtin"
@@ -26,7 +27,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -38,7 +38,7 @@ var _ engif.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, provider v1.Provider) (engif.Ingester, error) {
 	ing := rt.Def.GetIngest()
 
 	switch ing.GetType() {
@@ -47,23 +47,23 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
 
-		return rest.NewRestRuleDataIngest(ing.GetRest(), pbuild)
+		return rest.NewRestRuleDataIngest(ing.GetRest(), provider)
 	case builtin.BuiltinRuleDataIngestType:
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
-		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin(), pbuild)
+		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin())
 
 	case artifact.ArtifactRuleDataIngestType:
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
-		return artifact.NewArtifactDataIngest(ing.GetArtifact(), pbuild)
+		return artifact.NewArtifactDataIngest(provider)
 
 	case git.GitRuleDataIngestType:
-		return git.NewGitIngester(ing.GetGit(), pbuild)
+		return git.NewGitIngester(ing.GetGit(), provider)
 	case diff.DiffRuleDataIngestType:
-		return diff.NewDiffIngester(ing.GetDiff(), pbuild)
+		return diff.NewDiffIngester(ing.GetDiff(), provider)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

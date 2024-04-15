@@ -17,6 +17,8 @@ package engine
 import (
 	"context"
 	"fmt"
+	"github.com/stacklok/minder/internal/providers/factory"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	"sync"
 	"time"
 
@@ -67,6 +69,7 @@ type Executor struct {
 	provCfg             *serverconfig.ProviderConfig
 	providerStore       providers.ProviderStore
 	fallbackTokenClient *gogithub.Client
+	providers           factory.ProviderFactory
 }
 
 // ExecutorOption is a function that modifies an executor
@@ -200,43 +203,34 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 }
 func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
 	// TODO: clean this up once we get rid of provider name
-	var provider *db.Provider
+	var provider v1.Provider
 	var err error
 	if inf.ProviderID == uuid.Nil {
-		provider, err = e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
+		provider, err = e.providers.BuildFromNameProject(ctx, inf.Provider, inf.ProjectID)
 	} else {
-		provider, err = e.providerStore.GetByID(ctx, inf.ProviderID)
+		provider, err = e.providers.BuildFromID(ctx, inf.ProviderID)
 	}
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
-	}
-
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(e.provMt),
-		providers.WithRestClientCache(e.restClientCache),
-	}
-	cli, err := providers.GetProviderBuilder(ctx, *provider, e.querier, e.crypteng, e.provCfg, e.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
 	}
 
 	ectx := &EntityContext{
 		Project: Project{
 			ID: inf.ProjectID,
 		},
-		Provider: Provider{
+		/*Provider: Provider{
 			Name: provider.Name,
-		},
+		},*/
 	}
 
-	return e.evalEntityEvent(ctx, inf, ectx, cli)
+	return e.evalEntityEvent(ctx, inf, ectx, provider)
 }
 
 func (e *Executor) evalEntityEvent(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
-	cli *providers.ProviderBuilder,
+	provider v1.Provider,
 ) error {
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
@@ -276,7 +270,7 @@ func (e *Executor) evalEntityEvent(
 		// Let's evaluate all the rules for this profile
 		err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 			// Get the engine evaluator for this rule type
-			evalParams, rte, err := e.getEvaluator(ctx, inf, ectx, cli, profile, rule, ingestCache)
+			evalParams, rte, err := e.getEvaluator(ctx, inf, ectx, provider, profile, rule, ingestCache)
 			if err != nil {
 				return err
 			}
@@ -313,8 +307,7 @@ func (e *Executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	ectx *EntityContext,
-
-	cli *providers.ProviderBuilder,
+	provider v1.Provider,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
 	ingestCache ingestcache.Cache,
@@ -351,7 +344,7 @@ func (e *Executor) getEvaluator(
 	params.RuleType = rt
 
 	// Create the rule type engine
-	rte, err := NewRuleTypeEngine(ctx, profile, rt, cli)
+	rte, err := NewRuleTypeEngine(ctx, profile, rt, provider)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

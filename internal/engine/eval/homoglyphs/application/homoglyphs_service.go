@@ -18,6 +18,7 @@ package application
 import (
 	"context"
 	"fmt"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 	"strings"
 
 	"github.com/google/go-github/v61/github"
@@ -25,7 +26,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -40,10 +40,10 @@ const (
 // NewHomoglyphsEvaluator creates a new homoglyphs evaluator
 func NewHomoglyphsEvaluator(
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
-	pbuild *providers.ProviderBuilder,
+	provider provinfv1.Provider,
 ) (engif.Evaluator, error) {
-	if pbuild == nil {
-		return nil, fmt.Errorf("provider builder is nil")
+	if provider == nil {
+		return nil, fmt.Errorf("provider is nil")
 	}
 	if reh == nil {
 		return nil, fmt.Errorf("homoglyphs configuration is nil")
@@ -51,9 +51,9 @@ func NewHomoglyphsEvaluator(
 
 	switch reh.Type {
 	case invisibleCharacters:
-		return NewInvisibleCharactersEvaluator(pbuild)
+		return NewInvisibleCharactersEvaluator(provider)
 	case mixedScript:
-		return NewMixedScriptEvaluator(pbuild)
+		return NewMixedScriptEvaluator(provider)
 	default:
 		return nil, fmt.Errorf("unsupported homoglyphs type: %s", reh.Type)
 	}

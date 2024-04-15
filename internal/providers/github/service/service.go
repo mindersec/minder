@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/providers/factory"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 	"net/http"
 	"slices"
 	"strconv"
@@ -92,6 +94,7 @@ type ghProviderService struct {
 	restClientCache     ratecache.RestClientCache
 	ghClientService     github2.ClientService
 	fallbackTokenClient *github.Client
+	providers           factory.ProviderFactory
 }
 
 // NewGithubProviderService creates an instance of GitHubProviderService
@@ -477,18 +480,18 @@ func (p *ghProviderService) deleteInstallation(ctx context.Context, providerID u
 
 func (p *ghProviderService) verifyProviderTokenIdentity(
 	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(p.provMt),
-		providers.WithRestClientCache(p.restClientCache),
-	}
-	builder := providers.NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
-		p.config, p.fallbackTokenClient, pbOpts...)
-	// NOTE: this is github-specific at the moment.  We probably need to generally
-	// re-think token enrollment when we add more providers.
-	ghClient, err := builder.GetGitHub()
+	// TODO: refactor to remove the db.Provider here
+	// TODO: make sure factory can deal with case where provider is not yet in DB
+	providerInstance, err := p.providers.BuildFromID(ctx, provider.ID)
 	if err != nil {
-		return fmt.Errorf("error creating GitHub client: %w", err)
+		return err
 	}
+
+	ghClient, err := provinfv1.As[provinfv1.GitHub](providerInstance)
+	if err != nil {
+		return err
+	}
+
 	userId, err := ghClient.GetUserId(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting user ID: %w", err)

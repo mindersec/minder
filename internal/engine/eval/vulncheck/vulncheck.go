@@ -25,7 +25,6 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -41,12 +40,12 @@ type Evaluator struct {
 }
 
 // NewVulncheckEvaluator creates a new vulncheck evaluator
-func NewVulncheckEvaluator(_ *pb.RuleType_Definition_Eval_Vulncheck, pbuild *providers.ProviderBuilder) (*Evaluator, error) {
-	if pbuild == nil {
+func NewVulncheckEvaluator(provider provifv1.Provider) (*Evaluator, error) {
+	if provider == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	ghcli, err := pbuild.GetGitHub()
+	ghcli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

@@ -18,6 +18,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"github.com/stacklok/minder/internal/providers/factory"
 	"net"
 	"net/http"
 	"time"
@@ -99,6 +100,7 @@ type Server struct {
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
 	fallbackTokenClient *gh.Client
+	providers           factory.ProviderFactory
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer

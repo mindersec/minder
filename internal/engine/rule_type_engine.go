@@ -18,6 +18,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -31,7 +32,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -73,7 +73,7 @@ type RuleTypeEngine struct {
 
 	rt *minderv1.RuleType
 
-	cli *providers.ProviderBuilder
+	provider v1.Provider
 
 	ingestCache ingestcache.Cache
 }
@@ -83,24 +83,24 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	p *minderv1.Profile,
 	rt *minderv1.RuleType,
-	cli *providers.ProviderBuilder,
+	provider v1.Provider,
 ) (*RuleTypeEngine, error) {
 	rval, err := NewRuleValidator(rt)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := ingester.NewRuleDataIngest(rt, cli)
+	rdi, err := ingester.NewRuleDataIngest(rt, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	reval, err := eval.NewRuleEvaluator(ctx, rt, cli)
+	reval, err := eval.NewRuleEvaluator(ctx, rt, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
-	ae, err := actions.NewRuleActions(p, rt, cli)
+	ae, err := actions.NewRuleActions(p, rt, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
@@ -114,7 +114,7 @@ func NewRuleTypeEngine(
 		reval:       reval,
 		rae:         ae,
 		rt:          rt,
-		cli:         cli,
+		provider:    provider,
 		ingestCache: ingestcache.NewNoopCache(),
 	}
 

@@ -28,7 +28,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -49,17 +48,17 @@ type Diff struct {
 // NewDiffIngester creates a new diff ingester
 func NewDiffIngester(
 	cfg *pb.DiffType,
-	pbuild *providers.ProviderBuilder,
+	provider provifv1.Provider,
 ) (*Diff, error) {
 	if cfg == nil {
 		cfg = &pb.DiffType{}
 	}
 
-	if pbuild == nil {
+	if provider == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	cli, err := pbuild.GetGitHub()
+	cli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

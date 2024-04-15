@@ -32,7 +32,6 @@ import (
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	mindergh "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -47,7 +46,7 @@ const (
 // GhBranchProtectRemediator keeps the status for a rule type that uses GH API to remediate branch protection
 type GhBranchProtectRemediator struct {
 	actionType    interfaces.ActionType
-	cli           provifv1.GitHub
+	ghClient      provifv1.GitHub
 	patchTemplate *template.Template
 }
 
@@ -55,7 +54,7 @@ type GhBranchProtectRemediator struct {
 func NewGhBranchProtectRemediator(
 	actionType interfaces.ActionType,
 	ghp *pb.RuleType_Definition_Remediate_GhBranchProtectionType,
-	pbuild *providers.ProviderBuilder,
+	provider provifv1.Provider,
 ) (*GhBranchProtectRemediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -66,13 +65,13 @@ func NewGhBranchProtectRemediator(
 		return nil, fmt.Errorf("cannot parse patch template: %w", err)
 	}
 
-	cli, err := pbuild.GetGitHub()
+	ghClient, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}
 	return &GhBranchProtectRemediator{
 		actionType:    actionType,
-		cli:           cli,
+		ghClient:      ghClient,
 		patchTemplate: patchTemplate,
 	}, nil
 }
@@ -134,7 +133,7 @@ func (r *GhBranchProtectRemediator) Do(
 	}
 
 	// get the current protection
-	res, err := r.cli.GetBranchProtection(ctx, repo.Owner, repo.Name, branch)
+	res, err := r.ghClient.GetBranchProtection(ctx, repo.Owner, repo.Name, branch)
 	if errors.Is(err, github.ErrBranchNotProtected) {
 		// this will create a new branch protection using github's defaults
 		// which appear quite sensible
@@ -162,9 +161,9 @@ func (r *GhBranchProtectRemediator) Do(
 
 	switch remAction {
 	case interfaces.ActionOptOn:
-		err = r.cli.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
+		err = r.ghClient.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
 	case interfaces.ActionOptDryRun:
-		err = dryRun(r.cli.GetBaseURL(), repo.Owner, repo.Name, branch, updatedRequest)
+		err = dryRun(r.ghClient.GetBaseURL(), repo.Owner, repo.Name, branch, updatedRequest)
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}

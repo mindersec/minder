@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 
 	"github.com/rs/zerolog"
 	"github.com/sqlc-dev/pqtype"
@@ -33,7 +34,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -44,16 +44,16 @@ type RuleActionsEngine struct {
 }
 
 // NewRuleActions creates a new rule actions engine
-func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *providers.ProviderBuilder,
+func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, provider provinfv1.Provider,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
-	remEngine, err := remediate.NewRuleRemediator(rt, pbuild)
+	remEngine, err := remediate.NewRuleRemediator(rt, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 
 	// Create the alert engine
-	alertEngine, err := alert.NewRuleAlert(rt, pbuild)
+	alertEngine, err := alert.NewRuleAlert(rt, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}

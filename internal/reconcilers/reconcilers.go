@@ -18,6 +18,7 @@ package reconcilers
 
 import (
 	gogithub "github.com/google/go-github/v61/github"
+	"github.com/stacklok/minder/internal/providers/factory"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -37,6 +38,7 @@ type Reconciler struct {
 	provCfg             *serverconfig.ProviderConfig
 	provMt              providertelemetry.ProviderMetrics
 	fallbackTokenClient *gogithub.Client
+	providers           factory.ProviderFactory
 }
 
 // ReconcilerOption is a function that modifies a reconciler

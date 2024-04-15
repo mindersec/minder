@@ -37,7 +37,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -90,7 +89,7 @@ type paramsPR struct {
 func NewPullRequestRemediate(
 	actionType interfaces.ActionType,
 	prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation,
-	pbuild *providers.ProviderBuilder,
+	provider provifv1.Provider,
 ) (*Remediator, error) {
 	err := prCfg.Validate()
 	if err != nil {
@@ -107,7 +106,7 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
 
-	ghCli, err := pbuild.GetGitHub()
+	ghCli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get github client: %w", err)
 	}

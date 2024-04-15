@@ -32,7 +32,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -62,7 +61,7 @@ type Ingestor struct {
 // NewRestRuleDataIngest creates a new REST rule data ingest engine
 func NewRestRuleDataIngest(
 	restCfg *pb.RestType,
-	pbuild *providers.ProviderBuilder,
+	provider provifv1.Provider,
 ) (*Ingestor, error) {
 	if len(restCfg.Endpoint) == 0 {
 		return nil, fmt.Errorf("missing endpoint")
@@ -75,7 +74,7 @@ func NewRestRuleDataIngest(
 
 	method := util.HttpMethodFromString(restCfg.Method, http.MethodGet)
 
-	cli, err := pbuild.GetHTTP()
+	cli, err := provifv1.As[provifv1.REST](provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get http client: %w", err)
 	}

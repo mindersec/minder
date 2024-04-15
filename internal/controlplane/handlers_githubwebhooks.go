@@ -44,7 +44,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprov "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/util"
@@ -493,22 +492,6 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 
-	// get the provider for the repository
-	prov, err := s.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
-	if err != nil {
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider,
-		s.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
-	}
-
 	var action string // explicit declaration to use the default value
 	action, err = util.JQReadFrom[string](ctx, ".action", payload)
 	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
@@ -518,11 +501,11 @@ func (s *Server) parseGithubEventForProcessing(
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == WebhookActionEventPublished {
-		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
+		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
-		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
+		return s.parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(payload, msg, dbRepo, provBuilder.GetName(), action)
+		return parseRepoEvent(payload, msg, dbRepo, action)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -533,7 +516,6 @@ func parseRepoEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	providerName string,
 	action string,
 ) error {
 	if action == WebhookActionEventDeleted {
@@ -560,7 +542,7 @@ func parseRepoEvent(
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	repo := util.PBRepositoryFromDB(dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
-		WithProvider(providerName).
+		WithProvider(""). // NOTE: This is going away in one of my other PRs
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
@@ -574,7 +556,6 @@ func (s *Server) parseArtifactPublishedEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	prov *providers.ProviderBuilder,
 	action string,
 ) error {
 	// we need to have information about package and repository
@@ -583,15 +564,13 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
+	// get the provider for the repository
+	provider, err := s.providers.BuildFromID(ctx, dbrepo.ProjectID)
 	if err != nil {
-		log.Printf("error creating github provider: %v", err)
+		return fmt.Errorf("error building client: %w", err)
+	}
+	cli, err := provifv1.As[provifv1.GitHub](provider)
+	if err != nil {
 		return err
 	}
 
@@ -625,7 +604,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
-		WithProvider(prov.GetName()).
+		WithProvider(""). // This goes away in another PR
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID).
@@ -634,25 +613,22 @@ func (s *Server) parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parsePullRequestModEvent(
+func (s *Server) parsePullRequestModEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
 	store db.Store,
-	prov *providers.ProviderBuilder,
 	action string,
 ) error {
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
-	}
-
-	cli, err := prov.GetGitHub()
+	// get the provider for the repository
+	provider, err := s.providers.BuildFromID(ctx, dbrepo.ProjectID)
 	if err != nil {
-		log.Printf("error creating github provider: %v", err)
-		return nil
+		return fmt.Errorf("error building client: %w", err)
+	}
+	cli, err := provifv1.As[provifv1.GitHub](provider)
+	if err != nil {
+		return err
 	}
 
 	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
@@ -677,7 +653,7 @@ func parsePullRequestModEvent(
 	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(dbPr.ID).
-		WithProvider(prov.GetName()).
+		WithProvider(""). // This goes away in another PR
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithActionEvent(action)
