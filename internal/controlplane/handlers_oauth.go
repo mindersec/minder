@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -401,6 +402,10 @@ func (s *Server) exchangeCodeForToken(ctx context.Context, providerName string, 
 
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
+		if strings.Contains(err.Error(), "bad_verification_code") {
+			return nil, newHttpError(http.StatusBadRequest, "Invalid authorization code").SetContents(
+				"The verifycation code is invalid or has expired. Please retry the authorization process.")
+		}
 		return nil, fmt.Errorf("error exchanging code for token: %w", err)
 	}
 	return token, nil
