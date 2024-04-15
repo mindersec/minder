@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -27,11 +28,16 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CleanUpUnmanagedProjects deletes a project if it has no role assignments left
 func CleanUpUnmanagedProjects(
-	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
+	ctx context.Context,
+	subject string,
+	proj uuid.UUID,
+	querier db.Querier,
+	authzClient authz.Client,
 	providerService service.GitHubProviderService,
 ) error {
 	l := zerolog.Ctx(ctx).With().Str("project", proj.String()).Logger()
@@ -64,15 +70,20 @@ func CleanUpUnmanagedProjects(
 		return fmt.Errorf("error getting role assignments for project: %v", err)
 	}
 
-	for _, a := range as {
-		if a.GetRole() == authz.AuthzRoleAdmin.String() && a.GetSubject() != "" {
-			// There is an admin role assignment for this project, it's not unmanaged.
-			return nil
+	if !hasOtherRoleAssignments(as, subject) {
+		l.Info().Msg("deleting project")
+		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
+			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
+	l.Debug().Msg("project has other administrators, skipping deletion")
+	return nil
+}
 
-	l.Info().Msg("deleting project")
-	return DeleteProject(ctx, proj, querier, authzClient, providerService, l)
+func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
+	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
+		return a.GetRole() == authz.AuthzRoleAdmin.String() && a.Subject != subject
+	})
 }
 
 // DeleteProject deletes a project and authorization relationships

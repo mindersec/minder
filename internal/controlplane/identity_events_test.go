@@ -71,6 +71,8 @@ func TestHandleEvents(t *testing.T) {
 		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
 	mockStore.EXPECT().Commit(gomock.Any())
+	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
 	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
@@ -78,6 +80,7 @@ func TestHandleEvents(t *testing.T) {
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
 	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
 
 	c := serverconfig.Config{
 		Identity: serverconfig.IdentityConfigWrapper{
@@ -134,7 +137,7 @@ func TestDeleteUserOneProject(t *testing.T) {
 	err = DeleteUser(ctx, store, &authzClient, providerService, u1.IdentitySubject)
 	assert.NoError(t, err, "DeleteUser failed")
 
-	t.Log("Checking if user is removed from project")
+	t.Log("Checking if user is removed from DB")
 	u, err := store.GetUserBySubject(context.Background(), u1.IdentitySubject)
 	assert.Error(t, err, "User not deleted")
 	assert.ErrorIs(t, err, sql.ErrNoRows, "User not deleted")
@@ -148,6 +151,98 @@ func TestDeleteUserOneProject(t *testing.T) {
 	t.Log("Checking if project is removed")
 	_, err = store.GetProjectByID(context.Background(), p1.ID)
 	assert.ErrorIs(t, err, sql.ErrNoRows, "Project not deleted")
+}
+
+func TestDeleteUserMultiProjectMembership(t *testing.T) {
+	t.Parallel()
+
+	store, td, err := embedded.GetFakeStore()
+	require.NoError(t, err)
+
+	t.Cleanup(td)
+
+	ctx, tmout := context.WithTimeout(context.Background(), 5*time.Second)
+	defer tmout()
+
+	t.Log("Creating test projects")
+	p1, err := store.CreateProject(context.Background(), db.CreateProjectParams{
+		Name:     t.Name() + "1",
+		Metadata: json.RawMessage(`{}`),
+	})
+	require.NoError(t, err)
+
+	p2, err := store.CreateProject(context.Background(), db.CreateProjectParams{
+		Name:     t.Name() + "2",
+		Metadata: json.RawMessage(`{}`),
+	})
+	require.NoError(t, err)
+
+	t.Log("Creating test users")
+	u1, err := store.CreateUser(context.Background(), t.Name()+"1")
+	require.NoError(t, err)
+	u2, err := store.CreateUser(context.Background(), t.Name()+"2")
+	require.NoError(t, err)
+
+	p1ID := p1.ID.String()
+	p2ID := p2.ID.String()
+	authzClient := mock.SimpleClient{
+		Allowed: []uuid.UUID{p1.ID, p2.ID},
+		Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
+			p1.ID: {
+				{
+					Subject: u1.IdentitySubject,
+					Role:    authz.AuthzRoleAdmin.String(),
+					Project: &p1ID,
+				},
+			},
+			p2.ID: {
+				{
+					Subject: u2.IdentitySubject,
+					Role:    authz.AuthzRoleAdmin.String(),
+					Project: &p2ID,
+				},
+				{
+					Subject: u1.IdentitySubject,
+					Role:    authz.AuthzRoleViewer.String(),
+					Project: &p2ID,
+				},
+			},
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	providerService := mockprofsvc.NewMockProviderService(ctrl)
+
+	t.Log("Deleting user")
+	err = DeleteUser(ctx, store, &authzClient, providerService, u1.IdentitySubject)
+	assert.NoError(t, err, "DeleteUser failed")
+
+	t.Log("Checking if user1 is removed from DB")
+	_, err = store.GetUserBySubject(context.Background(), u1.IdentitySubject)
+	assert.Error(t, err, "User not deleted")
+	assert.ErrorIs(t, err, sql.ErrNoRows, "User not deleted")
+
+	t.Log("Checking if user1 is removed from project1")
+	assignments, err := authzClient.AssignmentsToProject(ctx, p1.ID)
+	assert.NoError(t, err, "AssignmentsToProject failed")
+	assert.Empty(t, assignments, "User not removed from project")
+
+	t.Log("Checking if project1 is removed")
+	_, err = store.GetProjectByID(context.Background(), p1.ID)
+	assert.ErrorIs(t, err, sql.ErrNoRows, "Project not deleted")
+
+	t.Log("Checking if project2 is still around")
+	_, err = store.GetProjectByID(context.Background(), p2.ID)
+	assert.NoError(t, err, "Project was deleted")
+
+	t.Log("Checking if user2 is still a member of project2")
+	assignments, err = authzClient.AssignmentsToProject(ctx, p2.ID)
+	assert.NoError(t, err, "AssignmentsToProject failed")
+	assert.NotEmpty(t, assignments, "Assignments are empty")
+	assert.Len(t, assignments, 1, "Assignments length is not 1")
+	assert.Equal(t, u2.IdentitySubject, assignments[0].Subject, "User2 is not a member of project2")
+	assert.Equal(t, authz.AuthzRoleAdmin.String(), assignments[0].Role, "User2 is not an admin of project2")
+	assert.Equal(t, p2ID, *assignments[0].Project, "User2 is not a member of project2")
 }
 
 func tokenHandler(t *testing.T, w http.ResponseWriter) {

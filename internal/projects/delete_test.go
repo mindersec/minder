@@ -286,11 +286,11 @@ func TestCleanupUnmanaged(t *testing.T) {
 		Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
 			projTwo: {{
 				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: "user1",
+				Subject: "user2",
 			}},
 			projThree: {{
 				Role:    authz.AuthzRoleViewer.String(),
-				Subject: "user1",
+				Subject: "user2",
 			}},
 		},
 	}
@@ -318,17 +318,17 @@ func TestCleanupUnmanaged(t *testing.T) {
 	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
 	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
 
-	err := projects.CleanUpUnmanagedProjects(context.Background(), projChild, mockStore, authzClient, mockProviderService)
+	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderService)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), projTwo, mockStore, authzClient, mockProviderService)
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore, authzClient, mockProviderService)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), projThree, mockStore, authzClient, mockProviderService)
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore, authzClient, mockProviderService)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
