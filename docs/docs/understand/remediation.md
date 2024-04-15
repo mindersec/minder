@@ -1,9 +1,9 @@
 ---
-title: Remediations
+title: Auto-remediation
 sidebar_position: 40
 ---
 
-# Alerts and Automatic Remediation in Minder
+# Automatic Remediation in Minder
 
 A profile in Minder offers a comprehensive view of your security posture, encompassing more than just the status report. 
 It actively responds to any rules that are not in compliance, taking specific actions. These actions can include the 

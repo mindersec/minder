@@ -1,6 +1,6 @@
 ---
-title: Profiles
-sidebar_position: 20
+title: Profiles and Rules
+sidebar_position: 30
 ---
 
 # Profiles in Minder

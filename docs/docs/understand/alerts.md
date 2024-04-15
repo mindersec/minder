@@ -1,5 +1,5 @@
 ---
-title: Alerts
+title: Alerting
 sidebar_position: 60
 ---
 
