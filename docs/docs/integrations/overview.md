@@ -14,7 +14,7 @@ Providers are integrations with external services that provide information about
 
 Think of them as device drivers in an operating system. They provide a common interface to interact with different services.
 
-For more information, see the [Providers](providers.md) documentation.
+For more information, see the [Provider Integrations](provider_integrations/github.md) documentation.
 
 ## Integration with other tools
 

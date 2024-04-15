@@ -1,4 +1,4 @@
-# Adding users to a project
+# Adding Users to a Project
 
 ## Prerequisites
 
