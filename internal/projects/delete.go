@@ -32,23 +32,47 @@ import (
 // CleanUpUnmanagedProjects deletes a project if it has no role assignments left
 func CleanUpUnmanagedProjects(
 	ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
-	providerService service.GitHubProviderService, l zerolog.Logger,
+	providerService service.GitHubProviderService,
 ) error {
-	l = l.With().Str("project", proj.String()).Logger()
-	// Given that we've deleted the user from the authorization system,
-	// we can now check if there are any role assignments for the project.
+	l := zerolog.Ctx(ctx).With().Str("project", proj.String()).Logger()
+	// We know that non-root projects have a parent which has an admin, so
+	// the only projects without management are top-level projects.
+	dbProj, err := querier.GetProjectByID(ctx, proj)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// was deleted somehow, log and return okay.
+			zerolog.Ctx(ctx).Debug().Str("project_id", proj.String()).Msg("project already deleted")
+			return nil
+		}
+		return err
+	}
+	if dbProj.ParentID.Valid {
+		// This is not a top-level project, skip.
+		return nil
+	}
+	// Given that we've deleted the user assignment from the authorization
+	// system, we can now check if there are any remaining role assignments
+	// for the project.
+	//
+	// Note that AssignmentsToProject returns only direct assignments, but
+	// we shouldn't have any transitive assignments for root projects.
+	// When we add group support, we'll need to check whether admin groups
+	// are empty in this check.  The alternative is to use Expand(), but
+	// that requires expanding the resulting tree ourselves.
 	as, err := authzClient.AssignmentsToProject(ctx, proj)
 	if err != nil {
-		return fmt.Errorf("error getting role assignments for project %v", err)
+		return fmt.Errorf("error getting role assignments for project: %v", err)
 	}
 
-	if len(as) == 0 {
-		l.Info().Msg("deleting project")
-		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
-			return fmt.Errorf("error deleting project %v", err)
+	for _, a := range as {
+		if a.GetRole() == authz.AuthzRoleAdmin.String() && a.GetSubject() != "" {
+			// There is an admin role assignment for this project, it's not unmanaged.
+			return nil
 		}
 	}
-	return nil
+
+	l.Info().Msg("deleting project")
+	return DeleteProject(ctx, proj, querier, authzClient, providerService, l)
 }
 
 // DeleteProject deletes a project and authorization relationships
