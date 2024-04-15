@@ -38,14 +38,36 @@ func CleanUpUnmanagedProjects(
 	proj uuid.UUID,
 	querier db.Querier,
 	authzClient authz.Client,
-	providerService service.GitHubProviderService, l zerolog.Logger,
+	providerService service.GitHubProviderService,
 ) error {
-	l = l.With().Str("project", proj.String()).Logger()
-	// Given that we've deleted the user from the authorization system,
-	// we can now check if there are any role assignments for the project.
+	l := zerolog.Ctx(ctx).With().Str("project", proj.String()).Logger()
+	// We know that non-root projects have a parent which has an admin, so
+	// the only projects without management are top-level projects.
+	dbProj, err := querier.GetProjectByID(ctx, proj)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// was deleted somehow, log and return okay.
+			zerolog.Ctx(ctx).Debug().Str("project_id", proj.String()).Msg("project already deleted")
+			return nil
+		}
+		return err
+	}
+	if dbProj.ParentID.Valid {
+		// This is not a top-level project, skip.
+		return nil
+	}
+	// Given that we've deleted the user assignment from the authorization
+	// system, we can now check if there are any remaining role assignments
+	// for the project.
+	//
+	// Note that AssignmentsToProject returns only direct assignments, but
+	// we shouldn't have any transitive assignments for root projects.
+	// When we add group support, we'll need to check whether admin groups
+	// are empty in this check.  The alternative is to use Expand(), but
+	// that requires expanding the resulting tree ourselves.
 	as, err := authzClient.AssignmentsToProject(ctx, proj)
 	if err != nil {
-		return fmt.Errorf("error getting role assignments for project %v", err)
+		return fmt.Errorf("error getting role assignments for project: %v", err)
 	}
 
 	if !hasOtherRoleAssignments(as, subject) {
@@ -53,15 +75,14 @@ func CleanUpUnmanagedProjects(
 		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
 		}
-	} else {
-		l.Debug().Msg("project has other role assignments")
 	}
+	l.Debug().Msg("project has other administrators, skipping deletion")
 	return nil
 }
 
 func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
-		return a.Subject != subject
+		return a.GetRole() == authz.AuthzRoleAdmin.String() && a.Subject != subject
 	})
 }
 

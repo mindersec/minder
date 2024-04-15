@@ -140,8 +140,8 @@ func DeleteUser(
 
 		for _, proj := range projs {
 			l.Debug().Str("project_id", proj.String()).Msg("cleaning up project")
-			if err := projects.CleanUpUnmanagedProjects(ctx, userId, proj, qtx, authzClient, providerService, l); err != nil {
-				return db.User{}, fmt.Errorf("error deleting project %v", err)
+			if err := projects.CleanUpUnmanagedProjects(l.WithContext(ctx), userId, proj, qtx, authzClient, providerService); err != nil {
+				return db.User{}, fmt.Errorf("error deleting project %s: %v", proj.String(), err)
 			}
 		}
 

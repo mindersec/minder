@@ -25,10 +25,12 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
 	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
@@ -270,4 +272,64 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 
 	// Ensure there are no calls to the orphan cleanup function
 	assert.Equal(t, int32(0), authzClient.OrphanCalls.Load())
+}
+
+func TestCleanupUnmanaged(t *testing.T) {
+	t.Parallel()
+
+	projOne := uuid.New()
+	projChild := uuid.New()
+	projTwo := uuid.New()
+	projThree := uuid.New()
+
+	authzClient := &mock.SimpleClient{
+		Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
+			projTwo: {{
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: "user2",
+			}},
+			projThree: {{
+				Role:    authz.AuthzRoleViewer.String(),
+				Subject: "user2",
+			}},
+		},
+	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), projChild).Return(
+		db.Project{ID: projChild, ParentID: uuid.NullUUID{UUID: projOne, Valid: true}}, nil)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), projTwo).Return(
+		db.Project{ID: projTwo}, nil)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), projThree).Return(
+		db.Project{ID: projThree}, nil).Times(2)
+	// Project 3 has no other admins, so it will be deleted.
+	mockStore.EXPECT().DeleteProject(gomock.Any(), projThree).Return(
+		[]db.DeleteProjectRow{
+			{ID: projThree},
+		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projThree}).
+		Return([]db.Provider{
+			{ID: uuid.UUID{}},
+		}, nil)
+
+	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+
+	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderService)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore, authzClient, mockProviderService)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore, authzClient, mockProviderService)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 }
