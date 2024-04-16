@@ -59,6 +59,8 @@ var (
 	// MinderAuthTokenEnvVar is the environment variable for the minder auth token
 	//nolint:gosec // This is not a hardcoded credential
 	MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
+	// ErrGettingRefreshToken is an error for when we can't get a refresh token
+	ErrGettingRefreshToken = errors.New("error refreshing credentials")
 )
 
 // OpenIdCredentials is a struct to hold the access and refresh tokens
@@ -212,7 +214,7 @@ func GetToken(issuerUrl string, clientId string) (string, error) {
 	if needsRefresh {
 		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, clientId)
 		if err != nil {
-			return "", fmt.Errorf("error refreshing credentials: %v", err)
+			return "", fmt.Errorf("%w: %v", ErrGettingRefreshToken, err)
 		}
 		return updatedCreds.AccessToken, nil
 	}
