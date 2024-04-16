@@ -5,7 +5,7 @@ sidebar_position: 40
 
 # Alerts from Minder
 
-Minder issues _alerts_ to notify you when the state of your software supply chain does not meet the criteria that you've defined in your [profile](profile).
+Minder issues _alerts_ to notify you when the state of your software supply chain does not meet the criteria that you've defined in your [profile](profiles).
 
 Alerts are a core feature of Minder providing you with notifications about the status of your registered
 repositories. These alerts automatically open and close based on the evaluation of the rules defined in your profiles.
