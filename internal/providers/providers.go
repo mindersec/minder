@@ -128,7 +128,7 @@ func NewProviderBuilder(
 
 // Implements returns true if the provider implements the given type.
 func (pb *ProviderBuilder) Implements(impl db.ProviderType) bool {
-	return slices.Contains(pb.p.Implements, impl)
+	return pb.p.CanImplement(impl)
 }
 
 // GetName returns the name of the provider instance as defined in the

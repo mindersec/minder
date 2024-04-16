@@ -44,6 +44,20 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 	return m.recorder
 }
 
+// CanImplement mocks base method.
+func (m *MockProvider) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockProviderMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockProvider)(nil).CanImplement), trait)
+}
+
 // MockGit is a mock of Git interface.
 type MockGit struct {
 	ctrl     *gomock.Controller
@@ -65,6 +79,20 @@ func NewMockGit(ctrl *gomock.Controller) *MockGit {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGit) EXPECT() *MockGitMockRecorder {
 	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockGit) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockGitMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockGit)(nil).CanImplement), trait)
 }
 
 // Clone mocks base method.
@@ -103,6 +131,20 @@ func NewMockREST(ctrl *gomock.Controller) *MockREST {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockREST) EXPECT() *MockRESTMockRecorder {
 	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockREST) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockRESTMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockREST)(nil).CanImplement), trait)
 }
 
 // Do mocks base method.
@@ -172,6 +214,20 @@ func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
 	return m.recorder
 }
 
+// CanImplement mocks base method.
+func (m *MockRepoLister) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockRepoListerMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockRepoLister)(nil).CanImplement), trait)
+}
+
 // ListAllRepositories mocks base method.
 func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*v1.Repository, error) {
 	m.ctrl.T.Helper()
@@ -222,6 +278,20 @@ func (m *MockGitHub) AddAuthToPushOptions(ctx context.Context, options *git.Push
 func (mr *MockGitHubMockRecorder) AddAuthToPushOptions(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAuthToPushOptions", reflect.TypeOf((*MockGitHub)(nil).AddAuthToPushOptions), ctx, options)
+}
+
+// CanImplement mocks base method.
+func (m *MockGitHub) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockGitHubMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockGitHub)(nil).CanImplement), trait)
 }
 
 // Clone mocks base method.

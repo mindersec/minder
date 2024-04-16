@@ -68,6 +68,12 @@ func NewREST(
 	}, nil
 }
 
+// CanImplement returns true/false depending on whether the Provider
+// can implement the specified trait
+func (_ *REST) CanImplement(trait minderv1.ProviderType) bool {
+	return trait == minderv1.ProviderType_PROVIDER_TYPE_REST
+}
+
 // GetBaseURL returns the base URL for the REST API.
 func (h *REST) GetBaseURL() string {
 	return h.baseURL.String()
