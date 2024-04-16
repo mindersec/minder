@@ -174,12 +174,12 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 		return engif.ActionCmdDoNothing
 	case db.EvalStatusTypesFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-		// We should do nothing if the Remediation is already pending or successful
-		if db.RemediationStatusTypesPending == prevRemediation || db.RemediationStatusTypesSuccess == prevRemediation {
-			return engif.ActionCmdDoNothing
+		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
+		if db.RemediationStatusTypesSkipped == prevRemediation {
+			return engif.ActionCmdOn
 		}
-		// The Remediation should be turned ON (if it wasn't already)
-		return engif.ActionCmdOn
+		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
+		return engif.ActionCmdDoNothing
 	case db.EvalStatusTypesSkipped:
 	case db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
