@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
-	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
+	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -53,7 +53,7 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 
 	ctx := context.Background()
 
@@ -103,7 +103,7 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 
 	ctx := context.Background()
 
@@ -155,7 +155,7 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 
 	ctx := context.Background()
 
@@ -220,7 +220,7 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 
 	ctx := context.Background()
 
@@ -260,7 +260,7 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 			{ID: uuid.UUID{}},
 		}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
 
 	ctx := context.Background()
@@ -315,7 +315,7 @@ func TestCleanupUnmanaged(t *testing.T) {
 			{ID: uuid.UUID{}},
 		}, nil)
 
-	mockProviderService := mockprofsvc.NewMockProviderService(ctrl)
+	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
 
 	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderService)

@@ -38,5 +38,6 @@ minder auth [flags]
 * [minder auth login](minder_auth_login.md)	 - Login to Minder
 * [minder auth logout](minder_auth_logout.md)	 - Logout from minder control plane.
 * [minder auth offline-token](minder_auth_offline-token.md)	 - Manage offline tokens
+* [minder auth token](minder_auth_token.md)	 - Print your token for Minder
 * [minder auth whoami](minder_auth_whoami.md)	 - whoami for current user
 

@@ -49,7 +49,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
-	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
+	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -505,13 +505,13 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 		name          string
 		state         string
 		setupAction   string
-		buildStubs    func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService, gh *mockgh.MockClientService)
+		buildStubs    func(store *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, gh *mockgh.MockClientService)
 		checkResponse func(t *testing.T, resp httptest.ResponseRecorder)
 	}{
 		{
 			name:  "Success with state",
 			state: validState,
-			buildStubs: func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService, _ *mockgh.MockClientService) {
+			buildStubs: func(store *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, _ *mockgh.MockClientService) {
 				service.EXPECT().
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(nil)
@@ -531,7 +531,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 		}, {
 			name:  "Success no provider",
 			state: "",
-			buildStubs: func(db *mockdb.MockStore, service *mockprofsvc.MockProviderService, gh *mockgh.MockClientService) {
+			buildStubs: func(db *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, gh *mockgh.MockClientService) {
 				service.EXPECT().
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(nil)
@@ -553,7 +553,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 		}, {
 			name:  "Invalid installation ID",
 			state: validState,
-			buildStubs: func(_ *mockdb.MockStore, service *mockprofsvc.MockProviderService, _ *mockgh.MockClientService) {
+			buildStubs: func(_ *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, _ *mockgh.MockClientService) {
 				service.EXPECT().
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(errors.New("invalid installation ID"))
@@ -565,7 +565,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 		}, {
 			name:  "Wrong remote userid",
 			state: validState,
-			buildStubs: func(store *mockdb.MockStore, service *mockprofsvc.MockProviderService, _ *mockgh.MockClientService) {
+			buildStubs: func(store *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, _ *mockgh.MockClientService) {
 				service.EXPECT().
 					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
 					Return(nil)
@@ -586,7 +586,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			name:        "Request to install",
 			state:       validState,
 			setupAction: "request",
-			buildStubs:  func(*mockdb.MockStore, *mockprofsvc.MockProviderService, *mockgh.MockClientService) {},
+			buildStubs:  func(*mockdb.MockStore, *mockprovsvc.MockGitHubProviderService, *mockgh.MockClientService) {},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
 				t.Helper()
 				assert.Equal(t, 403, resp.Code)
@@ -644,7 +644,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 				}, nil
 			}
 
-			providerService := mockprofsvc.NewMockProviderService(ctrl)
+			providerService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 			store := mockdb.NewMockStore(ctrl)
 			gh := mockgh.NewMockClientService(ctrl)
 
