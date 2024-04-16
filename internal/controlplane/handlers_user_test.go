@@ -42,7 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/providers"
-	mockprov "github.com/stacklok/minder/internal/providers/mock"
+	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -62,7 +62,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 		name       string
 		req        *pb.CreateUserRequest
 		buildStubs func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
-			prov *mockprov.MockProviderService) context.Context
+			prov *mockprov.MockGitHubProviderService) context.Context
 		checkResponse      func(t *testing.T, res *pb.CreateUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
@@ -70,7 +70,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
-				_ *mockprov.MockProviderService) context.Context {
+				_ *mockprov.MockGitHubProviderService) context.Context {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
@@ -114,7 +114,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success with pending App",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
-				prov *mockprov.MockProviderService) context.Context {
+				prov *mockprov.MockGitHubProviderService) context.Context {
 				ctx = auth.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}
@@ -171,7 +171,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			name: "Success with two pending Apps",
 			req:  &pb.CreateUserRequest{},
 			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
-				prov *mockprov.MockProviderService) context.Context {
+				prov *mockprov.MockGitHubProviderService) context.Context {
 				ctx = auth.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}
@@ -254,7 +254,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
-			mockProviders := mockprov.NewMockProviderService(ctrl)
+			mockProviders := mockprov.NewMockGitHubProviderService(ctrl)
 			reqCtx := tc.buildStubs(ctx, mockStore, mockJwtValidator, mockProviders)
 			crypeng := mockcrypto.NewMockEngine(ctrl)
 
