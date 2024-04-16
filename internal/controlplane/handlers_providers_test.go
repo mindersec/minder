@@ -34,7 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
-	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
+	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -59,7 +59,7 @@ func TestDeleteProvider(t *testing.T) {
 	projectIDStr := projectID.String()
 	accessToken := "test-token"
 
-	mockProvidersSvc := mockprofsvc.NewMockProviderService(ctrl)
+	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProvidersSvc.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
 
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
@@ -141,7 +141,7 @@ func TestDeleteProviderByID(t *testing.T) {
 	projectIDStr := projectID.String()
 	accessToken := "test-token"
 
-	mockProvidersSvc := mockprofsvc.NewMockProviderService(ctrl)
+	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProvidersSvc.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
 
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)

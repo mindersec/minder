@@ -24,7 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
-	mockprofsvc "github.com/stacklok/minder/internal/providers/mock"
+	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 )
 
 func TestProviderInstanceRemovedMessage(t *testing.T) {
@@ -38,7 +38,7 @@ func TestProviderInstanceRemovedMessage(t *testing.T) {
 	require.Equal(t, string(ProviderInstanceRemovedEvent), msg.Metadata.Get(InstallationEventKey))
 }
 
-func testNewInstallationManager(t *testing.T, mockSvc *mockprofsvc.MockProviderService) *InstallationManager {
+func testNewInstallationManager(t *testing.T, mockSvc *mockprovsvc.MockGitHubProviderService) *InstallationManager {
 	t.Helper()
 
 	return NewInstallationManager(mockSvc)
@@ -49,7 +49,7 @@ func TestHandleProviderInstanceRemovedMessage(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSvc := mockprofsvc.NewMockProviderService(ctrl)
+	mockSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	im := testNewInstallationManager(t, mockSvc)
 
 	installationID := 123
@@ -70,7 +70,7 @@ func TestHandleUnknownEvent(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockSvc := mockprofsvc.NewMockProviderService(ctrl)
+	mockSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	im := testNewInstallationManager(t, mockSvc)
 
 	msg := message.NewMessage(uuid.New().String(), nil)
