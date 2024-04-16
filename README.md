@@ -28,10 +28,9 @@ allowing users to integrate with their existing tooling and processes.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
 * **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-## Public instance
+## Minder Cloud
 
-Your friends at Stacklok have set up a public instance of Minder that you can use for free. The Minder CLI tool
-(`minder`) from our official releases is configured to use this instance by default. Follow Stacklok's Minder [Getting Started Guide](https://docs.stacklok.com/minder/getting_started/install_cli) to quickly try out Minder's features without having to build and deploy OSS Minder. 
+Stacklok, the company behind Minder, provides a [free-to-use SaaS version of Minder](https://cloud.stacklok.com/) that includes a UI (for public repositories only). You can access Minder Cloud documentation [here](https://docs.stacklok.com/minder).
 
 Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
 feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
