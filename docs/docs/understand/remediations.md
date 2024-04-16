@@ -9,7 +9,7 @@ Minder can perform _automatic remediation_ for many rules in an attempt to resol
 
 The steps to take during automatic remediation are defined within the rule itself and can perform actions like sending a REST call to an endpoint to change configuration, or creating a pull request with a proposed fix.
 
-For example, if you have a rule in your profile that specifies that [Secret Scanning should be enabled](../ref/rules/secret_scanning), and you have enabled automatic remediation in your profile, then Minder will attempt to turn Secret Scanning on in any repositories where it is not enabled.
+For example, if you have a rule in your profile that specifies that Secret Scanning should be enabled, and you have enabled automatic remediation in your profile, then Minder will attempt to turn Secret Scanning on in any repositories where it is not enabled.
 
 ### Enabling remediations in a profile
 To activate the remediation feature within a profile, you need to adjust the YAML definition.
