@@ -3,7 +3,7 @@ title: Automatic Remediations
 sidebar_position: 60
 ---
 
-# Automatic Remediation in Minder
+# Automatic Remediations in Minder
 
 Minder can perform _automatic remediation_ for many rules in an attempt to resolve problems in your software supply chain, and bring your resources into compliance with your [profile](profiles).
 
