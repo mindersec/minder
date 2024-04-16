@@ -5,7 +5,7 @@ sidebar_position: 20
 
 # Providers in Minder
 
-A _provider_ connects Minder to your software supply chain &mdash; giving Minder information about your source code repositories, and their pull requests, dependencies, and artifacts. Minder will apply your [profiles](profiles) to providers to analyze the security posture of your software supply chain, and then will create [alerts](alerts) and can automatically [remediate](remediation) problems that it finds.
+A _provider_ connects Minder to your software supply chain &mdash; giving Minder information about your source code repositories, and their pull requests, dependencies, and artifacts. Minder will apply your [profiles](profiles) to providers to analyze the security posture of your software supply chain, and then will create [alerts](alerts) and can automatically [remediate](remediations) problems that it finds.
 
 The currently supported providers are:
 * GitHub
