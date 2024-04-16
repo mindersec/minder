@@ -7,7 +7,7 @@ sidebar_position: 40
 
 Minder integrates directly with [Trusty by Stacklok](http://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-Minder provides a [Trusty rule type](../ref/rules/activity.md) which allows you to monitor new pull requests for newly added dependencies with low [Trusty](https://www.trustypkg.dev/) scores.
+Minder provides a [Trusty rule type](../ref/rules/pr_trusty_check.md) which allows you to monitor new pull requests for newly added dependencies with low [Trusty](https://www.trustypkg.dev/) scores.
 
 For every pull request submitted to a repository, this rule will check if the pull request adds a new dependency with
 a Trusty score below a threshold that you define. If a dependency with a low score is added, Minder will notify you and 
