@@ -194,8 +194,8 @@ func createTestRemArgsWithExcludes() *remediateArgs {
 
 func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 	// no pull request so far
-	//mockGitHub.EXPECT().
-	//	ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
+	mockGitHub.EXPECT().
+		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
 	mockGitHub.EXPECT().
 		GetName(gomock.Any()).Return("stacklok-bot", nil)
 	mockGitHub.EXPECT().
@@ -452,25 +452,35 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":41}`),
 		},
-		//{
-		//	name: "A PR with the same content already exists",
-		//	newRemArgs: &newPullRequestRemediateArgs{
-		//		prRem:      dependabotPrRem(),
-		//		pbuild:     testGithubProviderBuilder(),
-		//		actionType: TestActionTypeValid,
-		//	},
-		//	remArgs:   createTestRemArgs(),
-		//	repoSetup: defaultMockRepoSetup,
-		//	mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
-		//		mockGitHub.EXPECT().
-		//			ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
-		//			Return([]*github.PullRequest{
-		//				{
-		//					Body: github.String(prBody),
-		//				},
-		//			}, nil)
-		//	},
-		//},
+		{
+			name: "A PR already exists, use it and don't open a new one",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      dependabotPrRem(),
+				pbuild:     testGithubProviderBuilder(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs:   createTestRemArgs(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+				mockGitHub.EXPECT().
+					GetName(gomock.Any()).Return("stacklok-bot", nil)
+				mockGitHub.EXPECT().
+					GetPrimaryEmail(gomock.Any()).Return("test@stacklok.com", nil)
+				mockGitHub.EXPECT().
+					ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).
+					Return([]*github.PullRequest{
+						{
+							Body: github.String(prBody),
+							Head: &github.PullRequestBranch{
+								Ref: github.String("minder_add_dependabot_configuration_for_gomod"),
+							},
+							Number: github.Int(143),
+						},
+					}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":143}`),
+		},
 		//
 		//{
 		//	name: "A branch for this PR already exists, shouldn't open a new PR, but only update the branch",
