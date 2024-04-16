@@ -31,6 +31,7 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -348,27 +349,64 @@ func (r *Remediator) runOn(
 
 	refspec := refFromBranch(branchBaseName(p.title))
 
-	err = pushBranch(ctx, repo, refspec, r.ghCli)
-	if err != nil {
-		return nil, fmt.Errorf("cannot push branch: %w", err)
+	l := logger.With().Str("branchBaseName", branchBaseName(p.title)).Logger()
+
+	// Check if a PR already exists for this branch
+	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title))
+
+	// If no PR exists, push the branch and create a PR
+	if prNumber == 0 {
+		err = pushBranch(ctx, repo, refspec, r.ghCli)
+		if err != nil {
+			return nil, fmt.Errorf("cannot push branch: %w", err)
+		}
+
+		pr, err := r.ghCli.CreatePullRequest(
+			ctx, p.repo.GetOwner(), p.repo.GetName(),
+			p.title, p.body,
+			refspec,
+			dflBranchTo,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create pull request: %w, %w", err, enginerr.ErrActionFailed)
+		}
+		// Return the new PR number
+		prNumber = pr.GetNumber()
+		l = l.With().Str("pr_origin", "newly_created").Logger()
+	} else {
+		l = l.With().Str("pr_origin", "already_existed").Logger()
 	}
 
-	pr, err := r.ghCli.CreatePullRequest(
-		ctx, p.repo.GetOwner(), p.repo.GetName(),
-		p.title, p.body,
-		refspec,
-		dflBranchTo,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create pull request: %w, %w", err, enginerr.ErrActionFailed)
-	}
-	newMeta, err := json.Marshal(pullRequestMetadata{Number: pr.GetNumber()})
+	newMeta, err := json.Marshal(pullRequestMetadata{Number: prNumber})
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling pull request remediation metadata json: %w", err)
 	}
 	// Success - return the new metadata for storing the pull request number
-	logger.Info().Int("pr_number", pr.GetNumber()).Msg("pull request created")
+	l.Info().Int("pr_number", prNumber).Msg("pull request remediation completed")
 	return newMeta, enginerr.ErrActionPending
+}
+
+func getPRNumberFromBranch(
+	ctx context.Context,
+	cli provifv1.GitHub,
+	repo *pb.Repository,
+	branchName string,
+) int {
+	opts := &github.PullRequestListOptions{
+		// TODO: This is not working as expected, need to fix this
+		// Head: fmt.Sprintf("%s:%s", repo.GetOwner(), branchName),
+		State: "open",
+	}
+	openPrs, err := cli.ListPullRequests(ctx, repo.GetOwner(), repo.GetName(), opts)
+	if err != nil {
+		return 0
+	}
+	for _, pr := range openPrs {
+		if pr.GetHead().GetRef() == branchName {
+			return pr.GetNumber()
+		}
+	}
+	return 0
 }
 
 func (r *Remediator) runOff(
