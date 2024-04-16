@@ -349,6 +349,8 @@ func (r *Remediator) runOn(
 
 	refspec := refFromBranch(branchBaseName(p.title))
 
+	l := logger.With().Str("branchBaseName", branchBaseName(p.title)).Logger()
+
 	// Check if a PR already exists for this branch
 	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title))
 
@@ -370,6 +372,9 @@ func (r *Remediator) runOn(
 		}
 		// Return the new PR number
 		prNumber = pr.GetNumber()
+		l = l.With().Str("pr_origin", "newly_created").Logger()
+	} else {
+		l = l.With().Str("pr_origin", "already_existed").Logger()
 	}
 
 	newMeta, err := json.Marshal(pullRequestMetadata{Number: prNumber})
@@ -377,7 +382,7 @@ func (r *Remediator) runOn(
 		return nil, fmt.Errorf("error marshalling pull request remediation metadata json: %w", err)
 	}
 	// Success - return the new metadata for storing the pull request number
-	logger.Info().Int("pr_number", prNumber).Msg("pull request created")
+	l.Info().Int("pr_number", prNumber).Msg("pull request remediation completed")
 	return newMeta, enginerr.ErrActionPending
 }
 
