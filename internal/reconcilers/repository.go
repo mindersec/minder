@@ -46,7 +46,7 @@ type RepoReconcilerEvent struct {
 }
 
 // NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID) (*message.Message, error) {
+func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid.UUID) (*message.Message, error) {
 	evt := &RepoReconcilerEvent{
 		Repository: repoID,
 		Project:    projectID,
@@ -58,7 +58,7 @@ func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider", provider)
+	msg.Metadata.Set("provider_id", providerID.String())
 	return msg, nil
 }
 

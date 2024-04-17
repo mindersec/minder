@@ -299,7 +299,7 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 	return nil
 }
 
-func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) error {
+func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) error {
 	providerName := msg.Metadata.Get(ProviderEventKey)
 	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
 	// TODO: get rid of Provider name
@@ -409,7 +409,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	if err := out.withProviderFromMessage(msg); err != nil {
+	if err := out.withProviderIDFromMessage(msg); err != nil {
 		return nil, err
 	}
 
