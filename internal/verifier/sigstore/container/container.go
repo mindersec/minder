@@ -51,6 +51,13 @@ var (
 	ErrProvenanceNotFoundOrIncomplete = errors.New("provenance not found or incomplete")
 )
 
+const (
+	// This constant was previously defined in the sigstore-go library.
+	// As of version 0.3.0, it seems that library just uses the string
+	// directly any time it needs to refer to it.
+	bundleMediaType = "application/vnd.dev.sigstore.bundle+json;version=0.1"
+)
+
 // AuthMethod is an option for containerAuth
 type AuthMethod func(auth *containerAuth)
 
@@ -323,7 +330,7 @@ func bundleFromOCIImage(ctx context.Context,
 
 		// Construct and verify the bundle
 		pbb := protobundle.Bundle{
-			MediaType:            bundle.SigstoreBundleMediaType01,
+			MediaType:            bundleMediaType,
 			VerificationMaterial: verificationMaterial,
 			Content:              msgSignature,
 		}
