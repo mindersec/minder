@@ -28,6 +28,7 @@ import (
 	"github.com/openfga/openfga/cmd/run"
 	"github.com/openfga/openfga/pkg/logger"
 	"github.com/openfga/openfga/pkg/testutils"
+	fgatestutils "github.com/openfga/openfga/pkg/testutils"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -225,7 +226,7 @@ func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
 
 	fgaServerRunMux.Lock()
 
-	cfg := run.MustDefaultConfigWithRandomPorts()
+	cfg := fgatestutils.MustDefaultConfigWithRandomPorts()
 	cfg.Log.Level = "error"
 	cfg.Datastore.Engine = "memory"
 
