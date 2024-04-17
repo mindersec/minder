@@ -225,7 +225,7 @@ func newOpenFGAServerAndClient(t *testing.T) (authz.Client, func()) {
 
 	fgaServerRunMux.Lock()
 
-	cfg := run.MustDefaultConfigWithRandomPorts()
+	cfg := testutils.MustDefaultConfigWithRandomPorts()
 	cfg.Log.Level = "error"
 	cfg.Datastore.Engine = "memory"
 
