@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
@@ -53,6 +54,7 @@ func CmdTest() *cobra.Command {
 		SilenceUsage: true,
 	}
 
+	testCmd.Flags().String("log-level", "error", "Log Level")
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
 	testCmd.Flags().StringP("profile", "p", "", "YAML file containing a profile to test the rule against")
@@ -223,11 +225,17 @@ func runEvaluationForRules(
 				RemMetadata: remMetadata,
 			},
 		}
+
+		// Enable logging for the engine
+		ctx := context.Background()
+		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
+		ctx = logger.FromFlags(logConfig).WithContext(ctx)
+
 		// Perform rule evaluation
-		evalStatus.SetEvalErr(eng.Eval(context.Background(), inf, evalStatus))
+		evalStatus.SetEvalErr(eng.Eval(ctx, inf, evalStatus))
 
 		// Perform the actions, if any
-		evalStatus.SetActionsErr(context.Background(), eng.Actions(context.Background(), inf, evalStatus))
+		evalStatus.SetActionsErr(ctx, eng.Actions(ctx, inf, evalStatus))
 
 		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
 			cmd.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)
