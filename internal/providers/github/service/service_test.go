@@ -506,7 +506,7 @@ func TestProviderService_DeleteProvider(t *testing.T) {
 		db.CreateProviderParams{
 			Name:       rand.RandomName(seed),
 			ProjectID:  dbproj.ID,
-			Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true},
+			Class:      db.ProviderClassGithubApp,
 			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeGit},
 			AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowUserInput},
 			Definition: json.RawMessage("{}"),

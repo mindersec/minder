@@ -475,10 +475,10 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
 		// Sort GitHub OAuth provider after all GitHub App providers
-		if a.Class.ProviderClass == db.ProviderClassGithub && b.Class.ProviderClass == db.ProviderClassGithubApp {
+		if a.Class == db.ProviderClassGithub && b.Class == db.ProviderClassGithubApp {
 			return 1
 		}
-		if a.Class.ProviderClass == db.ProviderClassGithubApp && b.Class.ProviderClass == db.ProviderClassGithub {
+		if a.Class == db.ProviderClassGithubApp && b.Class == db.ProviderClassGithub {
 			return -1
 		}
 		return 0

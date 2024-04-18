@@ -16,14 +16,6 @@ package providers
 
 import "github.com/stacklok/minder/internal/db"
 
-// GetProviderClassString returns the string representation of the provider class.
-func GetProviderClassString(prov db.Provider) string {
-	if prov.Class.Valid {
-		return string(prov.Class.ProviderClass)
-	}
-	return ""
-}
-
 // ListProviderClasses returns a list of provider classes.
 func ListProviderClasses() []string {
 	return []string{

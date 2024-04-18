@@ -931,7 +931,7 @@ func CanHandleOwner(_ context.Context, prov db.Provider, owner string) bool {
 	if prov.Name == fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, owner) {
 		return true
 	}
-	if prov.Class.ProviderClass == db.ProviderClassGithub {
+	if prov.Class == db.ProviderClassGithub {
 		return true
 	}
 	return false

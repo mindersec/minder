@@ -66,7 +66,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, *prov),
 			Config:           cfg,
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider),
-			Class:            providers.GetProviderClassString(*prov),
+			Class:            string(prov.Class),
 		},
 	}, nil
 }
@@ -129,7 +129,7 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
 			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
 			Config:           cfg,
-			Class:            providers.GetProviderClassString(p),
+			Class:            string(p.Class),
 		})
 	}
 

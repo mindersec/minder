@@ -99,7 +99,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
-	GlobalListProvidersByClass(ctx context.Context, class NullProviderClass) ([]Provider, error)
+	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListNonOrgProjects is a query that lists all non-organization projects.
