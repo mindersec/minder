@@ -48,6 +48,7 @@ mock: ## generate mocks
 	mockgen -package mockghprovsvc -destination internal/providers/github/service/mock/service.go github.com/stacklok/minder/internal/providers/github/service GitHubProviderService
 	mockgen -package mockratecache -destination internal/providers/ratecache/mock/restcache.go github.com/stacklok/minder/internal/providers/ratecache RestClientCache
 	mockgen -package mockgh -destination internal/providers/github/mock/common.go github.com/stacklok/minder/internal/providers/github ClientService
+	mockgen -package mockprov -destination internal/providers/mock/store.go github.com/stacklok/minder/internal/providers ProviderStore
 
 
 # Ugly hack: cobra uses tabs for code blocks in markdown in some places
