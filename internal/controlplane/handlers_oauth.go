@@ -52,6 +52,7 @@ import (
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
+// nolint:gocyclo
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
@@ -143,7 +144,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	var authorizationURL string
 	if slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowGithubAppFlow) {
 		gitHubAppConfig := s.cfg.Provider.GitHubApp
-		if gitHubAppConfig == nil {
+		if gitHubAppConfig == nil || gitHubAppConfig.AppName == "" {
 			return nil, status.Errorf(codes.Internal, "error getting GitHub App config: %s", err)
 		}
 		authorizationURL = fmt.Sprintf("%s/apps/%v/installations/new?state=%v", githubURL, gitHubAppConfig.AppName, state)

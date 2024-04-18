@@ -22,12 +22,11 @@ Minder can be deployed as a Helm chart and provides a CLI tool ‘minder’. Min
 
 ## Minder Cloud
 
-Stacklok, the company behind Minder, also provides a free-to-use hosted version of Minder, allowing you to utilize Minder 
-without the need for managing your own infrastructure.
-You can find the documentation for using the hosted version of Minder [here](https://docs.stacklok.com/minder).
+Stacklok, the company behind Minder, provides a free-to-use SaaS version of Minder that includes a UI (for public repositories only).
+You can access Minder Cloud [here](https://cloud.stacklok.com) and access documentation [here](https://docs.stacklok.com/minder).
 
 ## Status
 
-Experimental stage
+Alpha stage
 
 The public roadmap for Minder is available here: [link](./about/roadmap.md)

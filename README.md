@@ -3,7 +3,7 @@
 [![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/stacklok/minder/badge.svg?branch=main)](https://coveralls.io/github/stacklok/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
 ---
 
-[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Discussions](https://github.com/stacklok/minder/discussions) | [Releases](https://github.com/stacklok/minder/releases)
+[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Releases](https://github.com/stacklok/minder/releases)
 ---
 
 # What is Minder?
@@ -28,10 +28,9 @@ allowing users to integrate with their existing tooling and processes.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
 * **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-## Public instance
+## Minder Cloud
 
-Your friends at Stacklok have set up a public instance of Minder that you can use for free. The Minder CLI tool
-(`minder`) from our official releases is configured to use this instance by default. Follow Stacklok's Minder [Getting Started Guide](https://docs.stacklok.com/minder/getting_started/install_cli) to quickly try out Minder's features without having to build and deploy OSS Minder. 
+Stacklok, the company behind Minder, provides a [free-to-use SaaS version of Minder](https://cloud.stacklok.com/) that includes a UI (for public repositories only). You can access Minder Cloud documentation [here](https://docs.stacklok.com/minder).
 
 Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
 feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
