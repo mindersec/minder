@@ -1197,7 +1197,7 @@ func (mr *MockStoreMockRecorder) GlobalListProviders(arg0 any) *gomock.Call {
 }
 
 // GlobalListProvidersByClass mocks base method.
-func (m *MockStore) GlobalListProvidersByClass(arg0 context.Context, arg1 db.NullProviderClass) ([]db.Provider, error) {
+func (m *MockStore) GlobalListProvidersByClass(arg0 context.Context, arg1 db.ProviderClass) ([]db.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GlobalListProvidersByClass", arg0, arg1)
 	ret0, _ := ret[0].([]db.Provider)

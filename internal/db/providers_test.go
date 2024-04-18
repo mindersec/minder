@@ -36,7 +36,7 @@ func createRandomProvider(t *testing.T, projectID uuid.UUID) Provider {
 	prov, err := testQueries.CreateProvider(context.Background(), CreateProviderParams{
 		Name:       rand.RandomName(seed),
 		ProjectID:  projectID,
-		Class:      NullProviderClass{ProviderClass: ProviderClassGithub, Valid: true},
+		Class:      ProviderClassGithub,
 		Implements: []ProviderType{ProviderTypeGithub, ProviderTypeGit},
 		AuthFlows:  []AuthorizationFlow{AuthorizationFlowUserInput},
 		Definition: json.RawMessage("{}"),

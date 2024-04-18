@@ -151,7 +151,7 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		createdProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
 			Name:       providerName,
 			ProjectID:  stateData.ProjectID,
-			Class:      db.NullProviderClass{ProviderClass: providerClass, Valid: true},
+			Class:      providerClass,
 			Implements: providerDef.Traits,
 			Definition: json.RawMessage(`{"github": {}}`),
 			AuthFlows:  providerDef.AuthorizationFlows,
@@ -327,7 +327,7 @@ func createGitHubApp(
 	savedProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, installationOwner.GetLogin()),
 		ProjectID:  projectId,
-		Class:      db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true},
+		Class:      db.ProviderClassGithubApp,
 		Implements: app.Implements,
 		Definition: json.RawMessage(`{"github-app": {}}`),
 		AuthFlows:  app.AuthorizationFlows,
