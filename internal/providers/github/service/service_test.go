@@ -272,7 +272,7 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.Equal(t, dbProv.ProjectID, dbproj.ID)
 	require.Equal(t, dbProv.AuthFlows, app.AuthorizationFlows)
 	require.Equal(t, dbProv.Implements, app.Implements)
-	require.Equal(t, dbProv.Class, db.NullProviderClass{ProviderClass: db.ProviderClassGithubApp, Valid: true})
+	require.Equal(t, dbProv.Class, db.ProviderClassGithubApp)
 	require.Contains(t, dbProv.Name, db.ProviderClassGithubApp)
 	require.Contains(t, dbProv.Name, accountLogin)
 
