@@ -25,6 +25,10 @@ import (
 func ConvertRepositories(repos []*gogithub.Repository) []*minderv1.Repository {
 	var converted []*minderv1.Repository
 	for _, repo := range repos {
+		// Skip archived repositories
+		if repo.Archived != nil && *repo.Archived {
+			continue
+		}
 		converted = append(converted, ConvertRepository(repo))
 	}
 	return converted
