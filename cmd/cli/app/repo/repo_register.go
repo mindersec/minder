@@ -283,6 +283,12 @@ func registerSelectedRepos(
 }
 
 func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.RegisterRepoResult) {
+	// If there were no results, print a message and return
+	if len(results) == 0 {
+		cmd.Println("No repositories registered")
+		return
+	}
+
 	t := table.New(table.Simple, layouts.Default, []string{"Repository", "Status", "Message"})
 	for _, result := range results {
 		// in the case of a malformed response, skip over it to avoid segfaulting

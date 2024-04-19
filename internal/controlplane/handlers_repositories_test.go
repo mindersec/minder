@@ -81,6 +81,13 @@ func TestServer_RegisterRepository(t *testing.T) {
 			ExpectedError:    "private repos cannot be registered in this project",
 		},
 		{
+			Name:             "Repo creation fails repo is archived, and archived repos are not allowed",
+			RepoOwner:        repoOwner,
+			RepoName:         repoName,
+			RepoServiceSetup: newRepoService(withFailedCreate(ghrepo.ErrArchivedRepoForbidden)),
+			ExpectedError:    "archived repos cannot be registered in this project",
+		},
+		{
 			Name:             "Repo creation on unexpected error",
 			RepoOwner:        repoOwner,
 			RepoName:         repoName,
