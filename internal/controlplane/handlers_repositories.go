@@ -441,7 +441,7 @@ func (s *Server) deleteRepository(
 		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
 	}
 
-	provider, err := s.providerStore.GetByID(ctx, repo.ID)
+	provider, err := s.providerStore.GetByID(ctx, repo.ProviderID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
