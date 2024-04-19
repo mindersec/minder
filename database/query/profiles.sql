@@ -70,8 +70,8 @@ AND (
 ) AND (
     -- if the exclude_labels arg is empty, we list all profiles
     COALESCE(cardinality(sqlc.arg(exclude_labels)::TEXT[]), 0) = 0 OR
-    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
-    NOT profiles.labels @> sqlc.arg(exclude_labels)::TEXT[]
+    -- if the exclude_labels arg is not empty, we exclude profiles containing any of the exclude_labels
+    NOT profiles.labels::TEXT[] && sqlc.arg(exclude_labels)::TEXT[]
 );
 
 -- name: DeleteProfile :exec

@@ -197,12 +197,14 @@ func TestProfileLabels(t *testing.T) {
 
 	randomEntities := createTestRandomEntities(t)
 
-	health1 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health"})
+	health1 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health", "managed"})
 	require.NotEmpty(t, health1)
-	health2 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health", "obsolete"})
+	health2 := createRandomProfile(t, randomEntities.proj.ID, []string{"stacklok:health", "obsolete", "managed"})
 	require.NotEmpty(t, health2)
 	obsolete := createRandomProfile(t, randomEntities.proj.ID, []string{"obsolete"})
 	require.NotEmpty(t, obsolete)
+	managed := createRandomProfile(t, randomEntities.proj.ID, []string{"managed"})
+	require.NotEmpty(t, managed)
 	p1 := createRandomProfile(t, randomEntities.proj.ID, []string{})
 	require.NotEmpty(t, p1)
 	p2 := createRandomProfile(t, randomEntities.proj.ID, []string{})
@@ -217,7 +219,7 @@ func TestProfileLabels(t *testing.T) {
 		{
 			name:          "list all profiles",
 			includeLabels: []string{"*"},
-			expectedNames: []string{health1.Name, health2.Name, obsolete.Name, p1.Name, p2.Name},
+			expectedNames: []string{health1.Name, health2.Name, obsolete.Name, p1.Name, p2.Name, managed.Name},
 		},
 		{
 			name:          "list profiles with no labels",
@@ -259,7 +261,13 @@ func TestProfileLabels(t *testing.T) {
 			name:          "include all labels but exclude one",
 			includeLabels: []string{"*"},
 			excludeLabels: []string{"obsolete"},
-			expectedNames: []string{health1.Name, p1.Name, p2.Name},
+			expectedNames: []string{health1.Name, p1.Name, p2.Name, managed.Name},
+		},
+		{
+			name:          "excluding filters out any profile with exclude labels",
+			includeLabels: []string{"*"},
+			excludeLabels: []string{"stacklok:health", "managed"},
+			expectedNames: []string{obsolete.Name, p1.Name, p2.Name},
 		},
 	}
 
@@ -281,6 +289,8 @@ func TestProfileLabels(t *testing.T) {
 			for _, row := range rows {
 				names = append(names, row.Profile.Name)
 			}
+			slices.Sort(names)
+			slices.Sort(tt.expectedNames)
 			require.True(t, slices.Equal(names, tt.expectedNames), "expected %v, got %v", tt.expectedNames, names)
 		})
 	}

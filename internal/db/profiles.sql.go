@@ -415,8 +415,8 @@ AND (
 ) AND (
     -- if the exclude_labels arg is empty, we list all profiles
     COALESCE(cardinality($3::TEXT[]), 0) = 0 OR
-    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
-    NOT profiles.labels @> $3::TEXT[]
+    -- if the exclude_labels arg is not empty, we exclude profiles containing any of the exclude_labels
+    NOT profiles.labels::TEXT[] && $3::TEXT[]
 )
 `
 
