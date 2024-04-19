@@ -87,7 +87,7 @@ func (s *Server) RegisterRepository(
 
 	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
-		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) {
+		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) || errors.Is(err, ghrepo.ErrArchivedRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 		}
 		return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
