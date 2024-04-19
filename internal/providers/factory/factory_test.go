@@ -54,42 +54,28 @@ func TestProviderFactory(t *testing.T) {
 			ExpectedError:     "error retrieving db record",
 		},
 		{
-			Name:              "BuildFromID returns error when record in DB has no class",
-			Provider:          providerWithClass(noClass),
-			LookupType:        byID,
-			RetrievalSucceeds: true,
-			ExpectedError:     "null provider class",
-		},
-		{
-			Name:              "BuildFromNameProject returns error when record in DB has no class",
-			Provider:          providerWithClass(noClass),
-			LookupType:        byName,
-			RetrievalSucceeds: true,
-			ExpectedError:     "null provider class",
-		},
-		{
 			Name:              "BuildFromID returns error when provider class has no associated factory",
-			Provider:          providerWithClass(githubAppClass),
+			Provider:          providerWithClass(db.ProviderClassGithubApp),
 			LookupType:        byID,
 			RetrievalSucceeds: true,
 			ExpectedError:     "unexpected provider class",
 		},
 		{
 			Name:              "BuildFromNameProject returns error when provider class has no associated factory",
-			Provider:          providerWithClass(githubAppClass),
+			Provider:          providerWithClass(db.ProviderClassGithubApp),
 			LookupType:        byName,
 			RetrievalSucceeds: true,
 			ExpectedError:     "unexpected provider class",
 		},
 		{
 			Name:              "BuildFromID calls factory and returns provider",
-			Provider:          providerWithClass(githubClass),
+			Provider:          providerWithClass(db.ProviderClassGithub),
 			LookupType:        byID,
 			RetrievalSucceeds: true,
 		},
 		{
 			Name:              "BuildFromNameProject calls factory and returns provider",
-			Provider:          providerWithClass(githubClass),
+			Provider:          providerWithClass(db.ProviderClassGithub),
 			LookupType:        byName,
 			RetrievalSucceeds: true,
 		},
@@ -136,9 +122,6 @@ func TestProviderFactory(t *testing.T) {
 }
 
 var (
-	githubAppClass    = db.NullProviderClass{Valid: true, ProviderClass: db.ProviderClassGithubApp}
-	githubClass       = db.NullProviderClass{Valid: true, ProviderClass: db.ProviderClassGithub}
-	noClass           = db.NullProviderClass{}
 	referenceProvider = db.Provider{
 		Name:      "test-provider",
 		ID:        uuid.New(),
@@ -146,7 +129,7 @@ var (
 	}
 )
 
-func providerWithClass(class db.NullProviderClass) db.Provider {
+func providerWithClass(class db.ProviderClass) db.Provider {
 	newProvider := referenceProvider
 	newProvider.Class = class
 	return newProvider

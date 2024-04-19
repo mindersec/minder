@@ -79,9 +79,9 @@ func (_ *githubProviderFactory) GetSupportedClasses() []db.ProviderClass {
 }
 
 func (g *githubProviderFactory) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
-	class := config.Class.ProviderClass
+	class := config.Class
 	// This should be validated by the caller, but let's check anyway
-	if !config.Class.Valid || !slices.Contains(supportedClasses, class) {
+	if !slices.Contains(supportedClasses, class) {
 		return nil, fmt.Errorf("provider does not implement github")
 	}
 

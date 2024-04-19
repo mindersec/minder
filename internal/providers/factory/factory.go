@@ -99,15 +99,7 @@ func (p *providerFactory) BuildFromNameProject(ctx context.Context, name string,
 }
 
 func (p *providerFactory) buildFromDBRecord(ctx context.Context, config *db.Provider) (v1.Provider, error) {
-	var class db.ProviderClass
-	if config.Class.Valid {
-		class = config.Class.ProviderClass
-	} else {
-		// per discussion with Ozz, it is safe to assume that this will not be
-		// null for a valid Provider.
-		// TODO: make this column non-null.
-		return nil, fmt.Errorf("provider %s has null provider class", config.ID.String())
-	}
+	class := config.Class
 	factory, ok := p.classFactories[class]
 	if !ok {
 		return nil, fmt.Errorf("unexpected provider class: %s", class)
