@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/repositories"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
@@ -112,6 +113,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
+	logger.BusinessRecord(ctx).Provider = providerName
+	logger.BusinessRecord(ctx).Project = projectID
+
 	providerFilter := getNameFilterParam(providerName)
 
 	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
@@ -149,7 +153,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	for _, repo := range repos {
 		projID := repo.ProjectID.String()
-		r := util.PBRepositoryFromDB(repo)
+		r := repositories.PBRepositoryFromDB(repo)
 		r.Context = &pb.Context{
 			Project:  &projID,
 			Provider: &repo.Provider,
@@ -172,11 +176,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	resp.Results = results
 	resp.Cursor = respRepoCursor.String()
-
-	// Telemetry logging
-	// TODO: Change to ProviderID
-	logger.BusinessRecord(ctx).Provider = providerName
-	logger.BusinessRecord(ctx).Project = projectID
 
 	return &resp, nil
 }
@@ -202,7 +201,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 
 	projID := repo.ProjectID.String()
-	r := util.PBRepositoryFromDB(repo)
+	r := repositories.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
 		Provider: &repo.Provider,
@@ -247,7 +246,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}
 
 	projID := repo.ProjectID.String()
-	r := util.PBRepositoryFromDB(repo)
+	r := repositories.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
 		Provider: &repo.Provider,
@@ -435,8 +434,6 @@ func (s *Server) deleteRepository(
 	ctx context.Context,
 	repoQueryMethod func() (db.Repository, error),
 ) error {
-	projectID := getProjectID(ctx)
-
 	repo, err := repoQueryMethod()
 	if errors.Is(err, sql.ErrNoRows) {
 		return status.Errorf(codes.NotFound, "repository not found")
@@ -444,7 +441,7 @@ func (s *Server) deleteRepository(
 		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
 	}
 
-	provider, err := s.providerStore.GetByName(ctx, projectID, repo.Provider)
+	provider, err := s.providerStore.GetByID(ctx, repo.ID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}

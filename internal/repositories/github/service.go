@@ -156,7 +156,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// publish a reconciling event for the registered repositories
-	if err = r.pushReconcilerEvent(pbRepo, projectID, provider.Name); err != nil {
+	if err = r.pushReconcilerEvent(pbRepo, projectID, provider.ID); err != nil {
 		return nil, err
 	}
 
@@ -253,10 +253,10 @@ func (r *repositoryService) DeleteRepositoriesByProvider(
 	return nil
 }
 
-func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID, providerName string) error {
+func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID, providerID uuid.UUID) error {
 	log.Printf("publishing register event for repository: %s/%s", pbRepo.Owner, pbRepo.Name)
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(providerName, pbRepo.RepoId, projectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(providerID, pbRepo.RepoId, projectID)
 	if err != nil {
 		return fmt.Errorf("error creating reconciler event: %v", err)
 	}

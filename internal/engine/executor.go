@@ -202,10 +202,10 @@ func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.Ent
 	// TODO: clean this up once we get rid of provider name
 	var provider *db.Provider
 	var err error
-	if inf.ProviderID == uuid.Nil {
-		provider, err = e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
-	} else {
+	if inf.ProviderID != uuid.Nil {
 		provider, err = e.providerStore.GetByID(ctx, inf.ProviderID)
+	} else {
+		provider, err = e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
 	}
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)

@@ -16,7 +16,6 @@ package engine_test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -102,24 +101,13 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
 
-	// get project information
 	mockStore.EXPECT().
-		GetParentProjects(gomock.Any(), projectID).
-		Return([]uuid.UUID{
-			projectID,
-		}, nil)
-
-	mockStore.EXPECT().
-		FindProviders(gomock.Any(), db.FindProvidersParams{
-			Name:     sql.NullString{String: providerName, Valid: true},
-			Projects: []uuid.UUID{projectID},
-			Trait:    db.NullProviderType{},
-		}).
-		Return([]db.Provider{{
+		GetProviderByID(gomock.Any(), gomock.Eq(providerID)).
+		Return(db.Provider{
 			ID:        providerID,
 			Name:      providerName,
 			ProjectID: projectID,
-		}}, nil)
+		}, nil)
 
 	// get access token
 	mockStore.EXPECT().
@@ -309,7 +297,7 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithProvider(providerName).
+		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{
 			Name:     "test",
@@ -325,9 +313,8 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	ts := &logger.TelemetryStore{
-		Project: projectID,
-		// TODO: Change to ProviderID
-		Provider:   providerName,
+		Project:    projectID,
+		ProviderID: providerID,
 		Repository: repositoryID,
 	}
 	ctx = ts.WithTelemetry(ctx)

@@ -72,7 +72,7 @@ type TelemetryStore struct {
 	// Provider records the provider name that the request was associated with.
 	Provider string `json:"provider"`
 
-	// ProviderID records the provider name that the request was associated with.
+	// ProviderID records the provider ID that the request was associated with.
 	ProviderID uuid.UUID `json:"provider_id"`
 
 	// Repository is the repository ID that the request was associated with.

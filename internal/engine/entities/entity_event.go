@@ -70,7 +70,7 @@ const (
 const (
 	// EntityTypeEventKey is the key for the entity type
 	EntityTypeEventKey = "entity_type"
-	// ProviderIDEventKey is the key for the provider
+	// ProviderIDEventKey is the key for the provider ID
 	ProviderIDEventKey = "provider_id"
 	// ProviderEventKey is the key for the provider
 	ProviderEventKey = "provider"
@@ -95,14 +95,7 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 	}
 }
 
-// WithProvider sets the provider
-func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
-	eiw.Provider = provider
-
-	return eiw
-}
-
-// WithProviderID sets the provider
+// WithProviderID sets the provider ID
 func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWrapper {
 	eiw.ProviderID = providerID
 
@@ -237,9 +230,8 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return fmt.Errorf("project ID is required")
 	}
 
-	// TODO: make provider ID mandatory instead
-	if eiw.Provider == "" {
-		return fmt.Errorf("provider is required")
+	if eiw.ProviderID == uuid.Nil {
+		return fmt.Errorf("provider ID is required")
 	}
 
 	if eiw.ExecutionID != nil {
@@ -307,13 +299,14 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 	return nil
 }
 
-func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) error {
-	provider := msg.Metadata.Get(ProviderEventKey)
-	if provider == "" {
-		return fmt.Errorf("%s not found in metadata", ProviderEventKey)
+func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) error {
+	providerName := msg.Metadata.Get(ProviderEventKey)
+	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
+	// TODO: get rid of Provider name
+	if providerName == "" && rawProviderID == "" {
+		return fmt.Errorf("neither %s nor %s found in metadata", ProviderIDEventKey, ProviderEventKey)
 	}
 
-	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
 	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
 	providerID := uuid.Nil
 	if rawProviderID != "" {
@@ -324,7 +317,7 @@ func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) erro
 		}
 	}
 
-	eiw.Provider = provider
+	eiw.Provider = providerName
 	eiw.ProviderID = providerID
 	return nil
 }
@@ -416,7 +409,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	if err := out.withProviderFromMessage(msg); err != nil {
+	if err := out.withProviderIDFromMessage(msg); err != nil {
 		return nil, err
 	}
 

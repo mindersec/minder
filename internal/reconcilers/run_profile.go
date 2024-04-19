@@ -26,10 +26,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/stacklok/minder/internal/artifacts"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/repositories"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic
@@ -112,9 +113,9 @@ func (r *Reconciler) publishProfileInitEvents(
 
 	for _, dbrepo := range dbrepos {
 		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := util.PBRepositoryFromDB(dbrepo)
+		repo := repositories.PBRepositoryFromDB(dbrepo)
 		err := entities.NewEntityInfoWrapper().
-			WithProvider(dbrepo.Provider).
+			WithProviderID(dbrepo.ProviderID).
 			WithProjectID(ectx.Project.ID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
@@ -158,13 +159,13 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 	}
 	for _, dbA := range dbArtifacts {
 		// Get the artifact with all its versions as a protobuf
-		pbArtifact, err := util.GetArtifact(ctx, r.store, dbrepo.ProjectID, dbA.ID)
+		_, pbArtifact, err := artifacts.GetArtifact(ctx, r.store, dbrepo.ProjectID, dbA.ID)
 		if err != nil {
 			return fmt.Errorf("error getting artifact versions: %w", err)
 		}
 
 		err = entities.NewEntityInfoWrapper().
-			WithProvider(dbrepo.Provider).
+			WithProviderID(dbrepo.ProviderID).
 			WithProjectID(ectx.Project.ID).
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).
