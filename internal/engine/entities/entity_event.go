@@ -70,8 +70,6 @@ const (
 	EntityTypeEventKey = "entity_type"
 	// ProviderIDEventKey is the key for the provider ID
 	ProviderIDEventKey = "provider_id"
-	// ProviderEventKey is the key for the provider
-	ProviderEventKey = "provider"
 	// ProjectIDEventKey is the key for the project ID
 	ProjectIDEventKey = "project_id"
 	// RepositoryIDEventKey is the key for the repository ID
