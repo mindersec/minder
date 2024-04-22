@@ -221,21 +221,6 @@ func (mr *MockStoreMockRecorder) CreateProvider(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProvider", reflect.TypeOf((*MockStore)(nil).CreateProvider), arg0, arg1)
 }
 
-// CreatePullRequest mocks base method.
-func (m *MockStore) CreatePullRequest(arg0 context.Context, arg1 db.CreatePullRequestParams) (db.PullRequest, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePullRequest", arg0, arg1)
-	ret0, _ := ret[0].(db.PullRequest)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreatePullRequest indicates an expected call of CreatePullRequest.
-func (mr *MockStoreMockRecorder) CreatePullRequest(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePullRequest", reflect.TypeOf((*MockStore)(nil).CreatePullRequest), arg0, arg1)
-}
-
 // CreateRepository mocks base method.
 func (m *MockStore) CreateRepository(arg0 context.Context, arg1 db.CreateRepositoryParams) (db.Repository, error) {
 	m.ctrl.T.Helper()

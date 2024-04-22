@@ -22,7 +22,7 @@ func (q *Queries) DeleteArtifact(ctx context.Context, id uuid.UUID) error {
 }
 
 const getArtifactByID = `-- name: GetArtifactByID :one
-SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name FROM artifacts
+SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name, external_id FROM artifacts
 WHERE artifacts.id = $1 AND artifacts.project_id = $2
 `
 
@@ -45,12 +45,13 @@ func (q *Queries) GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams
 		&i.ProjectID,
 		&i.ProviderID,
 		&i.ProviderName,
+		&i.ExternalID,
 	)
 	return i, err
 }
 
 const getArtifactByName = `-- name: GetArtifactByName :one
-SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name FROM artifacts 
+SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name, external_id FROM artifacts 
 WHERE lower(artifacts.artifact_name) = lower($3)
 AND artifacts.repository_id = $1 AND artifacts.project_id = $2
 `
@@ -75,12 +76,13 @@ func (q *Queries) GetArtifactByName(ctx context.Context, arg GetArtifactByNamePa
 		&i.ProjectID,
 		&i.ProviderID,
 		&i.ProviderName,
+		&i.ExternalID,
 	)
 	return i, err
 }
 
 const listArtifactsByRepoID = `-- name: ListArtifactsByRepoID :many
-SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name FROM artifacts
+SELECT id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name, external_id FROM artifacts
 WHERE repository_id = $1
 ORDER BY id
 `
@@ -105,6 +107,7 @@ func (q *Queries) ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.N
 			&i.ProjectID,
 			&i.ProviderID,
 			&i.ProviderName,
+			&i.ExternalID,
 		); err != nil {
 			return nil, err
 		}
@@ -127,14 +130,15 @@ INSERT INTO artifacts (
     artifact_visibility,
     project_id,
     provider_id,
-    provider_name
-) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    provider_name,
+    external_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (project_id, LOWER(artifact_name))
 DO UPDATE SET
     artifact_type = $3,
     artifact_visibility = $4
 WHERE artifacts.repository_id = $1 AND artifacts.artifact_name = $2
-RETURNING id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name
+RETURNING id, repository_id, artifact_name, artifact_type, artifact_visibility, created_at, updated_at, project_id, provider_id, provider_name, external_id
 `
 
 type UpsertArtifactParams struct {
@@ -145,6 +149,7 @@ type UpsertArtifactParams struct {
 	ProjectID          uuid.UUID     `json:"project_id"`
 	ProviderID         uuid.UUID     `json:"provider_id"`
 	ProviderName       string        `json:"provider_name"`
+	ExternalID         []byte        `json:"external_id"`
 }
 
 func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error) {
@@ -156,6 +161,7 @@ func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) 
 		arg.ProjectID,
 		arg.ProviderID,
 		arg.ProviderName,
+		arg.ExternalID,
 	)
 	var i Artifact
 	err := row.Scan(
@@ -169,6 +175,7 @@ func (q *Queries) UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) 
 		&i.ProjectID,
 		&i.ProviderID,
 		&i.ProviderName,
+		&i.ExternalID,
 	)
 	return i, err
 }

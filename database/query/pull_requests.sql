@@ -1,14 +1,9 @@
--- name: CreatePullRequest :one
-INSERT INTO pull_requests (
-    repository_id,
-    pr_number
-) VALUES ($1, $2) RETURNING *;
-
 -- name: UpsertPullRequest :one
 INSERT INTO pull_requests (
     repository_id,
-    pr_number
-) VALUES ($1, $2)
+    pr_number,
+    external_id
+) VALUES ($1, $2, $3)
 ON CONFLICT (repository_id, pr_number)
 DO UPDATE SET
     updated_at = NOW()

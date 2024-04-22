@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
@@ -152,6 +153,16 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	for _, artifact := range artifacts {
 		// store information if we do not have it
 		typeLower := strings.ToLower(artifact.GetPackageType())
+		externalID, err := proto.Marshal(&pb.GitHubArtifactID{
+			Org:         repository.RepoOwner,
+			PackageType: typeLower,
+			PackageName: artifact.GetName(),
+		})
+		if err != nil {
+			// just log error and continue
+			log.Printf("error serializing external ID: %v", err)
+			continue
+		}
 		newArtifact, err := r.store.UpsertArtifact(ctx,
 			db.UpsertArtifactParams{
 				RepositoryID: uuid.NullUUID{
@@ -164,6 +175,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 				ProjectID:          evt.Project,
 				ProviderName:       prov.Name,
 				ProviderID:         prov.ID,
+				ExternalID:         externalID,
 			})
 
 		if err != nil {

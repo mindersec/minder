@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package artifacts stores logic relating to the artifact entity type
+// Package artifacts contains logic relating to the artifact entity
 package artifacts
 
 import (

@@ -32,7 +32,8 @@ func createRandomPullRequest(t *testing.T, repo uuid.UUID) PullRequest {
 
 	seed := time.Now().UnixNano()
 	prNum := rand.RandomInt(0, 1000, seed)
-	pr, err := testQueries.CreatePullRequest(context.Background(), CreatePullRequestParams{
+	// TODO: we will need an external ID here once the column is set to NOT NULL
+	pr, err := testQueries.UpsertPullRequest(context.Background(), UpsertPullRequestParams{
 		RepositoryID: repo,
 		PrNumber:     prNum,
 	})

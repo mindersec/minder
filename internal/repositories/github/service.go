@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
@@ -295,6 +296,15 @@ func (r *repositoryService) persistRepository(
 		DefaultBranch: githubRepo.GetDefaultBranch(),
 	}
 
+	// create the external ID for this repo
+	serializedID, err := proto.Marshal(&pb.GitHubRepoID{
+		RepoOwner: pbRepo.Owner,
+		RepoName:  pbRepo.Name,
+	})
+	if err != nil {
+		return uuid.Nil, nil, fmt.Errorf("error serializing external ID: %w", err)
+	}
+
 	// update the database
 	dbRepo, err := r.store.CreateRepository(ctx, db.CreateRepositoryParams{
 		Provider:   provider.Name,
@@ -316,6 +326,7 @@ func (r *repositoryService) persistRepository(
 			String: pbRepo.DefaultBranch,
 			Valid:  true,
 		},
+		ExternalID: serializedID,
 	})
 	if err != nil {
 		return uuid.Nil, nil, err

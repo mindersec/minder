@@ -11,31 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const createPullRequest = `-- name: CreatePullRequest :one
-INSERT INTO pull_requests (
-    repository_id,
-    pr_number
-) VALUES ($1, $2) RETURNING id, repository_id, pr_number, created_at, updated_at
-`
-
-type CreatePullRequestParams struct {
-	RepositoryID uuid.UUID `json:"repository_id"`
-	PrNumber     int64     `json:"pr_number"`
-}
-
-func (q *Queries) CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error) {
-	row := q.db.QueryRowContext(ctx, createPullRequest, arg.RepositoryID, arg.PrNumber)
-	var i PullRequest
-	err := row.Scan(
-		&i.ID,
-		&i.RepositoryID,
-		&i.PrNumber,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const deletePullRequest = `-- name: DeletePullRequest :exec
 DELETE FROM pull_requests
 WHERE repository_id = $1 AND pr_number = $2
@@ -52,7 +27,7 @@ func (q *Queries) DeletePullRequest(ctx context.Context, arg DeletePullRequestPa
 }
 
 const getPullRequest = `-- name: GetPullRequest :one
-SELECT id, repository_id, pr_number, created_at, updated_at FROM pull_requests
+SELECT id, repository_id, pr_number, created_at, updated_at, external_id FROM pull_requests
 WHERE repository_id = $1 AND pr_number = $2
 `
 
@@ -70,12 +45,13 @@ func (q *Queries) GetPullRequest(ctx context.Context, arg GetPullRequestParams) 
 		&i.PrNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExternalID,
 	)
 	return i, err
 }
 
 const getPullRequestByID = `-- name: GetPullRequestByID :one
-SELECT id, repository_id, pr_number, created_at, updated_at FROM pull_requests
+SELECT id, repository_id, pr_number, created_at, updated_at, external_id FROM pull_requests
 WHERE id = $1
 `
 
@@ -88,6 +64,7 @@ func (q *Queries) GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullReq
 		&i.PrNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExternalID,
 	)
 	return i, err
 }
@@ -95,22 +72,24 @@ func (q *Queries) GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullReq
 const upsertPullRequest = `-- name: UpsertPullRequest :one
 INSERT INTO pull_requests (
     repository_id,
-    pr_number
-) VALUES ($1, $2)
+    pr_number,
+    external_id
+) VALUES ($1, $2, $3)
 ON CONFLICT (repository_id, pr_number)
 DO UPDATE SET
     updated_at = NOW()
 WHERE pull_requests.repository_id = $1 AND pull_requests.pr_number = $2
-RETURNING id, repository_id, pr_number, created_at, updated_at
+RETURNING id, repository_id, pr_number, created_at, updated_at, external_id
 `
 
 type UpsertPullRequestParams struct {
 	RepositoryID uuid.UUID `json:"repository_id"`
 	PrNumber     int64     `json:"pr_number"`
+	ExternalID   []byte    `json:"external_id"`
 }
 
 func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error) {
-	row := q.db.QueryRowContext(ctx, upsertPullRequest, arg.RepositoryID, arg.PrNumber)
+	row := q.db.QueryRowContext(ctx, upsertPullRequest, arg.RepositoryID, arg.PrNumber, arg.ExternalID)
 	var i PullRequest
 	err := row.Scan(
 		&i.ID,
@@ -118,6 +97,7 @@ func (q *Queries) UpsertPullRequest(ctx context.Context, arg UpsertPullRequestPa
 		&i.PrNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ExternalID,
 	)
 	return i, err
 }

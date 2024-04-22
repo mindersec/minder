@@ -36,6 +36,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/artifacts"
@@ -601,6 +602,16 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
 
+	artifactType := tempArtifact.GetTypeLower()
+	externalID, err := proto.Marshal(&pb.GitHubArtifactID{
+		Org:         dbrepo.RepoOwner,
+		PackageType: artifactType,
+		PackageName: tempArtifact.GetName(),
+	})
+	if err != nil {
+		return fmt.Errorf("error serializing external ID: %w", err)
+	}
+
 	dbArtifact, err := s.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
 		RepositoryID: uuid.NullUUID{
 			UUID:  dbrepo.ID,
@@ -612,6 +623,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		ProjectID:          dbrepo.ProjectID,
 		ProviderID:         dbrepo.ProviderID,
 		ProviderName:       dbrepo.Provider,
+		ExternalID:         externalID,
 	})
 	if err != nil {
 		return fmt.Errorf("error upserting artifact: %w", err)
@@ -869,9 +881,19 @@ func reconcilePrWithDb(
 
 	switch prEvalInfo.Action {
 	case WebhookActionEventOpened, WebhookActionEventSynchronize:
+		externalID, err := proto.Marshal(&pb.GitHubPullRequestID{
+			RepoOwner:  dbrepo.RepoOwner,
+			RepoName:   dbrepo.RepoName,
+			PullNumber: prEvalInfo.Number,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error while serializing external ID: %w", err)
+		}
+
 		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
+			ExternalID:   externalID,
 		})
 		if err != nil {
 			return nil, fmt.Errorf(

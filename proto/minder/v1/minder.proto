@@ -2143,3 +2143,33 @@ message Provider {
     // This is an output-only field. It may be: "set", "unset", "not_applicable".
     string credentials_state = 9;
 }
+
+// These are for persistence use only, and are not part of the API contract
+
+// GitHubRepoID is the external ID for a repository in GitHub
+message GitHubRepoID {
+    // owner of repo
+    string repo_owner = 1;
+    // name of repo
+    string repo_name = 2;
+}
+
+// GitHubArtifactID is the external ID for a package in GitHub
+message GitHubArtifactID {
+    // organization which owns this artifact
+    string org = 1;
+    // type of package
+    string package_type = 2;
+    // name of package
+    string package_name = 3;
+}
+
+// GitHubPullRequestID is the external ID for a PR in GitHub
+message GitHubPullRequestID {
+    // owner of repo
+    string repo_owner = 1;
+    // name of repo
+    string repo_name = 2;
+    // GitHub's integer ID for the PR
+    int64 pull_number = 3;
+}

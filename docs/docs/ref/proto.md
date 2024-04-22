@@ -976,6 +976,19 @@ GitHubAppProviderConfig contains the configuration for the GitHub App provider
 | endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
+<a name="minder-v1-GitHubArtifactID"></a>
+
+#### GitHubArtifactID
+GitHubArtifactID is the external ID for a package in GitHub
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| org | [string](#string) |  | organization which owns this artifact |
+| package_type | [string](#string) |  | type of package |
+| package_name | [string](#string) |  | name of package |
+
+
 <a name="minder-v1-GitHubProviderConfig"></a>
 
 #### GitHubProviderConfig
@@ -991,6 +1004,31 @@ naming convention
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+
+
+<a name="minder-v1-GitHubPullRequestID"></a>
+
+#### GitHubPullRequestID
+GitHubPullRequestID is the external ID for a PR in GitHub
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repo_owner | [string](#string) |  | owner of repo |
+| repo_name | [string](#string) |  | name of repo |
+| pull_number | [int64](#int64) |  | GitHub's integer ID for the PR |
+
+
+<a name="minder-v1-GitHubRepoID"></a>
+
+#### GitHubRepoID
+GitHubRepoID is the external ID for a repository in GitHub
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repo_owner | [string](#string) |  | owner of repo |
+| repo_name | [string](#string) |  | name of repo |
 
 
 <a name="minder-v1-GitType"></a>

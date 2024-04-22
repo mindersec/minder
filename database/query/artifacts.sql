@@ -6,8 +6,9 @@ INSERT INTO artifacts (
     artifact_visibility,
     project_id,
     provider_id,
-    provider_name
-) VALUES ($1, $2, $3, $4, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.arg(provider_name))
+    provider_name,
+    external_id
+) VALUES ($1, $2, $3, $4, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.arg(provider_name), sqlc.arg(external_id))
 ON CONFLICT (project_id, LOWER(artifact_name))
 DO UPDATE SET
     artifact_type = $3,

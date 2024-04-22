@@ -426,6 +426,7 @@ type Artifact struct {
 	ProjectID          uuid.UUID     `json:"project_id"`
 	ProviderID         uuid.UUID     `json:"provider_id"`
 	ProviderName       string        `json:"provider_name"`
+	ExternalID         []byte        `json:"external_id"`
 }
 
 type Bundle struct {
@@ -574,6 +575,7 @@ type PullRequest struct {
 	PrNumber     int64     `json:"pr_number"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	ExternalID   []byte    `json:"external_id"`
 }
 
 type Repository struct {
@@ -594,6 +596,7 @@ type Repository struct {
 	DefaultBranch sql.NullString `json:"default_branch"`
 	License       sql.NullString `json:"license"`
 	ProviderID    uuid.UUID      `json:"provider_id"`
+	ExternalID    []byte         `json:"external_id"`
 }
 
 type RuleDetailsAlert struct {
