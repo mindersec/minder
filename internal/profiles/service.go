@@ -314,10 +314,10 @@ func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldma
 		return
 	}
 
-	for _, attr := range updateMask.Paths {
-		oldReflect := oldProfilePb.ProtoReflect()
-		patchReflect := patchPb.ProtoReflect()
+	oldReflect := oldProfilePb.ProtoReflect()
+	patchReflect := patchPb.ProtoReflect()
 
+	for _, attr := range updateMask.Paths {
 		fieldDesc := patchReflect.Descriptor().Fields().ByName(protoreflect.Name(attr))
 		if fieldDesc == nil {
 			continue
