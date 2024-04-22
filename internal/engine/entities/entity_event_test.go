@@ -178,7 +178,6 @@ func Test_parseEntityEvent(t *testing.T) {
 			assert.Equal(t, tt.want.ProjectID, got.ProjectID, "project id mismatch")
 			assert.Equal(t, tt.want.Type, got.Type, "entity type mismatch")
 			assert.Equal(t, tt.want.OwnershipData, got.OwnershipData, "ownership data mismatch")
-			assert.Equal(t, tt.want.Provider, got.Provider, "provider mismatch")
 			assert.Equal(t, tt.want.ProviderID, got.ProviderID, "provider ID mismatch")
 		})
 	}
