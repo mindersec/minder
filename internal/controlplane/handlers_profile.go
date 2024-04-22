@@ -543,7 +543,7 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 	}
 
 	patchedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.PatchProfile(ctx, entityCtx.Project.ID, profileID, uuid.Nil, patch, ppr.GetUpdateMask(), qtx)
+		return s.profiles.PatchProfile(ctx, entityCtx.Project.ID, profileID, patch, ppr.GetUpdateMask(), qtx)
 	})
 	if err != nil {
 		// assumption: service layer sets sensible errors

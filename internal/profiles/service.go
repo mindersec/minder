@@ -75,7 +75,6 @@ type ProfileService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		profileID uuid.UUID,
-		subscriptionID uuid.UUID,
 		profile *minderv1.Profile,
 		updateMask *fieldmaskpb.FieldMask,
 		qtx db.Querier,
@@ -295,7 +294,6 @@ func (p *profileService) PatchProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	profileID uuid.UUID,
-	subscriptionID uuid.UUID,
 	patch *minderv1.Profile,
 	updateMask *fieldmaskpb.FieldMask,
 	qtx db.Querier,
@@ -307,7 +305,7 @@ func (p *profileService) PatchProfile(
 
 	patchProfilePb(oldProfilePb, patch, updateMask)
 
-	return p.UpdateProfile(ctx, projectID, subscriptionID, oldProfilePb, qtx)
+	return p.UpdateProfile(ctx, projectID, uuid.Nil, oldProfilePb, qtx)
 }
 
 func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldmaskpb.FieldMask) {

@@ -59,18 +59,18 @@ func (mr *MockProfileServiceMockRecorder) CreateProfile(arg0, arg1, arg2, arg3, 
 }
 
 // PatchProfile mocks base method.
-func (m *MockProfileService) PatchProfile(arg0 context.Context, arg1, arg2, arg3 uuid.UUID, arg4 *v1.Profile, arg5 *fieldmaskpb.FieldMask, arg6 db.Querier) (*v1.Profile, error) {
+func (m *MockProfileService) PatchProfile(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 *v1.Profile, arg4 *fieldmaskpb.FieldMask, arg5 db.Querier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchProfile", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "PatchProfile", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(*v1.Profile)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PatchProfile indicates an expected call of PatchProfile.
-func (mr *MockProfileServiceMockRecorder) PatchProfile(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
+func (mr *MockProfileServiceMockRecorder) PatchProfile(arg0, arg1, arg2, arg3, arg4, arg5 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchProfile", reflect.TypeOf((*MockProfileService)(nil).PatchProfile), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchProfile", reflect.TypeOf((*MockProfileService)(nil).PatchProfile), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // UpdateProfile mocks base method.
