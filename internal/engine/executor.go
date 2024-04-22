@@ -189,7 +189,6 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 		if err != nil {
 			zerolog.Ctx(ctx).Info().
 				Str("project", inf.ProjectID.String()).
-				Str("provider", inf.Provider).
 				Str("provider_id", inf.ProviderID.String()).
 				Str("entity", inf.Type.String()).
 				Err(err).Msg("got error while evaluating entity event")
@@ -199,14 +198,7 @@ func (e *Executor) HandleEntityEvent(msg *message.Message) error {
 	return nil
 }
 func (e *Executor) prepAndEvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-	// TODO: clean this up once we get rid of provider name
-	var provider *db.Provider
-	var err error
-	if inf.ProviderID != uuid.Nil {
-		provider, err = e.providerStore.GetByID(ctx, inf.ProviderID)
-	} else {
-		provider, err = e.providerStore.GetByName(ctx, inf.ProjectID, inf.Provider)
-	}
+	provider, err := e.providerStore.GetByID(ctx, inf.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -241,7 +233,6 @@ func (e *Executor) evalEntityEvent(
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
-		Str("provider", inf.Provider).
 		Str("provider_id", inf.ProviderID.String()).
 		Str("project_id", inf.ProjectID.String())
 	logger.Msg("entity evaluation - started")
