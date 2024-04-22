@@ -298,14 +298,14 @@ func (p *profileService) PatchProfile(
 	updateMask *fieldmaskpb.FieldMask,
 	qtx db.Querier,
 ) (*minderv1.Profile, error) {
-	oldProfilePb, err := getProfilePBFromDB(ctx, profileID, projectID, qtx)
+	baseProfilePb, err := getProfilePBFromDB(ctx, profileID, projectID, qtx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get profile: %w", err)
 	}
 
-	patchProfilePb(oldProfilePb, patch, updateMask)
+	patchProfilePb(baseProfilePb, patch, updateMask)
 
-	return p.UpdateProfile(ctx, projectID, uuid.Nil, oldProfilePb, qtx)
+	return p.UpdateProfile(ctx, projectID, uuid.Nil, baseProfilePb, qtx)
 }
 
 func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldmaskpb.FieldMask) {
