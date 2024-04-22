@@ -309,7 +309,7 @@ func (p *profileService) PatchProfile(
 }
 
 func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldmaskpb.FieldMask) {
-	// if there is no update mask, return the old profile. The grpc-rest gateway always sets the update mask
+	// if there is no update mask, there's no changes. The grpc-rest gateway always sets the update mask
 	if updateMask == nil {
 		return
 	}
