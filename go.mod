@@ -299,3 +299,5 @@ require (
 	k8s.io/klog/v2 v2.120.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/mitchellh/mapstructure => github.com/go-viper/mapstructure v1.6.0
