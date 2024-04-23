@@ -51,6 +51,10 @@ var (
 	ErrProvenanceNotFoundOrIncomplete = errors.New("provenance not found or incomplete")
 )
 
+const (
+	sigstoreBundleMediaType01 = "application/vnd.dev.sigstore.bundle+json;version=0.1"
+)
+
 // AuthMethod is an option for containerAuth
 type AuthMethod func(auth *containerAuth)
 
@@ -323,7 +327,7 @@ func bundleFromOCIImage(ctx context.Context,
 
 		// Construct and verify the bundle
 		pbb := protobundle.Bundle{
-			MediaType:            bundle.SigstoreBundleMediaType01,
+			MediaType:            sigstoreBundleMediaType01,
 			VerificationMaterial: verificationMaterial,
 			Content:              msgSignature,
 		}
