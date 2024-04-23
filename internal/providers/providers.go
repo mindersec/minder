@@ -45,7 +45,7 @@ import (
 var ErrInvalidCredential = errors.New("invalid credential type")
 
 // GetProviderBuilder is a utility function which allows for the creation of
-// a provider factory.
+// a provider manager.
 func GetProviderBuilder(
 	ctx context.Context,
 	prov db.Provider,

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package factory contains the GitHubProviderFactory
-package factory
+// Package manager contains the GitHubProviderFactory
+package manager
 
 import (
 	"context"
@@ -29,42 +29,54 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/factory"
 	githubapp "github.com/stacklok/minder/internal/providers/github/app"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
+	"github.com/stacklok/minder/internal/providers/github/service"
+	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/repositories/github"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-// NewGitHubProviderClassFactory creates an instance of ProviderClassFactory
+// NewGitHubProviderClassManager creates an instance of ProviderClassManager
 // for creating GitHub-specific provider instances.
-func NewGitHubProviderClassFactory(
+func NewGitHubProviderClassManager(
 	restClientCache ratecache.RestClientCache,
 	metrics telemetry.HttpClientMetrics,
-	config *server.GitHubAppConfig,
+	appConfig *server.GitHubAppConfig,
+	providerConfig *server.ProviderConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
+	repos github.RepositoryService,
 	store db.Store,
-) factory.ProviderClassFactory {
-	return &githubProviderFactory{
+	ghService service.GitHubProviderService,
+) m.ProviderClassManager {
+	return &githubProviderManager{
 		restClientCache:     restClientCache,
 		metrics:             metrics,
-		config:              config,
+		appConfig:           appConfig,
+		providerConfig:      providerConfig,
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
+		repos:               repos,
+		ghService:           ghService,
 	}
 }
 
-type githubProviderFactory struct {
+type githubProviderManager struct {
 	restClientCache     ratecache.RestClientCache
 	metrics             telemetry.HttpClientMetrics
-	config              *server.GitHubAppConfig
+	appConfig           *server.GitHubAppConfig
+	providerConfig      *server.ProviderConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
+	repos               github.RepositoryService
 	store               db.Store
+	ghService           service.GitHubProviderService
 }
 
 var (
@@ -74,11 +86,11 @@ var (
 	}
 )
 
-func (_ *githubProviderFactory) GetSupportedClasses() []db.ProviderClass {
+func (_ *githubProviderManager) GetSupportedClasses() []db.ProviderClass {
 	return supportedClasses
 }
 
-func (g *githubProviderFactory) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
+func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
 	class := config.Class
 	// This should be validated by the caller, but let's check anyway
 	if !slices.Contains(supportedClasses, class) {
@@ -121,7 +133,7 @@ func (g *githubProviderFactory) Build(ctx context.Context, config *db.Provider) 
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, g.config, g.metrics, g.restClientCache, creds.credential,
+	cli, err := githubapp.NewGitHubAppProvider(cfg, g.appConfig, g.metrics, g.restClientCache, creds.credential,
 		g.fallbackTokenClient, creds.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
@@ -129,7 +141,38 @@ func (g *githubProviderFactory) Build(ctx context.Context, config *db.Provider) 
 	return cli, nil
 }
 
-func (g *githubProviderFactory) createProviderWithAccessToken(
+func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider) error {
+	state := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.providerConfig)
+	if state == v1.CredentialStateSet {
+		provider, err := g.Build(ctx, config)
+		if err != nil {
+			// errors from `Build` are good enough - no need to add extra context
+			return err
+		}
+
+		client, err := v1.As[v1.GitHub](provider)
+		if err != nil {
+			// this should never happen
+			return errors.New("unable to instantiate provider as GitHub client")
+		}
+
+		// Delete all repositories associated with the provider and remove the webhooks
+		err = g.repos.DeleteRepositoriesByProvider(ctx, client, config.Name, config.ProjectID)
+		if err != nil {
+			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
+			// The repositories will still be deleted by a cascade delete in the database
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("projectID", config.ProjectID.String()).
+				Str("providerID", config.ID.String()).
+				Msg("error deleting repositories")
+		}
+	}
+
+	// clean up the app installation (if any)
+	return g.ghService.DeleteInstallation(ctx, config.ID)
+}
+
+func (g *githubProviderManager) createProviderWithAccessToken(
 	ctx context.Context,
 	encToken db.ProviderAccessToken,
 ) (*credentialDetails, error) {
@@ -150,7 +193,7 @@ func (g *githubProviderFactory) createProviderWithAccessToken(
 	}, nil
 }
 
-func (g *githubProviderFactory) getProviderCredentials(
+func (g *githubProviderManager) getProviderCredentials(
 	ctx context.Context,
 	prov *db.Provider,
 ) (*credentialDetails, error) {
@@ -168,7 +211,7 @@ func (g *githubProviderFactory) getProviderCredentials(
 	return g.createProviderWithAccessToken(ctx, encToken)
 }
 
-func (g *githubProviderFactory) createProviderWithInstallationToken(
+func (g *githubProviderManager) createProviderWithInstallationToken(
 	ctx context.Context,
 	prov *db.Provider,
 ) (*credentialDetails, error) {
@@ -194,18 +237,18 @@ func (g *githubProviderFactory) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	privateKey, err := g.config.GetPrivateKey()
+	privateKey, err := g.appConfig.GetPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("error reading private key: %w", err)
 	}
 
-	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.config.AppID, privateKey, cfg.Endpoint,
+	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.appConfig.AppID, privateKey, cfg.Endpoint,
 		installation.AppInstallationID)
 
 	zerolog.Ctx(ctx).
 		Debug().
-		Str("github-app-name", g.config.AppName).
-		Int64("github-app-id", g.config.AppID).
+		Str("github-app-name", g.appConfig.AppName).
+		Int64("github-app-id", g.appConfig.AppID).
 		Int64("github-app-installation-id", installation.AppInstallationID).
 		Msg("created provider with installation token")
 

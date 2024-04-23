@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -53,13 +53,13 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -103,13 +103,13 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -155,13 +155,13 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -220,13 +220,13 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 			},
 		}, nil)
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
 	assert.NoError(t, err)
 
 	// Ensure there are two calls to the orphan cleanup function
@@ -242,6 +242,7 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 	t.Parallel()
 
 	proj := uuid.New()
+	providerID := uuid.New()
 
 	authzClient := &mock.SimpleClient{}
 
@@ -257,17 +258,17 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{
-			{ID: uuid.UUID{}},
+			{ID: providerID},
 		}, nil)
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
-	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(proj)).Return(nil)
 
 	ctx := context.Background()
 
 	tl := zerolog.NewTestWriter(t)
 	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderService, l)
+	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -281,6 +282,7 @@ func TestCleanupUnmanaged(t *testing.T) {
 	projChild := uuid.New()
 	projTwo := uuid.New()
 	projThree := uuid.New()
+	providerID := uuid.New()
 
 	authzClient := &mock.SimpleClient{
 		Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
@@ -312,23 +314,23 @@ func TestCleanupUnmanaged(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{projThree}).
 		Return([]db.Provider{
-			{ID: uuid.UUID{}},
-		}, nil)
+			{ID: providerID},
+		}, nil).AnyTimes()
 
-	mockProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
-	mockProviderService.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(projThree)).Return(nil)
 
-	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderService)
+	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderManager)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore, authzClient, mockProviderService)
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore, authzClient, mockProviderManager)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore, authzClient, mockProviderService)
+	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore, authzClient, mockProviderManager)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -41,6 +41,20 @@ func (m *MockProviderStore) EXPECT() *MockProviderStoreMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockProviderStore) Delete(ctx context.Context, providerID, projectID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, providerID, projectID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockProviderStoreMockRecorder) Delete(ctx, providerID, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProviderStore)(nil).Delete), ctx, providerID, projectID)
+}
+
 // GetByID mocks base method.
 func (m *MockProviderStore) GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -54,6 +68,21 @@ func (m *MockProviderStore) GetByID(ctx context.Context, providerID uuid.UUID) (
 func (mr *MockProviderStoreMockRecorder) GetByID(ctx, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockProviderStore)(nil).GetByID), ctx, providerID)
+}
+
+// GetByIDProject mocks base method.
+func (m *MockProviderStore) GetByIDProject(ctx context.Context, providerID, projectID uuid.UUID) (*db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByIDProject", ctx, providerID, projectID)
+	ret0, _ := ret[0].(*db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByIDProject indicates an expected call of GetByIDProject.
+func (mr *MockProviderStoreMockRecorder) GetByIDProject(ctx, providerID, projectID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDProject", reflect.TypeOf((*MockProviderStore)(nil).GetByIDProject), ctx, providerID, projectID)
 }
 
 // GetByName mocks base method.

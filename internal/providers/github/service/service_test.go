@@ -475,7 +475,7 @@ func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestProviderService_DeleteProvider(t *testing.T) {
+func TestProviderService_DeleteInstallation(t *testing.T) {
 	t.Parallel()
 
 	installationID := int64(123)
@@ -528,12 +528,9 @@ func TestProviderService_DeleteProvider(t *testing.T) {
 		DeleteInstallation(gomock.Any(), installationID, gomock.Any()).
 		Return(nil, nil)
 
-	err = provSvc.DeleteProvider(
+	err = provSvc.DeleteInstallation(
 		context.Background(),
-		&ghAppProvider)
+		ghAppProvider.ID,
+	)
 	require.NoError(t, err)
-
-	// Ensure the provider is no longer in the database
-	_, err = mocks.fakeStore.GetProviderByID(context.Background(), ghAppProvider.ID)
-	require.ErrorIs(t, err, sql.ErrNoRows)
 }

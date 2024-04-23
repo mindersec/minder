@@ -60,6 +60,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -99,6 +100,7 @@ type Server struct {
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
 	fallbackTokenClient *gh.Client
+	providerManager     manager.ProviderManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -199,6 +201,11 @@ func NewServer(
 		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)
 
 	return s, nil
+}
+
+// GetProviderManager returns the provider manager
+func (s *Server) GetProviderManager() manager.ProviderManager {
+	return s.providerManager
 }
 
 // GetProviderService returns the provider service

@@ -16,7 +16,6 @@ package controlplane
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/google/uuid"
@@ -32,13 +31,10 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestDeleteProvider(t *testing.T) {
@@ -59,8 +55,10 @@ func TestDeleteProvider(t *testing.T) {
 	projectIDStr := projectID.String()
 	accessToken := "test-token"
 
-	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
-	mockProvidersSvc.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	mockProviderManager.EXPECT().
+		DeleteByName(gomock.Any(), gomock.Eq(providerName), gomock.Eq(projectID)).
+		Return(nil)
 
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	mockCryptoEngine.EXPECT().
@@ -68,23 +66,11 @@ func TestDeleteProvider(t *testing.T) {
 		Return(oauth2.Token{AccessToken: accessToken}, nil).AnyTimes()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetProviderByName(gomock.Any(), gomock.Any()).Return(db.Provider{
-		Name:      providerName,
-		ProjectID: projectID,
-		Implements: []db.ProviderType{
-			db.ProviderTypeGithub,
-		},
-		Version:    provinfv1.V1,
-		Definition: json.RawMessage(`{"github-app": {}}`),
-	}, nil)
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: "encryptedToken",
 		}, nil).AnyTimes()
-
-	mockRepoSvc := mockghrepo.NewMockRepositoryService(ctrl)
-	mockRepoSvc.EXPECT().DeleteRepositoriesByProvider(gomock.Any(), gomock.Any(), providerName, projectID).Return(nil)
 
 	cancelable, cancel := context.WithCancel(context.Background())
 	clientCache := ratecache.NewRestClientCache(cancelable)
@@ -97,10 +83,8 @@ func TestDeleteProvider(t *testing.T) {
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
-		ghProviders:     mockProvidersSvc,
-		repos:           mockRepoSvc,
+		providerManager: mockProviderManager,
 		authzClient:     authzClient,
-		providerStore:   providers.NewProviderStore(mockStore),
 		restClientCache: clientCache,
 		cfg:             &serverconfig.Config{},
 	}
@@ -135,14 +119,13 @@ func TestDeleteProviderByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	providerName := "test-provider"
 	providerID := uuid.New()
 	projectID := uuid.New()
 	projectIDStr := projectID.String()
 	accessToken := "test-token"
 
-	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
-	mockProvidersSvc.EXPECT().DeleteProvider(gomock.Any(), gomock.Any()).Return(nil)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(projectID)).Return(nil)
 
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	mockCryptoEngine.EXPECT().
@@ -150,23 +133,11 @@ func TestDeleteProviderByID(t *testing.T) {
 		Return(oauth2.Token{AccessToken: accessToken}, nil).AnyTimes()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetProviderByID(gomock.Any(), providerID).Return(db.Provider{
-		Name:      providerName,
-		ProjectID: projectID,
-		Implements: []db.ProviderType{
-			db.ProviderTypeGithub,
-		},
-		Version:    provinfv1.V1,
-		Definition: json.RawMessage(`{"github-app": {}}`),
-	}, nil)
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 		Return(db.ProviderAccessToken{
 			EncryptedToken: "encryptedToken",
 		}, nil).AnyTimes()
-
-	mockRepoSvc := mockghrepo.NewMockRepositoryService(ctrl)
-	mockRepoSvc.EXPECT().DeleteRepositoriesByProvider(gomock.Any(), gomock.Any(), providerName, projectID).Return(nil)
 
 	cancelable, cancel := context.WithCancel(context.Background())
 	clientCache := ratecache.NewRestClientCache(cancelable)
@@ -179,10 +150,8 @@ func TestDeleteProviderByID(t *testing.T) {
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
-		ghProviders:     mockProvidersSvc,
-		repos:           mockRepoSvc,
+		providerManager: mockProviderManager,
 		authzClient:     authzClient,
-		providerStore:   providers.NewProviderStore(mockStore),
 		restClientCache: clientCache,
 		cfg:             &serverconfig.Config{},
 	}

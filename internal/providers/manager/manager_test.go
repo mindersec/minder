@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package factory_test
+package manager_test
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/factory"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/mock/fixtures"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -42,39 +42,39 @@ func TestProviderFactory(t *testing.T) {
 		ExpectedError     string
 	}{
 		{
-			Name:              "BuildFromID returns error when DB lookup fails",
+			Name:              "InstantiateFromID returns error when DB lookup fails",
 			LookupType:        byID,
 			RetrievalSucceeds: false,
 			ExpectedError:     "error retrieving db record",
 		},
 		{
-			Name:              "BuildFromNameProject returns error when DB lookup fails",
+			Name:              "InstantiateFromNameProject returns error when DB lookup fails",
 			LookupType:        byName,
 			RetrievalSucceeds: false,
 			ExpectedError:     "error retrieving db record",
 		},
 		{
-			Name:              "BuildFromID returns error when provider class has no associated factory",
+			Name:              "InstantiateFromID returns error when provider class has no associated manager",
 			Provider:          providerWithClass(db.ProviderClassGithubApp),
 			LookupType:        byID,
 			RetrievalSucceeds: true,
 			ExpectedError:     "unexpected provider class",
 		},
 		{
-			Name:              "BuildFromNameProject returns error when provider class has no associated factory",
+			Name:              "InstantiateFromNameProject returns error when provider class has no associated manager",
 			Provider:          providerWithClass(db.ProviderClassGithubApp),
 			LookupType:        byName,
 			RetrievalSucceeds: true,
 			ExpectedError:     "unexpected provider class",
 		},
 		{
-			Name:              "BuildFromID calls factory and returns provider",
+			Name:              "InstantiateFromID calls manager and returns provider",
 			Provider:          providerWithClass(db.ProviderClassGithub),
 			LookupType:        byID,
 			RetrievalSucceeds: true,
 		},
 		{
-			Name:              "BuildFromNameProject calls factory and returns provider",
+			Name:              "InstantiateFromNameProject calls manager and returns provider",
 			Provider:          providerWithClass(db.ProviderClassGithub),
 			LookupType:        byName,
 			RetrievalSucceeds: true,
@@ -100,16 +100,16 @@ func TestProviderFactory(t *testing.T) {
 			}
 
 			store := fixtures.NewProviderStoreMock(opt)(ctrl)
-			provFactory, err := factory.NewProviderFactory(
-				[]factory.ProviderClassFactory{&mockClassFactory{}},
+			provFactory, err := manager.NewProviderManager(
+				[]manager.ProviderClassManager{&mockClassManager{}},
 				store,
 			)
 			require.NoError(t, err)
 
 			if scenario.LookupType == byName {
-				_, err = provFactory.BuildFromNameProject(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
+				_, err = provFactory.InstantiateFromNameProject(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
 			} else {
-				_, err = provFactory.BuildFromID(ctx, scenario.Provider.ID)
+				_, err = provFactory.InstantiateFromID(ctx, scenario.Provider.ID)
 			}
 
 			if scenario.ExpectedError != "" {
@@ -144,13 +144,17 @@ const (
 
 // Not using the mock generator because we probably won't need to stub this
 // elsewhere, and the implementation is trivial.
-type mockClassFactory struct{}
+type mockClassManager struct{}
 
-func (_ *mockClassFactory) Build(_ context.Context, _ *db.Provider) (v1.Provider, error) {
+func (_ *mockClassManager) Build(_ context.Context, _ *db.Provider) (v1.Provider, error) {
 	return &mockProvider{}, nil
 }
 
-func (_ *mockClassFactory) GetSupportedClasses() []db.ProviderClass {
+func (_ *mockClassManager) Delete(_ context.Context, _ *db.Provider) error {
+	return nil
+}
+
+func (_ *mockClassManager) GetSupportedClasses() []db.ProviderClass {
 	return []db.ProviderClass{db.ProviderClassGithub}
 }
 
