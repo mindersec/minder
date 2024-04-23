@@ -47,8 +47,6 @@ import (
 // - RepositoryEventEntityType - repository
 // - VersionedArtifactEventEntityType - versioned_artifact
 type EntityInfoWrapper struct {
-	// TODO: remove this field
-	Provider      string
 	ProviderID    uuid.UUID
 	ProjectID     uuid.UUID
 	Entity        protoreflect.ProtoMessage
@@ -70,10 +68,8 @@ const (
 const (
 	// EntityTypeEventKey is the key for the entity type
 	EntityTypeEventKey = "entity_type"
-	// ProviderIDEventKey is the key for the provider
+	// ProviderIDEventKey is the key for the provider ID
 	ProviderIDEventKey = "provider_id"
-	// ProviderEventKey is the key for the provider
-	ProviderEventKey = "provider"
 	// ProjectIDEventKey is the key for the project ID
 	ProjectIDEventKey = "project_id"
 	// RepositoryIDEventKey is the key for the repository ID
@@ -95,14 +91,7 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 	}
 }
 
-// WithProvider sets the provider
-func (eiw *EntityInfoWrapper) WithProvider(provider string) *EntityInfoWrapper {
-	eiw.Provider = provider
-
-	return eiw
-}
-
-// WithProviderID sets the provider
+// WithProviderID sets the provider ID
 func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWrapper {
 	eiw.ProviderID = providerID
 
@@ -237,16 +226,14 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return fmt.Errorf("project ID is required")
 	}
 
-	// TODO: make provider ID mandatory instead
-	if eiw.Provider == "" {
-		return fmt.Errorf("provider is required")
+	if eiw.ProviderID == uuid.Nil {
+		return fmt.Errorf("provider ID is required")
 	}
 
 	if eiw.ExecutionID != nil {
 		msg.Metadata.Set(ExecutionIDKey, eiw.ExecutionID.String())
 	}
 
-	msg.Metadata.Set(ProviderEventKey, eiw.Provider)
 	msg.Metadata.Set(ProviderIDEventKey, eiw.ProviderID.String())
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
@@ -307,24 +294,17 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 	return nil
 }
 
-func (eiw *EntityInfoWrapper) withProviderFromMessage(msg *message.Message) error {
-	provider := msg.Metadata.Get(ProviderEventKey)
-	if provider == "" {
-		return fmt.Errorf("%s not found in metadata", ProviderEventKey)
-	}
-
+func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) error {
 	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
-	// TODO: Make provider ID mandatory. Right now, default to a nil UUID
-	providerID := uuid.Nil
-	if rawProviderID != "" {
-		var err error
-		providerID, err = uuid.Parse(rawProviderID)
-		if err != nil {
-			return fmt.Errorf("malformed provider id %s", rawProviderID)
-		}
+	if rawProviderID == "" {
+		return fmt.Errorf("%s not found in metadata", ProviderIDEventKey)
 	}
 
-	eiw.Provider = provider
+	providerID, err := uuid.Parse(rawProviderID)
+	if err != nil {
+		return fmt.Errorf("malformed provider id %s", rawProviderID)
+	}
+
 	eiw.ProviderID = providerID
 	return nil
 }
@@ -416,7 +396,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	if err := out.withProviderFromMessage(msg); err != nil {
+	if err := out.withProviderIDFromMessage(msg); err != nil {
 		return nil, err
 	}
 

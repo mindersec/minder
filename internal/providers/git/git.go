@@ -26,6 +26,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
 
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -42,6 +43,12 @@ func NewGit(token provifv1.GitCredential) *Git {
 	return &Git{
 		credential: token,
 	}
+}
+
+// CanImplement returns true/false depending on whether the Provider
+// can implement the specified trait
+func (_ *Git) CanImplement(trait minderv1.ProviderType) bool {
+	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT
 }
 
 // Clone clones a git repository

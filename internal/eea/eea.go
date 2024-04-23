@@ -29,11 +29,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/artifacts"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/util"
 )
 
 // EEA is the Event Execution Aggregator
@@ -310,7 +310,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	repoID uuid.NullUUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	r, err := util.GetRepository(ctx, e.querier, projID, repoID.UUID)
+	providerID, r, err := getRepository(ctx, e.querier, projID, repoID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
@@ -319,7 +319,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 		WithRepository(r).
 		WithRepositoryID(repoID.UUID).
 		WithProjectID(projID).
-		WithProvider(*r.Context.Provider), nil
+		WithProviderID(providerID), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
@@ -328,7 +328,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 	projID uuid.UUID,
 	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	a, err := util.GetArtifact(ctx, e.querier, projID, artID.UUID)
+	providerID, a, err := artifacts.GetArtifact(ctx, e.querier, projID, artID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
@@ -337,7 +337,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 		WithProjectID(projID).
 		WithArtifact(a).
 		WithArtifactID(artID.UUID).
-		WithProvider(*a.Context.Provider)
+		WithProviderID(providerID)
 	if repoID.Valid {
 		eiw.WithRepositoryID(repoID.UUID)
 	}
@@ -350,7 +350,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	projID uuid.UUID,
 	prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	pr, err := util.GetPullRequest(ctx, e.querier, projID, repoID.UUID, prID.UUID)
+	providerID, pr, err := getPullRequest(ctx, e.querier, projID, repoID.UUID, prID.UUID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}
@@ -360,5 +360,5 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		WithProjectID(projID).
 		WithPullRequest(pr).
 		WithPullRequestID(prID.UUID).
-		WithProvider(*pr.Context.Provider), nil
+		WithProviderID(providerID), nil
 }

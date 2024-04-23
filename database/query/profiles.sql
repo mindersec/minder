@@ -40,7 +40,7 @@ DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
 -- name: GetProfileByProjectAndID :many
-SELECT * FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one
@@ -70,8 +70,8 @@ AND (
 ) AND (
     -- if the exclude_labels arg is empty, we list all profiles
     COALESCE(cardinality(sqlc.arg(exclude_labels)::TEXT[]), 0) = 0 OR
-    -- if the exclude_labels arg is not empty, we list profiles whose labels are not a subset of exclude_labels
-    NOT profiles.labels @> sqlc.arg(exclude_labels)::TEXT[]
+    -- if the exclude_labels arg is not empty, we exclude profiles containing any of the exclude_labels
+    NOT profiles.labels::TEXT[] && sqlc.arg(exclude_labels)::TEXT[]
 );
 
 -- name: DeleteProfile :exec

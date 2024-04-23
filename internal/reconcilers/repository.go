@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -46,7 +46,7 @@ type RepoReconcilerEvent struct {
 }
 
 // NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID) (*message.Message, error) {
+func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid.UUID) (*message.Message, error) {
 	evt := &RepoReconcilerEvent{
 		Repository: repoID,
 		Project:    projectID,
@@ -58,7 +58,7 @@ func NewRepoReconcilerMessage(provider string, repoID int64, projectID uuid.UUID
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider", provider)
+	msg.Metadata.Set("provider_id", providerID.String())
 	return msg, nil
 }
 
@@ -108,10 +108,10 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 	}
 
 	// evaluate profile for repo
-	repo := util.PBRepositoryFromDB(repository)
+	repo := repositories.PBRepositoryFromDB(repository)
 
 	err = entities.NewEntityInfoWrapper().
-		WithProvider(prov.Name).
+		WithProviderID(prov.ID).
 		WithRepository(repo).
 		WithProjectID(evt.Project).
 		WithRepositoryID(repository.ID).
@@ -184,7 +184,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
 		}
 		err = entities.NewEntityInfoWrapper().
-			WithProvider(prov.Name).
+			WithProviderID(prov.ID).
 			WithArtifact(pbArtifact).
 			WithProjectID(evt.Project).
 			WithArtifactID(newArtifact.ID).

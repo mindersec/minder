@@ -154,6 +154,15 @@ func NewGitHub(
 	}
 }
 
+// CanImplement returns true/false depending on whether the Provider
+// can implement the specified trait
+func (_ *GitHub) CanImplement(trait minderv1.ProviderType) bool {
+	return trait == minderv1.ProviderType_PROVIDER_TYPE_GITHUB ||
+		trait == minderv1.ProviderType_PROVIDER_TYPE_GIT ||
+		trait == minderv1.ProviderType_PROVIDER_TYPE_REST ||
+		trait == minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER
+}
+
 // ListPackagesByRepository returns a list of all packages for a specific repository
 func (c *GitHub) ListPackagesByRepository(
 	ctx context.Context,
@@ -922,7 +931,7 @@ func CanHandleOwner(_ context.Context, prov db.Provider, owner string) bool {
 	if prov.Name == fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, owner) {
 		return true
 	}
-	if prov.Class.ProviderClass == db.ProviderClassGithub {
+	if prov.Class == db.ProviderClassGithub {
 		return true
 	}
 	return false

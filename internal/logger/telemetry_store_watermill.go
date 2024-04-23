@@ -82,8 +82,7 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 		return ts, fmt.Errorf("error getting entity ID: %w", err)
 	}
 
-	// Set the provider name and project ID
-	ts.Provider = inf.Provider
+	// Set the provider and project ID
 	ts.ProviderID = inf.ProviderID
 	ts.Project = inf.ProjectID
 

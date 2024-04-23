@@ -541,7 +541,7 @@ type Provider struct {
 	CreatedAt  time.Time           `json:"created_at"`
 	UpdatedAt  time.Time           `json:"updated_at"`
 	AuthFlows  []AuthorizationFlow `json:"auth_flows"`
-	Class      NullProviderClass   `json:"class"`
+	Class      ProviderClass       `json:"class"`
 }
 
 type ProviderAccessToken struct {

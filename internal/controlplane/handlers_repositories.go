@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/repositories"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
@@ -87,7 +88,7 @@ func (s *Server) RegisterRepository(
 
 	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
-		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) {
+		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) || errors.Is(err, ghrepo.ErrArchivedRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 		}
 		return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
@@ -111,6 +112,9 @@ func (s *Server) ListRepositories(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
+
+	logger.BusinessRecord(ctx).Provider = providerName
+	logger.BusinessRecord(ctx).Project = projectID
 
 	providerFilter := getNameFilterParam(providerName)
 
@@ -149,7 +153,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	for _, repo := range repos {
 		projID := repo.ProjectID.String()
-		r := util.PBRepositoryFromDB(repo)
+		r := repositories.PBRepositoryFromDB(repo)
 		r.Context = &pb.Context{
 			Project:  &projID,
 			Provider: &repo.Provider,
@@ -172,11 +176,6 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	resp.Results = results
 	resp.Cursor = respRepoCursor.String()
-
-	// Telemetry logging
-	// TODO: Change to ProviderID
-	logger.BusinessRecord(ctx).Provider = providerName
-	logger.BusinessRecord(ctx).Project = projectID
 
 	return &resp, nil
 }
@@ -202,7 +201,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 
 	projID := repo.ProjectID.String()
-	r := util.PBRepositoryFromDB(repo)
+	r := repositories.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
 		Provider: &repo.Provider,
@@ -247,7 +246,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 	}
 
 	projID := repo.ProjectID.String()
-	r := util.PBRepositoryFromDB(repo)
+	r := repositories.PBRepositoryFromDB(repo)
 	r.Context = &pb.Context{
 		Project:  &projID,
 		Provider: &repo.Provider,
@@ -435,8 +434,6 @@ func (s *Server) deleteRepository(
 	ctx context.Context,
 	repoQueryMethod func() (db.Repository, error),
 ) error {
-	projectID := getProjectID(ctx)
-
 	repo, err := repoQueryMethod()
 	if errors.Is(err, sql.ErrNoRows) {
 		return status.Errorf(codes.NotFound, "repository not found")
@@ -444,7 +441,7 @@ func (s *Server) deleteRepository(
 		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
 	}
 
-	provider, err := s.providerStore.GetByName(ctx, projectID, repo.Provider)
+	provider, err := s.providerStore.GetByID(ctx, repo.ProviderID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
@@ -475,10 +472,10 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 
 	slices.SortFunc(opts, func(a, b db.Provider) int {
 		// Sort GitHub OAuth provider after all GitHub App providers
-		if a.Class.ProviderClass == db.ProviderClassGithub && b.Class.ProviderClass == db.ProviderClassGithubApp {
+		if a.Class == db.ProviderClassGithub && b.Class == db.ProviderClassGithubApp {
 			return 1
 		}
-		if a.Class.ProviderClass == db.ProviderClassGithubApp && b.Class.ProviderClass == db.ProviderClassGithub {
+		if a.Class == db.ProviderClassGithubApp && b.Class == db.ProviderClassGithub {
 			return -1
 		}
 		return 0

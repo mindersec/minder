@@ -79,6 +79,9 @@ var (
 	// attempt to register a private repo in a project which does not allow
 	// private repos
 	ErrPrivateRepoForbidden = errors.New("private repos cannot be registered in this project")
+	// ErrArchivedRepoForbidden is returned when creation fails due to an
+	// attempt to register an archived repo
+	ErrArchivedRepoForbidden = errors.New("archived repos cannot be registered in this project")
 )
 
 type repositoryService struct {
@@ -112,6 +115,11 @@ func (r *repositoryService) CreateRepository(
 	githubRepo, err := client.GetRepository(ctx, repoOwner, repoName)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving repo from github: %w", err)
+	}
+
+	// skip if this is an archived repo
+	if githubRepo.GetArchived() {
+		return nil, ErrArchivedRepoForbidden
 	}
 
 	// skip if this is a private repo, and private repos are not enabled
@@ -148,7 +156,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// publish a reconciling event for the registered repositories
-	if err = r.pushReconcilerEvent(pbRepo, projectID, provider.Name); err != nil {
+	if err = r.pushReconcilerEvent(pbRepo, projectID, provider.ID); err != nil {
 		return nil, err
 	}
 
@@ -245,10 +253,10 @@ func (r *repositoryService) DeleteRepositoriesByProvider(
 	return nil
 }
 
-func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID, providerName string) error {
+func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID uuid.UUID, providerID uuid.UUID) error {
 	log.Printf("publishing register event for repository: %s/%s", pbRepo.Owner, pbRepo.Name)
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(providerName, pbRepo.RepoId, projectID)
+	msg, err := reconcilers.NewRepoReconcilerMessage(providerID, pbRepo.RepoId, projectID)
 	if err != nil {
 		return fmt.Errorf("error creating reconciler event: %v", err)
 	}

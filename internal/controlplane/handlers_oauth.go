@@ -534,7 +534,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 		}
 		for _, p := range prov {
 			// Recently-created, let's use it.
-			if p.Class.ProviderClass == db.ProviderClassGithubApp && p.CreatedAt.After(in.GetTimestamp().AsTime()) {
+			if p.Class == db.ProviderClassGithubApp && p.CreatedAt.After(in.GetTimestamp().AsTime()) {
 				return &pb.VerifyProviderTokenFromResponse{Status: "OK"}, nil
 			}
 		}

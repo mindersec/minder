@@ -38,6 +38,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/artifacts"
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
@@ -47,6 +48,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprov "github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -494,7 +496,7 @@ func (s *Server) parseGithubEventForProcessing(
 	}
 
 	// get the provider for the repository
-	prov, err := s.providerStore.GetByName(ctx, dbRepo.ProjectID, dbRepo.Provider)
+	prov, err := s.providerStore.GetByID(ctx, dbRepo.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error getting provider: %w", err)
 	}
@@ -522,7 +524,7 @@ func (s *Server) parseGithubEventForProcessing(
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
 		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
-		return parseRepoEvent(payload, msg, dbRepo, provBuilder.GetName(), action)
+		return parseRepoEvent(payload, msg, dbRepo, action)
 	}
 
 	return newErrNotHandled("event %s with action %s not handled",
@@ -533,7 +535,6 @@ func parseRepoEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	providerName string,
 	action string,
 ) error {
 	if action == WebhookActionEventDeleted {
@@ -558,9 +559,9 @@ func parseRepoEvent(
 	}
 
 	// protobufs are our API, so we always execute on these instead of the DB directly.
-	repo := util.PBRepositoryFromDB(dbrepo)
+	repo := repositories.PBRepositoryFromDB(dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
-		WithProvider(providerName).
+		WithProviderID(dbrepo.ProviderID).
 		WithRepository(repo).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
@@ -616,7 +617,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return fmt.Errorf("error upserting artifact: %w", err)
 	}
 
-	pbArtifact, err := util.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbArtifact.ID)
+	_, pbArtifact, err := artifacts.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbArtifact.ID)
 	if err != nil {
 		return fmt.Errorf("error getting artifact with versions: %w", err)
 	}
@@ -625,7 +626,7 @@ func (s *Server) parseArtifactPublishedEvent(
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithArtifact(pbArtifact).
-		WithProvider(prov.GetName()).
+		WithProviderID(dbrepo.ProviderID).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithArtifactID(dbArtifact.ID).
@@ -677,7 +678,7 @@ func parsePullRequestModEvent(
 	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
 		WithPullRequestID(dbPr.ID).
-		WithProvider(prov.GetName()).
+		WithProviderID(dbrepo.ProviderID).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithActionEvent(action)
