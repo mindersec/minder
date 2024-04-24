@@ -36,6 +36,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // Engine provides all functions to encrypt and decrypt data
 type Engine interface {
 	EncryptOAuthToken(data []byte) ([]byte, error)

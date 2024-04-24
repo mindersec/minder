@@ -32,8 +32,8 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	mockverify "github.com/stacklok/minder/internal/verifier/mock"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
+	mockverify "github.com/stacklok/minder/internal/verifier/verifyif/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )

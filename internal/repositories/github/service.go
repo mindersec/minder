@@ -36,6 +36,8 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // RepositoryService encapsulates logic related to registering and deleting repos
 // TODO: get rid of the github client from this interface
 type RepositoryService interface {

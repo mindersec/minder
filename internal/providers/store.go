@@ -28,6 +28,8 @@ import (
 	"github.com/stacklok/minder/internal/util"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // ProviderStore provides methods for retrieving Providers from the database
 type ProviderStore interface {
 	// GetByID returns the provider identified by its UUID primary key.

@@ -21,6 +21,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // Handler is an alias for the watermill handler type, which is both wordy and may be
 // detail we don't want to expose.
 type Handler = message.NoPublishHandlerFunc

@@ -31,6 +31,8 @@ import (
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // WebhookManager encapsulates logic for creating and deleting GitHub webhooks
 type WebhookManager interface {
 	CreateWebhook(
