@@ -120,12 +120,12 @@ func TestProviderManager_Delete(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name                     string
-		Provider                 *db.Provider
-		ProviderStoreSetup       fixtures.ProviderStoreMockBuilder
-		ProviderDeletionSucceeds bool
-		LookupType               lookupType
-		ExpectedError            string
+		Name               string
+		Provider           *db.Provider
+		ProviderStoreSetup fixtures.ProviderStoreMockBuilder
+		CleanupSucceeds    bool
+		LookupType         lookupType
+		ExpectedError      string
 	}{
 		{
 			Name:               "DeleteByID returns error when DB lookup fails",
@@ -156,58 +156,58 @@ func TestProviderManager_Delete(t *testing.T) {
 			ExpectedError:      "unexpected provider class",
 		},
 		{
-			Name:                     "DeleteByID returns error when provider-specific cleanup fails",
-			Provider:                 githubProvider,
-			LookupType:               byID,
-			ProviderStoreSetup:       fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByIDProject(githubProvider)),
-			ProviderDeletionSucceeds: false,
-			ExpectedError:            "error while cleaning up provider",
+			Name:               "DeleteByID returns error when provider-specific cleanup fails",
+			Provider:           githubProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByIDProject(githubProvider)),
+			CleanupSucceeds:    false,
+			ExpectedError:      "error while cleaning up provider",
 		},
 		{
-			Name:                     "DeleteByName returns error when provider-specific cleanup fails",
-			Provider:                 githubProvider,
-			LookupType:               byName,
-			ProviderStoreSetup:       fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider)),
-			ProviderDeletionSucceeds: false,
-			ExpectedError:            "error while cleaning up provider",
+			Name:               "DeleteByName returns error when provider-specific cleanup fails",
+			Provider:           githubProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider)),
+			CleanupSucceeds:    false,
+			ExpectedError:      "error while cleaning up provider",
 		},
 		{
-			Name:                     "DeleteByID returns error when provider cannot be deleted from the database",
-			Provider:                 githubProvider,
-			LookupType:               byID,
-			ProviderDeletionSucceeds: true,
-			ExpectedError:            "error while deleting provider from DB",
+			Name:            "DeleteByID returns error when provider cannot be deleted from the database",
+			Provider:        githubProvider,
+			LookupType:      byID,
+			CleanupSucceeds: true,
+			ExpectedError:   "error while deleting provider from DB",
 			ProviderStoreSetup: fixtures.NewProviderStoreMock(
 				fixtures.WithSuccessfulGetByIDProject(githubProvider),
 				fixtures.WithFailedDelete,
 			),
 		},
 		{
-			Name:                     "DeleteByName returns error when provider cannot be deleted from the database",
-			Provider:                 githubProvider,
-			LookupType:               byName,
-			ProviderDeletionSucceeds: true,
-			ExpectedError:            "error while deleting provider from DB",
+			Name:            "DeleteByName returns error when provider cannot be deleted from the database",
+			Provider:        githubProvider,
+			LookupType:      byName,
+			CleanupSucceeds: true,
+			ExpectedError:   "error while deleting provider from DB",
 			ProviderStoreSetup: fixtures.NewProviderStoreMock(
 				fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider),
 				fixtures.WithFailedDelete,
 			),
 		},
 		{
-			Name:                     "DeleteByID calls manager and returns provider",
-			Provider:                 githubProvider,
-			LookupType:               byID,
-			ProviderDeletionSucceeds: true,
+			Name:            "DeleteByID calls manager and returns provider",
+			Provider:        githubProvider,
+			LookupType:      byID,
+			CleanupSucceeds: true,
 			ProviderStoreSetup: fixtures.NewProviderStoreMock(
 				fixtures.WithSuccessfulGetByIDProject(githubProvider),
 				fixtures.WithSuccessfulDelete(githubProvider),
 			),
 		},
 		{
-			Name:                     "DeleteByName calls manager and returns provider",
-			Provider:                 githubProvider,
-			LookupType:               byName,
-			ProviderDeletionSucceeds: true,
+			Name:            "DeleteByName calls manager and returns provider",
+			Provider:        githubProvider,
+			LookupType:      byName,
+			CleanupSucceeds: true,
 			ProviderStoreSetup: fixtures.NewProviderStoreMock(
 				fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider),
 				fixtures.WithSuccessfulDelete(githubProvider),
@@ -225,7 +225,7 @@ func TestProviderManager_Delete(t *testing.T) {
 			store := scenario.ProviderStoreSetup(ctrl)
 			classManager := mockmanager.NewMockProviderClassManager(ctrl)
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
-			if scenario.ProviderDeletionSucceeds {
+			if scenario.CleanupSucceeds {
 				classManager.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
 			} else {
 				classManager.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("oh no")).MaxTimes(1)
