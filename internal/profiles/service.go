@@ -44,6 +44,8 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // ProfileService encapsulates methods for creating and updating profiles
 // TODO: other methods such as deletion and patch should be moved here
 type ProfileService interface {

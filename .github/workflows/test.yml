@@ -1,5 +1,6 @@
 on:
   workflow_call:
+  workflow_dispatch:
 jobs:
   test:
     name: Unit testing
@@ -23,8 +24,16 @@ jobs:
       # copy config file into place
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
+      - name: Launch Registry
+        run: |
+          if [ "$(docker inspect -f '{{.State.Running}}' registry 2>/dev/null || true)" != 'true' ]; then
+            docker run -d --restart=always -p "127.0.0.1:5000:5000" --network bridge --name registry \
+            registry:2
+          fi
       # Run the tests
       - name: Run tests
+        env:
+          MINDER_TEST_REGISTRY: "localhost:5000"
         run: make test-silent
   cover:
     name: Coverage

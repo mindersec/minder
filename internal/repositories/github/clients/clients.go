@@ -22,6 +22,8 @@ import (
 	"github.com/google/go-github/v61/github"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // GitHubRepoClient defines a subset of the GitHub API client which we need for
 // repo and webhook management. This allows us to create a stub which only
 // includes the methods which we care about
