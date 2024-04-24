@@ -46,7 +46,6 @@ import (
 func NewGitHubProviderClassManager(
 	restClientCache ratecache.RestClientCache,
 	metrics telemetry.HttpClientMetrics,
-	appConfig *server.GitHubAppConfig,
 	providerConfig *server.ProviderConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
@@ -57,8 +56,7 @@ func NewGitHubProviderClassManager(
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
 		metrics:             metrics,
-		appConfig:           appConfig,
-		providerConfig:      providerConfig,
+		config:              providerConfig,
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
@@ -70,8 +68,7 @@ func NewGitHubProviderClassManager(
 type githubProviderManager struct {
 	restClientCache     ratecache.RestClientCache
 	metrics             telemetry.HttpClientMetrics
-	appConfig           *server.GitHubAppConfig
-	providerConfig      *server.ProviderConfig
+	config              *server.ProviderConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
 	repos               github.RepositoryService
@@ -133,7 +130,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, g.appConfig, g.metrics, g.restClientCache, creds.credential,
+	cli, err := githubapp.NewGitHubAppProvider(cfg, g.config.GitHubApp, g.metrics, g.restClientCache, creds.credential,
 		g.fallbackTokenClient, creds.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
@@ -142,7 +139,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 }
 
 func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider) error {
-	state := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.providerConfig)
+	state := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.config)
 	if state == v1.CredentialStateSet {
 		provider, err := g.Build(ctx, config)
 		if err != nil {
@@ -237,18 +234,18 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	privateKey, err := g.appConfig.GetPrivateKey()
+	privateKey, err := g.config.GitHubApp.GetPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("error reading private key: %w", err)
 	}
 
-	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.appConfig.AppID, privateKey, cfg.Endpoint,
+	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.config.GitHubApp.AppID, privateKey, cfg.Endpoint,
 		installation.AppInstallationID)
 
 	zerolog.Ctx(ctx).
 		Debug().
-		Str("github-app-name", g.appConfig.AppName).
-		Int64("github-app-id", g.appConfig.AppID).
+		Str("github-app-name", g.config.GitHubApp.AppName).
+		Int64("github-app-id", g.config.GitHubApp.AppID).
 		Int64("github-app-installation-id", installation.AppInstallationID).
 		Msg("created provider with installation token")
 

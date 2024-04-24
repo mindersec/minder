@@ -59,6 +59,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
+	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -170,6 +171,7 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create marketplace: %w", err)
 	}
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
+	repoSvc := github.NewRepositoryService(whManager, store, evt)
 
 	s := &Server{
 		store:               store,
@@ -182,7 +184,7 @@ func NewServer(
 		provMt:              provMt,
 		profiles:            profileSvc,
 		ruleTypes:           ruleSvc,
-		repos:               github.NewRepositoryService(whManager, store, evt),
+		repos:               repoSvc,
 		marketplace:         marketplace,
 		providerStore:       providerStore,
 		ghClient:            &ghprov.ClientServiceImplementation{},
@@ -199,6 +201,22 @@ func NewServer(
 	// Moved here because we have a dependency on s.restClientCache
 	s.ghProviders = service.NewGithubProviderService(
 		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)
+
+	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
+		s.restClientCache,
+		provMt,
+		&cfg.Provider,
+		fallbackTokenClient,
+		eng,
+		repoSvc,
+		store,
+		s.ghProviders,
+	)
+	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provider manager: %w", err)
+	}
+	s.providerManager = providerManager
 
 	return s, nil
 }

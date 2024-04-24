@@ -16,6 +16,7 @@ package manager_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -23,61 +24,63 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
+	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	"github.com/stacklok/minder/internal/providers/mock/fixtures"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // Test both create by name/project, and create by ID together.
 // This is because the test logic is basically identical.
-func TestProviderFactory(t *testing.T) {
+func TestProviderManager_Build(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name              string
-		Provider          db.Provider
-		LookupType        lookupType
-		RetrievalSucceeds bool
-		ExpectedError     string
+		Name               string
+		Provider           *db.Provider
+		ProviderStoreSetup fixtures.ProviderStoreMockBuilder
+		LookupType         lookupType
+		ExpectedError      string
 	}{
 		{
-			Name:              "InstantiateFromID returns error when DB lookup fails",
-			LookupType:        byID,
-			RetrievalSucceeds: false,
-			ExpectedError:     "error retrieving db record",
+			Name:               "InstantiateFromID returns error when DB lookup fails",
+			Provider:           githubProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithFailedGetByID),
+			ExpectedError:      "error retrieving db record",
 		},
 		{
-			Name:              "InstantiateFromNameProject returns error when DB lookup fails",
-			LookupType:        byName,
-			RetrievalSucceeds: false,
-			ExpectedError:     "error retrieving db record",
+			Name:               "InstantiateFromNameProject returns error when DB lookup fails",
+			Provider:           githubProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithFailedGetByName),
+			ExpectedError:      "error retrieving db record",
 		},
 		{
-			Name:              "InstantiateFromID returns error when provider class has no associated manager",
-			Provider:          providerWithClass(db.ProviderClassGithubApp),
-			LookupType:        byID,
-			RetrievalSucceeds: true,
-			ExpectedError:     "unexpected provider class",
+			Name:               "InstantiateFromID returns error when provider class has no associated manager",
+			Provider:           githubAppProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByID(githubAppProvider)),
+			ExpectedError:      "unexpected provider class",
 		},
 		{
-			Name:              "InstantiateFromNameProject returns error when provider class has no associated manager",
-			Provider:          providerWithClass(db.ProviderClassGithubApp),
-			LookupType:        byName,
-			RetrievalSucceeds: true,
-			ExpectedError:     "unexpected provider class",
+			Name:               "InstantiateFromNameProject returns error when provider class has no associated manager",
+			Provider:           githubAppProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByName(githubAppProvider)),
+			ExpectedError:      "unexpected provider class",
 		},
 		{
-			Name:              "InstantiateFromID calls manager and returns provider",
-			Provider:          providerWithClass(db.ProviderClassGithub),
-			LookupType:        byID,
-			RetrievalSucceeds: true,
+			Name:               "InstantiateFromID calls manager and returns provider",
+			Provider:           githubProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByID(githubProvider)),
 		},
 		{
-			Name:              "InstantiateFromNameProject calls manager and returns provider",
-			Provider:          providerWithClass(db.ProviderClassGithub),
-			LookupType:        byName,
-			RetrievalSucceeds: true,
+			Name:               "InstantiateFromNameProject calls manager and returns provider",
+			Provider:           githubProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByName(githubProvider)),
 		},
 	}
 
@@ -88,28 +91,152 @@ func TestProviderFactory(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			var opt func(mock fixtures.ProviderStoreMock)
-			if scenario.LookupType == byName && scenario.RetrievalSucceeds {
-				opt = fixtures.WithSuccessfulGetByName(&scenario.Provider)
-			} else if scenario.LookupType == byID && scenario.RetrievalSucceeds {
-				opt = fixtures.WithSuccessfulGetByID(&scenario.Provider)
-			} else if scenario.LookupType == byID && !scenario.RetrievalSucceeds {
-				opt = fixtures.WithFailedGetByID
-			} else {
-				opt = fixtures.WithFailedGetByName
-			}
-
-			store := fixtures.NewProviderStoreMock(opt)(ctrl)
-			provFactory, err := manager.NewProviderManager(
-				[]manager.ProviderClassManager{&mockClassManager{}},
-				store,
-			)
+			store := scenario.ProviderStoreSetup(ctrl)
+			classManager := mockmanager.NewMockProviderClassManager(ctrl)
+			provider := mockgithub.NewMockGitHub(ctrl)
+			classManager.EXPECT().Build(gomock.Any(), gomock.Any()).Return(provider, nil).MaxTimes(1)
+			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
+			provManager, err := manager.NewProviderManager(store, classManager)
 			require.NoError(t, err)
 
 			if scenario.LookupType == byName {
-				_, err = provFactory.InstantiateFromNameProject(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
+				_, err = provManager.InstantiateFromNameProject(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
 			} else {
-				_, err = provFactory.InstantiateFromID(ctx, scenario.Provider.ID)
+				_, err = provManager.InstantiateFromID(ctx, scenario.Provider.ID)
+			}
+
+			if scenario.ExpectedError != "" {
+				require.ErrorContains(t, err, scenario.ExpectedError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test both delete by name/project, and create by ID together.
+// This is because the test logic is basically identical.
+func TestProviderManager_Delete(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name                     string
+		Provider                 *db.Provider
+		ProviderStoreSetup       fixtures.ProviderStoreMockBuilder
+		ProviderDeletionSucceeds bool
+		LookupType               lookupType
+		ExpectedError            string
+	}{
+		{
+			Name:               "DeleteByID returns error when DB lookup fails",
+			Provider:           githubProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithFailedGetByIDProject),
+			ExpectedError:      "error retrieving db record",
+		},
+		{
+			Name:               "DeleteByName returns error when DB lookup fails",
+			Provider:           githubProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithFailedGetByNameInSpecificProject),
+			ExpectedError:      "error retrieving db record",
+		},
+		{
+			Name:               "DeleteByID returns error when provider class has no associated manager",
+			Provider:           githubAppProvider,
+			LookupType:         byID,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByIDProject(githubAppProvider)),
+			ExpectedError:      "unexpected provider class",
+		},
+		{
+			Name:               "DeleteByName returns error when provider class has no associated manager",
+			Provider:           githubAppProvider,
+			LookupType:         byName,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByNameInSpecificProject(githubAppProvider)),
+			ExpectedError:      "unexpected provider class",
+		},
+		{
+			Name:                     "DeleteByID returns error when provider-specific cleanup fails",
+			Provider:                 githubProvider,
+			LookupType:               byID,
+			ProviderStoreSetup:       fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByIDProject(githubProvider)),
+			ProviderDeletionSucceeds: false,
+			ExpectedError:            "error while cleaning up provider",
+		},
+		{
+			Name:                     "DeleteByName returns error when provider-specific cleanup fails",
+			Provider:                 githubProvider,
+			LookupType:               byName,
+			ProviderStoreSetup:       fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider)),
+			ProviderDeletionSucceeds: false,
+			ExpectedError:            "error while cleaning up provider",
+		},
+		{
+			Name:                     "DeleteByID returns error when provider cannot be deleted from the database",
+			Provider:                 githubProvider,
+			LookupType:               byID,
+			ProviderDeletionSucceeds: true,
+			ExpectedError:            "error while deleting provider from DB",
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(
+				fixtures.WithSuccessfulGetByIDProject(githubProvider),
+				fixtures.WithFailedDelete,
+			),
+		},
+		{
+			Name:                     "DeleteByName returns error when provider cannot be deleted from the database",
+			Provider:                 githubProvider,
+			LookupType:               byName,
+			ProviderDeletionSucceeds: true,
+			ExpectedError:            "error while deleting provider from DB",
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(
+				fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider),
+				fixtures.WithFailedDelete,
+			),
+		},
+		{
+			Name:                     "DeleteByID calls manager and returns provider",
+			Provider:                 githubProvider,
+			LookupType:               byID,
+			ProviderDeletionSucceeds: true,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(
+				fixtures.WithSuccessfulGetByIDProject(githubProvider),
+				fixtures.WithSuccessfulDelete(githubProvider),
+			),
+		},
+		{
+			Name:                     "DeleteByName calls manager and returns provider",
+			Provider:                 githubProvider,
+			LookupType:               byName,
+			ProviderDeletionSucceeds: true,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(
+				fixtures.WithSuccessfulGetByNameInSpecificProject(githubProvider),
+				fixtures.WithSuccessfulDelete(githubProvider),
+			),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			store := scenario.ProviderStoreSetup(ctrl)
+			classManager := mockmanager.NewMockProviderClassManager(ctrl)
+			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
+			if scenario.ProviderDeletionSucceeds {
+				classManager.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(nil)
+			} else {
+				classManager.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("oh no")).MaxTimes(1)
+			}
+			provManager, err := manager.NewProviderManager(store, classManager)
+			require.NoError(t, err)
+
+			if scenario.LookupType == byName {
+				err = provManager.DeleteByName(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
+			} else {
+				err = provManager.DeleteByID(ctx, scenario.Provider.ID, scenario.Provider.ProjectID)
 			}
 
 			if scenario.ExpectedError != "" {
@@ -127,12 +254,14 @@ var (
 		ID:        uuid.New(),
 		ProjectID: uuid.New(),
 	}
+	githubAppProvider = providerWithClass(db.ProviderClassGithubApp)
+	githubProvider    = providerWithClass(db.ProviderClassGithub)
 )
 
-func providerWithClass(class db.ProviderClass) db.Provider {
+func providerWithClass(class db.ProviderClass) *db.Provider {
 	newProvider := referenceProvider
 	newProvider.Class = class
-	return newProvider
+	return &newProvider
 }
 
 type lookupType int
@@ -141,27 +270,3 @@ const (
 	byID lookupType = iota
 	byName
 )
-
-// Not using the mock generator because we probably won't need to stub this
-// elsewhere, and the implementation is trivial.
-type mockClassManager struct{}
-
-func (_ *mockClassManager) Build(_ context.Context, _ *db.Provider) (v1.Provider, error) {
-	return &mockProvider{}, nil
-}
-
-func (_ *mockClassManager) Delete(_ context.Context, _ *db.Provider) error {
-	return nil
-}
-
-func (_ *mockClassManager) GetSupportedClasses() []db.ProviderClass {
-	return []db.ProviderClass{db.ProviderClassGithub}
-}
-
-// TODO: we probably want to mock some of the provider traits in future using
-// the mock generator.
-type mockProvider struct{}
-
-func (_ *mockProvider) CanImplement(_ minderv1.ProviderType) bool {
-	return false
-}

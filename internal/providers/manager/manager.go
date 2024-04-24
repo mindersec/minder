@@ -66,10 +66,11 @@ type providerManager struct {
 
 // NewProviderManager creates a new instance of ProviderManager
 func NewProviderManager(
-	classManagers []ProviderClassManager,
 	store providers.ProviderStore,
+	classManagers ...ProviderClassManager,
 ) (ProviderManager, error) {
 	classes := make(map[db.ProviderClass]ProviderClassManager)
+
 	for _, factory := range classManagers {
 		supportedClasses := factory.GetSupportedClasses()
 		// Sanity check: make sure we don't inadvertently register the same
@@ -86,6 +87,7 @@ func NewProviderManager(
 			classes[class] = factory
 		}
 	}
+
 	return &providerManager{
 		classManagers: classes,
 		store:         store,
