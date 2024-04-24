@@ -25,6 +25,7 @@ import (
 	gh "github.com/google/go-github/v61/github"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
@@ -89,6 +90,7 @@ type Server struct {
 	idClient            *auth.IdentityClient
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
+	featureFlags        *openfeature.Client
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
@@ -191,6 +193,7 @@ func NewServer(
 		repos:               github.NewRepositoryService(whManager, store, evt),
 		marketplace:         marketplace,
 		providerStore:       providerStore,
+		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		fallbackTokenClient: fallbackTokenClient,
 		// TODO: this currently always returns authorized as a transitionary measure.

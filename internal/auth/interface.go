@@ -56,13 +56,11 @@ func (i *Identity) String() string {
 	if i == nil {
 		return ""
 	}
-	p := i.Provider.String()
-	if p == "" {
+	if i.Provider == nil || i.Provider.String() == "" {
 		// Special case for provider registered as "".
 		return i.UserID
 	}
-	return fmt.Sprintf("%s/%s", i.UserID, p)
-
+	return fmt.Sprintf("%s/%s", i.UserID, i.Provider.String())
 }
 
 // Human returns a human-readable representation of the identity, suitable for
@@ -71,12 +69,11 @@ func (i *Identity) Human() string {
 	if i == nil {
 		return "<unknown>"
 	}
-	p := i.Provider.String()
-	if p == "" {
+	if i.Provider == nil || i.Provider.String() == "" {
 		// Special case for provider registered as "".
 		return i.HumanName
 	}
-	return fmt.Sprintf("%s/%s", i.HumanName, p)
+	return fmt.Sprintf("%s/%s", i.HumanName, i.Provider.String())
 }
 
 // Resolver is an interface for resolving human-readable or stable identifiers

@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	"github.com/stacklok/minder/internal/reconcilers"
@@ -51,6 +52,8 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
+
+	flags.ProviderFromFlags(ctx, cfg.Flags)
 
 	providerStore := providers.NewProviderStore(store)
 	s, err := controlplane.NewServer(

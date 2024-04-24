@@ -30,6 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -218,14 +219,16 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
-	for i := range as {
-		identity, err := s.idClient.Resolve(ctx, as[i].Subject)
-		if err != nil {
-			// if we can't resolve the subject, report the raw ID value
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			continue
+	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+		for i := range as {
+			identity, err := s.idClient.Resolve(ctx, as[i].Subject)
+			if err != nil {
+				// if we can't resolve the subject, report the raw ID value
+				zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+				continue
+			}
+			as[i].Subject = identity.Human()
 		}
-		as[i].Subject = identity.Human()
 	}
 
 	return &minder.ListRoleAssignmentsResponse{
@@ -252,10 +255,17 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 
 	// We may be given a human-readable identifier which can vary over time. Resolve
 	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity, err := s.idClient.Resolve(ctx, sub)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
+	identity := &auth.Identity{
+		Provider:  nil,
+		UserID:    sub,
+		HumanName: sub,
+	}
+	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+		identity, err = s.idClient.Resolve(ctx, sub)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
+		}
 	}
 
 	// Verify if user exists.
@@ -308,10 +318,17 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 
 	// We may be given a human-readable identifier which can vary over time. Resolve
 	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity, err := s.idClient.Resolve(ctx, sub)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
+	identity := &auth.Identity{
+		Provider:  nil,
+		UserID:    sub,
+		HumanName: sub,
+	}
+	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+		identity, err = s.idClient.Resolve(ctx, sub)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
+		}
 	}
 
 	// Verify if user exists
