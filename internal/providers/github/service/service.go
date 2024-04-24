@@ -46,6 +46,8 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // GitHubProviderService encapsulates methods for creating and updating providers
 type GitHubProviderService interface {
 	// CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential

@@ -33,6 +33,8 @@ import (
 	"github.com/stacklok/minder/pkg/mindpak/reader"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // SubscriptionService defines operations on the subscriptions, as well as the
 // profiles and rules linked to subscriptions
 // It is assumed that all methods will be called in the context of a

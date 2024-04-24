@@ -33,6 +33,8 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // RuleTypeService encapsulates the creation and update of rule types
 // TODO: in future, other operations such as delete should be moved here
 type RuleTypeService interface {
