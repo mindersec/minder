@@ -86,6 +86,7 @@ type Server struct {
 	vldtr               auth.JwtValidator
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
+	idClient            *auth.IdentityClient
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
 	// We may want to start breaking up the server struct if we use it to
@@ -134,6 +135,13 @@ func WithAuthzClient(c authz.Client) ServerOption {
 func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
 	return func(s *Server) {
 		s.restClientCache = c
+	}
+}
+
+// WithIdentityClient sets the identity client for the server
+func WithIdentityClient(c *auth.IdentityClient) ServerOption {
+	return func(s *Server) {
+		s.idClient = c
 	}
 }
 
@@ -188,6 +196,10 @@ func NewServer(
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
+		// TODO: an empty IdentityClient has no way to look up identities.  This means
+		// callers need to supply WithIdentityClient() to the constructor.  It would be nice
+		// to have a better way to do this.
+		idClient: &auth.IdentityClient{},
 	}
 
 	for _, opt := range opts {

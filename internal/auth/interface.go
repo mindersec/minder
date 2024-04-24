@@ -74,7 +74,7 @@ func (i *Identity) Human() string {
 	p := i.Provider.String()
 	if p == "" {
 		// Special case for provider registered as "".
-		return i.UserID
+		return i.HumanName
 	}
 	return fmt.Sprintf("%s/%s", i.HumanName, p)
 }
@@ -114,8 +114,8 @@ type IdentityProvider interface {
 // IdentityClient supports the ability to look up identities in one or more
 // IdentityProviders.
 type IdentityClient struct {
-	// This map is a bit overloaded; it maps both short provider names
-	providers xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
+	// This map is a bit overloaded; it maps both short provider names and URLs to IdentityProviders.
+	providers *xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
 }
 
 var _ Resolver = (*IdentityClient)(nil)
@@ -123,15 +123,17 @@ var _ Resolver = (*IdentityClient)(nil)
 // NewIdentityClient creates a new IdentityClient with the supplied providers.
 func NewIdentityClient(providers ...IdentityProvider) (*IdentityClient, error) {
 	c := &IdentityClient{
-		providers: xsync.NewMapOfPresized(len(providers) * 2),
+		providers: xsync.NewMapOfPresized[string, IdentityProvider](len(providers) * 2),
 	}
 	for _, p := range providers {
+		u := p.URL() // URL's String has a pointer receiver
+
 		prev, ok := c.providers.LoadOrStore(p.String(), p)
 		if ok { // We had an existing value, this is a configuration error.
-			return nil, fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), p.URL(), prev.URL())
+			prevUrl := prev.URL()
+			return nil, fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), u.String(), prevUrl.String())
 		}
 
-		u := p.URL() // URL's String has a pointer receiver
 		prev, ok = c.providers.LoadOrStore(u.String(), p)
 		if ok { // We had an existing value, this is a configuration error.
 			return nil, fmt.Errorf("duplicate provider for URL %s, new %q, old %q", u.String(), p.String(), prev.String())
@@ -145,13 +147,14 @@ func (c *IdentityClient) Register(p IdentityProvider) error {
 	if c == nil {
 		return errors.New("cannot register with a nil IdentityClient")
 	}
+	u := p.URL() // URL's String has a pointer receiver
 
 	prev, ok := c.providers.LoadOrStore(p.String(), p)
 	if ok { // We had an existing value, this is a configuration error.
-		return fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), p.URL(), prev.URL())
+		prevUrl := prev.URL()
+		return fmt.Errorf("duplicate provider for %q, new %s, old %s", p.String(), u.String(), prevUrl.String())
 	}
 
-	u := p.URL() // URL's String has a pointer receiver
 	prev, ok = c.providers.LoadOrStore(u.String(), p)
 	if ok { // We had an existing value, this is a configuration error.
 		return fmt.Errorf("duplicate provider for URL %s, new %q, old %q", u.String(), p.String(), prev.String())

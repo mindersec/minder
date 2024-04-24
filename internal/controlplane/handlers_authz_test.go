@@ -157,6 +157,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -207,6 +208,8 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 	t.Parallel()
 	projectID := uuid.New()
 	defaultProjectID := uuid.New()
+	userJWT := openid.New()
+	assert.NoError(t, userJWT.Set("sub", "subject1"))
 
 	assert.NotEqual(t, projectID, defaultProjectID)
 
@@ -236,7 +239,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			},
 			rpcErr: util.UserVisibleError(
 				codes.PermissionDenied,
-				fmt.Sprintf("user is not authorized to perform this operation on project %q", projectID)),
+				fmt.Sprintf("user %q is not authorized to perform this operation on project %q", "subject1", projectID)),
 		},
 		{
 			name:     "authorized on project",
@@ -250,6 +253,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -267,6 +271,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			}
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engine.WithEntityContext(ctx, tc.entityCtx)
+			ctx = auth.WithAuthTokenContext(ctx, userJWT)
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
 			}, unaryHandler)

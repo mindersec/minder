@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/keycloak"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -103,6 +104,15 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to prepare authz client for run: %w", err)
 		}
 
+		kc, err := keycloak.NewKeyCloak("", cfg.Identity.Server)
+		if err != nil {
+			return fmt.Errorf("unable to create keycloak identity provider: %w", err)
+		}
+		idClient, err := auth.NewIdentityClient(kc)
+		if err != nil {
+			return fmt.Errorf("unable to create identity client: %w", err)
+		}
+
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
@@ -111,6 +121,7 @@ var serveCmd = &cobra.Command{
 			controlplane.WithServerMetrics(cpmetrics.NewMetrics()),
 			controlplane.WithProviderMetrics(providerMetrics),
 			controlplane.WithAuthzClient(authzc),
+			controlplane.WithIdentityClient(idClient),
 			controlplane.WithRestClientCache(restClientCache),
 		}
 

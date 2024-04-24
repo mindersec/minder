@@ -16,7 +16,7 @@
 # exclude auto-generated DB code as well as mocks
 # in future, we may want to parse these from a file instead of hardcoding them
 # in the Makefile
-COVERAGE_EXCLUSIONS="internal/db\|/mock/"
+COVERAGE_EXCLUSIONS="internal/db\|/mock/|internal/auth/keycloak/client"
 COVERAGE_PACKAGES=./internal/...
 
 .PHONY: clean

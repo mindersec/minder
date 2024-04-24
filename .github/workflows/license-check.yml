@@ -14,5 +14,5 @@ jobs:
       - name: Check license headers
         run: |
           set -e
-          addlicense -l apache -c 'Stacklok, Inc' -v -ignore "pkg/generated/*" -ignore "**/database/query/**" -ignore "internal/db/*" -ignore "docs/docs/**" -ignore "docs/src/**" -ignore "docs/static/**" -ignore "pkg/controlplane/policy_types/**" -ignore "docs/build/**" -ignore "examples/**" *
+          addlicense -l apache -c 'Stacklok, Inc' -v -ignore "pkg/generated/*" -ignore "**/database/query/**" -ignore "internal/db/*" -ignore "docs/docs/**" -ignore "docs/src/**" -ignore "docs/static/**" -ignore "pkg/controlplane/policy_types/**" -ignore "docs/build/**" -ignore "examples/**" -ignore "internal/auth/keycloak/client/keycloak-api.yaml" *
           git diff --exit-code

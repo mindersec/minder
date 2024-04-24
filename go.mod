@@ -32,6 +32,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
+	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-policy-agent/opa v0.63.0
 	github.com/openfga/go-sdk v0.3.5
@@ -84,6 +85,7 @@ require (
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/bubbles v0.17.1 // indirect
