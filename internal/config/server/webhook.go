@@ -18,6 +18,7 @@ package server
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -29,6 +30,8 @@ type WebhookConfig struct {
 	ExternalPingURL string `mapstructure:"external_ping_url"`
 	// WebhookSecret is the secret that we will use to sign our webhook
 	WebhookSecret string `mapstructure:"webhook_secret"`
+	// WebhookSecretFile is the location of the file containing the webhook secret
+	WebhookSecretFile string `mapstructure:"webhook_secret_file"`
 	// PreviousWebhookSecretFile is a reference to a file that contains previous webhook secrets. This is used
 	// in case we are rotating secrets and the external service is still using the old secret. These will not
 	// be used when creating new webhooks.
@@ -46,4 +49,16 @@ func (wc *WebhookConfig) GetPreviousWebhookSecrets() ([]string, error) {
 	// Split the data by whitespace and return it as a slice of strings
 	secrets := strings.Fields(string(data))
 	return secrets, nil
+}
+
+// GetWebhookSecret returns the GitHub App's webhook secret
+func (wc *WebhookConfig) GetWebhookSecret() (string, error) {
+	if wc.WebhookSecretFile != "" {
+		data, err := os.ReadFile(filepath.Clean(wc.WebhookSecretFile))
+		if err != nil {
+			return "", fmt.Errorf("failed to read GitHub App webhook secret from file: %w", err)
+		}
+		return string(data), nil
+	}
+	return wc.WebhookSecret, nil
 }

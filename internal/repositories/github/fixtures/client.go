@@ -20,6 +20,7 @@ package fixtures
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v61/github"
@@ -128,18 +129,38 @@ func stubList(mock ClientMock, hooks []*github.Hook, err error) {
 		Return(hooks, err)
 }
 
-func WithFailedCreation(mock ClientMock) {
-	stubCreate(mock, nil, ErrClientTest)
+func WithFailedCreation(secret string) func(ClientMock) {
+	return func(mock ClientMock) {
+		stubCreate(mock, nil, secret, ErrClientTest)
+	}
 }
 
-func WithSuccessfulCreation(mock ClientMock) {
-	stubCreate(mock, ResultHook, nil)
+func WithSuccessfulCreation(secret string) func(ClientMock) {
+	return func(mock ClientMock) {
+		stubCreate(mock, ResultHook, secret, nil)
+	}
 }
 
-func stubCreate(mock ClientMock, hook *github.Hook, err error) {
+func stubCreate(mock ClientMock, hook *github.Hook, secret string, err error) {
 	// it would be nice to be able to make some assertions about the webhook
 	// config which gets passed here... this requires more investigation
 	mock.EXPECT().
-		CreateHook(gomock.Any(), gomock.Eq(RepoOwner), gomock.Eq(RepoName), gomock.Any()).
+		CreateHook(gomock.Any(), gomock.Eq(RepoOwner), gomock.Eq(RepoName), &hookSecretMatcher{secret: secret}).
 		Return(hook, err)
+}
+
+type hookSecretMatcher struct {
+	secret string
+}
+
+func (h *hookSecretMatcher) Matches(x interface{}) bool {
+	hook, ok := x.(*github.Hook)
+	if !ok {
+		return false
+	}
+	return hook.GetConfig().GetSecret() == h.secret
+}
+
+func (h *hookSecretMatcher) String() string {
+	return fmt.Sprintf("is a hook with the secret %s", h.secret)
 }

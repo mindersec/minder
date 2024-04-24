@@ -91,8 +91,12 @@ func (w *webhookManager) CreateWebhook(
 	}
 
 	// Attempt to register new webhook
+	secret, err := w.webhookConfig.GetWebhookSecret()
+	if err != nil {
+		return "", nil, err
+	}
 	ping := w.webhookConfig.ExternalPingURL
-	secret := w.webhookConfig.WebhookSecret
+
 	jsonCT := "json"
 	newHook := &github.Hook{
 		Config: &github.HookConfig{

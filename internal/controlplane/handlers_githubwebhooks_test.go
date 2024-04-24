@@ -86,12 +86,18 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	t := s.T()
 	t.Parallel()
 
+	whSecretFile, err := os.CreateTemp("", "webhooksecret*")
+	require.NoError(t, err, "failed to create temporary file")
+	_, err = whSecretFile.WriteString("test")
+	require.NoError(t, err, "failed to write to temporary file")
+	defer os.Remove(whSecretFile.Name())
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	srv, evt := newDefaultServer(t, mockStore)
-	srv.cfg.WebhookConfig.WebhookSecret = "test"
+	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
