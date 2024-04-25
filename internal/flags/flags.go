@@ -54,9 +54,9 @@ func Bool(ctx context.Context, client *openfeature.Client, feature Experiment) b
 	return ret
 }
 
-// ProviderFromFlags installs an OpenFeature Provider based on the flags config.
+// OpenFeatureProviderFromFlags installs an OpenFeature Provider based on the flags config.
 // This curently only supports the GoFeatureFlag file-based provider.
-func ProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
+func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 	var flagProvider openfeature.FeatureProvider
 	// TODO: support relay mode by setting options.Endpoint, etc
 	if cfg.GoFeature.FilePath != "" {

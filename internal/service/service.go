@@ -53,7 +53,7 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
 
-	flags.ProviderFromFlags(ctx, cfg.Flags)
+	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
 
 	providerStore := providers.NewProviderStore(store)
 	s, err := controlplane.NewServer(
