@@ -957,6 +957,21 @@ func (mr *MockStoreMockRecorder) GetProviderByID(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderByID", reflect.TypeOf((*MockStore)(nil).GetProviderByID), arg0, arg1)
 }
 
+// GetProviderByIDAndProject mocks base method.
+func (m *MockStore) GetProviderByIDAndProject(arg0 context.Context, arg1 db.GetProviderByIDAndProjectParams) (db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderByIDAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderByIDAndProject indicates an expected call of GetProviderByIDAndProject.
+func (mr *MockStoreMockRecorder) GetProviderByIDAndProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderByIDAndProject", reflect.TypeOf((*MockStore)(nil).GetProviderByIDAndProject), arg0, arg1)
+}
+
 // GetProviderByName mocks base method.
 func (m *MockStore) GetProviderByName(arg0 context.Context, arg1 db.GetProviderByNameParams) (db.Provider, error) {
 	m.ctrl.T.Helper()

@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -38,7 +38,7 @@ func CleanUpUnmanagedProjects(
 	proj uuid.UUID,
 	querier db.Querier,
 	authzClient authz.Client,
-	providerService service.GitHubProviderService,
+	providerManager manager.ProviderManager,
 ) error {
 	l := zerolog.Ctx(ctx).With().Str("project", proj.String()).Logger()
 	// We know that non-root projects have a parent which has an admin, so
@@ -72,7 +72,7 @@ func CleanUpUnmanagedProjects(
 
 	if !hasOtherRoleAssignments(as, subject) {
 		l.Info().Msg("deleting project")
-		if err := DeleteProject(ctx, proj, querier, authzClient, providerService, l); err != nil {
+		if err := DeleteProject(ctx, proj, querier, authzClient, providerManager, l); err != nil {
 			return fmt.Errorf("error deleting project %v", err)
 		}
 	}
@@ -87,8 +87,14 @@ func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 }
 
 // DeleteProject deletes a project and authorization relationships
-func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, authzClient authz.Client,
-	providerService service.GitHubProviderService, l zerolog.Logger) error {
+func DeleteProject(
+	ctx context.Context,
+	proj uuid.UUID,
+	querier db.Querier,
+	authzClient authz.Client,
+	providerManager manager.ProviderManager,
+	l zerolog.Logger,
+) error {
 	_, err := querier.GetProjectByID(ctx, proj)
 	if err != nil {
 		// This project has already been deleted. Skip and go to the next one.
@@ -104,8 +110,8 @@ func DeleteProject(ctx context.Context, proj uuid.UUID, querier db.Querier, auth
 	if err != nil {
 		l.Error().Err(err).Msg("error getting providers for project")
 	}
-	for i := range dbProviders {
-		if err := providerService.DeleteProvider(ctx, &dbProviders[i]); err != nil {
+	for _, provider := range dbProviders {
+		if err := providerManager.DeleteByID(ctx, provider.ID, proj); err != nil {
 			l.Error().Err(err).Msg("error deleting provider")
 		}
 	}

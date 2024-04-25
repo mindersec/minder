@@ -68,7 +68,8 @@ type GitHubProviderService interface {
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 	// ValidateGitHubAppWebhookPayload validates the payload of a GitHub App webhook.
 	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
-	DeleteProvider(ctx context.Context, provider *db.Provider) error
+	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
+	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -432,19 +433,7 @@ func (p *ghProviderService) ValidateGitHubAppWebhookPayload(r *http.Request) (pa
 	return github.ValidatePayload(r, []byte(secret))
 }
 
-// DeleteProvider deletes a provider and removes the credentials from the downstream service, if possible
-func (p *ghProviderService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
-	// Uninstall the GitHub App if it's a GitHub App provider
-	err := p.deleteInstallation(ctx, provider.ID)
-	if err != nil {
-		return fmt.Errorf("error deleting GitHub App installation: %w", err)
-	}
-
-	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{ID: provider.ID, ProjectID: provider.ProjectID})
-}
-
-// deleteInstallation deletes the installation from GitHub, if the provider has an associated installation
-func (p *ghProviderService) deleteInstallation(ctx context.Context, providerID uuid.UUID) error {
+func (p *ghProviderService) DeleteInstallation(ctx context.Context, providerID uuid.UUID) error {
 	installation, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
 		UUID:  providerID,
 		Valid: true,

@@ -52,11 +52,35 @@ func WithSuccessfulGetByID(provider *db.Provider) func(mock ProviderStoreMock) {
 	}
 }
 
+func WithSuccessfulGetByIDProject(provider *db.Provider) func(mock ProviderStoreMock) {
+	return func(mock ProviderStoreMock) {
+		mock.EXPECT().
+			GetByIDProject(gomock.Any(), gomock.Eq(provider.ID), gomock.Eq(provider.ProjectID)).
+			Return(provider, nil)
+	}
+}
+
 func WithSuccessfulGetByName(provider *db.Provider) func(mock ProviderStoreMock) {
 	return func(mock ProviderStoreMock) {
 		mock.EXPECT().
 			GetByName(gomock.Any(), gomock.Eq(provider.ProjectID), gomock.Eq(provider.Name)).
 			Return(provider, nil)
+	}
+}
+
+func WithSuccessfulGetByNameInSpecificProject(provider *db.Provider) func(mock ProviderStoreMock) {
+	return func(mock ProviderStoreMock) {
+		mock.EXPECT().
+			GetByNameInSpecificProject(gomock.Any(), gomock.Eq(provider.ProjectID), gomock.Eq(provider.Name)).
+			Return(provider, nil)
+	}
+}
+
+func WithSuccessfulDelete(provider *db.Provider) func(mock ProviderStoreMock) {
+	return func(mock ProviderStoreMock) {
+		mock.EXPECT().
+			Delete(gomock.Any(), gomock.Eq(provider.ID), gomock.Eq(provider.ProjectID)).
+			Return(nil)
 	}
 }
 
@@ -66,8 +90,26 @@ func WithFailedGetByID(mock ProviderStoreMock) {
 		Return(nil, errDefault)
 }
 
+func WithFailedGetByIDProject(mock ProviderStoreMock) {
+	mock.EXPECT().
+		GetByIDProject(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, errDefault)
+}
+
 func WithFailedGetByName(mock ProviderStoreMock) {
 	mock.EXPECT().
 		GetByName(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
+}
+
+func WithFailedGetByNameInSpecificProject(mock ProviderStoreMock) {
+	mock.EXPECT().
+		GetByNameInSpecificProject(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, errDefault)
+}
+
+func WithFailedDelete(mock ProviderStoreMock) {
+	mock.EXPECT().
+		Delete(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(errDefault)
 }
