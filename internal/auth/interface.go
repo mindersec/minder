@@ -60,7 +60,7 @@ func (i *Identity) String() string {
 		// Special case for provider registered as "".
 		return i.UserID
 	}
-	return fmt.Sprintf("%s/%s", i.UserID, i.Provider.String())
+	return fmt.Sprintf("%s/%s",  i.Provider.String(), i.UserID)
 }
 
 // Human returns a human-readable representation of the identity, suitable for
@@ -73,7 +73,7 @@ func (i *Identity) Human() string {
 		// Special case for provider registered as "".
 		return i.HumanName
 	}
-	return fmt.Sprintf("%s/%s", i.HumanName, i.Provider.String())
+	return fmt.Sprintf("%s/%s", i.Provider.String(), i.HumanName)
 }
 
 // Resolver is an interface for resolving human-readable or stable identifiers

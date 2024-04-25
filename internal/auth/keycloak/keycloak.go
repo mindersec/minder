@@ -24,8 +24,8 @@ import (
 	"net/url"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/openfga/go-sdk/oauth2"
-	"github.com/openfga/go-sdk/oauth2/clientcredentials"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/auth/keycloak/client"
@@ -80,6 +80,7 @@ func (k *KeyCloak) URL() url.URL {
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
 	remoteUser, err := k.lookupUser(ctx, id)
 	if err != nil {
+		// TODO: pass through to the next statements to try to create the user if not existing
 		return nil, fmt.Errorf("unable to resolve user: %w", err)
 	}
 	if remoteUser != nil {
@@ -127,21 +128,10 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 		}
 	}
 
-	escapedId := url.QueryEscape(id)
-	// next, try lookup by GitHub ID
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
-		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", escapedId)),
-	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
-	}
-
 	// last, try lookup by GitHub login
-	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
-		Q: ptr.Ptr(fmt.Sprintf("gh_login:%s", escapedId)),
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
+		Exact: ptr.Ptr(true),
+		Username: &id,
 	})
 	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
 		id := k.userToIdentity((*userLookup.JSON200)[0])
@@ -157,13 +147,9 @@ func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity
 	if user.Attributes == nil || user.Id == nil {
 		return nil
 	}
-	login := *user.Attributes
-	if login["gh_login"] == nil {
-		return nil
-	}
 	return &auth.Identity{
 		UserID:    *user.Id,
-		HumanName: login["gh_login"][0],
+		HumanName: *user.Username,
 		Provider:  k,
 	}
 }
@@ -190,7 +176,7 @@ func newAuthorizedClient(kcUrl url.URL, cfg serverconfig.IdentityConfig) (*http.
 
 	token, err := clientCredentials.Token(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
 	return oauth2.NewClient(context.Background(), oauth2.StaticTokenSource(token)), nil
