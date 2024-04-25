@@ -24,7 +24,6 @@ import (
 	"net/url"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/stacklok/minder/internal/auth"
@@ -185,10 +184,10 @@ func newAuthorizedClient(kcUrl url.URL, cfg serverconfig.IdentityConfig) (*http.
 		TokenURL:     tokenUrl.String(),
 	}
 
-	token, err := clientCredentials.Token(context.Background())
-	if err != nil {
+	// verify that we can fetch a token before returning the client
+	if _, err = clientCredentials.Token(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
 
-	return oauth2.NewClient(context.Background(), oauth2.StaticTokenSource(token)), nil
+	return clientCredentials.Client(context.Background()), nil
 }

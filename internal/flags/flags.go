@@ -34,8 +34,8 @@ import (
 // are registered in constants.go, not littered all over the codebase.
 type Experiment string
 
-// FromContext extracts the targeting flags from the current context.
-func FromContext(ctx context.Context) openfeature.EvaluationContext {
+// fromContext extracts the targeting flags from the current context.
+func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	// Note: engine.EntityFromContext is best-effort, so these values may be zero.
 	ec := engine.EntityFromContext(ctx)
 	return openfeature.NewEvaluationContext(
@@ -49,7 +49,7 @@ func FromContext(ctx context.Context) openfeature.EvaluationContext {
 
 // Bool provides a simple wrapper around client.Boolean to normalize usage for Minder.
 func Bool(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
-	ret := client.Boolean(ctx, string(feature), false, FromContext(ctx))
+	ret := client.Boolean(ctx, string(feature), false, fromContext(ctx))
 	// TODO: capture in telemetry records
 	return ret
 }
