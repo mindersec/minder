@@ -398,6 +398,7 @@ func validatePreviousSecrets(
 		}
 	}
 
+	err = fmt.Errorf("failed to validate payload with any fallback secret")
 	return
 }
 

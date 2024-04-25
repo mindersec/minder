@@ -327,6 +327,23 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 
 	// TODO: assert payload is Repository protobuf
+
+	// test that if no secret matches we get back a 400
+	req, err = http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Hub-Signature-256", "sha256=ab22bd9a3712e444e110c8088011fd827143ed63ba8655f07e76ed1a0f05edd1")
+
+	_, err = prevCredsFile.Seek(0, 0)
+	require.NoError(t, err, "failed to seek to beginning of temporary file")
+	_, err = prevCredsFile.WriteString("lets-just-overwrite-what-is-here-with-a-bad-secret")
+	require.NoError(t, err, "failed to write to temporary file")
+
+	resp, err = httpDoWithRetry(client, req)
+	require.NoError(t, err, "failed to make request")
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "unexpected status code")
 }
 
 // We should ignore events from packages from repositories that are not registered
