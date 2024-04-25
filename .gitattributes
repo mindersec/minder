@@ -16,3 +16,5 @@
 /internal/db/querier.go linguist-generated=true
 /internal/db/*.sql.go linguist-generated=true
 /internal/authz/model/minder.generated.json linguist-generated=true
+/internal/auth/keycloak/client/client.gen.go linguist-generated=true
+/internal/auth/keycloak/client/keycloak-api.yaml linguist-generated=true
