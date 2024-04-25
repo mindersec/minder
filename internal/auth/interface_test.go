@@ -62,6 +62,7 @@ func TestIdentityClient_Register(t *testing.T) {
 	}}
 
 	ValidateClient := func(t *testing.T, c *IdentityClient, tc []identityTestCase) {
+		t.Helper()
 		ctx := context.Background()
 		for _, tc := range tc {
 			id, err := c.Resolve(ctx, tc.id)
@@ -72,15 +73,15 @@ func TestIdentityClient_Register(t *testing.T) {
 				t.Errorf("Resolve(%q) = %v; want %q", tc.id, id.HumanName, tc.human)
 			}
 
-			jwt := jwt.New()
-			if err := jwt.Set("sub", tc.sub); err != nil {
+			userJwt := jwt.New()
+			if err := userJwt.Set("sub", tc.sub); err != nil {
 				t.Fatalf("jwt.Set(sub) = %v", err)
 			}
-			if err := jwt.Set("iss", tc.url); err != nil {
+			if err := userJwt.Set("iss", tc.url); err != nil {
 				t.Fatalf("jwt.Set(iss) = %v", err)
 			}
 
-			id, err = c.Validate(ctx, jwt)
+			id, err = c.Validate(ctx, userJwt)
 			if err != nil {
 				t.Fatalf("Validate(%q) = %v", tc.sub, err)
 			}

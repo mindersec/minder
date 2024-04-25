@@ -60,7 +60,7 @@ func (i *Identity) String() string {
 		// Special case for provider registered as "".
 		return i.UserID
 	}
-	return fmt.Sprintf("%s/%s",  i.Provider.String(), i.UserID)
+	return fmt.Sprintf("%s/%s", i.Provider.String(), i.UserID)
 }
 
 // Human returns a human-readable representation of the identity, suitable for
