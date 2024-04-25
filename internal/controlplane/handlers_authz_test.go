@@ -22,7 +22,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -384,8 +383,6 @@ func TestRoleManagement(t *testing.T) {
 
 	user := openid.New()
 	assert.NoError(t, user.Set("sub", "testuser"))
-
-	defer openfeature.Shutdown()
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
