@@ -112,7 +112,7 @@ type IdentityProvider interface {
 // IdentityProviders.
 type IdentityClient struct {
 	// This map is a bit overloaded; it maps both short provider names and URLs to IdentityProviders.
-	providers *xsync.MapOf[string, IdentityProvider] // map[string]IdentityProvider
+	providers *xsync.MapOf[string, IdentityProvider]
 }
 
 var _ Resolver = (*IdentityClient)(nil)

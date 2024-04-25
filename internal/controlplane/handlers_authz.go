@@ -219,7 +219,7 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
-	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
 		for i := range as {
 			identity, err := s.idClient.Resolve(ctx, as[i].Subject)
 			if err != nil {
@@ -260,7 +260,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		UserID:    sub,
 		HumanName: sub,
 	}
-	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
 		identity, err = s.idClient.Resolve(ctx, sub)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
@@ -323,7 +323,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 		UserID:    sub,
 		HumanName: sub,
 	}
-	if flags.Bool(ctx, s.featureFlags, "idp_resolver") {
+	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
 		identity, err = s.idClient.Resolve(ctx, sub)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")

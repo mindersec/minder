@@ -20,19 +20,26 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -284,4 +291,223 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			}
 		})
 	}
+}
+
+// see https://github.com/open-feature/go-sdk/issues/266
+//
+//nolint:tparallel,paralleltest // openfeature currently has global singleton state:
+func TestRoleManagement(t *testing.T) {
+	t.Parallel()
+
+	project := uuid.New()
+
+	user1 := uuid.New()
+	user2 := uuid.New()
+
+	tests := []struct {
+		name    string
+		idpFlag bool
+		adds    []*minder.RoleAssignment
+		removes []*minder.RoleAssignment
+		result  []*minder.RoleAssignment
+		stored  []*minder.RoleAssignment
+	}{{
+		name: "simple adds",
+		adds: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+		}},
+		result: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+			Project: proto.String(project.String()),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+			Project: proto.String(project.String()),
+		}},
+		stored: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+			Project: proto.String(project.String()),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+			Project: proto.String(project.String()),
+		}},
+	}, {
+		name: "add and remove",
+		adds: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+		}},
+		removes: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+		}},
+		result: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+			Project: proto.String(project.String()),
+		}},
+	}, {
+		name:    "IDP resolution",
+		idpFlag: true,
+		adds: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: "user1",
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+		}},
+		result: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: "user1",
+			Project: proto.String(project.String()),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: "user2",
+			Project: proto.String(project.String()),
+		}},
+		stored: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+			Project: proto.String(project.String()),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+			Project: proto.String(project.String()),
+		}},
+	}}
+
+	user := openid.New()
+	assert.NoError(t, user.Set("sub", "testuser"))
+
+	defer openfeature.Shutdown()
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			authzClient := &mock.SimpleClient{
+				Allowed: []uuid.UUID{},
+			}
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			for _, add := range tc.adds {
+				match := gomock.Eq(add.GetSubject())
+				if tc.idpFlag {
+					// note: in the flag case, subject may be translated to UUID.
+					match = gomock.Any()
+				}
+				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+			}
+			for _, remove := range tc.removes {
+				match := gomock.Eq(remove.GetSubject())
+				if tc.idpFlag {
+					// note: in the flag case, subject may be translated to UUID.
+					match = gomock.Any()
+				}
+				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+			}
+
+			inMemFlag := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+				string(flags.IDPResolver): {
+					Key:            string(flags.IDPResolver),
+					DefaultVariant: "Fixed",
+					Variants:       map[string]any{"Fixed": tc.idpFlag},
+				},
+			})
+			assert.NoError(t, openfeature.SetProvider(inMemFlag))
+			featureClient := openfeature.NewClient(t.Name())
+			t.Cleanup(openfeature.Shutdown)
+
+			server := Server{
+				store:        mockStore,
+				authzClient:  authzClient,
+				featureFlags: featureClient,
+				idClient: &SimpleResolver{
+					data: []auth.Identity{{
+						UserID:    user1.String(),
+						HumanName: "user1",
+					}, {
+						UserID:    user2.String(),
+						HumanName: "user2",
+					}},
+				},
+			}
+
+			ctx := context.Background()
+			ctx = auth.WithAuthTokenContext(ctx, user)
+			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
+				Project: engine.Project{
+					ID: project,
+				},
+			})
+
+			for _, add := range tc.adds {
+				_, err := server.AssignRole(ctx, &minder.AssignRoleRequest{RoleAssignment: add})
+				assert.NoError(t, err)
+			}
+			for _, remove := range tc.removes {
+				_, err := server.RemoveRole(ctx, &minder.RemoveRoleRequest{RoleAssignment: remove})
+				assert.NoError(t, err)
+			}
+
+			result, err := server.ListRoleAssignments(ctx, &minder.ListRoleAssignmentsRequest{})
+			assert.NoError(t, err)
+
+			wantJSON := RoleAssignmentsToJson(t, tc.result)
+			gotJSON := RoleAssignmentsToJson(t, result.RoleAssignments)
+			assert.ElementsMatchf(t, wantJSON, gotJSON, "RPC results mismatch, want: A, got: B")
+
+			if len(tc.stored) > 0 {
+				wantStored := RoleAssignmentsToJson(t, tc.stored)
+				gotStored := RoleAssignmentsToJson(t, authzClient.Assignments[project])
+				assert.ElementsMatchf(t, wantStored, gotStored, "Stored results mismatch, want: A, got: B")
+			}
+		})
+	}
+}
+
+func RoleAssignmentsToJson(t *testing.T, assignments []*minder.RoleAssignment) []string {
+	t.Helper()
+	json := make([]string, 0, len(assignments))
+	for _, p := range assignments {
+		j, err := protojson.Marshal(p)
+		assert.NoError(t, err)
+		json = append(json, string(j))
+	}
+	return json
+}
+
+type SimpleResolver struct {
+	data []auth.Identity
+}
+
+var _ auth.Resolver = (*SimpleResolver)(nil)
+
+// Resolve implements auth.Resolver.
+func (s *SimpleResolver) Resolve(_ context.Context, id string) (*auth.Identity, error) {
+	for _, i := range s.data {
+		if i.UserID == id {
+			return &i, nil
+		}
+		if i.HumanName == id {
+			return &i, nil
+		}
+	}
+	return nil, fmt.Errorf("user %q not found", id)
+}
+
+// Validate implements auth.Resolver.
+func (_ *SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity, error) {
+	panic("unimplemented")
 }

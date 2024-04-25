@@ -87,7 +87,7 @@ type Server struct {
 	vldtr               auth.JwtValidator
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
-	idClient            *auth.IdentityClient
+	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
 	featureFlags        *openfeature.Client
