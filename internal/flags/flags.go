@@ -48,7 +48,7 @@ func FromContext(ctx context.Context) openfeature.EvaluationContext {
 }
 
 // Bool provides a simple wrapper around client.Boolean to normalize usage for Minder.
-func Bool(ctx context.Context, client *openfeature.Client, feature Experiment) bool {
+func Bool(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
 	ret := client.Boolean(ctx, string(feature), false, FromContext(ctx))
 	// TODO: capture in telemetry records
 	return ret

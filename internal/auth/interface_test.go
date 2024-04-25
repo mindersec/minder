@@ -135,7 +135,7 @@ type StaticIDP struct {
 	human  string
 }
 
-var _ IdentityProvider = &StaticIDP{}
+var _ IdentityProvider = (*StaticIDP)(nil)
 
 // Resolve implements IdentityProvider.
 func (s *StaticIDP) Resolve(_ context.Context, id string) (*Identity, error) {

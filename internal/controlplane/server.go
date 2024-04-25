@@ -90,7 +90,7 @@ type Server struct {
 	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
-	featureFlags        *openfeature.Client
+	featureFlags        openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service

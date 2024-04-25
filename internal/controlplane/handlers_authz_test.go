@@ -23,7 +23,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -293,9 +292,6 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 	}
 }
 
-// see https://github.com/open-feature/go-sdk/issues/266
-//
-//nolint:tparallel,paralleltest // openfeature currently has global singleton state:
 func TestRoleManagement(t *testing.T) {
 	t.Parallel()
 
@@ -393,6 +389,7 @@ func TestRoleManagement(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			authzClient := &mock.SimpleClient{
 				Allowed: []uuid.UUID{},
 			}
@@ -418,16 +415,8 @@ func TestRoleManagement(t *testing.T) {
 				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
 			}
 
-			inMemFlag := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-				string(flags.IDPResolver): {
-					Key:            string(flags.IDPResolver),
-					DefaultVariant: "Fixed",
-					Variants:       map[string]any{"Fixed": tc.idpFlag},
-				},
-			})
-			assert.NoError(t, openfeature.SetProvider(inMemFlag))
-			featureClient := openfeature.NewClient(t.Name())
-			t.Cleanup(openfeature.Shutdown)
+			featureClient := &flags.FakeClient{}
+			featureClient.Data = map[string]any{"idp_resolver": tc.idpFlag}
 
 			server := Server{
 				store:        mockStore,
