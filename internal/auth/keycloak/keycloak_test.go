@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -47,14 +48,19 @@ func TestKeyCloak_Resolve(t *testing.T) {
 		human:  "user",
 		userid: "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
 	}, {
-		name:      "GitHub id",
-		id:        "123456",
-		wantError: "unable to resolve user: user not found in identity store",
+		name:   "GitHub id",
+		id:     "123456",
+		human:  "user",
+		userid: "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
 	}, {
 		name:   "GitHub login",
 		id:     "user",
 		human:  "user",
 		userid: "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
+	}, {
+		name:      "Unknown id",
+		id:        "unknown",
+		wantError: "unable to resolve user: user not found in identity store",
 	}}
 
 	fakeKeycloak := &fakeKeycloak{
@@ -138,8 +144,18 @@ func (f *fakeKeycloak) GetUser(w http.ResponseWriter, r *http.Request) {
 
 func (f *fakeKeycloak) GetUserByQuery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	matcher := func(u client.UserRepresentation) bool {
+		if r.URL.Query().Get("username") != "" {
+			return *u.Username == r.URL.Query().Get("username")
+		}
+		if r.URL.Query().Get("q") != "" {
+			parsed := strings.Split(r.URL.Query().Get("q"), ":")
+			return (*u.Attributes)[parsed[0]][0] == parsed[1]
+		}
+		return false
+	}
 	for _, u := range f.users {
-		if *u.Username == r.URL.Query().Get("username") {
+		if matcher(u) {
 			results := []client.UserRepresentation{u}
 			e := json.NewEncoder(w)
 			if err := e.Encode(results); err != nil {

@@ -128,10 +128,21 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 		}
 	}
 
-	// last, try lookup by GitHub login
+	// next, try lookup by GitHub login
 	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
-		Exact: ptr.Ptr(true),
+		Exact:    ptr.Ptr(true),
 		Username: &id,
+	})
+	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
+		id := k.userToIdentity((*userLookup.JSON200)[0])
+		if id != nil {
+			return id, nil
+		}
+	}
+
+	// last, try lookup by GitHub numeric ID
+	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
+		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
 	})
 	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
 		id := k.userToIdentity((*userLookup.JSON200)[0])
