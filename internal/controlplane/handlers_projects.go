@@ -194,7 +194,7 @@ func (s *Server) DeleteProject(
 		Str("operation", "delete").
 		Str("project", projectID.String()).
 		Logger()
-	if err := projects.DeleteProject(ctx, projectID, qtx, s.authzClient, s.ghProviders, l); err != nil {
+	if err := projects.DeleteProject(ctx, projectID, qtx, s.authzClient, s.providerManager, l); err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting project: %v", err)
 	}
 

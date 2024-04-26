@@ -80,7 +80,10 @@ var serveCmd = &cobra.Command{
 		// webhook config validation
 		webhookURL := cfg.WebhookConfig.ExternalWebhookURL
 		webhookping := cfg.WebhookConfig.ExternalPingURL
-		webhooksecret := cfg.WebhookConfig.WebhookSecret
+		webhooksecret, err := cfg.WebhookConfig.GetWebhookSecret()
+		if err != nil {
+			return fmt.Errorf("failed to get webhook secret: %w", err)
+		}
 		if webhookURL == "" || webhookping == "" || webhooksecret == "" {
 			return fmt.Errorf("webhook configuration is not set")
 		}

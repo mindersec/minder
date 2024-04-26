@@ -33,10 +33,13 @@ import (
 // ProviderStore provides methods for retrieving Providers from the database
 type ProviderStore interface {
 	// GetByID returns the provider identified by its UUID primary key.
-	// It is assumed that the caller carries out some kind of validation to
-	// ensure that whoever made the request is authorized to access this
-	// provider.
+	// This should only be used in places when it is certain that the requester
+	// is authorized to access this provider.
 	GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error)
+	// GetByIDProject returns the provider identified by its UUID primary key.
+	// ProjectID is also used in the query to prevent unauthorized access
+	// when used in API endpoints
+	GetByIDProject(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) (*db.Provider, error)
 	// GetByName returns the provider instance in the database as
 	// identified by its project ID and name. All parent projects of the
 	// specified project are included in the search.
@@ -56,6 +59,8 @@ type ProviderStore interface {
 		name string,
 		trait db.ProviderType,
 	) ([]db.Provider, error)
+	// Delete removes the provider configuration from the database
+	Delete(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
 }
 
 // ErrProviderNotFoundBy is an error type which is returned when a provider is not found
@@ -89,6 +94,17 @@ func (p *providerStore) GetByID(ctx context.Context, providerID uuid.UUID) (*db.
 	provider, err := p.store.GetProviderByID(ctx, providerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find provider by ID: %w", err)
+	}
+	return &provider, nil
+}
+
+func (p *providerStore) GetByIDProject(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) (*db.Provider, error) {
+	provider, err := p.store.GetProviderByIDAndProject(ctx, db.GetProviderByIDAndProjectParams{
+		ID:        providerID,
+		ProjectID: projectID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find provider by ID and project: %w", err)
 	}
 	return &provider, nil
 }
@@ -142,6 +158,13 @@ func (p *providerStore) GetByNameAndTrait(
 	}
 
 	return providers, nil
+}
+
+func (p *providerStore) Delete(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error {
+	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{
+		ID:        providerID,
+		ProjectID: projectID,
+	})
 }
 
 // builds an error message based on the given filters.

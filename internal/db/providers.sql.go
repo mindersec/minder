@@ -147,6 +147,33 @@ func (q *Queries) GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, 
 	return i, err
 }
 
+const getProviderByIDAndProject = `-- name: GetProviderByIDAndProject :one
+SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE id = $1 AND project_id = $2
+`
+
+type GetProviderByIDAndProjectParams struct {
+	ID        uuid.UUID `json:"id"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) GetProviderByIDAndProject(ctx context.Context, arg GetProviderByIDAndProjectParams) (Provider, error) {
+	row := q.db.QueryRowContext(ctx, getProviderByIDAndProject, arg.ID, arg.ProjectID)
+	var i Provider
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Version,
+		&i.ProjectID,
+		pq.Array(&i.Implements),
+		&i.Definition,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		pq.Array(&i.AuthFlows),
+		&i.Class,
+	)
+	return i, err
+}
+
 const getProviderByName = `-- name: GetProviderByName :one
 
 SELECT id, name, version, project_id, implements, definition, created_at, updated_at, auth_flows, class FROM providers WHERE lower(name) = lower($1) AND project_id = ANY($2::uuid[])

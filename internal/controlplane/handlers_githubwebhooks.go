@@ -351,7 +351,12 @@ func validatePayloadSignature(r *http.Request, wc *server.WebhookConfig) (payloa
 		return
 	}
 
-	payload, err = github.ValidatePayloadFromBody(contentType, br, signature, []byte(wc.WebhookSecret))
+	whSecret, err := wc.GetWebhookSecret()
+	if err != nil {
+		return
+	}
+
+	payload, err = github.ValidatePayloadFromBody(contentType, br, signature, []byte(whSecret))
 	if err == nil {
 		return
 	}
@@ -398,6 +403,7 @@ func validatePreviousSecrets(
 		}
 	}
 
+	err = fmt.Errorf("failed to validate payload with any fallback secret")
 	return
 }
 

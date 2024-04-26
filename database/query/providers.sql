@@ -20,6 +20,9 @@ LIMIT 1;
 -- name: GetProviderByID :one
 SELECT * FROM providers WHERE id = $1;
 
+-- name: GetProviderByIDAndProject :one
+SELECT * FROM providers WHERE id = $1 AND project_id = $2;
+
 -- FindProviders allows us to take a trait and filter
 -- providers by it. It also optionally takes a name, in case we want to
 -- filter by name as well.

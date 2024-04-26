@@ -32,7 +32,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // GetProvider gets a given provider available in a specific project.
@@ -171,16 +170,11 @@ func (s *Server) DeleteProvider(
 		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
 	}
 
-	provider, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
+	err := s.providerManager.DeleteByName(ctx, providerName, projectID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
 		}
-		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
-	}
-
-	err = s.deleteProvider(ctx, provider, projectID)
-	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting provider: %v", err)
 	}
 
@@ -202,60 +196,17 @@ func (s *Server) DeleteProviderByID(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider ID")
 	}
 
-	provider, err := s.providerStore.GetByID(ctx, parsedProviderID)
+	err = s.providerManager.DeleteByID(ctx, parsedProviderID, projectID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
 		}
-		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
-	}
-
-	err = s.deleteProvider(ctx, provider, projectID)
-	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting provider: %v", err)
 	}
 
 	return &minderv1.DeleteProviderByIDResponse{
 		Id: in.Id,
 	}, nil
-}
-
-func (s *Server) deleteProvider(ctx context.Context, provider *db.Provider, projectID uuid.UUID) error {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider,
-		s.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	// If the provider is a GitHub provider with a valid credential, delete all repositories associated with the provider
-	if p.Implements(db.ProviderTypeGithub) &&
-		providers.GetCredentialStateForProvider(ctx, *provider, s.store, s.cryptoEngine, &s.cfg.Provider) ==
-			provinfv1.CredentialStateSet {
-		client, err := p.GetGitHub()
-		if err != nil {
-			return status.Errorf(codes.Internal, "error creating github provider: %v", err)
-		}
-
-		// Delete all repositories associated with the provider and remove the webhooks
-		err = s.repos.DeleteRepositoriesByProvider(ctx, client, provider.Name, projectID)
-		if err != nil {
-			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
-			// The repositories will still be deleted by a cascade delete in the database
-			zerolog.Ctx(ctx).Error().Err(err).Str("projectID", projectID.String()).Msg("error deleting repositories")
-		}
-	}
-
-	// Delete the provider itself
-	err = s.ghProviders.DeleteProvider(ctx, provider)
-	if err != nil {
-		return status.Errorf(codes.Internal, "error deleting provider: %v", err)
-	}
-	return nil
 }
 
 func protobufProviderImplementsFromDB(ctx context.Context, p db.Provider) []minderv1.ProviderType {

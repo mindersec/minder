@@ -80,6 +80,7 @@ type Querier interface {
 	GetProjectByName(ctx context.Context, name string) (Project, error)
 	GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error)
 	GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error)
+	GetProviderByIDAndProject(ctx context.Context, arg GetProviderByIDAndProjectParams) (Provider, error)
 	// GetProviderByName allows us to get a provider by its name. This takes
 	// into account the project hierarchy, so it will only return the provider
 	// if it exists in the project or any of its ancestors. It'll return the first

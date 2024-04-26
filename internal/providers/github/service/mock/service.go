@@ -14,6 +14,7 @@ import (
 	http "net/http"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
@@ -101,18 +102,18 @@ func (mr *MockGitHubProviderServiceMockRecorder) DeleteGitHubAppInstallation(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitHubAppInstallation", reflect.TypeOf((*MockGitHubProviderService)(nil).DeleteGitHubAppInstallation), ctx, installationID)
 }
 
-// DeleteProvider mocks base method.
-func (m *MockGitHubProviderService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
+// DeleteInstallation mocks base method.
+func (m *MockGitHubProviderService) DeleteInstallation(ctx context.Context, providerID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteProvider", ctx, provider)
+	ret := m.ctrl.Call(m, "DeleteInstallation", ctx, providerID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteProvider indicates an expected call of DeleteProvider.
-func (mr *MockGitHubProviderServiceMockRecorder) DeleteProvider(ctx, provider any) *gomock.Call {
+// DeleteInstallation indicates an expected call of DeleteInstallation.
+func (mr *MockGitHubProviderServiceMockRecorder) DeleteInstallation(ctx, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProvider", reflect.TypeOf((*MockGitHubProviderService)(nil).DeleteProvider), ctx, provider)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallation", reflect.TypeOf((*MockGitHubProviderService)(nil).DeleteInstallation), ctx, providerID)
 }
 
 // ValidateGitHubAppWebhookPayload mocks base method.
