@@ -248,7 +248,7 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 	}
 	result, err := a.cli.Check(ctx).Options(options).Body(body).Execute()
 	if err != nil {
-		return fmt.Errorf("OpenFGA error: %w", err)
+		return fmt.Errorf("OpenFGA error for %s: %w", userString, err)
 	}
 	if result.Allowed != nil && *result.Allowed {
 		return nil

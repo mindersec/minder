@@ -25,6 +25,7 @@ import (
 	gh "github.com/google/go-github/v61/github"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
@@ -88,8 +89,10 @@ type Server struct {
 	vldtr               auth.JwtValidator
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
+	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine
 	restClientCache     ratecache.RestClientCache
+	featureFlags        openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
@@ -140,6 +143,13 @@ func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
 	}
 }
 
+// WithIdentityClient sets the identity client for the server
+func WithIdentityClient(c *auth.IdentityClient) ServerOption {
+	return func(s *Server) {
+		s.idClient = c
+	}
+}
+
 // WithServerMetrics sets the server metrics for the server
 func WithServerMetrics(mt metrics.Metrics) ServerOption {
 	return func(s *Server) {
@@ -187,11 +197,16 @@ func NewServer(
 		repos:               repoSvc,
 		marketplace:         marketplace,
 		providerStore:       providerStore,
+		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		fallbackTokenClient: fallbackTokenClient,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
+		// TODO: an empty IdentityClient has no way to look up identities.  This means
+		// callers need to supply WithIdentityClient() to the constructor.  It would be nice
+		// to have a better way to do this.
+		idClient: &auth.IdentityClient{},
 	}
 
 	for _, opt := range opts {

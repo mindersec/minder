@@ -29,12 +29,14 @@ package tools
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
 //go:generate go install github.com/openfga/cli/cmd/fga
 //go:generate go install github.com/mikefarah/yq/v4
+//go:generate go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen
 
 // nolint
 
 import (
 	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/daixiang0/gci"
+	_ "github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen"
 	_ "github.com/go-critic/go-critic/cmd/gocritic"
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"

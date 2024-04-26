@@ -34,6 +34,7 @@ type Config struct {
 	LoggingConfig   LoggingConfig         `mapstructure:"logging"`
 	Tracing         TracingConfig         `mapstructure:"tracing"`
 	Metrics         MetricsConfig         `mapstructure:"metrics"`
+	Flags           FlagsConfig           `mapstructure:"flags"`
 	Database        config.DatabaseConfig `mapstructure:"database"`
 	Identity        IdentityConfigWrapper `mapstructure:"identity"`
 	Auth            AuthConfig            `mapstructure:"auth"`
