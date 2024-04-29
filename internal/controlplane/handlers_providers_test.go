@@ -40,7 +40,6 @@ import (
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	mockwebhooks "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -103,7 +102,6 @@ func TestDeleteProvider(t *testing.T) {
 				WebhookID: sql.NullInt64{Valid: true, Int64: 12345},
 			}}, nil)
 
-	mockRepoSvc := mockghrepo.NewMockRepositoryService(ctrl)
 	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
 	whManager.EXPECT().DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
@@ -135,7 +133,6 @@ func TestDeleteProvider(t *testing.T) {
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
 		ghProviders:     mockProvidersSvc,
-		repos:           mockRepoSvc,
 		authzClient:     authzClient,
 		providerStore:   providerStore,
 		providerManager: providerManager,
@@ -221,7 +218,6 @@ func TestDeleteProviderByID(t *testing.T) {
 				WebhookID: sql.NullInt64{Valid: true, Int64: 12345},
 			}}, nil)
 
-	mockRepoSvc := mockghrepo.NewMockRepositoryService(ctrl)
 	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
 	whManager.EXPECT().DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
@@ -251,7 +247,6 @@ func TestDeleteProviderByID(t *testing.T) {
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
 		ghProviders:     mockProvidersSvc,
-		repos:           mockRepoSvc,
 		authzClient:     authzClient,
 		providerStore:   providerStore,
 		providerManager: providerManager,
