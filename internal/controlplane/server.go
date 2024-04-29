@@ -60,6 +60,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
@@ -175,6 +176,7 @@ func NewServer(
 	profileSvc := profiles.NewProfileService(evt)
 	mt := metrics.NewNoopMetrics()
 	provMt := provtelemetry.NewNoopMetrics()
+	ghClientFactory := clients.NewGitHubClientFactory(provMt)
 	ruleSvc := ruletypes.NewRuleTypeService()
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
 	if err != nil {
@@ -217,7 +219,7 @@ func NewServer(
 
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		s.restClientCache,
-		provMt,
+		ghClientFactory,
 		&cfg.Provider,
 		fallbackTokenClient,
 		eng,

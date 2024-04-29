@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	githubapp "github.com/stacklok/minder/internal/providers/github/app"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -216,7 +217,10 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
 
-		cli, err := ghclient.NewRestClient(cfg, pb.metrics, pb.restClientCache, gitHubCredential, pb.ownerFilter.String)
+		// This should be passed in from the outside, but since I intend to
+		// get rid of ProviderBuilder, I am instantiating a new copy here
+		ghClientFactory := clients.NewGitHubClientFactory(pb.metrics)
+		cli, err := ghclient.NewRestClient(cfg, pb.restClientCache, gitHubCredential, ghClientFactory, pb.ownerFilter.String)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github client: %w", err)
 		}
@@ -227,9 +231,12 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
+	// This should be passed in from the outside, but since I intend to
+	// get rid of ProviderBuilder, I am instantiating a new copy here
+	ghClientFactory := clients.NewGitHubClientFactory(pb.metrics)
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.metrics, pb.restClientCache, gitHubCredential,
-		pb.fallbackTokenClient, pb.isOrg)
+	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.restClientCache, gitHubCredential,
+		pb.fallbackTokenClient, ghClientFactory, pb.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}

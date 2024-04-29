@@ -19,17 +19,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
 
 	gogithub "github.com/google/go-github/v61/github"
-	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -66,34 +63,15 @@ var _ github.Delegate = (*GitHubOAuthDelegate)(nil)
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
 func NewRestClient(
-	config *minderv1.GitHubProviderConfig,
-	metrics telemetry.HttpClientMetrics,
+	cfg *minderv1.GitHubProviderConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
+	ghClientFactory clients.GitHubClientFactory,
 	owner string,
 ) (*github.GitHub, error) {
-	var err error
-
-	tc := &http.Client{
-		Transport: &oauth2.Transport{
-			Base:   http.DefaultClient.Transport,
-			Source: credential.GetAsOAuth2TokenSource(),
-		},
-	}
-
-	tc.Transport, err = metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	ghClient, err := ghClientFactory.Build(cfg.Endpoint, credential)
 	if err != nil {
-		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
-	}
-
-	ghClient := gogithub.NewClient(tc)
-
-	if config.Endpoint != "" {
-		parsedURL, err := url.Parse(config.Endpoint)
-		if err != nil {
-			return nil, err
-		}
-		ghClient.BaseURL = parsedURL
+		return nil, err
 	}
 
 	oauthDelegate := &GitHubOAuthDelegate{

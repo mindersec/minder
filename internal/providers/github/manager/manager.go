@@ -32,11 +32,11 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	githubapp "github.com/stacklok/minder/internal/providers/github/app"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -45,7 +45,7 @@ import (
 // for creating GitHub-specific provider instances.
 func NewGitHubProviderClassManager(
 	restClientCache ratecache.RestClientCache,
-	metrics telemetry.HttpClientMetrics,
+	ghClientFactory clients.GitHubClientFactory,
 	providerConfig *server.ProviderConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
@@ -55,7 +55,7 @@ func NewGitHubProviderClassManager(
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
-		metrics:             metrics,
+		ghClientFactory:     ghClientFactory,
 		config:              providerConfig,
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
@@ -67,7 +67,7 @@ func NewGitHubProviderClassManager(
 
 type githubProviderManager struct {
 	restClientCache     ratecache.RestClientCache
-	metrics             telemetry.HttpClientMetrics
+	ghClientFactory     clients.GitHubClientFactory
 	config              *server.ProviderConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
@@ -118,7 +118,13 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
 
-		cli, err := ghclient.NewRestClient(cfg, g.metrics, g.restClientCache, creds.credential, creds.ownerFilter.String)
+		cli, err := ghclient.NewRestClient(
+			cfg,
+			g.restClientCache,
+			creds.credential,
+			g.ghClientFactory,
+			creds.ownerFilter.String,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github client: %w", err)
 		}
@@ -130,8 +136,15 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, g.config.GitHubApp, g.metrics, g.restClientCache, creds.credential,
-		g.fallbackTokenClient, creds.isOrg)
+	cli, err := githubapp.NewGitHubAppProvider(
+		cfg,
+		g.config.GitHubApp,
+		g.restClientCache,
+		creds.credential,
+		g.fallbackTokenClient,
+		g.ghClientFactory,
+		creds.isOrg,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
 	}
