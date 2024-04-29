@@ -429,35 +429,6 @@ func (s *Server) listRemoteRepositoriesForProvider(
 	return results, nil
 }
 
-// covers the common logic for the two varieties of repo deletion
-/*func (s *Server) deleteRepository(
-	ctx context.Context,
-	repoQueryMethod func() (db.Repository, error),
-) error {
-	repo, err := repoQueryMethod()
-	if errors.Is(err, sql.ErrNoRows) {
-		return status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
-	}
-
-	provider, err := s.providerStore.GetByID(ctx, repo.ProviderID)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
-	}
-
-	client, err := s.getClientForProvider(ctx, *provider)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get client for provider: %v", err)
-	}
-
-	err = s.repos.DeleteRepository(ctx, client, &repo)
-	if err != nil {
-		return status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
-	}
-	return nil
-}*/
-
 // TODO: move out of controlplane
 // inferProviderByOwner returns the provider to use for a given repo owner
 func (s *Server) inferProviderByOwner(ctx context.Context, owner string, projectID uuid.UUID, providerName string,
