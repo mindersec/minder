@@ -84,9 +84,9 @@ spec:
           - name: "MINDER_FLAGS_GO_FEATURE_FILE_PATH"
             value: "/flags/flags-config.yaml"
           - name: "MINDER_WEBHOOK_CONFIG_WEBHOOK_SECRET_FILE"
-            value: "/secrets/app/repo_webhook_secret"
+            value: "/secrets/app/github_repo_webhook_secret"
           - name: "MINDER_WEBHOOK_CONFIG_PREVIOUS_WEBHOOK_SECRET_FILE"
-            value: "/secrets/app/repo_fallback_webhook_secret"
+            value: "/secrets/app/github_repo_fallback_webhook_secret"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
