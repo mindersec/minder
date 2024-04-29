@@ -54,7 +54,7 @@ require (
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.0.15
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.21.0
+	github.com/styrainc/regal v0.21.3
 	github.com/thomaspoignant/go-feature-flag v1.26.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0
