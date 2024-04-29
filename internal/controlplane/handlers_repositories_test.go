@@ -218,13 +218,6 @@ func TestServer_DeleteRepository(t *testing.T) {
 		ExpectedError    string
 	}{
 		{
-			Name:             "deletion fails when provider cannot be found",
-			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName),
-			ProviderFails:    true,
-			ExpectedError:    "cannot get provider",
-		},
-		{
 			Name:          "delete by name fails when name is malformed",
 			RepoName:      "I am not a repo name",
 			ExpectedError: "invalid repository name",
@@ -235,32 +228,38 @@ func TestServer_DeleteRepository(t *testing.T) {
 			ExpectedError: "invalid repository ID",
 		},
 		{
-			Name:             "deletion fails when repo is not found",
-			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withFailedGetRepoByName(sql.ErrNoRows)),
-			ExpectedError:    "repository not found",
-		},
-		{
 			Name:             "deletion fails when repo service returns error",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName, withFailedDelete(errDefault)),
+			RepoServiceSetup: newRepoService(withFailedDeleteByName(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
 		},
 		{
 			Name:             "delete by ID fails when repo service returns error",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withSuccessfulGetRepoById, withFailedDelete(errDefault)),
+			RepoServiceSetup: newRepoService(withFailedDeleteByID(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
+		},
+		{
+			Name:             "deletion fails when repo is not found",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: newRepoService(withFailedDeleteByName(sql.ErrNoRows)),
+			ExpectedError:    "repository not found",
+		},
+		{
+			Name:             "delete by ID fails when repo is not found",
+			RepoID:           repoID,
+			RepoServiceSetup: newRepoService(withFailedDeleteByID(sql.ErrNoRows)),
+			ExpectedError:    "repository not found",
 		},
 		{
 			Name:             "delete by name succeeds",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withSuccessfulGetRepoByName, withSuccessfulDelete),
+			RepoServiceSetup: newRepoService(withSuccessfulDeleteByName),
 		},
 		{
 			Name:             "delete by ID succeeds",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withSuccessfulGetRepoById, withSuccessfulDelete),
+			RepoServiceSetup: newRepoService(withSuccessfulDeleteByID),
 		},
 	}
 
@@ -382,35 +381,27 @@ func withFailedCreate(err error) func(repoServiceMock) {
 	}
 }
 
-func withSuccessfulDelete(mock repoServiceMock) {
-	withFailedDelete(nil)(mock)
+func withSuccessfulDeleteByID(mock repoServiceMock) {
+	withFailedDeleteByID(nil)(mock)
 }
 
-func withFailedDelete(err error) func(repoServiceMock) {
+func withFailedDeleteByID(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			DeleteRepository(gomock.Any(), gomock.Any(), gomock.Any()).
+			DeleteByID(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(err)
 	}
 }
 
-func withSuccessfulGetRepoById(mock repoServiceMock) {
-	mock.EXPECT().
-		GetRepositoryById(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, nil)
+func withSuccessfulDeleteByName(mock repoServiceMock) {
+	withFailedDeleteByName(nil)(mock)
 }
 
-func withSuccessfulGetRepoByName(mock repoServiceMock) {
-	mock.EXPECT().
-		GetRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, nil)
-}
-
-func withFailedGetRepoByName(err error) func(repoServiceMock) {
+func withFailedDeleteByName(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			GetRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(db.Repository{}, err)
+			DeleteByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(err)
 	}
 }
 

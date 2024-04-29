@@ -86,6 +86,9 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
+	// get a list of repos with webhooks belonging to a provider
+	// is used for webhook cleanup during provider deletion
+	GetProviderWebhooks(ctx context.Context, providerID uuid.UUID) ([]GetProviderWebhooksRow, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
 	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
 	// avoid using this, where possible use GetRepositoryByIDAndProject instead
