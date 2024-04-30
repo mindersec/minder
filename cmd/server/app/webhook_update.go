@@ -127,6 +127,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 				zerolog.Ctx(ctx).Err(err).Msg("cannot get webhook secret")
 				continue
 			}
+
+			if whSecret == "" {
+				zerolog.Ctx(ctx).Error().Msg("webhook secret is empty")
+				continue
+			}
 			updateErr = updateGithubWebhooks(ctx, ghCli, store, provider, webhookUrl.Host, whSecret)
 		} else {
 			updateErr = fmt.Errorf("provider type %s not supported", providerName)
