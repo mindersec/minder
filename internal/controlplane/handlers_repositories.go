@@ -272,11 +272,11 @@ func (s *Server) DeleteRepositoryById(
 
 	projectID := getProjectID(ctx)
 
-	err = s.deleteRepository(ctx, func() (db.Repository, error) {
-		return s.repos.GetRepositoryById(ctx, parsedRepositoryID, projectID)
-	})
-	if err != nil {
-		return nil, err
+	err = s.repos.DeleteByID(ctx, parsedRepositoryID, projectID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
 	// return the response with the id of the deleted repository
@@ -299,11 +299,11 @@ func (s *Server) DeleteRepositoryByName(
 	projectID := getProjectID(ctx)
 	providerName := getProviderName(ctx)
 
-	err := s.deleteRepository(ctx, func() (db.Repository, error) {
-		return s.repos.GetRepositoryByName(ctx, fragments[0], fragments[1], projectID, providerName)
-	})
-	if err != nil {
-		return nil, err
+	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
 	}
 
 	// return the response with the name of the deleted repository
@@ -427,35 +427,6 @@ func (s *Server) listRemoteRepositoriesForProvider(
 	}
 
 	return results, nil
-}
-
-// covers the common logic for the two varieties of repo deletion
-func (s *Server) deleteRepository(
-	ctx context.Context,
-	repoQueryMethod func() (db.Repository, error),
-) error {
-	repo, err := repoQueryMethod()
-	if errors.Is(err, sql.ErrNoRows) {
-		return status.Errorf(codes.NotFound, "repository not found")
-	} else if err != nil {
-		return status.Errorf(codes.Internal, "unexpected error fetching repo: %v", err)
-	}
-
-	provider, err := s.providerStore.GetByID(ctx, repo.ProviderID)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get provider: %v", err)
-	}
-
-	client, err := s.getClientForProvider(ctx, *provider)
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot get client for provider: %v", err)
-	}
-
-	err = s.repos.DeleteRepository(ctx, client, &repo)
-	if err != nil {
-		return status.Errorf(codes.Internal, "unexpected error deleting repo: %v", err)
-	}
-	return nil
 }
 
 // TODO: move out of controlplane

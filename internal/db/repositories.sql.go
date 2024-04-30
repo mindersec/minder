@@ -109,6 +109,42 @@ func (q *Queries) DeleteRepository(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getProviderWebhooks = `-- name: GetProviderWebhooks :many
+SELECT repo_owner, repo_name, webhook_id FROM repositories
+WHERE webhook_id IS NOT NULL AND provider_id = $1
+`
+
+type GetProviderWebhooksRow struct {
+	RepoOwner string        `json:"repo_owner"`
+	RepoName  string        `json:"repo_name"`
+	WebhookID sql.NullInt64 `json:"webhook_id"`
+}
+
+// get a list of repos with webhooks belonging to a provider
+// is used for webhook cleanup during provider deletion
+func (q *Queries) GetProviderWebhooks(ctx context.Context, providerID uuid.UUID) ([]GetProviderWebhooksRow, error) {
+	rows, err := q.db.QueryContext(ctx, getProviderWebhooks, providerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProviderWebhooksRow{}
+	for rows.Next() {
+		var i GetProviderWebhooksRow
+		if err := rows.Scan(&i.RepoOwner, &i.RepoName, &i.WebhookID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRepositoryByID = `-- name: GetRepositoryByID :one
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id FROM repositories WHERE id = $1
 `

@@ -181,7 +181,6 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create marketplace: %w", err)
 	}
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
-	repoSvc := github.NewRepositoryService(whManager, store, evt)
 
 	s := &Server{
 		store:               store,
@@ -194,7 +193,6 @@ func NewServer(
 		provMt:              provMt,
 		profiles:            profileSvc,
 		ruleTypes:           ruleSvc,
-		repos:               repoSvc,
 		marketplace:         marketplace,
 		providerStore:       providerStore,
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
@@ -223,7 +221,7 @@ func NewServer(
 		&cfg.Provider,
 		fallbackTokenClient,
 		eng,
-		repoSvc,
+		whManager,
 		store,
 		s.ghProviders,
 	)
@@ -232,6 +230,7 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create provider manager: %w", err)
 	}
 	s.providerManager = providerManager
+	s.repos = github.NewRepositoryService(whManager, store, evt, providerManager)
 
 	return s, nil
 }

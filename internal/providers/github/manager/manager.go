@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package manager contains the GitHubProviderFactory
+// Package manager contains the GitHubProviderClassManager
 package manager
 
 import (
@@ -37,7 +37,7 @@ import (
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/repositories/github"
+	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -49,7 +49,7 @@ func NewGitHubProviderClassManager(
 	providerConfig *server.ProviderConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
-	repos github.RepositoryService,
+	whManager webhooks.WebhookManager,
 	store db.Store,
 	ghService service.GitHubProviderService,
 ) m.ProviderClassManager {
@@ -60,7 +60,7 @@ func NewGitHubProviderClassManager(
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
-		repos:               repos,
+		webhooks:            whManager,
 		ghService:           ghService,
 	}
 }
@@ -71,7 +71,7 @@ type githubProviderManager struct {
 	config              *server.ProviderConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
-	repos               github.RepositoryService
+	webhooks            webhooks.WebhookManager
 	store               db.Store
 	ghService           service.GitHubProviderService
 }
@@ -153,9 +153,18 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 			return errors.New("unable to instantiate provider as GitHub client")
 		}
 
-		// Delete all repositories associated with the provider and remove the webhooks
-		err = g.repos.DeleteRepositoriesByProvider(ctx, client, config.Name, config.ProjectID)
+		// to avoid a circular dependency between this struct and the repo
+		// service, only delete the webhooks from the repos, and allow the
+		// cascade delete to delete the repos in the DB
+		// TODO: move webhook management behind a provider trait
+		providerWebhooks, err := g.store.GetProviderWebhooks(ctx, config.ID)
 		if err != nil {
+			return fmt.Errorf("unable to retrieve list of webhooks: %w", err)
+		}
+
+		for _, webhook := range providerWebhooks {
+			// SQL query guarantees that webhook ID is always non-null
+			err = g.webhooks.DeleteWebhook(ctx, client, webhook.RepoOwner, webhook.RepoName, webhook.WebhookID.Int64)
 			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
 			// The repositories will still be deleted by a cascade delete in the database
 			zerolog.Ctx(ctx).Error().Err(err).
