@@ -160,14 +160,14 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		ExpectedError    string
 	}{
 		{
-			Name:            "List remote repositories fails when all providers error",
-			GitHubSetup:     newGitHub(withFailedListAllRepositories(errDefault)),
-			ExpectedError:   "cannot list repositories for providers: [github]",
+			Name:          "List remote repositories fails when all providers error",
+			GitHubSetup:   newGitHub(withFailedListAllRepositories(errDefault)),
+			ExpectedError: "cannot list repositories for providers: [github]",
 		},
 		{
 			Name:        "List remote repositories succeeds when all providers succeed",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			StoreSetup:  newStore(
+			StoreSetup: newStore(
 				withStoredProvider(provider),
 				withStoredProviderAccessToken(),
 				withStoredRepositories(
@@ -182,7 +182,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:        "List remote repositories succeeds despite store fail",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			StoreSetup:  newStore(
+			StoreSetup: newStore(
 				withStoredProvider(provider),
 				withStoredProviderAccessToken(),
 				withStoreRepositoryLookupFailure(errors.New("oops")),
@@ -524,17 +524,6 @@ func withFailedListAllRepositories(err error) func(githubMock) {
 }
 
 // Builders useful to confiure storage mock
-func withStoreProviderFailure(err error) func(storeMock) {
-	return func(mock storeMock) {
-		mock.EXPECT().
-			GetProviderByID(gomock.Any(), gomock.Any()).
-			Return(db.Provider{}, err).AnyTimes()
-		mock.EXPECT().
-			FindProviders(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{}, err).AnyTimes()
-	}
-}
-
 func withStoredProvider(provider db.Provider) func(storeMock) {
 	return func(mock storeMock) {
 		mock.EXPECT().
