@@ -51,3 +51,9 @@ WHERE id = $1;
 
 -- name: CountRepositories :one
 SELECT COUNT(*) FROM repositories;
+
+-- get a list of repos with webhooks belonging to a provider
+-- is used for webhook cleanup during provider deletion
+-- name: GetProviderWebhooks :many
+SELECT repo_owner, repo_name, webhook_id FROM repositories
+WHERE webhook_id IS NOT NULL AND provider_id = $1;
