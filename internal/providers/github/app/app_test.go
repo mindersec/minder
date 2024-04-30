@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	github2 "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -42,13 +43,13 @@ import (
 func TestNewGitHubAppProvider(t *testing.T) {
 	t.Parallel()
 
-	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
-		Endpoint: "https://api.github.com",
-	},
+	client, err := NewGitHubAppProvider(
+		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
 		&config.GitHubAppConfig{},
-		provtelemetry.NewNoopMetrics(),
-		nil, credentials.NewGitHubTokenCredential("token"),
+		nil,
+		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
+		clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 		false,
 	)
 
@@ -64,17 +65,17 @@ func TestUserInfo(t *testing.T) {
 
 	ctx := context.Background()
 
-	client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
-		Endpoint: "https://api.github.com",
-	},
+	client, err := NewGitHubAppProvider(
+		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
 		&config.GitHubAppConfig{
 			AppName: appName,
 			AppID:   appId,
 			UserID:  expectedUserId,
 		},
-		provtelemetry.NewNoopMetrics(),
-		nil, credentials.NewGitHubTokenCredential("token"),
+		ratecache.NewRestClientCache(context.Background()),
+		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
+		clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 		false,
 	)
 	assert.NoError(t, err)
@@ -165,15 +166,16 @@ func TestArtifactAPIEscapes(t *testing.T) {
 			assert.NoError(t, err)
 			packageListingClient.BaseURL = testServerUrl
 
-			client, err := NewGitHubAppProvider(&minderv1.GitHubAppProviderConfig{
-				Endpoint: testServer.URL + "/",
-			},
+			client, err := NewGitHubAppProvider(
+				&minderv1.GitHubAppProviderConfig{Endpoint: testServer.URL + "/"},
 				&config.GitHubAppConfig{},
-				provtelemetry.NewNoopMetrics(),
-				nil, credentials.NewGitHubTokenCredential("token"),
+				ratecache.NewRestClientCache(context.Background()),
+				credentials.NewGitHubTokenCredential("token"),
 				packageListingClient,
+				clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 				true,
 			)
+
 			assert.NoError(t, err)
 			assert.NotNil(t, client)
 
@@ -256,10 +258,10 @@ func TestListPackagesByRepository(t *testing.T) {
 				&config.GitHubAppConfig{
 					FallbackToken: accessToken,
 				},
-				provtelemetry.NewNoopMetrics(),
-				nil,
+				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential(accessToken),
 				packageListingClient,
+				clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 				true,
 			)
 			assert.NoError(t, err)
@@ -304,10 +306,10 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
 		&config.GitHubAppConfig{},
-		provtelemetry.NewNoopMetrics(),
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
 		packageListingClient,
+		clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 		false,
 	)
 	require.NoError(t, err)
@@ -361,10 +363,10 @@ func TestConcurrentWaitForRateLimitReset(t *testing.T) {
 		client, err := NewGitHubAppProvider(
 			&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
 			&config.GitHubAppConfig{},
-			provtelemetry.NewNoopMetrics(),
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
 			packageListingClient,
+			clients.NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 			false,
 		)
 		require.NoError(t, err)

@@ -19,21 +19,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"net/url"
-	"os"
 
 	gogithub "github.com/google/go-github/v61/github"
-	"github.com/motemen/go-loghttp"
-	"github.com/rs/zerolog"
-	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -68,63 +62,17 @@ type GitHubAppDelegate struct {
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
 // the GitHubConfig struct
 func NewGitHubAppProvider(
-	providerConfig *minderv1.GitHubAppProviderConfig,
+	cfg *minderv1.GitHubAppProviderConfig,
 	appConfig *server.GitHubAppConfig,
-	metrics telemetry.HttpClientMetrics,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	packageListingClient *gogithub.Client,
+	ghClientFactory clients.GitHubClientFactory,
 	isOrg bool,
 ) (*github.GitHub, error) {
-	var err error
-
-	tc := &http.Client{
-		Transport: &oauth2.Transport{
-			Base:   http.DefaultClient.Transport,
-			Source: credential.GetAsOAuth2TokenSource(),
-		},
-	}
-
-	transport, err := metrics.NewDurationRoundTripper(tc.Transport, db.ProviderTypeGithub)
+	ghClient, err := ghClientFactory.Build(cfg.Endpoint, credential)
 	if err != nil {
-		return nil, fmt.Errorf("error creating duration round tripper: %w", err)
-	}
-
-	// If $MINDER_LOG_GITHUB_REQUESTS is set, wrap the transport in a logger
-	// to record all calls and responses to from GitHub:
-	if os.Getenv("MINDER_LOG_GITHUB_REQUESTS") != "" {
-		transport = &loghttp.Transport{
-			Transport: transport,
-			LogRequest: func(req *http.Request) {
-				zerolog.Ctx(req.Context()).Debug().
-					Str("type", "REQ").
-					Str("method", req.Method).
-					Msg(req.URL.String())
-			},
-			LogResponse: func(resp *http.Response) {
-				zerolog.Ctx(resp.Request.Context()).Debug().
-					Str("type", "RESP").
-					Str("method", resp.Request.Method).
-					Str("status", fmt.Sprintf("%d", resp.StatusCode)).
-					Str("rate-limit", fmt.Sprintf("%s/%s",
-						resp.Request.Header.Get("x-ratelimit-used"),
-						resp.Request.Header.Get("x-ratelimit-remaining"),
-					)).
-					Msg(resp.Request.URL.String())
-
-			},
-		}
-	}
-
-	tc.Transport = transport
-	ghClient := gogithub.NewClient(tc)
-
-	if providerConfig.Endpoint != "" {
-		parsedURL, err := url.Parse(providerConfig.Endpoint)
-		if err != nil {
-			return nil, err
-		}
-		ghClient.BaseURL = parsedURL
+		return nil, err
 	}
 
 	appName := appConfig.AppName
