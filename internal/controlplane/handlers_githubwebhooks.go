@@ -45,7 +45,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprov "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/repositories"
@@ -501,22 +500,6 @@ func (s *Server) parseGithubEventForProcessing(
 		return fmt.Errorf("error getting repo information from payload: %w", err)
 	}
 
-	// get the provider for the repository
-	prov, err := s.providerStore.GetByID(ctx, dbRepo.ProviderID)
-	if err != nil {
-		return fmt.Errorf("error getting provider: %w", err)
-	}
-
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-	provBuilder, err := providers.GetProviderBuilder(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider,
-		s.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
-	}
-
 	var action string // explicit declaration to use the default value
 	action, err = util.JQReadFrom[string](ctx, ".action", payload)
 	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
@@ -526,9 +509,9 @@ func (s *Server) parseGithubEventForProcessing(
 	// determine if the payload is an artifact published event
 	// TODO: this needs to be managed via signals
 	if ent == pb.Entity_ENTITY_ARTIFACTS && action == WebhookActionEventPublished {
-		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, provBuilder, action)
+		return s.parseArtifactPublishedEvent(ctx, payload, msg, dbRepo, dbRepo.ProviderID, action)
 	} else if ent == pb.Entity_ENTITY_PULL_REQUESTS {
-		return parsePullRequestModEvent(ctx, payload, msg, dbRepo, s.store, provBuilder, action)
+		return s.parsePullRequestModEvent(ctx, payload, msg, dbRepo, dbRepo.ProviderID, action)
 	} else if ent == pb.Entity_ENTITY_REPOSITORIES {
 		return parseRepoEvent(payload, msg, dbRepo, action)
 	}
@@ -581,7 +564,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	prov *providers.ProviderBuilder,
+	providerID uuid.UUID,
 	action string,
 ) error {
 	// we need to have information about package and repository
@@ -590,15 +573,15 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
+	provider, err := s.providerManager.InstantiateFromID(ctx, providerID)
+	if err != nil {
+		log.Printf("error instantiating provider: %v", err)
+		return err
 	}
 
-	cli, err := prov.GetGitHub()
+	cli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
-		log.Printf("error creating github provider: %v", err)
+		log.Printf("error instantiating provider: %v", err)
 		return err
 	}
 
@@ -641,25 +624,24 @@ func (s *Server) parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func parsePullRequestModEvent(
+func (s *Server) parsePullRequestModEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
 	dbrepo db.Repository,
-	store db.Store,
-	prov *providers.ProviderBuilder,
+	providerID uuid.UUID,
 	action string,
 ) error {
-	// NOTE(jaosorior): this webhook is very specific to github
-	if !prov.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for github webhook", prov.GetName())
-		return nil
+	provider, err := s.providerManager.InstantiateFromID(ctx, providerID)
+	if err != nil {
+		log.Printf("error instantiating provider: %v", err)
+		return err
 	}
 
-	cli, err := prov.GetGitHub()
+	cli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
-		log.Printf("error creating github provider: %v", err)
-		return nil
+		log.Printf("error instantiating provider: %v", err)
+		return err
 	}
 
 	prEvalInfo, err := getPullRequestInfoFromPayload(ctx, whPayload)
@@ -667,7 +649,7 @@ func parsePullRequestModEvent(
 		return fmt.Errorf("error getting pull request information from payload: %w", err)
 	}
 
-	dbPr, err := reconcilePrWithDb(ctx, store, dbrepo, prEvalInfo)
+	dbPr, err := s.reconcilePrWithDb(ctx, dbrepo, prEvalInfo)
 	if errors.Is(err, errNotHandled) {
 		return err
 	} else if err != nil {
@@ -864,9 +846,8 @@ func getPullRequestInfoFromPayload(
 	}, nil
 }
 
-func reconcilePrWithDb(
+func (s *Server) reconcilePrWithDb(
 	ctx context.Context,
-	store db.Store,
 	dbrepo db.Repository,
 	prEvalInfo *pb.PullRequest,
 ) (*db.PullRequest, error) {
@@ -875,7 +856,7 @@ func reconcilePrWithDb(
 
 	switch prEvalInfo.Action {
 	case WebhookActionEventOpened, WebhookActionEventSynchronize:
-		dbPr, err := store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
+		dbPr, err := s.store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
 		})
@@ -887,7 +868,7 @@ func reconcilePrWithDb(
 		retPr = &dbPr
 		retErr = nil
 	case WebhookActionEventClosed:
-		err := store.DeletePullRequest(ctx, db.DeletePullRequestParams{
+		err := s.store.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
 		})
