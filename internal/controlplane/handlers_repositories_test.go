@@ -197,9 +197,20 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 								Provider: &provider.Name,
 								Project:  ptr.Ptr(projectID.String()),
 							},
-							Owner:  repoOwner,
-							Name:   repoName,
-							RepoId: remoteRepoId,
+							Owner:      repoOwner,
+							Name:       repoName,
+							RepoId:     remoteRepoId,
+							Registered: true,
+						},
+						{
+							Context: &pb.Context{
+								Provider: &provider.Name,
+								Project:  ptr.Ptr(projectID.String()),
+							},
+							Owner:      repoOwner,
+							Name:       repoName2,
+							RepoId:     remoteRepoId2,
+							Registered: false,
 						},
 					},
 				}
@@ -332,6 +343,9 @@ const (
 	repoOwnerAndName = "acme-corp/api-gateway"
 	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
 	remoteRepoId     = 123456
+	repoName2        = "another-repo"
+	remoteRepoId2    = 234567
+	accessToken      = "TOKEN"
 )
 
 var (
@@ -351,6 +365,18 @@ var (
 		Owner:  repoOwner,
 		Name:   repoName,
 		RepoId: remoteRepoId,
+	}
+	existingRepo2 = pb.Repository{
+		Owner:  repoOwner,
+		Name:   repoName2,
+		RepoId: 234567,
+	}
+	dbExistingRepo = db.Repository{
+		ID:        uuid.UUID{},
+		Provider:  ghprovider.Github,
+		RepoOwner: repoOwner,
+		RepoName:  repoName,
+		RepoID:    remoteRepoId,
 	}
 )
 
@@ -415,7 +441,7 @@ func withFailedDeleteByName(err error) func(repoServiceMock) {
 func withSuccessfulListAllRepositories(mock githubMock) {
 	mock.EXPECT().
 		ListAllRepositories(gomock.Any()).
-		Return([]*pb.Repository{&existingRepo}, nil)
+		Return([]*pb.Repository{&existingRepo, &existingRepo2}, nil)
 }
 
 func withFailedListAllRepositories(err error) func(githubMock) {
@@ -466,6 +492,9 @@ func createServer(
 		store.EXPECT().
 			GetProviderByID(gomock.Any(), gomock.Any()).
 			Return(provider, nil).AnyTimes()
+		store.EXPECT().
+			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).
+			Return([]db.Repository{dbExistingRepo}, nil).AnyTimes()
 	}
 
 	return &Server{

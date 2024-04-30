@@ -903,6 +903,8 @@ message UpstreamRepositoryRef {
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3;
     Context context = 4;
+    // True if the repository is already registered in Minder.
+    bool registered = 5;
 }
 
 message Repository {
