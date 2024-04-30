@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package app provides the GitHub App specific operations
-package app
+package clients
 
 import (
 	"context"
@@ -25,7 +24,6 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -35,26 +33,45 @@ import (
 // GithubApp is the string that represents the GitHubApp provider
 const GithubApp = "github-app"
 
-// Implements is the list of provider types that the GitHubOAuth provider implements
-var Implements = []db.ProviderType{
+// AppImplements is the list of provider types that the GitHubOAuth provider implements
+var AppImplements = []db.ProviderType{
 	db.ProviderTypeGithub,
 	db.ProviderTypeGit,
 	db.ProviderTypeRest,
 	db.ProviderTypeRepoLister,
 }
 
-// AuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
-var AuthorizationFlows = []db.AuthorizationFlow{
+// AppAuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
+var AppAuthorizationFlows = []db.AuthorizationFlow{
 	db.AuthorizationFlowGithubAppFlow,
 }
 
 // GitHubAppDelegate is the struct that contains the GitHub App specific operations
 type GitHubAppDelegate struct {
-	client     *gogithub.Client
-	credential provifv1.GitHubCredential
-	appName    string
-	userId     int64
-	isOrg      bool
+	client        *gogithub.Client
+	credential    provifv1.GitHubCredential
+	appName       string
+	defaultUserId int64
+	isOrg         bool
+}
+
+// NewAppDelegate creates a GitHubOAuthDelegate from a GitHub client
+// This exists as a separate function to allow the provider creation code
+// to use its methods without instantiating a full provider.
+func NewAppDelegate(
+	client *gogithub.Client,
+	credential provifv1.GitHubCredential,
+	appName string,
+	defaultUserId int64,
+	isOrg bool,
+) *GitHubAppDelegate {
+	return &GitHubAppDelegate{
+		client:        client,
+		credential:    credential,
+		appName:       appName,
+		defaultUserId: defaultUserId,
+		isOrg:         isOrg,
+	}
 }
 
 // NewGitHubAppProvider creates a new GitHub App API client
@@ -67,23 +84,21 @@ func NewGitHubAppProvider(
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	packageListingClient *gogithub.Client,
-	ghClientFactory clients.GitHubClientFactory,
+	ghClientFactory GitHubClientFactory,
 	isOrg bool,
 ) (*github.GitHub, error) {
-	ghClient, err := ghClientFactory.Build(cfg.Endpoint, credential)
-	if err != nil {
-		return nil, err
-	}
-
 	appName := appConfig.AppName
 	userId := appConfig.UserID
 
-	oauthDelegate := &GitHubAppDelegate{
-		client:     ghClient,
-		credential: credential,
-		appName:    appName,
-		userId:     userId,
-		isOrg:      isOrg,
+	ghClient, delegate, err := ghClientFactory.BuildAppClient(
+		cfg.Endpoint,
+		credential,
+		appName,
+		userId,
+		isOrg,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return github.NewGitHub(
@@ -91,12 +106,12 @@ func NewGitHubAppProvider(
 		// Use the fallback token for package listing, since fine-grained tokens don't have access
 		packageListingClient,
 		restClientCache,
-		oauthDelegate,
+		delegate,
 	), nil
 }
 
-// ParseV1Config parses the raw config into a GitHubAppProviderConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubAppProviderConfig, error) {
+// ParseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
+func ParseV1AppConfig(rawCfg json.RawMessage) (*minderv1.GitHubAppProviderConfig, error) {
 	type wrapper struct {
 		GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
 	}
@@ -168,7 +183,7 @@ func (g *GitHubAppDelegate) GetUserId(ctx context.Context) (int64, error) {
 	if err != nil {
 		// Fallback to the configured user ID
 		// note: this is different from the App ID
-		return g.userId, nil
+		return g.defaultUserId, nil
 	}
 	return user.GetID(), nil
 }

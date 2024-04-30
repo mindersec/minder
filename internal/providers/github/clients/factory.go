@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package clients contains the GitHub client factory
+// Package clients contains github client logic
 package clients
 
 import (
@@ -27,16 +27,38 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+// I don't particularly love having a factory which returns two types of thing,
+// even if they are closely related. I think this can be cleaned up, but I
+// think the right time to do it is when we get rid of the Github-specific
+// provider trait.
+
 // GitHubClientFactory creates instances of the GitHub API client
 type GitHubClientFactory interface {
-	// Build creates an instance of the GitHub Client
+	// BuildOAuthClient creates an instance of the GitHub Client and the OAuthDelegate
 	// `baseURL` should be set to the empty string if there is no need to
 	// override the default GitHub URL
-	Build(baseURL string, credential provifv1.GitHubCredential) (*gogithub.Client, error)
+	BuildOAuthClient(
+		baseURL string,
+		credential provifv1.GitHubCredential,
+		owner string,
+	) (*gogithub.Client, github.Delegate, error)
+	// BuildAppClient creates an instance of the GitHub Client and the AppDelegate
+	// `baseURL` should be set to the empty string if there is no need to
+	// override the default GitHub URL
+	BuildAppClient(
+		baseURL string,
+		credential provifv1.GitHubCredential,
+		appName string,
+		userID int64,
+		isOrg bool,
+	) (*gogithub.Client, github.Delegate, error)
 }
 
 type githubClientFactory struct {
@@ -48,7 +70,43 @@ func NewGitHubClientFactory(metrics telemetry.HttpClientMetrics) GitHubClientFac
 	return &githubClientFactory{metrics: metrics}
 }
 
-func (g *githubClientFactory) Build(baseURL string, credential provifv1.GitHubCredential) (*gogithub.Client, error) {
+func (g *githubClientFactory) BuildOAuthClient(
+	baseURL string,
+	credential provifv1.GitHubCredential,
+	owner string,
+) (*gogithub.Client, github.Delegate, error) {
+	ghClient, err := g.buildClient(baseURL, credential)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ghClient, NewOAuthDelegate(ghClient, credential, owner), nil
+}
+
+func (g *githubClientFactory) BuildAppClient(
+	baseURL string,
+	credential provifv1.GitHubCredential,
+	appName string,
+	userID int64,
+	isOrg bool,
+) (*gogithub.Client, github.Delegate, error) {
+	ghClient, err := g.buildClient(baseURL, credential)
+	if err != nil {
+		return nil, nil, err
+	}
+	delegate := NewAppDelegate(
+		ghClient,
+		credential,
+		appName,
+		userID,
+		isOrg,
+	)
+	return ghClient, delegate, nil
+}
+
+func (g *githubClientFactory) buildClient(
+	baseURL string,
+	credential provifv1.GitHubCredential,
+) (*gogithub.Client, error) {
 	tc := &http.Client{
 		Transport: &oauth2.Transport{
 			Base:   http.DefaultClient.Transport,
@@ -93,7 +151,7 @@ func (g *githubClientFactory) Build(baseURL string, credential provifv1.GitHubCr
 	if baseURL != "" {
 		parsedURL, err := url.Parse(baseURL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing URL: %w", err)
 		}
 		ghClient.BaseURL = parsedURL
 	}

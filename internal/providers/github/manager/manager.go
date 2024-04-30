@@ -31,9 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	githubapp "github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/github/clients"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -111,12 +109,12 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 	// previously this was done by checking the name, I think this is safer
 	if class == db.ProviderClassGithub {
 		// TODO: Parsing will change based on version
-		cfg, err := ghclient.ParseV1Config(config.Definition)
+		cfg, err := clients.ParseV1OAuthConfig(config.Definition)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
 
-		cli, err := ghclient.NewRestClient(
+		cli, err := clients.NewRestClient(
 			cfg,
 			g.restClientCache,
 			creds.credential,
@@ -129,12 +127,12 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return cli, nil
 	}
 
-	cfg, err := githubapp.ParseV1Config(config.Definition)
+	cfg, err := clients.ParseV1AppConfig(config.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
-	cli, err := githubapp.NewGitHubAppProvider(
+	cli, err := clients.NewGitHubAppProvider(
 		cfg,
 		g.config.GitHubApp,
 		g.restClientCache,
@@ -249,7 +247,7 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	cfg, err := githubapp.ParseV1Config(prov.Definition)
+	cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
