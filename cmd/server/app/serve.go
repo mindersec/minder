@@ -132,15 +132,13 @@ var serveCmd = &cobra.Command{
 		executorOpts := []engine.ExecutorOption{
 			engine.WithProviderMetrics(providerMetrics),
 			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
-			engine.WithRestClientCache(restClientCache),
 		}
 
 		reconcilerOpts := []reconcilers.ReconcilerOption{
 			reconcilers.WithProviderMetrics(providerMetrics),
-			reconcilers.WithRestClientCache(restClientCache),
 		}
 
-		return service.AllInOneServerService(ctx, cfg, store, vldtr, serverOpts, executorOpts, reconcilerOpts)
+		return service.AllInOneServerService(ctx, cfg, store, vldtr, restClientCache, serverOpts, executorOpts, reconcilerOpts)
 	},
 }
 

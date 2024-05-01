@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/service"
 )
@@ -89,7 +90,12 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	}
 	packageListingClient.BaseURL = testServerUrl
 
-	return service.AllInOneServerService(ctx, cfg, store, vldtr,
+	return service.AllInOneServerService(
+		ctx,
+		cfg,
+		store,
+		vldtr,
+		&ratecache.NoopRestClientCache{},
 		[]controlplane.ServerOption{
 			controlplane.WithAuthzClient(&mockauthz.SimpleClient{}),
 		},

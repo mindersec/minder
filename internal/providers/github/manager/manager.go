@@ -103,11 +103,9 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return nil, fmt.Errorf("unable to fetch credentials")
 	}
 
-	if g.restClientCache != nil {
-		client, ok := g.restClientCache.Get(creds.ownerFilter.String, creds.credential.GetCacheKey(), db.ProviderTypeGithub)
-		if ok {
-			return client.(v1.GitHub), nil
-		}
+	client, ok := g.restClientCache.Get(creds.ownerFilter.String, creds.credential.GetCacheKey(), db.ProviderTypeGithub)
+	if ok {
+		return client.(v1.GitHub), nil
 	}
 
 	// previously this was done by checking the name, I think this is safer

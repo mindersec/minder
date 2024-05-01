@@ -313,7 +313,14 @@ func TestGetAuthorizationURL(t *testing.T) {
 			}
 			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-			server, err := NewServer(store, evt, c, mockJwt, providers.NewProviderStore(store))
+			server, err := NewServer(
+				store,
+				evt,
+				c,
+				mockJwt,
+				&ratecache.NoopRestClientCache{},
+				providers.NewProviderStore(store),
+			)
 			require.NoError(t, err, "failed to create server")
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)

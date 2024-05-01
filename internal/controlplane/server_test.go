@@ -35,6 +35,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -84,7 +85,15 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, opts ...ServerO
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, c, mockJwt, providers.NewProviderStore(mockStore), opts...)
+	server, err := NewServer(
+		mockStore,
+		evt,
+		c,
+		mockJwt,
+		&ratecache.NoopRestClientCache{},
+		providers.NewProviderStore(mockStore),
+		opts...,
+	)
 	require.NoError(t, err, "failed to create server")
 	return server, evt
 }

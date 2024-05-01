@@ -164,6 +164,7 @@ func NewServer(
 	evt events.Publisher,
 	cfg *serverconfig.Config,
 	vldtr auth.JwtValidator,
+	restCacheClient ratecache.RestClientCache,
 	providerStore providers.ProviderStore,
 	opts ...ServerOption,
 ) (*Server, error) {
@@ -200,6 +201,7 @@ func NewServer(
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		fallbackTokenClient: fallbackTokenClient,
+		restClientCache:     restCacheClient,
 		// TODO: this currently always returns authorized as a transitionary measure.
 		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
 		authzClient: &mock.NoopClient{Authorized: true},
@@ -213,6 +215,8 @@ func NewServer(
 		opt(s)
 	}
 
+	// TODO: Now that RestCacheClient is passed around directly, this will be
+	// cleaned up in a future PR.
 	// Moved here because we have a dependency on s.restClientCache
 	s.ghProviders = service.NewGithubProviderService(
 		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)

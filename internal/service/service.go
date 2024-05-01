@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/installations"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/reconcilers"
 )
 
@@ -42,6 +43,7 @@ func AllInOneServerService(
 	cfg *serverconfig.Config,
 	store db.Store,
 	vldtr auth.JwtValidator,
+	restCacheClient ratecache.RestClientCache,
 	serverOpts []controlplane.ServerOption,
 	executorOpts []engine.ExecutorOption,
 	reconcilerOpts []reconcilers.ReconcilerOption,
@@ -57,7 +59,7 @@ func AllInOneServerService(
 
 	providerStore := providers.NewProviderStore(store)
 	s, err := controlplane.NewServer(
-		store, evt, cfg, vldtr, providerStore,
+		store, evt, cfg, vldtr, restCacheClient, providerStore,
 		serverOpts...,
 	)
 	if err != nil {
@@ -79,14 +81,14 @@ func AllInOneServerService(
 	executorOpts = append([]engine.ExecutorOption{engine.WithMiddleware(aggr.AggregateMiddleware)},
 		executorOpts...)
 
-	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, providerStore, executorOpts...)
+	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, providerStore, restCacheClient, executorOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to create executor: %w", err)
 	}
 
 	evt.ConsumeEvents(exec)
 
-	rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, &cfg.Provider, reconcilerOpts...)
+	rec, err := reconcilers.NewReconciler(store, evt, &cfg.Auth, &cfg.Provider, restCacheClient, reconcilerOpts...)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}
