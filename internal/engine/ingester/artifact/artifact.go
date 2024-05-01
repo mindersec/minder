@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/sigstore/sigstore-go/pkg/verify"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -204,7 +204,7 @@ func (i *Ingest) getVerificationResult(
 			if res.IsVerified {
 				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
 				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.SignerIdentity = signerIdentityFromSignature(res.Signature)
+				verResult.SignerIdentity = signerIdentityFromCertificate(res.Signature.Certificate)
 				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
 				verResult.CertIssuer = res.Signature.Certificate.Issuer
 			}
@@ -323,22 +323,20 @@ func branchFromRef(ref string) string {
 	return ""
 }
 
-func signerIdentityFromSignature(s *verify.SignatureVerificationResult) string {
-	if s.Certificate.BuildSignerURI != "" {
+func signerIdentityFromCertificate(c *certificate.Summary) string {
+	if c.BuildSignerURI != "" {
 		// TODO(puerco): We should not be trimmin the tag from the signer identity
 		// I'm leavin this part for now as we are capturing the tag and branch
 		// elsewhere but we should improve this.
 		//
 		// Find the index of '@' to isolate the file name
-		atSymbolIndex := strings.Index(s.Certificate.BuildSignerURI, "@")
-		if atSymbolIndex != -1 {
-			return s.Certificate.BuildSignerURI[:atSymbolIndex]
-		}
-		return s.Certificate.BuildSignerURI
-	} else if s.Certificate.SubjectAlternativeName.Value != "" {
+		b, _, _ := strings.Cut(c.BuildSignerURI, "@")
+		return b
+
+	} else if c.SubjectAlternativeName.Value != "" {
 		// This is the use case where there is no build signer URI but there is a subject alternative name
 		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
-		return s.Certificate.SubjectAlternativeName.Value
+		return c.SubjectAlternativeName.Value
 	}
 	// If we can't find the signer identity, return an empty string
 	return ""
