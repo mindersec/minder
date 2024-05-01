@@ -161,10 +161,6 @@ func (i *Ingest) getApplicableArtifactVersions(
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
 
-	if err != nil {
-		return nil, err
-	}
-
 	// Return the list of provenance info for all applicable artifact versions
 	return result, nil
 }
