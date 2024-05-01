@@ -37,7 +37,7 @@ require (
 	github.com/open-feature/go-sdk v1.11.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.36
 	github.com/open-policy-agent/opa v0.64.1
-	github.com/openfga/go-sdk v0.3.5
+	github.com/openfga/go-sdk v0.3.6
 	github.com/openfga/openfga v1.5.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.0
@@ -73,7 +73,7 @@ require (
 	golang.org/x/term v0.19.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240401170217-c3f982113cda
 	google.golang.org/grpc v1.63.2
-	google.golang.org/protobuf v1.33.0
+	google.golang.org/protobuf v1.34.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.30.0
