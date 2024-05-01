@@ -19,12 +19,13 @@ package artifact
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/sigstore/sigstore-go/pkg/verify"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -160,10 +161,6 @@ func (i *Ingest) getApplicableArtifactVersions(
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
 
-	if err != nil {
-		return nil, err
-	}
-
 	// Return the list of provenance info for all applicable artifact versions
 	return result, nil
 }
@@ -210,7 +207,7 @@ func (i *Ingest) getVerificationResult(
 			if res.IsVerified {
 				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
 				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.SignerIdentity = signerIdentityFromSignature(res.Signature)
+				verResult.SignerIdentity = signerIdentityFromCertificate(res.Signature.Certificate)
 				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
 				verResult.CertIssuer = res.Signature.Certificate.Issuer
 			}
@@ -259,7 +256,10 @@ func getAndFilterArtifactVersions(
 	}
 
 	// Fetch all available versions of the artifact
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
+	artifactName := url.QueryEscape(artifact.GetName())
+	upstreamVersions, err := ghCli.GetPackageVersions(
+		ctx, artifact.Owner, artifact.GetTypeLower(), artifactName,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
@@ -336,30 +336,20 @@ func branchFromRef(ref string) string {
 	return ""
 }
 
-func signerIdentityFromSignature(s *verify.SignatureVerificationResult) string {
-	if s.Certificate.BuildSignerURI != "" {
-		// Find the index of the start of the ".github/workflows/" part
-		startIndex := strings.Index(s.Certificate.BuildSignerURI, ".github/workflows/")
-		if startIndex == -1 {
-			return ""
-		}
-
-		// Adjust startIndex to get the part right after ".github/workflows/"
-		startIndex += len(".github/workflows/")
-
-		// Extract the part after ".github/workflows/"
-		remainingURL := s.Certificate.BuildSignerURI[startIndex:]
-
+func signerIdentityFromCertificate(c *certificate.Summary) string {
+	if c.BuildSignerURI != "" {
+		// TODO(puerco): We should not be trimmin the tag from the signer identity
+		// I'm leavin this part for now as we are capturing the tag and branch
+		// elsewhere but we should improve this.
+		//
 		// Find the index of '@' to isolate the file name
-		atSymbolIndex := strings.Index(remainingURL, "@")
-		if atSymbolIndex != -1 {
-			return remainingURL[:atSymbolIndex]
-		}
-		return remainingURL
-	} else if s.Certificate.SubjectAlternativeName.Value != "" {
+		b, _, _ := strings.Cut(c.BuildSignerURI, "@")
+		return b
+
+	} else if c.SubjectAlternativeName.Value != "" {
 		// This is the use case where there is no build signer URI but there is a subject alternative name
 		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
-		return s.Certificate.SubjectAlternativeName.Value
+		return c.SubjectAlternativeName.Value
 	}
 	// If we can't find the signer identity, return an empty string
 	return ""
