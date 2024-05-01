@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v61/github"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -600,6 +601,46 @@ func TestArtifactIngestMatching(t *testing.T) {
 			} else {
 				require.Nil(t, got, "expected nil result")
 			}
+		})
+	}
+}
+
+func TestSignerIdentityFromCertificate(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name     string
+		sut      *certificate.Summary
+		expected string
+	}{
+		{
+			"build-signer-uri",
+			&certificate.Summary{
+				Extensions: certificate.Extensions{
+					BuildSignerURI: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
+				},
+			},
+			"https://github.com/openvex/vexctl/.github/workflows/release.yaml",
+		},
+		{
+			"alternative-subject",
+			&certificate.Summary{
+				SubjectAlternativeName: certificate.SubjectAlternativeName{
+					Type:  "critical",
+					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
+				},
+			},
+			"https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
+		},
+		{
+			"no-values",
+			&certificate.Summary{},
+			"",
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			require.Equal(t, tc.expected, signerIdentityFromCertificate(tc.sut))
 		})
 	}
 }
