@@ -29,12 +29,11 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
+	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/clients"
-	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
+	cf "github.com/stacklok/minder/internal/repositories/github/clients/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	mockghhook "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -47,7 +46,7 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 
 	scenarios := []struct {
 		Name           string
-		ClientSetup    cf.ClientMockBuilder
+		ProviderSetup  func(*gomock.Controller) provinfv1.Provider
 		DBSetup        dbMockBuilder
 		WebhookSetup   whMockBuilder
 		EventsSetup    eventMockBuilder
@@ -55,51 +54,55 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 		ExpectedError  string
 	}{
 		{
+			Name:          "CreateRepository fails when provider cannot be instantiated",
+			ExpectedError: "error instantiating provider",
+		},
+		{
 			Name:          "CreateRepository fails when repo cannot be found in GitHub",
-			ClientSetup:   cf.NewClientMock(cf.WithFailedGet),
+			ProviderSetup: withFailingGet,
 			ExpectedError: "error retrieving repo from github",
 		},
 		{
 			Name:          "CreateRepository fails for private repo in project which disallows private repos",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(privateRepo)),
+			ProviderSetup: withSuccessfulGet(privateRepo),
 			DBSetup:       newDBMock(withPrivateReposDisabled),
 			ExpectedError: "private repos cannot be registered in this project",
 		},
 		{
 			Name:          "CreateRepository fails when webhook creation fails",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
+			ProviderSetup: withSuccessfulGet(publicRepo),
 			WebhookSetup:  newWebhookMock(withFailedWebhookCreate),
 			ExpectedError: "error creating webhook in repo",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
+			ProviderSetup: withSuccessfulGet(publicRepo),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withSuccessfulWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database (cleanup fails)",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
+			ProviderSetup: withSuccessfulGet(publicRepo),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withFailedWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
-			Name:         "CreateRepository succeeds",
-			ClientSetup:  cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
-			DBSetup:      newDBMock(withSuccessfulCreate),
-			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
+			Name:          "CreateRepository succeeds",
+			ProviderSetup: withSuccessfulGet(publicRepo),
+			DBSetup:       newDBMock(withSuccessfulCreate),
+			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
-			Name:         "CreateRepository succeeds (private repos enabled)",
-			ClientSetup:  cf.NewClientMock(cf.WithSuccessfulGet(privateRepo)),
-			DBSetup:      newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
-			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
+			Name:          "CreateRepository succeeds (private repos enabled)",
+			ProviderSetup: withSuccessfulGet(privateRepo),
+			DBSetup:       newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
+			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
 			Name:           "CreateRepository succeeds (skips failed event send)",
-			ClientSetup:    cf.NewClientMock(cf.WithSuccessfulGet(publicRepo)),
+			ProviderSetup:  withSuccessfulGet(publicRepo),
 			DBSetup:        newDBMock(withSuccessfulCreate),
 			WebhookSetup:   newWebhookMock(withSuccessfulWebhookCreate),
 			EventSendFails: true,
@@ -113,13 +116,18 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			var ghClient clients.GitHubRepoClient
-			if scenario.ClientSetup != nil {
-				ghClient = scenario.ClientSetup(ctrl)
+			var opt func(mock pf.ProviderManagerMock)
+			if scenario.ProviderSetup != nil {
+				p := scenario.ProviderSetup(ctrl)
+				opt = pf.WithSuccessfulInstantiateFromID(p)
+			} else {
+				opt = pf.WithFailedInstantiateFromID
 			}
 
-			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, nil, scenario.EventSendFails)
-			res, err := svc.CreateRepository(ctx, ghClient, &provider, projectID, repoOwner, repoName)
+			providerSetup := pf.NewProviderManagerMock(opt)
+
+			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, providerSetup, scenario.EventSendFails)
+			res, err := svc.CreateRepository(ctx, &provider, projectID, repoOwner, repoName)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 				// cheat here a little...
@@ -400,7 +408,7 @@ var (
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
 		Version:    provinfv1.V1,
 	}
-	ghProvider = mock_github.NewMockGitHub(nil)
+	ghProvider = mockgithub.NewMockGitHub(nil)
 )
 
 type (
@@ -547,5 +555,23 @@ func newExpectation(isPrivate bool) *pb.Repository {
 		IsPrivate:     isPrivate,
 		IsFork:        publicRepo.GetFork(),
 		DefaultBranch: publicRepo.GetDefaultBranch(),
+	}
+}
+
+func withFailingGet(ctrl *gomock.Controller) provinfv1.Provider {
+	provider := mockgithub.NewMockGitHub(ctrl)
+	provider.EXPECT().
+		GetRepository(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, errDefault)
+	return provider
+}
+
+func withSuccessfulGet(repo *gh.Repository) func(*gomock.Controller) provinfv1.Provider {
+	return func(ctrl *gomock.Controller) provinfv1.Provider {
+		provider := mockgithub.NewMockGitHub(ctrl)
+		provider.EXPECT().
+			GetRepository(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(repo, nil)
+		return provider
 	}
 }

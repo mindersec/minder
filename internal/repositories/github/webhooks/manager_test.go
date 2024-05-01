@@ -24,7 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/config/server"
-	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
+	cf "github.com/stacklok/minder/internal/repositories/github/clients/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 )
 

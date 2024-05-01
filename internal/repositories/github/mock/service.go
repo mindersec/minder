@@ -15,7 +15,6 @@ import (
 
 	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
-	clients "github.com/stacklok/minder/internal/repositories/github/clients"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -44,18 +43,18 @@ func (m *MockRepositoryService) EXPECT() *MockRepositoryServiceMockRecorder {
 }
 
 // CreateRepository mocks base method.
-func (m *MockRepositoryService) CreateRepository(ctx context.Context, client clients.GitHubRepoClient, provider *db.Provider, projectID uuid.UUID, repoName, repoOwner string) (*v1.Repository, error) {
+func (m *MockRepositoryService) CreateRepository(ctx context.Context, provider *db.Provider, projectID uuid.UUID, repoName, repoOwner string) (*v1.Repository, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRepository", ctx, client, provider, projectID, repoName, repoOwner)
+	ret := m.ctrl.Call(m, "CreateRepository", ctx, provider, projectID, repoName, repoOwner)
 	ret0, _ := ret[0].(*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateRepository indicates an expected call of CreateRepository.
-func (mr *MockRepositoryServiceMockRecorder) CreateRepository(ctx, client, provider, projectID, repoName, repoOwner any) *gomock.Call {
+func (mr *MockRepositoryServiceMockRecorder) CreateRepository(ctx, provider, projectID, repoName, repoOwner any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockRepositoryService)(nil).CreateRepository), ctx, client, provider, projectID, repoName, repoOwner)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockRepositoryService)(nil).CreateRepository), ctx, provider, projectID, repoName, repoOwner)
 }
 
 // DeleteByID mocks base method.

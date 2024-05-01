@@ -32,7 +32,7 @@ import (
 
 // Test both create by name/project, and create by ID together.
 // This is because the test logic is basically identical.
-func TestProviderManager_Build(t *testing.T) {
+func TestProviderManager_Instantiate(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
@@ -109,6 +109,71 @@ func TestProviderManager_Build(t *testing.T) {
 				require.ErrorContains(t, err, scenario.ExpectedError)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestProviderManager_BulkInstantiateByTrait(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name               string
+		Provider           *db.Provider
+		ProviderStoreSetup fixtures.ProviderStoreMockBuilder
+		InstantiationFails bool
+		ExpectedError      string
+	}{
+		{
+			Name:               "InstantiateFromID returns error when DB lookup fails",
+			Provider:           githubProvider,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithFailedGetByTraitInHierarchy),
+			ExpectedError:      "error retrieving db record",
+		},
+		{
+			Name:               "BulkInstantiateByTrait returns name of provider which could not be instantiated",
+			Provider:           githubAppProvider,
+			InstantiationFails: true,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByTraitInHierarchy(githubProvider)),
+		},
+		{
+			Name:               "BulkInstantiateByTrait calls manager and returns provider",
+			Provider:           githubProvider,
+			InstantiationFails: false,
+			ProviderStoreSetup: fixtures.NewProviderStoreMock(fixtures.WithSuccessfulGetByTraitInHierarchy(githubProvider)),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			store := scenario.ProviderStoreSetup(ctrl)
+			classManager := mockmanager.NewMockProviderClassManager(ctrl)
+			provider := mockgithub.NewMockGitHub(ctrl)
+			if scenario.InstantiationFails {
+				classManager.EXPECT().Build(gomock.Any(), gomock.Any()).Return(nil, errors.New("oh no"))
+			} else {
+				classManager.EXPECT().Build(gomock.Any(), gomock.Any()).Return(provider, nil).MaxTimes(1)
+			}
+			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
+			provManager, err := manager.NewProviderManager(store, classManager)
+			require.NoError(t, err)
+
+			success, fail, err := provManager.BulkInstantiateByTrait(ctx, scenario.Provider.ProjectID, db.ProviderTypeRepoLister, "")
+			if scenario.ExpectedError != "" {
+				require.ErrorContains(t, err, scenario.ExpectedError)
+			} else if scenario.InstantiationFails {
+				require.Len(t, fail, 1)
+				require.Empty(t, success)
+				require.Equal(t, scenario.Provider.Name, fail[0])
+			} else {
+				require.Len(t, success, 1)
+				require.Empty(t, fail)
+				require.Equal(t, provider, success[scenario.Provider.Name])
 			}
 		})
 	}
@@ -250,9 +315,10 @@ func TestProviderManager_Delete(t *testing.T) {
 
 var (
 	referenceProvider = db.Provider{
-		Name:      "test-provider",
-		ID:        uuid.New(),
-		ProjectID: uuid.New(),
+		Name:       "test-provider",
+		ID:         uuid.New(),
+		ProjectID:  uuid.New(),
+		Implements: []db.ProviderType{db.ProviderTypeRepoLister},
 	}
 	githubAppProvider = providerWithClass(db.ProviderClassGithubApp)
 	githubProvider    = providerWithClass(db.ProviderClassGithub)

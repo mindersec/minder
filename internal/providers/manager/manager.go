@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
@@ -36,6 +37,18 @@ type ProviderManager interface {
 	// InstantiateFromNameProject creates the provider using the provider's name and
 	// project hierarchy.
 	InstantiateFromNameProject(ctx context.Context, name string, projectID uuid.UUID) (v1.Provider, error)
+	// BulkInstantiateByTrait instantiates multiple providers in the
+	// project hierarchy. Providers are filtered by trait, and optionally by
+	// name (empty name string means no filter by name).
+	// To preserve compatibility with behaviour expected by the API, if a
+	// provider cannot be instantiated, it will not cause the method to error
+	// out, instead a list of failed provider names will be returned.
+	BulkInstantiateByTrait(
+		ctx context.Context,
+		projectID uuid.UUID,
+		trait db.ProviderType,
+		name string,
+	) (map[string]v1.Provider, []string, error)
 	// DeleteByID deletes the specified instance of the Provider, and
 	// carries out any cleanup needed.
 	DeleteByID(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
@@ -110,6 +123,32 @@ func (p *providerManager) InstantiateFromNameProject(ctx context.Context, name s
 	}
 
 	return p.buildFromDBRecord(ctx, config)
+}
+
+func (p *providerManager) BulkInstantiateByTrait(
+	ctx context.Context,
+	projectID uuid.UUID,
+	trait db.ProviderType,
+	name string,
+) (map[string]v1.Provider, []string, error) {
+	providerConfigs, err := p.store.GetByTraitInHierarchy(ctx, projectID, name, trait)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving db records: %w", err)
+	}
+
+	result := make(map[string]v1.Provider, len(providerConfigs))
+	failedProviders := []string{}
+	for _, config := range providerConfigs {
+		provider, err := p.buildFromDBRecord(ctx, &config)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msgf("error while instantiating provider %s", config.ID)
+			failedProviders = append(failedProviders, config.Name)
+			continue
+		}
+		result[config.Name] = provider
+	}
+
+	return result, failedProviders, nil
 }
 
 func (p *providerManager) DeleteByID(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error {

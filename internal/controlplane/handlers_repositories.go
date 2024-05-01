@@ -81,12 +81,7 @@ func (s *Server) RegisterRepository(
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	client, err := s.getClientForProvider(ctx, *provider)
-	if err != nil {
-		return nil, err
-	}
-
-	newRepo, err := s.repos.CreateRepository(ctx, client, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
+	newRepo, err := s.repos.CreateRepository(ctx, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
 		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) || errors.Is(err, ghrepo.ErrArchivedRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
@@ -324,7 +319,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	logger.BusinessRecord(ctx).Project = projectID
 
 	providerName := in.GetContext().GetProvider()
-	provs, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeRepoLister)
+	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(ctx, projectID, db.ProviderTypeRepoLister, providerName)
 	if err != nil {
 		pErr := providers.ErrProviderNotFoundBy{}
 		if errors.As(err, &pErr) {
@@ -337,32 +332,23 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: []*pb.UpstreamRepositoryRef{},
 	}
 
-	var erroringProviders []string
-
-	for _, provider := range provs {
+	for providerName, provider := range provs {
 		zerolog.Ctx(ctx).Trace().
-			Str("provider", provider.Name).
+			Str("provider", providerName).
 			Str("project_id", projectID.String()).
 			Msg("listing repositories")
 
-		pbOpts := []providers.ProviderBuilderOption{
-			providers.WithProviderMetrics(s.provMt),
-			providers.WithRestClientCache(s.restClientCache),
-		}
-		p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider,
-			s.fallbackTokenClient, pbOpts...)
+		repoLister, err := v1.As[v1.RepoLister](provider)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot get provider builder")
-			erroringProviders = append(erroringProviders, provider.Name)
-
-			// skip over this provider
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error instantiating repo lister")
+			errorProvs = append(errorProvs, providerName)
 			continue
 		}
 
-		results, err := s.listRemoteRepositoriesForProvider(ctx, provider.Name, p, projectID)
+		results, err := s.listRemoteRepositoriesForProvider(ctx, providerName, repoLister, projectID)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot list repositories for provider")
-			erroringProviders = append(erroringProviders, provider.Name)
+			errorProvs = append(errorProvs, providerName)
 
 			// skip over this provider
 			continue
@@ -372,8 +358,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	// If all providers failed, return an error
-	if len(erroringProviders) > 0 && len(out.Results) == 0 {
-		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for providers: %v", erroringProviders)
+	if len(errorProvs) > 0 && len(out.Results) == 0 {
+		return nil, util.UserVisibleError(codes.Internal, "cannot list repositories for providers: %v", errorProvs)
 	}
 
 	return out, nil
@@ -382,19 +368,13 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 func (s *Server) listRemoteRepositoriesForProvider(
 	ctx context.Context,
 	provName string,
-	p *providers.ProviderBuilder,
+	repoLister v1.RepoLister,
 	projectID uuid.UUID,
 ) ([]*pb.UpstreamRepositoryRef, error) {
-	// by now we've already checked that repo listed is implemented
-	client, err := p.GetRepoLister()
-	if err != nil {
-		return nil, fmt.Errorf("cannot create github client: %v", err)
-	}
-
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
-	remoteRepos, err := client.ListAllRepositories(tmoutCtx)
+	remoteRepos, err := repoLister.ListAllRepositories(tmoutCtx)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list repositories: %v", err)
 	}
@@ -436,7 +416,7 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	if providerName != "" {
 		return s.providerStore.GetByName(ctx, projectID, providerName)
 	}
-	opts, err := s.providerStore.GetByNameAndTrait(ctx, projectID, providerName, db.ProviderTypeGithub)
+	opts, err := s.providerStore.GetByTraitInHierarchy(ctx, projectID, providerName, db.ProviderTypeGithub)
 	if err != nil {
 		return nil, fmt.Errorf("error getting providers: %v", err)
 	}
@@ -459,28 +439,6 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 
 	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
-}
-
-func (s *Server) getClientForProvider(
-	ctx context.Context,
-	provider db.Provider,
-) (v1.GitHub, error) {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(s.provMt),
-		providers.WithRestClientCache(s.restClientCache),
-	}
-
-	p, err := providers.GetProviderBuilder(ctx, provider, s.store, s.cryptoEngine, &s.cfg.Provider, s.fallbackTokenClient, pbOpts...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot get provider builder: %v", err)
-	}
-
-	client, err := p.GetGitHub()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating github provider: %v", err)
-	}
-
-	return client, nil
 }
 
 func getProjectID(ctx context.Context) uuid.UUID {
