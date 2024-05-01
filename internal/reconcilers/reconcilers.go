@@ -49,19 +49,13 @@ func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption 
 	}
 }
 
-// WithRestClientCache sets the rest client cache for the reconciler
-func WithRestClientCache(cache ratecache.RestClientCache) ReconcilerOption {
-	return func(r *Reconciler) {
-		r.restClientCache = cache
-	}
-}
-
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
 	evt events.Publisher,
 	authCfg *serverconfig.AuthConfig,
 	provCfg *serverconfig.ProviderConfig,
+	restClientCache ratecache.RestClientCache,
 	opts ...ReconcilerOption,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -78,6 +72,7 @@ func NewReconciler(
 		provCfg:             provCfg,
 		provMt:              providertelemetry.NewNoopMetrics(),
 		fallbackTokenClient: fallbackTokenClient,
+		restClientCache:     restClientCache,
 	}
 
 	for _, opt := range opts {

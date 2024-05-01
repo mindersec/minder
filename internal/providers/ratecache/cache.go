@@ -136,3 +136,21 @@ func (r *restClientCache) evictExpiredEntriesRoutine(ctx context.Context) {
 		}
 	}
 }
+
+// NoopRestClientCache is a no-op implementation of the interface used for testing
+type NoopRestClientCache struct{}
+
+// Get always returns nil, false
+func (_ *NoopRestClientCache) Get(_, _ string, _ db.ProviderType) (provinfv1.REST, bool) {
+	return nil, false
+}
+
+// Set does nothing
+func (_ *NoopRestClientCache) Set(_, _ string, _ db.ProviderType, _ provinfv1.REST) {
+	// no-op
+}
+
+// Close does nothing
+func (_ *NoopRestClientCache) Close() {
+	// no-op
+}

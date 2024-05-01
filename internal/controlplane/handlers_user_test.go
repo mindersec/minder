@@ -43,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/providers"
 	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -447,18 +448,25 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &serverconfig.Config{
-				Auth: serverconfig.AuthConfig{
-					TokenKey: generateTokenKey(t),
-				},
-				Identity: serverconfig.IdentityConfigWrapper{
-					Server: serverconfig.IdentityConfig{
-						IssuerUrl:    testServer.URL,
-						ClientId:     "client-id",
-						ClientSecret: "client-secret",
+			server, err := NewServer(
+				mockStore,
+				evt,
+				&serverconfig.Config{
+					Auth: serverconfig.AuthConfig{
+						TokenKey: generateTokenKey(t),
+					},
+					Identity: serverconfig.IdentityConfigWrapper{
+						Server: serverconfig.IdentityConfig{
+							IssuerUrl:    testServer.URL,
+							ClientId:     "client-id",
+							ClientSecret: "client-secret",
+						},
 					},
 				},
-			}, mockJwtValidator, providers.NewProviderStore(mockStore))
+				mockJwtValidator,
+				&ratecache.NoopRestClientCache{},
+				providers.NewProviderStore(mockStore),
+			)
 			require.NoError(t, err, "failed to create test server")
 
 			resp, err := server.DeleteUser(ctx, tc.req)

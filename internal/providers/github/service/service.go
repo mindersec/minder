@@ -40,7 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	github2 "github.com/stacklok/minder/internal/providers/github"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -93,7 +93,7 @@ type ghProviderService struct {
 	config              *server.ProviderConfig
 	projectFactory      ProjectFactory
 	restClientCache     ratecache.RestClientCache
-	ghClientService     github2.ClientService
+	ghClientService     ghprov.ClientService
 	fallbackTokenClient *github.Client
 }
 
@@ -116,7 +116,7 @@ func NewGithubProviderService(
 		config:              config,
 		projectFactory:      projectFactory,
 		restClientCache:     restClientCache,
-		ghClientService:     github2.ClientServiceImplementation{},
+		ghClientService:     ghprov.ClientServiceImplementation{},
 		fallbackTokenClient: fallbackTokenClient,
 	}
 }
