@@ -19,6 +19,7 @@ package artifact
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -246,7 +247,10 @@ func getAndFilterArtifactVersions(
 	}
 
 	// Fetch all available versions of the artifact
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
+	artifactName := url.QueryEscape(artifact.GetName())
+	upstreamVersions, err := ghCli.GetPackageVersions(
+		ctx, artifact.Owner, artifact.GetTypeLower(), artifactName,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
