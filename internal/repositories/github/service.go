@@ -243,7 +243,10 @@ func (r *repositoryService) DeleteByName(
 		ProjectID: projectID,
 		Provider: sql.NullString{
 			String: providerName,
-			Valid:  providerName != "",
+			// This should be validated by the controlplane.
+			// If not, a provider with an empty name will not match any repo
+			// and this will fail closed.
+			Valid: true,
 		},
 	})
 	if err != nil {

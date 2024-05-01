@@ -298,6 +298,9 @@ func (s *Server) DeleteRepositoryByName(
 
 	projectID := getProjectID(ctx)
 	providerName := getProviderName(ctx)
+	if providerName == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name missing from request")
+	}
 
 	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {

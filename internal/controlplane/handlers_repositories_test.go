@@ -215,6 +215,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 		RepoID           string
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
+		ProviderMissing  bool
 		ExpectedError    string
 	}{
 		{
@@ -226,6 +227,12 @@ func TestServer_DeleteRepository(t *testing.T) {
 			Name:          "delete by ID fails when ID is malformed",
 			RepoID:        "I am not a UUID",
 			ExpectedError: "invalid repository ID",
+		},
+		{
+			Name:            "delete by name fails when provider name is omitted",
+			RepoName:        repoOwnerAndName,
+			ProviderMissing: true,
+			ExpectedError:   "provider name missing from request",
 		},
 		{
 			Name:             "deletion fails when repo service returns error",
@@ -268,8 +275,12 @@ func TestServer_DeleteRepository(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
+			var providerName string
+			if !scenario.ProviderMissing {
+				providerName = ghprovider.Github
+			}
 			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Provider: engine.Provider{Name: ghprovider.Github},
+				Provider: engine.Provider{Name: providerName},
 				Project:  engine.Project{ID: projectID},
 			})
 
