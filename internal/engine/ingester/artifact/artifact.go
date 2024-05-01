@@ -325,24 +325,16 @@ func branchFromRef(ref string) string {
 
 func signerIdentityFromSignature(s *verify.SignatureVerificationResult) string {
 	if s.Certificate.BuildSignerURI != "" {
-		// Find the index of the start of the ".github/workflows/" part
-		startIndex := strings.Index(s.Certificate.BuildSignerURI, ".github/workflows/")
-		if startIndex == -1 {
-			return ""
-		}
-
-		// Adjust startIndex to get the part right after ".github/workflows/"
-		startIndex += len(".github/workflows/")
-
-		// Extract the part after ".github/workflows/"
-		remainingURL := s.Certificate.BuildSignerURI[startIndex:]
-
+		// TODO(puerco): We should not be trimmin the tag from the signer identity
+		// I'm leavin this part for now as we are capturing the tag and branch
+		// elsewhere but we should improve this.
+		//
 		// Find the index of '@' to isolate the file name
-		atSymbolIndex := strings.Index(remainingURL, "@")
+		atSymbolIndex := strings.Index(s.Certificate.BuildSignerURI, "@")
 		if atSymbolIndex != -1 {
-			return remainingURL[:atSymbolIndex]
+			return s.Certificate.BuildSignerURI[:atSymbolIndex]
 		}
-		return remainingURL
+		return s.Certificate.BuildSignerURI
 	} else if s.Certificate.SubjectAlternativeName.Value != "" {
 		// This is the use case where there is no build signer URI but there is a subject alternative name
 		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
