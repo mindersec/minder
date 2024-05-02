@@ -2074,6 +2074,7 @@ type UpstreamRepositoryRef struct {
 	RepoId  int64    `protobuf:"varint,3,opt,name=repo_id,json=repoId,proto3" json:"repo_id,omitempty"`
 	Context *Context `protobuf:"bytes,4,opt,name=context,proto3" json:"context,omitempty"`
 	// True if the repository is already registered in Minder.
+	// This is only set on output, and is ignored on input.
 	Registered bool `protobuf:"varint,5,opt,name=registered,proto3" json:"registered,omitempty"`
 }
 

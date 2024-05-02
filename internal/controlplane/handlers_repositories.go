@@ -356,13 +356,13 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 
 		registeredRepos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
 			ProjectID: projectID,
-			Provider:  getNameFilterParam(provider.Name),
+			Provider:  getNameFilterParam(providerName),
 		})
 		if err != nil {
 			// Here we try to handle errors gracefully by
 			// simply not filtering.
 			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot get registered repos for provider")
-			erroringProviders = append(erroringProviders, provider.Name)
+			errorProvs = append(errorProvs, providerName)
 		}
 
 		registered := make(map[int64]bool)
