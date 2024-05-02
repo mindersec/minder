@@ -279,6 +279,20 @@ func getAndFilterArtifactVersions(
 			continue
 		}
 
+		match := false
+		for _, v := range artifact.Versions {
+			if v.Sha == *version.Name {
+				match = true
+				break
+			}
+		}
+		if !match {
+			zerolog.Ctx(ctx).Debug().Str("name", *version.Name).
+				Str("hashes", fmt.Sprintf("%+v", artifact.Versions)).
+				Msg("artifact versions do not match")
+			continue
+		}
+
 		// If the artifact version is applicable to this rule, add it to the list
 		zerolog.Ctx(ctx).Debug().Str("name", *version.Name).Strs("tags", tags).Msg("artifact version matched")
 		res = append(res, *version.Name)
@@ -309,10 +323,7 @@ func isSkippable(artifactType verifyif.ArtifactType, createdAt time.Time, opts m
 		}
 		tags, ok := opts["tags"].([]string)
 		if !ok {
-			return nil
-		} else if len(tags) == 0 {
-			// if the artifact has no tags, skip it
-			return fmt.Errorf("artifact has no tags")
+			tags = []string{}
 		}
 		// if the artifact has a .sig tag it's a signature, skip it
 		if verifier.GetSignatureTag(tags) != "" {
@@ -320,7 +331,7 @@ func isSkippable(artifactType verifyif.ArtifactType, createdAt time.Time, opts m
 		}
 		// if the artifact tags don't match the tag matcher, skip it
 		if !filter.MatchTag(tags...) {
-			return fmt.Errorf("artifact tags does not match")
+			return fmt.Errorf("artifact tags do not match (%+v)", tags)
 		}
 		return nil
 	default:

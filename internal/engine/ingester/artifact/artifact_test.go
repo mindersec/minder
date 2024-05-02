@@ -644,3 +644,72 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 		})
 	}
 }
+
+func TestSsSkippable(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	for _, tc := range []struct {
+		name         string
+		paramTags    []string // Tags defined in the profile
+		artifactTags []string // Tags defined in the artifac
+		mustErr      bool
+	}{
+		{
+			name:         "latest and latest",
+			paramTags:    []string{"latest"},
+			artifactTags: []string{"latest"},
+			mustErr:      false,
+		},
+		{
+			name:         "tag mismatch",
+			paramTags:    []string{"latest"},
+			artifactTags: []string{"not-latest"},
+			mustErr:      true,
+		},
+		{
+			name:         "no-tags-tagged-artifact",
+			paramTags:    []string{},
+			artifactTags: []string{"tagged"},
+			mustErr:      false,
+		},
+		{
+			name:         "no-tags-untagged-artifact",
+			paramTags:    []string{},
+			artifactTags: []string{},
+			mustErr:      false,
+		},
+		{
+			// Perhaps we need to revisit this case. I would expect two
+			// tags in a profile to mean "any of them". Right now the
+			// artifact will not match unless it contains both tags
+			name:         "profile-tags-single-tagged-artifact",
+			paramTags:    []string{"hello", "bye"},
+			artifactTags: []string{"hello"},
+			mustErr:      true,
+		},
+		{
+			name:         "sigstore-signature",
+			paramTags:    []string{},
+			artifactTags: []string{"sha256-0fca47903c6535c46ac9c48f916b2e77b573e1832c120d14e830c76b4a9b2021.sig"},
+			mustErr:      true,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			matcher, err := buildTagMatcher(tc.paramTags, "") // add support for regex
+			require.NoError(t, err)
+
+			err = isSkippable(
+				verifyif.ArtifactTypeContainer, now,
+				map[string]interface{}{"tags": tc.artifactTags}, matcher,
+			)
+
+			if tc.mustErr {
+				require.Error(t, err)
+				return
+			}
+			require.Nil(t, err)
+		})
+	}
+}
