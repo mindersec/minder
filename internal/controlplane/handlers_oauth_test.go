@@ -43,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
@@ -313,15 +314,14 @@ func TestGetAuthorizationURL(t *testing.T) {
 			}
 			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-			server, err := NewServer(
-				store,
-				evt,
-				c,
-				mockJwt,
-				&ratecache.NoopRestClientCache{},
-				providers.NewProviderStore(store),
-			)
-			require.NoError(t, err, "failed to create server")
+			server := &Server{
+				store:               store,
+				jwt:                 mockJwt,
+				evt:                 evt,
+				cfg:                 c,
+				mt:                  metrics.NewNoopMetrics(),
+				providerAuthFactory: auth.NewOAuthConfig,
+			}
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
@@ -405,19 +405,16 @@ func TestProviderCallback(t *testing.T) {
 			gh := mockgh.NewMockGitHub(ctrl)
 			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
 
-			var opts []ServerOption
+			var restClientCache ratecache.RestClientCache
 			if tc.remoteUser.String != "" {
 				// TODO: verfifyProviderTokenIdentity
 				cancelable, cancel := context.WithCancel(context.Background())
 				defer cancel()
-				clientCache := ratecache.NewRestClientCache(cancelable)
-				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, gh)
-				opts = []ServerOption{
-					WithRestClientCache(clientCache),
-				}
+				restClientCache = ratecache.NewRestClientCache(cancelable)
+				restClientCache.Set("", "anAccessToken", db.ProviderTypeGithub, gh)
 			}
 
-			s, _ := newDefaultServer(t, store, opts...)
+			s, _ := newDefaultServer(t, store, restClientCache)
 
 			var err error
 			encryptedUrlString, err := s.cryptoEngine.EncryptString(tc.redirectUrl)

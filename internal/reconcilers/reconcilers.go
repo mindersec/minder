@@ -39,16 +39,6 @@ type Reconciler struct {
 	fallbackTokenClient *gogithub.Client
 }
 
-// ReconcilerOption is a function that modifies a reconciler
-type ReconcilerOption func(*Reconciler)
-
-// WithProviderMetrics sets the provider metrics for the reconciler
-func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption {
-	return func(r *Reconciler) {
-		r.provMt = mt
-	}
-}
-
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
@@ -56,7 +46,7 @@ func NewReconciler(
 	authCfg *serverconfig.AuthConfig,
 	provCfg *serverconfig.ProviderConfig,
 	restClientCache ratecache.RestClientCache,
-	opts ...ReconcilerOption,
+	providerMetrics providertelemetry.ProviderMetrics,
 ) (*Reconciler, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
 	if err != nil {
@@ -65,21 +55,15 @@ func NewReconciler(
 
 	fallbackTokenClient := github.NewFallbackTokenClient(*provCfg)
 
-	r := &Reconciler{
+	return &Reconciler{
 		store:               store,
 		evt:                 evt,
 		crypteng:            crypteng,
 		provCfg:             provCfg,
-		provMt:              providertelemetry.NewNoopMetrics(),
 		fallbackTokenClient: fallbackTokenClient,
 		restClientCache:     restClientCache,
-	}
-
-	for _, opt := range opts {
-		opt(r)
-	}
-
-	return r, nil
+		provMt:              providerMetrics,
+	}, nil
 }
 
 // Register implements the Consumer interface.

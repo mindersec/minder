@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"time"
 
-	gh "github.com/google/go-github/v61/github"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -49,26 +48,19 @@ import (
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -86,28 +78,25 @@ type Server struct {
 	cfg                 *serverconfig.Config
 	evt                 events.Publisher
 	mt                  metrics.Metrics
-	provMt              provtelemetry.ProviderMetrics
 	grpcServer          *grpc.Server
-	vldtr               auth.JwtValidator
+	jwt                 auth.JwtValidator
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
 	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine
-	restClientCache     ratecache.RestClientCache
 	featureFlags        openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes           ruletypes.RuleTypeService
-	repos               github.RepositoryService
-	profiles            profiles.ProfileService
-	ghProviders         service.GitHubProviderService
-	providerStore       providers.ProviderStore
-	ghClient            ghprov.ClientService
-	fallbackTokenClient *gh.Client
-	providerManager     manager.ProviderManager
-	projectCreator      projects.ProjectCreator
-	projectDeleter      projects.ProjectDeleter
+	ruleTypes       ruletypes.RuleTypeService
+	repos           github.RepositoryService
+	profiles        profiles.ProfileService
+	ghProviders     service.GitHubProviderService
+	providerStore   providers.ProviderStore
+	ghClient        ghprov.ClientService
+	providerManager manager.ProviderManager
+	projectCreator  projects.ProjectCreator
+	projectDeleter  projects.ProjectDeleter
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -122,154 +111,46 @@ type Server struct {
 	pb.UnimplementedEvalResultsServiceServer
 }
 
-// ServerOption is a function that modifies a server
-type ServerOption func(*Server)
-
-// WithProviderMetrics sets the provider metrics for the server
-func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
-	return func(s *Server) {
-		s.provMt = mt
-	}
-}
-
-// WithAuthzClient sets the authz client for the server
-func WithAuthzClient(c authz.Client) ServerOption {
-	return func(s *Server) {
-		s.authzClient = c
-	}
-}
-
-// WithRestClientCache sets the rest client cache for the server
-func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
-	return func(s *Server) {
-		s.restClientCache = c
-	}
-}
-
-// WithIdentityClient sets the identity client for the server
-func WithIdentityClient(c *auth.IdentityClient) ServerOption {
-	return func(s *Server) {
-		s.idClient = c
-	}
-}
-
-// WithServerMetrics sets the server metrics for the server
-func WithServerMetrics(mt metrics.Metrics) ServerOption {
-	return func(s *Server) {
-		s.mt = mt
-	}
-}
-
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
 	evt events.Publisher,
 	cfg *serverconfig.Config,
-	vldtr auth.JwtValidator,
-	restCacheClient ratecache.RestClientCache,
+	serverMetrics metrics.Metrics,
+	jwt auth.JwtValidator,
+	cryptoEngine crypto.Engine,
+	authzClient authz.Client,
+	idClient auth.Resolver,
+	repoService github.RepositoryService,
+	profileService profiles.ProfileService,
+	ruleService ruletypes.RuleTypeService,
+	ghProviders service.GitHubProviderService,
+	providerManager manager.ProviderManager,
 	providerStore providers.ProviderStore,
-	opts ...ServerOption,
-) (*Server, error) {
-	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
-	}
-
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
-	profileSvc := profiles.NewProfileService(evt)
-	mt := metrics.NewNoopMetrics()
-	provMt := provtelemetry.NewNoopMetrics()
-	ghClientFactory := clients.NewGitHubClientFactory(provMt)
-	ruleSvc := ruletypes.NewRuleTypeService()
-	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create marketplace: %w", err)
-	}
-	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
-
-	s := &Server{
+	projectDeleter projects.ProjectDeleter,
+	projectCreator projects.ProjectCreator,
+) *Server {
+	return &Server{
 		store:               store,
 		cfg:                 cfg,
 		evt:                 evt,
-		cryptoEngine:        eng,
-		vldtr:               vldtr,
+		cryptoEngine:        cryptoEngine,
+		jwt:                 jwt,
 		providerAuthFactory: auth.NewOAuthConfig,
-		mt:                  mt,
-		provMt:              provMt,
-		profiles:            profileSvc,
-		ruleTypes:           ruleSvc,
+		mt:                  serverMetrics,
+		profiles:            profileService,
+		ruleTypes:           ruleService,
 		providerStore:       providerStore,
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
-		fallbackTokenClient: fallbackTokenClient,
-		restClientCache:     restCacheClient,
-		// TODO: this currently always returns authorized as a transitionary measure.
-		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
-		authzClient: &mock.NoopClient{Authorized: true},
-		// TODO: an empty IdentityClient has no way to look up identities.  This means
-		// callers need to supply WithIdentityClient() to the constructor.  It would be nice
-		// to have a better way to do this.
-		idClient: &auth.IdentityClient{},
+		providerManager:     providerManager,
+		repos:               repoService,
+		ghProviders:         ghProviders,
+		authzClient:         authzClient,
+		idClient:            idClient,
+		projectCreator:      projectCreator,
+		projectDeleter:      projectDeleter,
 	}
-
-	for _, opt := range opts {
-		opt(s)
-	}
-
-	// Moved after opts because it depends on the authz client
-	// This will be cleaned up in the next PR
-	s.projectCreator = projects.NewProjectCreator(s.authzClient, marketplace, &cfg.DefaultProfiles)
-
-	projectFactory := makeProjectFactory(s.projectCreator, cfg.Identity)
-	// TODO: Now that RestCacheClient is passed around directly, this will be
-	// cleaned up in a future PR.
-	// Moved here because we have a dependency on s.restClientCache
-	s.ghProviders = service.NewGithubProviderService(
-		store,
-		eng,
-		mt,
-		provMt,
-		&cfg.Provider,
-		projectFactory,
-		s.restClientCache,
-		s.fallbackTokenClient,
-	)
-
-	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
-		s.restClientCache,
-		ghClientFactory,
-		&cfg.Provider,
-		fallbackTokenClient,
-		eng,
-		whManager,
-		store,
-		s.ghProviders,
-	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provider manager: %w", err)
-	}
-	s.providerManager = providerManager
-	s.projectDeleter = projects.NewProjectDeleter(s.authzClient, providerManager)
-	s.repos = github.NewRepositoryService(whManager, store, evt, providerManager)
-
-	return s, nil
-}
-
-// GetProjectDeleter returns the project deleter
-// TODO: this will be removed in the next PR
-func (s *Server) GetProjectDeleter() projects.ProjectDeleter {
-	return s.projectDeleter
-}
-
-// GetProviderService returns the provider service
-func (s *Server) GetProviderService() service.GitHubProviderService {
-	return s.ghProviders
-}
-
-// GetAuthzClient returns the authz client
-func (s *Server) GetAuthzClient() authz.Client {
-	return s.authzClient
 }
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
@@ -568,44 +449,5 @@ func shutdownHandler(component string, sdf shutdowner) {
 
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatal().Msgf("error shutting down '%s': %+v", component, err)
-	}
-}
-
-// makeProjectFactory creates a callback used for GitHub project creation.
-// The callback is used to construct a project for a GitHub App installation which was
-// created by a user through the app installation flow on GitHub.  The flow on GitHub
-// cannot be tied back to a specific project, so we create a new project for the provider.
-//
-// This is a callback because we want to encapsulate components like identity,
-// projectCreator and the like from the providers implementation.
-func makeProjectFactory(
-	projectCreator projects.ProjectCreator,
-	identity serverconfig.IdentityConfigWrapper,
-) service.ProjectFactory {
-	return func(
-		ctx context.Context,
-		qtx db.Querier,
-		name string,
-		ghUser int64,
-	) (*db.Project, error) {
-		user, err := auth.GetUserForGitHubId(ctx, identity, ghUser)
-		if err != nil {
-			return nil, fmt.Errorf("error getting user for GitHub ID: %w", err)
-		}
-		// Ensure the user already exists in the database
-		if _, err := qtx.GetUserBySubject(ctx, user); err != nil {
-			return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
-		}
-
-		topLevelProject, err := projectCreator.ProvisionSelfEnrolledProject(
-			ctx,
-			qtx,
-			name,
-			user,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error creating project: %w", err)
-		}
-		return topLevelProject, nil
 	}
 }
