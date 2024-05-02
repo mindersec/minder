@@ -67,7 +67,7 @@ func AllInOneServerService(
 	}
 
 	// Subscribe to events from the identity server
-	err = controlplane.SubscribeToIdentityEvents(ctx, store, s.GetAuthzClient(), cfg, s.GetProviderManager())
+	err = controlplane.SubscribeToIdentityEvents(ctx, store, s.GetAuthzClient(), cfg, s.GetProjectDeleter())
 	if err != nil {
 		return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 	}

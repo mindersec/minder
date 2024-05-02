@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -57,9 +56,8 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 
 	ctx := context.Background()
 
-	tl := zerolog.NewTestWriter(t)
-	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -107,9 +105,8 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 
 	ctx := context.Background()
 
-	tl := zerolog.NewTestWriter(t)
-	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -159,9 +156,8 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 
 	ctx := context.Background()
 
-	tl := zerolog.NewTestWriter(t)
-	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
 	assert.NoError(t, err)
 
 	// Ensure there is one call to the orphan cleanup function
@@ -224,9 +220,8 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 
 	ctx := context.Background()
 
-	tl := zerolog.NewTestWriter(t)
-	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
 	assert.NoError(t, err)
 
 	// Ensure there are two calls to the orphan cleanup function
@@ -266,9 +261,8 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 
 	ctx := context.Background()
 
-	tl := zerolog.NewTestWriter(t)
-	l := zerolog.New(tl)
-	err := projects.DeleteProject(ctx, proj, mockStore, authzClient, mockProviderManager, l)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
 	assert.NoError(t, err)
 
 	// Ensure there are no calls to the orphan cleanup function
@@ -320,17 +314,19 @@ func TestCleanupUnmanaged(t *testing.T) {
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(projThree)).Return(nil)
 
-	err := projects.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore, authzClient, mockProviderManager)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+
+	err := deleter.CleanUpUnmanagedProjects(context.Background(), "user1", projChild, mockStore)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore, authzClient, mockProviderManager)
+	err = deleter.CleanUpUnmanagedProjects(context.Background(), "user1", projTwo, mockStore)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err = projects.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore, authzClient, mockProviderManager)
+	err = deleter.CleanUpUnmanagedProjects(context.Background(), "user1", projThree, mockStore)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

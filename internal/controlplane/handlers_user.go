@@ -77,14 +77,11 @@ func (s *Server) CreateUser(ctx context.Context,
 			baseName = token.PreferredUsername()
 		}
 
-		project, err := projects.ProvisionSelfEnrolledOAuthProject(
+		project, err := s.projectCreator.ProvisionSelfEnrolledOAuthProject(
 			ctx,
-			s.authzClient,
 			qtx,
 			baseName,
 			subject,
-			s.marketplace,
-			s.cfg.DefaultProfiles,
 		)
 		if err != nil {
 			if errors.Is(err, projects.ErrProjectAlreadyExists) {
@@ -166,7 +163,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 
 	subject := token.Subject()
 
-	err = DeleteUser(ctx, s.store, s.authzClient, s.providerManager, subject)
+	err = DeleteUser(ctx, s.store, s.authzClient, s.projectDeleter, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
