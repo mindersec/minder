@@ -45,7 +45,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	token, err := s.vldtr.ParseAndValidate(tokenString)
+	token, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
@@ -156,7 +156,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	token, err := s.vldtr.ParseAndValidate(tokenString)
+	token, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
@@ -218,7 +218,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	openIdToken, err := s.vldtr.ParseAndValidate(tokenString)
+	openIdToken, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}

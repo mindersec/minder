@@ -136,7 +136,6 @@ func TestDeleteProvider(t *testing.T) {
 		authzClient:     authzClient,
 		providerStore:   providerStore,
 		providerManager: providerManager,
-		restClientCache: clientCache,
 		cfg:             &serverconfig.Config{},
 	}
 
@@ -250,7 +249,6 @@ func TestDeleteProviderByID(t *testing.T) {
 		authzClient:     authzClient,
 		providerStore:   providerStore,
 		providerManager: providerManager,
-		restClientCache: clientCache,
 		cfg:             &serverconfig.Config{},
 	}
 

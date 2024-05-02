@@ -44,7 +44,6 @@ import (
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
-	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -265,7 +264,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store:        mockStore,
 				cfg:          &serverconfig.Config{},
 				cryptoEngine: crypeng,
-				vldtr:        mockJwtValidator,
+				jwt:          mockJwtValidator,
 				ghProviders:  mockProviders,
 				authzClient:  authz,
 				projectCreator: projects.NewProjectCreator(
@@ -356,7 +355,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 				},
 			},
 		},
-		vldtr:        mockJwtValidator,
+		jwt:          mockJwtValidator,
 		cryptoEngine: crypeng,
 		authzClient:  &mock.NoopClient{Authorized: true},
 	}
@@ -454,10 +453,13 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(
-				mockStore,
-				evt,
-				&serverconfig.Config{
+			server := &Server{
+				evt:           evt,
+				store:         mockStore,
+				jwt:           mockJwtValidator,
+				providerStore: providers.NewProviderStore(mockStore),
+				authzClient:   &mock.SimpleClient{},
+				cfg: &serverconfig.Config{
 					Auth: serverconfig.AuthConfig{
 						TokenKey: generateTokenKey(t),
 					},
@@ -469,11 +471,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 						},
 					},
 				},
-				mockJwtValidator,
-				&ratecache.NoopRestClientCache{},
-				providers.NewProviderStore(mockStore),
-			)
-			require.NoError(t, err, "failed to create test server")
+			}
 
 			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

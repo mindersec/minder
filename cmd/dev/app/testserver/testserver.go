@@ -28,16 +28,17 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/internal/auth"
 	noopauth "github.com/stacklok/minder/internal/auth/noop"
 	mockauthz "github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/reconcilers"
+	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/service"
 )
 
@@ -77,7 +78,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	cfg.Events.RouterCloseTimeout = 10
 	cfg.Events.Aggregator.LockInterval = 30
 
-	vldtr := noopauth.NewJwtValidator("mindev")
+	jwt := noopauth.NewJwtValidator("mindev")
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -94,12 +95,12 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 		ctx,
 		cfg,
 		store,
-		vldtr,
+		jwt,
 		&ratecache.NoopRestClientCache{},
-		[]controlplane.ServerOption{
-			controlplane.WithAuthzClient(&mockauthz.SimpleClient{}),
-		},
+		&mockauthz.SimpleClient{},
+		&auth.IdentityClient{},
+		metrics.NewNoopMetrics(),
+		provtelemetry.NewNoopMetrics(),
 		[]engine.ExecutorOption{},
-		[]reconcilers.ReconcilerOption{},
 	)
 }
