@@ -47,7 +47,8 @@ type RepositoryService interface {
 	// a webhook in the repo in GitHub.
 	CreateRepository(
 		ctx context.Context,
-		client ghclient.GitHubRepoClient,
+		// TODO: this should just be ProviderID
+		// Switch once we get rid of provider names from the repo table
 		provider *db.Provider,
 		projectID uuid.UUID,
 		repoName string,
@@ -115,12 +116,22 @@ func NewRepositoryService(
 
 func (r *repositoryService) CreateRepository(
 	ctx context.Context,
-	client ghclient.GitHubRepoClient,
 	provider *db.Provider,
 	projectID uuid.UUID,
 	repoOwner string,
 	repoName string,
 ) (*pb.Repository, error) {
+	// instantiate the GitHub client
+	p, err := r.providerManager.InstantiateFromID(ctx, provider.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error instantiating provider: %w", err)
+	}
+
+	client, err := provifv1.As[provifv1.GitHub](p)
+	if err != nil {
+		return nil, fmt.Errorf("error instantiating github client: %w", err)
+	}
+
 	// get information about the repo from GitHub, and ensure it exists
 	githubRepo, err := client.GetRepository(ctx, repoOwner, repoName)
 	if err != nil {

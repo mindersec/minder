@@ -76,6 +76,14 @@ func WithSuccessfulGetByNameInSpecificProject(provider *db.Provider) func(mock P
 	}
 }
 
+func WithSuccessfulGetByTraitInHierarchy(provider *db.Provider) func(mock ProviderStoreMock) {
+	return func(mock ProviderStoreMock) {
+		mock.EXPECT().
+			GetByTraitInHierarchy(gomock.Any(), gomock.Eq(provider.ProjectID), gomock.Any(), gomock.Eq(provider.Implements[0])).
+			Return([]db.Provider{*provider}, nil)
+	}
+}
+
 func WithSuccessfulDelete(provider *db.Provider) func(mock ProviderStoreMock) {
 	return func(mock ProviderStoreMock) {
 		mock.EXPECT().
@@ -105,6 +113,12 @@ func WithFailedGetByName(mock ProviderStoreMock) {
 func WithFailedGetByNameInSpecificProject(mock ProviderStoreMock) {
 	mock.EXPECT().
 		GetByNameInSpecificProject(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, errDefault)
+}
+
+func WithFailedGetByTraitInHierarchy(mock ProviderStoreMock) {
+	mock.EXPECT().
+		GetByTraitInHierarchy(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 }
 

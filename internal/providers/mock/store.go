@@ -100,21 +100,6 @@ func (mr *MockProviderStoreMockRecorder) GetByName(ctx, projectID, name any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByName", reflect.TypeOf((*MockProviderStore)(nil).GetByName), ctx, projectID, name)
 }
 
-// GetByNameAndTrait mocks base method.
-func (m *MockProviderStore) GetByNameAndTrait(ctx context.Context, projectID uuid.UUID, name string, trait db.ProviderType) ([]db.Provider, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByNameAndTrait", ctx, projectID, name, trait)
-	ret0, _ := ret[0].([]db.Provider)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByNameAndTrait indicates an expected call of GetByNameAndTrait.
-func (mr *MockProviderStoreMockRecorder) GetByNameAndTrait(ctx, projectID, name, trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNameAndTrait", reflect.TypeOf((*MockProviderStore)(nil).GetByNameAndTrait), ctx, projectID, name, trait)
-}
-
 // GetByNameInSpecificProject mocks base method.
 func (m *MockProviderStore) GetByNameInSpecificProject(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -128,4 +113,19 @@ func (m *MockProviderStore) GetByNameInSpecificProject(ctx context.Context, proj
 func (mr *MockProviderStoreMockRecorder) GetByNameInSpecificProject(ctx, projectID, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNameInSpecificProject", reflect.TypeOf((*MockProviderStore)(nil).GetByNameInSpecificProject), ctx, projectID, name)
+}
+
+// GetByTraitInHierarchy mocks base method.
+func (m *MockProviderStore) GetByTraitInHierarchy(ctx context.Context, projectID uuid.UUID, name string, trait db.ProviderType) ([]db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByTraitInHierarchy", ctx, projectID, name, trait)
+	ret0, _ := ret[0].([]db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByTraitInHierarchy indicates an expected call of GetByTraitInHierarchy.
+func (mr *MockProviderStoreMockRecorder) GetByTraitInHierarchy(ctx, projectID, name, trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTraitInHierarchy", reflect.TypeOf((*MockProviderStore)(nil).GetByTraitInHierarchy), ctx, projectID, name, trait)
 }

@@ -24,17 +24,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/config/server"
-	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghprovider "github.com/stacklok/minder/internal/providers/github/oauth"
-	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/manager"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	"github.com/stacklok/minder/internal/util/ptr"
@@ -113,7 +112,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, newGitHub(), scenario.ProviderFails)
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, nil)
 
 			req := &pb.RegisterRepositoryRequest{
 				Repository: &pb.UpstreamRepositoryRef{
@@ -172,7 +171,16 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 				Project: engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.GitHubSetup, scenario.ProviderFails)
+			prov := scenario.GitHubSetup(ctrl)
+			manager := mockmanager.NewMockProviderManager(ctrl)
+			manager.EXPECT().BulkInstantiateByTrait(
+				gomock.Any(),
+				gomock.Eq(projectID),
+				gomock.Eq(db.ProviderTypeRepoLister),
+				gomock.Eq(""),
+			).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
+
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, manager)
 
 			projectIDStr := projectID.String()
 			req := &pb.ListRemoteRepositoriesFromProviderRequest{
@@ -273,7 +281,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, newGitHub(), scenario.ProviderFails)
+			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, nil)
 
 			var result string
 			var resultError error
@@ -324,7 +332,6 @@ const (
 	repoOwnerAndName = "acme-corp/api-gateway"
 	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
 	remoteRepoId     = 123456
-	accessToken      = "TOKEN"
 )
 
 var (
@@ -369,14 +376,14 @@ func newGitHub(opts ...func(mock githubMock)) githubMockBuilder {
 
 func withSuccessfulCreate(mock repoServiceMock) {
 	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
+		CreateRepository(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
 		Return(creationResult, nil)
 }
 
 func withFailedCreate(err error) func(repoServiceMock) {
 	return func(mock repoServiceMock) {
 		mock.EXPECT().
-			CreateRepository(gomock.Any(), gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
+			CreateRepository(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
 			Return(nil, err)
 	}
 }
@@ -419,29 +426,16 @@ func withFailedListAllRepositories(err error) func(githubMock) {
 	}
 }
 
-func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, githubSetup githubMockBuilder, providerFails bool) *Server {
+func createServer(
+	ctrl *gomock.Controller,
+	repoServiceSetup repoMockBuilder,
+	providerFails bool,
+	providerManager manager.ProviderManager,
+) *Server {
 	var svc ghrepo.RepositoryService
 	if repoServiceSetup != nil {
 		svc = repoServiceSetup(ctrl)
 	}
-
-	// stubs needed for providers to work
-	// TODO: this provider logic should be better encapsulated from the controlplane
-	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
-	mockCryptoEngine.EXPECT().
-		DecryptOAuthToken(gomock.Any()).
-		Return(oauth2.Token{AccessToken: accessToken}, nil).
-		AnyTimes()
-	cancelable, cancel := context.WithCancel(context.Background())
-	clientCache := ratecache.NewRestClientCache(cancelable)
-	defer cancel()
-
-	var gh *mockgh.MockGitHub
-	if githubSetup != nil {
-		gh = githubSetup(ctrl)
-	}
-
-	clientCache.Set("", accessToken, db.ProviderTypeGithub, gh)
 
 	store := mockdb.NewMockStore(ctrl)
 	store.EXPECT().
@@ -477,9 +471,8 @@ func createServer(ctrl *gomock.Controller, repoServiceSetup repoMockBuilder, git
 	return &Server{
 		store:           store,
 		repos:           svc,
-		cryptoEngine:    mockCryptoEngine,
-		restClientCache: clientCache,
 		cfg:             &server.Config{},
 		providerStore:   providers.NewProviderStore(store),
+		providerManager: providerManager,
 	}
 }

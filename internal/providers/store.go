@@ -48,12 +48,12 @@ type ProviderStore interface {
 	// identified by its project ID and name. Unlike `GetByName` it will only
 	// search in the specified project, and ignore the project hierarchy.
 	GetByNameInSpecificProject(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error)
-	// GetByNameAndTrait returns the providers in the project which match the
+	// GetByTraitInHierarchy returns the providers in the project which match the
 	// specified trait. All parent projects of the specified project are
-	// included in the search.
+	// included in the search. The providers are optionally filtered by name.
 	// Note that if error is nil, there will always be at least one element
 	// in the list of providers which is returned.
-	GetByNameAndTrait(
+	GetByTraitInHierarchy(
 		ctx context.Context,
 		projectID uuid.UUID,
 		name string,
@@ -144,7 +144,7 @@ func (p *providerStore) GetByNameInSpecificProject(ctx context.Context, projectI
 	return &provider, nil
 }
 
-func (p *providerStore) GetByNameAndTrait(
+func (p *providerStore) GetByTraitInHierarchy(
 	ctx context.Context,
 	projectID uuid.UUID,
 	name string,

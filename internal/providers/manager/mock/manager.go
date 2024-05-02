@@ -42,6 +42,22 @@ func (m *MockProviderManager) EXPECT() *MockProviderManagerMockRecorder {
 	return m.recorder
 }
 
+// BulkInstantiateByTrait mocks base method.
+func (m *MockProviderManager) BulkInstantiateByTrait(ctx context.Context, projectID uuid.UUID, trait db.ProviderType, name string) (map[string]v1.Provider, []string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkInstantiateByTrait", ctx, projectID, trait, name)
+	ret0, _ := ret[0].(map[string]v1.Provider)
+	ret1, _ := ret[1].([]string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// BulkInstantiateByTrait indicates an expected call of BulkInstantiateByTrait.
+func (mr *MockProviderManagerMockRecorder) BulkInstantiateByTrait(ctx, projectID, trait, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkInstantiateByTrait", reflect.TypeOf((*MockProviderManager)(nil).BulkInstantiateByTrait), ctx, projectID, trait, name)
+}
+
 // DeleteByID mocks base method.
 func (m *MockProviderManager) DeleteByID(ctx context.Context, providerID, projectID uuid.UUID) error {
 	m.ctrl.T.Helper()
