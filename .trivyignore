@@ -1,3 +1,0 @@
-# Ignoring this CVE since we've got mitigations for it and we need to use this
-# version because of a regression
-CVE-2023-47108
