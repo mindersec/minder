@@ -30,11 +30,11 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // RepoReconcilerEvent is an event that is sent to the reconciler topic
@@ -93,41 +93,32 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 		return fmt.Errorf("error retrieving repository: %w", err)
 	}
 
-	prov, err := r.store.GetProviderByID(ctx, repository.ProviderID)
+	providerID := repository.ProviderID
+	p, err := r.providerManager.InstantiateFromID(ctx, providerID)
 	if err != nil {
-		return fmt.Errorf("error retrieving provider: %w", err)
+		return fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(r.provMt),
-		providers.WithRestClientCache(r.restClientCache),
-	}
-	p, err := providers.GetProviderBuilder(ctx, prov, r.store, r.crypteng, r.provCfg, r.fallbackTokenClient, pbOpts...)
+	cli, err := v1.As[v1.GitHub](p)
 	if err != nil {
-		return fmt.Errorf("error building client: %w", err)
+		// Keeping this behaviour to match the existing logic
+		// This reconciler logic needs to be split between GitHub-specific
+		// and generic parts.
+		log.Printf("provider %s is not supported for artifacts reconciler", providerID)
+		return nil
 	}
 
 	// evaluate profile for repo
 	repo := repositories.PBRepositoryFromDB(repository)
 
 	err = entities.NewEntityInfoWrapper().
-		WithProviderID(prov.ID).
+		WithProviderID(providerID).
 		WithRepository(repo).
 		WithProjectID(evt.Project).
 		WithRepositoryID(repository.ID).
 		Publish(r.evt)
 	if err != nil {
 		return fmt.Errorf("error publishing message: %w", err)
-	}
-
-	if !p.Implements(db.ProviderTypeGithub) {
-		log.Printf("provider %s is not supported for artifacts reconciler", prov.Name)
-		return nil
-	}
-
-	cli, err := p.GetGitHub()
-	if err != nil {
-		return fmt.Errorf("error getting github client: %w", err)
 	}
 
 	// todo: add another type of artifacts
@@ -142,7 +133,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			// not a hard error, just misconfiguration or the user doesn't want to put a token
 			// into the provider config
 			zerolog.Ctx(ctx).Info().
-				Str("provider", prov.ID.String()).
+				Str("provider", providerID.String()).
 				Msg("No package listing client available for provider")
 			return nil
 		}
@@ -162,8 +153,8 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 				ArtifactType:       typeLower,
 				ArtifactVisibility: artifact.GetVisibility(),
 				ProjectID:          evt.Project,
-				ProviderName:       prov.Name,
-				ProviderID:         prov.ID,
+				ProviderName:       repository.Provider,
+				ProviderID:         providerID,
 			})
 
 		if err != nil {
@@ -184,7 +175,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *Re
 			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
 		}
 		err = entities.NewEntityInfoWrapper().
-			WithProviderID(prov.ID).
+			WithProviderID(providerID).
 			WithArtifact(pbArtifact).
 			WithProjectID(evt.Project).
 			WithArtifactID(newArtifact.ID).
