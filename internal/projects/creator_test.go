@@ -51,14 +51,12 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledOAuthProject(
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	_, err := creator.ProvisionSelfEnrolledOAuthProject(
 		ctx,
-		authzClient,
 		mockStore,
 		"test-proj",
 		"test-user",
-		marketplaces.NewNoopMarketplace(),
-		server.DefaultProfilesConfig{},
 	)
 	assert.NoError(t, err)
 
@@ -80,14 +78,12 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 
 	ctx := context.Background()
 
-	_, err := projects.ProvisionSelfEnrolledOAuthProject(
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	_, err := creator.ProvisionSelfEnrolledOAuthProject(
 		ctx,
-		authzClient,
 		mockStore,
 		"test-proj",
 		"test-user",
-		marketplaces.NewNoopMarketplace(),
-		server.DefaultProfilesConfig{},
 	)
 	assert.Error(t, err)
 

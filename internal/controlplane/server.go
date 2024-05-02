@@ -58,6 +58,7 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -101,11 +102,12 @@ type Server struct {
 	repos               github.RepositoryService
 	profiles            profiles.ProfileService
 	ghProviders         service.GitHubProviderService
-	marketplace         marketplaces.Marketplace
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
 	fallbackTokenClient *gh.Client
 	providerManager     manager.ProviderManager
+	projectCreator      projects.ProjectCreator
+	projectDeleter      projects.ProjectDeleter
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -196,7 +198,6 @@ func NewServer(
 		provMt:              provMt,
 		profiles:            profileSvc,
 		ruleTypes:           ruleSvc,
-		marketplace:         marketplace,
 		providerStore:       providerStore,
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
@@ -215,11 +216,24 @@ func NewServer(
 		opt(s)
 	}
 
+	// Moved after opts because it depends on the authz client
+	// This will be cleaned up in the next PR
+	s.projectCreator = projects.NewProjectCreator(s.authzClient, marketplace, &cfg.DefaultProfiles)
+
+	projectFactory := makeProjectFactory(s.projectCreator, cfg.Identity)
 	// TODO: Now that RestCacheClient is passed around directly, this will be
 	// cleaned up in a future PR.
 	// Moved here because we have a dependency on s.restClientCache
 	s.ghProviders = service.NewGithubProviderService(
-		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)
+		store,
+		eng,
+		mt,
+		provMt,
+		&cfg.Provider,
+		projectFactory,
+		s.restClientCache,
+		s.fallbackTokenClient,
+	)
 
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		s.restClientCache,
@@ -236,14 +250,16 @@ func NewServer(
 		return nil, fmt.Errorf("failed to create provider manager: %w", err)
 	}
 	s.providerManager = providerManager
+	s.projectDeleter = projects.NewProjectDeleter(s.authzClient, providerManager)
 	s.repos = github.NewRepositoryService(whManager, store, evt, providerManager)
 
 	return s, nil
 }
 
-// GetProviderManager returns the provider manager
-func (s *Server) GetProviderManager() manager.ProviderManager {
-	return s.providerManager
+// GetProjectDeleter returns the project deleter
+// TODO: this will be removed in the next PR
+func (s *Server) GetProjectDeleter() projects.ProjectDeleter {
+	return s.projectDeleter
 }
 
 // GetProviderService returns the provider service
@@ -552,5 +568,44 @@ func shutdownHandler(component string, sdf shutdowner) {
 
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatal().Msgf("error shutting down '%s': %+v", component, err)
+	}
+}
+
+// makeProjectFactory creates a callback used for GitHub project creation.
+// The callback is used to construct a project for a GitHub App installation which was
+// created by a user through the app installation flow on GitHub.  The flow on GitHub
+// cannot be tied back to a specific project, so we create a new project for the provider.
+//
+// This is a callback because we want to encapsulate components like identity,
+// projectCreator and the like from the providers implementation.
+func makeProjectFactory(
+	projectCreator projects.ProjectCreator,
+	identity serverconfig.IdentityConfigWrapper,
+) service.ProjectFactory {
+	return func(
+		ctx context.Context,
+		qtx db.Querier,
+		name string,
+		ghUser int64,
+	) (*db.Project, error) {
+		user, err := auth.GetUserForGitHubId(ctx, identity, ghUser)
+		if err != nil {
+			return nil, fmt.Errorf("error getting user for GitHub ID: %w", err)
+		}
+		// Ensure the user already exists in the database
+		if _, err := qtx.GetUserBySubject(ctx, user); err != nil {
+			return nil, fmt.Errorf("error getting user %s from database: %w", user, err)
+		}
+
+		topLevelProject, err := projectCreator.ProvisionSelfEnrolledProject(
+			ctx,
+			qtx,
+			name,
+			user,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error creating project: %w", err)
+		}
+		return topLevelProject, nil
 	}
 }

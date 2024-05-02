@@ -1,4 +1,3 @@
-//
 // Copyright 2024 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,26 +31,60 @@ import (
 	"github.com/stacklok/minder/pkg/mindpak"
 )
 
+// ProjectCreator encapsulates operations for managing projects
+// TODO: There are several follow-ups needed here:
+// 1. Move the delete operations into this interface
+// 2. The interface is very GitHub-specific. It needs to be made more generic.
+type ProjectCreator interface {
+	// ProvisionSelfEnrolledOAuthProject creates the default records, such as projects,
+	// roles and provider for the organization
+	ProvisionSelfEnrolledOAuthProject(
+		ctx context.Context,
+		qtx db.Querier,
+		projectName string,
+		userSub string,
+	) (outproj *db.Project, projerr error)
+
+	// ProvisionSelfEnrolledProject creates the core default components of the project
+	// (project, marketplace subscriptions, etc.) but *does not* create a project.
+	ProvisionSelfEnrolledProject(
+		ctx context.Context,
+		qtx db.Querier,
+		projectName string,
+		userSub string,
+	) (outproj *db.Project, projerr error)
+}
+
+type projectCreator struct {
+	authzClient authz.Client
+	marketplace marketplaces.Marketplace
+	profilesCfg *server.DefaultProfilesConfig
+}
+
+// NewProjectCreator creates a new instance of the project creator
+func NewProjectCreator(authzClient authz.Client,
+	marketplace marketplaces.Marketplace,
+	profilesCfg *server.DefaultProfilesConfig,
+) ProjectCreator {
+	return &projectCreator{
+		authzClient: authzClient,
+		marketplace: marketplace,
+		profilesCfg: profilesCfg,
+	}
+}
+
 var (
 	// ErrProjectAlreadyExists is returned when a project with the same name already exists
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
 
-// ProvisionSelfEnrolledOAuthProject creates the default records, such as projects, roles and provider for the organization
-func ProvisionSelfEnrolledOAuthProject(
+func (p *projectCreator) ProvisionSelfEnrolledOAuthProject(
 	ctx context.Context,
-	authzClient authz.Client,
 	qtx db.Querier,
 	projectName string,
 	userSub string,
-	// Passing these as arguments to minimize code changes. In future, it may
-	// make sense to hang these project create/delete methods off a struct or
-	// interface to reduce the amount of dependencies which need to be passed
-	// to individual methods.
-	marketplace marketplaces.Marketplace,
-	profilesCfg server.DefaultProfilesConfig,
 ) (outproj *db.Project, projerr error) {
-	project, err := ProvisionSelfEnrolledProject(ctx, authzClient, qtx, projectName, userSub, marketplace, profilesCfg)
+	project, err := p.ProvisionSelfEnrolledProject(ctx, qtx, projectName, userSub)
 	if err != nil {
 		return nil, err
 	}
@@ -71,20 +104,11 @@ func ProvisionSelfEnrolledOAuthProject(
 	return project, nil
 }
 
-// ProvisionSelfEnrolledProject creates the core default components of the project (project,
-// marketplace subscriptions, etc.) but *does not* create a project.
-func ProvisionSelfEnrolledProject(
+func (p *projectCreator) ProvisionSelfEnrolledProject(
 	ctx context.Context,
-	authzClient authz.Client,
 	qtx db.Querier,
 	projectName string,
 	userSub string,
-	// Passing these as arguments to minimize code changes. In future, it may
-	// make sense to hang these project create/delete methods off a struct or
-	// interface to reduce the amount of dependencies which need to be passed
-	// to individual methods.
-	marketplace marketplaces.Marketplace,
-	profilesCfg server.DefaultProfilesConfig,
 ) (outproj *db.Project, projerr error) {
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
@@ -96,14 +120,14 @@ func ProvisionSelfEnrolledProject(
 	projectID := uuid.New()
 
 	// Create authorization tuple
-	if err := authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+	if err := p.authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
 		// TODO: this can't be part of a transaction, so we should probably find a saga-ish
 		// way to reverse this operation if the transaction fails.
 		if outproj == nil && projerr != nil {
-			if err := authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+			if err := p.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
 			}
 		}
@@ -126,12 +150,12 @@ func ProvisionSelfEnrolledProject(
 	// Enable any default profiles and rule types in the project.
 	// For now, we subscribe to a single bundle and a single profile.
 	// Both are specified in the service config.
-	bundleID := mindpak.ID(profilesCfg.Bundle.Namespace, profilesCfg.Bundle.Name)
-	if err := marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
+	bundleID := mindpak.ID(p.profilesCfg.Bundle.Namespace, p.profilesCfg.Bundle.Name)
+	if err := p.marketplace.Subscribe(ctx, project.ID, bundleID, qtx); err != nil {
 		return nil, fmt.Errorf("unable to subscribe to bundle: %w", err)
 	}
-	for _, profileName := range profilesCfg.GetProfiles() {
-		if err := marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
+	for _, profileName := range p.profilesCfg.GetProfiles() {
+		if err := p.marketplace.AddProfile(ctx, project.ID, bundleID, profileName, qtx); err != nil {
 			return nil, fmt.Errorf("unable to enable bundle profile: %w", err)
 		}
 	}

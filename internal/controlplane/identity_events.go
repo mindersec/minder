@@ -31,7 +31,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/providers/manager"
 )
 
 const (
@@ -54,11 +53,11 @@ func SubscribeToIdentityEvents(
 	store db.Store,
 	authzClient authz.Client,
 	cfg *serverconfig.Config,
-	providerManager manager.ProviderManager,
+	projectDeleter projects.ProjectDeleter,
 ) error {
 	c := cron.New()
 	_, err := c.AddFunc(eventFetchInterval, func() {
-		HandleEvents(ctx, store, authzClient, cfg, providerManager)
+		HandleEvents(ctx, store, authzClient, cfg, projectDeleter)
 	})
 	if err != nil {
 		return err
@@ -73,7 +72,7 @@ func HandleEvents(
 	store db.Store,
 	authzClient authz.Client,
 	cfg *serverconfig.Config,
-	providerManager manager.ProviderManager,
+	projectDeleter projects.ProjectDeleter,
 ) {
 	d := time.Now().Add(time.Duration(10) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
@@ -100,7 +99,7 @@ func HandleEvents(
 	}
 	for _, event := range events {
 		if event.Type == deleteAccountEventType {
-			err := DeleteUser(ctx, store, authzClient, providerManager, event.UserId)
+			err := DeleteUser(ctx, store, authzClient, projectDeleter, event.UserId)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Msgf("events chron: error deleting user account: %v", err)
 			}
@@ -113,7 +112,7 @@ func DeleteUser(
 	ctx context.Context,
 	store db.Store,
 	authzClient authz.Client,
-	providerManager manager.ProviderManager,
+	projectDeleter projects.ProjectDeleter,
 	userId string,
 ) error {
 	l := zerolog.Ctx(ctx).With().
@@ -140,7 +139,7 @@ func DeleteUser(
 
 		for _, proj := range projs {
 			l.Debug().Str("project_id", proj.String()).Msg("cleaning up project")
-			if err := projects.CleanUpUnmanagedProjects(l.WithContext(ctx), userId, proj, qtx, authzClient, providerManager); err != nil {
+			if err := projectDeleter.CleanUpUnmanagedProjects(l.WithContext(ctx), userId, proj, qtx); err != nil {
 				return db.User{}, fmt.Errorf("error deleting project %s: %v", proj.String(), err)
 			}
 		}

@@ -41,6 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/marketplaces"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -259,14 +260,19 @@ func TestCreateUser_gRPC(t *testing.T) {
 			reqCtx := tc.buildStubs(ctx, mockStore, mockJwtValidator, mockProviders)
 			crypeng := mockcrypto.NewMockEngine(ctrl)
 
+			authz := &mock.NoopClient{Authorized: true}
 			server := &Server{
 				store:        mockStore,
 				cfg:          &serverconfig.Config{},
 				cryptoEngine: crypeng,
 				vldtr:        mockJwtValidator,
 				ghProviders:  mockProviders,
-				authzClient:  &mock.NoopClient{Authorized: true},
-				marketplace:  marketplaces.NewNoopMarketplace(),
+				authzClient:  authz,
+				projectCreator: projects.NewProjectCreator(
+					authz,
+					marketplaces.NewNoopMarketplace(),
+					&serverconfig.DefaultProfilesConfig{},
+				),
 			}
 
 			// server, err := NewServer(mockStore, evt, &serverconfig.Config{
