@@ -77,6 +77,47 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			err: "",
 		},
 		{
+			name: "no provider succeeds",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_REPOSITORIES,
+					Id:   repoUuid.String(),
+				},
+			},
+			entityContext: &engine.EntityContext{
+				Project: engine.Project{
+					ID: uuid.New(),
+				},
+				Provider: engine.Provider{},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+				projId := entityContext.Project.ID
+				store.EXPECT().
+					GetProjectByID(gomock.Any(), projId).
+					Return(db.Project{ID: projId}, nil)
+				store.EXPECT().
+					GetParentProjects(gomock.Any(), projId).
+					Return([]uuid.UUID{projId}, nil)
+				store.EXPECT().
+					FindProviders(gomock.Any(), db.FindProvidersParams{
+						Name:     sql.NullString{String: "", Valid: false},
+						Projects: []uuid.UUID{projId},
+						Trait:    db.NullProviderType{},
+					}).Return([]db.Provider{{Name: ghProvider}}, nil)
+				store.EXPECT().
+					GetRepositoryByIDAndProject(gomock.Any(), db.GetRepositoryByIDAndProjectParams{
+						ID:        repoUuid,
+						ProjectID: projId,
+					}).
+					Return(db.Repository{
+						ID:        repoUuid,
+						Provider:  ghProvider,
+						ProjectID: projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
 			name: "invalid entity context",
 			input: &pb.CreateEntityReconciliationTaskRequest{
 				Entity: &pb.EntityTypedId{

@@ -61,7 +61,7 @@ type Alternative struct {
 
 // ScoreSummary is the summary score returned from the package intelligence API
 type ScoreSummary struct {
-	Score       float64        `json:"score"`
+	Score       *float64       `json:"score"`
 	Description map[string]any `json:"description"`
 }
 
