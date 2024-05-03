@@ -611,6 +611,7 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 		name     string
 		sut      *certificate.Summary
 		expected string
+		mustErr  bool
 	}{
 		{
 			"build-signer-uri",
@@ -619,28 +620,70 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 					BuildSignerURI: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
 				},
 			},
-			"https://github.com/openvex/vexctl/.github/workflows/release.yaml",
+			"/openvex/vexctl/.github/workflows/release.yaml",
+			false,
 		},
 		{
-			"alternative-subject",
+			"san-uri",
 			&certificate.Summary{
 				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  "critical",
+					Type:  certificate.SubjectAlternativeNameTypeURI,
 					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
 				},
 			},
-			"https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
+			"/openvex/vexctl/.github/workflows/release.yaml",
+			false,
+		},
+		{
+			"san-email",
+			&certificate.Summary{
+				SubjectAlternativeName: certificate.SubjectAlternativeName{
+					Type:  certificate.SubjectAlternativeNameTypeEmail,
+					Value: "test@example.com",
+				},
+			},
+			"test@example.com",
+			false,
+		},
+		{
+			"san-other",
+			&certificate.Summary{
+				SubjectAlternativeName: certificate.SubjectAlternativeName{
+					Type:  certificate.SubjectAlternativeNameTypeEmail,
+					Value: "Hello Friend",
+				},
+			},
+			"Hello Friend",
+			false,
+		},
+		{
+			"error-invalid-url",
+			&certificate.Summary{
+				SubjectAlternativeName: certificate.SubjectAlternativeName{
+					Type:  certificate.SubjectAlternativeNameTypeURI,
+					Value: "http:\n\\/",
+				},
+			},
+			"",
+			true,
 		},
 		{
 			"no-values",
 			&certificate.Summary{},
 			"",
+			false,
 		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			require.Equal(t, tc.expected, signerIdentityFromCertificate(tc.sut))
+			identity, err := signerIdentityFromCertificate(tc.sut)
+			if tc.mustErr {
+				require.Error(t, err, identity)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, identity)
 		})
 	}
 }

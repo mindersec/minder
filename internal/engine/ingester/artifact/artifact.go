@@ -205,9 +205,14 @@ func (i *Ingest) getVerificationResult(
 
 			// If we got verified provenance info for the artifact version, populate the rest of the verification result
 			if res.IsVerified {
+				siIdentity, err := signerIdentityFromCertificate(res.Signature.Certificate)
+				if err != nil {
+					zerolog.Ctx(ctx).Err(err).Msg("error parsing signer identity")
+				}
+
 				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
 				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.SignerIdentity = signerIdentityFromCertificate(res.Signature.Certificate)
+				verResult.SignerIdentity = siIdentity
 				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
 				verResult.CertIssuer = res.Signature.Certificate.Issuer
 			}
@@ -336,21 +341,30 @@ func branchFromRef(ref string) string {
 	return ""
 }
 
-func signerIdentityFromCertificate(c *certificate.Summary) string {
-	if c.BuildSignerURI != "" {
-		// TODO(puerco): We should not be trimmin the tag from the signer identity
-		// I'm leavin this part for now as we are capturing the tag and branch
-		// elsewhere but we should improve this.
-		//
+// signerIdentityFromCertificate returns the signer identity. When the identity
+// is a URI (from the BuildSignerURI extension or the cert SAN), we return only
+// the URI path component. We split it this way to ensure we can make rules
+// more generalizable (applicable to the same path regardless of the repo for example).
+func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
+	var builderURL string
+	switch {
+	case c.BuildSignerURI != "":
 		// Find the index of '@' to isolate the file name
-		b, _, _ := strings.Cut(c.BuildSignerURI, "@")
-		return b
-
-	} else if c.SubjectAlternativeName.Value != "" {
-		// This is the use case where there is no build signer URI but there is a subject alternative name
-		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
-		return c.SubjectAlternativeName.Value
+		builderURL = c.BuildSignerURI
+	case c.SubjectAlternativeName.Value != "" && c.SubjectAlternativeName.Type == certificate.SubjectAlternativeNameTypeURI:
+		builderURL = c.SubjectAlternativeName.Value
+	default:
+		// Return the SAN in the cert as a last resort. This handles the case when
+		// we don't have a signer identity but also when the SAN is an email
+		// when a user authenticated using an OIDC provider.
+		// Any other SAN types are returned verbatim
+		return c.SubjectAlternativeName.Value, nil
 	}
-	// If we can't find the signer identity, return an empty string
-	return ""
+
+	uString, _, _ := strings.Cut(builderURL, "@")
+	u, err := url.Parse(uString)
+	if err != nil {
+		return "", fmt.Errorf("parsing builder URI: %w", err)
+	}
+	return u.Path, nil
 }
