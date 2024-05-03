@@ -95,10 +95,6 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 	logger.BusinessRecord(ctx).Project = repo.ProjectID
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
-	if repo.Provider != entityCtx.Provider.Name {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
-	}
-
 	msg, err := reconcilers.NewRepoReconcilerMessage(repo.ProviderID, repo.RepoID, repo.ProjectID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
