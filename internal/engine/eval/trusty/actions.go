@@ -121,7 +121,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 
 		higherScoringAlternatives := make([]Alternative, 0)
 		for _, alt := range alternative.trustyReply.Alternatives.Packages {
-			if alt.Score > alternative.trustyReply.Summary.Score {
+			if alternative.trustyReply.Summary.Score != nil && alt.Score > *alternative.trustyReply.Summary.Score {
 				alt.PackageNameURL = url.PathEscape(alt.PackageName)
 				higherScoringAlternatives = append(higherScoringAlternatives, alt)
 			}
@@ -145,7 +145,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			Ecosystem:    strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
 			Name:         alternative.Dependency.Name,
 			NameURL:      url.PathEscape(alternative.Dependency.Name),
-			Score:        alternative.trustyReply.Summary.Score,
+			Score:        *alternative.trustyReply.Summary.Score,
 			Alternatives: higherScoringAlternatives,
 			BaseUrl:      constants.TrustyHttpURL,
 		}); err != nil {
