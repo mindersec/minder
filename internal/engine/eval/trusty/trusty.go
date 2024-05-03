@@ -134,7 +134,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			continue
 		}
 
-		if resp.Summary.Score == 0 {
+		if resp.Summary.Score == nil {
 			logger.Info().
 				Str("dependency", dep.Dep.Name).
 				Msgf("the dependency has no score, skipping")

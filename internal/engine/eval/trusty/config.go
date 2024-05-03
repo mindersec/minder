@@ -119,8 +119,8 @@ func (ec *ecosystemConfig) getScoreSource() string {
 }
 
 func (ec *ecosystemConfig) getScore(inSummary ScoreSummary) (float64, error) {
-	if ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore {
-		return inSummary.Score, nil
+	if inSummary.Score != nil && (ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore) {
+		return *inSummary.Score, nil
 	}
 
 	// If the score is not the summary score, then it must be in the details
