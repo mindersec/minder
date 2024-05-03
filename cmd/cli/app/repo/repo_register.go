@@ -18,13 +18,11 @@ package repo
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
@@ -60,218 +58,149 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 	}
 
-	alreadyRegisteredRepos, err := fetchAlreadyRegisteredRepos(ctx, provider, project, client)
+	// Fetch remote repos, both registered and unregistered.
+	repos, err := fetchRepos(ctx, provider, project, client)
 	if err != nil {
-		return cli.MessageAndError("Error getting list of registered repos", err)
+		return cli.MessageAndError("Error getting registered repos", err)
 	}
 
-	unregisteredInputRepos, warnings := getUnregisteredInputRepos(inputRepoList, alreadyRegisteredRepos)
-	printWarnings(cmd, warnings)
+	// Maps for filtering
+	registeredRepos := make(map[string]*minderv1.UpstreamRepositoryRef)
+	unregisteredRepos := make(map[string]*minderv1.UpstreamRepositoryRef)
+	for _, repo := range repos {
+		key := cli.GetRepositoryName(repo.Owner, repo.Name)
+		if repo.Registered {
+			registeredRepos[key] = repo
+		} else {
+			unregisteredRepos[key] = repo
+		}
+	}
 
-	// All input repos are already registered
-	if len(inputRepoList) > 0 && len(unregisteredInputRepos) == 0 {
+	// No repos left to register, exit cleanly
+	if len(unregisteredRepos) == 0 {
+		cmd.Println("No repos left to register")
 		return nil
 	}
 
 	var selectedRepos []*minderv1.UpstreamRepositoryRef
-	if len(unregisteredInputRepos) > 0 {
-		for _, repo := range unregisteredInputRepos {
-			owner, name := cli.GetNameAndOwnerFromRepository(repo)
-			selectedRepos = append(selectedRepos, &minderv1.UpstreamRepositoryRef{
-				Owner: owner,
-				Name:  name,
-			})
+	if len(inputRepoList) > 0 {
+		// Repositories are provided as --name options
+		for _, repo := range inputRepoList {
+			// Repo was already registered, report it to
+			// user and move on
+			if registeredRepos[repo] != nil {
+				cmd.Printf("Repository %s is already registered\n", repo)
+			}
+
+			// Repo was not already registered, add it to
+			// those to process.
+			if repoRef := unregisteredRepos[repo]; repoRef != nil {
+				selectedRepos = append(selectedRepos, repoRef)
+			}
 		}
 	} else {
+		cmd.Printf(
+			"Found %d remote repositories: %d registered and %d unregistered.\n",
+			len(registeredRepos)+len(unregisteredRepos),
+			len(registeredRepos),
+			len(unregisteredRepos),
+		)
+
 		var err error
-		selectedRepos, err = getSelectedReposToRegister(
-			ctx, cmd, provider, project, client, alreadyRegisteredRepos, unregisteredInputRepos)
+		selectedRepos, err = selectReposInteractively(
+			cmd,
+			unregisteredRepos,
+		)
 		if err != nil {
 			return cli.MessageAndError("Error getting selected repositories", err)
 		}
 	}
 
-	results, warnings := registerSelectedRepos(project, client, selectedRepos)
+	results, warnings := registerRepos(project, client, selectedRepos)
 	printWarnings(cmd, warnings)
 
 	printRepoRegistrationStatus(cmd, results)
 	return nil
 }
 
-func getSelectedReposToRegister(
-	ctx context.Context, cmd *cobra.Command, provider, project string, client minderv1.RepositoryServiceClient,
-	alreadyRegisteredRepos sets.Set[string], unregisteredInputRepos []string) ([]*minderv1.UpstreamRepositoryRef, error) {
-	remoteRepositories, err := fetchRemoteRepositoriesFromProvider(ctx, provider, project, client)
-	if err != nil {
-		return nil, cli.MessageAndError("Error getting list of remote repos", err)
-	}
-
-	unregisteredRemoteRepositories := getUnregisteredRemoteRepositories(remoteRepositories, alreadyRegisteredRepos)
-
-	cmd.Printf("Found %d remote repositories: %d registered and %d unregistered.\n",
-		len(remoteRepositories), len(alreadyRegisteredRepos), len(unregisteredRemoteRepositories))
-
-	selectedRepos, warnings, err := getSelectedRepositories(unregisteredRemoteRepositories, unregisteredInputRepos)
-	if err != nil {
-		return nil, cli.MessageAndError("Error getting selected repositories", err)
-	}
-	printWarnings(cmd, warnings)
-
-	return selectedRepos, nil
-}
-
-func fetchAlreadyRegisteredRepos(ctx context.Context, provider, project string, client minderv1.RepositoryServiceClient) (
-	sets.Set[string], error) {
-	alreadyRegisteredRepos, err := client.ListRepositories(ctx, &minderv1.ListRepositoriesRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	alreadyRegisteredReposSet := sets.New[string]()
-	for _, repo := range alreadyRegisteredRepos.Results {
-		alreadyRegisteredReposSet.Insert(cli.GetRepositoryName(repo.Owner, repo.Name))
-	}
-
-	return alreadyRegisteredReposSet, nil
-}
-
-func getUnregisteredInputRepos(inputRepoList []string, alreadyRegisteredRepos sets.Set[string]) (
-	unregisteredInputRepos []string, warnings []string) {
-	if len(inputRepoList) > 0 {
-		inputRepositoriesSet := sets.New(inputRepoList...)
-		for inputRepo := range inputRepositoriesSet {
-			// Input repos without owner are added to unregistered list, even if already registered
-			if alreadyRegisteredRepos.Has(inputRepo) {
-				warnings = append(warnings, fmt.Sprintf("Repository %s is already registered", inputRepo))
-			} else {
-				unregisteredInputRepos = append(unregisteredInputRepos, inputRepo)
-			}
-		}
-	}
-	return unregisteredInputRepos, warnings
-}
-
-func fetchRemoteRepositoriesFromProvider(ctx context.Context, provider, project string, client minderv1.RepositoryServiceClient) (
-	[]*minderv1.UpstreamRepositoryRef, error) {
+func fetchRepos(
+	ctx context.Context,
+	provider string,
+	project string,
+	client minderv1.RepositoryServiceClient,
+) ([]*minderv1.UpstreamRepositoryRef, error) {
 	var provPtr *string
 	if provider != "" {
 		provPtr = &provider
 	}
-	remoteListResp, err := client.ListRemoteRepositoriesFromProvider(ctx, &minderv1.ListRemoteRepositoriesFromProviderRequest{
-		Context: &minderv1.Context{
-			Provider: provPtr,
-			Project:  &project,
+
+	resp, err := client.ListRemoteRepositoriesFromProvider(
+		ctx,
+		&minderv1.ListRemoteRepositoriesFromProviderRequest{
+			Context: &minderv1.Context{
+				Provider: provPtr,
+				Project:  &project,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
-	return remoteListResp.Results, nil
+
+	return resp.Results, nil
 }
 
-func getUnregisteredRemoteRepositories(remoteRepositories []*minderv1.UpstreamRepositoryRef,
-	alreadyRegisteredRepos sets.Set[string]) []*minderv1.UpstreamRepositoryRef {
-	var unregisteredRepos []*minderv1.UpstreamRepositoryRef
-	for _, remoteRepo := range remoteRepositories {
-		if !alreadyRegisteredRepos.Has(cli.GetRepositoryName(remoteRepo.Owner, remoteRepo.Name)) {
-			unregisteredRepos = append(unregisteredRepos, &minderv1.UpstreamRepositoryRef{
-				Owner:   remoteRepo.Owner,
-				Name:    remoteRepo.Name,
-				RepoId:  remoteRepo.RepoId,
-				Context: remoteRepo.Context,
-			})
-		}
+func selectReposInteractively(
+	cmd *cobra.Command,
+	unregisteredRepos map[string]*minderv1.UpstreamRepositoryRef,
+) ([]*minderv1.UpstreamRepositoryRef, error) {
+	repoNames := make([]string, 0, len(unregisteredRepos))
+	for repoName := range unregisteredRepos {
+		repoNames = append(repoNames, repoName)
 	}
-	return unregisteredRepos
+
+	var selectedRepos []string
+	prompt := &survey.MultiSelect{
+		Message: "Select repositories to register with Minder: \n",
+		Options: repoNames,
+	}
+
+	// Prompt the user to select repos, defaulting to 20 per page, but scrollable
+	err := survey.AskOne(prompt, &selectedRepos, survey.WithPageSize(20))
+	if err != nil {
+		return nil, cli.MessageAndError("error getting repo selection: %s", err)
+	}
+
+	effectiveRepos := make([]*minderv1.UpstreamRepositoryRef, 0, len(selectedRepos))
+	for _, name := range selectedRepos {
+		effectiveRepos = append(effectiveRepos, unregisteredRepos[name])
+	}
+
+	if len(effectiveRepos) == 0 {
+		cmd.Println("No repositories selected")
+	}
+
+	return effectiveRepos, nil
 }
 
-func getSelectedRepositories(repoList []*minderv1.UpstreamRepositoryRef, inputRepositories []string) (
-	[]*minderv1.UpstreamRepositoryRef, []string, error) {
-	// If no repos are found, exit
-	if len(repoList) == 0 {
-		return nil, nil, fmt.Errorf("no repositories found")
-	}
-
-	// Create a slice of strings to hold the repo names
-	repoNames := make([]string, len(repoList))
-
-	// Map of repo names to IDs
-	repoIDs := make(map[string]int64)
-
-	// Map of repo names to repo objects
-	repoMap := make(map[string]*minderv1.UpstreamRepositoryRef)
-
-	// Populate the repoNames slice, repoIDs map and repoMap
-	for i, repo := range repoList {
-		repoNames[i] = fmt.Sprintf("%s/%s", repo.Owner, repo.Name)
-		repoIDs[repoNames[i]] = repo.RepoId
-		repoMap[repoNames[i]] = repo
-	}
-
-	// If the --name flag is set, use it to select repos
-	allSelectedRepos, warnings := getSelectedInputRepositories(inputRepositories, repoIDs)
-
-	// The repo flag was empty, or no repositories matched the ones from the flag
-	// Prompt the user to select repos
-	if len(allSelectedRepos) == 0 {
-		var userSelectedRepos []string
-		prompt := &survey.MultiSelect{
-			Message: "Select repositories to register with Minder: \n",
-			Options: repoNames,
-		}
-		// Prompt the user to select repos, defaulting to 20 per page, but scrollable
-		err := survey.AskOne(prompt, &userSelectedRepos, survey.WithPageSize(20))
-		if err != nil {
-			return nil, warnings, fmt.Errorf("error getting repo selection: %s", err)
-		}
-		allSelectedRepos = append(allSelectedRepos, userSelectedRepos...)
-	}
-
-	// If no repos were selected, exit
-	if len(allSelectedRepos) == 0 {
-		return nil, warnings, fmt.Errorf("no repositories selected")
-	}
-
-	// Create a slice of Repositories protobufs
-	protoRepos := make([]*minderv1.UpstreamRepositoryRef, len(allSelectedRepos))
-
-	// Convert the selected repos into a slice of Repositories protobufs
-	for i, repo := range allSelectedRepos {
-		splitRepo := strings.Split(repo, "/")
-		if len(splitRepo) != 2 {
-			warnings = append(warnings, fmt.Sprintf("Unexpected repository name format: %s, skipping registration", repo))
-			continue
-		}
-		protoRepos[i] = &minderv1.UpstreamRepositoryRef{
-			Owner:  splitRepo[0],
-			Name:   splitRepo[1],
-			RepoId: repoIDs[repo],
-			Context: &minderv1.Context{
-				Provider: ptr.Ptr(repoMap[repo].GetContext().GetProvider()),
-			},
-		}
-	}
-	return protoRepos, warnings, nil
-}
-
-func registerSelectedRepos(
+func registerRepos(
 	project string,
 	client minderv1.RepositoryServiceClient,
-	selectedRepos []*minderv1.UpstreamRepositoryRef) ([]*minderv1.RegisterRepoResult, []string) {
+	repos []*minderv1.UpstreamRepositoryRef,
+) ([]*minderv1.RegisterRepoResult, []string) {
 	var results []*minderv1.RegisterRepoResult
 	var warnings []string
-	for idx := range selectedRepos {
-		repo := selectedRepos[idx]
-
-		result, err := client.RegisterRepository(context.Background(), &minderv1.RegisterRepositoryRequest{
-			Context: &minderv1.Context{
-				Provider: ptr.Ptr(repo.GetContext().GetProvider()),
-				Project:  &project,
+	for _, repo := range repos {
+		result, err := client.RegisterRepository(
+			context.Background(),
+			&minderv1.RegisterRepositoryRequest{
+				Context: &minderv1.Context{
+					Provider: ptr.Ptr(repo.GetContext().GetProvider()),
+					Project:  &project,
+				},
+				Repository: repo,
 			},
-			Repository: repo,
-		})
+		)
 
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Error registering repository %s: %s", repo.Name, err))
@@ -279,6 +208,7 @@ func registerSelectedRepos(
 		}
 		results = append(results, result.Result)
 	}
+
 	return results, warnings
 }
 
@@ -312,28 +242,10 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 	t.Render()
 }
 
-func getSelectedInputRepositories(inputRepositories []string, repoIDs map[string]int64) (selectedInputRepo, warnings []string) {
-	for _, repo := range inputRepositories {
-		if _, ok := repoIDs[repo]; !ok {
-			warnings = append(warnings, fmt.Sprintf("Repository %s not found", repo))
-			continue
-		}
-		selectedInputRepo = append(selectedInputRepo, repo)
-	}
-	return selectedInputRepo, warnings
-}
-
 func printWarnings(cmd *cobra.Command, warnings []string) {
 	for _, warning := range warnings {
 		cmd.Println(warning)
 	}
-}
-
-func getInputRepoList(raw string) []string {
-	if raw == "" {
-		return []string{}
-	}
-	return strings.Split(raw, ",")
 }
 
 func init() {
