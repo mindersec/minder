@@ -50,7 +50,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 		RepoName         string
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
-		StoreSetup       storeMockBuilder
 		ExpectedError    string
 	}{
 		{
@@ -118,7 +117,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 				scenario.RepoServiceSetup,
 				scenario.ProviderFails,
 				nil,
-				scenario.StoreSetup,
 			)
 
 			req := &pb.RegisterRepositoryRequest{
@@ -155,7 +153,6 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		RepoServiceSetup repoMockBuilder
 		GitHubSetup      githubMockBuilder
 		ProviderFails    bool
-		StoreSetup       storeMockBuilder
 		ExpectedResults  []*pb.UpstreamRepositoryRef
 		ExpectedError    string
 	}{
@@ -167,10 +164,8 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:        "List remote repositories succeeds when all providers succeed",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			StoreSetup: newStore(
-				withStoredProvider(provider),
-				withStoredProviderAccessToken(),
-				withStoredRepositories(
+			RepoServiceSetup: newRepoService(
+				withSuccessfulListRepositories(
 					simpleDbRepository(repoName, remoteRepoId),
 				),
 			),
@@ -180,17 +175,12 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			},
 		},
 		{
-			Name:        "List remote repositories succeeds despite store fail",
+			Name:        "List remote repositories fails when db fails",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			StoreSetup: newStore(
-				withStoredProvider(provider),
-				withStoredProviderAccessToken(),
-				withStoreRepositoryLookupFailure(errors.New("oops")),
+			RepoServiceSetup: newRepoService(
+				withFailedListRepositories(errors.New("oops")),
 			),
-			ExpectedResults: []*pb.UpstreamRepositoryRef{
-				simpleUpstreamRepositoryRef(repoName, remoteRepoId, false),
-				simpleUpstreamRepositoryRef(repoName2, remoteRepoId2, false),
-			},
+			ExpectedError: "cannot list registered repositories",
 		},
 	}
 
@@ -218,7 +208,6 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 				scenario.RepoServiceSetup,
 				scenario.ProviderFails,
 				manager,
-				scenario.StoreSetup,
 			)
 
 			projectIDStr := projectID.String()
@@ -252,7 +241,6 @@ func TestServer_DeleteRepository(t *testing.T) {
 		RepoID           string
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
-		StoreSetup       storeMockBuilder
 		ExpectedError    string
 	}{
 		{
@@ -316,7 +304,6 @@ func TestServer_DeleteRepository(t *testing.T) {
 				scenario.RepoServiceSetup,
 				scenario.ProviderFails,
 				nil,
-				scenario.StoreSetup,
 			)
 
 			var result string
@@ -360,8 +347,6 @@ type (
 	repoMockBuilder   = func(*gomock.Controller) repoServiceMock
 	githubMock        = *mockgh.MockGitHub
 	githubMockBuilder = func(*gomock.Controller) githubMock
-	storeMock         = *mockdb.MockStore
-	storeMockBuilder  = func(*gomock.Controller) storeMock
 )
 
 const (
@@ -450,27 +435,6 @@ func newGitHub(opts ...func(mock githubMock)) githubMockBuilder {
 	}
 }
 
-func newStore(opts ...func(storeMock)) storeMockBuilder {
-	return func(ctrl *gomock.Controller) storeMock {
-		mock := mockdb.NewMockStore(ctrl)
-
-		mock.EXPECT().
-			GetParentProjects(gomock.Any(), projectID).
-			Return([]uuid.UUID{projectID}, nil).
-			AnyTimes()
-		mock.EXPECT().
-			GetFeatureInProject(gomock.Any(), gomock.Any()).
-			Return(json.RawMessage{}, nil).
-			AnyTimes()
-
-		for _, opt := range opts {
-			opt(mock)
-		}
-
-		return mock
-	}
-}
-
 func withSuccessfulCreate(mock repoServiceMock) {
 	mock.EXPECT().
 		CreateRepository(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
@@ -509,6 +473,30 @@ func withFailedDeleteByName(err error) func(repoServiceMock) {
 	}
 }
 
+func withSuccessfulListRepositories(repositories ...db.Repository) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			ListRepositories(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).
+			Return(repositories, nil).AnyTimes()
+	}
+}
+
+func withFailedListRepositories(err error) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			ListRepositories(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).
+			Return(nil, err).AnyTimes()
+	}
+}
+
 func withSuccessfulListAllRepositories(mock githubMock) {
 	mock.EXPECT().
 		ListAllRepositories(gomock.Any()).
@@ -523,53 +511,11 @@ func withFailedListAllRepositories(err error) func(githubMock) {
 	}
 }
 
-// Builders useful to confiure storage mock
-func withStoredProvider(provider db.Provider) func(storeMock) {
-	return func(mock storeMock) {
-		mock.EXPECT().
-			FindProviders(gomock.Any(), gomock.Any()).
-			Return([]db.Provider{provider}, nil).AnyTimes()
-		mock.EXPECT().
-			GetProviderByID(gomock.Any(), gomock.Any()).
-			Return(provider, nil).AnyTimes()
-	}
-}
-
-func withStoredProviderAccessToken() func(storeMock) {
-	return func(mock storeMock) {
-		mock.EXPECT().
-			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
-			Return(db.ProviderAccessToken{
-				EncryptedToken: "encryptedToken",
-			}, nil).AnyTimes()
-	}
-}
-
-func withStoredRepositories(repositories ...db.Repository) func(storeMock) {
-	return func(mock storeMock) {
-		mock.EXPECT().
-			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).
-			Return(repositories, nil).AnyTimes()
-	}
-}
-
-func withStoreRepositoryLookupFailure(err error) func(storeMock) {
-	return func(mock storeMock) {
-		mock.EXPECT().
-			ListRepositoriesByProjectID(
-				gomock.Any(),
-				gomock.Any(),
-			).
-			Return(nil, err).AnyTimes()
-	}
-}
-
 func createServer(
 	ctrl *gomock.Controller,
 	repoServiceSetup repoMockBuilder,
 	providerFails bool,
 	providerManager manager.ProviderManager,
-	storeSetup storeMockBuilder,
 ) *Server {
 	var svc ghrepo.RepositoryService
 	if repoServiceSetup != nil {
@@ -608,10 +554,6 @@ func createServer(
 		store.EXPECT().
 			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).
 			Return([]db.Repository{dbExistingRepo}, nil).AnyTimes()
-	}
-
-	if storeSetup != nil {
-		store = storeSetup(ctrl)
 	}
 
 	return &Server{
