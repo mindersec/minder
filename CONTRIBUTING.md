@@ -28,7 +28,7 @@ We use GitHub issues to track bugs and enhancements. If you have a general usage
 If you are reporting a bug, please help to speed up problem diagnosis by providing as much information as possible. Ideally, that would include a small sample project that reproduces the problem.
 
 ### Sign the Contributor License Agreement
-Before we accept a non-trivial patch or pull request, we will need you to sign the [Contributor License Agreement](https://cla-assistant.io/stacklok/minder?pullRequest=3209). Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. Active contributors might be asked to join the core team and given the ability to merge pull requests.
+Before we accept a non-trivial patch or pull request, we will need you to sign the [Contributor License Agreement](https://cla-assistant.io/stacklok/minder). Signing the contributor’s agreement does not grant anyone commit rights to the main repository, but it does mean that we can accept your contributions, and you will get an author credit if we do. Active contributors might be asked to join the core team and given the ability to merge pull requests.
 
 ### Not sure how to start contributing...
 PRs to resolve existing issues are greatly appreciated and issues labeled as ["good first issue"](https://github.com/stacklok/minder/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) are a great place to start!
