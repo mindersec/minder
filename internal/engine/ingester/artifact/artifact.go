@@ -41,6 +41,11 @@ import (
 const (
 	// ArtifactRuleDataIngestType is the type of the artifact rule data ingest engine
 	ArtifactRuleDataIngestType = "artifact"
+
+	// githubTokenIssuer is the issuer stamped into sigstore certs
+	// when authenticating through GitHub tokens
+	//nolint : gosec // Not an embedded credential
+	githubTokenIssuer = "https://token.actions.githubusercontent.com"
 )
 
 // Ingest is the engine for a rule type that uses artifact data ingest
@@ -347,24 +352,38 @@ func branchFromRef(ref string) string {
 // more generalizable (applicable to the same path regardless of the repo for example).
 func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	var builderURL string
+
+	if c.SubjectAlternativeName.Value == "" {
+		return "", fmt.Errorf("certificate has no signer identity in SAN (is it a fulcio cert?)")
+	}
+
 	switch {
-	case c.BuildSignerURI != "":
-		// Find the index of '@' to isolate the file name
-		builderURL = c.BuildSignerURI
 	case c.SubjectAlternativeName.Value != "" && c.SubjectAlternativeName.Type == certificate.SubjectAlternativeNameTypeURI:
 		builderURL = c.SubjectAlternativeName.Value
 	default:
 		// Return the SAN in the cert as a last resort. This handles the case when
 		// we don't have a signer identity but also when the SAN is an email
-		// when a user authenticated using an OIDC provider.
+		// when a user authenticated using an OIDC provider or a SPIFFE ID.
 		// Any other SAN types are returned verbatim
 		return c.SubjectAlternativeName.Value, nil
 	}
 
-	uString, _, _ := strings.Cut(builderURL, "@")
-	u, err := url.Parse(uString)
-	if err != nil {
-		return "", fmt.Errorf("parsing builder URI: %w", err)
+	// Any signer identity not issued by github actions is returned verbatim
+	if c.Extensions.Issuer != githubTokenIssuer {
+		return builderURL, nil
 	}
-	return u.Path, nil
+
+	// When handling a cert issued through GitHub actions tokens, break the identity
+	// into its components. The verifier captures the git reference and the
+	// the repository URI.
+	if c.Extensions.SourceRepositoryURI == "" {
+		return "", fmt.Errorf(
+			"certificate extension dont have a SourceRepositoryURI set (oid 1.3.6.1.4.1.57264.1.5)",
+		)
+	}
+
+	builderURL, _, _ = strings.Cut(builderURL, "@")
+	builderURL = strings.TrimPrefix(builderURL, c.Extensions.SourceRepositoryURI)
+
+	return builderURL, nil
 }
