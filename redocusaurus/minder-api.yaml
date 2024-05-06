@@ -3046,6 +3046,11 @@ definitions:
           This is only set on output, and is ignored on input.
       context:
         $ref: '#/definitions/v1Context'
+      registered:
+        type: boolean
+        description: |-
+          True if the repository is already registered in Minder.
+          This is only set on output, and is ignored on input.
   v1UserRecord:
     type: object
     properties:
