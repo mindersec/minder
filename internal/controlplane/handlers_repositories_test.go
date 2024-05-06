@@ -112,7 +112,12 @@ func TestServer_RegisterRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, nil)
+			server := createServer(
+				ctrl,
+				scenario.RepoServiceSetup,
+				scenario.ProviderFails,
+				nil,
+			)
 
 			req := &pb.RegisterRepositoryRequest{
 				Repository: &pb.UpstreamRepositoryRef{
@@ -148,6 +153,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		RepoServiceSetup repoMockBuilder
 		GitHubSetup      githubMockBuilder
 		ProviderFails    bool
+		ExpectedResults  []*pb.UpstreamRepositoryRef
 		ExpectedError    string
 	}{
 		{
@@ -158,6 +164,23 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:        "List remote repositories succeeds when all providers succeed",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
+			RepoServiceSetup: newRepoService(
+				withSuccessfulListRepositories(
+					simpleDbRepository(repoName, remoteRepoId),
+				),
+			),
+			ExpectedResults: []*pb.UpstreamRepositoryRef{
+				simpleUpstreamRepositoryRef(repoName, remoteRepoId, true),
+				simpleUpstreamRepositoryRef(repoName2, remoteRepoId2, false),
+			},
+		},
+		{
+			Name:        "List remote repositories fails when db fails",
+			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
+			RepoServiceSetup: newRepoService(
+				withFailedListRepositories(errors.New("oops")),
+			),
+			ExpectedError: "cannot list registered repositories",
 		},
 	}
 
@@ -180,7 +203,12 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 				gomock.Eq(""),
 			).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, manager)
+			server := createServer(
+				ctrl,
+				scenario.RepoServiceSetup,
+				scenario.ProviderFails,
+				manager,
+			)
 
 			projectIDStr := projectID.String()
 			req := &pb.ListRemoteRepositoriesFromProviderRequest{
@@ -191,20 +219,10 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			res, err := server.ListRemoteRepositoriesFromProvider(ctx, req)
 			if scenario.ExpectedError == "" {
 				expectation := &pb.ListRemoteRepositoriesFromProviderResponse{
-					Results: []*pb.UpstreamRepositoryRef{
-						{
-							Context: &pb.Context{
-								Provider: &provider.Name,
-								Project:  ptr.Ptr(projectID.String()),
-							},
-							Owner:  repoOwner,
-							Name:   repoName,
-							RepoId: remoteRepoId,
-						},
-					},
+					Results: scenario.ExpectedResults,
 				}
 				require.NoError(t, err)
-				require.Equal(t, res, expectation)
+				require.Equal(t, expectation, res)
 			} else {
 				require.Nil(t, res)
 				require.Contains(t, err.Error(), scenario.ExpectedError)
@@ -281,7 +299,12 @@ func TestServer_DeleteRepository(t *testing.T) {
 				Project:  engine.Project{ID: projectID},
 			})
 
-			server := createServer(ctrl, scenario.RepoServiceSetup, scenario.ProviderFails, nil)
+			server := createServer(
+				ctrl,
+				scenario.RepoServiceSetup,
+				scenario.ProviderFails,
+				nil,
+			)
 
 			var result string
 			var resultError error
@@ -332,6 +355,9 @@ const (
 	repoOwnerAndName = "acme-corp/api-gateway"
 	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
 	remoteRepoId     = 123456
+	repoName2        = "another-repo"
+	remoteRepoId2    = 234567
+	accessToken      = "TOKEN"
 )
 
 var (
@@ -352,7 +378,42 @@ var (
 		Name:   repoName,
 		RepoId: remoteRepoId,
 	}
+	existingRepo2 = pb.Repository{
+		Owner:  repoOwner,
+		Name:   repoName2,
+		RepoId: 234567,
+	}
+	dbExistingRepo = db.Repository{
+		ID:        uuid.UUID{},
+		Provider:  ghprovider.Github,
+		RepoOwner: repoOwner,
+		RepoName:  repoName,
+		RepoID:    remoteRepoId,
+	}
 )
+
+func simpleDbRepository(name string, id int64) db.Repository {
+	return db.Repository{
+		ID:        uuid.UUID{},
+		Provider:  ghprovider.Github,
+		RepoOwner: repoOwner,
+		RepoName:  name,
+		RepoID:    id,
+	}
+}
+
+func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *pb.UpstreamRepositoryRef {
+	return &pb.UpstreamRepositoryRef{
+		Context: &pb.Context{
+			Provider: &provider.Name,
+			Project:  ptr.Ptr(projectID.String()),
+		},
+		Owner:      repoOwner,
+		Name:       name,
+		RepoId:     id,
+		Registered: registered,
+	}
+}
 
 func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
 	return func(ctrl *gomock.Controller) repoServiceMock {
@@ -412,10 +473,34 @@ func withFailedDeleteByName(err error) func(repoServiceMock) {
 	}
 }
 
+func withSuccessfulListRepositories(repositories ...db.Repository) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			ListRepositories(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).
+			Return(repositories, nil).AnyTimes()
+	}
+}
+
+func withFailedListRepositories(err error) func(repoServiceMock) {
+	return func(mock repoServiceMock) {
+		mock.EXPECT().
+			ListRepositories(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).
+			Return(nil, err).AnyTimes()
+	}
+}
+
 func withSuccessfulListAllRepositories(mock githubMock) {
 	mock.EXPECT().
 		ListAllRepositories(gomock.Any()).
-		Return([]*pb.Repository{&existingRepo}, nil)
+		Return([]*pb.Repository{&existingRepo, &existingRepo2}, nil)
 }
 
 func withFailedListAllRepositories(err error) func(githubMock) {
@@ -456,6 +541,9 @@ func createServer(
 			Return([]db.Provider{}, errDefault).AnyTimes()
 	} else {
 		store.EXPECT().
+			GetProviderByID(gomock.Any(), gomock.Any()).
+			Return(provider, nil).AnyTimes()
+		store.EXPECT().
 			FindProviders(gomock.Any(), gomock.Any()).
 			Return([]db.Provider{provider}, nil).AnyTimes()
 		store.EXPECT().
@@ -464,8 +552,8 @@ func createServer(
 				EncryptedToken: "encryptedToken",
 			}, nil).AnyTimes()
 		store.EXPECT().
-			GetProviderByID(gomock.Any(), gomock.Any()).
-			Return(provider, nil).AnyTimes()
+			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).
+			Return([]db.Repository{dbExistingRepo}, nil).AnyTimes()
 	}
 
 	return &Server{

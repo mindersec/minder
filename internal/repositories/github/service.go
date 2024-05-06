@@ -70,6 +70,17 @@ type RepositoryService interface {
 		projectID uuid.UUID,
 		providerName string,
 	) error
+
+	// ListRepositories retrieves all repositories for the
+	// specific provider and project. Ideally, we would take
+	// provider ID instead of name. Name is used for backwards
+	// compatibility with the API endpoint which calls it.
+	ListRepositories(
+		ctx context.Context,
+		projectID uuid.UUID,
+		providerName string,
+	) ([]db.Repository, error)
+
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (db.Repository, error)
 	// GetRepositoryByName retrieves a repository by its name, owner, project and provider (if specified).
@@ -187,6 +198,23 @@ func (r *repositoryService) CreateRepository(
 	logger.BusinessRecord(ctx).Repository = dbID
 
 	return pbRepo, nil
+}
+
+func (r *repositoryService) ListRepositories(
+	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
+) ([]db.Repository, error) {
+	return r.store.ListRepositoriesByProjectID(
+		ctx,
+		db.ListRepositoriesByProjectIDParams{
+			ProjectID: projectID,
+			Provider: sql.NullString{
+				String: providerName,
+				Valid:  providerName != "",
+			},
+		},
+	)
 }
 
 func (r *repositoryService) GetRepositoryById(

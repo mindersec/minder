@@ -354,6 +354,26 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			continue
 		}
 
+		registeredRepos, err := s.repos.ListRepositories(
+			ctx,
+			projectID,
+			providerName,
+		)
+		if err != nil {
+			return nil, util.UserVisibleError(
+				codes.Internal,
+				"cannot list registered repositories",
+			)
+		}
+
+		registered := make(map[int64]bool)
+		for _, repo := range registeredRepos {
+			registered[repo.RepoID] = true
+		}
+
+		for _, result := range results {
+			result.Registered = registered[result.RepoId]
+		}
 		out.Results = append(out.Results, results...)
 	}
 
