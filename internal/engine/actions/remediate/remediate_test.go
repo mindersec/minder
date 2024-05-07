@@ -19,8 +19,6 @@ package remediate_test
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,6 +27,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
+	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
+	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
