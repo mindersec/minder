@@ -26,21 +26,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/engine"
 
+	"github.com/stacklok/minder/internal/auth"
 	config "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/engine"
 )
 
 func TestOpenFeatureProviderFromFlags(t *testing.T) {
 	t.Parallel()
 
-	testFile := filepath.Join(t.TempDir(), "testfile.yaml")
+	testFile := filepath.Clean(filepath.Join(t.TempDir(), "testfile.yaml"))
 	tempFile, err := os.Create(testFile)
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
-	t.Cleanup(func() { tempFile.Close() })
+	t.Cleanup(func() { _ = tempFile.Close() })
 	configFile := `
 idp_resolver:
   variations:
@@ -78,16 +78,19 @@ idp_resolver:
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			ctx := context.Background()
 			OpenFeatureProviderFromFlags(ctx, tt.cfg)
 
 			client := openfeature.NewClient("test")
 			userJWT := openid.New()
-			userJWT.Set("sub", "user-1")
+			if err := userJWT.Set("sub", "user-1"); err != nil {
+				t.Fatalf("failed to set sub claim: %v", err)
+			}
 			ctx = auth.WithAuthTokenContext(ctx, userJWT)
 			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-				Project:  engine.Project{uuid.New()},
-				Provider: engine.Provider{"testing"},
+				Project:  engine.Project{ID: uuid.New()},
+				Provider: engine.Provider{Name: "testing"},
 			})
 
 			flagResult := Bool(ctx, client, IDPResolver)
