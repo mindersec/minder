@@ -9,6 +9,7 @@ project_name: minder
 before:
   hooks:
     - go mod tidy
+    - go generate ./tools/tools.go
     - go generate ./...
 # This section defines the build matrix.
 builds:
