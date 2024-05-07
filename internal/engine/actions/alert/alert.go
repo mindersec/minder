@@ -18,21 +18,25 @@
 package alert
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert/noop"
 	"github.com/stacklok/minder/internal/engine/actions/alert/security_advisory"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // ActionType is the type of the alert engine
 const ActionType engif.ActionType = "alert"
 
 // NewRuleAlert creates a new rule alert engine
-func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
-	alertCfg := rt.Def.GetAlert()
+func NewRuleAlert(
+	ruletype *pb.RuleType,
+	provider provinfv1.Provider,
+) (engif.Action, error) {
+	alertCfg := ruletype.Def.GetAlert()
 	if alertCfg == nil {
 		return noop.NewNoopAlert(ActionType)
 	}
@@ -43,11 +47,11 @@ func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Act
 		if alertCfg.GetSecurityAdvisory() == nil {
 			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), client)
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype.GetSeverity(), alertCfg.GetSecurityAdvisory(), client)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

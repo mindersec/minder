@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -35,7 +36,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -101,6 +101,6 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 		&auth.IdentityClient{},
 		metrics.NewNoopMetrics(),
 		provtelemetry.NewNoopMetrics(),
-		[]engine.ExecutorOption{},
+		[]message.HandlerMiddleware{},
 	)
 }

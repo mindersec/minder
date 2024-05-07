@@ -31,8 +31,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // RuleMeta is the metadata for a rule
@@ -60,20 +60,20 @@ func (r *RuleMeta) String() string {
 type RuleTypeEngine struct {
 	Meta RuleMeta
 
-	// rdi is the rule data ingest engine
-	rdi engif.Ingester
+	// ingester is the rule data ingest engine
+	ingester engif.Ingester
 
-	// reval is the rule evaluator
-	reval engif.Evaluator
+	// ruleEvaluator is the rule evaluator
+	ruleEvaluator engif.Evaluator
 
-	// rae is the rule actions engine
-	rae *actions.RuleActionsEngine
+	// actionsEngine is the rule actions engine
+	actionsEngine *actions.RuleActionsEngine
 
-	rval *RuleValidator
+	ruleValidator *RuleValidator
 
-	rt *minderv1.RuleType
+	ruletype *minderv1.RuleType
 
-	cli *providers.ProviderBuilder
+	//provider provinfv1.Provider
 
 	ingestCache ingestcache.Cache
 }
@@ -81,45 +81,45 @@ type RuleTypeEngine struct {
 // NewRuleTypeEngine creates a new rule type engine
 func NewRuleTypeEngine(
 	ctx context.Context,
-	p *minderv1.Profile,
-	rt *minderv1.RuleType,
-	cli *providers.ProviderBuilder,
+	profile *minderv1.Profile,
+	ruletype *minderv1.RuleType,
+	provider provinfv1.Provider,
 ) (*RuleTypeEngine, error) {
-	rval, err := NewRuleValidator(rt)
+	rval, err := NewRuleValidator(ruletype)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := ingester.NewRuleDataIngest(rt, cli)
+	rdi, err := ingester.NewRuleDataIngest(ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	reval, err := eval.NewRuleEvaluator(ctx, rt, cli)
+	reval, err := eval.NewRuleEvaluator(ctx, ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
-	ae, err := actions.NewRuleActions(p, rt, cli)
+	ae, err := actions.NewRuleActions(profile, ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
-			Name: rt.Name,
+			Name: ruletype.Name,
 		},
-		rval:        rval,
-		rdi:         rdi,
-		reval:       reval,
-		rae:         ae,
-		rt:          rt,
-		cli:         cli,
+		ruleValidator: rval,
+		ingester:      rdi,
+		ruleEvaluator: reval,
+		actionsEngine: ae,
+		ruletype:      ruletype,
+		//cli:           cli,
 		ingestCache: ingestcache.NewNoopCache(),
 	}
 
-	if rt.Context.Project != nil && *rt.Context.Project != "" {
-		prj := strings.Clone(*rt.Context.Project)
+	if ruletype.Context.Project != nil && *ruletype.Context.Project != "" {
+		prj := strings.Clone(*ruletype.Context.Project)
 		rte.Meta.Project = &prj
 	} else {
 		return nil, fmt.Errorf("rule type context must have a project")
@@ -143,7 +143,7 @@ func (r *RuleTypeEngine) GetID() string {
 // GetRuleInstanceValidator returns the rule instance validator for this rule type.
 // By instance we mean a rule that has been instantiated in a profile from a given rule type.
 func (r *RuleTypeEngine) GetRuleInstanceValidator() *RuleValidator {
-	return r.rval
+	return r.ruleValidator
 }
 
 // Eval runs the rule type engine against the given entity
@@ -154,17 +154,17 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapp
 
 	logger.Info().Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
-	result, ok := r.ingestCache.Get(r.rdi, inf.Entity, params.GetRule().Params)
+	result, ok := r.ingestCache.Get(r.ingester, inf.Entity, params.GetRule().Params)
 	if !ok {
 		var err error
 		// Ingest the data needed for the rule evaluation
-		result, err = r.rdi.Ingest(ctx, inf.Entity, params.GetRule().Params.AsMap())
+		result, err = r.ingester.Ingest(ctx, inf.Entity, params.GetRule().Params.AsMap())
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
 			return fmt.Errorf("error ingesting data: %w", err)
 		}
-		r.ingestCache.Set(r.rdi, inf.Entity, params.GetRule().Params, result)
+		r.ingestCache.Set(r.ingester, inf.Entity, params.GetRule().Params, result)
 	} else {
 		logger.Info().Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
 	}
@@ -173,7 +173,7 @@ func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapp
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.reval.Eval(ctx, params.GetRule().Def.AsMap(), result)
+	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def.AsMap(), result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }
@@ -185,12 +185,12 @@ func (r *RuleTypeEngine) Actions(
 	params engif.ActionsParams,
 ) enginerr.ActionsError {
 	// Process actions
-	return r.rae.DoActions(ctx, inf.Entity, params)
+	return r.actionsEngine.DoActions(ctx, inf.Entity, params)
 }
 
 // GetActionsOnOff returns the on/off state of the actions
 func (r *RuleTypeEngine) GetActionsOnOff() map[engif.ActionType]engif.ActionOpt {
-	return r.rae.GetOnOffState()
+	return r.actionsEngine.GetOnOffState()
 }
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

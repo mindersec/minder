@@ -17,57 +17,36 @@
 package remediate_test
 
 import (
-	"database/sql"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/git"
+	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 var (
-	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
-	validProviderBuilder = providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "github",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				db.ProviderTypeRest,
-			},
-			Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-	}
-}`),
-		},
-		sql.NullString{},
-		false,
-		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	)
+	simpleBodyTemplate = "{\"foo\": \"bar\"}"
 )
 
 func TestNewRuleRemediator(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		ruleType    *pb.RuleType
-		wantError   bool
-		wantType    engif.Action
-		provBuilder *providers.ProviderBuilder
+		name      string
+		ruleType  *pb.RuleType
+		wantError bool
+		wantType  engif.Action
+		provider  func() (provifv1.Provider, error)
 	}{
 		{
 			name: "Test Noop Remediate",
@@ -91,9 +70,26 @@ func TestNewRuleRemediator(t *testing.T) {
 					},
 				},
 			},
-			provBuilder: validProviderBuilder,
-			wantError:   false, // Expecting a NoopRemediate instance (or whichever condition you check for)
-			wantType:    &rest.Remediator{},
+			provider:  HTTPProvider,
+			wantError: false, // Expecting a NoopRemediate instance (or whichever condition you check for)
+			wantType:  &rest.Remediator{},
+		},
+		{
+			name: "Test REST Remediate with wrong provider type",
+			ruleType: &pb.RuleType{
+				Def: &pb.RuleType_Definition{
+					Remediate: &pb.RuleType_Definition_Remediate{
+						Type: rest.RemediateType,
+						Rest: &pb.RestType{
+							Method:   "POST",
+							Endpoint: "{{.Profile.endpoint}}",
+							Body:     &simpleBodyTemplate,
+						},
+					},
+				},
+			},
+			provider:  GitProvider,
+			wantError: true,
 		},
 		{
 			name: "Test Rest Remediate Without Config",
@@ -104,8 +100,8 @@ func TestNewRuleRemediator(t *testing.T) {
 					},
 				},
 			},
-			provBuilder: validProviderBuilder,
-			wantError:   true,
+			provider:  HTTPProvider,
+			wantError: true,
 		},
 		{
 			name: "Test made up remediator",
@@ -127,7 +123,13 @@ func TestNewRuleRemediator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := remediate.NewRuleRemediator(tt.ruleType, tt.provBuilder)
+			var err error
+			var provider provifv1.Provider
+			if tt.provider != nil {
+				provider, err = tt.provider()
+				require.NoError(t, err)
+			}
+			result, err := remediate.NewRuleRemediator(tt.ruleType, provider)
 			if tt.wantError {
 				require.Error(t, err)
 				return
@@ -137,4 +139,17 @@ func TestNewRuleRemediator(t *testing.T) {
 			assert.IsType(t, tt.wantType, result) // Or whichever condition you check for
 		})
 	}
+}
+
+func HTTPProvider() (provifv1.Provider, error) {
+	cfg := pb.RESTProviderConfig{BaseUrl: "https://api.github.com/"}
+	return httpclient.NewREST(
+		&cfg,
+		telemetry.NewNoopMetrics(),
+		credentials.NewGitHubTokenCredential("token"),
+	)
+}
+
+func GitProvider() (provifv1.Provider, error) {
+	return git.NewGit(credentials.NewEmptyCredential()), nil
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -112,7 +113,7 @@ func testGithubProviderBuilder(baseURL string) (provifv1.REST, error) {
 		&pb.GitHubProviderConfig{
 			Endpoint: baseURL,
 		},
-		nil,
+		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		"",
