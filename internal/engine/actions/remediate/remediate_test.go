@@ -104,7 +104,8 @@ func TestNewRuleRemediator(t *testing.T) {
 					},
 				},
 			},
-			wantError: true,
+			provBuilder: validProviderBuilder,
+			wantError:   true,
 		},
 		{
 			name: "Test made up remediator",

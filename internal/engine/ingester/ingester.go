@@ -46,24 +46,40 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rt.Def.Ingest.GetRest() == nil {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
+		client, err := pbuild.GetHTTP()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
 
-		return rest.NewRestRuleDataIngest(ing.GetRest(), pbuild)
+		return rest.NewRestRuleDataIngest(ing.GetRest(), client)
 	case builtin.BuiltinRuleDataIngestType:
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
-		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin(), pbuild)
+		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin())
 
 	case artifact.ArtifactRuleDataIngestType:
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
-		return artifact.NewArtifactDataIngest(ing.GetArtifact(), pbuild)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return artifact.NewArtifactDataIngest(client)
 
 	case git.GitRuleDataIngestType:
-		return git.NewGitIngester(ing.GetGit(), pbuild)
+		client, err := pbuild.GetGit()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return git.NewGitIngester(ing.GetGit(), client)
 	case diff.DiffRuleDataIngestType:
-		return diff.NewDiffIngester(ing.GetDiff(), pbuild)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return diff.NewDiffIngester(ing.GetDiff(), client)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

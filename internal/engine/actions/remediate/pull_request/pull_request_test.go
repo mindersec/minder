@@ -18,7 +18,6 @@ package pull_request
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,13 +38,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -89,27 +87,15 @@ jobs:
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
 
-func testGithubProviderBuilder() *providers.ProviderBuilder {
-	baseURL := ghApiUrl + "/"
-
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
-			Definition: json.RawMessage(definitionJSON),
+func testGithubProvider() (provifv1.GitHub, error) {
+	return clients.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: ghApiUrl + "/",
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -192,7 +178,7 @@ func createTestRemArgsWithExcludes() *remediateArgs {
 	}
 }
 
-func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
+func happyPathMockSetup(mockGitHub *mockghclient.MockGitHub) {
 	// no pull request so far
 	mockGitHub.EXPECT().
 		ListPullRequests(gomock.Any(), repoOwner, repoName, gomock.Any()).Return([]*github.PullRequest{}, nil)
@@ -204,7 +190,7 @@ func happyPathMockSetup(mockGitHub *mock_ghclient.MockGitHub) {
 		AddAuthToPushOptions(gomock.Any(), gomock.Any()).Return(nil)
 }
 
-func resolveActionMockSetup(t *testing.T, mockGitHub *mock_ghclient.MockGitHub, url, ref string) {
+func resolveActionMockSetup(t *testing.T, mockGitHub *mockghclient.MockGitHub, url, ref string) {
 	t.Helper()
 
 	mockGitHub.EXPECT().
@@ -369,7 +355,6 @@ func TestPullRequestRemediate(t *testing.T) {
 
 	type newPullRequestRemediateArgs struct {
 		prRem      *pb.RuleType_Definition_Remediate_PullRequestRemediation
-		pbuild     *providers.ProviderBuilder
 		actionType interfaces.ActionType
 	}
 
@@ -378,7 +363,7 @@ func TestPullRequestRemediate(t *testing.T) {
 		newRemArgs       *newPullRequestRemediateArgs
 		remArgs          *remediateArgs
 		repoSetup        func(*testing.T) (*git.Repository, error)
-		mockSetup        func(*testing.T, *mock_ghclient.MockGitHub)
+		mockSetup        func(*testing.T, *mockghclient.MockGitHub)
 		expectedErr      error
 		wantInitErr      bool
 		expectedMetadata json.RawMessage
@@ -387,12 +372,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "open a PR",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
 				mockGitHub.EXPECT().
@@ -410,12 +394,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "fail to open a PR",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
 				mockGitHub.EXPECT().
@@ -433,12 +416,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "update an existing PR branch with a force-push",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: mockRepoSetupWithBranch,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				happyPathMockSetup(mockGitHub)
 
 				mockGitHub.EXPECT().
@@ -456,12 +438,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "A PR already exists, use it and don't open a new one",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(_ *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				mockGitHub.EXPECT().
 					GetName(gomock.Any()).Return("stacklok-bot", nil)
 				mockGitHub.EXPECT().
@@ -518,12 +499,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				t.Helper()
 
 				happyPathMockSetup(mockGitHub)
@@ -546,12 +526,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee with excludes",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRemWithExcludes([]string{"actions/setup-go@v5"}),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				t.Helper()
 
 				happyPathMockSetup(mockGitHub)
@@ -572,12 +551,11 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee with excludes from rule",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgsWithExcludes(),
 			repoSetup: defaultMockRepoSetup,
-			mockSetup: func(t *testing.T, mockGitHub *mock_ghclient.MockGitHub) {
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
 				t.Helper()
 
 				happyPathMockSetup(mockGitHub)
@@ -608,9 +586,11 @@ func TestPullRequestRemediate(t *testing.T) {
 				ctrl.Finish()
 			})
 
-			mockClient := mock_ghclient.NewMockGitHub(ctrl)
+			mockClient := mockghclient.NewMockGitHub(ctrl)
 
-			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, tt.newRemArgs.pbuild)
+			provider, err := testGithubProvider()
+			require.NoError(t, err)
+			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
