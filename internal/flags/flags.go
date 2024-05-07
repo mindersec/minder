@@ -71,6 +71,7 @@ func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 		})
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to create GoFeatureFlag provider")
+			flagProvider = nil // Need to explicitly reset the value, see #3259
 		}
 	}
 
