@@ -21,8 +21,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -434,6 +436,73 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 
 	require.NoError(t, err, "failed to make request")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+}
+
+func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
+	t := s.T()
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	srv, evt := newDefaultServer(t, mockStore, nil)
+	defer evt.Close()
+
+	pq := testqueue.NewPassthroughQueue(t)
+	queued := pq.GetQueue()
+
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
+
+	go func() {
+		err := evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	<-evt.Running()
+
+	hook := withMaxSizeMiddleware(srv.HandleGitHubWebHook())
+	port, err := rand.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.PackageEvent{
+		Action: github.String("published"),
+		Repo: &github.Repository{
+			ID:   github.Int64(12345),
+			Name: github.String("stacklok/minder"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal package event")
+
+	maliciousBody := strings.NewReader(strings.Repeat("1337", 1000000000))
+	maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
+	_ = packageJson
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), maliciousBodyReader)
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := httpDoWithRetry(client, req)
+	require.NoError(t, err, "failed to make request")
+	// We expect OK since we don't want to leak information about registered repositories
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "unexpected status code")
+	assert.Len(t, queued, 0)
 }
 
 func TestAll(t *testing.T) {

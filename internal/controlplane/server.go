@@ -70,6 +70,10 @@ const metricsPath = "/metrics"
 
 var (
 	readHeaderTimeout = 2 * time.Second
+
+	// RequestBodyMaxBytes is the maximum number of bytes that can be read from a request body
+	// We limit to 2MB for now
+	RequestBodyMaxBytes int64 = 2 << 20
 )
 
 // Server represents the controlplane server
@@ -316,10 +320,10 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register GitHub App callback handler: %w", err)
 	}
 
-	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
-	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
-	mux.Handle("/api/v1/ghapp/", mw(s.HandleGitHubAppWebhook()))
-	mux.Handle("/api/v1/gh-marketplace/", mw(s.NoopWebhookHandler()))
+	mux.Handle("/", withMaxSizeMiddleware(s.handlerWithHTTPMiddleware(gwmux)))
+	mux.Handle("/api/v1/webhook/", mw(withMaxSizeMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/ghapp/", mw(withMaxSizeMiddleware(s.HandleGitHubAppWebhook())))
+	mux.Handle("/api/v1/gh-marketplace/", mw(withMaxSizeMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
@@ -450,4 +454,11 @@ func shutdownHandler(component string, sdf shutdowner) {
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatal().Msgf("error shutting down '%s': %+v", component, err)
 	}
+}
+
+func withMaxSizeMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, RequestBodyMaxBytes)
+		h.ServeHTTP(w, r)
+	})
 }
