@@ -44,7 +44,7 @@ PRs to resolve existing issues are greatly appreciated and issues labeled as ["g
 * Once approved, all of your commits will be squashed into a single commit with your PR title.
 
 ### Contributing to docs
-Follow [this guide](https://github.com/stacklok/minder/blob/main/docs/README.md) for instructions on building, running, and previewing Miner's documentation.
+Follow [this guide](https://github.com/stacklok/minder/blob/main/docs/README.md) for instructions on building, running, and previewing Minder's documentation.
 
 ### Commit Message Guidelines
 We follow the commit formatting recommendations found on [Chris Beams' How to Write a Git Commit Message article](https://chris.beams.io/posts/git-commit/):
