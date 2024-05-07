@@ -94,7 +94,7 @@ func NewExecutor(
 	provCfg *serverconfig.ProviderConfig,
 	evt events.Publisher,
 	providerStore providers.ProviderStore,
-	restCacheClient ratecache.RestClientCache,
+	restClientCache ratecache.RestClientCache,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -115,7 +115,7 @@ func NewExecutor(
 		provCfg:                provCfg,
 		providerStore:          providerStore,
 		fallbackTokenClient:    fallbackTokenClient,
-		restClientCache:        restCacheClient,
+		restClientCache:        restClientCache,
 	}
 
 	for _, opt := range opts {

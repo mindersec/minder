@@ -24,13 +24,13 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	"github.com/stacklok/minder/internal/providers/github/oauth"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
-	defaultProvider = oauth.Github
+	defaultProvider = clients.Github
 	githubURL       = "https://github.com"
 )
 

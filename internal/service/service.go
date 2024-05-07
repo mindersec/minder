@@ -97,11 +97,9 @@ func AllInOneServerService(
 		store,
 		cryptoEngine,
 		serverMetrics,
-		providerMetrics,
 		&cfg.Provider,
 		makeProjectFactory(projectCreator, cfg.Identity),
-		restClientCache,
-		fallbackTokenClient,
+		ghClientFactory,
 	)
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		restClientCache,

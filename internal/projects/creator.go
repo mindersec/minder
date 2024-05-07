@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
-	github "github.com/stacklok/minder/internal/providers/github/oauth"
+	github "github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/pkg/mindpak"
 )
 
@@ -94,9 +94,9 @@ func (p *projectCreator) ProvisionSelfEnrolledOAuthProject(
 		Name:       github.Github,
 		ProjectID:  project.ID,
 		Class:      db.ProviderClassGithub,
-		Implements: github.Implements,
+		Implements: github.OAuthImplements,
 		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.AuthorizationFlows,
+		AuthFlows:  github.OAuthAuthorizationFlows,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provider: %v", err)

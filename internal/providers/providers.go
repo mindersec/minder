@@ -32,9 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
-	githubapp "github.com/stacklok/minder/internal/providers/github/app"
 	"github.com/stacklok/minder/internal/providers/github/clients"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
@@ -210,9 +208,9 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	}
 
 	// TODO: use provider class once it's available
-	if pb.p.Name == ghclient.Github {
+	if pb.p.Name == clients.Github {
 		// TODO: Parsing will change based on version
-		cfg, err := ghclient.ParseV1Config(pb.p.Definition)
+		cfg, err := clients.ParseV1OAuthConfig(pb.p.Definition)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
@@ -220,14 +218,14 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 		// This should be passed in from the outside, but since I intend to
 		// get rid of ProviderBuilder, I am instantiating a new copy here
 		ghClientFactory := clients.NewGitHubClientFactory(pb.metrics)
-		cli, err := ghclient.NewRestClient(cfg, pb.restClientCache, gitHubCredential, ghClientFactory, pb.ownerFilter.String)
+		cli, err := clients.NewRestClient(cfg, pb.restClientCache, gitHubCredential, ghClientFactory, pb.ownerFilter.String)
 		if err != nil {
 			return nil, fmt.Errorf("error creating github client: %w", err)
 		}
 		return cli, nil
 	}
 
-	cfg, err := githubapp.ParseV1Config(pb.p.Definition)
+	cfg, err := clients.ParseV1AppConfig(pb.p.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -235,7 +233,7 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	// get rid of ProviderBuilder, I am instantiating a new copy here
 	ghClientFactory := clients.NewGitHubClientFactory(pb.metrics)
 
-	cli, err := githubapp.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.restClientCache, gitHubCredential,
+	cli, err := clients.NewGitHubAppProvider(cfg, pb.cfg.GitHubApp, pb.restClientCache, gitHubCredential,
 		pb.fallbackTokenClient, ghClientFactory, pb.isOrg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating github app client: %w", err)
@@ -370,7 +368,7 @@ func getInstallationTokenCredential(
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
-	cfg, err := githubapp.ParseV1Config(prov.Definition)
+	cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -430,7 +428,7 @@ func createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	cfg, err := githubapp.ParseV1Config(prov.Definition)
+	cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}

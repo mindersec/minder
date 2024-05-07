@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package oauth provides a client for interacting with the GitHub API using OAuth 2.0 authorization
-package oauth
+package clients
 
 import (
 	"context"
@@ -24,7 +23,6 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -34,16 +32,16 @@ import (
 // Github is the string that represents the GitHubOAuth provider
 const Github = "github"
 
-// Implements is the list of provider types that the GitHubOAuth provider implements
-var Implements = []db.ProviderType{
+// OAuthImplements is the list of provider types that the GitHubOAuth provider implements
+var OAuthImplements = []db.ProviderType{
 	db.ProviderTypeGithub,
 	db.ProviderTypeGit,
 	db.ProviderTypeRest,
 	db.ProviderTypeRepoLister,
 }
 
-// AuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
-var AuthorizationFlows = []db.AuthorizationFlow{
+// OAuthAuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
+var OAuthAuthorizationFlows = []db.AuthorizationFlow{
 	db.AuthorizationFlowUserInput,
 	db.AuthorizationFlowOauth2AuthorizationCodeFlow,
 }
@@ -58,6 +56,21 @@ type GitHubOAuthDelegate struct {
 // Ensure that the GitHubOAuthDelegate client implements the GitHub Delegate interface
 var _ github.Delegate = (*GitHubOAuthDelegate)(nil)
 
+// NewOAuthDelegate creates a GitHubOAuthDelegate from a GitHub client
+// This exists as a separate function to allow the provider creation code
+// to use its methods without instantiating a full provider.
+func NewOAuthDelegate(
+	client *gogithub.Client,
+	credential provifv1.GitHubCredential,
+	owner string,
+) *GitHubOAuthDelegate {
+	return &GitHubOAuthDelegate{
+		client:     client,
+		credential: credential,
+		owner:      owner,
+	}
+}
+
 // NewRestClient creates a new GitHub REST API client
 // BaseURL defaults to the public GitHub API, if needing to use a customer domain
 // endpoint (as is the case with GitHub Enterprise), set the Endpoint field in
@@ -66,30 +79,24 @@ func NewRestClient(
 	cfg *minderv1.GitHubProviderConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
-	ghClientFactory clients.GitHubClientFactory,
+	ghClientFactory GitHubClientFactory,
 	owner string,
 ) (*github.GitHub, error) {
-	ghClient, err := ghClientFactory.Build(cfg.Endpoint, credential)
+	ghClient, delegate, err := ghClientFactory.BuildOAuthClient(cfg.Endpoint, credential, owner)
 	if err != nil {
 		return nil, err
-	}
-
-	oauthDelegate := &GitHubOAuthDelegate{
-		client:     ghClient,
-		credential: credential,
-		owner:      owner,
 	}
 
 	return github.NewGitHub(
 		ghClient,
 		ghClient, // use the same client for listing packages and all other operations
 		restClientCache,
-		oauthDelegate,
+		delegate,
 	), nil
 }
 
-// ParseV1Config parses the raw config into a GitHubConfig struct
-func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
+// ParseV1OAuthConfig parses the raw config into a GitHubConfig struct
+func ParseV1OAuthConfig(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
 	type wrapper struct {
 		GitHub *minderv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
 	}

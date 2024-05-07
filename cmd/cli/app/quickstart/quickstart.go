@@ -36,7 +36,7 @@ import (
 	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
 	"github.com/stacklok/minder/internal/engine"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
+	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )

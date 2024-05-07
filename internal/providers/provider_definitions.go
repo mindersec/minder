@@ -18,8 +18,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/minder/internal/db"
-	githubapp "github.com/stacklok/minder/internal/providers/github/app"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
+	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 )
 
 // ProviderClassDefinition contains the static fields needed when creating a provider
@@ -29,13 +28,13 @@ type ProviderClassDefinition struct {
 }
 
 var supportedProviderClassDefinitions = map[string]ProviderClassDefinition{
-	githubapp.GithubApp: {
-		Traits:             githubapp.Implements,
-		AuthorizationFlows: githubapp.AuthorizationFlows,
+	ghclient.GithubApp: {
+		Traits:             ghclient.AppImplements,
+		AuthorizationFlows: ghclient.AppAuthorizationFlows,
 	},
 	ghclient.Github: {
-		Traits:             ghclient.Implements,
-		AuthorizationFlows: ghclient.AuthorizationFlows,
+		Traits:             ghclient.OAuthImplements,
+		AuthorizationFlows: ghclient.OAuthAuthorizationFlows,
 	},
 }
 

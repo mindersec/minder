@@ -453,6 +453,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
+
 			server := &Server{
 				evt:           evt,
 				store:         mockStore,

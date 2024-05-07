@@ -48,10 +48,10 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
-	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -405,16 +405,19 @@ func TestProviderCallback(t *testing.T) {
 			gh := mockgh.NewMockGitHub(ctrl)
 			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
 
-			var restClientCache ratecache.RestClientCache
+			var clientFactory *mockclients.MockGitHubClientFactory
 			if tc.remoteUser.String != "" {
-				// TODO: verfifyProviderTokenIdentity
-				cancelable, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				restClientCache = ratecache.NewRestClientCache(cancelable)
-				restClientCache.Set("", "anAccessToken", db.ProviderTypeGithub, gh)
+				delegate := mockgh.NewMockDelegate(ctrl)
+				delegate.EXPECT().
+					GetUserId(gomock.Any()).
+					Return(int64(31337), nil)
+				clientFactory = mockclients.NewMockGitHubClientFactory(ctrl)
+				clientFactory.EXPECT().
+					BuildOAuthClient(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, delegate, nil)
 			}
 
-			s, _ := newDefaultServer(t, store, restClientCache)
+			s, _ := newDefaultServer(t, store, clientFactory)
 
 			var err error
 			encryptedUrlString, err := s.cryptoEngine.EncryptString(tc.redirectUrl)
