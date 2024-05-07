@@ -17,8 +17,6 @@ package container
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -26,14 +24,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -110,26 +109,11 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 }
 
 func buildGitHubClient(token string) (provifv1.GitHub, error) {
-	pbuild := providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "test",
-			Version: "v1",
-			Implements: []db.ProviderType{
-				"rest",
-				"git",
-				"github",
-			},
-			Definition: json.RawMessage(`{
-				"rest": {},
-				"github": {}
-			}`),
-		},
-		sql.NullString{},
-		false,
+	return clients.NewRestClient(
+		&minderv1.GitHubProviderConfig{},
+		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential(token),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
-
-	return pbuild.GetGitHub()
 }
