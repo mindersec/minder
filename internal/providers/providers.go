@@ -241,24 +241,6 @@ func (pb *ProviderBuilder) GetGitHub() (provinfv1.GitHub, error) {
 	return cli, nil
 }
 
-// GetRepoLister returns a repo lister for the provider.
-func (pb *ProviderBuilder) GetRepoLister() (provinfv1.RepoLister, error) {
-	if !pb.Implements(db.ProviderTypeRepoLister) {
-		return nil, fmt.Errorf("provider does not implement repo lister")
-	}
-
-	if pb.p.Version != provinfv1.V1 {
-		return nil, fmt.Errorf("provider version not supported")
-	}
-
-	if pb.Implements(db.ProviderTypeGithub) {
-		return pb.GetGitHub()
-	}
-
-	// TODO: We'll need to add support for other providers here
-	return nil, fmt.Errorf("provider does not implement repo lister")
-}
-
 // DBToPBType converts a database provider type to a protobuf provider type.
 func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 	switch t {

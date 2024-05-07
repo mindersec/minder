@@ -42,23 +42,35 @@ func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
 	switch rem.GetType() {
 	case rest.RemediateType:
+		client, err := pbuild.GetHTTP()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
 		if rem.GetRest() == nil {
 			return nil, fmt.Errorf("remediations engine missing rest configuration")
 		}
-		return rest.NewRestRemediate(ActionType, rem.GetRest(), pbuild)
+		return rest.NewRestRemediate(ActionType, rem.GetRest(), client)
 
 	case gh_branch_protect.RemediateType:
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
 		if rem.GetGhBranchProtection() == nil {
 			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
 		}
-		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), pbuild)
+		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), client)
 
 	case pull_request.RemediateType:
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
 		if rem.GetPullRequest() == nil {
 			return nil, fmt.Errorf("remediations engine missing pull request configuration")
 		}
 
-		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), pbuild)
+		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), client)
 	}
 
 	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())

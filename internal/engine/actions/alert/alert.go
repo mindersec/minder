@@ -43,7 +43,11 @@ func NewRuleAlert(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Act
 		if alertCfg.GetSecurityAdvisory() == nil {
 			return nil, fmt.Errorf("alert engine missing security-advisory configuration")
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), pbuild)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, rt.GetSeverity(), alertCfg.GetSecurityAdvisory(), client)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

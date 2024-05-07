@@ -17,7 +17,6 @@ package rest
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -28,11 +27,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	github "github.com/stacklok/minder/internal/providers/github/oauth"
+	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -42,7 +42,6 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 
 	type args struct {
 		restCfg *pb.RestType
-		pbuild  *providers.ProviderBuilder
 	}
 	tests := []struct {
 		name    string
@@ -55,25 +54,6 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 				restCfg: &pb.RestType{
 					Endpoint: "/repos/Foo/Bar",
 				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-						Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-	}
-}`),
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
 			},
 			wantErr: false,
 		},
@@ -83,25 +63,6 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 				restCfg: &pb.RestType{
 					Endpoint: "{{",
 				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-						Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-	}
-}`),
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
 			},
 			wantErr: true,
 		},
@@ -111,103 +72,6 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 				restCfg: &pb.RestType{
 					Endpoint: "",
 				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-						Definition: json.RawMessage(`{
-	"rest": {
-		"endpoint": "https://api.github.com/"
-	}
-}`),
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing provider definition",
-			args: args{
-				restCfg: &pb.RestType{
-					Endpoint: "",
-				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
-			},
-			wantErr: true,
-		},
-		{
-			name: "wrong provider definition",
-			args: args{
-				restCfg: &pb.RestType{
-					Endpoint: "",
-				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-						Definition: json.RawMessage(`{
-	"rest": {
-		"wrong": "https://api.github.com/"
-	}
-}`),
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid provider definition",
-			args: args{
-				restCfg: &pb.RestType{
-					Endpoint: "",
-				},
-				pbuild: providers.NewProviderBuilder(
-					&db.Provider{
-						Name:    "osv",
-						Version: provifv1.V1,
-						Implements: []db.ProviderType{
-							"rest",
-						},
-						Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-}`),
-					},
-					sql.NullString{},
-					false,
-					credentials.NewGitHubTokenCredential("token"),
-					&serverconfig.ProviderConfig{},
-					nil, // this is unused here
-				),
 			},
 			wantErr: true,
 		},
@@ -218,7 +82,16 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRuleDataIngest(tt.args.restCfg, tt.args.pbuild)
+			rest, err := httpclient.NewREST(
+				&pb.RESTProviderConfig{
+					BaseUrl: "https://api.github.com/",
+				},
+				telemetry.NewNoopMetrics(),
+				credentials.NewGitHubTokenCredential("token"),
+			)
+			require.NoError(t, err)
+
+			got, err := NewRestRuleDataIngest(tt.args.restCfg, rest)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -231,29 +104,19 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 	}
 }
 
-func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
+func testGithubProviderBuilder(baseURL string) (provifv1.REST, error) {
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL = baseURL + "/"
 	}
 
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
-			Definition: json.RawMessage(definitionJSON),
+	return github.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: baseURL,
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -312,7 +175,6 @@ func TestRestIngest(t *testing.T) {
 
 	type newRestIngestArgs struct {
 		restCfg *pb.RestType
-		pbuild  *providers.ProviderBuilder
 	}
 
 	tests := []struct {
@@ -439,9 +301,10 @@ func TestRestIngest(t *testing.T) {
 
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
-			tt.newIngArgs.pbuild = testGithubProviderBuilder(testServer.URL)
 
-			engine, err := NewRestRuleDataIngest(tt.newIngArgs.restCfg, tt.newIngArgs.pbuild)
+			rest, err := testGithubProviderBuilder(testServer.URL)
+			require.NoError(t, err)
+			engine, err := NewRestRuleDataIngest(tt.newIngArgs.restCfg, rest)
 			require.NoError(t, err, "unexpected error creating ingestion engine")
 			require.NotNil(t, engine, "expected non-nil ingestion engine")
 

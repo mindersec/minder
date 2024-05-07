@@ -18,7 +18,6 @@ package pull_request
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,13 +38,13 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -89,27 +88,15 @@ jobs:
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
 
-func testGithubProviderBuilder() *providers.ProviderBuilder {
-	baseURL := ghApiUrl + "/"
-
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
-			Definition: json.RawMessage(definitionJSON),
+func testGithubProvider() (provifv1.GitHub, error) {
+	return oauth.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: ghApiUrl + "/",
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -369,7 +356,6 @@ func TestPullRequestRemediate(t *testing.T) {
 
 	type newPullRequestRemediateArgs struct {
 		prRem      *pb.RuleType_Definition_Remediate_PullRequestRemediation
-		pbuild     *providers.ProviderBuilder
 		actionType interfaces.ActionType
 	}
 
@@ -387,7 +373,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "open a PR",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -410,7 +395,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "fail to open a PR",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -433,7 +417,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "update an existing PR branch with a force-push",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -456,7 +439,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "A PR already exists, use it and don't open a new one",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      dependabotPrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -518,7 +500,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -546,7 +527,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee with excludes",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRemWithExcludes([]string{"actions/setup-go@v5"}),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgs(),
@@ -572,7 +552,6 @@ func TestPullRequestRemediate(t *testing.T) {
 			name: "resolve tags using frizbee with excludes from rule",
 			newRemArgs: &newPullRequestRemediateArgs{
 				prRem:      frizbeePrRem(),
-				pbuild:     testGithubProviderBuilder(),
 				actionType: TestActionTypeValid,
 			},
 			remArgs:   createTestRemArgsWithExcludes(),
@@ -610,7 +589,9 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			mockClient := mock_ghclient.NewMockGitHub(ctrl)
 
-			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, tt.newRemArgs.pbuild)
+			provider, err := testGithubProvider()
+			require.NoError(t, err)
+			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return

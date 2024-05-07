@@ -29,7 +29,6 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/rule_methods"
@@ -48,10 +47,7 @@ type BuiltinRuleDataIngest struct {
 }
 
 // NewBuiltinRuleDataIngest creates a new builtin rule data ingest engine
-func NewBuiltinRuleDataIngest(
-	builtinCfg *pb.BuiltinType,
-	_ *providers.ProviderBuilder,
-) (*BuiltinRuleDataIngest, error) {
+func NewBuiltinRuleDataIngest(builtinCfg *pb.BuiltinType) (*BuiltinRuleDataIngest, error) {
 	return &BuiltinRuleDataIngest{
 		builtinCfg:  builtinCfg,
 		method:      builtinCfg.GetMethod(),

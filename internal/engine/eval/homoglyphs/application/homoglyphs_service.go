@@ -25,8 +25,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -40,9 +40,9 @@ const (
 // NewHomoglyphsEvaluator creates a new homoglyphs evaluator
 func NewHomoglyphsEvaluator(
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
-	pbuild *providers.ProviderBuilder,
+	ghClient provifv1.GitHub,
 ) (engif.Evaluator, error) {
-	if pbuild == nil {
+	if ghClient == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 	if reh == nil {
@@ -51,9 +51,9 @@ func NewHomoglyphsEvaluator(
 
 	switch reh.Type {
 	case invisibleCharacters:
-		return NewInvisibleCharactersEvaluator(pbuild)
+		return NewInvisibleCharactersEvaluator(ghClient)
 	case mixedScript:
-		return NewMixedScriptEvaluator(pbuild)
+		return NewMixedScriptEvaluator(ghClient)
 	default:
 		return nil, fmt.Errorf("unsupported homoglyphs type: %s", reh.Type)
 	}

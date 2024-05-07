@@ -17,8 +17,6 @@ package gh_branch_protect
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -29,12 +27,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -49,29 +47,19 @@ const (
 
 var TestActionTypeValid interfaces.ActionType = "remediate-test"
 
-func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
+func testGithubProvider(baseURL string) (provifv1.GitHub, error) {
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL = baseURL + "/"
 	}
 
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
-			Definition: json.RawMessage(definitionJSON),
+	return oauth.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: baseURL,
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -151,7 +139,6 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 	type newBranchProtectionRemediateArgs struct {
 		ghp        *pb.RuleType_Definition_Remediate_GhBranchProtectionType
-		pbuild     *providers.ProviderBuilder
 		actionType interfaces.ActionType
 	}
 
@@ -169,7 +156,6 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
 					Patch: reviewCountPatch,
 				},
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: "",
 			},
 			mockSetup: func(_ *mock_ghclient.MockGitHub) {
@@ -195,7 +181,6 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
 					Patch: reviewCountPatch,
 				},
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: TestActionTypeValid,
 			},
 			remArgs: &remediateArgs{
@@ -235,7 +220,6 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
 					Patch: reviewCountPatch,
 				},
-				pbuild:     testGithubProviderBuilder(ghApiUrl),
 				actionType: TestActionTypeValid,
 			},
 			remArgs: &remediateArgs{
@@ -305,7 +289,9 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			mockClient := mock_ghclient.NewMockGitHub(ctrl)
 
-			engine, err := NewGhBranchProtectRemediator(tt.newRemArgs.actionType, tt.newRemArgs.ghp, tt.newRemArgs.pbuild)
+			prov, err := testGithubProvider(ghApiUrl)
+			require.NoError(t, err)
+			engine, err := NewGhBranchProtectRemediator(tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return

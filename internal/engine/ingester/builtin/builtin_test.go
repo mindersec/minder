@@ -26,7 +26,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -61,7 +60,7 @@ func TestBuiltInWorks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bi, err := NewBuiltinRuleDataIngest(nil, &providers.ProviderBuilder{})
+			bi, err := NewBuiltinRuleDataIngest(nil)
 			assert.NoError(t, err)
 			bi.method = tt.methodName
 
@@ -108,7 +107,7 @@ func TestBuiltinErrorCases(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			bi, err := NewBuiltinRuleDataIngest(nil, &providers.ProviderBuilder{})
+			bi, err := NewBuiltinRuleDataIngest(nil)
 			assert.NoError(t, err)
 			bi.method = tt.methodName
 

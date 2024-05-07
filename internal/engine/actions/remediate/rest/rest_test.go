@@ -18,7 +18,6 @@ package rest
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,82 +30,36 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	github "github.com/stacklok/minder/internal/providers/github/oauth"
+	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 var (
-	simpleBodyTemplate   = "{\"foo\": \"bar\"}"
-	bodyTemplateWithVars = `{ "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }`
-	invalidBodyTemplate  = "{\"foo\": {{bar}"
-	validProviderBuilder = providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "github",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				db.ProviderTypeRest,
-			},
-			Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-	}
-}`),
-		},
-		sql.NullString{},
-		false,
-		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	)
-	invalidProviderBuilder = providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "github",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				db.ProviderTypeRest,
-			},
-			Definition: json.RawMessage(`{
-	"rest": {
-		"base_url": "https://api.github.com/"
-}`),
-		},
-		sql.NullString{},
-		false,
-		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	)
-	TestActionTypeValid interfaces.ActionType = "remediate-test"
+	simpleBodyTemplate                         = "{\"foo\": \"bar\"}"
+	bodyTemplateWithVars                       = `{ "enabled": true, "allowed_actions": "{{.Profile.allowed_actions}}" }`
+	invalidBodyTemplate                        = "{\"foo\": {{bar}"
+	TestActionTypeValid  interfaces.ActionType = "remediate-test"
 )
 
-func testGithubProviderBuilder(baseURL string) *providers.ProviderBuilder {
+func testGithubProvider(baseURL string) (provifv1.REST, error) {
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL = baseURL + "/"
 	}
 
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest},
-			Definition: json.RawMessage(definitionJSON),
+	return github.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: baseURL,
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -115,7 +68,6 @@ func TestNewRestRemediate(t *testing.T) {
 
 	type args struct {
 		restCfg    *pb.RestType
-		pbuild     *providers.ProviderBuilder
 		actionType interfaces.ActionType
 	}
 	tests := []struct {
@@ -130,7 +82,6 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild:     validProviderBuilder,
 				actionType: "",
 			},
 			wantErr: true,
@@ -142,7 +93,6 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild:     validProviderBuilder,
 				actionType: TestActionTypeValid,
 			},
 			wantErr: false,
@@ -155,7 +105,6 @@ func TestNewRestRemediate(t *testing.T) {
 					Body:     &simpleBodyTemplate,
 					Method:   "POST",
 				},
-				pbuild:     validProviderBuilder,
 				actionType: TestActionTypeValid,
 			},
 			wantErr: false,
@@ -167,7 +116,6 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/{{ .repos/Foo/Bar",
 					Body:     &simpleBodyTemplate,
 				},
-				pbuild:     validProviderBuilder,
 				actionType: TestActionTypeValid,
 			},
 			wantErr: true,
@@ -179,19 +127,6 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/repos/Foo/Bar",
 					Body:     &invalidBodyTemplate,
 				},
-				pbuild:     validProviderBuilder,
-				actionType: TestActionTypeValid,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid provider builder",
-			args: args{
-				restCfg: &pb.RestType{
-					Endpoint: "/repos/Foo/Bar",
-					Body:     &simpleBodyTemplate,
-				},
-				pbuild:     invalidProviderBuilder,
 				actionType: TestActionTypeValid,
 			},
 			wantErr: true,
@@ -203,7 +138,16 @@ func TestNewRestRemediate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, tt.args.pbuild)
+			restProvider, err := httpclient.NewREST(
+				&pb.RESTProviderConfig{
+					BaseUrl: "https://api.github.com/",
+				},
+				telemetry.NewNoopMetrics(),
+				credentials.NewGitHubTokenCredential("token"),
+			)
+			require.NoError(t, err)
+
+			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, restProvider)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -218,6 +162,7 @@ func TestNewRestRemediate(t *testing.T) {
 		})
 	}
 }
+
 func TestRestRemediate(t *testing.T) {
 	t.Parallel()
 
@@ -230,7 +175,6 @@ func TestRestRemediate(t *testing.T) {
 
 	type newRestRemediateArgs struct {
 		restCfg *pb.RestType
-		pbuild  *providers.ProviderBuilder
 	}
 
 	tests := []struct {
@@ -433,8 +377,9 @@ func TestRestRemediate(t *testing.T) {
 
 			testServer := httptest.NewServer(tt.testHandler)
 			defer testServer.Close()
-			tt.newRemArgs.pbuild = testGithubProviderBuilder(testServer.URL)
-			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, tt.newRemArgs.pbuild)
+			provider, err := testGithubProvider(testServer.URL)
+			require.NoError(t, err)
+			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, provider)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 

@@ -17,8 +17,6 @@ package artifact
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -27,43 +25,33 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/github/oauth"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	mockverify "github.com/stacklok/minder/internal/verifier/verifyif/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-func testGithubProviderBuilder() *providers.ProviderBuilder {
+func testGithubProvider() (provinfv1.GitHub, error) {
 	const (
 		ghApiUrl = "https://api.github.com"
 	)
 
 	baseURL := ghApiUrl + "/"
 
-	definitionJSON := `{
-		"github": {
-			"endpoint": "` + baseURL + `"
-		}
-	}`
-
-	return providers.NewProviderBuilder(
-		&db.Provider{
-			Name:       "github",
-			Version:    provifv1.V1,
-			Implements: []db.ProviderType{db.ProviderTypeGithub, db.ProviderTypeRest, db.ProviderTypeGit},
-			Definition: json.RawMessage(definitionJSON),
+	return oauth.NewRestClient(
+		&pb.GitHubProviderConfig{
+			Endpoint: baseURL,
 		},
-		sql.NullString{},
-		false,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		"",
 	)
 }
 
@@ -576,7 +564,9 @@ func TestArtifactIngestMatching(t *testing.T) {
 			mockGhClient := mock_ghclient.NewMockGitHub(ctrl)
 			mockVerifier := mockverify.NewMockArtifactVerifier(ctrl)
 
-			ing, err := NewArtifactDataIngest(nil, testGithubProviderBuilder())
+			prov, err := testGithubProvider()
+			require.NoError(t, err)
+			ing, err := NewArtifactDataIngest(prov)
 			require.NoError(t, err, "expected no error")
 
 			ing.ghCli = mockGhClient
