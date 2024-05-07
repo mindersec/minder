@@ -33,7 +33,6 @@ import (
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
-	github "github.com/stacklok/minder/internal/providers/github/oauth"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -52,7 +51,7 @@ func testGithubProvider(baseURL string) (provifv1.REST, error) {
 		baseURL = baseURL + "/"
 	}
 
-	return github.NewRestClient(
+	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
 			Endpoint: baseURL,
 		},

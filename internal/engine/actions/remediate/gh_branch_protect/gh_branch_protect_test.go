@@ -31,7 +31,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/providers/github/oauth"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -52,7 +51,7 @@ func testGithubProvider(baseURL string) (provifv1.GitHub, error) {
 		baseURL = baseURL + "/"
 	}
 
-	return oauth.NewRestClient(
+	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
 			Endpoint: baseURL,
 		},
