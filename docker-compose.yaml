@@ -115,6 +115,15 @@ services:
       image: postgres:16.1-alpine
       restart: always
       user: postgres
+      command:
+        - "-c"
+        - "shared_preload_libraries=auto_explain"
+        - "-c"
+        - "auto_explain.log_min_duration=0"
+        - "-c"
+        - "auto_explain.log_analyze=true"
+        - "-c"
+        - "auto_explain.log_triggers=true"
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
