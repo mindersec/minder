@@ -19,6 +19,7 @@ package eval
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
@@ -27,49 +28,49 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/trusty"
 	"github.com/stacklok/minder/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
 func NewRuleEvaluator(
 	ctx context.Context,
-	rt *pb.RuleType,
-	pbuild *providers.ProviderBuilder,
+	ruletype *pb.RuleType,
+	provider provinfv1.Provider,
 ) (engif.Evaluator, error) {
-	e := rt.Def.GetEval()
+	e := ruletype.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")
 	}
 
 	// TODO: make this more generic and/or use constants
-	switch rt.Def.Eval.Type {
+	switch ruletype.Def.Eval.Type {
 	case "jq":
-		if rt.Def.Eval.GetJq() == nil {
+		if ruletype.Def.Eval.GetJq() == nil {
 			return nil, fmt.Errorf("rule type engine missing jq configuration")
 		}
 		return jq.NewJQEvaluator(e.GetJq())
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
 		return vulncheck.NewVulncheckEvaluator(client)
 	case trusty.TrustyEvalType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
 		return trusty.NewTrustyEvaluator(ctx, client)
 	case application.HomoglyphsEvalType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
 		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), client)
 	default:
-		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
+		return nil, fmt.Errorf("unsupported rule type engine: %s", ruletype.Def.Eval.Type)
 	}
 }

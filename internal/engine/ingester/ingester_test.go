@@ -18,22 +18,19 @@
 package ingester
 
 import (
-	"database/sql"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
 	"github.com/stacklok/minder/internal/engine/ingester/builtin"
 	"github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestNewRuleDataIngest(t *testing.T) {
@@ -161,37 +158,24 @@ func TestNewRuleDataIngest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewRuleDataIngest(tt.args.rt, providers.NewProviderBuilder(
-				&db.Provider{
-					Name:    "github",
-					Version: provifv1.V1,
-					Implements: []db.ProviderType{
-						"rest",
-						"git",
-						"github",
-					},
-					Definition: json.RawMessage(`{
-	"rest": {
-		"endpoint": "https://api.github.com/repos/Foo/Bar"
-	},
-	"git": {},
-	"github": {}
-}`),
-				},
-				sql.NullString{},
-				false,
+			client, err := clients.NewRestClient(
+				&pb.GitHubProviderConfig{},
+				&ratecache.NoopRestClientCache{},
 				credentials.NewGitHubTokenCredential("token"),
-				&serverconfig.ProviderConfig{},
-				nil, // this is unused here
-			))
+				clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+				"",
+			)
+			require.NoError(t, err)
+
+			ingester, err := NewRuleDataIngest(tt.args.rt, client)
 			if tt.wantErr {
 				require.Error(t, err, "Expected error")
-				require.Nil(t, got, "Expected nil")
+				require.Nil(t, ingester, "Expected nil")
 				return
 			}
 
 			require.NoError(t, err, "Unexpected error")
-			require.NotNil(t, got, "Expected non-nil")
+			require.NotNil(t, ingester, "Expected non-nil")
 		})
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -40,9 +42,15 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
+	ghService "github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -108,6 +116,12 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			ID:        providerID,
 			Name:      providerName,
 			ProjectID: projectID,
+			Class:     db.ProviderClassGithub,
+			Version:   provinfv1.V1,
+			Implements: []db.ProviderType{
+				db.ProviderTypeGithub,
+			},
+			Definition: json.RawMessage(`{"github": {}}`),
 		}, nil)
 
 	// get access token
@@ -150,7 +164,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 						Valid:    true,
 					},
 					ContextualRules: pqtype.NullRawMessage{
-						RawMessage: json.RawMessage(marshalledCRS),
+						RawMessage: marshalledCRS,
 						Valid:      true,
 					},
 				},
@@ -188,7 +202,7 @@ default allow = true`,
 		ID:         ruleTypeID,
 		Name:       passthroughRuleType,
 		ProjectID:  projectID,
-		Definition: json.RawMessage(marshalledRTD),
+		Definition: marshalledRTD,
 	}, nil)
 
 	ruleEvalId := uuid.New()
@@ -292,13 +306,42 @@ default allow = true`,
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	e, err := engine.NewExecutor(ctx,
+	// Needed to keep these tests working as-is.
+	// In future, beef up unit test coverage in the dependencies
+	// of this code, and refactor these tests to use stubs.
+	eng, err := crypto.EngineFromAuthConfig(&serverconfig.AuthConfig{TokenKey: tokenKeyPath})
+	require.NoError(t, err)
+	ghProviderService := ghService.NewGithubProviderService(
 		mockStore,
-		&serverconfig.AuthConfig{TokenKey: tokenKeyPath},
-		&serverconfig.ProviderConfig{},
-		evt,
-		providers.NewProviderStore(mockStore),
+		eng,
+		metrics.NewNoopMetrics(),
+		// These nil dependencies do not matter for the current tests
+		nil,
+		nil,
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+	)
+
+	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		&ratecache.NoopRestClientCache{},
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		&serverconfig.ProviderConfig{},
+		nil,
+		eng,
+		nil,
+		mockStore,
+		ghProviderService,
+	)
+
+	providerStore := providers.NewProviderStore(mockStore)
+	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	require.NoError(t, err)
+
+	e := engine.NewExecutor(
+		ctx,
+		mockStore,
+		evt,
+		providerManager,
+		[]message.HandlerMiddleware{},
 	)
 	require.NoError(t, err, "expected no error")
 

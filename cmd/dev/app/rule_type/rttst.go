@@ -17,7 +17,6 @@ package rule_type
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -38,8 +37,10 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -97,24 +98,24 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		cmd.Println("If the rule you're testing is rego-based, you will not be able to use `print` statements for debugging.")
 	}
 
-	rt, err := readRuleTypeFromFile(rtpath.Value.String())
+	ruletype, err := readRuleTypeFromFile(rtpath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading rule type from file: %w", err)
 	}
 
 	provider := "test"
 	rootProject := "00000000-0000-0000-0000-000000000002"
-	rt.Context = &minderv1.Context{
+	ruletype.Context = &minderv1.Context{
 		Provider: &provider,
 		Project:  &rootProject,
 	}
 
-	ent, err := readEntityFromFile(epath.Value.String(), minderv1.EntityFromString(rt.Def.InEntity))
+	ent, err := readEntityFromFile(epath.Value.String(), minderv1.EntityFromString(ruletype.Def.InEntity))
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
 
-	p, err := engine.ReadProfileFromFile(ppath.Value.String())
+	profile, err := engine.ReadProfileFromFile(ppath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
@@ -148,38 +149,30 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// Disable actions
 	off := "off"
-	p.Alert = &off
+	profile.Alert = &off
 
-	rules, err := engine.GetRulesFromProfileOfType(p, rt)
+	rules, err := engine.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
 
-	// TODO: Read this from a providers file instead so we can make it pluggable
-	eng, err := engine.NewRuleTypeEngine(context.Background(), p, rt, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "test",
-			Version: "v1",
-			Implements: []db.ProviderType{
-				"rest",
-				"repo-lister",
-				"git",
-				"github",
-			},
-			Definition: json.RawMessage(`{
-				"github-app": {}
-			}`),
-		},
-		sql.NullString{},
-		false,
+	// TODO: Whenever we add more Provider classes, we will need to rethink this
+	client, err := clients.NewGitHubAppProvider(
+		&minderv1.GitHubAppProviderConfig{},
+		&serverconfig.GitHubAppConfig{AppName: "test"},
+		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential(token),
-		&serverconfig.ProviderConfig{
-			GitHubApp: &serverconfig.GitHubAppConfig{
-				AppName: "test",
-			},
-		},
-		nil, // this is unused here
-	))
+		nil,
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		false,
+	)
+	if err != nil {
+		return fmt.Errorf("error instantiating github provider: %w", err)
+	}
+
+	// TODO: use cobra context here
+	eng, err := engine.NewRuleTypeEngine(context.Background(), profile, ruletype, client)
+
 	inf := &entities.EntityInfoWrapper{
 		Entity:      ent,
 		ExecutionID: &uuid.Nil,
@@ -189,7 +182,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	if len(rules) == 0 {
-		return fmt.Errorf("no rules found with type %s", rt.Name)
+		return fmt.Errorf("no rules found with type %s", ruletype.Name)
 	}
 
 	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules)

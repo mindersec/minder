@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
@@ -63,7 +64,7 @@ func AllInOneServerService(
 	idClient auth.Resolver,
 	serverMetrics metrics.Metrics,
 	providerMetrics provtelemetry.ProviderMetrics,
-	executorOpts []engine.ExecutorOption,
+	executorMiddleware []message.HandlerMiddleware,
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
 
@@ -149,13 +150,15 @@ func AllInOneServerService(
 	evt.ConsumeEvents(aggr)
 
 	// prepend the aggregator to the executor options
-	executorOpts = append([]engine.ExecutorOption{engine.WithMiddleware(aggr.AggregateMiddleware)},
-		executorOpts...)
+	executorMiddleware = append([]message.HandlerMiddleware{aggr.AggregateMiddleware}, executorMiddleware...)
 
-	exec, err := engine.NewExecutor(ctx, store, &cfg.Auth, &cfg.Provider, evt, providerStore, restClientCache, executorOpts...)
-	if err != nil {
-		return fmt.Errorf("unable to create executor: %w", err)
-	}
+	exec := engine.NewExecutor(
+		ctx,
+		store,
+		evt,
+		providerManager,
+		executorMiddleware,
+	)
 
 	evt.ConsumeEvents(exec)
 

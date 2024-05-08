@@ -33,8 +33,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
@@ -44,16 +44,19 @@ type RuleActionsEngine struct {
 }
 
 // NewRuleActions creates a new rule actions engine
-func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *providers.ProviderBuilder,
+func NewRuleActions(
+	profile *minderv1.Profile,
+	ruletype *minderv1.RuleType,
+	provider provinfv1.Provider,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
-	remEngine, err := remediate.NewRuleRemediator(rt, pbuild)
+	remEngine, err := remediate.NewRuleRemediator(ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 
 	// Create the alert engine
-	alertEngine, err := alert.NewRuleAlert(rt, pbuild)
+	alertEngine, err := alert.NewRuleAlert(ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}
@@ -66,8 +69,8 @@ func NewRuleActions(p *minderv1.Profile, rt *minderv1.RuleType, pbuild *provider
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
 		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
-			remEngine.Class():   remEngine.GetOnOffState(p),
-			alertEngine.Class(): alertEngine.GetOnOffState(p),
+			remEngine.Class():   remEngine.GetOnOffState(profile),
+			alertEngine.Class(): alertEngine.GetOnOffState(profile),
 		},
 	}, nil
 }
