@@ -18,6 +18,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -34,6 +35,7 @@ type JwtValidator interface {
 // JwkSetJwtValidator is a JWT validator that uses a JWK set URL to validate the tokens
 type JwkSetJwtValidator struct {
 	jwksFetcher KeySetFetcher
+	aud         string
 }
 
 // KeySetFetcher provides the functions to fetch a JWK set
@@ -74,11 +76,15 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 		return nil, fmt.Errorf("provided token is missing required subject claim")
 	}
 
+	if !slices.Contains(openIdToken.Audience(), j.aud) {
+		return nil, fmt.Errorf("provided token is missing required audience claim %q", j.aud)
+	}
+
 	return openIdToken, nil
 }
 
 // NewJwtValidator creates a new JWT validator that uses a JWK set URL to validate the tokens
-func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) {
+func NewJwtValidator(ctx context.Context, jwksUrl string, aud string) (JwtValidator, error) {
 	// Cache the JWK set
 	// The cache will refresh every 15 minutes by default
 	jwks := jwk.NewCache(ctx)
@@ -100,6 +106,7 @@ func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) 
 	}
 	return &JwkSetJwtValidator{
 		jwksFetcher: &keySetCache,
+		aud:         aud,
 	}, nil
 }
 

@@ -44,6 +44,19 @@ roles:
             - delete-account
             - view-profile
             - manage-account
+          minder:
+            # TODO: this automatically adds the `minder` audience to tokens.
+            # Keycloak documentation suggests it should be possible to use a
+            # client scope to only add the audience when requested, but Evan
+            # couldn't get it to work ("Invalid scopes: openid minder"):
+            # https://www.keycloak.org/docs/latest/server_admin/#audience-support
+            - minder-access
+  client:
+    minder:
+      - id: minder-access
+        name: minder-access
+        description: Access to the Minder API
+
 
 # Collect gh_login and gh_id from GitHub and expose them in tokens
 clientScopes:
@@ -85,6 +98,11 @@ clientScopes:
 
 
 clients:
+  - clientId: minder
+    enabled: true
+    redirectUris:
+      - "http://localhost/*"
+    publicClient: true
   # From:
   # create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
   - clientId: minder-cli

@@ -47,6 +47,8 @@ type IdentityConfig struct {
 	ClientSecret string `mapstructure:"client_secret" default:"secret"`
 	// ClientSecretFile is the location of a file containing the client secret for the minder server (optional)
 	ClientSecretFile string `mapstructure:"client_secret_file"`
+	// Audience is the expected audience for JWT tokens (see OpenID spec)
+	Audience string `mapstructure:"audience"`
 }
 
 // GetClientSecret returns the minder-server client secret

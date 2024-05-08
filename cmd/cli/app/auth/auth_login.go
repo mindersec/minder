@@ -66,12 +66,11 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 	// wait for the token to be received
 	var loginErr loginError
 	token, err := login(ctx, cmd, clientConfig, nil, skipBrowser)
-	if errors.As(err, &loginErr) {
-		if loginErr.isAccessDenied() {
-			cmd.Println("Access denied. Please run the command again and accept the terms and conditions.")
-			return nil
-		}
-	} else if err != nil {
+	if errors.As(err, &loginErr) && loginErr.isAccessDenied() {
+		cmd.Println("Access denied. Please run the command again and accept the terms and conditions.")
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 

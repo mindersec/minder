@@ -91,7 +91,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
 		}
-		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String())
+		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
