@@ -14,7 +14,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
 	github.com/mikefarah/yq/v4 v4.43.1
 	github.com/norwoodj/helm-docs v1.13.1
-	github.com/openfga/cli v0.3.1
+	github.com/openfga/cli v0.4.0
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.26.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
@@ -220,10 +220,10 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20240425220334-619029c1d3d3 // indirect
-	github.com/openfga/go-sdk v0.3.6-0.20240415101814-23d3da979203 // indirect
+	github.com/openfga/api/proto v0.0.0-20240430203311-36050418a284 // indirect
+	github.com/openfga/go-sdk v0.3.6 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240429103126-f3e71ca3287d // indirect
-	github.com/openfga/openfga v1.5.3 // indirect
+	github.com/openfga/openfga v1.5.4-rc1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pganalyze/pg_query_go/v5 v5.1.0 // indirect
