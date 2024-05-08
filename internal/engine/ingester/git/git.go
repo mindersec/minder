@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
