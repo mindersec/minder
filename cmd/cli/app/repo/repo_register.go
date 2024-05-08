@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -154,25 +153,19 @@ func selectReposInteractively(
 	cmd *cobra.Command,
 	unregisteredRepos map[string]*minderv1.UpstreamRepositoryRef,
 ) ([]*minderv1.UpstreamRepositoryRef, error) {
+	effectiveRepos := make([]*minderv1.UpstreamRepositoryRef, 0)
+
 	repoNames := make([]string, 0, len(unregisteredRepos))
 	for repoName := range unregisteredRepos {
 		repoNames = append(repoNames, repoName)
 	}
 
-	var selectedRepos []string
-	prompt := &survey.MultiSelect{
-		Message: "Select repositories to register with Minder: \n",
-		Options: repoNames,
-	}
-
-	// Prompt the user to select repos, defaulting to 20 per page, but scrollable
-	err := survey.AskOne(prompt, &selectedRepos, survey.WithPageSize(20))
+	selected, err := cli.MultiSelect(repoNames)
 	if err != nil {
-		return nil, cli.MessageAndError("error getting repo selection: %s", err)
+		return nil, err
 	}
 
-	effectiveRepos := make([]*minderv1.UpstreamRepositoryRef, 0, len(selectedRepos))
-	for _, name := range selectedRepos {
+	for _, name := range selected {
 		effectiveRepos = append(effectiveRepos, unregisteredRepos[name])
 	}
 
