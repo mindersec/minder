@@ -44,19 +44,6 @@ roles:
             - delete-account
             - view-profile
             - manage-account
-          minder:
-            # TODO: this automatically adds the `minder` audience to tokens.
-            # Keycloak documentation suggests it should be possible to use a
-            # client scope to only add the audience when requested, but Evan
-            # couldn't get it to work ("Invalid scopes: openid minder"):
-            # https://www.keycloak.org/docs/latest/server_admin/#audience-support
-            - minder-access
-  client:
-    minder:
-      - id: minder-access
-        name: minder-access
-        description: Access to the Minder API
-
 
 # Collect gh_login and gh_id from GitHub and expose them in tokens
 clientScopes:
@@ -95,14 +82,25 @@ clientScopes:
     attributes:
       "include.in.token.scope": "true"
       "display.on.consent.screen": "false"
-
+  - name: minder-audience
+    description: "Add minder to audience claim"
+    protocol: openid-connect
+    attributes:
+      "include.in.token.scope": "true"
+      "display.on.consent.screen": "false"
+    protocolMappers:
+      - name: minder_audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        consentRequired: false
+        config:
+          id.token.claim: "false"
+          access.token.claim: "true"
+          introspection.token.claim: "true"
+          included.custom.audience: "minder"
+          userinfo.token.claim: "false"
 
 clients:
-  - clientId: minder
-    enabled: true
-    redirectUris:
-      - "http://localhost/*"
-    publicClient: true
   # From:
   # create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
   - clientId: minder-cli
@@ -118,6 +116,7 @@ clients:
       - roles
       - web-origins
       - gh-data
+      - minder-audience
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
@@ -136,6 +135,7 @@ clients:
       - roles
       - web-origins
       - gh-data
+      - minder-audience
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
