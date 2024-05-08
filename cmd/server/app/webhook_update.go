@@ -35,6 +35,11 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
+	"github.com/stacklok/minder/internal/providers/manager"
+	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/telemetry"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -69,23 +74,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 
 	providerName := cmd.Flag("provider").Value.String()
 
-	cryptoEng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
+	store, err := wireUpDB(ctx, cfg)
 	if err != nil {
-		return fmt.Errorf("failed to create crypto engine: %w", err)
+		return err
 	}
 
-	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to connect to database: %w", err)
-	}
-	defer func(dbConn *sql.DB) {
-		err := dbConn.Close()
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error closing database connection")
-		}
-	}(dbConn)
-
-	store := db.NewStore(dbConn)
 	allProviders, err := store.GlobalListProviders(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to list providers: %w", err)
@@ -96,16 +89,24 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to parse webhook url: %w", err)
 	}
 
-	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
+	whSecret, err := getWebhookSecret(cfg)
+	if err != nil {
+		return err
+	}
+
+	providerManager, err := wireUpProviderManager(cfg, store)
+	if err != nil {
+		return fmt.Errorf("failed to instantiate provider manager: %w", err)
+	}
 
 	for _, provider := range allProviders {
-		zerolog.Ctx(ctx).Info().Str("name", provider.Name).Str("uuid", provider.ID.String()).Msg("provider")
-		pb, err := providers.GetProviderBuilder(ctx, provider, store, cryptoEng, &cfg.Provider, fallbackTokenClient)
-		if err != nil {
-			return fmt.Errorf("unable to get provider builder: %w", err)
+		if providerName != "" && providerName != provider.Name {
+			continue
 		}
 
-		if !pb.Implements(db.ProviderType(providerName)) {
+		if !provider.CanImplement(db.ProviderTypeGithub) {
+			// currently we can only operate on GitHub
+			// revisit this once we add more providers with webhooks
 			zerolog.Ctx(ctx).Info().
 				Str("name", provider.Name).
 				Str("uuid", provider.ID.String()).
@@ -113,30 +114,29 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		var updateErr error
+		zerolog.Ctx(ctx).Info().
+			Str("name", provider.Name).
+			Str("uuid", provider.ID.String()).
+			Msg("provider")
 
-		if db.ProviderType(providerName) == db.ProviderTypeGithub {
-			ghCli, err := pb.GetGitHub()
-			if err != nil {
-				zerolog.Ctx(ctx).Err(err).Msg("cannot get github client")
-				continue
-			}
-
-			whSecret, err := cfg.WebhookConfig.GetWebhookSecret()
-			if err != nil {
-				zerolog.Ctx(ctx).Err(err).Msg("cannot get webhook secret")
-				continue
-			}
-
-			if whSecret == "" {
-				zerolog.Ctx(ctx).Error().Msg("webhook secret is empty")
-				continue
-			}
-			updateErr = updateGithubWebhooks(ctx, ghCli, store, provider, webhookUrl.Host, whSecret)
-		} else {
-			updateErr = fmt.Errorf("provider type %s not supported", providerName)
+		// We end up querying each provider db record twice - once to build
+		// the slice which this loop iterates over, and a second time to
+		// instantiate the provider. Taking this approach since we plan on
+		// changing webhook handling in minder, so I do not want to create any
+		// throwaway code.
+		providerInstance, err := providerManager.InstantiateFromID(ctx, provider.ID)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("cannot instantiate provider")
+			continue
 		}
 
+		ghCli, err := provifv1.As[provifv1.GitHub](providerInstance)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("cannot convert to github provider")
+			continue
+		}
+
+		updateErr := updateGithubWebhooks(ctx, ghCli, store, provider, webhookUrl.Host, whSecret)
 		if updateErr != nil {
 			zerolog.Ctx(ctx).Err(updateErr).Msg("unable to update webhooks")
 		}
@@ -216,4 +216,53 @@ func updateGithubRepoHooks(
 	}
 
 	return nil
+}
+
+func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.ProviderManager, error) {
+	cryptoEng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
+	}
+	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
+	providerStore := providers.NewProviderStore(store)
+	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
+		&ratecache.NoopRestClientCache{},
+		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		&cfg.Provider,
+		fallbackTokenClient,
+		cryptoEng,
+		nil, // whManager not needed here (only when creating/delete webhooks)
+		store,
+		nil, // ghProviderService not needed here
+	)
+
+	return manager.NewProviderManager(providerStore, githubProviderManager)
+}
+
+func wireUpDB(ctx context.Context, cfg *serverconfig.Config) (db.Store, error) {
+	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to connect to database: %w", err)
+	}
+	defer func(dbConn *sql.DB) {
+		err := dbConn.Close()
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error closing database connection")
+		}
+	}(dbConn)
+
+	return db.NewStore(dbConn), nil
+}
+
+func getWebhookSecret(cfg *serverconfig.Config) (string, error) {
+	secret, err := cfg.WebhookConfig.GetWebhookSecret()
+	if err != nil {
+		return "", fmt.Errorf("cannot read secret from config: %w", err)
+	}
+
+	if secret == "" {
+		return "", fmt.Errorf("webhook secret is empty in config: %w", err)
+	}
+
+	return secret, nil
 }
