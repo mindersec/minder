@@ -17,74 +17,33 @@
 package reconcilers
 
 import (
-	gogithub "github.com/google/go-github/v61/github"
-
-	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	providertelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/providers/manager"
 )
 
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
-	store               db.Store
-	evt                 events.Publisher
-	crypteng            crypto.Engine
-	restClientCache     ratecache.RestClientCache
-	provCfg             *serverconfig.ProviderConfig
-	provMt              providertelemetry.ProviderMetrics
-	fallbackTokenClient *gogithub.Client
-}
-
-// ReconcilerOption is a function that modifies a reconciler
-type ReconcilerOption func(*Reconciler)
-
-// WithProviderMetrics sets the provider metrics for the reconciler
-func WithProviderMetrics(mt providertelemetry.ProviderMetrics) ReconcilerOption {
-	return func(r *Reconciler) {
-		r.provMt = mt
-	}
-}
-
-// WithRestClientCache sets the rest client cache for the reconciler
-func WithRestClientCache(cache ratecache.RestClientCache) ReconcilerOption {
-	return func(r *Reconciler) {
-		r.restClientCache = cache
-	}
+	store           db.Store
+	evt             events.Publisher
+	crypteng        crypto.Engine
+	providerManager manager.ProviderManager
 }
 
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
 	evt events.Publisher,
-	authCfg *serverconfig.AuthConfig,
-	provCfg *serverconfig.ProviderConfig,
-	opts ...ReconcilerOption,
+	cryptoEngine crypto.Engine,
+	providerManager manager.ProviderManager,
 ) (*Reconciler, error) {
-	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
-	if err != nil {
-		return nil, err
-	}
-
-	fallbackTokenClient := github.NewFallbackTokenClient(*provCfg)
-
-	r := &Reconciler{
-		store:               store,
-		evt:                 evt,
-		crypteng:            crypteng,
-		provCfg:             provCfg,
-		provMt:              providertelemetry.NewNoopMetrics(),
-		fallbackTokenClient: fallbackTokenClient,
-	}
-
-	for _, opt := range opts {
-		opt(r)
-	}
-
-	return r, nil
+	return &Reconciler{
+		store:           store,
+		evt:             evt,
+		crypteng:        cryptoEngine,
+		providerManager: providerManager,
+	}, nil
 }
 
 // Register implements the Consumer interface.

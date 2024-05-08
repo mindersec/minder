@@ -28,13 +28,18 @@ import (
 	"github.com/stacklok/minder/internal/util"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // ProviderStore provides methods for retrieving Providers from the database
 type ProviderStore interface {
 	// GetByID returns the provider identified by its UUID primary key.
-	// It is assumed that the caller carries out some kind of validation to
-	// ensure that whoever made the request is authorized to access this
-	// provider.
+	// This should only be used in places when it is certain that the requester
+	// is authorized to access this provider.
 	GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error)
+	// GetByIDProject returns the provider identified by its UUID primary key.
+	// ProjectID is also used in the query to prevent unauthorized access
+	// when used in API endpoints
+	GetByIDProject(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) (*db.Provider, error)
 	// GetByName returns the provider instance in the database as
 	// identified by its project ID and name. All parent projects of the
 	// specified project are included in the search.
@@ -43,17 +48,19 @@ type ProviderStore interface {
 	// identified by its project ID and name. Unlike `GetByName` it will only
 	// search in the specified project, and ignore the project hierarchy.
 	GetByNameInSpecificProject(ctx context.Context, projectID uuid.UUID, name string) (*db.Provider, error)
-	// GetByNameAndTrait returns the providers in the project which match the
+	// GetByTraitInHierarchy returns the providers in the project which match the
 	// specified trait. All parent projects of the specified project are
-	// included in the search.
+	// included in the search. The providers are optionally filtered by name.
 	// Note that if error is nil, there will always be at least one element
 	// in the list of providers which is returned.
-	GetByNameAndTrait(
+	GetByTraitInHierarchy(
 		ctx context.Context,
 		projectID uuid.UUID,
 		name string,
 		trait db.ProviderType,
 	) ([]db.Provider, error)
+	// Delete removes the provider configuration from the database
+	Delete(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
 }
 
 // ErrProviderNotFoundBy is an error type which is returned when a provider is not found
@@ -87,6 +94,17 @@ func (p *providerStore) GetByID(ctx context.Context, providerID uuid.UUID) (*db.
 	provider, err := p.store.GetProviderByID(ctx, providerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find provider by ID: %w", err)
+	}
+	return &provider, nil
+}
+
+func (p *providerStore) GetByIDProject(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) (*db.Provider, error) {
+	provider, err := p.store.GetProviderByIDAndProject(ctx, db.GetProviderByIDAndProjectParams{
+		ID:        providerID,
+		ProjectID: projectID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to find provider by ID and project: %w", err)
 	}
 	return &provider, nil
 }
@@ -126,7 +144,7 @@ func (p *providerStore) GetByNameInSpecificProject(ctx context.Context, projectI
 	return &provider, nil
 }
 
-func (p *providerStore) GetByNameAndTrait(
+func (p *providerStore) GetByTraitInHierarchy(
 	ctx context.Context,
 	projectID uuid.UUID,
 	name string,
@@ -140,6 +158,13 @@ func (p *providerStore) GetByNameAndTrait(
 	}
 
 	return providers, nil
+}
+
+func (p *providerStore) Delete(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error {
+	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{
+		ID:        providerID,
+		ProjectID: projectID,
+	})
 }
 
 // builds an error message based on the given filters.

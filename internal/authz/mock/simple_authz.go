@@ -22,6 +22,7 @@ import (
 	"sync/atomic"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/authz"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -50,18 +51,29 @@ func (n *SimpleClient) Check(_ context.Context, _ string, project uuid.UUID) err
 }
 
 // Write implements authz.Client
-func (n *SimpleClient) Write(_ context.Context, _ string, _ authz.Role, project uuid.UUID) error {
+func (n *SimpleClient) Write(_ context.Context, id string, role authz.Role, project uuid.UUID) error {
 	n.Allowed = append(n.Allowed, project)
+	if n.Assignments == nil {
+		n.Assignments = make(map[uuid.UUID][]*minderv1.RoleAssignment)
+	}
+	n.Assignments[project] = append(n.Assignments[project], &minderv1.RoleAssignment{
+		Subject: id,
+		Role:    string(role),
+		Project: proto.String(project.String()),
+	})
 	return nil
 }
 
 // Delete implements authz.Client
-func (n *SimpleClient) Delete(_ context.Context, _ string, _ authz.Role, project uuid.UUID) error {
+func (n *SimpleClient) Delete(_ context.Context, id string, role authz.Role, project uuid.UUID) error {
 	index := slices.Index(n.Allowed, project)
 	if index != -1 {
 		n.Allowed[index] = n.Allowed[len(n.Allowed)-1]
 		n.Allowed = n.Allowed[:len(n.Allowed)-1]
 	}
+	n.Assignments[project] = slices.DeleteFunc(n.Assignments[project], func(a *minderv1.RoleAssignment) bool {
+		return a.Subject == id && a.Role == string(role)
+	})
 	return nil
 }
 
@@ -86,7 +98,13 @@ func (n *SimpleClient) AssignmentsToProject(_ context.Context, p uuid.UUID) ([]*
 		return nil, nil
 	}
 
-	return n.Assignments[p], nil
+	// copy data to avoid modifying the original
+	assignments := make([]*minderv1.RoleAssignment, len(n.Assignments[p]))
+	for i, a := range n.Assignments[p] {
+		assignments[i] = proto.Clone(a).(*minderv1.RoleAssignment)
+	}
+
+	return assignments, nil
 }
 
 // ProjectsForUser implements authz.Client

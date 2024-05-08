@@ -86,13 +86,6 @@ func WithMiddleware(mdw message.HandlerMiddleware) ExecutorOption {
 	}
 }
 
-// WithRestClientCache sets the rest client cache for the executor
-func WithRestClientCache(cache ratecache.RestClientCache) ExecutorOption {
-	return func(e *Executor) {
-		e.restClientCache = cache
-	}
-}
-
 // NewExecutor creates a new executor
 func NewExecutor(
 	ctx context.Context,
@@ -101,6 +94,7 @@ func NewExecutor(
 	provCfg *serverconfig.ProviderConfig,
 	evt events.Publisher,
 	providerStore providers.ProviderStore,
+	restClientCache ratecache.RestClientCache,
 	opts ...ExecutorOption,
 ) (*Executor, error) {
 	crypteng, err := crypto.EngineFromAuthConfig(authCfg)
@@ -121,6 +115,7 @@ func NewExecutor(
 		provCfg:                provCfg,
 		providerStore:          providerStore,
 		fallbackTokenClient:    fallbackTokenClient,
+		restClientCache:        restClientCache,
 	}
 
 	for _, opt := range opts {

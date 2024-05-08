@@ -35,7 +35,7 @@ import (
 func NewRuleEvaluator(
 	ctx context.Context,
 	rt *pb.RuleType,
-	cli *providers.ProviderBuilder,
+	pbuild *providers.ProviderBuilder,
 ) (engif.Evaluator, error) {
 	e := rt.Def.GetEval()
 	if e == nil {
@@ -52,11 +52,23 @@ func NewRuleEvaluator(
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego())
 	case vulncheck.VulncheckEvalType:
-		return vulncheck.NewVulncheckEvaluator(e.GetVulncheck(), cli)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return vulncheck.NewVulncheckEvaluator(client)
 	case trusty.TrustyEvalType:
-		return trusty.NewTrustyEvaluator(ctx, cli)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return trusty.NewTrustyEvaluator(ctx, client)
 	case application.HomoglyphsEvalType:
-		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), cli)
+		client, err := pbuild.GetGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+		}
+		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), client)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Eval.Type)
 	}

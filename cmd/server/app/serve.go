@@ -27,17 +27,16 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/keycloak"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane"
 	cpmetrics "github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/service"
 )
 
@@ -79,7 +78,10 @@ var serveCmd = &cobra.Command{
 		// webhook config validation
 		webhookURL := cfg.WebhookConfig.ExternalWebhookURL
 		webhookping := cfg.WebhookConfig.ExternalPingURL
-		webhooksecret := cfg.WebhookConfig.WebhookSecret
+		webhooksecret, err := cfg.WebhookConfig.GetWebhookSecret()
+		if err != nil {
+			return fmt.Errorf("failed to get webhook secret: %w", err)
+		}
 		if webhookURL == "" || webhookping == "" || webhooksecret == "" {
 			return fmt.Errorf("webhook configuration is not set")
 		}
@@ -89,7 +91,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
 		}
-		vldtr, err := auth.NewJwtValidator(ctx, jwksUrl.String())
+		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String())
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
@@ -103,30 +105,37 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to prepare authz client for run: %w", err)
 		}
 
+		kc, err := keycloak.NewKeyCloak("", cfg.Identity.Server)
+		if err != nil {
+			return fmt.Errorf("unable to create keycloak identity provider: %w", err)
+		}
+		idClient, err := auth.NewIdentityClient(kc)
+		if err != nil {
+			return fmt.Errorf("unable to create identity client: %w", err)
+		}
+
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
-
-		serverOpts := []controlplane.ServerOption{
-			controlplane.WithServerMetrics(cpmetrics.NewMetrics()),
-			controlplane.WithProviderMetrics(providerMetrics),
-			controlplane.WithAuthzClient(authzc),
-			controlplane.WithRestClientCache(restClientCache),
-		}
 
 		tsmdw := logger.NewTelemetryStoreWMMiddleware(l)
 		executorOpts := []engine.ExecutorOption{
 			engine.WithProviderMetrics(providerMetrics),
 			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
-			engine.WithRestClientCache(restClientCache),
 		}
 
-		reconcilerOpts := []reconcilers.ReconcilerOption{
-			reconcilers.WithProviderMetrics(providerMetrics),
-			reconcilers.WithRestClientCache(restClientCache),
-		}
-
-		return service.AllInOneServerService(ctx, cfg, store, vldtr, serverOpts, executorOpts, reconcilerOpts)
+		return service.AllInOneServerService(
+			ctx,
+			cfg,
+			store,
+			jwt,
+			restClientCache,
+			authzc,
+			idClient,
+			cpmetrics.NewMetrics(),
+			providerMetrics,
+			executorOpts,
+		)
 	},
 }
 

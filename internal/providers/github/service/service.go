@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package service contains the github
+// Package service contains the GitHubProviderService
 package service
 
 import (
@@ -40,11 +40,11 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	github2 "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/app"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 )
+
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // GitHubProviderService encapsulates methods for creating and updating providers
 type GitHubProviderService interface {
@@ -66,7 +66,8 @@ type GitHubProviderService interface {
 	DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error
 	// ValidateGitHubAppWebhookPayload validates the payload of a GitHub App webhook.
 	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
-	DeleteProvider(ctx context.Context, provider *db.Provider) error
+	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
+	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -83,15 +84,13 @@ type ProjectFactory func(
 	ctx context.Context, qtx db.Querier, name string, user int64) (*db.Project, error)
 
 type ghProviderService struct {
-	store               db.Store
-	cryptoEngine        crypto.Engine
-	mt                  metrics.Metrics
-	provMt              provtelemetry.ProviderMetrics
-	config              *server.ProviderConfig
-	projectFactory      ProjectFactory
-	restClientCache     ratecache.RestClientCache
-	ghClientService     github2.ClientService
-	fallbackTokenClient *github.Client
+	store           db.Store
+	cryptoEngine    crypto.Engine
+	mt              metrics.Metrics
+	config          *server.ProviderConfig
+	projectFactory  ProjectFactory
+	ghClientService ghprov.ClientService
+	ghClientFactory clients.GitHubClientFactory
 }
 
 // NewGithubProviderService creates an instance of GitHubProviderService
@@ -99,22 +98,18 @@ func NewGithubProviderService(
 	store db.Store,
 	cryptoEngine crypto.Engine,
 	mt metrics.Metrics,
-	provMt provtelemetry.ProviderMetrics,
 	config *server.ProviderConfig,
 	projectFactory ProjectFactory,
-	restClientCache ratecache.RestClientCache,
-	fallbackTokenClient *github.Client,
+	ghClientFactory clients.GitHubClientFactory,
 ) GitHubProviderService {
 	return &ghProviderService{
-		store:               store,
-		cryptoEngine:        cryptoEngine,
-		mt:                  mt,
-		provMt:              provMt,
-		config:              config,
-		projectFactory:      projectFactory,
-		restClientCache:     restClientCache,
-		ghClientService:     github2.ClientServiceImplementation{},
-		fallbackTokenClient: fallbackTokenClient,
+		store:           store,
+		cryptoEngine:    cryptoEngine,
+		mt:              mt,
+		config:          config,
+		projectFactory:  projectFactory,
+		ghClientService: ghprov.ClientServiceImplementation{},
+		ghClientFactory: ghClientFactory,
 	}
 }
 
@@ -167,7 +162,13 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
 	p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
 	if stateData.RemoteUser.Valid {
-		if err := p.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
+		credential := credentials.NewGitHubTokenCredential(token.AccessToken)
+		// owner is empty, as per original logic
+		_, delegate, err := p.ghClientFactory.BuildOAuthClient("", credential, "")
+		if err != nil {
+			return nil, fmt.Errorf("unable to create github client: %w", err)
+		}
+		if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
 			return nil, ErrInvalidTokenIdentity
 		}
 	} else {
@@ -228,11 +229,23 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 	}
 
 	return db.WithTransaction(p.store, func(qtx db.ExtendQuerier) (*db.Provider, error) {
-		validateOwnership := func(ctx context.Context, provider db.Provider) error {
+		validateOwnership := func(ctx context.Context) error {
 			// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
 			p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
 			if stateData.RemoteUser.Valid {
-				if err := p.verifyProviderTokenIdentity(ctx, stateData, provider, token.AccessToken); err != nil {
+				// create just enough of the provider to validate the user ID
+				credential := credentials.NewGitHubTokenCredential(token.AccessToken)
+				_, delegate, err := p.ghClientFactory.BuildAppClient(
+					"",
+					credential,
+					p.config.GitHubApp.AppName,
+					p.config.GitHubApp.UserID,
+					false, // isOrg = false, as per original logic
+				)
+				if err != nil {
+					return fmt.Errorf("unable to create github client: %w", err)
+				}
+				if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
 					return ErrInvalidTokenIdentity
 				}
 			} else {
@@ -320,32 +333,35 @@ func createGitHubApp(
 	projectId uuid.UUID,
 	installationOwner *github.User,
 	installationID int64,
-	validateOwnership func(ctx context.Context, provider db.Provider) error,
+	validateOwnership func(ctx context.Context) error,
 	nonce sql.NullString,
 ) (db.Provider, error) {
+	if validateOwnership != nil {
+		if err := validateOwnership(ctx); err != nil {
+			return db.Provider{}, err
+		}
+	}
+
+	class := db.ProviderClassGithubApp
+	providerDef, err := providers.GetProviderClassDefinition(string(class))
+	if err != nil {
+		return db.Provider{}, err
+	}
+
 	// Save the installation ID and create a provider
 	savedProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
 		Name:       fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, installationOwner.GetLogin()),
 		ProjectID:  projectId,
-		Class:      db.ProviderClassGithubApp,
-		Implements: app.Implements,
+		Class:      class,
+		Implements: providerDef.Traits,
 		Definition: json.RawMessage(`{"github-app": {}}`),
-		AuthFlows:  app.AuthorizationFlows,
+		AuthFlows:  providerDef.AuthorizationFlows,
 	})
 	if err != nil {
 		return db.Provider{}, err
 	}
 
 	isOrg := installationOwner.GetType() == TypeGitHubOrganization
-
-	if validateOwnership != nil {
-		// TODO: it would be nice if validateOwnership didn't need to use a provider to get a
-		// github.Client, because then we could call it _before_ createGitHubApp, rather than
-		// in the middle...
-		if err := validateOwnership(ctx, savedProvider); err != nil {
-			return db.Provider{}, err
-		}
-	}
 
 	_, err = qtx.UpsertInstallationID(ctx, db.UpsertInstallationIDParams{
 		ProviderID: uuid.NullUUID{
@@ -430,19 +446,7 @@ func (p *ghProviderService) ValidateGitHubAppWebhookPayload(r *http.Request) (pa
 	return github.ValidatePayload(r, []byte(secret))
 }
 
-// DeleteProvider deletes a provider and removes the credentials from the downstream service, if possible
-func (p *ghProviderService) DeleteProvider(ctx context.Context, provider *db.Provider) error {
-	// Uninstall the GitHub App if it's a GitHub App provider
-	err := p.deleteInstallation(ctx, provider.ID)
-	if err != nil {
-		return fmt.Errorf("error deleting GitHub App installation: %w", err)
-	}
-
-	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{ID: provider.ID, ProjectID: provider.ProjectID})
-}
-
-// deleteInstallation deletes the installation from GitHub, if the provider has an associated installation
-func (p *ghProviderService) deleteInstallation(ctx context.Context, providerID uuid.UUID) error {
+func (p *ghProviderService) DeleteInstallation(ctx context.Context, providerID uuid.UUID) error {
 	installation, err := p.store.GetInstallationIDByProviderID(ctx, uuid.NullUUID{
 		UUID:  providerID,
 		Valid: true,
@@ -475,21 +479,12 @@ func (p *ghProviderService) deleteInstallation(ctx context.Context, providerID u
 	return nil
 }
 
-func (p *ghProviderService) verifyProviderTokenIdentity(
-	ctx context.Context, stateData db.GetProjectIDBySessionStateRow, provider db.Provider, token string) error {
-	pbOpts := []providers.ProviderBuilderOption{
-		providers.WithProviderMetrics(p.provMt),
-		providers.WithRestClientCache(p.restClientCache),
-	}
-	builder := providers.NewProviderBuilder(&provider, sql.NullString{}, false, credentials.NewGitHubTokenCredential(token),
-		p.config, p.fallbackTokenClient, pbOpts...)
-	// NOTE: this is github-specific at the moment.  We probably need to generally
-	// re-think token enrollment when we add more providers.
-	ghClient, err := builder.GetGitHub()
-	if err != nil {
-		return fmt.Errorf("error creating GitHub client: %w", err)
-	}
-	userId, err := ghClient.GetUserId(ctx)
+func verifyProviderTokenIdentity(
+	ctx context.Context,
+	stateData db.GetProjectIDBySessionStateRow,
+	client ghprov.Delegate,
+) error {
+	userId, err := client.GetUserId(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting user ID: %w", err)
 	}

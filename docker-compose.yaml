@@ -43,6 +43,7 @@ services:
       - "9090:9090"
     volumes:
       - ./server-config.yaml:/app/server-config.yaml:z
+      - ./flags-config.yaml:/app/flags-config.yaml:z
       # If you don't want to store your GitHub client ID and secret in the main
       # config file, point to them here:
       # - ./.github_client_id:/secrets/github_client_id:z
@@ -62,6 +63,7 @@ services:
       - MINDER_AUTH_TOKEN_KEY=/app/.ssh/token_key_passphrase
       - MINDER_UNSTABLE_TRUSTY_ENDPOINT=https://api.trustypkg.dev
       - MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY=/app/.secrets/github-app.pem
+      - MINDER_FLAGS_GO_FEATURE_FILE_PATH=/app/flags-config.yaml
       - MINDER_LOG_GITHUB_REQUESTS=1
     networks:
       - app_net

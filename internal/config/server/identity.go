@@ -122,3 +122,12 @@ func (sic *IdentityConfig) Do(
 
 	return client.Do(req)
 }
+
+// Issuer returns the URL of the identity server
+func (ic *IdentityConfig) Issuer() url.URL {
+	u, err := url.Parse(ic.IssuerUrl)
+	if err != nil {
+		panic("Invalid issuer URL")
+	}
+	return *u
+}

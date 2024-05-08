@@ -957,6 +957,21 @@ func (mr *MockStoreMockRecorder) GetProviderByID(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderByID", reflect.TypeOf((*MockStore)(nil).GetProviderByID), arg0, arg1)
 }
 
+// GetProviderByIDAndProject mocks base method.
+func (m *MockStore) GetProviderByIDAndProject(arg0 context.Context, arg1 db.GetProviderByIDAndProjectParams) (db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderByIDAndProject", arg0, arg1)
+	ret0, _ := ret[0].(db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderByIDAndProject indicates an expected call of GetProviderByIDAndProject.
+func (mr *MockStoreMockRecorder) GetProviderByIDAndProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderByIDAndProject", reflect.TypeOf((*MockStore)(nil).GetProviderByIDAndProject), arg0, arg1)
+}
+
 // GetProviderByName mocks base method.
 func (m *MockStore) GetProviderByName(arg0 context.Context, arg1 db.GetProviderByNameParams) (db.Provider, error) {
 	m.ctrl.T.Helper()
@@ -970,6 +985,21 @@ func (m *MockStore) GetProviderByName(arg0 context.Context, arg1 db.GetProviderB
 func (mr *MockStoreMockRecorder) GetProviderByName(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderByName", reflect.TypeOf((*MockStore)(nil).GetProviderByName), arg0, arg1)
+}
+
+// GetProviderWebhooks mocks base method.
+func (m *MockStore) GetProviderWebhooks(arg0 context.Context, arg1 uuid.UUID) ([]db.GetProviderWebhooksRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderWebhooks", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetProviderWebhooksRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderWebhooks indicates an expected call of GetProviderWebhooks.
+func (mr *MockStoreMockRecorder) GetProviderWebhooks(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderWebhooks", reflect.TypeOf((*MockStore)(nil).GetProviderWebhooks), arg0, arg1)
 }
 
 // GetPullRequest mocks base method.

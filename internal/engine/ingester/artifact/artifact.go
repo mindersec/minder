@@ -19,17 +19,17 @@ package artifact
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/sigstore/sigstore-go/pkg/verify"
+	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -40,6 +40,11 @@ import (
 const (
 	// ArtifactRuleDataIngestType is the type of the artifact rule data ingest engine
 	ArtifactRuleDataIngestType = "artifact"
+
+	// githubTokenIssuer is the issuer stamped into sigstore certs
+	// when authenticating through GitHub tokens
+	//nolint : gosec // Not an embedded credential
+	githubTokenIssuer = "https://token.actions.githubusercontent.com"
 )
 
 // Ingest is the engine for a rule type that uses artifact data ingest
@@ -53,26 +58,23 @@ type Ingest struct {
 }
 
 type verification struct {
-	IsSigned          bool   `json:"is_signed"`
-	IsVerified        bool   `json:"is_verified"`
-	Repository        string `json:"repository"`
-	Branch            string `json:"branch"`
-	SignerIdentity    string `json:"signer_identity"`
-	RunnerEnvironment string `json:"runner_environment"`
-	CertIssuer        string `json:"cert_issuer"`
+	IsSigned          bool                 `json:"is_signed"`
+	IsVerified        bool                 `json:"is_verified"`
+	Repository        string               `json:"repository"`
+	Branch            string               `json:"branch"`
+	SignerIdentity    string               `json:"signer_identity"`
+	RunnerEnvironment string               `json:"runner_environment"`
+	CertIssuer        string               `json:"cert_issuer"`
+	Attestation       *verifiedAttestation `json:"attestation,omitempty"`
+}
+
+type verifiedAttestation struct {
+	PredicateType string `json:"predicate_type,omitempty"`
+	Predicate     any    `json:"predicate,omitempty"`
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
-func NewArtifactDataIngest(
-	_ *pb.ArtifactType,
-	pbuild *providers.ProviderBuilder,
-) (*Ingest, error) {
-
-	ghCli, err := pbuild.GetGitHub()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get github client: %w", err)
-	}
-
+func NewArtifactDataIngest(ghCli provifv1.GitHub) (*Ingest, error) {
 	return &Ingest{
 		ghCli: ghCli,
 	}, nil
@@ -154,10 +156,6 @@ func (i *Ingest) getApplicableArtifactVersions(
 
 	zerolog.Ctx(ctx).Debug().Any("result", result).Msg("ingestion result")
 
-	if err != nil {
-		return nil, err
-	}
-
 	// Return the list of provenance info for all applicable artifact versions
 	return result, nil
 }
@@ -202,11 +200,23 @@ func (i *Ingest) getVerificationResult(
 
 			// If we got verified provenance info for the artifact version, populate the rest of the verification result
 			if res.IsVerified {
+				siIdentity, err := signerIdentityFromCertificate(res.Signature.Certificate)
+				if err != nil {
+					zerolog.Ctx(ctx).Err(err).Msg("error parsing signer identity")
+				}
+
 				verResult.Repository = res.Signature.Certificate.SourceRepositoryURI
 				verResult.Branch = branchFromRef(res.Signature.Certificate.SourceRepositoryRef)
-				verResult.SignerIdentity = signerIdentityFromSignature(res.Signature)
+				verResult.SignerIdentity = siIdentity
 				verResult.RunnerEnvironment = res.Signature.Certificate.RunnerEnvironment
 				verResult.CertIssuer = res.Signature.Certificate.Issuer
+			}
+
+			if res.Statement != nil {
+				verResult.Attestation = &verifiedAttestation{
+					PredicateType: res.Statement.PredicateType,
+					Predicate:     res.Statement.Predicate,
+				}
 			}
 			// Append the verification result to the list
 			versionResults = append(versionResults, *verResult)
@@ -246,7 +256,10 @@ func getAndFilterArtifactVersions(
 	}
 
 	// Fetch all available versions of the artifact
-	upstreamVersions, err := ghCli.GetPackageVersions(ctx, artifact.Owner, artifact.GetTypeLower(), artifact.GetName())
+	artifactName := url.QueryEscape(artifact.GetName())
+	upstreamVersions, err := ghCli.GetPackageVersions(
+		ctx, artifact.Owner, artifact.GetTypeLower(), artifactName,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
@@ -323,31 +336,44 @@ func branchFromRef(ref string) string {
 	return ""
 }
 
-func signerIdentityFromSignature(s *verify.SignatureVerificationResult) string {
-	if s.Certificate.BuildSignerURI != "" {
-		// Find the index of the start of the ".github/workflows/" part
-		startIndex := strings.Index(s.Certificate.BuildSignerURI, ".github/workflows/")
-		if startIndex == -1 {
-			return ""
-		}
+// signerIdentityFromCertificate returns the signer identity. When the identity
+// is a URI (from the BuildSignerURI extension or the cert SAN), we return only
+// the URI path component. We split it this way to ensure we can make rules
+// more generalizable (applicable to the same path regardless of the repo for example).
+func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
+	var builderURL string
 
-		// Adjust startIndex to get the part right after ".github/workflows/"
-		startIndex += len(".github/workflows/")
-
-		// Extract the part after ".github/workflows/"
-		remainingURL := s.Certificate.BuildSignerURI[startIndex:]
-
-		// Find the index of '@' to isolate the file name
-		atSymbolIndex := strings.Index(remainingURL, "@")
-		if atSymbolIndex != -1 {
-			return remainingURL[:atSymbolIndex]
-		}
-		return remainingURL
-	} else if s.Certificate.SubjectAlternativeName.Value != "" {
-		// This is the use case where there is no build signer URI but there is a subject alternative name
-		// Usually this is the case when signing through an OIDC provider. The value is the signer's email identity.
-		return s.Certificate.SubjectAlternativeName.Value
+	if c.SubjectAlternativeName.Value == "" {
+		return "", fmt.Errorf("certificate has no signer identity in SAN (is it a fulcio cert?)")
 	}
-	// If we can't find the signer identity, return an empty string
-	return ""
+
+	switch {
+	case c.SubjectAlternativeName.Value != "" && c.SubjectAlternativeName.Type == certificate.SubjectAlternativeNameTypeURI:
+		builderURL = c.SubjectAlternativeName.Value
+	default:
+		// Return the SAN in the cert as a last resort. This handles the case when
+		// we don't have a signer identity but also when the SAN is an email
+		// when a user authenticated using an OIDC provider or a SPIFFE ID.
+		// Any other SAN types are returned verbatim
+		return c.SubjectAlternativeName.Value, nil
+	}
+
+	// Any signer identity not issued by github actions is returned verbatim
+	if c.Extensions.Issuer != githubTokenIssuer {
+		return builderURL, nil
+	}
+
+	// When handling a cert issued through GitHub actions tokens, break the identity
+	// into its components. The verifier captures the git reference and the
+	// the repository URI.
+	if c.Extensions.SourceRepositoryURI == "" {
+		return "", fmt.Errorf(
+			"certificate extension dont have a SourceRepositoryURI set (oid 1.3.6.1.4.1.57264.1.5)",
+		)
+	}
+
+	builderURL, _, _ = strings.Cut(builderURL, "@")
+	builderURL = strings.TrimPrefix(builderURL, c.Extensions.SourceRepositoryURI)
+
+	return builderURL, nil
 }

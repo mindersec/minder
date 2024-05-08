@@ -4141,6 +4141,10 @@
         },
         "context": {
           "$ref": "#/definitions/v1Context"
+        },
+        "registered": {
+          "type": "boolean",
+          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
         }
       }
     },

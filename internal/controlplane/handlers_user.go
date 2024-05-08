@@ -45,7 +45,7 @@ func (s *Server) CreateUser(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	token, err := s.vldtr.ParseAndValidate(tokenString)
+	token, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
@@ -77,14 +77,11 @@ func (s *Server) CreateUser(ctx context.Context,
 			baseName = token.PreferredUsername()
 		}
 
-		project, err := projects.ProvisionSelfEnrolledOAuthProject(
+		project, err := s.projectCreator.ProvisionSelfEnrolledOAuthProject(
 			ctx,
-			s.authzClient,
 			qtx,
 			baseName,
 			subject,
-			s.marketplace,
-			s.cfg.DefaultProfiles,
 		)
 		if err != nil {
 			if errors.Is(err, projects.ErrProjectAlreadyExists) {
@@ -159,14 +156,14 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	token, err := s.vldtr.ParseAndValidate(tokenString)
+	token, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}
 
 	subject := token.Subject()
 
-	err = DeleteUser(ctx, s.store, s.authzClient, s.ghProviders, subject)
+	err = DeleteUser(ctx, s.store, s.authzClient, s.projectDeleter, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
@@ -221,7 +218,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
 	}
 
-	openIdToken, err := s.vldtr.ParseAndValidate(tokenString)
+	openIdToken, err := s.jwt.ParseAndValidate(tokenString)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
 	}

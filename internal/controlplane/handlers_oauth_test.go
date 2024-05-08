@@ -43,14 +43,15 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
-	"github.com/stacklok/minder/internal/providers/ratecache"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -313,8 +314,14 @@ func TestGetAuthorizationURL(t *testing.T) {
 			}
 			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-			server, err := NewServer(store, evt, c, mockJwt, providers.NewProviderStore(store))
-			require.NoError(t, err, "failed to create server")
+			server := &Server{
+				store:               store,
+				jwt:                 mockJwt,
+				evt:                 evt,
+				cfg:                 c,
+				mt:                  metrics.NewNoopMetrics(),
+				providerAuthFactory: auth.NewOAuthConfig,
+			}
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
@@ -398,19 +405,19 @@ func TestProviderCallback(t *testing.T) {
 			gh := mockgh.NewMockGitHub(ctrl)
 			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
 
-			var opts []ServerOption
+			var clientFactory *mockclients.MockGitHubClientFactory
 			if tc.remoteUser.String != "" {
-				// TODO: verfifyProviderTokenIdentity
-				cancelable, cancel := context.WithCancel(context.Background())
-				defer cancel()
-				clientCache := ratecache.NewRestClientCache(cancelable)
-				clientCache.Set("", "anAccessToken", db.ProviderTypeGithub, gh)
-				opts = []ServerOption{
-					WithRestClientCache(clientCache),
-				}
+				delegate := mockgh.NewMockDelegate(ctrl)
+				delegate.EXPECT().
+					GetUserId(gomock.Any()).
+					Return(int64(31337), nil)
+				clientFactory = mockclients.NewMockGitHubClientFactory(ctrl)
+				clientFactory.EXPECT().
+					BuildOAuthClient(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, delegate, nil)
 			}
 
-			s, _ := newDefaultServer(t, store, opts...)
+			s, _ := newDefaultServer(t, store, clientFactory)
 
 			var err error
 			encryptedUrlString, err := s.cryptoEngine.EncryptString(tc.redirectUrl)

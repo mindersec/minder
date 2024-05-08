@@ -41,6 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/marketplaces"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -258,14 +259,19 @@ func TestCreateUser_gRPC(t *testing.T) {
 			reqCtx := tc.buildStubs(ctx, mockStore, mockJwtValidator, mockProviders)
 			crypeng := mockcrypto.NewMockEngine(ctrl)
 
+			authz := &mock.NoopClient{Authorized: true}
 			server := &Server{
 				store:        mockStore,
 				cfg:          &serverconfig.Config{},
 				cryptoEngine: crypeng,
-				vldtr:        mockJwtValidator,
+				jwt:          mockJwtValidator,
 				ghProviders:  mockProviders,
-				authzClient:  &mock.NoopClient{Authorized: true},
-				marketplace:  marketplaces.NewNoopMarketplace(),
+				authzClient:  authz,
+				projectCreator: projects.NewProjectCreator(
+					authz,
+					marketplaces.NewNoopMarketplace(),
+					&serverconfig.DefaultProfilesConfig{},
+				),
 			}
 
 			// server, err := NewServer(mockStore, evt, &serverconfig.Config{
@@ -349,7 +355,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 				},
 			},
 		},
-		vldtr:        mockJwtValidator,
+		jwt:          mockJwtValidator,
 		cryptoEngine: crypeng,
 		authzClient:  &mock.NoopClient{Authorized: true},
 	}
@@ -447,19 +453,26 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
 			require.NoError(t, err, "failed to setup eventer")
-			server, err := NewServer(mockStore, evt, &serverconfig.Config{
-				Auth: serverconfig.AuthConfig{
-					TokenKey: generateTokenKey(t),
-				},
-				Identity: serverconfig.IdentityConfigWrapper{
-					Server: serverconfig.IdentityConfig{
-						IssuerUrl:    testServer.URL,
-						ClientId:     "client-id",
-						ClientSecret: "client-secret",
+
+			server := &Server{
+				evt:           evt,
+				store:         mockStore,
+				jwt:           mockJwtValidator,
+				providerStore: providers.NewProviderStore(mockStore),
+				authzClient:   &mock.SimpleClient{},
+				cfg: &serverconfig.Config{
+					Auth: serverconfig.AuthConfig{
+						TokenKey: generateTokenKey(t),
+					},
+					Identity: serverconfig.IdentityConfigWrapper{
+						Server: serverconfig.IdentityConfig{
+							IssuerUrl:    testServer.URL,
+							ClientId:     "client-id",
+							ClientSecret: "client-secret",
+						},
 					},
 				},
-			}, mockJwtValidator, providers.NewProviderStore(mockStore))
-			require.NoError(t, err, "failed to create test server")
+			}
 
 			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)

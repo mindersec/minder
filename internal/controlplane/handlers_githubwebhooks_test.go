@@ -19,11 +19,12 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,10 +36,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
-	"golang.org/x/oauth2"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
@@ -86,12 +85,18 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	t := s.T()
 	t.Parallel()
 
+	whSecretFile, err := os.CreateTemp("", "webhooksecret*")
+	require.NoError(t, err, "failed to create temporary file")
+	_, err = whSecretFile.WriteString("test")
+	require.NoError(t, err, "failed to write to temporary file")
+	defer os.Remove(whSecretFile.Name())
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore)
-	srv.cfg.WebhookConfig.WebhookSecret = "test"
+	srv, evt := newDefaultServer(t, mockStore, nil)
+	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -146,7 +151,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore)
+	srv, evt := newDefaultServer(t, mockStore, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -218,7 +223,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	defer os.Remove(prevCredsFile.Name())
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore)
+	srv, evt := newDefaultServer(t, mockStore, nil)
 	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 	defer evt.Close()
@@ -240,27 +245,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	projectID := uuid.New()
 	providerID := uuid.New()
 
-	// create a test oauth2 token
-	token := oauth2.Token{
-		AccessToken: "test",
-		TokenType:   "test",
-	}
-	// marshal the token
-	byteToken, err := json.Marshal(token)
-	require.NoError(t, err, "failed to marshal decryptedToken")
-	// encrypt the token
-	encryptedToken, err := crypto.EncryptBytes("test", byteToken)
-	require.NoError(t, err, "failed to encrypt token")
-
-	// Encode the token to Base64
-	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
-	mockStore.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).Return(db.ProviderAccessToken{
-		EncryptedToken: encodedToken,
-		ID:             1,
-		ProjectID:      projectID,
-		Provider:       providerName,
-	}, nil)
-
 	mockStore.EXPECT().
 		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 		Return(db.Repository{
@@ -269,14 +253,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 			RepoID:     12345,
 			Provider:   providerName,
 			ProviderID: providerID,
-		}, nil)
-
-	mockStore.EXPECT().
-		GetProviderByID(gomock.Any(), gomock.Eq(providerID)).
-		Return(db.Provider{
-			ID:        providerID,
-			ProjectID: projectID,
-			Name:      providerName,
 		}, nil)
 
 	hook := srv.HandleGitHubWebHook()
@@ -327,6 +303,23 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 
 	// TODO: assert payload is Repository protobuf
+
+	// test that if no secret matches we get back a 400
+	req, err = http.NewRequest("POST", fmt.Sprintf("http://%s", addr), bytes.NewBuffer(packageJson))
+	require.NoError(t, err, "failed to create request")
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("X-Hub-Signature-256", "sha256=ab22bd9a3712e444e110c8088011fd827143ed63ba8655f07e76ed1a0f05edd1")
+
+	_, err = prevCredsFile.Seek(0, 0)
+	require.NoError(t, err, "failed to seek to beginning of temporary file")
+	_, err = prevCredsFile.WriteString("lets-just-overwrite-what-is-here-with-a-bad-secret")
+	require.NoError(t, err, "failed to write to temporary file")
+
+	resp, err = httpDoWithRetry(client, req)
+	require.NoError(t, err, "failed to make request")
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "unexpected status code")
 }
 
 // We should ignore events from packages from repositories that are not registered
@@ -338,7 +331,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore)
+	srv, evt := newDefaultServer(t, mockStore, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -406,7 +399,7 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore)
+	srv, evt := newDefaultServer(t, mockStore, nil)
 	defer evt.Close()
 
 	go func() {
@@ -443,6 +436,73 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 
 	require.NoError(t, err, "failed to make request")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+}
+
+func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
+	t := s.T()
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	srv, evt := newDefaultServer(t, mockStore, nil)
+	defer evt.Close()
+
+	pq := testqueue.NewPassthroughQueue(t)
+	queued := pq.GetQueue()
+
+	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
+
+	go func() {
+		err := evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	<-evt.Running()
+
+	hook := withMaxSizeMiddleware(srv.HandleGitHubWebHook())
+	port, err := rand.GetRandomPort()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := fmt.Sprintf("localhost:%d", port)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           hook,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+	go server.ListenAndServe()
+
+	event := github.PackageEvent{
+		Action: github.String("published"),
+		Repo: &github.Repository{
+			ID:   github.Int64(12345),
+			Name: github.String("stacklok/minder"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal package event")
+
+	maliciousBody := strings.NewReader(strings.Repeat("1337", 1000000000))
+	maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
+	_ = packageJson
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s", addr), maliciousBodyReader)
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := httpDoWithRetry(client, req)
+	require.NoError(t, err, "failed to make request")
+	// We expect OK since we don't want to leak information about registered repositories
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "unexpected status code")
+	assert.Len(t, queued, 0)
 }
 
 func TestAll(t *testing.T) {

@@ -45,10 +45,9 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/providers/github/app"
+	"github.com/stacklok/minder/internal/providers/github/clients"
+	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
-	ghclient "github.com/stacklok/minder/internal/providers/github/oauth"
-	mockratecache "github.com/stacklok/minder/internal/providers/ratecache/mock"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util/rand"
 )
@@ -60,11 +59,12 @@ type testMocks struct {
 	cancelFunc  embedded.CancelFunc
 }
 
-func testNewProviderService(
+func testNewGitHubProviderService(
 	t *testing.T,
 	mockCtrl *gomock.Controller,
 	config *server.ProviderConfig,
 	projectFactory ProjectFactory,
+	ghClientFactory clients.GitHubClientFactory,
 ) (*ghProviderService, *testMocks) {
 	t.Helper()
 
@@ -89,15 +89,17 @@ func testNewProviderService(
 	require.NoError(t, err)
 	packageListingClient.BaseURL = testServerUrl
 
+	if ghClientFactory == nil {
+		ghClientFactory = clients.NewGitHubClientFactory(telemetry.NewNoopMetrics())
+	}
+
 	psi := NewGithubProviderService(
 		mocks.fakeStore,
 		mocks.cryptoMocks,
 		metrics.NewNoopMetrics(),
-		telemetry.NewNoopMetrics(),
 		config,
 		projectFactory,
-		mockratecache.NewMockRestClientCache(mockCtrl),
-		packageListingClient,
+		ghClientFactory,
 	)
 
 	ps, ok := psi.(*ghProviderService)
@@ -130,13 +132,23 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	const (
 		stateNonce       = "test-oauth-nonce"
 		stateNonceUpdate = "test-oauth-nonce-update"
+		accountID        = 12345
 	)
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	cfg := &server.ProviderConfig{}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
+	delegate := mockgh.NewMockDelegate(ctrl)
+	delegate.EXPECT().
+		GetUserId(gomock.Any()).
+		Return(int64(accountID), nil)
+	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
+	clientFactory.EXPECT().
+		BuildOAuthClient(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, delegate, nil)
+
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
 	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
 		db.CreateProjectParams{
 			Name:     "test",
@@ -150,7 +162,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 
 	dbProv, err := provSvc.CreateGitHubOAuthProvider(
 		context.Background(),
-		ghclient.Github,
+		clients.Github,
 		db.ProviderClassGithub,
 		oauth2.Token{
 			AccessToken: "my-access",
@@ -163,15 +175,16 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 				String: "testorg",
 			},
 			RemoteUser: sql.NullString{
-				Valid: false,
+				Valid:  true,
+				String: strconv.Itoa(accountID),
 			},
 		},
 		stateNonce)
 	require.NoError(t, err)
 	require.NotNil(t, dbProv)
 	require.Equal(t, dbProv.ProjectID, dbproj.ID)
-	require.Equal(t, dbProv.AuthFlows, ghclient.AuthorizationFlows)
-	require.Equal(t, dbProv.Implements, ghclient.Implements)
+	require.Equal(t, dbProv.AuthFlows, clients.OAuthAuthorizationFlows)
+	require.Equal(t, dbProv.Implements, clients.OAuthImplements)
 
 	dbToken, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
 	require.NoError(t, err)
@@ -187,7 +200,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 
 	dbProvUpdated, err := provSvc.CreateGitHubOAuthProvider(
 		context.Background(),
-		ghclient.Github,
+		clients.Github,
 		db.ProviderClassGithub,
 		oauth2.Token{
 			AccessToken: "my-access2",
@@ -239,7 +252,16 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
+	delegate := mockgh.NewMockDelegate(ctrl)
+	delegate.EXPECT().
+		GetUserId(gomock.Any()).
+		Return(int64(accountID), nil)
+	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
+	clientFactory.EXPECT().
+		BuildAppClient(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, delegate, nil)
+
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
 	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
 		db.CreateProjectParams{
 			Name:     "test",
@@ -261,7 +283,8 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 		db.GetProjectIDBySessionStateRow{
 			ProjectID: dbproj.ID,
 			RemoteUser: sql.NullString{
-				Valid: false,
+				Valid:  true,
+				String: strconv.Itoa(accountID),
 			},
 		},
 		installationID,
@@ -270,8 +293,8 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.NotNil(t, dbProv)
 
 	require.Equal(t, dbProv.ProjectID, dbproj.ID)
-	require.Equal(t, dbProv.AuthFlows, app.AuthorizationFlows)
-	require.Equal(t, dbProv.Implements, app.Implements)
+	require.Equal(t, dbProv.AuthFlows, clients.AppAuthorizationFlows)
+	require.Equal(t, dbProv.Implements, clients.AppImplements)
 	require.Equal(t, dbProv.Class, db.ProviderClassGithubApp)
 	require.Contains(t, dbProv.Name, db.ProviderClassGithubApp)
 	require.Contains(t, dbProv.Name, accountLogin)
@@ -319,7 +342,7 @@ func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
 		return &project, nil
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, factory)
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, factory, nil)
 
 	mocks.svcMock.EXPECT().
 		GetInstallation(gomock.Any(), int64(installationID), gomock.Any()).
@@ -376,7 +399,7 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 		return nil, errors.New("error getting user for GitHub ID: 404 not found")
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, factory)
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, factory, nil)
 
 	mocks.svcMock.EXPECT().
 		GetInstallation(gomock.Any(), int64(installationID), gomock.Any()).
@@ -418,7 +441,7 @@ func TestProviderService_ValidateGithubInstallationId(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, nil)
 
 	mocks.svcMock.EXPECT().
 		ListUserInstallations(gomock.Any(), gomock.Any()).
@@ -462,7 +485,7 @@ func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
 		},
 	}
 
-	provSvc, _ := testNewProviderService(t, ctrl, cfg, nil)
+	provSvc, _ := testNewGitHubProviderService(t, ctrl, cfg, nil, nil)
 	payload, err := provSvc.ValidateGitHubAppWebhookPayload(req)
 	require.NoError(t, err)
 
@@ -475,7 +498,7 @@ func TestProviderService_ValidateGitHubAppWebhookPayload(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestProviderService_DeleteProvider(t *testing.T) {
+func TestProviderService_DeleteInstallation(t *testing.T) {
 	t.Parallel()
 
 	installationID := int64(123)
@@ -493,7 +516,7 @@ func TestProviderService_DeleteProvider(t *testing.T) {
 		},
 	}
 
-	provSvc, mocks := testNewProviderService(t, ctrl, cfg, nil)
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, nil)
 
 	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
 		db.CreateProjectParams{
@@ -528,12 +551,9 @@ func TestProviderService_DeleteProvider(t *testing.T) {
 		DeleteInstallation(gomock.Any(), installationID, gomock.Any()).
 		Return(nil, nil)
 
-	err = provSvc.DeleteProvider(
+	err = provSvc.DeleteInstallation(
 		context.Background(),
-		&ghAppProvider)
+		ghAppProvider.ID,
+	)
 	require.NoError(t, err)
-
-	// Ensure the provider is no longer in the database
-	_, err = mocks.fakeStore.GetProviderByID(context.Background(), ghAppProvider.ID)
-	require.ErrorIs(t, err, sql.ErrNoRows)
 }

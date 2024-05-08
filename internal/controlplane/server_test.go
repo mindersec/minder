@@ -31,10 +31,16 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/auth"
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	mockauthz "github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
+	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
+	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -64,7 +70,11 @@ func init() {
 	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
-func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, opts ...ServerOption) (*Server, events.Interface) {
+func newDefaultServer(
+	t *testing.T,
+	mockStore *mockdb.MockStore,
+	ghClientFactory ghclient.GitHubClientFactory,
+) (*Server, events.Interface) {
 	t.Helper()
 
 	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
@@ -84,8 +94,34 @@ func newDefaultServer(t *testing.T, mockStore *mockdb.MockStore, opts ...ServerO
 	defer ctrl.Finish()
 	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
 
-	server, err := NewServer(mockStore, evt, c, mockJwt, providers.NewProviderStore(mockStore), opts...)
-	require.NoError(t, err, "failed to create server")
+	// Needed to keep these tests working as-is.
+	// In future, beef up unit test coverage in the dependencies
+	// of this code, and refactor these tests to use stubs.
+	eng, err := crypto.EngineFromAuthConfig(&c.Auth)
+	require.NoError(t, err)
+	ghClientService := ghService.NewGithubProviderService(
+		mockStore,
+		eng,
+		metrics.NewNoopMetrics(),
+		// These nil dependencies do not matter for the current tests
+		nil,
+		nil,
+		ghClientFactory,
+	)
+
+	server := &Server{
+		store:         mockStore,
+		evt:           evt,
+		cfg:           c,
+		mt:            metrics.NewNoopMetrics(),
+		jwt:           mockJwt,
+		authzClient:   &mockauthz.SimpleClient{},
+		idClient:      &auth.IdentityClient{},
+		ghProviders:   ghClientService,
+		providerStore: providers.NewProviderStore(mockStore),
+		cryptoEngine:  eng,
+	}
+
 	return server, evt
 }
 

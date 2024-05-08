@@ -65,7 +65,7 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 
 	server := info.Server.(*Server)
 
-	parsedToken, err := server.vldtr.ParseAndValidate(token)
+	parsedToken, err := server.jwt.ParseAndValidate(token)
 	if err != nil {
 		zerolog.Ctx(ctx).Info().Msgf("Error validating token %s", token)
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)

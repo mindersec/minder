@@ -16,7 +16,7 @@
 # exclude auto-generated DB code as well as mocks
 # in future, we may want to parse these from a file instead of hardcoding them
 # in the Makefile
-COVERAGE_EXCLUSIONS="internal/db\|/mock/"
+COVERAGE_EXCLUSIONS="internal/db\|/mock/\|internal/auth/keycloak/client"
 COVERAGE_PACKAGES=./internal/...
 
 .PHONY: clean
@@ -33,11 +33,7 @@ test-silent: clean init-examples ## run tests in a silent mode (errors only outp
 
 .PHONY: cover
 cover: init-examples ## display test coverage
-	# There is a bug in the new coverage logic implemented in go 1.22.
-	# The recommended workaround is to disable the new coverage logic until
-	# this is fixed.
-	# See: https://github.com/golang/go/issues/65653
-	GOEXPERIMENT=nocoverageredesign go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
+	go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
 	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
 	rm coverage.out.tmp
 	go tool cover -func=coverage.out

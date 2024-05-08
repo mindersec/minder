@@ -35,7 +35,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
+	"github.com/stacklok/minder/internal/projects"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -91,7 +92,10 @@ func TestHandleEvents(t *testing.T) {
 			},
 		},
 	}
-	HandleEvents(context.Background(), mockStore, &mock.NoopClient{Authorized: true}, &c, mockprovsvc.NewMockGitHubProviderService(ctrl))
+	authzClient := &mock.NoopClient{Authorized: true}
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	HandleEvents(context.Background(), mockStore, authzClient, &c, deleter)
 }
 
 func TestDeleteUserOneProject(t *testing.T) {
@@ -131,10 +135,11 @@ func TestDeleteUserOneProject(t *testing.T) {
 	}
 
 	ctrl := gomock.NewController(t)
-	providerService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	deleter := projects.NewProjectDeleter(&authzClient, mockProviderManager)
 
 	t.Log("Deleting user")
-	err = DeleteUser(ctx, store, &authzClient, providerService, u1.IdentitySubject)
+	err = DeleteUser(ctx, store, &authzClient, deleter, u1.IdentitySubject)
 	assert.NoError(t, err, "DeleteUser failed")
 
 	t.Log("Checking if user is removed from DB")
@@ -211,10 +216,11 @@ func TestDeleteUserMultiProjectMembership(t *testing.T) {
 	}
 
 	ctrl := gomock.NewController(t)
-	providerService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	deleter := projects.NewProjectDeleter(&authzClient, mockProviderManager)
 
 	t.Log("Deleting user")
-	err = DeleteUser(ctx, store, &authzClient, providerService, u1.IdentitySubject)
+	err = DeleteUser(ctx, store, &authzClient, deleter, u1.IdentitySubject)
 	assert.NoError(t, err, "DeleteUser failed")
 
 	t.Log("Checking if user1 is removed from DB")

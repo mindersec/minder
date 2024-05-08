@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"time"
 
-	gh "github.com/google/go-github/v61/github"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
@@ -48,22 +48,19 @@ import (
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/service"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -73,6 +70,10 @@ const metricsPath = "/metrics"
 
 var (
 	readHeaderTimeout = 2 * time.Second
+
+	// RequestBodyMaxBytes is the maximum number of bytes that can be read from a request body
+	// We limit to 2MB for now
+	RequestBodyMaxBytes int64 = 2 << 20
 )
 
 // Server represents the controlplane server
@@ -81,24 +82,25 @@ type Server struct {
 	cfg                 *serverconfig.Config
 	evt                 events.Publisher
 	mt                  metrics.Metrics
-	provMt              provtelemetry.ProviderMetrics
 	grpcServer          *grpc.Server
-	vldtr               auth.JwtValidator
+	jwt                 auth.JwtValidator
 	providerAuthFactory func(string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
+	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine
-	restClientCache     ratecache.RestClientCache
+	featureFlags        openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes           ruletypes.RuleTypeService
-	repos               github.RepositoryService
-	profiles            profiles.ProfileService
-	ghProviders         service.GitHubProviderService
-	marketplace         marketplaces.Marketplace
-	providerStore       providers.ProviderStore
-	ghClient            ghprov.ClientService
-	fallbackTokenClient *gh.Client
+	ruleTypes       ruletypes.RuleTypeService
+	repos           github.RepositoryService
+	profiles        profiles.ProfileService
+	ghProviders     service.GitHubProviderService
+	providerStore   providers.ProviderStore
+	ghClient        ghprov.ClientService
+	providerManager manager.ProviderManager
+	projectCreator  projects.ProjectCreator
+	projectDeleter  projects.ProjectDeleter
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -113,102 +115,46 @@ type Server struct {
 	pb.UnimplementedEvalResultsServiceServer
 }
 
-// ServerOption is a function that modifies a server
-type ServerOption func(*Server)
-
-// WithProviderMetrics sets the provider metrics for the server
-func WithProviderMetrics(mt provtelemetry.ProviderMetrics) ServerOption {
-	return func(s *Server) {
-		s.provMt = mt
-	}
-}
-
-// WithAuthzClient sets the authz client for the server
-func WithAuthzClient(c authz.Client) ServerOption {
-	return func(s *Server) {
-		s.authzClient = c
-	}
-}
-
-// WithRestClientCache sets the rest client cache for the server
-func WithRestClientCache(c ratecache.RestClientCache) ServerOption {
-	return func(s *Server) {
-		s.restClientCache = c
-	}
-}
-
-// WithServerMetrics sets the server metrics for the server
-func WithServerMetrics(mt metrics.Metrics) ServerOption {
-	return func(s *Server) {
-		s.mt = mt
-	}
-}
-
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
 	evt events.Publisher,
 	cfg *serverconfig.Config,
-	vldtr auth.JwtValidator,
+	serverMetrics metrics.Metrics,
+	jwt auth.JwtValidator,
+	cryptoEngine crypto.Engine,
+	authzClient authz.Client,
+	idClient auth.Resolver,
+	repoService github.RepositoryService,
+	profileService profiles.ProfileService,
+	ruleService ruletypes.RuleTypeService,
+	ghProviders service.GitHubProviderService,
+	providerManager manager.ProviderManager,
 	providerStore providers.ProviderStore,
-	opts ...ServerOption,
-) (*Server, error) {
-	eng, err := crypto.EngineFromAuthConfig(&cfg.Auth)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
-	}
-
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
-	profileSvc := profiles.NewProfileService(evt)
-	mt := metrics.NewNoopMetrics()
-	provMt := provtelemetry.NewNoopMetrics()
-	ruleSvc := ruletypes.NewRuleTypeService()
-	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create marketplace: %w", err)
-	}
-	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
-
-	s := &Server{
+	projectDeleter projects.ProjectDeleter,
+	projectCreator projects.ProjectCreator,
+) *Server {
+	return &Server{
 		store:               store,
 		cfg:                 cfg,
 		evt:                 evt,
-		cryptoEngine:        eng,
-		vldtr:               vldtr,
+		cryptoEngine:        cryptoEngine,
+		jwt:                 jwt,
 		providerAuthFactory: auth.NewOAuthConfig,
-		mt:                  mt,
-		provMt:              provMt,
-		profiles:            profileSvc,
-		ruleTypes:           ruleSvc,
-		repos:               github.NewRepositoryService(whManager, store, evt),
-		marketplace:         marketplace,
+		mt:                  serverMetrics,
+		profiles:            profileService,
+		ruleTypes:           ruleService,
 		providerStore:       providerStore,
+		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
-		fallbackTokenClient: fallbackTokenClient,
-		// TODO: this currently always returns authorized as a transitionary measure.
-		// When OpenFGA is fully rolled out, we may want to make this a hard error or set to false.
-		authzClient: &mock.NoopClient{Authorized: true},
+		providerManager:     providerManager,
+		repos:               repoService,
+		ghProviders:         ghProviders,
+		authzClient:         authzClient,
+		idClient:            idClient,
+		projectCreator:      projectCreator,
+		projectDeleter:      projectDeleter,
 	}
-
-	for _, opt := range opts {
-		opt(s)
-	}
-
-	// Moved here because we have a dependency on s.restClientCache
-	s.ghProviders = service.NewGithubProviderService(
-		store, eng, mt, provMt, &cfg.Provider, s.makeProjectForGitHubApp, s.restClientCache, s.fallbackTokenClient)
-
-	return s, nil
-}
-
-// GetProviderService returns the provider service
-func (s *Server) GetProviderService() service.GitHubProviderService {
-	return s.ghProviders
-}
-
-// GetAuthzClient returns the authz client
-func (s *Server) GetAuthzClient() authz.Client {
-	return s.authzClient
 }
 
 func (s *Server) initTracer() (*sdktrace.TracerProvider, error) {
@@ -374,10 +320,10 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register GitHub App callback handler: %w", err)
 	}
 
-	mux.Handle("/", s.handlerWithHTTPMiddleware(gwmux))
-	mux.Handle("/api/v1/webhook/", mw(s.HandleGitHubWebHook()))
-	mux.Handle("/api/v1/ghapp/", mw(s.HandleGitHubAppWebhook()))
-	mux.Handle("/api/v1/gh-marketplace/", mw(s.NoopWebhookHandler()))
+	mux.Handle("/", withMaxSizeMiddleware(s.handlerWithHTTPMiddleware(gwmux)))
+	mux.Handle("/api/v1/webhook/", mw(withMaxSizeMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/ghapp/", mw(withMaxSizeMiddleware(s.HandleGitHubAppWebhook())))
+	mux.Handle("/api/v1/gh-marketplace/", mw(withMaxSizeMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
@@ -508,4 +454,11 @@ func shutdownHandler(component string, sdf shutdowner) {
 	if err := sdf(shutdownCtx); err != nil {
 		log.Fatal().Msgf("error shutting down '%s': %+v", component, err)
 	}
+}
+
+func withMaxSizeMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, RequestBodyMaxBytes)
+		h.ServeHTTP(w, r)
+	})
 }

@@ -17,40 +17,24 @@ package git_test
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
-	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	gitclient "github.com/stacklok/minder/internal/providers/git"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{
-		Branch: "master",
-	}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		credentials.NewEmptyCredential(),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	))
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitclient.NewGit(credentials.NewEmptyCredential()),
+	)
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Repository{
@@ -75,22 +59,10 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{
-		Branch: "master",
-	}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		credentials.NewEmptyCredential(),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	))
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitclient.NewGit(credentials.NewEmptyCredential()),
+	)
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
@@ -115,22 +87,10 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{
-		Branch: "master",
-	}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		credentials.NewEmptyCredential(),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	))
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitclient.NewGit(credentials.NewEmptyCredential()),
+	)
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
@@ -156,21 +116,11 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{},
-		providers.NewProviderBuilder(
-			&db.Provider{
-				Name:    "git-provider",
-				Version: provifv1.V1,
-				Implements: []db.ProviderType{
-					"git",
-				},
-			},
-			sql.NullString{},
-			false,
-			credentials.NewEmptyCredential(),
-			&serverconfig.ProviderConfig{},
-			nil, // this is unused here
-		))
+	gi, err := gitengine.NewGitIngester(
+		//		&pb.GitType{Branch: "master"},
+		&pb.GitType{},
+		gitclient.NewGit(credentials.NewEmptyCredential()),
+	)
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Repository{
@@ -197,22 +147,11 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{
-		Branch: "master",
-	}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		credentials.NewEmptyCredential(),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	))
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitclient.NewGit(credentials.NewEmptyCredential()),
+	)
+
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
@@ -228,23 +167,11 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 	t.Parallel()
 
 	// foobar is not a valid token
-	gi, err := gitengine.NewGitIngester(&pb.GitType{
-		Branch: "master",
-	}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		credentials.NewGitHubTokenCredential("foobar"),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	),
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitclient.NewGit(credentials.NewGitHubTokenCredential("foobar")),
 	)
+
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
@@ -257,22 +184,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	t.Parallel()
 
-	// foobar is not a valid token
-	gi, err := gitengine.NewGitIngester(&pb.GitType{}, providers.NewProviderBuilder(
-		&db.Provider{
-			Name:    "git-provider",
-			Version: provifv1.V1,
-			Implements: []db.ProviderType{
-				"git",
-			},
-		},
-		sql.NullString{},
-		false,
-		// No authentication is the right thing in this case.
-		credentials.NewEmptyCredential(),
-		&serverconfig.ProviderConfig{},
-		nil, // this is unused here
-	))
+	gi, err := gitengine.NewGitIngester(&pb.GitType{}, gitclient.NewGit(credentials.NewEmptyCredential()))
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{

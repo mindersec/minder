@@ -16,6 +16,7 @@ package webhooks_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -23,9 +24,65 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/config/server"
-	cf "github.com/stacklok/minder/internal/repositories/github/fixtures"
+	cf "github.com/stacklok/minder/internal/repositories/github/clients/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 )
+
+type webhookConfigOpt func(opts *server.WebhookConfig)
+type webhookTearDownOpt func(opts *server.WebhookConfig)
+
+const (
+	webhookURL        = "https://example.com/api/v1/webhook/github/12345"
+	webhookSecret     = "supersecret"
+	webhookFileSecret = "supersecretinafile"
+)
+
+func getWebhookConfig(opts ...webhookConfigOpt) server.WebhookConfig {
+	webhookConfig := server.WebhookConfig{
+		ExternalWebhookURL: "https://example.com/api/v1/webhook/github",
+		ExternalPingURL:    "https://example.com/api/v1/health",
+		WebhookSecret:      "",
+	}
+
+	for _, opt := range opts {
+		opt(&webhookConfig)
+	}
+
+	return webhookConfig
+}
+
+func withWebhookUrl(url string) webhookConfigOpt {
+	return func(opts *server.WebhookConfig) {
+		opts.ExternalWebhookURL = url
+	}
+}
+
+func withWebhookSecret() webhookConfigOpt {
+	return func(opts *server.WebhookConfig) {
+		opts.WebhookSecret = webhookSecret
+	}
+}
+
+func withWebhookSecretFile(secret string) webhookConfigOpt {
+	return func(opts *server.WebhookConfig) {
+		whSecretFile, err := os.CreateTemp("", "webhooksecret*")
+		if err != nil {
+			panic(err)
+		}
+		_, err = whSecretFile.WriteString(secret)
+		if err != nil {
+			panic(err)
+		}
+		opts.WebhookSecretFile = whSecretFile.Name()
+	}
+}
+
+func withTearDownSecretFile(opts *server.WebhookConfig) {
+	err := os.Remove(opts.WebhookSecretFile)
+	if err != nil {
+		panic(err)
+	}
+}
 
 func TestWebhookManager_DeleteWebhook(t *testing.T) {
 	t.Parallel()
@@ -62,7 +119,8 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
-			err := webhooks.NewWebhookManager(webhookConfig).
+
+			err := webhooks.NewWebhookManager(getWebhookConfig()).
 				DeleteWebhook(ctx, client, cf.RepoOwner, cf.RepoName, cf.HookID)
 
 			if scenario.ShouldSucceed {
@@ -78,10 +136,12 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 	t.Parallel()
 
 	creationScenarios := []struct {
-		Name          string
-		ClientSetup   cf.ClientMockBuilder
-		ShouldSucceed bool
-		ExpectedError string
+		Name                string
+		ClientSetup         cf.ClientMockBuilder
+		WebhookOpts         []webhookConfigOpt
+		WebhookTearDownOpts []webhookTearDownOpt
+		ShouldSucceed       bool
+		ExpectedError       string
 	}{
 		{
 			Name:          "CreateWebhook returns error when listing request fails",
@@ -96,30 +156,58 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			ExpectedError: "unexpected hook config structure",
 		},
 		{
-			Name:          "CreateWebhook returns error when stale hook deletion fails",
+			Name: "CreateWebhook returns error when stale hook deletion fails",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookUrl(webhookURL),
+			},
 			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithFailedDeletion),
 			ShouldSucceed: false,
 			ExpectedError: "error deleting hook",
 		},
 		{
-			Name:          "CreateWebhook returns error when creation request fails",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithFailedCreation),
+			Name: "CreateWebhook returns error when creation request fails",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookSecret(),
+				withWebhookUrl(webhookURL),
+			},
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithFailedCreation(webhookSecret)),
 			ShouldSucceed: false,
 			ExpectedError: "error creating hook",
 		},
 		{
-			Name:          "CreateWebhook successfully creates a new webhook for repo cf.With no previous webhooks",
-			ClientSetup:   cf.NewClientMock(cf.WithNotFoundList, cf.WithSuccessfulCreation),
+			Name: "CreateWebhook successfully creates a new webhook for repo cf.With no previous webhooks",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookSecret(),
+			},
+			ClientSetup:   cf.NewClientMock(cf.WithNotFoundList, cf.WithSuccessfulCreation(webhookSecret)),
 			ShouldSucceed: true,
 		},
 		{
-			Name:          "CreateWebhook successfully creates a new webhook, ignoring other projects' webhooks",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList("http://hook.foo.com/67890"), cf.WithSuccessfulCreation),
+			Name: "CreateWebhook successfully creates a new webhook, ignoring other projects' webhooks",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookSecret(),
+			},
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList("http://hook.foo.com/67890"), cf.WithSuccessfulCreation(webhookSecret)),
 			ShouldSucceed: true,
 		},
 		{
-			Name:          "CreateWebhook successfully creates a new webhook, and deletes stale hook",
-			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithSuccessfulCreation),
+			Name: "CreateWebhook successfully creates a new webhook, and deletes stale hook",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookUrl(webhookURL),
+				withWebhookSecret(),
+			},
+			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulList(webhookURL), cf.WithSuccessfulDeletion, cf.WithSuccessfulCreation(webhookSecret)),
+			ShouldSucceed: true,
+		},
+		{
+			Name: "CreateWebhook successfully creates a new webhook using a secret from a file",
+			WebhookOpts: []webhookConfigOpt{
+				withWebhookSecretFile(webhookFileSecret),
+			},
+			WebhookTearDownOpts: []webhookTearDownOpt{
+				withTearDownSecretFile,
+			},
+			ClientSetup:   cf.NewClientMock(cf.WithNotFoundList, cf.WithSuccessfulCreation(webhookFileSecret)),
 			ShouldSucceed: true,
 		},
 	}
@@ -132,6 +220,7 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
+			webhookConfig := getWebhookConfig(scenario.WebhookOpts...)
 			resultID, hook, err := webhooks.NewWebhookManager(webhookConfig).
 				CreateWebhook(ctx, client, cf.RepoOwner, cf.RepoName)
 
@@ -150,12 +239,3 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 		})
 	}
 }
-
-var (
-	webhookConfig = server.WebhookConfig{
-		ExternalWebhookURL: "https://example.com/api/v1/webhook/github",
-		ExternalPingURL:    "https://example.com/api/v1/health",
-		WebhookSecret:      "",
-	}
-	webhookURL = webhookConfig.ExternalWebhookURL + "/12345"
-)

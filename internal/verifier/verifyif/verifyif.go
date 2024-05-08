@@ -22,6 +22,8 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/verify"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // ArtifactRegistry supported artifact registries
 type ArtifactRegistry string
 

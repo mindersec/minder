@@ -1,5 +1,6 @@
 on:
   workflow_call:
+  workflow_dispatch:
 jobs:
   test:
     name: Unit testing
@@ -7,10 +8,10 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: 'go.mod'
       - name: Set up helm (test dependency)
@@ -23,8 +24,16 @@ jobs:
       # copy config file into place
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
+      - name: Launch Registry
+        run: |
+          if [ "$(docker inspect -f '{{.State.Running}}' registry 2>/dev/null || true)" != 'true' ]; then
+            docker run -d --restart=always -p "127.0.0.1:5000:5000" --network bridge --name registry \
+            registry:2
+          fi
       # Run the tests
       - name: Run tests
+        env:
+          MINDER_TEST_REGISTRY: "localhost:5000"
         run: make test-silent
   cover:
     name: Coverage
@@ -33,9 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
       - name: Set up Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: 'go.mod'
       - name: Set up helm (test dependency)
@@ -55,10 +64,10 @@ jobs:
     steps:
       # Checkout your project with git
       - name: Checkout
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@44c2b7a8a4ea60a981eaca3cf939b5f4305c123b # v4.1.5
       # Install Go on the VM running the action.
       - name: Set up Go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
         with:
           go-version-file: 'go.mod'
       - name: Run `make bootstrap`

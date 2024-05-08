@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -291,9 +292,14 @@ default allow = true`,
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	e, err := engine.NewExecutor(ctx, mockStore, &serverconfig.AuthConfig{
-		TokenKey: tokenKeyPath,
-	}, &serverconfig.ProviderConfig{}, evt, providers.NewProviderStore(mockStore))
+	e, err := engine.NewExecutor(ctx,
+		mockStore,
+		&serverconfig.AuthConfig{TokenKey: tokenKeyPath},
+		&serverconfig.ProviderConfig{},
+		evt,
+		providers.NewProviderStore(mockStore),
+		&ratecache.NoopRestClientCache{},
+	)
 	require.NoError(t, err, "expected no error")
 
 	eiw := entities.NewEntityInfoWrapper().

@@ -31,6 +31,8 @@ import (
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // WebhookManager encapsulates logic for creating and deleting GitHub webhooks
 type WebhookManager interface {
 	CreateWebhook(
@@ -89,8 +91,12 @@ func (w *webhookManager) CreateWebhook(
 	}
 
 	// Attempt to register new webhook
+	secret, err := w.webhookConfig.GetWebhookSecret()
+	if err != nil {
+		return "", nil, err
+	}
 	ping := w.webhookConfig.ExternalPingURL
-	secret := w.webhookConfig.WebhookSecret
+
 	jsonCT := "json"
 	newHook := &github.Hook{
 		Config: &github.HookConfig{

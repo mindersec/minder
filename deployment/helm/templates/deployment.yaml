@@ -81,6 +81,12 @@ spec:
             value: "/secrets/github-app/github_app_webhook_secret"
           - name: "MINDER_PROVIDER_GITHUB_APP_FALLBACK_TOKEN_FILE"
             value: "/secrets/github-app/github_app_fallback_token"
+          - name: "MINDER_FLAGS_GO_FEATURE_FILE_PATH"
+            value: "/flags/flags-config.yaml"
+          - name: "MINDER_WEBHOOK_CONFIG_WEBHOOK_SECRET_FILE"
+            value: "/secrets/app/github_repo_webhook_secret"
+          - name: "MINDER_WEBHOOK_CONFIG_PREVIOUS_WEBHOOK_SECRET_FILE"
+            value: "/secrets/app/github_repo_fallback_webhook_secret"
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
@@ -111,6 +117,8 @@ spec:
           volumeMounts:
           - name: config
             mountPath: /config
+          - name: flags
+            mountPath: /flags
           - name: auth-secrets
             mountPath: /secrets/auth
           - name: app-secrets
@@ -136,6 +144,13 @@ spec:
             path: server-config.yaml
           - key: overrides.yaml
             path: overrides.yaml
+      - name: flags
+        configMap:
+          name: minder-flags
+          optional: true  # We expect the outside environment to create this ConfigMap
+          items:
+          - key: flags-config.yaml
+            path: flags-config.yaml
       - name: auth-secrets
         secret:
           secretName: {{ .Values.deploymentSettings.secrets.authSecretName }}
