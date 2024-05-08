@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -74,6 +75,18 @@ type Reply struct {
 		Status   string        `json:"status"`
 		Packages []Alternative `json:"packages"`
 	} `json:"alternatives"`
+	PackageData struct {
+		Malicious *MaliciousData `json:"malicious"`
+	} `json:"package_data"`
+}
+
+// MaliciousData contains the security details when a dependency is malicious
+type MaliciousData struct {
+	Summary   string     `json:"summary"`
+	Details   string     `json:"details"`
+	Published *time.Time `json:"published"`
+	Modified  *time.Time `json:"modified"`
+	Source    string     `json:"source"`
 }
 
 func newPiClient(baseUrl string) *trustyClient {

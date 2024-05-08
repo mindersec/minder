@@ -30,37 +30,50 @@ import (
 
 const (
 	// nolint:lll
-	noLowScoresText = "Minder analyzed this PR with <a href=\"https://www.trustypkg.dev/\">Trusty</a> and found no dependencies scored lower than your profile threshold."
+	noLowScoresText = "Minder analyzed the changes in this pull request with <a href=\"https://www.trustypkg.dev/\">Trusty</a> and found no dependencies scored lower than your profile threshold."
 
-	tableHeaderTmplName = "alternativesTableHeader"
-	tableTemplateHeader = `### Summary of packages with low scores
-Minder detected that this PR is adding dependencies whose score is lower than the threshold configured with
-Minder profiles. Below is a summary of the packages with low scores and their alternatives.
-
-<table>
-  <tr>
-    <td> Pkg </td>
-    <td> Name </td>
-    <td> Score </td>
-    <td> Alternative Name </td>
-    <td> Alternative Score </td>
-  </tr>
-`
-	tableFooter       = "</table>"
-	tableRowsTmplName = "alternativesTableRow"
 	// nolint:lll
-	tableTemplateRow = `
-{{ range .Alternatives }}
-  <tr>
-	<td>{{ $.Ecosystem }}</td>
-	<td><a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ $.NameURL }}">{{ $.Name }}</a></td>
-	<td>{{ $.Score }}</td>
-	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageNameURL }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
-	<td>{{ if .PackageName }}{{ .Score }}{{ else }}-{{ end }}</td>
-  </tr>
+	commentTemplate = `{{- if .Malicious -}}
+### ⚠️ MALICIOUS PACKAGES ⚠️
+
+Minder has detected that this pull request is introducing malicious software dependencies using data from [Trusty](https://www.trustypkg.dev/):
+
+| Package | Notes |
+| --- | --- |
+{{ range .Malicious -}}
+| [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Summary }} |
+{{ end }}
+{{ end }}
+
+{{ if .Alternatives }}
+### Summary of Packages With Low Scores
+
+Based on [Trusty](https://www.trustypkg.dev/) dependency data, Minder detected that this PR is introducing software dependencies whose score is lower than the configured threshold. Below is a summary of the packages with low scores and their alternatives.
+
+| Type | Name | Score | Alternative Package | Alternative Score |
+| --- | --- | --- | --- | --- |
+{{ range .Alternatives -}}
+| {{ .Ecosystem }} | [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Score }} | [{{ .AlternativeName }}]({{ .AlternativeTrustyURL }}) | {{ .AlternativeScore }} |
+{{ end }}
 {{ end }}
 `
 )
+
+type maliciousTemplateData struct {
+	PackageName string
+	TrustyURL   string
+	Summary     string
+}
+
+type lowScoreTemplateData struct {
+	Ecosystem            string
+	PackageName          string
+	Score                float64
+	TrustyURL            string
+	AlternativeName      string
+	AlternativeScore     float64
+	AlternativeTrustyURL string
+}
 
 type dependencyAlternatives struct {
 	Dependency  *pb.Dependency
@@ -74,8 +87,7 @@ type summaryPrHandler struct {
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
-	headerTmpl          *htmltemplate.Template
-	rowsTmpl            *htmltemplate.Template
+	commentTemplate     *htmltemplate.Template
 }
 
 func (sph *summaryPrHandler) trackAlternatives(
@@ -109,51 +121,77 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		summary.WriteString(noLowScoresText)
 		return summary.String(), nil
 	}
+	var malicious = []maliciousTemplateData{}
+	var lowScorePackages = []lowScoreTemplateData{}
+
+	// Build the datastructure for the template
+	for _, alternative := range sph.trackedAlternatives {
+		// Build the package trustyURL
+		trustyURL := fmt.Sprintf(
+			"%s%s/%s", constants.TrustyHttpURL,
+			strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+			url.PathEscape(alternative.trustyReply.PackageName),
+		)
+
+		var score float64
+		if alternative.trustyReply.Summary.Score != nil {
+			score = *alternative.trustyReply.Summary.Score
+		}
+
+		// If the package is malicious we list it separately
+		if alternative.trustyReply.PackageData.Malicious != nil &&
+			alternative.trustyReply.PackageData.Malicious.Published.String() != "" {
+			malicious = append(malicious, maliciousTemplateData{
+				PackageName: alternative.trustyReply.PackageName,
+				TrustyURL:   trustyURL,
+				Summary:     alternative.trustyReply.PackageData.Malicious.Summary,
+			})
+			continue
+		}
+
+		for _, alt := range alternative.trustyReply.Alternatives.Packages {
+			if alt.Score < score {
+				continue
+			}
+
+			lowScorePkg := lowScoreTemplateData{
+				Ecosystem:        alternative.Dependency.Ecosystem.AsString(),
+				PackageName:      alternative.trustyReply.PackageName,
+				Score:            score,
+				TrustyURL:        trustyURL,
+				AlternativeName:  alt.PackageName,
+				AlternativeScore: alt.Score,
+				AlternativeTrustyURL: fmt.Sprintf(
+					"%s%s/%s", constants.TrustyHttpURL,
+					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+					url.PathEscape(alt.PackageName),
+				),
+			}
+			lowScorePackages = append(lowScorePackages, lowScorePkg)
+		}
+
+		// If there are no alternatives, add a single row with no data
+		if len(alternative.trustyReply.Alternatives.Packages) == 0 {
+			lowScorePackages = append(lowScorePackages, lowScoreTemplateData{
+				PackageName:     alternative.trustyReply.PackageName,
+				Score:           score,
+				TrustyURL:       trustyURL,
+				AlternativeName: "N/A",
+			})
+		}
+	}
 
 	var headerBuf bytes.Buffer
-	if err := sph.headerTmpl.Execute(&headerBuf, nil); err != nil {
+	if err := sph.commentTemplate.Execute(&headerBuf, struct {
+		Malicious    []maliciousTemplateData
+		Alternatives []lowScoreTemplateData
+	}{
+		Malicious:    malicious,
+		Alternatives: lowScorePackages,
+	}); err != nil {
 		return "", fmt.Errorf("could not execute template: %w", err)
 	}
 	summary.WriteString(headerBuf.String())
-
-	for _, alternative := range sph.trackedAlternatives {
-		var rowBuf bytes.Buffer
-
-		higherScoringAlternatives := make([]Alternative, 0)
-		for _, alt := range alternative.trustyReply.Alternatives.Packages {
-			if alternative.trustyReply.Summary.Score != nil && alt.Score > *alternative.trustyReply.Summary.Score {
-				alt.PackageNameURL = url.PathEscape(alt.PackageName)
-				higherScoringAlternatives = append(higherScoringAlternatives, alt)
-			}
-		}
-		if len(higherScoringAlternatives) == 0 {
-			higherScoringAlternatives = append(higherScoringAlternatives, Alternative{
-				PackageName: "", // Note: Set it to empty to indicate no alternative found in the template
-				Score:       0,
-			})
-		}
-
-		// Populate the Trusty alternatives row template
-		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
-			Ecosystem    string
-			Name         string
-			NameURL      string
-			Score        float64
-			Alternatives []Alternative
-			BaseUrl      string
-		}{
-			Ecosystem:    strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-			Name:         alternative.Dependency.Name,
-			NameURL:      url.PathEscape(alternative.Dependency.Name),
-			Score:        *alternative.trustyReply.Summary.Score,
-			Alternatives: higherScoringAlternatives,
-			BaseUrl:      constants.TrustyHttpURL,
-		}); err != nil {
-			return "", fmt.Errorf("could not execute template: %w", err)
-		}
-		summary.WriteString(rowBuf.String())
-	}
-	summary.WriteString(tableFooter)
 
 	return summary.String(), nil
 }
@@ -163,21 +201,16 @@ func newSummaryPrHandler(
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {
-	headerTmpl, err := htmltemplate.New(tableHeaderTmplName).Parse(tableTemplateHeader)
+	tmpl, err := htmltemplate.New("comment").Parse(commentTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse dependency template: %w", err)
-	}
-	rowsTmpl, err := htmltemplate.New(tableRowsTmplName).Parse(tableTemplateRow)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
 	}
 
 	return &summaryPrHandler{
 		cli:                 cli,
 		pr:                  pr,
 		trustyUrl:           trustyUrl,
-		headerTmpl:          headerTmpl,
-		rowsTmpl:            rowsTmpl,
+		commentTemplate:     tmpl,
 		trackedAlternatives: make([]dependencyAlternatives, 0),
 	}, nil
 }
