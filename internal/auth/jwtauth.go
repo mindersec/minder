@@ -18,7 +18,6 @@ package auth
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -62,7 +61,12 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 		return nil, err
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(set), jwt.WithValidate(true), jwt.WithToken(openid.New()))
+	token, err := jwt.ParseString(
+		tokenString,
+		jwt.WithKeySet(set),
+		jwt.WithValidate(true),
+		jwt.WithToken(openid.New()),
+		jwt.WithAudience(j.aud))
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +78,6 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 
 	if openIdToken.Subject() == "" {
 		return nil, fmt.Errorf("provided token is missing required subject claim")
-	}
-
-	if !slices.Contains(openIdToken.Audience(), j.aud) {
-		return nil, fmt.Errorf("provided token is missing required audience claim %q", j.aud)
 	}
 
 	return openIdToken, nil
