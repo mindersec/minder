@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"

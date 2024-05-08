@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/mitchellh/mapstructure"
+	"github.com/go-viper/mapstructure/v2"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )

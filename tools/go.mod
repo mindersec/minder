@@ -343,5 +343,3 @@ require (
 )
 
 replace github.com/stacklok/minder => ../.
-
-replace github.com/mitchellh/mapstructure => github.com/go-viper/mapstructure v1.6.0
