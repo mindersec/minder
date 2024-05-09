@@ -21,9 +21,13 @@ clean-gen: ## clean generated files
 gen: buf sqlc mock oapi ## run code generation targets (buf, sqlc, mock)
 	$(MAKE) authz-model
 
+# At the time of writing, it is not possible to tell buf to not generate docs
+# for certain protobuf files. I have decided to work around this by deleting
+# the docs for the `internal` protobufs after generation.
 .PHONY: buf
 buf: ## generate protobuf files
 	buf generate
+	rm -rf pkg/api/openapi/internal
 
 .PHONY: sqlc
 sqlc: ## generate sqlc files
