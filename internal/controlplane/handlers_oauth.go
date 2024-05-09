@@ -17,8 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -458,18 +456,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		RefreshToken: "",
 	}
 
-	// Convert token to JSON
-	jsonData, err := json.Marshal(ftoken)
-	if err != nil {
-		return nil, err
-	}
-
 	// encode token
-	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(ftoken)
 	if err != nil {
 		return nil, err
 	}
-	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// additionally, add an owner
 	var owner sql.NullString
@@ -482,7 +473,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
 		ProjectID:      projectID,
 		Provider:       provider.Name,
-		EncryptedToken: encodedToken,
+		EncryptedToken: encryptedToken,
 		OwnerFilter:    owner,
 	})
 	if err != nil {

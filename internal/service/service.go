@@ -74,7 +74,7 @@ func AllInOneServerService(
 	}
 
 	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
-	cryptoEngine, err := crypto.EngineFromAuthConfig(&cfg.Auth)
+	cryptoEngine, err := crypto.NewEngineFromAuthConfig(&cfg.Auth)
 	if err != nil {
 		return fmt.Errorf("failed to create crypto engine: %w", err)
 	}
