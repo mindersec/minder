@@ -40,14 +40,6 @@ type ecosystemConfig struct {
 	// evaluated depends on the `evaluate_score` field.
 	Score float64 `json:"score" mapstructure:"score" validate:"required"`
 
-	// EvaluateScore tells the trusty executor which score to use
-	// for evaluation. This is useful when the trusty API returns.
-	// The default is the summary score. If `score` or an empty string, the
-	// summary score is used.
-	// If `evaluate_score` is set to something else (e.g. `provenance`)
-	// then that score is used, which comes from the details field.
-	EvaluateScore string `json:"evaluate_score" mapstructure:"evaluate_score"`
-
 	// The provenance field contains the minimal provenance score
 	// to consider the origin of the package as trusted.
 	Provenance float64 `json:"provenance" mapstructure:"provenance"`
@@ -116,31 +108,4 @@ func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig 
 	}
 
 	return nil
-}
-
-func (ec *ecosystemConfig) getScoreSource() string {
-	if ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore {
-		return SummaryScore
-	}
-
-	return ec.EvaluateScore
-}
-
-func (ec *ecosystemConfig) getScore(inSummary ScoreSummary) (float64, error) {
-	if inSummary.Score != nil && (ec.EvaluateScore == DefaultScore || ec.EvaluateScore == SummaryScore) {
-		return *inSummary.Score, nil
-	}
-
-	// If the score is not the summary score, then it must be in the details
-	rawScore, ok := inSummary.Description[ec.EvaluateScore]
-	if !ok {
-		return 0, fmt.Errorf("score %s not found in details", ec.EvaluateScore)
-	}
-
-	s, ok := rawScore.(float64)
-	if !ok {
-		return 0, fmt.Errorf("score %s is not a float64", ec.EvaluateScore)
-	}
-
-	return s, nil
 }

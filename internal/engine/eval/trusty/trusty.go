@@ -261,7 +261,6 @@ func classifyDependency(
 	if len(reasons) > 0 {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
-			Str("score-source", ecoConfig.getScoreSource()).
 			Float64("score", packageScore).
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
@@ -270,7 +269,6 @@ func classifyDependency(
 	} else {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
-			Str("score-source", ecoConfig.getScoreSource()).
 			Float64("score", *resp.Summary.Score).
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
