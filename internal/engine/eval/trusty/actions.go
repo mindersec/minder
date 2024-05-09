@@ -16,12 +16,14 @@
 package trusty
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
-	htmltemplate "html/template"
 	"net/url"
+	"slices"
 	"strings"
+	template "text/template"
 
 	"github.com/stacklok/minder/internal/constants"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -38,22 +40,22 @@ const (
 
 Minder has detected that this pull request is introducing malicious software dependencies using data from [Trusty](https://www.trustypkg.dev/):
 
-| Package | Notes |
-| --- | --- |
+| Package | Summary | Details |
+| --- | --- | --- |
 {{ range .Malicious -}}
-| [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Summary }} |
+| [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Summary }} | {{ .Details }} |
 {{ end }}
 {{ end }}
 
 {{ if .Alternatives }}
 ### Summary of Packages With Low Scores
 
-Based on [Trusty](https://www.trustypkg.dev/) dependency data, Minder detected that this PR is introducing software dependencies whose score is lower than the configured threshold. Below is a summary of the packages with low scores and their alternatives.
+Based on [Trusty](https://www.trustypkg.dev/) dependency data, Minder detected that this PR is introducing software dependencies whose trust score components are lower than some of the configured thresholds. Below is a summary of the packages with low scores and their alternatives.
 
-| Type | Name | Score | Alternative Package | Alternative Score |
-| --- | --- | --- | --- | --- |
+| Type | Name | Score | Score Components | Alternative Package | Alternative Score |
+| --- | --- | --- | --- | --- | --- |
 {{ range .Alternatives -}}
-| {{ .Ecosystem }} | [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Score }} | [{{ .AlternativeName }}]({{ .AlternativeTrustyURL }}) | {{ .AlternativeScore }} |
+| {{ .Ecosystem }} | [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Score }} | {{ .ScoreComponents }} | [{{ .AlternativeName }}]({{ .AlternativeTrustyURL }}) | {{ .AlternativeScore }} |
 {{ end }}
 {{ end }}
 `
@@ -81,6 +83,7 @@ type maliciousTemplateData struct {
 	PackageName string
 	TrustyURL   string
 	Summary     string
+	Details     string
 }
 
 type lowScoreTemplateData struct {
@@ -91,6 +94,7 @@ type lowScoreTemplateData struct {
 	AlternativeName      string
 	AlternativeScore     float64
 	AlternativeTrustyURL string
+	ScoreComponents      string
 }
 
 type dependencyAlternatives struct {
@@ -108,7 +112,7 @@ type summaryPrHandler struct {
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
-	commentTemplate     *htmltemplate.Template
+	commentTemplate     *template.Template
 }
 
 func (sph *summaryPrHandler) trackAlternatives(
@@ -147,7 +151,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	var malicious = []maliciousTemplateData{}
 	var lowScorePackages = []lowScoreTemplateData{}
 
-	// Build the datastructure for the template
+	// Build the data structure for the template
 	for _, alternative := range sph.trackedAlternatives {
 		// Build the package trustyURL
 		trustyURL := fmt.Sprintf(
@@ -162,12 +166,12 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 		}
 
 		// If the package is malicious we list it separately
-		if alternative.trustyReply.PackageData.Malicious != nil &&
-			alternative.trustyReply.PackageData.Malicious.Published.String() != "" {
+		if slices.Contains(alternative.Reasons, TRUSTY_MALICIOUS_PKG) {
 			malicious = append(malicious, maliciousTemplateData{
 				PackageName: alternative.trustyReply.PackageName,
 				TrustyURL:   trustyURL,
 				Summary:     alternative.trustyReply.PackageData.Malicious.Summary,
+				Details:     preprocessDetails(alternative.trustyReply.PackageData.Malicious.Details),
 			})
 			continue
 		}
@@ -189,6 +193,23 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
 					url.PathEscape(alt.PackageName),
 				),
+				ScoreComponents: "-",
+			}
+
+			// Add the low score components
+			if alternative.trustyReply.Summary.Description != nil {
+				sc := ""
+				if v, ok := alternative.trustyReply.Summary.Description["activity"]; ok {
+					sc = fmt.Sprintf("Activity: %.2f <br>", v.(float64))
+				}
+
+				if v, ok := alternative.trustyReply.Summary.Description["provenance"]; ok {
+					sc = fmt.Sprintf("Provenance: %.2f <br>", v.(float64))
+				}
+
+				if sc != "" {
+					lowScorePkg.ScoreComponents = sc
+				}
 			}
 			lowScorePackages = append(lowScorePackages, lowScorePkg)
 		}
@@ -224,7 +245,7 @@ func newSummaryPrHandler(
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {
-	tmpl, err := htmltemplate.New("comment").Parse(commentTemplate)
+	tmpl, err := template.New("comment").Parse(commentTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse dependency template: %w", err)
 	}
@@ -236,4 +257,16 @@ func newSummaryPrHandler(
 		commentTemplate:     tmpl,
 		trackedAlternatives: make([]dependencyAlternatives, 0),
 	}, nil
+}
+
+func preprocessDetails(s string) string {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	text := ""
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), "#") {
+			continue
+		}
+		text += scanner.Text() + "<br>"
+	}
+	return strings.ReplaceAll(text, "|", "")
 }
