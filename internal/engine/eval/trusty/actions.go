@@ -59,6 +59,24 @@ Based on [Trusty](https://www.trustypkg.dev/) dependency data, Minder detected t
 `
 )
 
+// RuleViolationReason are int constants that captures the various
+// reasons a package was considered unsafe when compared with trusty data
+type RuleViolationReason int
+
+const (
+	// TRUSTY_LOW_SCORE Overall score was lower than threshold
+	TRUSTY_LOW_SCORE RuleViolationReason = iota + 1
+
+	// TRUSTY_MALICIOUS_PKG Package is marked as malicious
+	TRUSTY_MALICIOUS_PKG
+
+	// TRUSTY_LOW_ACTIVITY The package does not have enough activity
+	TRUSTY_LOW_ACTIVITY
+
+	// TRUSTY_LOW_PROVENANCE Low trust in proof of origin
+	TRUSTY_LOW_PROVENANCE
+)
+
 type maliciousTemplateData struct {
 	PackageName string
 	TrustyURL   string
@@ -76,7 +94,10 @@ type lowScoreTemplateData struct {
 }
 
 type dependencyAlternatives struct {
-	Dependency  *pb.Dependency
+	Dependency *pb.Dependency
+
+	// Reason captures the reason why a package was flagged
+	Reasons     []RuleViolationReason
 	trustyReply *Reply
 }
 
@@ -92,10 +113,12 @@ type summaryPrHandler struct {
 
 func (sph *summaryPrHandler) trackAlternatives(
 	dep *pb.PrDependencies_ContextualDependency,
+	violationReasons []RuleViolationReason,
 	trustyReply *Reply,
 ) {
 	sph.trackedAlternatives = append(sph.trackedAlternatives, dependencyAlternatives{
 		Dependency:  dep.Dep,
+		Reasons:     violationReasons,
 		trustyReply: trustyReply,
 	})
 }

@@ -47,6 +47,14 @@ type ecosystemConfig struct {
 	// If `evaluate_score` is set to something else (e.g. `provenance`)
 	// then that score is used, which comes from the details field.
 	EvaluateScore string `json:"evaluate_score" mapstructure:"evaluate_score"`
+
+	// The provenance field contains the minimal provenance score
+	// to consider the origin of the package as trusted.
+	Provenance float64 `json:"provenance" mapstructure:"provenance"`
+
+	// Activity is the minimal activity score that minder needs to find to
+	// consider the package as trustworthy.
+	Activity float64 `json:"activity" mapstructure:"activity"`
 }
 
 // config is the configuration for the vulncheck evaluator
