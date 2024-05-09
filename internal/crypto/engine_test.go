@@ -85,6 +85,5 @@ func TestEncryptDecryptOAuthToken(t *testing.T) {
 }
 
 var authConfig = &server.AuthConfig{
-	EncryptionAlgorithm: string(AESCFB),
-	TokenKey:            "./testdata/test_encryption_key",
+	TokenKey: "./testdata/test_encryption_key",
 }
