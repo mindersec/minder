@@ -56,7 +56,7 @@ jobs:
       - name: Try converting to LCOV
         run: go run github.com/jandelgado/gcov2lcov@latest -infile=./coverage.out -outfile=./coverage.lcov
       - name: Coveralls GitHub Action
-        uses: coverallsapp/github-action@3dfc5567390f6fa9267c0ee9c251e4c8c3f18949 # v2.2.3
+        uses: coverallsapp/github-action@643bc377ffa44ace6394b2b5d0d3950076de9f63 # v2.3.0
 
   authz:
     name: Authz tests
