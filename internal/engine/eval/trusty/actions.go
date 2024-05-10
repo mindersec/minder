@@ -33,9 +33,6 @@ import (
 
 const (
 	// nolint:lll
-	noLowScoresText = "Minder analyzed the changes in this pull request with <a href=\"https://www.trustypkg.dev/\">Trusty</a> and found no dependencies scored lower than your profile threshold."
-
-	// nolint:lll
 	commentTemplate = `{{- if .Malicious -}}
 ### ⚠️ MALICIOUS PACKAGES ⚠️
 
@@ -162,6 +159,10 @@ func (sph *summaryPrHandler) trackAlternatives(
 }
 
 func (sph *summaryPrHandler) submit(ctx context.Context) error {
+	if len(sph.trackedAlternatives) == 0 {
+		return nil
+	}
+
 	summary, err := sph.generateSummary()
 	if err != nil {
 		return fmt.Errorf("could not generate summary: %w", err)
@@ -176,11 +177,6 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 }
 
 func (sph *summaryPrHandler) generateSummary() (string, error) {
-	if len(sph.trackedAlternatives) == 0 {
-		var summary strings.Builder
-		summary.WriteString(noLowScoresText)
-		return summary.String(), nil
-	}
 	var malicious = []maliciousTemplateData{}
 	var lowScorePackages = map[string]templatePackage{}
 

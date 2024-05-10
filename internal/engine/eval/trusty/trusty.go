@@ -106,8 +106,12 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		}
 	}
 
+	// If there are no problematic dependencies, return here
+	if len(prSummaryHandler.trackedAlternatives) == 0 {
+		return nil
+	}
+
 	if err := submitSummary(ctx, prSummaryHandler); err != nil {
-		logger.Err(err)
 		return fmt.Errorf("submitting pull request summary: %w", err)
 	}
 
