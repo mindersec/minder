@@ -17,11 +17,13 @@
  */
 
 syntax = "proto3";
+package internal.crypto;
 
 option go_package = "github.com/stacklok/minder/internal/models/generated";
 
 enum EncryptionAlgorithm {
-  AES_256_CFB = 0;
+  ENCRYPTION_ALGORITHM_UNSPECIFIED = 0;
+  ENCRYPTION_ALGORITHM_AES_256_CFB = 1;
 };
 
 message EncryptedData {
