@@ -167,7 +167,7 @@ func login(
 	}
 
 	issuerUrl := parsedURL.JoinPath("realms/stacklok")
-	scopes := []string{"openid"}
+	scopes := []string{"openid", "minder-audience"}
 
 	if len(extraScopes) > 0 {
 		scopes = append(scopes, extraScopes...)
