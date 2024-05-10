@@ -16,7 +16,6 @@ package engine_test
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"os"
 	"testing"
@@ -68,15 +67,11 @@ func generateFakeAccessToken(t *testing.T) string {
 		Expiry: time.Now().Add(10 * time.Minute),
 	}
 
-	// Convert token to JSON
-	jsonData, err := json.Marshal(ftoken)
-	require.NoError(t, err, "expected no error")
-
-	// encode token
-	encryptedToken, err := crypto.EncryptBytes(fakeTokenKey, jsonData)
-	require.NoError(t, err, "expected no error")
-
-	return base64.StdEncoding.EncodeToString(encryptedToken)
+	// encrypt token
+	cryptoEngine := crypto.NewEngine([]byte(fakeTokenKey))
+	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
+	require.NoError(t, err)
+	return encryptedToken
 }
 
 func TestExecutor_handleEntityEvent(t *testing.T) {
@@ -309,7 +304,7 @@ default allow = true`,
 	// Needed to keep these tests working as-is.
 	// In future, beef up unit test coverage in the dependencies
 	// of this code, and refactor these tests to use stubs.
-	eng, err := crypto.EngineFromAuthConfig(&serverconfig.AuthConfig{TokenKey: tokenKeyPath})
+	eng, err := crypto.NewEngineFromAuthConfig(&serverconfig.AuthConfig{TokenKey: tokenKeyPath})
 	require.NoError(t, err)
 	ghProviderService := ghService.NewGithubProviderService(
 		mockStore,

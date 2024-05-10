@@ -97,7 +97,7 @@ func newDefaultServer(
 	// Needed to keep these tests working as-is.
 	// In future, beef up unit test coverage in the dependencies
 	// of this code, and refactor these tests to use stubs.
-	eng, err := crypto.EngineFromAuthConfig(&c.Auth)
+	eng, err := crypto.NewEngineFromAuthConfig(&c.Auth)
 	require.NoError(t, err)
 	ghClientService := ghService.NewGithubProviderService(
 		mockStore,
