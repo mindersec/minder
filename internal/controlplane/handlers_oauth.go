@@ -125,15 +125,24 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl.EncodedData}
 	}
 
+	var confBytes []byte
+	if conf := req.GetConfig(); conf != nil {
+		confBytes, err = conf.MarshalJSON()
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error marshalling config: %s", err)
+		}
+	}
+
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
 		Provider:     providerName,
-		ProjectID:    projectID,
-		RemoteUser:   sql.NullString{Valid: user != "", String: user},
-		SessionState: state,
-		OwnerFilter:  owner,
-		RedirectUrl:  redirectUrl,
+		ProjectID:      projectID,
+		RemoteUser:     sql.NullString{Valid: user != "", String: user},
+		SessionState:   state,
+		OwnerFilter:    owner,
+		RedirectUrl:    redirectUrl,
+		ProviderConfig: confBytes,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)

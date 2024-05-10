@@ -663,6 +663,7 @@ type SessionStore struct {
 	CreatedAt         time.Time             `json:"created_at"`
 	RedirectUrl       sql.NullString        `json:"redirect_url"`
 	RemoteUser        sql.NullString        `json:"remote_user"`
+	ProviderConfig    []byte                `json:"provider_config"`
 	EncryptedRedirect pqtype.NullRawMessage `json:"encrypted_redirect"`
 }
 
