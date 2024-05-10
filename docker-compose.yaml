@@ -112,7 +112,7 @@ services:
         condition: service_healthy
   postgres:
       container_name: postgres_container
-      image: postgres:16.1-alpine
+      image: postgres:16.2-alpine
       restart: always
       user: postgres
       environment:
