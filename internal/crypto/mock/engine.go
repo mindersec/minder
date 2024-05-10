@@ -12,6 +12,7 @@ package mock_crypto
 import (
 	reflect "reflect"
 
+	crypto "github.com/stacklok/minder/internal/crypto"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -40,40 +41,40 @@ func (m *MockEngine) EXPECT() *MockEngineMockRecorder {
 }
 
 // DecryptOAuthToken mocks base method.
-func (m *MockEngine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
+func (m *MockEngine) DecryptOAuthToken(encryptedToken crypto.EncryptedData) (oauth2.Token, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DecryptOAuthToken", encToken)
+	ret := m.ctrl.Call(m, "DecryptOAuthToken", encryptedToken)
 	ret0, _ := ret[0].(oauth2.Token)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DecryptOAuthToken indicates an expected call of DecryptOAuthToken.
-func (mr *MockEngineMockRecorder) DecryptOAuthToken(encToken any) *gomock.Call {
+func (mr *MockEngineMockRecorder) DecryptOAuthToken(encryptedToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecryptOAuthToken", reflect.TypeOf((*MockEngine)(nil).DecryptOAuthToken), encToken)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecryptOAuthToken", reflect.TypeOf((*MockEngine)(nil).DecryptOAuthToken), encryptedToken)
 }
 
 // DecryptString mocks base method.
-func (m *MockEngine) DecryptString(encData string) (string, error) {
+func (m *MockEngine) DecryptString(encryptedString crypto.EncryptedData) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DecryptString", encData)
+	ret := m.ctrl.Call(m, "DecryptString", encryptedString)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DecryptString indicates an expected call of DecryptString.
-func (mr *MockEngineMockRecorder) DecryptString(encData any) *gomock.Call {
+func (mr *MockEngineMockRecorder) DecryptString(encryptedString any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecryptString", reflect.TypeOf((*MockEngine)(nil).DecryptString), encData)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecryptString", reflect.TypeOf((*MockEngine)(nil).DecryptString), encryptedString)
 }
 
 // EncryptOAuthToken mocks base method.
-func (m *MockEngine) EncryptOAuthToken(token *oauth2.Token) (string, error) {
+func (m *MockEngine) EncryptOAuthToken(token *oauth2.Token) (crypto.EncryptedData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EncryptOAuthToken", token)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(crypto.EncryptedData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -85,10 +86,10 @@ func (mr *MockEngineMockRecorder) EncryptOAuthToken(token any) *gomock.Call {
 }
 
 // EncryptString mocks base method.
-func (m *MockEngine) EncryptString(data string) (string, error) {
+func (m *MockEngine) EncryptString(data string) (crypto.EncryptedData, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EncryptString", data)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(crypto.EncryptedData)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -426,7 +426,7 @@ func TestProviderCallback(t *testing.T) {
 			}
 			encryptedUrl := sql.NullString{
 				Valid:  true,
-				String: encryptedUrlString,
+				String: encryptedUrlString.EncodedData,
 			}
 
 			tx := sql.Tx{}

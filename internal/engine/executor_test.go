@@ -71,7 +71,7 @@ func generateFakeAccessToken(t *testing.T) string {
 	cryptoEngine := crypto.NewEngine([]byte(fakeTokenKey))
 	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
 	require.NoError(t, err)
-	return encryptedToken
+	return encryptedToken.EncodedData
 }
 
 func TestExecutor_handleEntityEvent(t *testing.T) {

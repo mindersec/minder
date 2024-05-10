@@ -115,7 +115,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error encrypting redirect URL: %s", err)
 		}
-		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl}
+		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl.EncodedData}
 	}
 
 	// Insert the new session state into the database along with the user's project ID
@@ -246,7 +246,10 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	logger.BusinessRecord(ctx).ProviderID = p.ID
 
 	if stateData.RedirectUrl.Valid {
-		redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
+		// TODO: get rid of this once we store the EncryptedData struct in
+		// the database.
+		encryptedData := mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
+		redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
 		if err != nil {
 			return fmt.Errorf("error decrypting redirect URL: %w", err)
 		}
@@ -325,7 +328,10 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		// If we have a redirect URL, redirect the user, otherwise show a success page
 		if stateData.RedirectUrl.Valid {
-			redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
+			// TODO: get rid of this once we store the EncryptedData struct in
+			// the database.
+			encryptedData := mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
+			redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
 			if err != nil {
 				return fmt.Errorf("error decrypting redirect URL: %w", err)
 			}
@@ -473,7 +479,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
 		ProjectID:      projectID,
 		Provider:       provider.Name,
-		EncryptedToken: encryptedToken,
+		EncryptedToken: encryptedToken.EncodedData,
 		OwnerFilter:    owner,
 	})
 	if err != nil {
