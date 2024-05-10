@@ -30,6 +30,16 @@ BEGIN
   FROM rule_evaluations
   WHERE id = NEW.rule_eval_id;
 
+  -- The next five statements calculate whether there are, for this
+  -- profile, any rules in evaluations in status 'error', 'failure',
+  -- 'success', and 'skipped', respectively. This allows to write the
+  -- subsequent CASE statement in a more compact and readable fashion.
+  --
+  -- The consequence is that this version of the stored procedure adds
+  -- some load w.r.t. to previous one by unconditionally executing
+  -- these statements, but this should not be a problem, as all five
+  -- queries hit the same rows, so they'll likely hit the cache.
+
   SELECT EXISTS (
        SELECT 1 FROM rule_details_eval rde
         INNER JOIN rule_evaluations res ON res.id = rde.rule_eval_id
@@ -65,18 +75,18 @@ BEGIN
   ) INTO v_pending;
 
   CASE
-    -- a single rule in error state means policy is in error state
+    -- A single rule in error state means policy is in error state
     WHEN NEW.status = 'error' THEN
       v_status := 'error';
 
-    -- no rule in error state and at least one rule in failure state
+    -- No rule in error state and at least one rule in failure state
     -- means policy is in error state
     WHEN NEW.STATUS = 'failure' AND v_other_error THEN
       v_status := 'error';
     WHEN NEW.STATUS = 'failure' THEN
       v_status := 'failure';
 
-    -- no rule in error or failure state and at least one rule in
+    -- No rule in error or failure state and at least one rule in
     -- success state means policy is in success state
     WHEN NEW.STATUS = 'success' AND v_other_error THEN
       v_status := 'error';
@@ -85,7 +95,7 @@ BEGIN
     WHEN NEW.STATUS = 'success' THEN
       v_status := 'success';
 
-    -- no rule in error, failure, or success state and at least one
+    -- No rule in error, failure, or success state and at least one
     -- rule in skipped state means policy is in skipped state
     WHEN NEW.STATUS = 'skipped' AND v_other_error THEN
       v_status := 'error';
@@ -96,17 +106,26 @@ BEGIN
     WHEN NEW.STATUS = 'skipped' THEN
       v_status := 'skipped';
 
-    -- no rule evaluations means the policy is pending evaluation
+    -- No rule evaluations means the policy is pending evaluation
     WHEN v_pending THEN
       v_status := 'pending';
 
     -- This should never happen, if yes, make it visible
     ELSE
       v_status := 'error';
+      RAISE WARNING 'default case should not happen';
   END CASE;
 
   -- This turned out to be very useful during debugging
-  -- RAISE LOG '% % % % % % % => %', v_other_error, v_other_failed, v_other_success, v_other_skipped, v_pending, OLD.status, NEW.status, v_status;
+  -- RAISE LOG '% % % % % % % => %',
+  --   v_other_error,
+  --   v_other_failed,
+  --   v_other_success,
+  --   v_other_skipped,
+  --   v_pending,
+  --   OLD.status,
+  --   NEW.status,
+  --   v_status;
 
   UPDATE profile_status
      SET profile_status = v_status, last_updated = NOW()
