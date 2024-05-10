@@ -79,6 +79,7 @@ type GitHub interface {
 	RepoLister
 	REST
 	Git
+	ImageLister
 
 	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
@@ -119,6 +120,40 @@ type GitHub interface {
 	) ([]*github.IssueComment, error)
 	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
+}
+
+// ImageLister is the interface for listing images
+type ImageLister interface {
+	Provider
+
+	// ListImages lists the images available for the provider
+	ListImages(ctx context.Context) ([]string, error)
+
+	// GetNamespaceURL returns the repository URL
+	GetNamespaceURL() string
+}
+
+// OCI is the interface for interacting with OCI registries
+type OCI interface {
+	Provider
+
+	// ListTags lists the tags available for the given container in the given namespace
+	// for the OCI provider.
+	ListTags(ctx context.Context, name string) ([]string, error)
+
+	// GetDigest returns the digest for the given tag of the given container in the given namespace
+	// for the OCI provider.
+	GetDigest(ctx context.Context, name, tag string) (string, error)
+
+	// GetReferrer returns the referrer for the given tag of the given container in the given namespace
+	// for the OCI provider. It returns the referrer as a golang struct given the OCI spec.
+	// TODO - Define the referrer struct
+	GetReferrer(ctx context.Context, name, tag, artifactType string) (any, error)
+
+	// GetManifest returns the manifest for the given tag of the given container in the given namespace
+	// for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
+	// TODO - Define the manifest struct
+	GetManifest(ctx context.Context, name, tag string) (any, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

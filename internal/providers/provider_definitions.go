@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 )
 
@@ -35,6 +36,10 @@ var supportedProviderClassDefinitions = map[string]ProviderClassDefinition{
 	ghclient.Github: {
 		Traits:             ghclient.OAuthImplements,
 		AuthorizationFlows: ghclient.OAuthAuthorizationFlows,
+	},
+	dockerhub.DockerHub: {
+		Traits:             dockerhub.Implements,
+		AuthorizationFlows: dockerhub.AuthorizationFlows,
 	},
 }
 
