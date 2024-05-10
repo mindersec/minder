@@ -17,9 +17,9 @@
  */
 
 syntax = "proto3";
-package internal.crypto;
+package crypto;
 
-option go_package = "github.com/stacklok/minder/internal/models/generated";
+option go_package = "github.com/stacklok/minder/internal/models/generated/crypto";
 
 enum EncryptionAlgorithm {
   ENCRYPTION_ALGORITHM_UNSPECIFIED = 0;
