@@ -1,4 +1,4 @@
-// Copyright 2023 Stacklok, Inc.
+// Copyright 2024 Stacklok, Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package container provides the root command for the container subcommands
-package container
+package constants
 
-import "github.com/spf13/cobra"
-
-// CmdContainer is the root command for the container subcommands
-func CmdContainer() *cobra.Command {
-	var rtCmd = &cobra.Command{
-		Use:   "container",
-		Short: "container provides utilities to test minder container support",
-	}
-
-	rtCmd.AddCommand(CmdVerify())
-
-	return rtCmd
-}
+var (
+	// ServerUserAgent is the user agent string for the server
+	ServerUserAgent = "Minder/" + Revision
+)

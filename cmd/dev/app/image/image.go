@@ -1,4 +1,4 @@
-// Copyright 2024 Stacklok, Inc.
+// Copyright 2023 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,16 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package providers
+// Package image provides the root command for the image subcommands
+package image
 
-import "github.com/stacklok/minder/internal/db"
+import "github.com/spf13/cobra"
 
-// ListProviderClasses returns a list of provider classes.
-func ListProviderClasses() []string {
-	return []string{
-		string(db.ProviderClassGithub),
-		string(db.ProviderClassGithubApp),
-		string(db.ProviderClassDockerhub),
-		string(db.ProviderClassGhcr),
+// CmdImage is the root command for the container subcommands
+func CmdImage() *cobra.Command {
+	var rtCmd = &cobra.Command{
+		Use:   "image",
+		Short: "image provides utilities to test minder container image support",
 	}
+
+	rtCmd.AddCommand(CmdVerify())
+	rtCmd.AddCommand(CmdList())
+	rtCmd.AddCommand(CmdListTags())
+
+	return rtCmd
 }

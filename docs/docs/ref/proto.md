@@ -619,6 +619,19 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
+<a name="minder-v1-DockerHubProviderConfig"></a>
+
+#### DockerHubProviderConfig
+DockerHubProviderConfig contains the configuration for the DockerHub provider.
+
+Namespace: is the namespace for the DockerHub provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  | namespace is the namespace for the DockerHub provider. |
+
+
 <a name="minder-v1-EntityTypedId"></a>
 
 #### EntityTypedId
@@ -644,6 +657,19 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
 | details | [string](#string) |  | details is the description of the alert attempt if any |
 | url | [string](#string) |  | url is the URL to the alert |
+
+
+<a name="minder-v1-GHCRProviderConfig"></a>
+
+#### GHCRProviderConfig
+GHCRProviderConfig contains the configuration for the GHCR provider.
+
+Namespace: is the namespace for the GHCR provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  | namespace is the namespace for the GHCR provider. |
 
 
 <a name="minder-v1-GetArtifactByIdRequest"></a>
@@ -2242,6 +2268,8 @@ Entity defines the entity that is supported by the provider.
 | PROVIDER_CLASS_UNSPECIFIED | 0 |  |
 | PROVIDER_CLASS_GITHUB | 1 |  |
 | PROVIDER_CLASS_GITHUB_APP | 2 |  |
+| PROVIDER_CLASS_GHCR | 3 |  |
+| PROVIDER_CLASS_DOCKERHUB | 4 |  |
 
 
 <a name="minder-v1-ProviderType"></a>
@@ -2257,6 +2285,7 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_GIT | 3 |  |
 | PROVIDER_TYPE_OCI | 4 |  |
 | PROVIDER_TYPE_REPO_LISTER | 5 |  |
+| PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
 
 
 <a name="minder-v1-Relation"></a>

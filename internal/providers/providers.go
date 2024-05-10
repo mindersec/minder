@@ -48,6 +48,8 @@ func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 		return minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER, true
 	case db.ProviderTypeOci:
 		return minderv1.ProviderType_PROVIDER_TYPE_OCI, true
+	case db.ProviderTypeImageLister:
+		return minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER, true
 	default:
 		return minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED, false
 	}
