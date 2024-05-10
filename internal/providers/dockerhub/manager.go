@@ -93,7 +93,10 @@ func (m *providerClassManager) getProviderCredentials(
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	decryptedToken, err := m.crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	// TODO: get rid of this once we store the EncryptedData struct in
+	// the database.
+	encryptedData := crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	decryptedToken, err := m.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
