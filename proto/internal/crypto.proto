@@ -17,7 +17,7 @@
  */
 
 syntax = "proto3";
-package crypto;
+package internal.v1;
 
 option go_package = "github.com/stacklok/minder/internal/models/generated/crypto";
 
