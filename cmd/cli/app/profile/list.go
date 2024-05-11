@@ -18,6 +18,7 @@ package profile
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -90,7 +91,10 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 func init() {
 	ProfileCmd.AddCommand(listCmd)
 	listCmd.Flags().StringP("label", "l", "", "Profile label to filter on")
-	listCmd.Flags().MarkHidden("label")
+	if err := listCmd.Flags().MarkHidden("label"); err != nil {
+		listCmd.Printf("Error hiding flag: %s", err)
+		os.Exit(1)
+	}
 
 	// Flags
 	listCmd.Flags().StringP("output", "o", app.Table,
