@@ -90,6 +90,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 func init() {
 	ProfileCmd.AddCommand(listCmd)
 	listCmd.Flags().StringP("label", "l", "", "Profile label to filter on")
+	listCmd.Flags().MarkHidden("label")
 
 	// Flags
 	listCmd.Flags().StringP("output", "o", app.Table,
