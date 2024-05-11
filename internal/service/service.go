@@ -38,6 +38,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/github/installations"
@@ -112,7 +113,11 @@ func AllInOneServerService(
 		store,
 		ghProviders,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
+		cryptoEngine,
+		store,
+	)
+	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}

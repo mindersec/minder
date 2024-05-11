@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/github/ghcr"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -71,6 +72,7 @@ type GitHub struct {
 	packageListingClient *github.Client
 	cache                ratecache.RestClientCache
 	delegate             Delegate
+	ghcrwrap             *ghcr.ImageLister
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -153,6 +155,7 @@ func NewGitHub(
 		packageListingClient: packageListingClient,
 		cache:                cache,
 		delegate:             delegate,
+		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 	}
 }
 
@@ -774,6 +777,16 @@ func (c *GitHub) GetLogin(ctx context.Context) (string, error) {
 // GetPrimaryEmail returns the primary email for the acting user
 func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 	return c.delegate.GetPrimaryEmail(ctx)
+}
+
+// ListImages lists all containers in the GitHub Container Registry
+func (c *GitHub) ListImages(ctx context.Context) ([]string, error) {
+	return c.ghcrwrap.ListImages(ctx)
+}
+
+// GetNamespaceURL returns the URL for the repository
+func (c *GitHub) GetNamespaceURL() string {
+	return c.ghcrwrap.GetNamespaceURL()
 }
 
 // setAsRateLimited adds the GitHub to the cache as rate limited.

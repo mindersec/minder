@@ -28,6 +28,9 @@ var (
 	// VerboseCLIVersion is the verbose version of the application.
 	// Note that this is set up at init time.
 	VerboseCLIVersion = ""
+	// Revision is the git commit hash. Note that this is set at compile time
+	// using ldflags.
+	Revision = "no-info"
 )
 
 type versionStruct struct {
@@ -66,6 +69,7 @@ func init() {
 			vvs.Time = kv.Value
 		case "vcs.revision":
 			vvs.Commit = kv.Value
+			Revision = kv.Value
 		case "vcs.modified":
 			vvs.Modified = kv.Value == "true"
 		case "GOOS":

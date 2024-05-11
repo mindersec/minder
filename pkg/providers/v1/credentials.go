@@ -49,13 +49,18 @@ type GitCredential interface {
 	AddToCloneOptions(options *git.CloneOptions)
 }
 
+// OAuth2TokenCredential is the interface for credentials that are OAuth2 tokens
+type OAuth2TokenCredential interface {
+	GetAsOAuth2TokenSource() oauth2.TokenSource
+}
+
 // GitHubCredential is the interface for credentials used when interacting with GitHub
 type GitHubCredential interface {
 	RestCredential
 	GitCredential
+	OAuth2TokenCredential
 
 	GetCacheKey() string
-	GetAsOAuth2TokenSource() oauth2.TokenSource
 	// as we add new OCI providers this will change to a procedure / mutator, right now it's GitHub specific
 	GetAsContainerAuthenticator(owner string) authn.Authenticator
 }

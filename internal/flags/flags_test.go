@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 )
 
+// nolint: tparallel
 func TestOpenFeatureProviderFromFlags(t *testing.T) {
 	t.Parallel()
 
@@ -76,9 +77,14 @@ idp_resolver:
 		},
 		expectedFlag: true,
 	}}
+	//nolint: paralleltest
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			// These tests need to be exclusive with each other, because openfeature
+			// uses a global variable to store the provider.
+			// Other tests can mock the openfeature client to avoid this, but this test
+			// specifically tests our interaction with the library, so we need exclusion here.
+
 			ctx := context.Background()
 			OpenFeatureProviderFromFlags(ctx, tt.cfg)
 

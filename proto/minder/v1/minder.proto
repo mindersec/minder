@@ -142,6 +142,7 @@ service ArtifactService {
             relation: RELATION_ARTIFACT_GET
         };
     }
+
 }
 
 message ListArtifactsRequest {
@@ -1309,6 +1310,24 @@ message GitHubAppProviderConfig {
   reserved "app_name", "app_id", "user_id";
 }
 
+// DockerHubProviderConfig contains the configuration for the DockerHub provider.
+//
+// Namespace: is the namespace for the DockerHub provider.
+//
+message DockerHubProviderConfig {
+    // namespace is the namespace for the DockerHub provider.
+    string namespace = 1;
+}
+
+// GHCRProviderConfig contains the configuration for the GHCR provider.
+//
+// Namespace: is the namespace for the GHCR provider.
+//
+message GHCRProviderConfig {
+    // namespace is the namespace for the GHCR provider.
+    string namespace = 1;
+}
+
 // Context defines the context in which a rule is evaluated.
 // this normally refers to a combination of the provider, organization and project.
 message Context {
@@ -2096,12 +2115,15 @@ enum ProviderType {
     PROVIDER_TYPE_GIT = 3 [(name) = "git"];
     PROVIDER_TYPE_OCI = 4 [(name) = "oci"];
     PROVIDER_TYPE_REPO_LISTER = 5 [(name) = "repo-lister"];
+    PROVIDER_TYPE_IMAGE_LISTER = 6 [(name) = "image-lister"];
 }
 
 enum ProviderClass {
     PROVIDER_CLASS_UNSPECIFIED = 0;
     PROVIDER_CLASS_GITHUB = 1 [(name) = "github"];
     PROVIDER_CLASS_GITHUB_APP = 2 [(name) = "github-app"];
+    PROVIDER_CLASS_GHCR = 3 [(name) = "ghcr"];
+    PROVIDER_CLASS_DOCKERHUB = 4 [(name) = "dockerhub"];
 }
 
 enum AuthorizationFlow {

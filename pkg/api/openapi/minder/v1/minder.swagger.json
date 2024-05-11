@@ -3702,7 +3702,8 @@
         "PROVIDER_TYPE_REST",
         "PROVIDER_TYPE_GIT",
         "PROVIDER_TYPE_OCI",
-        "PROVIDER_TYPE_REPO_LISTER"
+        "PROVIDER_TYPE_REPO_LISTER",
+        "PROVIDER_TYPE_IMAGE_LISTER"
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
