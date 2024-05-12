@@ -17,7 +17,6 @@ minder profile list [flags]
 
 ```
   -h, --help            help for list
-  -l, --label string    Profile label to filter on
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
