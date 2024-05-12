@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/stacklok/minder/internal/constants"
@@ -134,20 +135,20 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 
 // GetManifest returns the manifest for the given tag of the given container in the given namespace
 // for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
-func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (any, error) {
+func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manifest, error) {
 	ref, err := o.getReference(contname, tag)
 	if err != nil {
-		return "", fmt.Errorf("failed to get reference: %w", err)
+		return nil, fmt.Errorf("failed to get reference: %w", err)
 	}
 
 	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
 	if err != nil {
-		return "", fmt.Errorf("failed to get image: %w", err)
+		return nil, fmt.Errorf("failed to get image: %w", err)
 	}
 
 	man, err := img.Manifest()
 	if err != nil {
-		return "", fmt.Errorf("failed to get manifest: %w", err)
+		return nil, fmt.Errorf("failed to get manifest: %w", err)
 	}
 
 	return man, nil

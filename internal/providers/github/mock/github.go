@@ -15,9 +15,10 @@ import (
 	reflect "reflect"
 
 	git "github.com/go-git/go-git/v5"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	github "github.com/google/go-github/v61/github"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v10 "github.com/stacklok/minder/pkg/providers/v1"
+	v10 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v11 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -45,7 +46,7 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockProvider) CanImplement(trait v1.ProviderType) bool {
+func (m *MockProvider) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -82,7 +83,7 @@ func (m *MockGit) EXPECT() *MockGitMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockGit) CanImplement(trait v1.ProviderType) bool {
+func (m *MockGit) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -134,7 +135,7 @@ func (m *MockREST) EXPECT() *MockRESTMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockREST) CanImplement(trait v1.ProviderType) bool {
+func (m *MockREST) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -215,7 +216,7 @@ func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockRepoLister) CanImplement(trait v1.ProviderType) bool {
+func (m *MockRepoLister) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -229,10 +230,10 @@ func (mr *MockRepoListerMockRecorder) CanImplement(trait any) *gomock.Call {
 }
 
 // ListAllRepositories mocks base method.
-func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*v1.Repository, error) {
+func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*v10.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
-	ret0, _ := ret[0].([]*v1.Repository)
+	ret0, _ := ret[0].([]*v10.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -281,7 +282,7 @@ func (mr *MockGitHubMockRecorder) AddAuthToPushOptions(ctx, options any) *gomock
 }
 
 // CanImplement mocks base method.
-func (m *MockGitHub) CanImplement(trait v1.ProviderType) bool {
+func (m *MockGitHub) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -503,10 +504,10 @@ func (mr *MockGitHubMockRecorder) GetBranchProtection(arg0, arg1, arg2, arg3 any
 }
 
 // GetCredential mocks base method.
-func (m *MockGitHub) GetCredential() v10.GitHubCredential {
+func (m *MockGitHub) GetCredential() v11.GitHubCredential {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCredential")
-	ret0, _ := ret[0].(v10.GitHubCredential)
+	ret0, _ := ret[0].(v11.GitHubCredential)
 	return ret0
 }
 
@@ -695,10 +696,10 @@ func (mr *MockGitHubMockRecorder) IsOrg() *gomock.Call {
 }
 
 // ListAllRepositories mocks base method.
-func (m *MockGitHub) ListAllRepositories(arg0 context.Context) ([]*v1.Repository, error) {
+func (m *MockGitHub) ListAllRepositories(arg0 context.Context) ([]*v10.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListAllRepositories", arg0)
-	ret0, _ := ret[0].([]*v1.Repository)
+	ret0, _ := ret[0].([]*v10.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -912,7 +913,7 @@ func (m *MockImageLister) EXPECT() *MockImageListerMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockImageLister) CanImplement(trait v1.ProviderType) bool {
+func (m *MockImageLister) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -978,7 +979,7 @@ func (m *MockOCI) EXPECT() *MockOCIMockRecorder {
 }
 
 // CanImplement mocks base method.
-func (m *MockOCI) CanImplement(trait v1.ProviderType) bool {
+func (m *MockOCI) CanImplement(trait v10.ProviderType) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CanImplement", trait)
 	ret0, _ := ret[0].(bool)
@@ -1007,10 +1008,10 @@ func (mr *MockOCIMockRecorder) GetDigest(ctx, name, tag any) *gomock.Call {
 }
 
 // GetManifest mocks base method.
-func (m *MockOCI) GetManifest(ctx context.Context, name, tag string) (any, error) {
+func (m *MockOCI) GetManifest(ctx context.Context, name, tag string) (*v1.Manifest, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetManifest", ctx, name, tag)
-	ret0, _ := ret[0].(any)
+	ret0, _ := ret[0].(*v1.Manifest)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

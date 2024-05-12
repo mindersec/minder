@@ -22,16 +22,22 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers/oci"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // DockerHub is the string that represents the DockerHub provider
 const DockerHub = "dockerhub"
+
+const (
+	dockerioBaseURL = "docker.io"
+)
 
 // Implements is the list of provider types that the DockerHub provider implements
 var Implements = []db.ProviderType{
@@ -46,6 +52,7 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 
 // dockerHubImageLister is the struct that contains the Docker Hub specific operations
 type dockerHubImageLister struct {
+	*oci.OCI
 	cred      provifv1.OAuth2TokenCredential
 	cli       *http.Client
 	namespace string
@@ -68,7 +75,9 @@ func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderCon
 	ns := cfg.GetNamespace()
 	t := u.JoinPath(ns)
 
+	o := oci.New(cred, path.Join(dockerioBaseURL, cfg.GetNamespace()))
 	return &dockerHubImageLister{
+		OCI:       o,
 		namespace: ns,
 		cred:      cred,
 		cli:       cli,
@@ -102,7 +111,8 @@ func (d *dockerHubImageLister) GetNamespaceURL() string {
 
 // CanImplement returns true if the provider can implement the specified trait
 func (_ *dockerHubImageLister) CanImplement(trait minderv1.ProviderType) bool {
-	return trait == minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER
+	return trait == minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER ||
+		trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
 
 // ListImages lists the containers in the Docker Hub
