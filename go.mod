@@ -13,7 +13,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.0
-	github.com/fergusstrange/embedded-postgres v1.26.0
+	github.com/fergusstrange/embedded-postgres v1.27.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/validator/v10 v10.20.0
@@ -47,7 +47,7 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.16.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.16.0
-	github.com/sigstore/protobuf-specs v0.3.1
+	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sigstore/sigstore-go v0.3.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
