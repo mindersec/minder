@@ -99,7 +99,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
 
-	res, err := artifactVerifier.Verify(context.Background(), verifyif.ArtifactTypeContainer, "",
+	res, err := artifactVerifier.Verify(context.Background(), verifyif.ArtifactTypeContainer,
 		owner.Value.String(), name.Value.String(), digest.Value.String())
 	if err != nil {
 		return fmt.Errorf("error verifying container: %w", err)

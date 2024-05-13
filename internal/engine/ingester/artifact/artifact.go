@@ -176,7 +176,7 @@ func (i *Ingest) getVerificationResult(
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
 	for _, artifactVersion := range versions {
 		// Try getting provenance info for the artifact version
-		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer, "",
+		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
 			artifact.Owner, artifact.Name, artifactVersion)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here

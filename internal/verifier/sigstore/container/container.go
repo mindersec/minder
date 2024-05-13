@@ -60,18 +60,28 @@ type AuthMethod func(auth *containerAuth)
 
 // containerAuth is the authentication for the container
 type containerAuth struct {
+	// Used if GH client is available
 	ghClient provifv1.GitHub
+	// Used if GH client is not available (any other provider)
+	concreteAuthn authn.Authenticator
+	// Registry to use
+	registry string
 }
 
 func (c *containerAuth) getAuthenticator(owner string) authn.Authenticator {
 	if c.ghClient != nil {
 		return c.ghClient.GetCredential().GetAsContainerAuthenticator(owner)
 	}
+	if c.concreteAuthn != nil {
+		return c.concreteAuthn
+	}
 	return authn.Anonymous
 }
 
 func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
-	var auth containerAuth
+	auth := containerAuth{
+		registry: "ghcr.io",
+	}
 	for _, opt := range authOpts {
 		opt(&auth)
 	}
@@ -85,6 +95,24 @@ func WithGitHubClient(ghClient provifv1.GitHub) AuthMethod {
 	}
 }
 
+// WithAuthenticator sets the authenticator as an authentication option we want to use during verification
+func WithAuthenticator(auth authn.Authenticator) AuthMethod {
+	return func(cauth *containerAuth) {
+		cauth.concreteAuthn = auth
+	}
+}
+
+// WithRegistry sets the registry as an authentication option we want to use during verification
+func WithRegistry(registry string) AuthMethod {
+	return func(cauth *containerAuth) {
+		cauth.registry = registry
+	}
+}
+
+func (c *containerAuth) getRegistry() string {
+	return c.registry
+}
+
 // Verify verifies a container artifact using sigstore
 // isSigned is true only if we were able to find a signature/attestation and it had everything needed to construct the
 // sigstore bundle.
@@ -92,16 +120,18 @@ func WithGitHubClient(ghClient provifv1.GitHub) AuthMethod {
 func Verify(
 	ctx context.Context,
 	sev *verify.SignedEntityVerifier,
-	registry, owner, artifact, version string,
+	owner, artifact, version string,
 	authOpts ...AuthMethod,
 ) ([]verifyif.Result, error) {
 	logger := zerolog.Ctx(ctx)
 
+	cauth := newContainerAuth(authOpts...)
+
 	logger.Info().
-		Str("imageRef", BuildImageRef(registry, owner, artifact, version)).
+		Str("imageRef", BuildImageRef(cauth.getRegistry(), owner, artifact, version)).
 		Msg("verifying container artifact")
 	// Construct the bundle(s) - OCI image or GitHub's attestation endpoint
-	bundles, err := getSigstoreBundles(ctx, registry, owner, artifact, version, newContainerAuth(authOpts...))
+	bundles, err := getSigstoreBundles(ctx, owner, artifact, version, cauth)
 	if err != nil && !errors.Is(err, ErrProvenanceNotFoundOrIncomplete) {
 		// We got some other unexpected error prior to querying for the signature/attestation
 		return nil, err
@@ -168,10 +198,10 @@ func getVerifiedResults(
 // getSigstoreBundles returns the sigstore bundles, either through the OCI registry or the GitHub attestation endpoint
 func getSigstoreBundles(
 	ctx context.Context,
-	registry, owner, artifact, version string,
+	owner, artifact, version string,
 	auth *containerAuth,
 ) ([]sigstoreBundle, error) {
-	imageRef := BuildImageRef(registry, owner, artifact, version)
+	imageRef := BuildImageRef(auth.getRegistry(), owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
 	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.getAuthenticator(owner))
 	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) && auth.ghClient != nil {

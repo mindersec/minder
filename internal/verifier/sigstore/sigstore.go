@@ -147,17 +147,17 @@ func verifierOptions(trustedRoot string) ([]verify.VerifierOption, error) {
 }
 
 // Verify verifies an artifact
-func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactType, registry verifyif.ArtifactRegistry,
+func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactType,
 	owner, artifact, version string) ([]verifyif.Result, error) {
 	var err error
 	var res []verifyif.Result
 	// Sanitize the input
-	sanitizeInput(&registry, &owner)
+	sanitizeInput(&owner)
 
 	// Process verification based on the artifact type
 	switch artifactType {
 	case verifyif.ArtifactTypeContainer:
-		res, err = s.VerifyContainer(ctx, string(registry), owner, artifact, version)
+		res, err = s.VerifyContainer(ctx, owner, artifact, version)
 	default:
 		err = fmt.Errorf("unknown artifact type: %s", artifactType)
 	}
@@ -166,17 +166,13 @@ func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactTyp
 }
 
 // VerifyContainer verifies a container artifact using sigstore
-func (s *Sigstore) VerifyContainer(ctx context.Context, registry, owner, artifact, version string) (
+func (s *Sigstore) VerifyContainer(ctx context.Context, owner, artifact, version string) (
 	[]verifyif.Result, error) {
-	return container.Verify(ctx, s.verifier, registry, owner, artifact, version, s.authOpts...)
+	return container.Verify(ctx, s.verifier, owner, artifact, version, s.authOpts...)
 }
 
 // sanitizeInput sanitizes the input parameters
-func sanitizeInput(registry *verifyif.ArtifactRegistry, owner *string) {
-	// Default the registry to GHCR for the time being
-	if *registry == "" {
-		*registry = verifyif.ArtifactRegistryGHCR
-	}
+func sanitizeInput(owner *string) {
 	// (jaosorior): The owner can't be upper-cased, normalize the owner.
 	*owner = strings.ToLower(*owner)
 }
