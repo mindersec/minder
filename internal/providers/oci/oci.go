@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -152,6 +153,30 @@ func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manife
 	}
 
 	return man, nil
+}
+
+// GetRegistry returns the registry name
+func (o *OCI) GetRegistry() string {
+	return o.baseURL
+}
+
+// GetAuthenticator returns the authenticator for the OCI provider
+func (o *OCI) GetAuthenticator() (authn.Authenticator, error) {
+	if o.cred == nil {
+		return authn.Anonymous, nil
+	}
+
+	oauth2cred, ok := o.cred.(provifv1.OAuth2TokenCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential is not an OAuth2 token credential")
+	}
+	s := oauth2cred.GetAsOAuth2TokenSource()
+	t, err := s.Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+
+	return &authn.Bearer{Token: t.AccessToken}, nil
 }
 
 // getReferenceString returns the reference string for a given container name and tag

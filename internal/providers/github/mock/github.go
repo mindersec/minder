@@ -15,6 +15,7 @@ import (
 	reflect "reflect"
 
 	git "github.com/go-git/go-git/v5"
+	authn "github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	github "github.com/google/go-github/v61/github"
 	v10 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -992,6 +993,21 @@ func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
 }
 
+// GetAuthenticator mocks base method.
+func (m *MockOCI) GetAuthenticator() (authn.Authenticator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuthenticator")
+	ret0, _ := ret[0].(authn.Authenticator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthenticator indicates an expected call of GetAuthenticator.
+func (mr *MockOCIMockRecorder) GetAuthenticator() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticator", reflect.TypeOf((*MockOCI)(nil).GetAuthenticator))
+}
+
 // GetDigest mocks base method.
 func (m *MockOCI) GetDigest(ctx context.Context, name, tag string) (string, error) {
 	m.ctrl.T.Helper()
@@ -1035,6 +1051,20 @@ func (m *MockOCI) GetReferrer(ctx context.Context, name, tag, artifactType strin
 func (mr *MockOCIMockRecorder) GetReferrer(ctx, name, tag, artifactType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReferrer", reflect.TypeOf((*MockOCI)(nil).GetReferrer), ctx, name, tag, artifactType)
+}
+
+// GetRegistry mocks base method.
+func (m *MockOCI) GetRegistry() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRegistry")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetRegistry indicates an expected call of GetRegistry.
+func (mr *MockOCIMockRecorder) GetRegistry() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegistry", reflect.TypeOf((*MockOCI)(nil).GetRegistry))
 }
 
 // ListTags mocks base method.

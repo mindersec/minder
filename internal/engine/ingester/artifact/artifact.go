@@ -255,6 +255,17 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 			return nil, fmt.Errorf("unable to get github provider from provider configuration")
 		}
 		verifieropts = append(verifieropts, container.WithGitHubClient(ghcli))
+	} else if i.prov.CanImplement(pb.ProviderType_PROVIDER_TYPE_OCI) {
+		ocicli, err := provifv1.As[provifv1.OCI](i.prov)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get oci provider from provider configuration")
+		}
+		cauthn, err := ocicli.GetAuthenticator()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get oci authenticator: %w", err)
+		}
+		verifieropts = append(verifieropts, container.WithRegistry(ocicli.GetRegistry()),
+			container.WithAuthenticator(cauthn))
 	}
 
 	artifactVerifier, err := verifier.NewVerifier(
