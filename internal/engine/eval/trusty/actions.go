@@ -53,6 +53,12 @@ Minder analyzed the dependencies introduced in this pull request and detected th
 
 ### 📦 Dependency: [{{ .PackageName }}]({{ .TrustyURL }})
 
+{{ if .Archived }}
+⚠️ __Archived Package:__ This package is marked as deprecated. Proceed with caution!
+{{ end }}
+{{ if .Deprecated }}
+⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
+{{ end }}
 #### Trusty Score: {{ .Score }}
 {{ if .ScoreComponents }}
 <details>
@@ -114,6 +120,8 @@ type maliciousTemplateData struct {
 
 type templatePackage struct {
 	templatePackageData
+	Deprecated      bool
+	Archived        bool
 	ScoreComponents []templateScoreComponent
 	Alternatives    []templateAlternative
 }
@@ -236,6 +244,8 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 
 			lowScorePackages[alternative.Dependency.Name] = templatePackage{
 				templatePackageData: packageData,
+				Deprecated:          alternative.trustyReply.PackageData.Deprecated,
+				Archived:            alternative.trustyReply.PackageData.Archived,
 				ScoreComponents:     scoreComp,
 				Alternatives:        []templateAlternative{},
 			}

@@ -76,7 +76,9 @@ type Reply struct {
 		Packages []Alternative `json:"packages"`
 	} `json:"alternatives"`
 	PackageData struct {
-		Malicious *MaliciousData `json:"malicious"`
+		Archived   bool           `json:"archived"`
+		Deprecated bool           `json:"is_deprecated"`
+		Malicious  *MaliciousData `json:"malicious"`
 	} `json:"package_data"`
 }
 

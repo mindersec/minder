@@ -112,6 +112,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	if err := submitSummary(ctx, prSummaryHandler); err != nil {
+		logger.Err(err).Msgf("Failed Generating PR Summary: %s", err.Error())
 		return fmt.Errorf("submitting pull request summary: %w", err)
 	}
 

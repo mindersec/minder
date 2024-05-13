@@ -55,8 +55,12 @@ func TestBuildEvalResult(t *testing.T) {
 							Score: &sg,
 						},
 						PackageData: struct {
-							Malicious *MaliciousData `json:"malicious"`
+							Archived   bool           `json:"archived"`
+							Deprecated bool           `json:"is_deprecated"`
+							Malicious  *MaliciousData `json:"malicious"`
 						}{
+							Archived:   false,
+							Deprecated: false,
 							Malicious: &MaliciousData{
 								Summary:   "malicuous",
 								Published: &now,
@@ -113,8 +117,12 @@ func TestBuildEvalResult(t *testing.T) {
 							Score: &sg,
 						},
 						PackageData: struct {
-							Malicious *MaliciousData `json:"malicious"`
+							Archived   bool           `json:"archived"`
+							Deprecated bool           `json:"is_deprecated"`
+							Malicious  *MaliciousData `json:"malicious"`
 						}{
+							Archived:   false,
+							Deprecated: false,
 							Malicious: &MaliciousData{
 								Summary:   "malicuous",
 								Published: &now,
