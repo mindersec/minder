@@ -47,7 +47,7 @@ require (
 	github.com/rs/zerolog v1.32.0
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.16.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.16.0
-	github.com/sigstore/protobuf-specs v0.3.1
+	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sigstore/sigstore-go v0.3.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
