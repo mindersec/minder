@@ -16,8 +16,10 @@
 package cli
 
 import (
+	"cmp"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -36,6 +38,10 @@ func MultiSelect(choices []string) ([]string, error) {
 	for _, c := range choices {
 		items = append(items, item{title: c})
 	}
+
+	slices.SortFunc(items, func(a, b list.Item) int {
+		return cmp.Compare(a.(item).title, b.(item).title)
+	})
 
 	l := list.New(items, itemDelegate{}, 0, 0)
 	l.Title = "Select repos to register"
