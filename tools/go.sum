@@ -485,8 +485,8 @@ github.com/mfridman/interpolate v0.0.2 h1:pnuTK7MQIxxFz1Gr+rjSIx9u7qVjf5VOoM/u6B
 github.com/mfridman/interpolate v0.0.2/go.mod h1:p+7uk6oE07mpE/Ik1b8EckO0O4ZXiGAfshKBWLUM9Xg=
 github.com/mgechev/revive v1.3.7 h1:502QY0vQGe9KtYJ9FpxMz9rL+Fc/P13CI5POL4uHCcE=
 github.com/mgechev/revive v1.3.7/go.mod h1:RJ16jUbF0OWC3co/+XTxmFNgEpUPwnnA0BRllX2aDNA=
-github.com/mikefarah/yq/v4 v4.43.1 h1:1bCrQwVDhjGnPboQidy30hu6U2TCd8sUQTy1hKCHOGI=
-github.com/mikefarah/yq/v4 v4.43.1/go.mod h1:jcSqtyUKbPWvwaa8cNw8Ej4rmPb3iWE8zYvpkTvM7oc=
+github.com/mikefarah/yq/v4 v4.44.1 h1:FqnryFyO2MLfxKHYlGbrqpqPA8so7KAyuc7ra9vY+vQ=
+github.com/mikefarah/yq/v4 v4.44.1/go.mod h1:mpBUHgdchicbt1rSHO0A3GKDHy6eVON14WXMLfpU3kg=
 github.com/mitchellh/copystructure v1.0.0 h1:Laisrj+bAB6b/yJwB5Bt3ITZhGJdqmxquMKeZ+mmkFQ=
 github.com/mitchellh/copystructure v1.0.0/go.mod h1:SNtv71yrdKgLRyLFxmLdkAbkKEFWgYaq1OVrnRcwhnw=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
