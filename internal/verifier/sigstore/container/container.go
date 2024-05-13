@@ -63,6 +63,13 @@ type containerAuth struct {
 	ghClient provifv1.GitHub
 }
 
+func (c *containerAuth) getAuthenticator(owner string) authn.Authenticator {
+	if c.ghClient != nil {
+		return c.ghClient.GetCredential().GetAsContainerAuthenticator(owner)
+	}
+	return authn.Anonymous
+}
+
 func newContainerAuth(authOpts ...AuthMethod) *containerAuth {
 	var auth containerAuth
 	for _, opt := range authOpts {
@@ -166,7 +173,7 @@ func getSigstoreBundles(
 ) ([]sigstoreBundle, error) {
 	imageRef := BuildImageRef(registry, owner, artifact, version)
 	// Try to build a bundle from the OCI image reference
-	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.ghClient.GetCredential().GetAsContainerAuthenticator(owner))
+	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.getAuthenticator(owner))
 	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) && auth.ghClient != nil {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
 		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)
