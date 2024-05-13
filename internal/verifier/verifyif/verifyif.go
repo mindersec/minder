@@ -24,14 +24,6 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
-// ArtifactRegistry supported artifact registries
-type ArtifactRegistry string
-
-const (
-	// ArtifactRegistryGHCR is the GitHub Container Registry
-	ArtifactRegistryGHCR ArtifactRegistry = "ghcr.io"
-)
-
 // ArtifactType represents the type of artifact, i.e., container, npm, etc.
 type ArtifactType string
 
@@ -49,8 +41,8 @@ type Result struct {
 
 // ArtifactVerifier is the interface for artifact verifiers
 type ArtifactVerifier interface {
-	Verify(ctx context.Context, artifactType ArtifactType, registry ArtifactRegistry,
+	Verify(ctx context.Context, artifactType ArtifactType,
 		owner, name, version string) ([]Result, error)
 	VerifyContainer(ctx context.Context,
-		registry, owner, artifact, version string) ([]Result, error)
+		owner, artifact, version string) ([]Result, error)
 }

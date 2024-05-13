@@ -91,7 +91,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 						},
 					}, nil)
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
@@ -138,7 +138,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name-and-tag", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name-and-tag", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
@@ -299,7 +299,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name-but-not-tags", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name-but-not-tags", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
@@ -353,7 +353,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
@@ -390,7 +390,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
@@ -428,7 +428,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 					}, nil)
 
 				mockVerifier.EXPECT().
-					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, verifyif.ArtifactRegistry(""), "stacklok", "matching-name", "sha256:1234").
+					Verify(gomock.Any(), verifyif.ArtifactTypeContainer, "stacklok", "matching-name", "sha256:1234").
 					Return([]verifyif.Result{
 						{
 							IsSigned:   false,
