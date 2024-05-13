@@ -38,11 +38,13 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // CmdTest is the root command for the rule subcommands
@@ -59,6 +61,8 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("rule-type", "r", "", "file to read rule type definition from")
 	testCmd.Flags().StringP("entity", "e", "", "YAML file containing the entity to test the rule against")
 	testCmd.Flags().StringP("profile", "p", "", "YAML file containing a profile to test the rule against")
+	testCmd.Flags().StringP("provider", "P", "github", "The provider class to test the rule against")
+	testCmd.Flags().StringP("provider-config", "c", "", "YAML file containing the provider configuration (optional)")
 	testCmd.Flags().StringP("remediate-status", "", "", "The previous remediate status (optional)")
 	testCmd.Flags().StringP("remediate-metadata", "", "", "YAML file containing the remediate metadata (optional)")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
@@ -91,6 +95,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rstatus := cmd.Flag("remediate-status")
 	rMetaPath := cmd.Flag("remediate-metadata")
 	token := viper.GetString("auth.token")
+	providerclass := cmd.Flag("provider")
+	providerconfig := cmd.Flag("provider-config")
 
 	// set rego env variable for debugging
 	if err := os.Setenv(rego.EnablePrintEnvVar, "true"); err != nil {
@@ -157,21 +163,13 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// TODO: Whenever we add more Provider classes, we will need to rethink this
-	client, err := clients.NewGitHubAppProvider(
-		&minderv1.GitHubAppProviderConfig{},
-		&serverconfig.GitHubAppConfig{AppName: "test"},
-		&ratecache.NoopRestClientCache{},
-		credentials.NewGitHubTokenCredential(token),
-		nil,
-		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
-		false,
-	)
+	prov, err := getProvider(providerclass.Value.String(), token, providerconfig.Value.String())
 	if err != nil {
-		return fmt.Errorf("error instantiating github provider: %w", err)
+		return err
 	}
 
 	// TODO: use cobra context here
-	eng, err := engine.NewRuleTypeEngine(context.Background(), profile, ruletype, client)
+	eng, err := engine.NewRuleTypeEngine(context.Background(), profile, ruletype, prov)
 
 	inf := &entities.EntityInfoWrapper{
 		Entity:      ent,
@@ -291,4 +289,62 @@ func readEntityFromFile(fpath string, entType minderv1.Entity) (protoreflect.Pro
 	}
 
 	return out, nil
+}
+
+func getProvider(pstr string, token string, providerConfigFile string) (provifv1.Provider, error) {
+	cfgbytes, err := readProviderConfig(providerConfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("error reading provider config: %w", err)
+	}
+
+	switch pstr {
+	case "github":
+		client, err := clients.NewGitHubAppProvider(
+			&minderv1.GitHubAppProviderConfig{},
+			&serverconfig.GitHubAppConfig{AppName: "test"},
+			&ratecache.NoopRestClientCache{},
+			credentials.NewGitHubTokenCredential(token),
+			nil,
+			clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+			false,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error instantiating github provider: %w", err)
+		}
+
+		return client, nil
+	case "dockerhub":
+		// read provider config
+		cfg, err := dockerhub.ParseV1Config(cfgbytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing dockerhub provider config: %w", err)
+		}
+
+		client, err := dockerhub.New(credentials.NewOAuth2TokenCredential(token), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("error instantiating dockerhub provider: %w", err)
+		}
+
+		return client, nil
+	default:
+		return nil, fmt.Errorf("unknown or unsupported provider: %s", pstr)
+	}
+}
+
+func readProviderConfig(fpath string) ([]byte, error) {
+	if fpath == "" {
+		return []byte{}, nil
+	}
+
+	f, err := os.Open(filepath.Clean(fpath))
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %w", err)
+	}
+
+	w := &bytes.Buffer{}
+	if err := jsonyaml.TranscodeYAMLToJSON(f, w); err != nil {
+		return nil, fmt.Errorf("error converting yaml to json: %w", err)
+	}
+
+	return w.Bytes(), nil
 }
