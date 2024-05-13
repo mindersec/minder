@@ -37,6 +37,7 @@ func CmdListTags() *cobra.Command {
 	}
 
 	listCmd.Flags().StringP("base-url", "b", "", "base URL for the OCI registry")
+	listCmd.Flags().StringP("owner", "o", "", "owner of the artifact")
 	listCmd.Flags().StringP("container", "c", "", "container name to list tags for")
 	//nolint:goconst // let's not use a const for this one
 	listCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
@@ -57,6 +58,7 @@ func runCmdListTags(cmd *cobra.Command, _ []string) error {
 
 	// get the provider
 	baseURL := cmd.Flag("base-url")
+	owner := cmd.Flag("owner")
 	contname := cmd.Flag("container")
 
 	if baseURL.Value.String() == "" {
@@ -66,8 +68,10 @@ func runCmdListTags(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("container name is required")
 	}
 
+	regWithOwner := fmt.Sprintf("%s/%s", owner.Value.String(), baseURL.Value.String())
+
 	cred := credentials.NewOAuth2TokenCredential(viper.GetString("auth.token"))
-	prov := oci.New(cred, baseURL.Value.String())
+	prov := oci.New(cred, baseURL.Value.String(), regWithOwner)
 
 	// get the containers
 	containers, err := prov.ListTags(ctx, contname.Value.String())
