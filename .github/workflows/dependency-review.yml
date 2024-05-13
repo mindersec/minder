@@ -1,14 +1,12 @@
 name: 'Dependency Review'
 on: [pull_request]
-
 permissions:
   contents: read
-
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
       - name: Dependency Review
-        uses: StacklokLabs/trusty-dependency-review-action@add_trusty_scores
+        uses: StacklokLabs/trusty-dependency-review-action@f4a8109b8e9a2fdacd9f6b1238ed5687ffc0a81e # add_trusty_scores
