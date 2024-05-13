@@ -34,17 +34,19 @@ import (
 type OCI struct {
 	cred provifv1.Credential
 
-	baseURL string
+	registry string
+	baseURL  string
 }
 
 // Ensure that the OCI client implements the OCI interface
 var _ provifv1.OCI = (*OCI)(nil)
 
 // New creates a new OCI client
-func New(cred provifv1.Credential, baseURL string) *OCI {
+func New(cred provifv1.Credential, registry, baseURL string) *OCI {
 	return &OCI{
-		cred:    cred,
-		baseURL: baseURL,
+		cred:     cred,
+		registry: registry,
+		baseURL:  baseURL,
 	}
 }
 
@@ -157,7 +159,7 @@ func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manife
 
 // GetRegistry returns the registry name
 func (o *OCI) GetRegistry() string {
-	return o.baseURL
+	return o.registry
 }
 
 // GetAuthenticator returns the authenticator for the OCI provider

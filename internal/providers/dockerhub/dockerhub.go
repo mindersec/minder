@@ -75,7 +75,7 @@ func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderCon
 	ns := cfg.GetNamespace()
 	t := u.JoinPath(ns)
 
-	o := oci.New(cred, path.Join(dockerioBaseURL, cfg.GetNamespace()))
+	o := oci.New(cred, dockerioBaseURL, path.Join(dockerioBaseURL, cfg.GetNamespace()))
 	return &dockerHubImageLister{
 		OCI:       o,
 		namespace: ns,
