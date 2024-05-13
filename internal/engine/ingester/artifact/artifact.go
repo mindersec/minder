@@ -318,7 +318,7 @@ func getAndFilterArtifactVersions(
 
 		// If the artifact version is applicable to this rule, add it to the list
 		zerolog.Ctx(ctx).Debug().Str("name", name).Strs("tags", tags).Msg("artifact version matched")
-		res = append(res, name)
+		res = append(res, tags...)
 	}
 
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
