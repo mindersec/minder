@@ -31,11 +31,24 @@ import (
 
 // Engine provides all functions to encrypt and decrypt data
 type Engine interface {
-	EncryptOAuthToken(token *oauth2.Token) (string, error)
-	DecryptOAuthToken(encToken string) (oauth2.Token, error)
-	EncryptString(data string) (string, error)
-	DecryptString(encData string) (string, error)
+	// EncryptOAuthToken takes an OAuth2 token, serializes to JSON and encrypts it.
+	EncryptOAuthToken(token *oauth2.Token) (EncryptedData, error)
+	// DecryptOAuthToken takes an OAuth2 token encrypted using EncryptOAuthToken and decrypts it.
+	DecryptOAuthToken(encryptedToken EncryptedData) (oauth2.Token, error)
+	// EncryptString encrypts a string.
+	EncryptString(data string) (EncryptedData, error)
+	// DecryptString decrypts a string encrypted with EncryptString.
+	DecryptString(encryptedString EncryptedData) (string, error)
 }
+
+var (
+	// TODO: get rid of this when we allow per-secret salting.
+	legacySalt = []byte("somesalt")
+	// ErrDecrypt is returned when we cannot decrypt a secret.
+	ErrDecrypt = errors.New("unable to decrypt")
+	// ErrEncrypt is returned when we cannot encrypt a secret.
+	ErrEncrypt = errors.New("unable to encrypt")
+)
 
 type engine struct {
 	algorithm EncryptionAlgorithm
@@ -60,69 +73,79 @@ func NewEngine(key []byte) Engine {
 	return &engine{algorithm: newAlgorithm(key)}
 }
 
-// EncryptOAuthToken encrypts an oauth token
-func (e *engine) EncryptOAuthToken(token *oauth2.Token) (string, error) {
-	// Convert token to JSON
+func (e *engine) EncryptOAuthToken(token *oauth2.Token) (EncryptedData, error) {
+	// Convert token to JSON.
 	jsonData, err := json.Marshal(token)
 	if err != nil {
-		return "", fmt.Errorf("unable to marshal token to json: %w", err)
+		return EncryptedData{}, fmt.Errorf("unable to marshal token to json: %w", err)
 	}
-	encrypted, err := e.algorithm.Encrypt(jsonData)
+
+	// Encrypt the JSON.
+	encrypted, err := e.encrypt(jsonData)
 	if err != nil {
-		return "", fmt.Errorf("unable to encrypt token: %w", err)
+		return EncryptedData{}, fmt.Errorf("unable to encrypt token: %w", err)
 	}
-	return base64.StdEncoding.EncodeToString(encrypted), nil
+	return encrypted, nil
 }
 
-// DecryptOAuthToken decrypts an encrypted oauth token
-func (e *engine) DecryptOAuthToken(encToken string) (oauth2.Token, error) {
-	var decryptedToken oauth2.Token
-
-	// base64 decode the token
-	decodeToken, err := base64.StdEncoding.DecodeString(encToken)
+func (e *engine) DecryptOAuthToken(encryptedToken EncryptedData) (result oauth2.Token, err error) {
+	// Decrypt the token.
+	token, err := e.decrypt(encryptedToken)
 	if err != nil {
-		return decryptedToken, err
+		return result, err
 	}
 
-	// decrypt the token
-	token, err := e.algorithm.Decrypt(decodeToken)
+	// Deserialize to token struct.
+	err = json.Unmarshal(token, &result)
 	if err != nil {
-		return decryptedToken, err
+		return result, err
 	}
-
-	// serialise token *oauth.Token
-	err = json.Unmarshal(token, &decryptedToken)
-	if err != nil {
-		return decryptedToken, err
-	}
-	return decryptedToken, nil
+	return result, nil
 }
 
-// EncryptString encrypts a string
-func (e *engine) EncryptString(data string) (string, error) {
-	encrypted, err := e.algorithm.Encrypt([]byte(data))
+func (e *engine) EncryptString(data string) (EncryptedData, error) {
+	encrypted, err := e.encrypt([]byte(data))
 	if err != nil {
-		return "", err
+		return EncryptedData{}, err
 	}
-
-	return base64.StdEncoding.EncodeToString(encrypted), nil
+	return encrypted, nil
 }
 
-// DecryptString decrypts an encrypted string
-func (e *engine) DecryptString(encData string) (string, error) {
-	var decrypted string
+func (e *engine) DecryptString(encryptedString EncryptedData) (string, error) {
+	decrypted, err := e.decrypt(encryptedString)
+	if err != nil {
+		return "", fmt.Errorf("%w: %w", ErrDecrypt, err)
+	}
+	return string(decrypted), nil
+}
+
+func (e *engine) encrypt(data []byte) (EncryptedData, error) {
+	encrypted, err := e.algorithm.Encrypt(data, legacySalt)
+	if err != nil {
+		return EncryptedData{}, err
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(encrypted)
+	// TODO:
+	// 1. when we support more than one algorithm, remove hard-coding.
+	// 2. Allow salt to be randomly generated per secret.
+	// 3. Set key version.
+	return NewBackwardsCompatibleEncryptedData(encoded), nil
+}
+
+func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
+	// TODO: Select algorithm based on Algorithm field when we support
+	// more than one algorithm.
+	if data.Algorithm != Aes256Cfb {
+		return nil, fmt.Errorf("%w: %s", ErrUnknownAlgorithm, data.Algorithm)
+	}
 
 	// base64 decode the string
-	decodeToken, err := base64.StdEncoding.DecodeString(encData)
+	encrypted, err := base64.StdEncoding.DecodeString(data.EncodedData)
 	if err != nil {
-		return decrypted, err
+		return nil, err
 	}
 
-	// decrypt the string
-	token, err := e.algorithm.Decrypt(decodeToken)
-	if err != nil {
-		return decrypted, err
-	}
-
-	return string(token), nil
+	// decrypt the data
+	return e.algorithm.Decrypt(encrypted, data.Salt)
 }

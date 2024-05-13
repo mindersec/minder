@@ -191,7 +191,10 @@ func (g *githubProviderManager) createProviderWithAccessToken(
 	ctx context.Context,
 	encToken db.ProviderAccessToken,
 ) (*credentialDetails, error) {
-	decryptedToken, err := g.crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	// TODO: get rid of this once we store the EncryptedData struct in
+	// the database.
+	encryptedData := crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	decryptedToken, err := g.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}

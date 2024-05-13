@@ -42,6 +42,7 @@ import (
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
+	"github.com/stacklok/minder/internal/crypto"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
@@ -156,7 +157,8 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	encryptedToken := base64.StdEncoding.EncodeToString([]byte("my-encrypted-token"))
+	encryptedValue := base64.StdEncoding.EncodeToString([]byte("my-encrypted-token"))
+	encryptedToken := crypto.NewBackwardsCompatibleEncryptedData(encryptedValue)
 	mocks.cryptoMocks.EXPECT().
 		EncryptOAuthToken(gomock.Any()).
 		Return(encryptedToken, nil)
@@ -190,7 +192,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	dbToken, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
 	require.NoError(t, err)
 	require.Len(t, dbToken, 1)
-	require.Equal(t, dbToken[0].EncryptedToken, encryptedToken)
+	require.Equal(t, dbToken[0].EncryptedToken, encryptedToken.EncodedData)
 	require.Equal(t, dbToken[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbToken[0].EnrollmentNonce, sql.NullString{String: stateNonce, Valid: true})
 
@@ -227,7 +229,7 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	dbTokenUpdate, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
 	require.NoError(t, err)
 	require.Len(t, dbTokenUpdate, 1)
-	require.Equal(t, dbTokenUpdate[0].EncryptedToken, encryptedToken)
+	require.Equal(t, dbTokenUpdate[0].EncryptedToken, encryptedToken.EncodedData)
 	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
 }

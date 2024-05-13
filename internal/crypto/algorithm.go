@@ -19,7 +19,6 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"io"
 
 	"golang.org/x/crypto/argon2"
@@ -29,36 +28,22 @@ import (
 
 // EncryptionAlgorithm represents a crypto algorithm used by the Engine
 type EncryptionAlgorithm interface {
-	Encrypt(data []byte) ([]byte, error)
-	Decrypt(data []byte) ([]byte, error)
+	Encrypt(data []byte, salt []byte) ([]byte, error)
+	Decrypt(data []byte, salt []byte) ([]byte, error)
 }
-
-const maxSize = 32 * 1024 * 1024
-
-// In a real application, you should use a unique salt for
-// each key and save it with the encrypted data.
-var (
-	salt                = []byte("somesalt")
-	errUnknownAlgorithm = errors.New("unexpected encryption algorithm")
-)
 
 // EncryptionAlgorithmType is an enum of supported encryption algorithms
 type EncryptionAlgorithmType string
 
 const (
-	// AESCFB is the AES-CFB algorithm
-	AESCFB EncryptionAlgorithmType = "aes-cfb"
+	// Aes256Cfb is the AES-256-CFB algorithm
+	Aes256Cfb EncryptionAlgorithmType = "aes-256-cfb"
 )
 
-// AlgorithmTypeFromString converts a string to an EncryptionAlgorithmType
-// or returns errUnknownAlgorithm.
-func AlgorithmTypeFromString(input string) (EncryptionAlgorithmType, error) {
-	// for backwards compatibility - default to AES-CFB if string is empty
-	if input == "" || input == string(AESCFB) {
-		return AESCFB, nil
-	}
-	return "", fmt.Errorf("%w: %s", errUnknownAlgorithm, input)
-}
+const maxSize = 32 * 1024 * 1024
+
+// ErrUnknownAlgorithm is used when an incorrect algorithm name is used.
+var ErrUnknownAlgorithm = errors.New("unexpected encryption algorithm")
 
 func newAlgorithm(key []byte) EncryptionAlgorithm {
 	// TODO: Make the type of algorithm selectable
@@ -70,11 +55,11 @@ type aesCFBSAlgorithm struct {
 }
 
 // Encrypt encrypts a row of data.
-func (a *aesCFBSAlgorithm) Encrypt(data []byte) ([]byte, error) {
+func (a *aesCFBSAlgorithm) Encrypt(data []byte, salt []byte) ([]byte, error) {
 	if len(data) > maxSize {
 		return nil, status.Errorf(codes.InvalidArgument, "data is too large (>32MB)")
 	}
-	block, err := aes.NewCipher(a.deriveKey())
+	block, err := aes.NewCipher(a.deriveKey(salt))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
@@ -93,8 +78,8 @@ func (a *aesCFBSAlgorithm) Encrypt(data []byte) ([]byte, error) {
 }
 
 // Decrypt decrypts a row of data.
-func (a *aesCFBSAlgorithm) Decrypt(ciphertext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(a.deriveKey())
+func (a *aesCFBSAlgorithm) Decrypt(ciphertext []byte, salt []byte) ([]byte, error) {
+	block, err := aes.NewCipher(a.deriveKey(salt))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
@@ -110,6 +95,6 @@ func (a *aesCFBSAlgorithm) Decrypt(ciphertext []byte) ([]byte, error) {
 }
 
 // Function to derive a key from a passphrase using Argon2
-func (a *aesCFBSAlgorithm) deriveKey() []byte {
+func (a *aesCFBSAlgorithm) deriveKey(salt []byte) []byte {
 	return argon2.IDKey(a.encryptionKey, salt, 1, 64*1024, 4, 32)
 }
