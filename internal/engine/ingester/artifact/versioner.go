@@ -32,7 +32,7 @@ import (
 
 type versioner interface {
 	// Gets the available versions of a given artifact
-	GetVersions(ctx context.Context) ([]*minderv1.ArtifactVersion, error)
+	GetVersions(ctx context.Context) (map[string]*minderv1.ArtifactVersion, error)
 }
 
 func getVersioner(prov provifv1.Provider, a *minderv1.Artifact) (versioner, error) {
@@ -62,7 +62,7 @@ type githubVersioner struct {
 
 // in case of the GitHub provider, a package version may be
 // linked to multiple tags
-func (gv *githubVersioner) GetVersions(ctx context.Context) ([]*minderv1.ArtifactVersion, error) {
+func (gv *githubVersioner) GetVersions(ctx context.Context) (map[string]*minderv1.ArtifactVersion, error) {
 	artifactName := url.QueryEscape(gv.artifact.GetName())
 	upstreamVersions, err := gv.ghCli.GetPackageVersions(
 		ctx, gv.artifact.GetOwner(), gv.artifact.GetTypeLower(), artifactName,
@@ -71,16 +71,16 @@ func (gv *githubVersioner) GetVersions(ctx context.Context) ([]*minderv1.Artifac
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	out := make([]*minderv1.ArtifactVersion, 0, 10)
+	out := make(map[string]*minderv1.ArtifactVersion, len(upstreamVersions))
 	for _, uv := range upstreamVersions {
 		tags := uv.Metadata.Container.Tags
 		sort.Strings(tags)
 
 		// only the tags and creation time is relevant to us.
-		out = append(out, &minderv1.ArtifactVersion{
+		out[*uv.Name] = &minderv1.ArtifactVersion{
 			Tags:      tags,
 			CreatedAt: timestamppb.New(uv.CreatedAt.Time),
-		})
+		}
 	}
 
 	return out, nil
@@ -91,13 +91,13 @@ type ociVersioner struct {
 	artifact *minderv1.Artifact
 }
 
-func (ov *ociVersioner) GetVersions(ctx context.Context) ([]*minderv1.ArtifactVersion, error) {
+func (ov *ociVersioner) GetVersions(ctx context.Context) (map[string]*minderv1.ArtifactVersion, error) {
 	tags, err := ov.ocicli.ListTags(ctx, ov.artifact.GetName())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	out := make([]*minderv1.ArtifactVersion, 0, 10)
+	out := make(map[string]*minderv1.ArtifactVersion, len(tags))
 	for _, t := range tags {
 		// TODO: We probably should try to surface errors while returning a subset
 		// of manifests.
@@ -130,11 +130,11 @@ func (ov *ociVersioner) GetVersions(ctx context.Context) ([]*minderv1.ArtifactVe
 			return nil, fmt.Errorf("unable to get digest")
 		}
 
-		out = append(out, &minderv1.ArtifactVersion{
+		out[t] = &minderv1.ArtifactVersion{
 			Tags:      []string{t},
 			Sha:       digest,
 			CreatedAt: timestamppb.New(createdAt),
-		})
+		}
 	}
 
 	return out, nil

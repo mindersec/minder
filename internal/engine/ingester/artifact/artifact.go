@@ -303,7 +303,7 @@ func getAndFilterArtifactVersions(
 	name := artifact.GetName()
 
 	// Loop through all and filter out the versions that don't apply to this rule
-	for _, version := range upstreamVersions {
+	for vname, version := range upstreamVersions {
 		// Decide if the artifact version should be skipped or not
 		tags := version.GetTags()
 		tagsopt := map[string]interface{}{"tags": tags}
@@ -318,7 +318,7 @@ func getAndFilterArtifactVersions(
 
 		// If the artifact version is applicable to this rule, add it to the list
 		zerolog.Ctx(ctx).Debug().Str("name", name).Strs("tags", tags).Msg("artifact version matched")
-		res = append(res, tags...)
+		res = append(res, vname)
 	}
 
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
