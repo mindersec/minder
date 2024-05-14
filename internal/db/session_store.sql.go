@@ -13,7 +13,7 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, redirect_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user
+INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, redirect_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect
 `
 
 type CreateSessionStateParams struct {
@@ -45,6 +45,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		&i.CreatedAt,
 		&i.RedirectUrl,
 		&i.RemoteUser,
+		&i.EncryptedRedirect,
 	)
 	return i, err
 }
@@ -55,15 +56,6 @@ DELETE FROM session_store WHERE created_at < NOW() - INTERVAL '1 day'
 
 func (q *Queries) DeleteExpiredSessionStates(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, deleteExpiredSessionStates)
-	return err
-}
-
-const deleteSessionState = `-- name: DeleteSessionState :exec
-DELETE FROM session_store WHERE id = $1
-`
-
-func (q *Queries) DeleteSessionState(ctx context.Context, id int32) error {
-	_, err := q.db.ExecContext(ctx, deleteSessionState, id)
 	return err
 }
 

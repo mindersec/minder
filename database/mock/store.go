@@ -480,20 +480,6 @@ func (mr *MockStoreMockRecorder) DeleteRuleType(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), arg0, arg1)
 }
 
-// DeleteSessionState mocks base method.
-func (m *MockStore) DeleteSessionState(arg0 context.Context, arg1 int32) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSessionState", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSessionState indicates an expected call of DeleteSessionState.
-func (mr *MockStoreMockRecorder) DeleteSessionState(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionState", reflect.TypeOf((*MockStore)(nil).DeleteSessionState), arg0, arg1)
-}
-
 // DeleteSessionStateByProjectID mocks base method.
 func (m *MockStore) DeleteSessionStateByProjectID(arg0 context.Context, arg1 db.DeleteSessionStateByProjectIDParams) error {
 	m.ctrl.T.Helper()

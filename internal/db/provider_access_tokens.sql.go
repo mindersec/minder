@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const getAccessTokenByEnrollmentNonce = `-- name: GetAccessTokenByEnrollmentNonce :one
-SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce FROM provider_access_tokens WHERE project_id = $1 AND enrollment_nonce = $2
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token FROM provider_access_tokens WHERE project_id = $1 AND enrollment_nonce = $2
 `
 
 type GetAccessTokenByEnrollmentNonceParams struct {
@@ -35,12 +36,13 @@ func (q *Queries) GetAccessTokenByEnrollmentNonce(ctx context.Context, arg GetAc
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.EnrollmentNonce,
+		&i.EncryptedAccessToken,
 	)
 	return i, err
 }
 
 const getAccessTokenByProjectID = `-- name: GetAccessTokenByProjectID :one
-SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce FROM provider_access_tokens WHERE provider = $1 AND project_id = $2
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token FROM provider_access_tokens WHERE provider = $1 AND project_id = $2
 `
 
 type GetAccessTokenByProjectIDParams struct {
@@ -61,12 +63,13 @@ func (q *Queries) GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTo
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.EnrollmentNonce,
+		&i.EncryptedAccessToken,
 	)
 	return i, err
 }
 
 const getAccessTokenByProvider = `-- name: GetAccessTokenByProvider :many
-SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce FROM provider_access_tokens WHERE provider = $1
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token FROM provider_access_tokens WHERE provider = $1
 `
 
 func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error) {
@@ -88,6 +91,7 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.EnrollmentNonce,
+			&i.EncryptedAccessToken,
 		); err != nil {
 			return nil, err
 		}
@@ -103,7 +107,7 @@ func (q *Queries) GetAccessTokenByProvider(ctx context.Context, provider string)
 }
 
 const getAccessTokenSinceDate = `-- name: GetAccessTokenSinceDate :one
-SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce FROM provider_access_tokens WHERE provider = $1 AND project_id = $2 AND updated_at >= $3
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token FROM provider_access_tokens WHERE provider = $1 AND project_id = $2 AND updated_at >= $3
 `
 
 type GetAccessTokenSinceDateParams struct {
@@ -125,33 +129,36 @@ func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessToke
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.EnrollmentNonce,
+		&i.EncryptedAccessToken,
 	)
 	return i, err
 }
 
 const upsertAccessToken = `-- name: UpsertAccessToken :one
 INSERT INTO provider_access_tokens
-(project_id, provider, encrypted_token, expiration_time, owner_filter, enrollment_nonce)
+(project_id, provider, encrypted_token, expiration_time, owner_filter, enrollment_nonce, encrypted_access_token)
 VALUES
-    ($1, $2, $3, $4, $5, $6)
+    ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT (project_id, provider)
     DO UPDATE SET
                   encrypted_token = $3,
                   expiration_time = $4,
                   owner_filter = $5,
                   enrollment_nonce = $6,
-                  updated_at = NOW()
+                  updated_at = NOW(),
+                  encrypted_access_token = $7
 WHERE provider_access_tokens.project_id = $1 AND provider_access_tokens.provider = $2
-RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce
+RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token
 `
 
 type UpsertAccessTokenParams struct {
-	ProjectID       uuid.UUID      `json:"project_id"`
-	Provider        string         `json:"provider"`
-	EncryptedToken  string         `json:"encrypted_token"`
-	ExpirationTime  time.Time      `json:"expiration_time"`
-	OwnerFilter     sql.NullString `json:"owner_filter"`
-	EnrollmentNonce sql.NullString `json:"enrollment_nonce"`
+	ProjectID            uuid.UUID             `json:"project_id"`
+	Provider             string                `json:"provider"`
+	EncryptedToken       string                `json:"encrypted_token"`
+	ExpirationTime       time.Time             `json:"expiration_time"`
+	OwnerFilter          sql.NullString        `json:"owner_filter"`
+	EnrollmentNonce      sql.NullString        `json:"enrollment_nonce"`
+	EncryptedAccessToken pqtype.NullRawMessage `json:"encrypted_access_token"`
 }
 
 func (q *Queries) UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error) {
@@ -162,6 +169,7 @@ func (q *Queries) UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenPa
 		arg.ExpirationTime,
 		arg.OwnerFilter,
 		arg.EnrollmentNonce,
+		arg.EncryptedAccessToken,
 	)
 	var i ProviderAccessToken
 	err := row.Scan(
@@ -174,6 +182,7 @@ func (q *Queries) UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenPa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.EnrollmentNonce,
+		&i.EncryptedAccessToken,
 	)
 	return i, err
 }
