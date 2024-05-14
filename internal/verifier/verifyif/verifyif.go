@@ -42,7 +42,7 @@ type Result struct {
 // ArtifactVerifier is the interface for artifact verifiers
 type ArtifactVerifier interface {
 	Verify(ctx context.Context, artifactType ArtifactType,
-		owner, name, version string) ([]Result, error)
+		owner, name, checksumref string) ([]Result, error)
 	VerifyContainer(ctx context.Context,
-		owner, artifact, version string) ([]Result, error)
+		owner, artifact, checksumref string) ([]Result, error)
 }

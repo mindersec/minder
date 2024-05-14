@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"github.com/stacklok/minder/internal/constants"
@@ -32,17 +34,19 @@ import (
 type OCI struct {
 	cred provifv1.Credential
 
-	baseURL string
+	registry string
+	baseURL  string
 }
 
 // Ensure that the OCI client implements the OCI interface
 var _ provifv1.OCI = (*OCI)(nil)
 
 // New creates a new OCI client
-func New(cred provifv1.Credential, baseURL string) *OCI {
+func New(cred provifv1.Credential, registry, baseURL string) *OCI {
 	return &OCI{
-		cred:    cred,
-		baseURL: baseURL,
+		cred:     cred,
+		registry: registry,
+		baseURL:  baseURL,
 	}
 }
 
@@ -134,23 +138,47 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 
 // GetManifest returns the manifest for the given tag of the given container in the given namespace
 // for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
-func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (any, error) {
+func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manifest, error) {
 	ref, err := o.getReference(contname, tag)
 	if err != nil {
-		return "", fmt.Errorf("failed to get reference: %w", err)
+		return nil, fmt.Errorf("failed to get reference: %w", err)
 	}
 
 	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
 	if err != nil {
-		return "", fmt.Errorf("failed to get image: %w", err)
+		return nil, fmt.Errorf("failed to get image: %w", err)
 	}
 
 	man, err := img.Manifest()
 	if err != nil {
-		return "", fmt.Errorf("failed to get manifest: %w", err)
+		return nil, fmt.Errorf("failed to get manifest: %w", err)
 	}
 
 	return man, nil
+}
+
+// GetRegistry returns the registry name
+func (o *OCI) GetRegistry() string {
+	return o.registry
+}
+
+// GetAuthenticator returns the authenticator for the OCI provider
+func (o *OCI) GetAuthenticator() (authn.Authenticator, error) {
+	if o.cred == nil {
+		return authn.Anonymous, nil
+	}
+
+	oauth2cred, ok := o.cred.(provifv1.OAuth2TokenCredential)
+	if !ok {
+		return nil, fmt.Errorf("credential is not an OAuth2 token credential")
+	}
+	s := oauth2cred.GetAsOAuth2TokenSource()
+	t, err := s.Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get token: %w", err)
+	}
+
+	return &authn.Bearer{Token: t.AccessToken}, nil
 }
 
 // getReferenceString returns the reference string for a given container name and tag
