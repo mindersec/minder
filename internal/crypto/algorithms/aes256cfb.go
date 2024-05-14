@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package crypto
+package algorithms
 
 import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"errors"
 	"io"
 
 	"golang.org/x/crypto/argon2"
@@ -26,40 +25,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// EncryptionAlgorithm represents a crypto algorithm used by the Engine
-type EncryptionAlgorithm interface {
-	Encrypt(data []byte, salt []byte) ([]byte, error)
-	Decrypt(data []byte, salt []byte) ([]byte, error)
-}
-
-// EncryptionAlgorithmType is an enum of supported encryption algorithms
-type EncryptionAlgorithmType string
-
-const (
-	// Aes256Cfb is the AES-256-CFB algorithm
-	Aes256Cfb EncryptionAlgorithmType = "aes-256-cfb"
-)
-
-const maxSize = 32 * 1024 * 1024
-
-// ErrUnknownAlgorithm is used when an incorrect algorithm name is used.
-var ErrUnknownAlgorithm = errors.New("unexpected encryption algorithm")
-
-func newAlgorithm(key []byte) EncryptionAlgorithm {
-	// TODO: Make the type of algorithm selectable
-	return &aesCFBSAlgorithm{encryptionKey: key}
-}
-
-type aesCFBSAlgorithm struct {
-	encryptionKey []byte
-}
+// AES256CFBAlgorithm implements the AES-256-CFB algorithm
+type AES256CFBAlgorithm struct{}
 
 // Encrypt encrypts a row of data.
-func (a *aesCFBSAlgorithm) Encrypt(data []byte, salt []byte) ([]byte, error) {
+func (a *AES256CFBAlgorithm) Encrypt(data []byte, key []byte, salt []byte) ([]byte, error) {
 	if len(data) > maxSize {
 		return nil, status.Errorf(codes.InvalidArgument, "data is too large (>32MB)")
 	}
-	block, err := aes.NewCipher(a.deriveKey(salt))
+	block, err := aes.NewCipher(a.deriveKey(key, salt))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
@@ -78,8 +52,8 @@ func (a *aesCFBSAlgorithm) Encrypt(data []byte, salt []byte) ([]byte, error) {
 }
 
 // Decrypt decrypts a row of data.
-func (a *aesCFBSAlgorithm) Decrypt(ciphertext []byte, salt []byte) ([]byte, error) {
-	block, err := aes.NewCipher(a.deriveKey(salt))
+func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte) ([]byte, error) {
+	block, err := aes.NewCipher(a.deriveKey(key, salt))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
@@ -95,6 +69,6 @@ func (a *aesCFBSAlgorithm) Decrypt(ciphertext []byte, salt []byte) ([]byte, erro
 }
 
 // Function to derive a key from a passphrase using Argon2
-func (a *aesCFBSAlgorithm) deriveKey(salt []byte) []byte {
-	return argon2.IDKey(a.encryptionKey, salt, 1, 64*1024, 4, 32)
+func (_ *AES256CFBAlgorithm) deriveKey(key []byte, salt []byte) []byte {
+	return argon2.IDKey(key, salt, 1, 64*1024, 4, 32)
 }

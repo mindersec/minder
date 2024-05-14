@@ -21,10 +21,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"golang.org/x/oauth2"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto/algorithms"
+	"github.com/stacklok/minder/internal/crypto/keystores"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -50,27 +53,43 @@ var (
 	ErrEncrypt = errors.New("unable to encrypt")
 )
 
+type algorithmsByName map[algorithms.Type]algorithms.EncryptionAlgorithm
+
 type engine struct {
-	algorithm EncryptionAlgorithm
+	keystore            keystores.KeyStore
+	supportedAlgorithms algorithmsByName
+	defaultKeyID        string
+	defaultAlgorithm    algorithms.Type
 }
 
-// NewEngineFromAuthConfig creates a new crypto engine from an auth config
-func NewEngineFromAuthConfig(authConfig *serverconfig.AuthConfig) (Engine, error) {
-	if authConfig == nil {
+// NewEngineFromAuthConfig creates a new crypto engine from the service config
+// TODO: modify to support multiple keys/algorithms
+func NewEngineFromAuthConfig(config *serverconfig.AuthConfig) (Engine, error) {
+	if config == nil {
 		return nil, errors.New("auth config is nil")
 	}
 
-	keyBytes, err := authConfig.GetTokenKey()
+	keystore, err := keystores.NewKeyStoreFromConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read token key file: %s", err)
 	}
 
-	return NewEngine(keyBytes), nil
-}
+	aes, err := algorithms.NewFromType(algorithms.Aes256Cfb)
+	if err != nil {
+		return nil, err
+	}
+	supportedAlgorithms := map[algorithms.Type]algorithms.EncryptionAlgorithm{
+		algorithms.Aes256Cfb: aes,
+	}
 
-// NewEngine creates the engine based on the specified algorithm and key.
-func NewEngine(key []byte) Engine {
-	return &engine{algorithm: newAlgorithm(key)}
+	return &engine{
+		keystore:            keystore,
+		supportedAlgorithms: supportedAlgorithms,
+		defaultAlgorithm:    algorithms.Aes256Cfb,
+		// This will be cleaned up in a future PR
+		// Right now, by the time we get here, this should return a valid result
+		defaultKeyID: filepath.Base(config.TokenKey),
+	}, nil
 }
 
 func (e *engine) EncryptOAuthToken(token *oauth2.Token) (EncryptedData, error) {
@@ -83,7 +102,7 @@ func (e *engine) EncryptOAuthToken(token *oauth2.Token) (EncryptedData, error) {
 	// Encrypt the JSON.
 	encrypted, err := e.encrypt(jsonData)
 	if err != nil {
-		return EncryptedData{}, fmt.Errorf("unable to encrypt token: %w", err)
+		return EncryptedData{}, err
 	}
 	return encrypted, nil
 }
@@ -114,38 +133,60 @@ func (e *engine) EncryptString(data string) (EncryptedData, error) {
 func (e *engine) DecryptString(encryptedString EncryptedData) (string, error) {
 	decrypted, err := e.decrypt(encryptedString)
 	if err != nil {
-		return "", fmt.Errorf("%w: %w", ErrDecrypt, err)
+		return "", err
 	}
 	return string(decrypted), nil
 }
 
 func (e *engine) encrypt(data []byte) (EncryptedData, error) {
-	encrypted, err := e.algorithm.Encrypt(data, legacySalt)
+	// Neither of these lookups should ever fail.
+	algorithm, ok := e.supportedAlgorithms[e.defaultAlgorithm]
+	if !ok {
+		return EncryptedData{}, fmt.Errorf("unable to find preferred algorithm: %s", e.defaultAlgorithm)
+	}
+
+	key, err := e.keystore.GetKey(e.defaultAlgorithm, e.defaultKeyID)
 	if err != nil {
-		return EncryptedData{}, err
+		return EncryptedData{}, fmt.Errorf("unable to find preferred key with ID: %s", e.defaultKeyID)
+	}
+
+	encrypted, err := algorithm.Encrypt(data, key, legacySalt)
+	if err != nil {
+		return EncryptedData{}, errors.Join(ErrEncrypt, err)
 	}
 
 	encoded := base64.StdEncoding.EncodeToString(encrypted)
-	// TODO:
-	// 1. when we support more than one algorithm, remove hard-coding.
-	// 2. Allow salt to be randomly generated per secret.
-	// 3. Set key version.
-	return NewBackwardsCompatibleEncryptedData(encoded), nil
+	// TODO: Allow salt to be randomly generated per secret.
+	return EncryptedData{
+		Algorithm:   e.defaultAlgorithm,
+		EncodedData: encoded,
+		Salt:        legacySalt,
+		KeyVersion:  e.defaultKeyID,
+	}, nil
 }
 
 func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
-	// TODO: Select algorithm based on Algorithm field when we support
-	// more than one algorithm.
-	if data.Algorithm != Aes256Cfb {
-		return nil, fmt.Errorf("%w: %s", ErrUnknownAlgorithm, data.Algorithm)
+	algorithm, ok := e.supportedAlgorithms[data.Algorithm]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)
+	}
+
+	key, err := e.keystore.GetKey(e.defaultAlgorithm, e.defaultKeyID)
+	if err != nil {
+		// error from keystore is good enough - we do not need more context
+		return nil, err
 	}
 
 	// base64 decode the string
 	encrypted, err := base64.StdEncoding.DecodeString(data.EncodedData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding secret: %w", err)
 	}
 
 	// decrypt the data
-	return e.algorithm.Decrypt(encrypted, data.Salt)
+	result, err := algorithm.Decrypt(encrypted, key, data.Salt)
+	if err != nil {
+		return nil, errors.Join(ErrDecrypt, err)
+	}
+	return result, nil
 }

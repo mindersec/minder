@@ -56,7 +56,7 @@ const (
 	fakeTokenKey = "foo-bar"
 )
 
-func generateFakeAccessToken(t *testing.T) string {
+func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) string {
 	t.Helper()
 
 	ftoken := &oauth2.Token{
@@ -68,7 +68,6 @@ func generateFakeAccessToken(t *testing.T) string {
 	}
 
 	// encrypt token
-	cryptoEngine := crypto.NewEngine([]byte(fakeTokenKey))
 	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
 	require.NoError(t, err)
 	return encryptedToken.EncodedData
@@ -92,8 +91,22 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	repositoryID := uuid.New()
 	executionID := uuid.New()
 
-	authtoken := generateFakeAccessToken(t)
+	// write token key to file
+	tmpdir := t.TempDir()
+	tokenKeyPath := tmpdir + "/token_key"
 
+	// write key to file
+	err := os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
+	require.NoError(t, err, "expected no error")
+
+	// Needed to keep these tests working as-is.
+	// In future, beef up unit test coverage in the dependencies
+	// of this code, and refactor these tests to use stubs.
+	config := &serverconfig.AuthConfig{TokenKey: tokenKeyPath}
+	cryptoEngine, err := crypto.NewEngineFromAuthConfig(config)
+	require.NoError(t, err)
+
+	authtoken := generateFakeAccessToken(t, cryptoEngine)
 	// -- start expectations
 
 	// not valuable yet, but would have to be updated once actions start using this
@@ -271,14 +284,6 @@ default allow = true`,
 
 	// -- end expectations
 
-	tmpdir := t.TempDir()
-	// write token key to file
-	tokenKeyPath := tmpdir + "/token_key"
-
-	// write key to file
-	err = os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
-	require.NoError(t, err, "expected no error")
-
 	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
@@ -301,14 +306,9 @@ default allow = true`,
 	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
 	defer cancel()
 
-	// Needed to keep these tests working as-is.
-	// In future, beef up unit test coverage in the dependencies
-	// of this code, and refactor these tests to use stubs.
-	eng, err := crypto.NewEngineFromAuthConfig(&serverconfig.AuthConfig{TokenKey: tokenKeyPath})
-	require.NoError(t, err)
 	ghProviderService := ghService.NewGithubProviderService(
 		mockStore,
-		eng,
+		cryptoEngine,
 		metrics.NewNoopMetrics(),
 		// These nil dependencies do not matter for the current tests
 		nil,
@@ -321,7 +321,7 @@ default allow = true`,
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		&serverconfig.ProviderConfig{},
 		nil,
-		eng,
+		cryptoEngine,
 		nil,
 		mockStore,
 		ghProviderService,
