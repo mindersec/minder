@@ -17,13 +17,15 @@ package crypto
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 // EncryptedData represents the structure we use to store encrypted data in the
 // database.
 type EncryptedData struct {
 	// The type of encryption used.
-	Algorithm EncryptionAlgorithmType
+	Algorithm algorithms.Type
 	// The encrypted data represented as a base64 encoded string.
 	EncodedData string
 	// The salt used in the encryption.
@@ -44,7 +46,7 @@ func (e *EncryptedData) Serialize() (json.RawMessage, error) {
 // and should be removed once we migrate to the new encryption model.
 func NewBackwardsCompatibleEncryptedData(encryptedData string) EncryptedData {
 	return EncryptedData{
-		Algorithm:   Aes256Cfb,
+		Algorithm:   algorithms.Aes256Cfb,
 		EncodedData: encryptedData,
 		Salt:        legacySalt,
 		KeyVersion:  "",
