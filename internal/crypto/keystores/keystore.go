@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -29,14 +28,14 @@ import (
 // KeyStore represents a struct which stores or can fetch encryption keys.
 type KeyStore interface {
 	// GetKey retrieves the key for the specified algorithm by key ID.
-	GetKey(algorithm algorithms.Type, id string) ([]byte, error)
+	GetKey(id string) ([]byte, error)
 }
 
 // ErrUnknownKeyID is returned when the Key ID cannot be found by the keystore.
 var ErrUnknownKeyID = errors.New("unknown key id")
 
 // This structure is used by the keystore implementation to manage keys.
-type keysByAlgorithmAndID map[algorithms.Type]map[string][]byte
+type keysByID map[string][]byte
 
 // NewKeyStoreFromConfig creates an instance of a KeyStore based on the
 // AuthConfig in Minder.
@@ -50,10 +49,8 @@ func NewKeyStoreFromConfig(config *serverconfig.AuthConfig) (KeyStore, error) {
 	}
 	// Use the key filename as the key ID.
 	name := filepath.Base(config.TokenKey)
-	keys := map[algorithms.Type]map[string][]byte{
-		algorithms.Aes256Cfb: {
-			name: key,
-		},
+	keys := map[string][]byte{
+		name: key,
 	}
 	return &localFileKeyStore{
 		keys: keys,
@@ -61,15 +58,11 @@ func NewKeyStoreFromConfig(config *serverconfig.AuthConfig) (KeyStore, error) {
 }
 
 type localFileKeyStore struct {
-	keys keysByAlgorithmAndID
+	keys keysByID
 }
 
-func (l *localFileKeyStore) GetKey(algorithm algorithms.Type, id string) ([]byte, error) {
-	algorithmKeys, ok := l.keys[algorithm]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, algorithm)
-	}
-	key, ok := algorithmKeys[id]
+func (l *localFileKeyStore) GetKey(id string) ([]byte, error) {
+	key, ok := l.keys[id]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownKeyID, id)
 	}

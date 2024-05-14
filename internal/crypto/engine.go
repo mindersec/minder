@@ -146,7 +146,7 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 		return EncryptedData{}, fmt.Errorf("unable to find preferred algorithm: %s", e.defaultAlgorithm)
 	}
 
-	key, err := e.keystore.GetKey(e.defaultAlgorithm, e.defaultKeyID)
+	key, err := e.keystore.GetKey(e.defaultKeyID)
 	if err != nil {
 		return EncryptedData{}, fmt.Errorf("unable to find preferred key with ID: %s", e.defaultKeyID)
 	}
@@ -172,7 +172,7 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)
 	}
 
-	key, err := e.keystore.GetKey(e.defaultAlgorithm, e.defaultKeyID)
+	key, err := e.keystore.GetKey(e.defaultKeyID)
 	if err != nil {
 		// error from keystore is good enough - we do not need more context
 		return nil, err
