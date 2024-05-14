@@ -851,6 +851,9 @@ message GetAuthorizationURLRequest {
     Context context = 6;
     optional string redirect_url = 7;
 
+    // config is a JSON object that can be used to pass additional configuration
+    google.protobuf.Struct config = 8;
+
     reserved 1, 2; // deprecated provider and project_id
 }
 
