@@ -26,6 +26,8 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/go-containerregistry/pkg/authn"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-github/v61/github"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -153,7 +155,13 @@ type OCI interface {
 	// GetManifest returns the manifest for the given tag of the given container in the given namespace
 	// for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
 	// TODO - Define the manifest struct
-	GetManifest(ctx context.Context, name, tag string) (any, error)
+	GetManifest(ctx context.Context, name, tag string) (*v1.Manifest, error)
+
+	// GetRegistry returns the registry name
+	GetRegistry() string
+
+	// GetAuthenticator returns the authenticator for the OCI provider
+	GetAuthenticator() (authn.Authenticator, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.

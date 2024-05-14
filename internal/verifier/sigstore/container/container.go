@@ -120,7 +120,7 @@ func (c *containerAuth) getRegistry() string {
 func Verify(
 	ctx context.Context,
 	sev *verify.SignedEntityVerifier,
-	owner, artifact, version string,
+	owner, artifact, checksumref string,
 	authOpts ...AuthMethod,
 ) ([]verifyif.Result, error) {
 	logger := zerolog.Ctx(ctx)
@@ -128,10 +128,10 @@ func Verify(
 	cauth := newContainerAuth(authOpts...)
 
 	logger.Info().
-		Str("imageRef", BuildImageRef(cauth.getRegistry(), owner, artifact, version)).
+		Str("imageRef", BuildImageRef(cauth.getRegistry(), owner, artifact, checksumref)).
 		Msg("verifying container artifact")
 	// Construct the bundle(s) - OCI image or GitHub's attestation endpoint
-	bundles, err := getSigstoreBundles(ctx, owner, artifact, version, cauth)
+	bundles, err := getSigstoreBundles(ctx, owner, artifact, checksumref, cauth)
 	if err != nil && !errors.Is(err, ErrProvenanceNotFoundOrIncomplete) {
 		// We got some other unexpected error prior to querying for the signature/attestation
 		return nil, err
@@ -198,15 +198,15 @@ func getVerifiedResults(
 // getSigstoreBundles returns the sigstore bundles, either through the OCI registry or the GitHub attestation endpoint
 func getSigstoreBundles(
 	ctx context.Context,
-	owner, artifact, version string,
+	owner, artifact, checksumref string,
 	auth *containerAuth,
 ) ([]sigstoreBundle, error) {
-	imageRef := BuildImageRef(auth.getRegistry(), owner, artifact, version)
+	imageRef := BuildImageRef(auth.getRegistry(), owner, artifact, checksumref)
 	// Try to build a bundle from the OCI image reference
 	bundles, err := bundleFromOCIImage(ctx, imageRef, auth.getAuthenticator(owner))
 	if errors.Is(err, ErrProvenanceNotFoundOrIncomplete) && auth.ghClient != nil {
 		// If we failed to find the signature in the OCI image, try to build a bundle from the GitHub attestation endpoint
-		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, version)
+		return bundleFromGHAttestationEndpoint(ctx, auth.ghClient, owner, checksumref)
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting bundle from OCI image: %w", err)
 	}
@@ -225,12 +225,12 @@ type AttestationReply struct {
 }
 
 func bundleFromGHAttestationEndpoint(
-	ctx context.Context, ghCli provifv1.GitHub, owner, version string,
+	ctx context.Context, ghCli provifv1.GitHub, owner, checksumref string,
 ) ([]sigstoreBundle, error) {
 	logger := zerolog.Ctx(ctx)
 
 	// Get the attestation reply from the GitHub attestation endpoint
-	attestationReply, err := getAttestationReply(ctx, ghCli, owner, version)
+	attestationReply, err := getAttestationReply(ctx, ghCli, owner, checksumref)
 	if err != nil {
 		return nil, fmt.Errorf("error getting attestation reply: %w", err)
 	}
@@ -244,7 +244,7 @@ func bundleFromGHAttestationEndpoint(
 			continue
 		}
 
-		digest, err := getDigestFromVersion(version)
+		digest, err := getDigestFromVersion(checksumref)
 		if err != nil {
 			logger.Err(err).Msg("error getting digest from version")
 			continue
@@ -268,12 +268,15 @@ func bundleFromGHAttestationEndpoint(
 
 }
 
-func getAttestationReply(ctx context.Context, ghCli provifv1.GitHub, owner, version string) (*AttestationReply, error) {
+func getAttestationReply(
+	ctx context.Context,
+	ghCli provifv1.GitHub,
+	owner, checksumref string) (*AttestationReply, error) {
 	if ghCli == nil {
 		return nil, fmt.Errorf("no github client available")
 	}
 
-	url := fmt.Sprintf("orgs/%s/attestations/%s", owner, version)
+	url := fmt.Sprintf("orgs/%s/attestations/%s", owner, checksumref)
 	req, err := ghCli.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
@@ -611,8 +614,8 @@ func getBundleMsgSignature(simpleSigningLayer v1.Descriptor) (*protobundle.Bundl
 }
 
 // BuildImageRef returns the OCI image reference
-func BuildImageRef(registry, owner, artifact, version string) string {
-	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, version)
+func BuildImageRef(registry, owner, artifact, checksum string) string {
+	return fmt.Sprintf("%s/%s/%s@%s", registry, owner, artifact, checksum)
 }
 
 type sigstoreBundle struct {

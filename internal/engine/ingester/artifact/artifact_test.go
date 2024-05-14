@@ -569,7 +569,7 @@ func TestArtifactIngestMatching(t *testing.T) {
 			ing, err := NewArtifactDataIngest(prov)
 			require.NoError(t, err, "expected no error")
 
-			ing.ghCli = mockGhClient
+			ing.prov = mockGhClient
 			ing.artifactVerifier = mockVerifier
 
 			tt.mockSetup(mockGhClient, mockVerifier)

@@ -63,11 +63,7 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (engif.Inge
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
-		if err != nil {
-			return nil, errors.New("provider does not implement github trait")
-		}
-		return artifact.NewArtifactDataIngest(client)
+		return artifact.NewArtifactDataIngest(provider)
 
 	case git.GitRuleDataIngestType:
 		client, err := provinfv1.As[provinfv1.Git](provider)
