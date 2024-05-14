@@ -253,14 +253,14 @@ func classifyDependency(
 		}
 	}
 
-	if ecoConfig.Score <= packageScore {
+	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
 	}
-	if ecoConfig.Provenance <= descr["provenance"].(float64) {
+	if ecoConfig.Provenance > descr["provenance"].(float64) {
 		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
 	}
 
-	if ecoConfig.Activity <= descr["activity"].(float64) {
+	if ecoConfig.Activity > descr["activity"].(float64) {
 		reasons = append(reasons, TRUSTY_LOW_ACTIVITY)
 	}
 	if len(reasons) > 0 {

@@ -60,16 +60,22 @@ func defaultConfig() *config {
 		Action: pr_actions.ActionSummary,
 		EcosystemConfig: []ecosystemConfig{
 			{
-				Name:  "npm",
-				Score: 5.0,
+				Name:       "npm",
+				Score:      5.0,
+				Provenance: 5.0,
+				Activity:   5.0,
 			},
 			{
-				Name:  "pypi",
-				Score: 5.0,
+				Name:       "pypi",
+				Score:      5.0,
+				Provenance: 5.0,
+				Activity:   5.0,
 			},
 			{
-				Name:  "go",
-				Score: 5.0,
+				Name:       "go",
+				Score:      5.0,
+				Provenance: 5.0,
+				Activity:   5.0,
 			},
 		},
 	}
