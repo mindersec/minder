@@ -148,7 +148,7 @@ func verifierOptions(trustedRoot string) ([]verify.VerifierOption, error) {
 
 // Verify verifies an artifact
 func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactType,
-	owner, artifact, version string) ([]verifyif.Result, error) {
+	owner, artifact, checksumref string) ([]verifyif.Result, error) {
 	var err error
 	var res []verifyif.Result
 	// Sanitize the input
@@ -157,7 +157,7 @@ func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactTyp
 	// Process verification based on the artifact type
 	switch artifactType {
 	case verifyif.ArtifactTypeContainer:
-		res, err = s.VerifyContainer(ctx, owner, artifact, version)
+		res, err = s.VerifyContainer(ctx, owner, artifact, checksumref)
 	default:
 		err = fmt.Errorf("unknown artifact type: %s", artifactType)
 	}
@@ -166,9 +166,9 @@ func (s *Sigstore) Verify(ctx context.Context, artifactType verifyif.ArtifactTyp
 }
 
 // VerifyContainer verifies a container artifact using sigstore
-func (s *Sigstore) VerifyContainer(ctx context.Context, owner, artifact, version string) (
+func (s *Sigstore) VerifyContainer(ctx context.Context, owner, artifact, checksumref string) (
 	[]verifyif.Result, error) {
-	return container.Verify(ctx, s.verifier, owner, artifact, version, s.authOpts...)
+	return container.Verify(ctx, s.verifier, owner, artifact, checksumref, s.authOpts...)
 }
 
 // sanitizeInput sanitizes the input parameters

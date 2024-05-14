@@ -131,14 +131,14 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	// Get all artifact versions filtering out those that don't apply to this rule
-	versions, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
+	// Get all artifact checksums filtering out those that don't apply to this rule
+	checksums, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the provenance info for all artifact versions that apply to this rule
-	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, versions)
+	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, checksums)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (i *Ingest) getVerificationResult(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
-	versions []string,
+	checksums []string,
 ) ([]verification, error) {
 	var versionResults []verification
 	// Get the verifier for sigstore
@@ -192,13 +192,13 @@ func (i *Ingest) getVerificationResult(
 	}
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
-	for _, artifactVersion := range versions {
+	for _, artifactChecksum := range checksums {
 		// Try getting provenance info for the artifact version
 		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
-			artifact.Owner, artifact.Name, artifactVersion)
+			artifact.Owner, artifact.Name, artifactChecksum)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
-			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
+			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
 			zerolog.Ctx(ctx).Debug().Err(err).Str("name", artifactName).Msg("failed getting signature information")
 			return nil, fmt.Errorf("failed getting signature information: %w", err)
 		}
@@ -206,7 +206,7 @@ func (i *Ingest) getVerificationResult(
 		for _, res := range results {
 			// Log a debug message in case we failed to find or verify any signature information for the artifact version
 			if !res.IsSigned || !res.IsVerified {
-				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
+				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
 				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
 			}
 
@@ -280,6 +280,9 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 	return artifactVerifier, nil
 }
 
+// getAndFilterArtifactVersions fetches the available versions and filters the
+// ones that apply to the rule. Note that this returns the checksums of the
+// applicable artifact versions.
 func getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
@@ -303,7 +306,7 @@ func getAndFilterArtifactVersions(
 	name := artifact.GetName()
 
 	// Loop through all and filter out the versions that don't apply to this rule
-	for vname, version := range upstreamVersions {
+	for _, version := range upstreamVersions {
 		// Decide if the artifact version should be skipped or not
 		tags := version.GetTags()
 		tagsopt := map[string]interface{}{"tags": tags}
@@ -318,7 +321,7 @@ func getAndFilterArtifactVersions(
 
 		// If the artifact version is applicable to this rule, add it to the list
 		zerolog.Ctx(ctx).Debug().Str("name", name).Strs("tags", tags).Msg("artifact version matched")
-		res = append(res, vname)
+		res = append(res, version.Sha)
 	}
 
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
