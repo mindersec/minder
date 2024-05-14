@@ -86,6 +86,7 @@ func NewEngineFromAuthConfig(config *serverconfig.AuthConfig) (Engine, error) {
 		keystore:            keystore,
 		supportedAlgorithms: supportedAlgorithms,
 		defaultAlgorithm:    algorithms.Aes256Cfb,
+		// Use the key filename as the key ID.
 		// This will be cleaned up in a future PR
 		// Right now, by the time we get here, this should return a valid result
 		defaultKeyID: filepath.Base(config.TokenKey),

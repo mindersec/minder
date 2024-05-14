@@ -48,6 +48,7 @@ func NewKeyStoreFromConfig(config *serverconfig.AuthConfig) (KeyStore, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to read encryption key from %s: %w", config.TokenKey, err)
 	}
+	// Use the key filename as the key ID.
 	name := filepath.Base(config.TokenKey)
 	keys := map[algorithms.Type]map[string][]byte{
 		algorithms.Aes256Cfb: {
