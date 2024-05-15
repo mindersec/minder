@@ -68,6 +68,7 @@ type GitHubProviderService interface {
 	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
 	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
 	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
+	VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -492,6 +493,22 @@ func verifyProviderTokenIdentity(
 	if strconv.FormatInt(userId, 10) != remoteUser {
 		return fmt.Errorf("user ID mismatch: %d != %s", userId, remoteUser)
 	}
+	return nil
+}
+
+func (p *ghProviderService) VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error {
+	credential := credentials.NewGitHubTokenCredential(accessToken)
+
+	// owner is empty, as per original logic
+	_, delegate, err := p.ghClientFactory.BuildOAuthClient("", credential, "")
+	if err != nil {
+		return fmt.Errorf("unable to create github client: %w", err)
+	}
+
+	if err := verifyProviderTokenIdentity(ctx, remoteUser, delegate); err != nil {
+		return fmt.Errorf("error verifying provider token identity: %w", ErrInvalidTokenIdentity)
+	}
+
 	return nil
 }
 

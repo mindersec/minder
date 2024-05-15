@@ -46,6 +46,7 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
@@ -240,6 +241,41 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	require.Equal(t, dbTokenUpdate[0].EncryptedToken, encryptedToken.EncodedData)
 	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
+}
+
+func TestProviderService_VerifyProviderTokenIdentity(t *testing.T) {
+	t.Parallel()
+
+	const (
+		accountID   = 456
+		accessToken = "my-access-token"
+	)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ghCredential := credentials.NewGitHubTokenCredential(accessToken)
+
+	delegate := mockgh.NewMockDelegate(ctrl)
+	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
+
+	clientFactory.EXPECT().
+		BuildOAuthClient(gomock.Any(), ghCredential, gomock.Any()).
+		Return(nil, delegate, nil).AnyTimes()
+
+	delegate.EXPECT().
+		GetUserId(gomock.Any()).
+		Return(int64(accountID), nil).AnyTimes()
+
+	cfg := &server.ProviderConfig{}
+
+	provSvc, _ := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
+
+	err := provSvc.VerifyProviderTokenIdentity(context.Background(), "456", accessToken)
+	require.NoError(t, err)
+
+	err = provSvc.VerifyProviderTokenIdentity(context.Background(), "123", accessToken)
+	require.ErrorIs(t, err, ErrInvalidTokenIdentity)
 }
 
 func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
