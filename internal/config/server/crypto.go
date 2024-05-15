@@ -28,7 +28,7 @@ type KeyStoreConfig struct {
 	Config map[string]any `mapstructure:"config"`
 }
 
-// DefaultCrypto defines the default cyrpto to be used for new data
+// DefaultCrypto defines the default crypto to be used for new data
 type DefaultCrypto struct {
 	KeyID     string `mapstructure:"key_id"`
 	Algorithm string `mapstructure:"algorithm"`
