@@ -17,6 +17,7 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -36,6 +37,49 @@ import (
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+// CreateProvider implements the CreateProvider RPC method.
+func (s *Server) CreateProvider(
+	ctx context.Context, req *minderv1.CreateProviderRequest,
+) (*minderv1.CreateProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	provider := req.GetProvider()
+
+	if provider == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "provider is required")
+	}
+
+	var provConfig json.RawMessage
+	if provider.Config != nil {
+		var marshallErr error
+
+		provConfig, marshallErr = provider.Config.MarshalJSON()
+		if marshallErr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error marshalling provider provConfig: %v", marshallErr)
+		}
+	} else {
+		zerolog.Ctx(ctx).Debug().Msg("no provider provConfig, will use default")
+	}
+
+	dbProv, err := s.providerManager.CreateFromConfig(
+		ctx, db.ProviderClass(provider.GetClass()), projectID, provider.Name, provConfig)
+	if db.ErrIsUniqueViolation(err) {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("provider already exists")
+		return nil, util.UserVisibleError(codes.AlreadyExists, "provider already exists")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
+	}
+
+	prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, dbProv)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error converting provider to protobuf: %v", err)
+	}
+
+	return &minderv1.CreateProviderResponse{
+		Provider: prov,
+	}, nil
+}
 
 // GetProvider gets a given provider available in a specific project.
 func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderRequest) (*minderv1.GetProviderResponse, error) {
