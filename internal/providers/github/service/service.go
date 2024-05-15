@@ -168,7 +168,7 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		if err != nil {
 			return nil, fmt.Errorf("unable to create github client: %w", err)
 		}
-		if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
+		if err := verifyProviderTokenIdentity(ctx, stateData.RemoteUser.String, delegate); err != nil {
 			return nil, ErrInvalidTokenIdentity
 		}
 	} else {
@@ -246,7 +246,7 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 				if err != nil {
 					return fmt.Errorf("unable to create github client: %w", err)
 				}
-				if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
+				if err := verifyProviderTokenIdentity(ctx, stateData.RemoteUser.String, delegate); err != nil {
 					return ErrInvalidTokenIdentity
 				}
 			} else {
@@ -482,15 +482,15 @@ func (p *ghProviderService) DeleteInstallation(ctx context.Context, providerID u
 
 func verifyProviderTokenIdentity(
 	ctx context.Context,
-	stateData db.GetProjectIDBySessionStateRow,
+	remoteUser string,
 	client ghprov.Delegate,
 ) error {
 	userId, err := client.GetUserId(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting user ID: %w", err)
 	}
-	if strconv.FormatInt(userId, 10) != stateData.RemoteUser.String {
-		return fmt.Errorf("user ID mismatch: %d != %s", userId, stateData.RemoteUser.String)
+	if strconv.FormatInt(userId, 10) != remoteUser {
+		return fmt.Errorf("user ID mismatch: %d != %s", userId, remoteUser)
 	}
 	return nil
 }
