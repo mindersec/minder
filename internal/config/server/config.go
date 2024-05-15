@@ -44,6 +44,7 @@ type Config struct {
 	Provider        ProviderConfig        `mapstructure:"provider"`
 	Marketplace     MarketplaceConfig     `mapstructure:"marketplace"`
 	DefaultProfiles DefaultProfilesConfig `mapstructure:"default_profiles"`
+	Crypto          CryptoConfig          `mapstructure:"crypto"`
 }
 
 // DefaultConfigForTest returns a configuration with all the struct defaults set,

@@ -18,7 +18,10 @@ package keystores
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+
+	"github.com/go-viper/mapstructure/v2"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
@@ -31,30 +34,57 @@ type KeyStore interface {
 	GetKey(id string) ([]byte, error)
 }
 
+// LocalKeyStore is the config value for an on-disk key store
+const LocalKeyStore = "local"
+
 // ErrUnknownKeyID is returned when the Key ID cannot be found by the keystore.
 var ErrUnknownKeyID = errors.New("unknown key id")
 
-// This structure is used by the keystore implementation to manage keys.
 type keysByID map[string][]byte
 
 // NewKeyStoreFromConfig creates an instance of a KeyStore based on the
 // AuthConfig in Minder.
 // Since our only implementation is based on reading from the local disk, do
 // all key loading during construction of the struct.
-// TODO: allow support for multiple keys/algos
-func NewKeyStoreFromConfig(config *serverconfig.AuthConfig) (KeyStore, error) {
-	key, err := config.GetTokenKey()
+func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
+	// You might think that a nil value cannot be deserialized to a struct,
+	// yet, here we are.
+	if config.KeyStore.Config == nil {
+		return nil, errors.New("keystore config is missing")
+	}
+
+	// TODO: support other methods in future
+	if config.KeyStore.Type != LocalKeyStore {
+		return nil, fmt.Errorf("unexpected keystore type: %s", config.KeyStore.Type)
+	}
+
+	var keystoreCfg serverconfig.LocalFileKeyStoreConfig
+	err := mapstructure.Decode(config.KeyStore.Config, &keystoreCfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read encryption key from %s: %w", config.TokenKey, err)
+		return nil, fmt.Errorf("unable to read keystore config: %w", err)
 	}
-	// Use the key filename as the key ID.
-	name := filepath.Base(config.TokenKey)
-	keys := map[string][]byte{
-		name: key,
+
+	// Join the default key to the fallback keys to assemble the full
+	// set of keys to load.
+	keyIDs := append([]string{config.DefaultKeyID}, config.FallbackKeyIDs...)
+	keys := make(keysByID, len(keyIDs))
+	for _, keyID := range keyIDs {
+		key, err := readKey(keystoreCfg.KeyDir, keyID)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read key %s: %w", keyID, err)
+		}
+		keys[keyID] = key
 	}
+
 	return &localFileKeyStore{
 		keys: keys,
 	}, nil
+}
+
+// NewKeyStoreFromMap constructs a keystore from a map of key ID to key bytes.
+// This is mostly useful for testing.
+func NewKeyStoreFromMap(keys keysByID) KeyStore {
+	return &localFileKeyStore{keys}
 }
 
 type localFileKeyStore struct {
@@ -67,4 +97,15 @@ func (l *localFileKeyStore) GetKey(id string) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownKeyID, id)
 	}
 	return key, nil
+}
+
+func readKey(keyDir string, keyFilename string) ([]byte, error) {
+	keyPath := filepath.Join(keyDir, keyFilename)
+	cleanPath := filepath.Clean(keyPath)
+	data, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read key: %w", err)
+	}
+
+	return data, nil
 }

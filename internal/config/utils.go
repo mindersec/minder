@@ -233,31 +233,7 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			continue
 		}
 
-		defaultValue := reflect.Zero(field.Type).Interface()
-		var err error // We handle errors at the end of the switch
-		//nolint:golint,exhaustive
-		switch fieldType.Kind() {
-		case reflect.String:
-			defaultValue = value
-		case reflect.Int64:
-			defaultValue, err = getDefaultValueForInt64(value)
-		case reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
-			reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
-			defaultValue, err = strconv.Atoi(value)
-		case reflect.Float64:
-			defaultValue, err = strconv.ParseFloat(value, 64)
-		case reflect.Bool:
-			defaultValue, err = strconv.ParseBool(value)
-		case reflect.Slice:
-			defaultValue = nil
-		default:
-			err = fmt.Errorf("unhandled type %s", fieldType)
-		}
-		if err != nil {
-			// This is effectively a compile-time error, so exit early
-			panic(fmt.Sprintf("Bad value for field %q (%s): %q", valueName, fieldType, err))
-		}
-
+		defaultValue := getDefaultValue(field, value, valueName)
 		if err := v.BindEnv(strings.ToUpper(valueName)); err != nil {
 			panic(fmt.Sprintf("Failed to bind %q to env var: %v", valueName, err))
 		}
@@ -296,4 +272,34 @@ func getDefaultValueForInt64(value string) (any, error) {
 
 	// Return the original error, not time.ParseDuration's error
 	return nil, err
+}
+
+func getDefaultValue(field reflect.StructField, value string, valueName string) any {
+	defaultValue := reflect.Zero(field.Type).Interface()
+	var err error // We handle errors at the end of the switch
+	//nolint:golint,exhaustive
+	switch field.Type.Kind() {
+	case reflect.String:
+		defaultValue = value
+	case reflect.Int64:
+		defaultValue, err = getDefaultValueForInt64(value)
+	case reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
+		reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
+		defaultValue, err = strconv.Atoi(value)
+	case reflect.Float64:
+		defaultValue, err = strconv.ParseFloat(value, 64)
+	case reflect.Bool:
+		defaultValue, err = strconv.ParseBool(value)
+	case reflect.Slice:
+		defaultValue = nil
+	case reflect.Map:
+		defaultValue = nil
+	default:
+		err = fmt.Errorf("unhandled type %s", field.Type)
+	}
+	if err != nil {
+		// This is effectively a compile-time error, so exit early
+		panic(fmt.Sprintf("Bad value for field %q (%s): %q", valueName, field.Type, err))
+	}
+	return defaultValue
 }

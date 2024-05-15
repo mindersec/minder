@@ -219,7 +219,7 @@ func updateGithubRepoHooks(
 }
 
 func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.ProviderManager, error) {
-	cryptoEng, err := crypto.NewEngineFromAuthConfig(&cfg.Auth)
+	cryptoEng, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
 	}

@@ -102,8 +102,10 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	// Needed to keep these tests working as-is.
 	// In future, beef up unit test coverage in the dependencies
 	// of this code, and refactor these tests to use stubs.
-	config := &serverconfig.AuthConfig{TokenKey: tokenKeyPath}
-	cryptoEngine, err := crypto.NewEngineFromAuthConfig(config)
+	config := &serverconfig.Config{
+		Auth: serverconfig.AuthConfig{TokenKey: tokenKeyPath},
+	}
+	cryptoEngine, err := crypto.NewEngineFromConfig(config)
 	require.NoError(t, err)
 
 	authtoken := generateFakeAccessToken(t, cryptoEngine)
