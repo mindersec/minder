@@ -172,7 +172,7 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return err
 	}
@@ -190,15 +190,14 @@ func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provide
 }
 
 func (p *providerManager) buildFromDBRecord(ctx context.Context, config *db.Provider) (v1.Provider, error) {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return nil, err
 	}
 	return manager.Build(ctx, config)
 }
 
-func (p *providerManager) getClassManager(config *db.Provider) (ProviderClassManager, error) {
-	class := config.Class
+func (p *providerManager) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
 	manager, ok := p.classManagers[class]
 	if !ok {
 		return nil, fmt.Errorf("unexpected provider class: %s", class)
