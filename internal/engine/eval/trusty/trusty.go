@@ -101,9 +101,19 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 
 	// Classify all dependencies, tracking all that are malicious or scored low
 	for _, dep := range prDependencies.Deps {
-		if err := classifyDependency(ctx, &logger, e.client, ruleConfig, prSummaryHandler, dep); err != nil {
-			return fmt.Errorf("classifying dependency: %w", err)
+		depscore, err := getDependencyScore(ctx, e.client, dep)
+		if err != nil {
+			return fmt.Errorf("getting dependency score: %w", err)
 		}
+
+		if depscore == nil || depscore.PackageName == "" {
+			logger.Info().
+				Str("dependency", dep.Dep.Name).
+				Msgf("no trusty data for dependency, skipping")
+			return nil
+		}
+
+		classifyDependency(ctx, &logger, depscore, ruleConfig, prSummaryHandler, dep)
 	}
 
 	// If there are no problematic dependencies, return here
@@ -117,6 +127,20 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	return buildEvalResult(prSummaryHandler)
+}
+
+func getEcosystemConfig(
+	logger *zerolog.Logger, ruleConfig *config, dep *pb.PrDependencies_ContextualDependency,
+) *ecosystemConfig {
+	ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
+	if ecoConfig == nil {
+		logger.Info().
+			Str("dependency", dep.Dep.Name).
+			Str("ecosystem", dep.Dep.Ecosystem.AsString()).
+			Msgf("no config for ecosystem, skipping")
+		return nil
+	}
+	return ecoConfig
 }
 
 // readPullRequestDependencies returns the dependencies found in theingestion results
@@ -194,40 +218,32 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	return nil
 }
 
-// classifyDependency checks the dependencies from the PR for maliciousness or
-// low scores and adds them to the summary if needed
-func classifyDependency(
-	ctx context.Context, logger *zerolog.Logger, trusty *trustyClient, ruleConfig *config,
-	prSummary *summaryPrHandler, dep *pb.PrDependencies_ContextualDependency,
-) error {
-	// Check all the policy violations
-	reasons := []RuleViolationReason{}
-
-	ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
-	if ecoConfig == nil {
-		logger.Info().
-			Str("dependency", dep.Dep.Name).
-			Str("ecosystem", dep.Dep.Ecosystem.AsString()).
-			Msgf("no config for ecosystem, skipping")
-		return nil
-	}
-
+func getDependencyScore(ctx context.Context, trusty *trustyClient, dep *pb.PrDependencies_ContextualDependency) (*Reply, error) {
 	// Call the Trusty API
 	resp, err := trusty.SendRecvRequest(ctx, dep.Dep)
 	if err != nil {
-		return fmt.Errorf("failed to send request: %w", err)
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
+	return resp, nil
+}
 
-	if resp == nil || resp.PackageName == "" {
-		logger.Info().
-			Str("dependency", dep.Dep.Name).
-			Msgf("no trusty data for dependency, skipping")
-		return nil
+// classifyDependency checks the dependencies from the PR for maliciousness or
+// low scores and adds them to the summary if needed
+func classifyDependency(
+	_ context.Context, logger *zerolog.Logger, resp *Reply, ruleConfig *config,
+	prSummary *summaryPrHandler, dep *pb.PrDependencies_ContextualDependency,
+) {
+	// Check all the policy violations
+	reasons := []RuleViolationReason{}
+
+	ecoConfig := getEcosystemConfig(logger, ruleConfig, dep)
+	if ecoConfig == nil {
+		return
 	}
 
 	// If the package is malicious, ensure that the score is 0 to avoid it
 	// getting ignored from the report
-	if resp.PackageData.Malicious != nil && resp.PackageData.Malicious.Published.String() != "" {
+	if resp.PackageData.Malicious != nil && resp.PackageData.Malicious.Summary != "" {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
 			Str("malicious", "true").
@@ -256,13 +272,15 @@ func classifyDependency(
 	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
 	}
-	if ecoConfig.Provenance > descr["provenance"].(float64) {
+
+	if ecoConfig.Provenance > descr["provenance"].(float64) && descr["provenance"].(float64) > 0 {
 		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
 	}
 
-	if ecoConfig.Activity > descr["activity"].(float64) {
+	if ecoConfig.Activity > descr["activity"].(float64) && descr["activity"].(float64) > 0 {
 		reasons = append(reasons, TRUSTY_LOW_ACTIVITY)
 	}
+
 	if len(reasons) > 0 {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
@@ -278,5 +296,4 @@ func classifyDependency(
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
 	}
-	return nil
 }
