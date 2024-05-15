@@ -249,7 +249,8 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 			RepoID:     12345,
 			Provider:   providerName,
 			ProviderID: providerID,
-		}, nil)
+		}, nil).
+		AnyTimes()
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -294,6 +295,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
 	require.NoError(t, err, "failed to create request")
+
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
@@ -333,9 +335,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 
 	<-evt.Running()
 
-	mockStore.EXPECT().
-		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, sql.ErrNoRows)
+	// mockStore.EXPECT().
+	// 	GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
+	// 	Return(db.Repository{}, sql.ErrNoRows)
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 
@@ -930,6 +932,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte("ceci n'est pas une JSON"),
 			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "package garbage",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			rawPayload: []byte("this is not a JSON"),
 			statusCode: http.StatusInternalServerError,
 		},
 		{
