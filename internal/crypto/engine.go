@@ -67,7 +67,7 @@ type engine struct {
 func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 	// Use fallback if the new config structure is missing
 	var cryptoCfg serverconfig.CryptoConfig
-	if config.Crypto.DefaultKeyID != "" && config.Crypto.DefaultAlgorithm != "" {
+	if config.Crypto.Default.KeyID != "" && config.Crypto.Default.Algorithm != "" {
 		cryptoCfg = config.Crypto
 	} else if config.Auth.TokenKey != "" {
 		fallbackConfig, err := convertToCryptoConfig(&config.Auth)
@@ -84,13 +84,13 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 		return nil, fmt.Errorf("failed to read token key file: %s", err)
 	}
 
-	defaultAlgorithm, err := algorithms.TypeFromString(cryptoCfg.DefaultAlgorithm)
+	defaultAlgorithm, err := algorithms.TypeFromString(cryptoCfg.Default.Algorithm)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected default algorithm: %w", err)
 	}
 
 	// Instantiate all the algorithms we need
-	algos := append([]string{cryptoCfg.DefaultAlgorithm}, cryptoCfg.FallbackAlgorithms...)
+	algos := append([]string{cryptoCfg.Default.Algorithm}, cryptoCfg.Fallback.Algorithms...)
 	supportedAlgorithms := make(algorithmsByName, len(algos))
 	for _, algoName := range algos {
 		algoType, err := algorithms.TypeFromString(algoName)
@@ -108,7 +108,7 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 		keystore:            keystore,
 		supportedAlgorithms: supportedAlgorithms,
 		defaultAlgorithm:    defaultAlgorithm,
-		defaultKeyID:        cryptoCfg.DefaultKeyID,
+		defaultKeyID:        cryptoCfg.Default.KeyID,
 	}, nil
 }
 
@@ -231,7 +231,9 @@ func convertToCryptoConfig(a *serverconfig.AuthConfig) (serverconfig.CryptoConfi
 			Type:   keystores.LocalKeyStore,
 			Config: map[string]any{"key_dir": dir},
 		},
-		DefaultKeyID:     name,
-		DefaultAlgorithm: string(algorithms.Aes256Cfb),
+		Default: serverconfig.DefaultCrypto{
+			KeyID:     name,
+			Algorithm: string(algorithms.Aes256Cfb),
+		},
 	}, nil
 }

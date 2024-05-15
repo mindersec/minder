@@ -110,5 +110,6 @@ crypto:
         type: local
         config:
             key_dir: "./.ssh"
-    default_key_id:    token_key_passphrase
-    default_algorithm: aes-256-cfb
+    default:
+        key_id:    token_key_passphrase
+        algorithm: aes-256-cfb

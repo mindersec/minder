@@ -66,7 +66,7 @@ func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
 
 	// Join the default key to the fallback keys to assemble the full
 	// set of keys to load.
-	keyIDs := append([]string{config.DefaultKeyID}, config.FallbackKeyIDs...)
+	keyIDs := append([]string{config.Default.KeyID}, config.Fallback.KeyIDs...)
 	keys := make(keysByID, len(keyIDs))
 	for _, keyID := range keyIDs {
 		key, err := readKey(keystoreCfg.KeyDir, keyID)

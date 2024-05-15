@@ -51,7 +51,7 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 			ExpectedError: "unexpected keystore type",
 		},
 		{
-			Name: "NewKeyStoreFromConfig rejects missing keystore config",
+			Name: "NewKeyStoreFromConfig returns error when key cannot be read",
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
 					Type: keystores.LocalKeyStore,
@@ -59,12 +59,14 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 						"key_dir": "../testdata",
 					},
 				},
-				DefaultKeyID: "not-a-valid-file",
+				Default: server.DefaultCrypto{
+					KeyID: "not-a-valid-file",
+				},
 			},
 			ExpectedError: "unable to read key",
 		},
 		{
-			Name: "NewKeyStoreFromConfig rejects missing keystore config",
+			Name: "NewKeyStoreFromConfig successfully creates keystore",
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
 					Type: keystores.LocalKeyStore,
@@ -72,7 +74,9 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 						"key_dir": "../testdata",
 					},
 				},
-				DefaultKeyID: "test_encryption_key",
+				Default: server.DefaultCrypto{
+					KeyID: "test_encryption_key",
+				},
 			},
 		},
 	}

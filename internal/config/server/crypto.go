@@ -16,13 +16,9 @@ package server
 
 // CryptoConfig is the configuration for the crypto engine
 type CryptoConfig struct {
-	KeyStore         KeyStoreConfig `mapstructure:"key_store"`
-	DefaultKeyID     string         `mapstructure:"default_key_id"`
-	DefaultAlgorithm string         `mapstructure:"default_algorithm"`
-	// Optional list of keys and algorithms to fall back to.
-	// When rotating keys or algorithms, add the old ones here.
-	FallbackKeyIDs     []string `mapstructure:"fallback_key_ids"`
-	FallbackAlgorithms []string `mapstructure:"fallback_algorithms"`
+	KeyStore KeyStoreConfig `mapstructure:"key_store"`
+	Default  DefaultCrypto  `mapstructure:"default"`
+	Fallback FallbackCrypto `mapstructure:"fallback"`
 }
 
 // KeyStoreConfig specifies the type of keystore to use and its configuration
@@ -30,6 +26,20 @@ type KeyStoreConfig struct {
 	Type string `mapstructure:"type"`
 	// is currently expected to match the structure of LocalFileKeyStoreConfig
 	Config map[string]any `mapstructure:"config"`
+}
+
+// DefaultCrypto defines the default cyrpto to be used for new data
+type DefaultCrypto struct {
+	KeyID     string `mapstructure:"key_id"`
+	Algorithm string `mapstructure:"algorithm"`
+}
+
+// FallbackCrypto defines the optional list of keys and algorithms to fall
+// back to.
+// When rotating keys or algorithms, add the old ones here.
+type FallbackCrypto struct {
+	KeyIDs     []string `mapstructure:"key_ids"`
+	Algorithms []string `mapstructure:"algorithms"`
 }
 
 // LocalFileKeyStoreConfig contains configuration for the local file keystore
