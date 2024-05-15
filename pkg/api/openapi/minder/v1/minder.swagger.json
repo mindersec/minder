@@ -321,6 +321,12 @@
             "in": "query",
             "required": false,
             "type": "object"
+          },
+          {
+            "name": "providerClass",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

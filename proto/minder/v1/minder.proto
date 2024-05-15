@@ -854,6 +854,8 @@ message GetAuthorizationURLRequest {
     // config is a JSON object that can be used to pass additional configuration
     google.protobuf.Struct config = 8;
 
+    string provider_class = 9;
+
     reserved 1, 2; // deprecated provider and project_id
 }
 
