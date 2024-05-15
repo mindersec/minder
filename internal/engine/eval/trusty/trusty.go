@@ -41,6 +41,7 @@ const (
 type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
+	client   *trustyClient
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -59,119 +60,223 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 		zerolog.Ctx(ctx).Info().Str("trusty-endpoint", trustyEndpoint).Msg("using trusty endpoint from environment")
 	}
 
+	piCli := newPiClient(trustyEndpoint)
+	if piCli == nil {
+		return nil, fmt.Errorf("failed to create pi client")
+	}
+
 	return &Evaluator{
 		cli:      ghcli,
 		endpoint: trustyEndpoint,
+		client:   piCli,
 	}, nil
 }
 
 // Eval implements the Evaluator interface.
-//
-//nolint:gocyclo
 func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
-	var lowScoringPackages []string
-
-	//nolint:govet
-	prdeps, ok := res.Object.(*pb.PrDependencies)
-	if !ok {
-		return fmt.Errorf("invalid object type for vulncheck evaluator")
+	// Extract the dependency list from the PR
+	prDependencies, err := readPullRequestDependencies(res)
+	if err != nil {
+		return fmt.Errorf("reading pull request dependencies: %w", err)
 	}
-
-	if len(prdeps.Deps) == 0 {
+	if len(prDependencies.Deps) == 0 {
 		return nil
 	}
 
-	ruleConfig, err := parseConfig(pol)
-	if err != nil {
-		return fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	if !isActionImplemented(ruleConfig.Action) {
-		return fmt.Errorf("action %s is not implemented", ruleConfig.Action)
-	}
-
 	logger := zerolog.Ctx(ctx).With().
-		Int64("pull-number", prdeps.Pr.Number).
-		Str("repo-owner", prdeps.Pr.RepoOwner).
-		Str("repo-name", prdeps.Pr.RepoName).
-		Logger()
+		Int64("pull-number", prDependencies.Pr.Number).
+		Str("repo-owner", prDependencies.Pr.RepoOwner).
+		Str("repo-name", prDependencies.Pr.RepoName).Logger()
 
-	prSummaryHandler, err := newSummaryPrHandler(prdeps.Pr, e.cli, e.endpoint)
+	// Parse the profile data to get the policy configuration
+	ruleConfig, err := parseRuleConfig(pol)
+	if err != nil {
+		return fmt.Errorf("parsing policy configuration: %w", err)
+	}
+
+	prSummaryHandler, err := newSummaryPrHandler(prDependencies.Pr, e.cli, e.endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create summary handler: %w", err)
 	}
 
-	piCli := newPiClient(e.endpoint)
-	if piCli == nil {
-		return fmt.Errorf("failed to create pi client")
+	// Classify all dependencies, tracking all that are malicious or scored low
+	for _, dep := range prDependencies.Deps {
+		if err := classifyDependency(ctx, &logger, e.client, ruleConfig, prSummaryHandler, dep); err != nil {
+			return fmt.Errorf("classifying dependency: %w", err)
+		}
 	}
 
-	for _, dep := range prdeps.Deps {
-		ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
-		if ecoConfig == nil {
-			logger.Info().
-				Str("dependency", dep.Dep.Name).
-				Str("ecosystem", dep.Dep.Ecosystem.AsString()).
-				Msgf("no config for ecosystem, skipping")
-			continue
-		}
-
-		resp, err := piCli.SendRecvRequest(ctx, dep.Dep)
-		if err != nil {
-			return fmt.Errorf("failed to send request: %w", err)
-		}
-
-		if resp == nil || resp.PackageName == "" {
-			logger.Info().
-				Str("dependency", dep.Dep.Name).
-				Msgf("no trusty data for dependency, skipping")
-			continue
-		}
-
-		if resp.Summary.Score == nil {
-			logger.Info().
-				Str("dependency", dep.Dep.Name).
-				Msgf("the dependency has no score, skipping")
-			continue
-		}
-
-		s, err := ecoConfig.getScore(resp.Summary)
-		if err != nil {
-			return fmt.Errorf("failed to get score: %w", err)
-		}
-
-		if s >= ecoConfig.Score {
-			logger.Debug().
-				Str("dependency", dep.Dep.Name).
-				Str("score-source", ecoConfig.getScoreSource()).
-				Float64("score", s).
-				Float64("threshold", ecoConfig.Score).
-				Msgf("the dependency has higher score than threshold, skipping")
-			continue
-		}
-
-		logger.Debug().
-			Str("dependency", dep.Dep.Name).
-			Str("score-source", ecoConfig.getScoreSource()).
-			Float64("score", s).
-			Float64("threshold", ecoConfig.Score).
-			Msgf("the dependency has lower score than threshold, tracking")
-
-		lowScoringPackages = append(lowScoringPackages, dep.Dep.Name)
-
-		prSummaryHandler.trackAlternatives(dep, resp)
+	// If there are no problematic dependencies, return here
+	if len(prSummaryHandler.trackedAlternatives) == 0 {
+		return nil
 	}
 
-	if err := prSummaryHandler.submit(ctx); err != nil {
+	if err := submitSummary(ctx, prSummaryHandler); err != nil {
+		logger.Err(err).Msgf("Failed Generating PR Summary: %s", err.Error())
+		return fmt.Errorf("submitting pull request summary: %w", err)
+	}
+
+	return buildEvalResult(prSummaryHandler)
+}
+
+// readPullRequestDependencies returns the dependencies found in theingestion results
+func readPullRequestDependencies(res *engif.Result) (*pb.PrDependencies, error) {
+	prdeps, ok := res.Object.(*pb.PrDependencies)
+	if !ok {
+		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")
+	}
+
+	return prdeps, nil
+}
+
+// parseRuleConfig parses the profile configuration to build the policy
+func parseRuleConfig(pol map[string]any) (*config, error) {
+	ruleConfig, err := parseConfig(pol)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	if ruleConfig.Action != pr_actions.ActionSummary {
+		return nil, fmt.Errorf("action %s is not implemented", ruleConfig.Action)
+	}
+
+	return ruleConfig, nil
+}
+
+// submitSummary submits the pull request summary. It will return an error if
+// something fails.
+func submitSummary(ctx context.Context, prSummary *summaryPrHandler) error {
+	if err := prSummary.submit(ctx); err != nil {
 		return fmt.Errorf("failed to submit summary: %w", err)
-	}
-
-	if len(lowScoringPackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("packages with low score: %s", strings.Join(lowScoringPackages, ",")))
 	}
 	return nil
 }
 
-func isActionImplemented(action pr_actions.Action) bool {
-	return action == pr_actions.ActionSummary
+// buildEvalResult returns nil or an EvaluationError with details about the
+// bad dependencies found by Trusty if any are found.
+func buildEvalResult(prSummary *summaryPrHandler) error {
+	// If we have malicious or lowscored packages, the evaluation fails.
+	// Craft an evaluation failed error with the dependency data:
+	var lowScoringPackages, maliciousPackages []string
+	for _, d := range prSummary.trackedAlternatives {
+		if d.trustyReply.PackageData.Malicious != nil &&
+			d.trustyReply.PackageData.Malicious.Published != nil &&
+			d.trustyReply.PackageData.Malicious.Published.String() != "" {
+			maliciousPackages = append(maliciousPackages, d.trustyReply.PackageName)
+		} else {
+			lowScoringPackages = append(lowScoringPackages, d.trustyReply.PackageName)
+		}
+	}
+
+	failedEvalMsg := ""
+
+	if len(maliciousPackages) > 0 {
+		failedEvalMsg = fmt.Sprintf(
+			"%d malicious packages: %s",
+			len(maliciousPackages), strings.Join(maliciousPackages, ","),
+		)
+	}
+
+	if len(lowScoringPackages) > 0 {
+		if failedEvalMsg != "" {
+			failedEvalMsg += " and "
+		}
+		failedEvalMsg += fmt.Sprintf(
+			"%d packages with low score: %s",
+			len(lowScoringPackages), strings.Join(lowScoringPackages, ","),
+		)
+	}
+
+	if failedEvalMsg != "" {
+		return evalerrors.NewErrEvaluationFailed(failedEvalMsg)
+	}
+
+	return nil
+}
+
+// classifyDependency checks the dependencies from the PR for maliciousness or
+// low scores and adds them to the summary if needed
+func classifyDependency(
+	ctx context.Context, logger *zerolog.Logger, trusty *trustyClient, ruleConfig *config,
+	prSummary *summaryPrHandler, dep *pb.PrDependencies_ContextualDependency,
+) error {
+	// Check all the policy violations
+	reasons := []RuleViolationReason{}
+
+	ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
+	if ecoConfig == nil {
+		logger.Info().
+			Str("dependency", dep.Dep.Name).
+			Str("ecosystem", dep.Dep.Ecosystem.AsString()).
+			Msgf("no config for ecosystem, skipping")
+		return nil
+	}
+
+	// Call the Trusty API
+	resp, err := trusty.SendRecvRequest(ctx, dep.Dep)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if resp == nil || resp.PackageName == "" {
+		logger.Info().
+			Str("dependency", dep.Dep.Name).
+			Msgf("no trusty data for dependency, skipping")
+		return nil
+	}
+
+	// If the package is malicious, ensure that the score is 0 to avoid it
+	// getting ignored from the report
+	if resp.PackageData.Malicious != nil && resp.PackageData.Malicious.Published.String() != "" {
+		logger.Debug().
+			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
+			Str("malicious", "true").
+			Msgf("malicious dependency")
+
+		reasons = append(reasons, TRUSTY_MALICIOUS_PKG)
+	}
+
+	packageScore := float64(0)
+	if resp.Summary.Score != nil {
+		packageScore = *resp.Summary.Score
+	}
+
+	descr := map[string]any{}
+	if resp.Summary.Description != nil {
+		descr = resp.Summary.Description
+	}
+
+	// Ensure don't panic checking all fields are there
+	for _, fld := range []string{"activity", "provenance"} {
+		if _, ok := descr[fld]; !ok {
+			descr[fld] = float64(0)
+		}
+	}
+
+	if ecoConfig.Score > packageScore {
+		reasons = append(reasons, TRUSTY_LOW_SCORE)
+	}
+	if ecoConfig.Provenance > descr["provenance"].(float64) {
+		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
+	}
+
+	if ecoConfig.Activity > descr["activity"].(float64) {
+		reasons = append(reasons, TRUSTY_LOW_ACTIVITY)
+	}
+	if len(reasons) > 0 {
+		logger.Debug().
+			Str("dependency", dep.Dep.Name).
+			Float64("score", packageScore).
+			Float64("threshold", ecoConfig.Score).
+			Msgf("the dependency has lower score than threshold or is malicious, tracking")
+
+		prSummary.trackAlternatives(dep, reasons, resp)
+	} else {
+		logger.Debug().
+			Str("dependency", dep.Dep.Name).
+			Float64("score", *resp.Summary.Score).
+			Float64("threshold", ecoConfig.Score).
+			Msgf("the dependency has lower score than threshold or is malicious, tracking")
+	}
+	return nil
 }

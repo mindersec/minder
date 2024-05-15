@@ -16,12 +16,15 @@
 package trusty
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
-	htmltemplate "html/template"
 	"net/url"
+	"slices"
 	"strings"
+	template "text/template"
+	"unicode"
 
 	"github.com/stacklok/minder/internal/constants"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -30,40 +33,114 @@ import (
 
 const (
 	// nolint:lll
-	noLowScoresText = "Minder analyzed this PR with <a href=\"https://www.trustypkg.dev/\">Trusty</a> and found no dependencies scored lower than your profile threshold."
+	commentTemplate = `{{- if .Malicious -}}
+### ⚠️ MALICIOUS PACKAGES ⚠️
 
-	tableHeaderTmplName = "alternativesTableHeader"
-	tableTemplateHeader = `### Summary of packages with low scores
-Minder detected that this PR is adding dependencies whose score is lower than the threshold configured with
-Minder profiles. Below is a summary of the packages with low scores and their alternatives.
+Minder has detected that this pull request is introducing malicious software dependencies using data from [Trusty](https://www.trustypkg.dev/):
 
-<table>
-  <tr>
-    <td> Pkg </td>
-    <td> Name </td>
-    <td> Score </td>
-    <td> Alternative Name </td>
-    <td> Alternative Score </td>
-  </tr>
-`
-	tableFooter       = "</table>"
-	tableRowsTmplName = "alternativesTableRow"
-	// nolint:lll
-	tableTemplateRow = `
-{{ range .Alternatives }}
-  <tr>
-	<td>{{ $.Ecosystem }}</td>
-	<td><a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ $.NameURL }}">{{ $.Name }}</a></td>
-	<td>{{ $.Score }}</td>
-	<td>{{ if .PackageName }}<a href="{{ $.BaseUrl }}/{{ $.Ecosystem }}/{{ .PackageNameURL }}">{{ .PackageName }}</a>{{ else }}No alternative found{{ end }}</td>
-	<td>{{ if .PackageName }}{{ .Score }}{{ else }}-{{ end }}</td>
-  </tr>
+| Package | Summary | Details |
+| --- | --- | --- |
+{{ range .Malicious -}}
+| [{{ .PackageName }}]({{ .TrustyURL }}) | {{ .Summary }} | {{ .Details }} |
 {{ end }}
+{{ end }}
+
+{{- if .Dependencies -}}
+### <ins>Dependency Information</ins>
+
+Minder analyzed the dependencies introduced in this pull request and detected that some dependencies do not meet your security profile.
+{{ range .Dependencies }}
+
+### 📦 Dependency: [{{ .PackageName }}]({{ .TrustyURL }})
+
+{{ if .Archived }}
+⚠️ __Archived Package:__ This package is marked as deprecated. Proceed with caution!
+{{ end }}
+{{ if .Deprecated }}
+⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
+{{ end }}
+#### Trusty Score: {{ .Score }}
+{{ if .ScoreComponents }}
+<details>
+  <summary>Scoring details</summary>
+
+  | Component           | Score |
+  | ------------------- | ----: |
+  {{ range .ScoreComponents -}}
+  | {{ .Label }} | {{ .Value }}  |
+{{ end }}
+</details>
+{{ end }}
+{{ if .Alternatives }}
+<details>
+  <summary>Alternatives</summary>
+
+  | Package             | Score | Description |
+  | ------------------- | ----: | ----------- |
+{{ range .Alternatives -}}
+  | [{{ .PackageName }}]({{ .TrustyURL }})  | {{ .Score }} | {{ .Summary }} |
+{{ end }}
+</details>
+{{- end -}}
+{{- end -}}
+{{- end -}}
 `
 )
 
+// RuleViolationReason are int constants that captures the various
+// reasons a package was considered unsafe when compared with trusty data
+type RuleViolationReason int
+
+const (
+	// TRUSTY_LOW_SCORE Overall score was lower than threshold
+	TRUSTY_LOW_SCORE RuleViolationReason = iota + 1
+
+	// TRUSTY_MALICIOUS_PKG Package is marked as malicious
+	TRUSTY_MALICIOUS_PKG
+
+	// TRUSTY_LOW_ACTIVITY The package does not have enough activity
+	TRUSTY_LOW_ACTIVITY
+
+	// TRUSTY_LOW_PROVENANCE Low trust in proof of origin
+	TRUSTY_LOW_PROVENANCE
+)
+
+type templatePackageData struct {
+	Ecosystem   string
+	PackageName string
+	TrustyURL   string
+	Score       float64
+}
+
+type maliciousTemplateData struct {
+	templatePackageData
+	Summary string
+	Details string
+}
+
+type templatePackage struct {
+	templatePackageData
+	Deprecated      bool
+	Archived        bool
+	ScoreComponents []templateScoreComponent
+	Alternatives    []templateAlternative
+}
+
+type templateAlternative struct {
+	templatePackageData
+	Summary string
+}
+
+type templateScoreComponent struct {
+	Label string
+	Value any
+}
+
 type dependencyAlternatives struct {
-	Dependency  *pb.Dependency
+	Dependency *pb.Dependency
+
+	// Reason captures the reason why a package was flagged
+	Reasons     []RuleViolationReason
 	trustyReply *Reply
 }
 
@@ -74,21 +151,26 @@ type summaryPrHandler struct {
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
-	headerTmpl          *htmltemplate.Template
-	rowsTmpl            *htmltemplate.Template
+	commentTemplate     *template.Template
 }
 
 func (sph *summaryPrHandler) trackAlternatives(
 	dep *pb.PrDependencies_ContextualDependency,
+	violationReasons []RuleViolationReason,
 	trustyReply *Reply,
 ) {
 	sph.trackedAlternatives = append(sph.trackedAlternatives, dependencyAlternatives{
 		Dependency:  dep.Dep,
+		Reasons:     violationReasons,
 		trustyReply: trustyReply,
 	})
 }
 
 func (sph *summaryPrHandler) submit(ctx context.Context) error {
+	if len(sph.trackedAlternatives) == 0 {
+		return nil
+	}
+
 	summary, err := sph.generateSummary()
 	if err != nil {
 		return fmt.Errorf("could not generate summary: %w", err)
@@ -103,57 +185,112 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 }
 
 func (sph *summaryPrHandler) generateSummary() (string, error) {
-	var summary strings.Builder
+	var malicious = []maliciousTemplateData{}
+	var lowScorePackages = map[string]templatePackage{}
 
-	if len(sph.trackedAlternatives) == 0 {
-		summary.WriteString(noLowScoresText)
-		return summary.String(), nil
+	// Build the data structure for the template
+	for _, alternative := range sph.trackedAlternatives {
+		if _, ok := lowScorePackages[alternative.Dependency.Name]; !ok {
+			var score float64
+			if alternative.trustyReply.Summary.Score != nil {
+				score = *alternative.trustyReply.Summary.Score
+			}
+			packageData := templatePackageData{
+				Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
+				PackageName: alternative.Dependency.Name,
+				TrustyURL: fmt.Sprintf(
+					"%s%s/%s", constants.TrustyHttpURL,
+					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+					url.PathEscape(alternative.trustyReply.PackageName),
+				),
+				Score: score,
+			}
+
+			scoreComp := []templateScoreComponent{}
+			if alternative.trustyReply.Summary.Description != nil {
+				for l, v := range alternative.trustyReply.Summary.Description {
+					switch l {
+					case "activity":
+						l = "Package activity"
+					case "activity_user":
+						l = "User activity"
+					case "provenance":
+						l = "Provenance"
+					case "typosquatting":
+						l = "Typosquatting"
+					case "activity_repo":
+						l = "Repository activity"
+					default:
+						if len(l) > 1 {
+							l = string(unicode.ToUpper([]rune(l)[0])) + l[1:]
+						}
+					}
+					scoreComp = append(scoreComp, templateScoreComponent{
+						Label: l,
+						Value: v,
+					})
+				}
+			}
+
+			// If the package is malicious we list it separately
+			if slices.Contains(alternative.Reasons, TRUSTY_MALICIOUS_PKG) {
+				malicious = append(malicious, maliciousTemplateData{
+					templatePackageData: packageData,
+					Summary:             alternative.trustyReply.PackageData.Malicious.Summary,
+					Details:             preprocessDetails(alternative.trustyReply.PackageData.Malicious.Details),
+				})
+				continue
+			}
+
+			lowScorePackages[alternative.Dependency.Name] = templatePackage{
+				templatePackageData: packageData,
+				Deprecated:          alternative.trustyReply.PackageData.Deprecated,
+				Archived:            alternative.trustyReply.PackageData.Archived,
+				ScoreComponents:     scoreComp,
+				Alternatives:        []templateAlternative{},
+			}
+		}
+
+		for _, altData := range alternative.trustyReply.Alternatives.Packages {
+			if altData.Score <= lowScorePackages[alternative.Dependency.Name].Score {
+				continue
+			}
+
+			altPackageData := templateAlternative{
+				templatePackageData: templatePackageData{
+					Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
+					PackageName: altData.PackageName,
+					TrustyURL: fmt.Sprintf(
+						"%s%s/%s", constants.TrustyHttpURL,
+						strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+						url.PathEscape(altData.PackageName),
+					),
+					Score: altData.Score,
+				},
+			}
+
+			dep := lowScorePackages[alternative.Dependency.Name]
+			dep.Alternatives = append(dep.Alternatives, altPackageData)
+			lowScorePackages[alternative.Dependency.Name] = dep
+		}
 	}
 
+	return sph.compileTemplate(malicious, lowScorePackages)
+}
+
+func (sph *summaryPrHandler) compileTemplate(malicious []maliciousTemplateData, deps map[string]templatePackage) (string, error) {
+	var summary strings.Builder
 	var headerBuf bytes.Buffer
-	if err := sph.headerTmpl.Execute(&headerBuf, nil); err != nil {
+	if err := sph.commentTemplate.Execute(&headerBuf, struct {
+		Malicious    []maliciousTemplateData
+		Dependencies map[string]templatePackage
+	}{
+		Malicious:    malicious,
+		Dependencies: deps,
+	}); err != nil {
 		return "", fmt.Errorf("could not execute template: %w", err)
 	}
 	summary.WriteString(headerBuf.String())
-
-	for _, alternative := range sph.trackedAlternatives {
-		var rowBuf bytes.Buffer
-
-		higherScoringAlternatives := make([]Alternative, 0)
-		for _, alt := range alternative.trustyReply.Alternatives.Packages {
-			if alternative.trustyReply.Summary.Score != nil && alt.Score > *alternative.trustyReply.Summary.Score {
-				alt.PackageNameURL = url.PathEscape(alt.PackageName)
-				higherScoringAlternatives = append(higherScoringAlternatives, alt)
-			}
-		}
-		if len(higherScoringAlternatives) == 0 {
-			higherScoringAlternatives = append(higherScoringAlternatives, Alternative{
-				PackageName: "", // Note: Set it to empty to indicate no alternative found in the template
-				Score:       0,
-			})
-		}
-
-		// Populate the Trusty alternatives row template
-		if err := sph.rowsTmpl.Execute(&rowBuf, struct {
-			Ecosystem    string
-			Name         string
-			NameURL      string
-			Score        float64
-			Alternatives []Alternative
-			BaseUrl      string
-		}{
-			Ecosystem:    strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-			Name:         alternative.Dependency.Name,
-			NameURL:      url.PathEscape(alternative.Dependency.Name),
-			Score:        *alternative.trustyReply.Summary.Score,
-			Alternatives: higherScoringAlternatives,
-			BaseUrl:      constants.TrustyHttpURL,
-		}); err != nil {
-			return "", fmt.Errorf("could not execute template: %w", err)
-		}
-		summary.WriteString(rowBuf.String())
-	}
-	summary.WriteString(tableFooter)
 
 	return summary.String(), nil
 }
@@ -163,21 +300,28 @@ func newSummaryPrHandler(
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {
-	headerTmpl, err := htmltemplate.New(tableHeaderTmplName).Parse(tableTemplateHeader)
+	tmpl, err := template.New("comment").Parse(commentTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse dependency template: %w", err)
-	}
-	rowsTmpl, err := htmltemplate.New(tableRowsTmplName).Parse(tableTemplateRow)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse vulnerability template: %w", err)
 	}
 
 	return &summaryPrHandler{
 		cli:                 cli,
 		pr:                  pr,
 		trustyUrl:           trustyUrl,
-		headerTmpl:          headerTmpl,
-		rowsTmpl:            rowsTmpl,
+		commentTemplate:     tmpl,
 		trackedAlternatives: make([]dependencyAlternatives, 0),
 	}, nil
+}
+
+func preprocessDetails(s string) string {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	text := ""
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), "#") {
+			continue
+		}
+		text += scanner.Text() + "<br>"
+	}
+	return strings.ReplaceAll(text, "|", "")
 }
