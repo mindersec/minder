@@ -60,26 +60,32 @@ type Alternative struct {
 	PackageNameURL string
 }
 
+// AlternativesList is the alternatives block in the trusty API response
+type AlternativesList struct {
+	Status   string        `json:"status"`
+	Packages []Alternative `json:"packages"`
+}
+
 // ScoreSummary is the summary score returned from the package intelligence API
 type ScoreSummary struct {
 	Score       *float64       `json:"score"`
 	Description map[string]any `json:"description"`
 }
 
+// PackageData contains the data about the queried package
+type PackageData struct {
+	Archived   bool           `json:"archived"`
+	Deprecated bool           `json:"is_deprecated"`
+	Malicious  *MaliciousData `json:"malicious"`
+}
+
 // Reply is the response from the package intelligence API
 type Reply struct {
-	PackageName  string       `json:"package_name"`
-	PackageType  string       `json:"package_type"`
-	Summary      ScoreSummary `json:"summary"`
-	Alternatives struct {
-		Status   string        `json:"status"`
-		Packages []Alternative `json:"packages"`
-	} `json:"alternatives"`
-	PackageData struct {
-		Archived   bool           `json:"archived"`
-		Deprecated bool           `json:"is_deprecated"`
-		Malicious  *MaliciousData `json:"malicious"`
-	} `json:"package_data"`
+	PackageName  string           `json:"package_name"`
+	PackageType  string           `json:"package_type"`
+	Summary      ScoreSummary     `json:"summary"`
+	Alternatives AlternativesList `json:"alternatives"`
+	PackageData  PackageData      `json:"package_data"`
 }
 
 // MaliciousData contains the security details when a dependency is malicious

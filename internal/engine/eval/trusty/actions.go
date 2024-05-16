@@ -206,32 +206,6 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				Score: score,
 			}
 
-			scoreComp := []templateScoreComponent{}
-			if alternative.trustyReply.Summary.Description != nil {
-				for l, v := range alternative.trustyReply.Summary.Description {
-					switch l {
-					case "activity":
-						l = "Package activity"
-					case "activity_user":
-						l = "User activity"
-					case "provenance":
-						l = "Provenance"
-					case "typosquatting":
-						l = "Typosquatting"
-					case "activity_repo":
-						l = "Repository activity"
-					default:
-						if len(l) > 1 {
-							l = string(unicode.ToUpper([]rune(l)[0])) + l[1:]
-						}
-					}
-					scoreComp = append(scoreComp, templateScoreComponent{
-						Label: l,
-						Value: v,
-					})
-				}
-			}
-
 			// If the package is malicious we list it separately
 			if slices.Contains(alternative.Reasons, TRUSTY_MALICIOUS_PKG) {
 				malicious = append(malicious, maliciousTemplateData{
@@ -246,7 +220,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				templatePackageData: packageData,
 				Deprecated:          alternative.trustyReply.PackageData.Deprecated,
 				Archived:            alternative.trustyReply.PackageData.Archived,
-				ScoreComponents:     scoreComp,
+				ScoreComponents:     buildScoreMatrix(alternative),
 				Alternatives:        []templateAlternative{},
 			}
 		}
@@ -276,6 +250,41 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 
 	return sph.compileTemplate(malicious, lowScorePackages)
+}
+
+// buildScoreMatrix builds the score components matrix that populates
+// the score table in the PR comment template
+func buildScoreMatrix(alternative dependencyAlternatives) []templateScoreComponent {
+	scoreComp := []templateScoreComponent{}
+	if alternative.trustyReply.Summary.Description != nil {
+		for l, v := range alternative.trustyReply.Summary.Description {
+			switch l {
+			case "activity":
+				l = "Package activity"
+			case "activity_user":
+				l = "User activity"
+			case "provenance":
+				l = "Provenance"
+			case "typosquatting":
+				if v.(float64) > 5.00 {
+					continue
+				}
+				v = "⚠️ Dependency may be trying to impersonate a well known package"
+				l = "Typosquatting"
+			case "activity_repo":
+				l = "Repository activity"
+			default:
+				if len(l) > 1 {
+					l = string(unicode.ToUpper([]rune(l)[0])) + l[1:]
+				}
+			}
+			scoreComp = append(scoreComp, templateScoreComponent{
+				Label: l,
+				Value: v,
+			})
+		}
+	}
+	return scoreComp
 }
 
 func (sph *summaryPrHandler) compileTemplate(malicious []maliciousTemplateData, deps map[string]templatePackage) (string, error) {
