@@ -23,8 +23,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
-//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
-
 // KeyStore represents a struct which stores or can fetch encryption keys.
 type KeyStore interface {
 	// GetKey retrieves the key for the specified algorithm by key ID.
