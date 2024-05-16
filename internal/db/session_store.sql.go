@@ -13,7 +13,7 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, provider_config, redirect_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, provider_config, encrypted_redirect
+INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, provider_config, redirect_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect, provider_config
 `
 
 type CreateSessionStateParams struct {
@@ -47,8 +47,8 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		&i.CreatedAt,
 		&i.RedirectUrl,
 		&i.RemoteUser,
-		&i.ProviderConfig,
 		&i.EncryptedRedirect,
+		&i.ProviderConfig,
 	)
 	return i, err
 }
