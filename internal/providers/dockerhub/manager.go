@@ -93,9 +93,16 @@ func (m *providerClassManager) getProviderCredentials(
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	// TODO: get rid of this once we store the EncryptedData struct in
-	// the database.
-	encryptedData := crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	// TODO: get rid of this once we migrate all secrets to use the new structure
+	var encryptedData crypto.EncryptedData
+	if encToken.EncryptedAccessToken.Valid {
+		encryptedData, err = crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	}
 	decryptedToken, err := m.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)

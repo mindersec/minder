@@ -191,9 +191,17 @@ func (g *githubProviderManager) createProviderWithAccessToken(
 	ctx context.Context,
 	encToken db.ProviderAccessToken,
 ) (*credentialDetails, error) {
-	// TODO: get rid of this once we store the EncryptedData struct in
-	// the database.
-	encryptedData := crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	// TODO: get rid of this once we migrate all secrets to use the new structure
+	var err error
+	var encryptedData crypto.EncryptedData
+	if encToken.EncryptedAccessToken.Valid {
+		encryptedData, err = crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+	}
 	decryptedToken, err := g.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
@@ -219,7 +227,6 @@ func (g *githubProviderManager) getProviderCredentials(
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
 	if errors.Is(err, sql.ErrNoRows) {
 		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
-
 		// If we don't have an access token, check if we have an installation ID
 		return g.createProviderWithInstallationToken(ctx, prov)
 	} else if err != nil {
