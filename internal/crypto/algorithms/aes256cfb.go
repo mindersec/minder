@@ -18,6 +18,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"fmt"
 	"io"
 
 	"golang.org/x/crypto/argon2"
@@ -56,6 +57,10 @@ func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte)
 	block, err := aes.NewCipher(a.deriveKey(key, salt))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
+	}
+
+	if len(ciphertext) < aes.BlockSize {
+		return nil, fmt.Errorf("ciphertext too short to decrypt, length is: %d", len(ciphertext))
 	}
 
 	// The IV needs to be extracted from the ciphertext.

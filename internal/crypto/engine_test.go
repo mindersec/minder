@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 //Test both the algorithm and the engine in one test suite
@@ -77,6 +78,86 @@ func TestEncryptDecryptOAuthToken(t *testing.T) {
 	decrypted, err := engine.DecryptOAuthToken(encryptedToken)
 	require.NoError(t, err)
 	require.Equal(t, oauthToken, decrypted)
+}
+
+func TestDecryptEmpty(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		EncodedData: "",
+	}
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "cannot decrypt empty data")
+}
+
+func TestDecryptEmptySalt(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		EncodedData: "abc",
+		Salt:        nil,
+	}
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "cannot decrypt data with empty salt")
+}
+
+func TestDecryptBadAlgorithm(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm:   "I'm a little teapot",
+		EncodedData: "abc",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
+}
+
+func TestDecryptBadEncoding(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm: algorithms.Aes256Cfb,
+		// Unicode snowman is _not_ a valid base64 character
+		EncodedData: "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "error decoding secret")
+}
+
+func TestDecryptFailedDecryption(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm: algorithms.Aes256Cfb,
+		// too small of a value - will trigger the ciphertext length check
+		EncodedData: "abcdef0123456789",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorIs(t, err, ErrDecrypt)
 }
 
 var config = &server.Config{

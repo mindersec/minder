@@ -673,7 +673,6 @@ func (s *Server) decryptRedirect(stateData *db.GetProjectIDBySessionStateRow) (*
 	} else {
 		encryptedData = mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
 	}
-	fmt.Printf("HEYO data is %s", encryptedData)
 	redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting redirect URL: %w", err)
