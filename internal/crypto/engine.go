@@ -62,34 +62,53 @@ type engine struct {
 	defaultAlgorithm    algorithms.Type
 }
 
-// NewEngineFromAuthConfig creates a new crypto engine from the service config
+// NewEngineFromConfig creates a new crypto engine from the service config
 // TODO: modify to support multiple keys/algorithms
-func NewEngineFromAuthConfig(config *serverconfig.AuthConfig) (Engine, error) {
-	if config == nil {
-		return nil, errors.New("auth config is nil")
+func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
+	// Use fallback if the new config structure is missing
+	var cryptoCfg serverconfig.CryptoConfig
+	if config.Crypto.Default.KeyID != "" && config.Crypto.Default.Algorithm != "" {
+		cryptoCfg = config.Crypto
+	} else if config.Auth.TokenKey != "" {
+		fallbackConfig, err := convertToCryptoConfig(&config.Auth)
+		if err != nil {
+			return nil, fmt.Errorf("unable to load fallback config: %w", err)
+		}
+		cryptoCfg = fallbackConfig
+	} else {
+		return nil, errors.New("no encryption keys configured")
 	}
 
-	keystore, err := keystores.NewKeyStoreFromConfig(config)
+	keystore, err := keystores.NewKeyStoreFromConfig(cryptoCfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read token key file: %s", err)
 	}
 
-	aes, err := algorithms.NewFromType(algorithms.Aes256Cfb)
+	defaultAlgorithm, err := algorithms.TypeFromString(cryptoCfg.Default.Algorithm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unexpected default algorithm: %w", err)
 	}
-	supportedAlgorithms := map[algorithms.Type]algorithms.EncryptionAlgorithm{
-		algorithms.Aes256Cfb: aes,
+
+	// Instantiate all the algorithms we need
+	algos := append([]string{cryptoCfg.Default.Algorithm}, cryptoCfg.Fallback.Algorithms...)
+	supportedAlgorithms := make(algorithmsByName, len(algos))
+	for _, algoName := range algos {
+		algoType, err := algorithms.TypeFromString(algoName)
+		if err != nil {
+			return nil, err
+		}
+		algorithm, err := algorithms.NewFromType(algoType)
+		if err != nil {
+			return nil, err
+		}
+		supportedAlgorithms[algoType] = algorithm
 	}
 
 	return &engine{
 		keystore:            keystore,
 		supportedAlgorithms: supportedAlgorithms,
-		defaultAlgorithm:    algorithms.Aes256Cfb,
-		// Use the key filename as the key ID.
-		// This will be cleaned up in a future PR
-		// Right now, by the time we get here, this should return a valid result
-		defaultKeyID: filepath.Base(config.TokenKey),
+		defaultAlgorithm:    defaultAlgorithm,
+		defaultKeyID:        cryptoCfg.Default.KeyID,
 	}, nil
 }
 
@@ -172,7 +191,13 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)
 	}
 
-	key, err := e.keystore.GetKey(e.defaultKeyID)
+	// for backwards compatibility with encrypted data which doesn't have the
+	// key ID stored in the DB.
+	if data.KeyVersion == "" {
+		data.KeyVersion = e.defaultKeyID
+	}
+
+	key, err := e.keystore.GetKey(data.KeyVersion)
 	if err != nil {
 		// error from keystore is good enough - we do not need more context
 		return nil, err
@@ -190,4 +215,25 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 		return nil, errors.Join(ErrDecrypt, err)
 	}
 	return result, nil
+}
+
+// This is for config transition purposes, and will eventually be removed.
+func convertToCryptoConfig(a *serverconfig.AuthConfig) (serverconfig.CryptoConfig, error) {
+	abspath, err := filepath.Abs(a.TokenKey)
+	if err != nil {
+		return serverconfig.CryptoConfig{}, fmt.Errorf("could not get absolute path: %w", err)
+	}
+	name := filepath.Base(abspath)
+	dir := filepath.Dir(abspath)
+
+	return serverconfig.CryptoConfig{
+		KeyStore: serverconfig.KeyStoreConfig{
+			Type:   keystores.LocalKeyStore,
+			Config: map[string]any{"key_dir": dir},
+		},
+		Default: serverconfig.DefaultCrypto{
+			KeyID:     name,
+			Algorithm: string(algorithms.Aes256Cfb),
+		},
+	}, nil
 }

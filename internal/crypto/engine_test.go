@@ -30,20 +30,15 @@ import (
 //Test both the algorithm and the engine in one test suite
 // TODO: if we add additional algorithms in future, we should split up testing
 
-func TestNilConfig(t *testing.T) {
-	t.Parallel()
-
-	_, err := NewEngineFromAuthConfig(nil)
-	require.ErrorContains(t, err, "auth config is nil")
-}
-
 func TestKeyLoadFail(t *testing.T) {
 	t.Parallel()
 
-	config := &server.AuthConfig{
-		TokenKey: "./testdata/non-existent-file",
+	config := &server.Config{
+		Auth: server.AuthConfig{
+			TokenKey: "./testdata/non-existent-file",
+		},
 	}
-	_, err := NewEngineFromAuthConfig(config)
+	_, err := NewEngineFromConfig(config)
 	require.ErrorContains(t, err, "failed to read token key file")
 }
 
@@ -51,7 +46,7 @@ func TestEncryptDecryptBytes(t *testing.T) {
 	t.Parallel()
 
 	const sampleData = "I'm a little teapot"
-	engine, err := NewEngineFromAuthConfig(authConfig)
+	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	encrypted, err := engine.EncryptString(sampleData)
 	assert.Nil(t, err)
@@ -63,7 +58,7 @@ func TestEncryptDecryptBytes(t *testing.T) {
 func TestEncryptTooLarge(t *testing.T) {
 	t.Parallel()
 
-	engine, err := NewEngineFromAuthConfig(authConfig)
+	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	large := make([]byte, 34000000) // More than 32 MB
 	_, err = engine.EncryptString(string(large))
@@ -73,7 +68,7 @@ func TestEncryptTooLarge(t *testing.T) {
 func TestEncryptDecryptOAuthToken(t *testing.T) {
 	t.Parallel()
 
-	engine, err := NewEngineFromAuthConfig(authConfig)
+	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	oauthToken := oauth2.Token{AccessToken: "AUTH"}
 	encryptedToken, err := engine.EncryptOAuthToken(&oauthToken)
@@ -84,6 +79,8 @@ func TestEncryptDecryptOAuthToken(t *testing.T) {
 	require.Equal(t, oauthToken, decrypted)
 }
 
-var authConfig = &server.AuthConfig{
-	TokenKey: "./testdata/test_encryption_key",
+var config = &server.Config{
+	Auth: server.AuthConfig{
+		TokenKey: "./testdata/test_encryption_key",
+	},
 }
