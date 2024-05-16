@@ -664,6 +664,7 @@ type SessionStore struct {
 	RedirectUrl       sql.NullString        `json:"redirect_url"`
 	RemoteUser        sql.NullString        `json:"remote_user"`
 	EncryptedRedirect pqtype.NullRawMessage `json:"encrypted_redirect"`
+	ProviderConfig    []byte                `json:"provider_config"`
 }
 
 type Subscription struct {

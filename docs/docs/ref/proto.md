@@ -733,6 +733,8 @@ Namespace: is the namespace for the GHCR provider.
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | redirect_url | [string](#string) | optional |  |
+| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is a JSON object that can be used to pass additional configuration |
+| provider_class | [string](#string) |  |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>

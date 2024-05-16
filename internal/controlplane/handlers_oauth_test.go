@@ -29,6 +29,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
@@ -833,7 +835,8 @@ func (p partialDbParamsMatcher) Matches(x interface{}) bool {
 
 	typedX.SessionState = ""
 
-	return typedX == p.value
+	return cmp.Equal(typedX, p.value,
+		cmpopts.IgnoreFields(db.CreateSessionStateParams{}, "ProviderConfig"))
 }
 
 func (m partialDbParamsMatcher) String() string {

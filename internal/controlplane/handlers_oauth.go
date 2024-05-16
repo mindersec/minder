@@ -55,19 +55,26 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	var provider string
+	var providerName string
 	if req.GetContext().GetProvider() == "" {
-		provider = defaultProvider
+		providerName = defaultProvider
 	} else {
-		provider = req.GetContext().GetProvider()
+		providerName = req.GetContext().GetProvider()
+	}
+
+	var providerClass string
+	if req.GetProviderClass() == "" {
+		providerClass = providerName
+	} else {
+		providerClass = req.GetProviderClass()
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider
+	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
 	// get provider info
-	providerDef, err := providers.GetProviderClassDefinition(provider)
+	providerDef, err := providers.GetProviderClassDefinition(providerClass)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -82,7 +89,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
-	span.SetAttributes(attribute.Key("provider").String(provider))
+	span.SetAttributes(attribute.Key("provider").String(providerName))
 	defer span.End()
 
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
@@ -97,7 +104,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
-		Provider:  provider,
+		Provider:  providerName,
 		ProjectID: projectID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
@@ -118,22 +125,31 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl.EncodedData}
 	}
 
+	var confBytes []byte
+	if conf := req.GetConfig(); conf != nil {
+		confBytes, err = conf.MarshalJSON()
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error marshalling config: %s", err)
+		}
+	}
+
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:     provider,
-		ProjectID:    projectID,
-		RemoteUser:   sql.NullString{Valid: user != "", String: user},
-		SessionState: state,
-		OwnerFilter:  owner,
-		RedirectUrl:  redirectUrl,
+		Provider:       providerName,
+		ProjectID:      projectID,
+		RemoteUser:     sql.NullString{Valid: user != "", String: user},
+		SessionState:   state,
+		OwnerFilter:    owner,
+		RedirectUrl:    redirectUrl,
+		ProviderConfig: confBytes,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
 	}
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(provider, req.Cli)
+	oauthConfig, err := s.providerAuthFactory(providerClass, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -394,9 +410,9 @@ func (s *Server) getValidSessionState(ctx context.Context, state string) (db.Get
 	return stateData, nil
 }
 
-func (s *Server) exchangeCodeForToken(ctx context.Context, providerName string, code string) (*oauth2.Token, error) {
+func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass string, code string) (*oauth2.Token, error) {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(providerName, true)
+	oauthConfig, err := s.providerAuthFactory(providerClass, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OAuth config: %w", err)
 	}

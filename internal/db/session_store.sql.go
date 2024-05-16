@@ -13,16 +13,17 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, redirect_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect
+INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, provider_config, redirect_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect, provider_config
 `
 
 type CreateSessionStateParams struct {
-	Provider     string         `json:"provider"`
-	ProjectID    uuid.UUID      `json:"project_id"`
-	RemoteUser   sql.NullString `json:"remote_user"`
-	SessionState string         `json:"session_state"`
-	OwnerFilter  sql.NullString `json:"owner_filter"`
-	RedirectUrl  sql.NullString `json:"redirect_url"`
+	Provider       string         `json:"provider"`
+	ProjectID      uuid.UUID      `json:"project_id"`
+	RemoteUser     sql.NullString `json:"remote_user"`
+	SessionState   string         `json:"session_state"`
+	OwnerFilter    sql.NullString `json:"owner_filter"`
+	ProviderConfig []byte         `json:"provider_config"`
+	RedirectUrl    sql.NullString `json:"redirect_url"`
 }
 
 func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error) {
@@ -32,6 +33,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		arg.RemoteUser,
 		arg.SessionState,
 		arg.OwnerFilter,
+		arg.ProviderConfig,
 		arg.RedirectUrl,
 	)
 	var i SessionStore
@@ -46,6 +48,7 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		&i.RedirectUrl,
 		&i.RemoteUser,
 		&i.EncryptedRedirect,
+		&i.ProviderConfig,
 	)
 	return i, err
 }
@@ -74,15 +77,16 @@ func (q *Queries) DeleteSessionStateByProjectID(ctx context.Context, arg DeleteS
 }
 
 const getProjectIDBySessionState = `-- name: GetProjectIDBySessionState :one
-SELECT provider, project_id, remote_user, owner_filter, redirect_url FROM session_store WHERE session_state = $1
+SELECT provider, project_id, remote_user, owner_filter, provider_config, redirect_url FROM session_store WHERE session_state = $1
 `
 
 type GetProjectIDBySessionStateRow struct {
-	Provider    string         `json:"provider"`
-	ProjectID   uuid.UUID      `json:"project_id"`
-	RemoteUser  sql.NullString `json:"remote_user"`
-	OwnerFilter sql.NullString `json:"owner_filter"`
-	RedirectUrl sql.NullString `json:"redirect_url"`
+	Provider       string         `json:"provider"`
+	ProjectID      uuid.UUID      `json:"project_id"`
+	RemoteUser     sql.NullString `json:"remote_user"`
+	OwnerFilter    sql.NullString `json:"owner_filter"`
+	ProviderConfig []byte         `json:"provider_config"`
+	RedirectUrl    sql.NullString `json:"redirect_url"`
 }
 
 func (q *Queries) GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error) {
@@ -93,6 +97,7 @@ func (q *Queries) GetProjectIDBySessionState(ctx context.Context, sessionState s
 		&i.ProjectID,
 		&i.RemoteUser,
 		&i.OwnerFilter,
+		&i.ProviderConfig,
 		&i.RedirectUrl,
 	)
 	return i, err
