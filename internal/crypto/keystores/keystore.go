@@ -47,8 +47,8 @@ type keysByID map[string][]byte
 // Since our only implementation is based on reading from the local disk, do
 // all key loading during construction of the struct.
 func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
-	// You might think that a nil value cannot be deserialized to a struct,
-	// yet, here we are.
+	// Check if config is nil first - otherwise it will deserialize to an
+	// empty struct.
 	if config.KeyStore.Config == nil {
 		return nil, errors.New("keystore config is missing")
 	}
