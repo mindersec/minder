@@ -28,6 +28,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	artif "github.com/stacklok/minder/internal/providers/artifact"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -126,7 +127,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	vers, err := getVersioner(i.prov, artifact)
+	vers, err := getVersioner(i.prov)
 	if err != nil {
 		return nil, err
 	}
@@ -286,41 +287,24 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 func getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
-	vers versioner,
+	vers provifv1.ArtifactProvider,
 	artifact *pb.Artifact,
 ) ([]string, error) {
 	var res []string
 
 	// Build a tag filter based on the configuration
-	filter, err := buildTagMatcher(cfg.Tags, cfg.TagRegex)
+	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}
 
 	// Fetch all available versions of the artifact
-	upstreamVersions, err := vers.GetVersions(ctx)
+	upstreamVersions, err := vers.GetArtifactVersions(ctx, artifact, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	name := artifact.GetName()
-
-	// Loop through all and filter out the versions that don't apply to this rule
 	for _, version := range upstreamVersions {
-		// Decide if the artifact version should be skipped or not
-		tags := version.GetTags()
-		tagsopt := map[string]interface{}{"tags": tags}
-		err = isSkippable(version.GetCreatedAt().AsTime(), tagsopt, filter)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().Str("name", name).Strs("tags", tags).Str(
-				"reason",
-				err.Error(),
-			).Msg("skipping artifact version")
-			continue
-		}
-
-		// If the artifact version is applicable to this rule, add it to the list
-		zerolog.Ctx(ctx).Debug().Str("name", name).Strs("tags", tags).Msg("artifact version matched")
 		res = append(res, version.Sha)
 	}
 
@@ -337,32 +321,6 @@ var (
 	// ArtifactTypeContainerRetentionPeriod represents the retention period for container artifacts
 	ArtifactTypeContainerRetentionPeriod = time.Now().AddDate(0, -6, 0)
 )
-
-// isSkippable determines if an artifact should be skipped
-// Note this is only applicable to container artifacts.
-// TODO - this should be refactored as well, for now just a forklift from reconciler
-func isSkippable(createdAt time.Time, opts map[string]interface{}, filter tagMatcher) error {
-	// if the artifact is older than the retention period, skip it
-	if createdAt.Before(ArtifactTypeContainerRetentionPeriod) {
-		return fmt.Errorf("artifact is older than retention period - %s", ArtifactTypeContainerRetentionPeriod)
-	}
-	tags, ok := opts["tags"].([]string)
-	if !ok {
-		return nil
-	} else if len(tags) == 0 {
-		// if the artifact has no tags, skip it
-		return fmt.Errorf("artifact has no tags")
-	}
-	// if the artifact has a .sig tag it's a signature, skip it
-	if verifier.GetSignatureTag(tags) != "" {
-		return fmt.Errorf("artifact is a signature")
-	}
-	// if the artifact tags don't match the tag matcher, skip it
-	if !filter.MatchTag(tags...) {
-		return fmt.Errorf("artifact tags does not match")
-	}
-	return nil
-}
 
 func branchFromRef(ref string) string {
 	if strings.HasPrefix(ref, "refs/heads/") {
@@ -412,4 +370,13 @@ func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	builderURL = strings.TrimPrefix(builderURL, c.Extensions.SourceRepositoryURI)
 
 	return builderURL, nil
+}
+
+func getVersioner(prov provifv1.Provider) (provifv1.ArtifactProvider, error) {
+	ap, ok := prov.(provifv1.ArtifactProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider does not implement ArtifactProvider")
+	}
+
+	return ap, nil
 }

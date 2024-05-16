@@ -13,6 +13,7 @@ import (
 	context "context"
 	http "net/http"
 	reflect "reflect"
+	time "time"
 
 	git "github.com/go-git/go-git/v5"
 	authn "github.com/google/go-containerregistry/pkg/authn"
@@ -245,6 +246,81 @@ func (mr *MockRepoListerMockRecorder) ListAllRepositories(arg0 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockRepoLister)(nil).ListAllRepositories), arg0)
 }
 
+// MockGetArtifactVersionsFilter is a mock of GetArtifactVersionsFilter interface.
+type MockGetArtifactVersionsFilter struct {
+	ctrl     *gomock.Controller
+	recorder *MockGetArtifactVersionsFilterMockRecorder
+}
+
+// MockGetArtifactVersionsFilterMockRecorder is the mock recorder for MockGetArtifactVersionsFilter.
+type MockGetArtifactVersionsFilterMockRecorder struct {
+	mock *MockGetArtifactVersionsFilter
+}
+
+// NewMockGetArtifactVersionsFilter creates a new mock instance.
+func NewMockGetArtifactVersionsFilter(ctrl *gomock.Controller) *MockGetArtifactVersionsFilter {
+	mock := &MockGetArtifactVersionsFilter{ctrl: ctrl}
+	mock.recorder = &MockGetArtifactVersionsFilterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGetArtifactVersionsFilter) EXPECT() *MockGetArtifactVersionsFilterMockRecorder {
+	return m.recorder
+}
+
+// IsSkippable mocks base method.
+func (m *MockGetArtifactVersionsFilter) IsSkippable(createdAt time.Time, tags []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsSkippable", createdAt, tags)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IsSkippable indicates an expected call of IsSkippable.
+func (mr *MockGetArtifactVersionsFilterMockRecorder) IsSkippable(createdAt, tags any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSkippable", reflect.TypeOf((*MockGetArtifactVersionsFilter)(nil).IsSkippable), createdAt, tags)
+}
+
+// MockArtifactProvider is a mock of ArtifactProvider interface.
+type MockArtifactProvider struct {
+	ctrl     *gomock.Controller
+	recorder *MockArtifactProviderMockRecorder
+}
+
+// MockArtifactProviderMockRecorder is the mock recorder for MockArtifactProvider.
+type MockArtifactProviderMockRecorder struct {
+	mock *MockArtifactProvider
+}
+
+// NewMockArtifactProvider creates a new mock instance.
+func NewMockArtifactProvider(ctrl *gomock.Controller) *MockArtifactProvider {
+	mock := &MockArtifactProvider{ctrl: ctrl}
+	mock.recorder = &MockArtifactProviderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockArtifactProvider) EXPECT() *MockArtifactProviderMockRecorder {
+	return m.recorder
+}
+
+// GetArtifactVersions mocks base method.
+func (m *MockArtifactProvider) GetArtifactVersions(ctx context.Context, artifact *v10.Artifact, filter v11.GetArtifactVersionsFilter) ([]*v10.ArtifactVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactVersions", ctx, artifact, filter)
+	ret0, _ := ret[0].([]*v10.ArtifactVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactVersions indicates an expected call of GetArtifactVersions.
+func (mr *MockArtifactProviderMockRecorder) GetArtifactVersions(ctx, artifact, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactVersions", reflect.TypeOf((*MockArtifactProvider)(nil).GetArtifactVersions), ctx, artifact, filter)
+}
+
 // MockGitHub is a mock of GitHub interface.
 type MockGitHub struct {
 	ctrl     *gomock.Controller
@@ -475,6 +551,21 @@ func (mr *MockGitHubMockRecorder) EditHook(ctx, owner, repo, id, hook any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditHook", reflect.TypeOf((*MockGitHub)(nil).EditHook), ctx, owner, repo, id, hook)
 }
 
+// GetArtifactVersions mocks base method.
+func (m *MockGitHub) GetArtifactVersions(ctx context.Context, artifact *v10.Artifact, filter v11.GetArtifactVersionsFilter) ([]*v10.ArtifactVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactVersions", ctx, artifact, filter)
+	ret0, _ := ret[0].([]*v10.ArtifactVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactVersions indicates an expected call of GetArtifactVersions.
+func (mr *MockGitHubMockRecorder) GetArtifactVersions(ctx, artifact, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactVersions", reflect.TypeOf((*MockGitHub)(nil).GetArtifactVersions), ctx, artifact, filter)
+}
+
 // GetBaseURL mocks base method.
 func (m *MockGitHub) GetBaseURL() string {
 	m.ctrl.T.Helper()
@@ -590,36 +681,6 @@ func (m *MockGitHub) GetPackageVersionById(arg0 context.Context, arg1, arg2, arg
 func (mr *MockGitHubMockRecorder) GetPackageVersionById(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionById", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionById), arg0, arg1, arg2, arg3, arg4)
-}
-
-// GetPackageVersionByTag mocks base method.
-func (m *MockGitHub) GetPackageVersionByTag(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*github.PackageVersion, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageVersionByTag", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(*github.PackageVersion)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPackageVersionByTag indicates an expected call of GetPackageVersionByTag.
-func (mr *MockGitHubMockRecorder) GetPackageVersionByTag(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersionByTag", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersionByTag), arg0, arg1, arg2, arg3, arg4)
-}
-
-// GetPackageVersions mocks base method.
-func (m *MockGitHub) GetPackageVersions(arg0 context.Context, arg1, arg2, arg3 string) ([]*github.PackageVersion, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPackageVersions", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([]*github.PackageVersion)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPackageVersions indicates an expected call of GetPackageVersions.
-func (mr *MockGitHubMockRecorder) GetPackageVersions(arg0, arg1, arg2, arg3 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPackageVersions", reflect.TypeOf((*MockGitHub)(nil).GetPackageVersions), arg0, arg1, arg2, arg3)
 }
 
 // GetPrimaryEmail mocks base method.
@@ -1021,6 +1082,21 @@ func (m *MockOCI) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
+}
+
+// GetArtifactVersions mocks base method.
+func (m *MockOCI) GetArtifactVersions(ctx context.Context, artifact *v10.Artifact, filter v11.GetArtifactVersionsFilter) ([]*v10.ArtifactVersion, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArtifactVersions", ctx, artifact, filter)
+	ret0, _ := ret[0].([]*v10.ArtifactVersion)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetArtifactVersions indicates an expected call of GetArtifactVersions.
+func (mr *MockOCIMockRecorder) GetArtifactVersions(ctx, artifact, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArtifactVersions", reflect.TypeOf((*MockOCI)(nil).GetArtifactVersions), ctx, artifact, filter)
 }
 
 // GetAuthenticator mocks base method.
