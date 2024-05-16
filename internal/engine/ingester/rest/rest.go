@@ -40,6 +40,10 @@ import (
 const (
 	// RestRuleDataIngestType is the type of the REST rule data ingest engine
 	RestRuleDataIngestType = "rest"
+
+	// MaxBytesLimit is the maximum number of bytes to read from the response body
+	// We limit to 1MB to prevent abuse
+	MaxBytesLimit int64 = 1 << 20
 )
 
 type ingestorFallback struct {
@@ -201,16 +205,18 @@ func (rdi *Ingestor) parseBody(body io.Reader) (any, error) {
 		return nil, nil
 	}
 
+	lr := io.LimitReader(body, MaxBytesLimit)
+
 	if rdi.restCfg.Parse == "json" {
 		var jsonData any
-		dec := json.NewDecoder(body)
+		dec := json.NewDecoder(lr)
 		if err := dec.Decode(&jsonData); err != nil {
 			return nil, fmt.Errorf("cannot decode json: %w", err)
 		}
 
 		data = jsonData
 	} else {
-		data, err = io.ReadAll(body)
+		data, err = io.ReadAll(lr)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read response body: %w", err)
 		}
