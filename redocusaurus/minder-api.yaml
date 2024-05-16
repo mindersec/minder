@@ -199,6 +199,17 @@ paths:
           in: query
           required: false
           type: string
+        - name: config
+          description: >-
+            config is a JSON object that can be used to pass additional
+            configuration
+          in: query
+          required: false
+          type: object
+        - name: providerClass
+          in: query
+          required: false
+          type: string
       tags:
         - OAuthService
   /api/v1/auth/verify:
