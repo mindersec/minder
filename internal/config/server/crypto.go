@@ -23,7 +23,7 @@ type CryptoConfig struct {
 
 // KeyStoreConfig specifies the type of keystore to use and its configuration
 type KeyStoreConfig struct {
-	Type string `mapstructure:"type"`
+	Type string `mapstructure:"type" default:"local"`
 	// is currently expected to match the structure of LocalFileKeyStoreConfig
 	Config map[string]any `mapstructure:"config"`
 }
