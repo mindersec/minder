@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -833,7 +835,8 @@ func (p partialDbParamsMatcher) Matches(x interface{}) bool {
 
 	typedX.SessionState = ""
 
-	return typedX == p.value
+	return cmp.Equal(typedX, p.value,
+		cmpopts.IgnoreFields(db.CreateSessionStateParams{}, "ProviderConfig"))
 }
 
 func (m partialDbParamsMatcher) String() string {
