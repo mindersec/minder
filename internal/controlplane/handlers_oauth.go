@@ -136,7 +136,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:     providerName,
+		Provider:       providerName,
 		ProjectID:      projectID,
 		RemoteUser:     sql.NullString{Valid: user != "", String: user},
 		SessionState:   state,
