@@ -26,6 +26,9 @@ import (
 	gogithub "github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -313,7 +316,6 @@ func (g *githubProviderManager) GetConfig(
 	default:
 		return nil, fmt.Errorf("unsupported provider class %s", class)
 	}
-
 	if len(userConfig) == 0 {
 		return json.RawMessage(defaultConfig), nil
 	}
@@ -341,4 +343,129 @@ func (g *githubProviderManager) ValidateConfig(
 	}
 
 	return err
+}
+
+func fallbackOAuthClientConfigValues(provider string, cfg *server.OAuthClientConfig) {
+	// we read the values one-by-one instead of just getting the top-level key to allow
+	// for environment variables to be set per-variable
+	cfg.ClientID = viper.GetString(fmt.Sprintf("%s.client_id", provider))
+	cfg.ClientIDFile = viper.GetString(fmt.Sprintf("%s.client_id_file", provider))
+	cfg.ClientSecret = viper.GetString(fmt.Sprintf("%s.client_secret", provider))
+	cfg.ClientSecretFile = viper.GetString(fmt.Sprintf("%s.client_secret_file", provider))
+	cfg.RedirectURI = viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
+}
+
+func getOAuthClientConfig(c *server.ProviderConfig, providerClass db.ProviderClass) (*server.OAuthClientConfig, error) {
+	var oc *server.OAuthClientConfig
+	var err error
+
+	switch providerClass { // nolint:exhaustive // we really want handle only the two
+	case db.ProviderClassGithub:
+		if c != nil && c.GitHub != nil {
+			oc = &c.GitHub.OAuthClientConfig
+		}
+		fallbackOAuthClientConfigValues("github", oc)
+	case db.ProviderClassGithubApp:
+		if c != nil && c.GitHubApp != nil {
+			oc = &c.GitHubApp.OAuthClientConfig
+		}
+		fallbackOAuthClientConfigValues("github-app", oc)
+	default:
+		err = fmt.Errorf("unknown provider: %s", providerClass)
+	}
+
+	return oc, err
+}
+
+func (g *githubProviderManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
+	var oauthConfig *oauth2.Config
+	var err error
+
+	oauthClientConfig, err := getOAuthClientConfig(g.config, providerClass)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OAuth client config: %w", err)
+	}
+
+	switch providerClass { // nolint:exhaustive // we really want handle only the two
+	case db.ProviderClassGithub:
+		oauthConfig = githubOauthConfig(oauthClientConfig.RedirectURI, cli)
+	case db.ProviderClassGithubApp:
+		oauthConfig = githubAppOauthConfig(oauthClientConfig.RedirectURI)
+	default:
+		err = fmt.Errorf("invalid provider class: %s", providerClass)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientId, err := oauthClientConfig.GetClientID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client ID: %w", err)
+	}
+
+	clientSecret, err := oauthClientConfig.GetClientSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client secret: %w", err)
+	}
+
+	// this is currently only used for testing as github uses well-known endpoints
+	if oauthClientConfig.Endpoint != nil {
+		oauthConfig.Endpoint = oauth2.Endpoint{
+			TokenURL: oauthClientConfig.Endpoint.TokenURL,
+		}
+	}
+
+	oauthConfig.ClientID = clientId
+	oauthConfig.ClientSecret = clientSecret
+	return oauthConfig, nil
+}
+
+func githubOauthConfig(redirectUrlBase string, cli bool) *oauth2.Config {
+	var redirectUrl string
+
+	if cli {
+		redirectUrl = fmt.Sprintf("%s/cli", redirectUrlBase)
+	} else {
+		redirectUrl = fmt.Sprintf("%s/web", redirectUrlBase)
+	}
+
+	return &oauth2.Config{
+		RedirectURL: redirectUrl,
+		Scopes:      []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"},
+		Endpoint:    github.Endpoint,
+	}
+}
+
+func githubAppOauthConfig(redirectUrlBase string) *oauth2.Config {
+	return &oauth2.Config{
+		RedirectURL: redirectUrlBase,
+		Scopes:      []string{},
+		Endpoint:    github.Endpoint,
+	}
+}
+
+func (g *githubProviderManager) ValidateCredentials(
+	ctx context.Context, cred v1.Credential, params *m.CredentialVerifyParams,
+) error {
+	tokenCred, ok := cred.(v1.OAuth2TokenCredential)
+	if !ok {
+		return fmt.Errorf("invalid credential type: %T", cred)
+	}
+
+	token, err := tokenCred.GetAsOAuth2TokenSource().Token()
+	if err != nil {
+		return fmt.Errorf("cannot get token from credential: %w", err)
+	}
+
+	if params.RemoteUser != "" {
+		err := g.ghService.VerifyProviderTokenIdentity(ctx, params.RemoteUser, token.AccessToken)
+		if err != nil {
+			return fmt.Errorf("error verifying token identity: %w", err)
+		}
+	} else {
+		zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
+	}
+
+	return nil
 }

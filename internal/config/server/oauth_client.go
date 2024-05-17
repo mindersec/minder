@@ -15,7 +15,16 @@
 
 package server
 
-import "fmt"
+import (
+	"fmt"
+)
+
+// OAuthEndpoint is the configuration for the OAuth endpoint
+// Only used for testing
+type OAuthEndpoint struct {
+	// TokenURL is the OAuth token URL
+	TokenURL string `mapstructure:"token_url"`
+}
 
 // OAuthClientConfig is the configuration for the OAuth client
 type OAuthClientConfig struct {
@@ -29,6 +38,8 @@ type OAuthClientConfig struct {
 	ClientSecretFile string `mapstructure:"client_secret_file"`
 	// RedirectURI is the OAuth redirect URI
 	RedirectURI string `mapstructure:"redirect_uri"`
+	// Endpoint is the OAuth endpoint. Currently only used for testing
+	Endpoint *OAuthEndpoint `mapstructure:"endpoint"`
 }
 
 // GetClientID returns the OAuth client ID from either the file or the argument

@@ -40,7 +40,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -60,6 +59,7 @@ import (
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
+	"github.com/stacklok/minder/internal/providers/session"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
@@ -78,29 +78,30 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store               db.Store
-	cfg                 *serverconfig.Config
-	evt                 events.Publisher
-	mt                  metrics.Metrics
-	grpcServer          *grpc.Server
-	jwt                 auth.JwtValidator
-	providerAuthFactory func(*serverconfig.ProviderConfig, string, bool) (*oauth2.Config, error)
-	authzClient         authz.Client
-	idClient            auth.Resolver
-	cryptoEngine        crypto.Engine
-	featureFlags        openfeature.IClient
+	store        db.Store
+	cfg          *serverconfig.Config
+	evt          events.Publisher
+	mt           metrics.Metrics
+	grpcServer   *grpc.Server
+	jwt          auth.JwtValidator
+	authzClient  authz.Client
+	idClient     auth.Resolver
+	cryptoEngine crypto.Engine
+	featureFlags openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes       ruletypes.RuleTypeService
-	repos           github.RepositoryService
-	profiles        profiles.ProfileService
-	ghProviders     service.GitHubProviderService
-	providerStore   providers.ProviderStore
-	ghClient        ghprov.ClientService
-	providerManager manager.ProviderManager
-	projectCreator  projects.ProjectCreator
-	projectDeleter  projects.ProjectDeleter
+	ruleTypes           ruletypes.RuleTypeService
+	repos               github.RepositoryService
+	profiles            profiles.ProfileService
+	ghProviders         service.GitHubProviderService
+	providerStore       providers.ProviderStore
+	ghClient            ghprov.ClientService
+	providerManager     manager.ProviderManager
+	sessionService      session.ProviderSessionService
+	providerAuthManager manager.AuthManager
+	projectCreator      projects.ProjectCreator
+	projectDeleter      projects.ProjectDeleter
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -130,7 +131,9 @@ func NewServer(
 	ruleService ruletypes.RuleTypeService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
+	providerAuthManager manager.AuthManager,
 	providerStore providers.ProviderStore,
+	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
 ) *Server {
@@ -140,7 +143,6 @@ func NewServer(
 		evt:                 evt,
 		cryptoEngine:        cryptoEngine,
 		jwt:                 jwt,
-		providerAuthFactory: auth.NewOAuthConfig,
 		mt:                  serverMetrics,
 		profiles:            profileService,
 		ruleTypes:           ruleService,
@@ -148,6 +150,8 @@ func NewServer(
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		providerManager:     providerManager,
+		providerAuthManager: providerAuthManager,
+		sessionService:      sessionService,
 		repos:               repoService,
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
