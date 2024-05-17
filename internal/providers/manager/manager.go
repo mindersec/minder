@@ -33,6 +33,10 @@ import (
 
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
+	// CreateFromConfig creates a new Provider instance in the database with a given configuration or the provider default
+	CreateFromConfig(
+		ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+	) (*db.Provider, error)
 	// InstantiateFromID creates the provider from the Provider's UUID
 	InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error)
 	// InstantiateFromNameProject creates the provider using the provider's name and
@@ -107,6 +111,22 @@ func NewProviderManager(
 		classManagers: classes,
 		store:         store,
 	}, nil
+}
+
+func (p *providerManager) CreateFromConfig(
+	ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+) (*db.Provider, error) {
+	manager, err := p.getClassManager(providerClass)
+	if err != nil {
+		return nil, fmt.Errorf("error getting class manager: %w", err)
+	}
+
+	provConfig, err := manager.GetConfig(ctx, providerClass, config)
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider config: %w", err)
+	}
+
+	return p.store.Create(ctx, providerClass, name, projectID, provConfig)
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {

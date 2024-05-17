@@ -59,6 +59,21 @@ func (mr *MockProviderManagerMockRecorder) BulkInstantiateByTrait(ctx, projectID
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkInstantiateByTrait", reflect.TypeOf((*MockProviderManager)(nil).BulkInstantiateByTrait), ctx, projectID, trait, name)
 }
 
+// CreateFromConfig mocks base method.
+func (m *MockProviderManager) CreateFromConfig(ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage) (*db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFromConfig", ctx, providerClass, projectID, name, config)
+	ret0, _ := ret[0].(*db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFromConfig indicates an expected call of CreateFromConfig.
+func (mr *MockProviderManagerMockRecorder) CreateFromConfig(ctx, providerClass, projectID, name, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFromConfig", reflect.TypeOf((*MockProviderManager)(nil).CreateFromConfig), ctx, providerClass, projectID, name, config)
+}
+
 // DeleteByID mocks base method.
 func (m *MockProviderManager) DeleteByID(ctx context.Context, providerID, projectID uuid.UUID) error {
 	m.ctrl.T.Helper()
