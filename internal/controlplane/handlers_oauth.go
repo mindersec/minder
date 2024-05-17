@@ -29,6 +29,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/sqlc-dev/pqtype"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -116,13 +117,22 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	var redirectUrl sql.NullString
+	var encryptedBytes pqtype.NullRawMessage
 	// Empty redirect URL means null string (default condition)
 	if req.GetRedirectUrl() != "" {
-		encryptedRedirectUrl, err := s.cryptoEngine.EncryptString(*req.RedirectUrl)
+		encryptedRedirectURL, err := s.cryptoEngine.EncryptString(req.GetRedirectUrl())
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error encrypting redirect URL: %s", err)
 		}
-		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl.EncodedData}
+		serialized, err := encryptedRedirectURL.Serialize()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "unable to serialize secret: %v", err)
+		}
+		encryptedBytes = pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
+		}
+		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectURL.EncodedData}
 	}
 
 	var confBytes []byte
@@ -136,13 +146,14 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:       providerName,
-		ProjectID:      projectID,
-		RemoteUser:     sql.NullString{Valid: user != "", String: user},
-		SessionState:   state,
-		OwnerFilter:    owner,
-		RedirectUrl:    redirectUrl,
-		ProviderConfig: confBytes,
+		Provider:          providerName,
+		ProjectID:         projectID,
+		RemoteUser:        sql.NullString{Valid: user != "", String: user},
+		SessionState:      state,
+		OwnerFilter:       owner,
+		RedirectUrl:       redirectUrl,
+		ProviderConfig:    confBytes,
+		EncryptedRedirect: encryptedBytes,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
@@ -261,19 +272,13 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 
 	logger.BusinessRecord(ctx).ProviderID = p.ID
 
+	// Note: right now, both RedirectUrl and EncryptedRedirect should both be valid
 	if stateData.RedirectUrl.Valid {
-		// TODO: get rid of this once we store the EncryptedData struct in
-		// the database.
-		encryptedData := mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
-		redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
+		redirectURL, err := s.decryptRedirect(&stateData)
 		if err != nil {
-			return fmt.Errorf("error decrypting redirect URL: %w", err)
+			return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 		}
-		parsedURL, err := url.Parse(redirectUrl)
-		if err != nil {
-			return fmt.Errorf("error parsing redirect URL: %w", err)
-		}
-		http.Redirect(w, r, parsedURL.String(), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 		return nil
 	}
 
@@ -342,20 +347,12 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			return fmt.Errorf("error creating GitHub App provider: %w", err)
 		}
 
-		// If we have a redirect URL, redirect the user, otherwise show a success page
 		if stateData.RedirectUrl.Valid {
-			// TODO: get rid of this once we store the EncryptedData struct in
-			// the database.
-			encryptedData := mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
-			redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
+			redirectURL, err := s.decryptRedirect(&stateData)
 			if err != nil {
-				return fmt.Errorf("error decrypting redirect URL: %w", err)
+				return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 			}
-			parsedURL, err := url.Parse(redirectUrl)
-			if err != nil {
-				return fmt.Errorf("error parsing redirect URL: %w", err)
-			}
-			http.Redirect(w, r, parsedURL.String(), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 			return nil
 		}
 	} else {
@@ -484,6 +481,11 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		return nil, err
 	}
 
+	serialized, err := encryptedToken.Serialize()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error serializing secret: %s", err)
+	}
+
 	// additionally, add an owner
 	var owner sql.NullString
 	if in.Owner == nil {
@@ -497,6 +499,10 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		Provider:       provider.Name,
 		EncryptedToken: encryptedToken.EncodedData,
 		OwnerFilter:    owner,
+		EncryptedAccessToken: pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
+		},
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
@@ -653,4 +659,27 @@ func (e *httpResponseError) Error() string {
 
 func (e *httpResponseError) WriteError(w http.ResponseWriter) {
 	http.Error(w, e.pageContents, e.statusCode)
+}
+
+func (s *Server) decryptRedirect(stateData *db.GetProjectIDBySessionStateRow) (*url.URL, error) {
+	var err error
+	// TODO: get rid of this once we migrate all secrets to use the new structure
+	var encryptedData mcrypto.EncryptedData
+	if stateData.EncryptedRedirect.Valid {
+		encryptedData, err = mcrypto.DeserializeEncryptedData(stateData.EncryptedRedirect.RawMessage)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		encryptedData = mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
+	}
+	redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting redirect URL: %w", err)
+	}
+	parsedURL, err := url.Parse(redirectUrl)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing redirect URL: %w", err)
+	}
+	return parsedURL, nil
 }

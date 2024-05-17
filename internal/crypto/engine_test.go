@@ -25,12 +25,34 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 //Test both the algorithm and the engine in one test suite
 // TODO: if we add additional algorithms in future, we should split up testing
 
-func TestKeyLoadFail(t *testing.T) {
+func TestNewFromCryptoConfig(t *testing.T) {
+	t.Parallel()
+
+	config := &server.Config{
+		Crypto: server.CryptoConfig{
+			KeyStore: server.KeyStoreConfig{
+				Type: "local",
+				Config: map[string]any{
+					"key_dir": "./testdata",
+				},
+			},
+			Default: server.DefaultCrypto{
+				KeyID:     "test_encryption_key",
+				Algorithm: string(algorithms.Aes256Cfb),
+			},
+		},
+	}
+	_, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+}
+
+func TestNewKeyLoadFail(t *testing.T) {
 	t.Parallel()
 
 	config := &server.Config{
@@ -40,6 +62,59 @@ func TestKeyLoadFail(t *testing.T) {
 	}
 	_, err := NewEngineFromConfig(config)
 	require.ErrorContains(t, err, "failed to read token key file")
+}
+
+func TestNewKeyRejectsEmptyConfig(t *testing.T) {
+	t.Parallel()
+
+	config := &server.Config{}
+	_, err := NewEngineFromConfig(config)
+	require.ErrorContains(t, err, "no encryption keys configured")
+}
+
+func TestNewKeyRejectsBadAlgo(t *testing.T) {
+	t.Parallel()
+
+	config := &server.Config{
+		Crypto: server.CryptoConfig{
+			KeyStore: server.KeyStoreConfig{
+				Type: "local",
+				Config: map[string]any{
+					"key_dir": "./testdata",
+				},
+			},
+			Default: server.DefaultCrypto{
+				KeyID:     "test_encryption_key",
+				Algorithm: "I'm a little teapot",
+			},
+		},
+	}
+	_, err := NewEngineFromConfig(config)
+	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
+}
+
+func TestNewKeyRejectsBadFallbackAlgo(t *testing.T) {
+	t.Parallel()
+
+	config := &server.Config{
+		Crypto: server.CryptoConfig{
+			KeyStore: server.KeyStoreConfig{
+				Type: "local",
+				Config: map[string]any{
+					"key_dir": "./testdata",
+				},
+			},
+			Default: server.DefaultCrypto{
+				KeyID:     "test_encryption_key",
+				Algorithm: string(algorithms.Aes256Cfb),
+			},
+			Fallback: server.FallbackCrypto{
+				Algorithms: []string{"what even is this?"},
+			},
+		},
+	}
+	_, err := NewEngineFromConfig(config)
+	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
 }
 
 func TestEncryptDecryptBytes(t *testing.T) {
@@ -77,6 +152,86 @@ func TestEncryptDecryptOAuthToken(t *testing.T) {
 	decrypted, err := engine.DecryptOAuthToken(encryptedToken)
 	require.NoError(t, err)
 	require.Equal(t, oauthToken, decrypted)
+}
+
+func TestDecryptEmpty(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		EncodedData: "",
+	}
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "cannot decrypt empty data")
+}
+
+func TestDecryptEmptySalt(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		EncodedData: "abc",
+		Salt:        nil,
+	}
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "cannot decrypt data with empty salt")
+}
+
+func TestDecryptBadAlgorithm(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm:   "I'm a little teapot",
+		EncodedData: "abc",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
+}
+
+func TestDecryptBadEncoding(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm: algorithms.Aes256Cfb,
+		// Unicode snowman is _not_ a valid base64 character
+		EncodedData: "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "error decoding secret")
+}
+
+func TestDecryptFailedDecryption(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
+		Algorithm: algorithms.Aes256Cfb,
+		// too small of a value - will trigger the ciphertext length check
+		EncodedData: "abcdef0123456789",
+		Salt:        legacySalt,
+		KeyVersion:  "",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorIs(t, err, ErrDecrypt)
 }
 
 var config = &server.Config{

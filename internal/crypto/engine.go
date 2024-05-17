@@ -186,6 +186,14 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 }
 
 func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
+	if data.EncodedData == "" {
+		return nil, errors.New("cannot decrypt empty data")
+	}
+
+	if len(data.Salt) == 0 {
+		return nil, errors.New("cannot decrypt data with empty salt")
+	}
+
 	algorithm, ok := e.supportedAlgorithms[data.Algorithm]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)

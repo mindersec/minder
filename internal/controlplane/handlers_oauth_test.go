@@ -834,7 +834,6 @@ func (p partialDbParamsMatcher) Matches(x interface{}) bool {
 	}
 
 	typedX.SessionState = ""
-
 	return cmp.Equal(typedX, p.value,
 		cmpopts.IgnoreFields(db.CreateSessionStateParams{}, "ProviderConfig"))
 }

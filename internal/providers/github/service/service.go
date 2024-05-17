@@ -29,6 +29,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/sqlc-dev/pqtype"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -186,6 +187,11 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		return nil, fmt.Errorf("error encoding token: %w", err)
 	}
 
+	serialized, err := encryptedToken.Serialize()
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = qtx.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
 		ProjectID:      stateData.ProjectID,
 		Provider:       providerName,
@@ -194,6 +200,10 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		EnrollmentNonce: sql.NullString{
 			Valid:  true,
 			String: state,
+		},
+		EncryptedAccessToken: pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
 		},
 	})
 	if err != nil {
