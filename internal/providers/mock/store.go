@@ -11,6 +11,7 @@ package mock_providers
 
 import (
 	context "context"
+	json "encoding/json"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -39,6 +40,21 @@ func NewMockProviderStore(ctrl *gomock.Controller) *MockProviderStore {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProviderStore) EXPECT() *MockProviderStoreMockRecorder {
 	return m.recorder
+}
+
+// Create mocks base method.
+func (m *MockProviderStore) Create(ctx context.Context, providerClass db.ProviderClass, name string, projectID uuid.UUID, config json.RawMessage) (*db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, providerClass, name, projectID, config)
+	ret0, _ := ret[0].(*db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockProviderStoreMockRecorder) Create(ctx, providerClass, name, projectID, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProviderStore)(nil).Create), ctx, providerClass, name, projectID, config)
 }
 
 // Delete mocks base method.
