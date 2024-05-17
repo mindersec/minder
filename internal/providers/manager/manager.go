@@ -17,6 +17,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -63,6 +64,7 @@ type ProviderManager interface {
 // specific Provider class. The idea is that ProviderManager determines the
 // class of the Provider, and delegates to the appropraite ProviderClassManager
 type ProviderClassManager interface {
+	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
 	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
 	// Delete deletes an instance of this provider
