@@ -101,8 +101,10 @@ func (m *providerClassManager) getProviderCredentials(
 		if err != nil {
 			return nil, err
 		}
+	} else if encToken.EncryptedToken.Valid {
+		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken.String)
 	} else {
-		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken)
+		return nil, fmt.Errorf("no secret found for provider %s", encToken.Provider)
 	}
 	decryptedToken, err := m.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {

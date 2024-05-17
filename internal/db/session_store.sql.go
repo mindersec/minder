@@ -14,7 +14,7 @@ import (
 )
 
 const createSessionState = `-- name: CreateSessionState :one
-INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, provider_config, redirect_url, encrypted_redirect) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect, provider_config
+INSERT INTO session_store (provider, project_id, remote_user, session_state, owner_filter, provider_config, encrypted_redirect) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, provider, project_id, port, owner_filter, session_state, created_at, redirect_url, remote_user, encrypted_redirect, provider_config
 `
 
 type CreateSessionStateParams struct {
@@ -24,7 +24,6 @@ type CreateSessionStateParams struct {
 	SessionState      string                `json:"session_state"`
 	OwnerFilter       sql.NullString        `json:"owner_filter"`
 	ProviderConfig    []byte                `json:"provider_config"`
-	RedirectUrl       sql.NullString        `json:"redirect_url"`
 	EncryptedRedirect pqtype.NullRawMessage `json:"encrypted_redirect"`
 }
 
@@ -36,7 +35,6 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 		arg.SessionState,
 		arg.OwnerFilter,
 		arg.ProviderConfig,
-		arg.RedirectUrl,
 		arg.EncryptedRedirect,
 	)
 	var i SessionStore

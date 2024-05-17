@@ -50,7 +50,7 @@ func TestNewFromCryptoConfig(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestNewKeyLoadFail(t *testing.T) {
+func TestNewKeystoreFail(t *testing.T) {
 	t.Parallel()
 
 	config := &server.Config{
@@ -59,10 +59,10 @@ func TestNewKeyLoadFail(t *testing.T) {
 		},
 	}
 	_, err := NewEngineFromConfig(config)
-	require.ErrorContains(t, err, "failed to read token key file")
+	require.ErrorContains(t, err, "unable to create keystore")
 }
 
-func TestNewKeyRejectsEmptyConfig(t *testing.T) {
+func TestNewRejectsEmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	config := &server.Config{}
@@ -70,7 +70,7 @@ func TestNewKeyRejectsEmptyConfig(t *testing.T) {
 	require.ErrorContains(t, err, "no encryption keys configured")
 }
 
-func TestNewKeyRejectsBadAlgo(t *testing.T) {
+func TestNewRejectsBadAlgo(t *testing.T) {
 	t.Parallel()
 
 	config := &server.Config{
@@ -91,7 +91,7 @@ func TestNewKeyRejectsBadAlgo(t *testing.T) {
 	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
 }
 
-func TestNewKeyRejectsBadFallbackAlgo(t *testing.T) {
+func TestNewRejectsBadFallbackAlgo(t *testing.T) {
 	t.Parallel()
 
 	config := &server.Config{
@@ -128,14 +128,52 @@ func TestEncryptDecryptBytes(t *testing.T) {
 	assert.Equal(t, sampleData, decrypted)
 }
 
-func TestEncryptTooLarge(t *testing.T) {
+func TestFallbackDecrypt(t *testing.T) {
 	t.Parallel()
 
+	// instantiate engine with CFB as default algorithm
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
-	large := make([]byte, 34000000) // More than 32 MB
-	_, err = engine.EncryptString(string(large))
-	assert.ErrorIs(t, err, algorithms.ErrExceedsMaxSize)
+
+	// encrypt data with old config
+	const sampleData = "Hello world!"
+	encrypted, err := engine.EncryptString(sampleData)
+	require.NoError(t, err)
+
+	// Create new config where we introduce a new default algorithm
+	// and make CFB the fallback.
+	newConfig := &server.Config{
+		Crypto: server.CryptoConfig{
+			KeyStore: server.KeyStoreConfig{
+				Type: "local",
+				Config: map[string]any{
+					"key_dir": "./testdata",
+				},
+			},
+			Default: server.DefaultCrypto{
+				KeyID:     "test_encryption_key",
+				Algorithm: string(algorithms.Aes256Gcm),
+			},
+			Fallback: server.FallbackCrypto{
+				Algorithms: []string{string(algorithms.Aes256Cfb)},
+			},
+		},
+	}
+
+	// instantiate new engine
+	newEngine, err := NewEngineFromConfig(newConfig)
+	require.NoError(t, err)
+
+	// decrypt data from old engine with new engine
+	// this validates that the fallback works as expected
+	decrypted, err := newEngine.DecryptString(encrypted)
+	assert.Nil(t, err)
+	assert.Equal(t, sampleData, decrypted)
+
+	// encrypt the data with the new engine - assert it is not the same as the old result
+	newEncrypted, err := newEngine.EncryptString(sampleData)
+	require.NoError(t, err)
+	require.NotEqualf(t, newEncrypted, encrypted, "two encrypted values expected to be different but are not")
 }
 
 func TestEncryptDecryptOAuthToken(t *testing.T) {

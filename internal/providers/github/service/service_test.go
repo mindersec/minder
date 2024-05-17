@@ -197,7 +197,6 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	deserialized, err := crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
 	require.NoError(t, err)
 	require.Equal(t, deserialized, encryptedToken)
-	require.Equal(t, dbToken[0].EncryptedToken, encryptedToken.EncodedData)
 	require.Equal(t, dbToken[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbToken[0].EnrollmentNonce, sql.NullString{String: stateNonce, Valid: true})
 
@@ -238,7 +237,6 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	deserialized, err = crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
 	require.NoError(t, err)
 	require.Equal(t, deserialized, encryptedToken)
-	require.Equal(t, dbTokenUpdate[0].EncryptedToken, encryptedToken.EncodedData)
 	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
 }

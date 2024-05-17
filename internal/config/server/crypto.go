@@ -31,7 +31,7 @@ type KeyStoreConfig struct {
 // DefaultCrypto defines the default crypto to be used for new data
 type DefaultCrypto struct {
 	KeyID     string `mapstructure:"key_id"`
-	Algorithm string `mapstructure:"algorithm"`
+	Algorithm string `mapstructure:"algorithm" default:"aes-256-gcm"`
 }
 
 // FallbackCrypto defines the optional list of keys and algorithms to fall

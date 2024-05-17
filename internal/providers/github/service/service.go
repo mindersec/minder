@@ -194,10 +194,9 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 	}
 
 	_, err = qtx.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:      stateData.ProjectID,
-		Provider:       providerName,
-		EncryptedToken: encryptedToken.EncodedData,
-		OwnerFilter:    stateData.OwnerFilter,
+		ProjectID:   stateData.ProjectID,
+		Provider:    providerName,
+		OwnerFilter: stateData.OwnerFilter,
 		EnrollmentNonce: sql.NullString{
 			Valid:  true,
 			String: state,

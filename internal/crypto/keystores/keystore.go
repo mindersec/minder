@@ -100,10 +100,18 @@ func (l *localFileKeyStore) GetKey(id string) ([]byte, error) {
 func readKey(keyDir string, keyFilename string) ([]byte, error) {
 	keyPath := filepath.Join(keyDir, keyFilename)
 	cleanPath := filepath.Clean(keyPath)
-	data, err := os.ReadFile(cleanPath)
+
+	// NOTE: Minder reads the base64 encoded key PLUS line feed character and
+	// uses it as the key without decoding. The CFB algorithm expects the line
+	// feed, and stripping  it out will break existing secrets. The GCM
+	// algorithm will base64 decode the key and get rid of the newline.
+	//
+	// If we get rid of the CFB cipher in future, we should base64 decode the
+	// string here and always use the decoded bytes minus linefeed as the key
+	// in the algorithms.
+	key, err := os.ReadFile(cleanPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read key: %w", err)
 	}
-
-	return data, nil
+	return key, nil
 }

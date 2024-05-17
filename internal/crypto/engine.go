@@ -79,7 +79,7 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 
 	keystore, err := keystores.NewKeyStoreFromConfig(cryptoCfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read token key file: %s", err)
+		return nil, fmt.Errorf("unable to create keystore: %s", err)
 	}
 
 	defaultAlgorithm, err := algorithms.TypeFromString(cryptoCfg.Default.Algorithm)

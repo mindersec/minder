@@ -552,7 +552,7 @@ type ProviderAccessToken struct {
 	Provider             string                `json:"provider"`
 	ProjectID            uuid.UUID             `json:"project_id"`
 	OwnerFilter          sql.NullString        `json:"owner_filter"`
-	EncryptedToken       string                `json:"encrypted_token"`
+	EncryptedToken       sql.NullString        `json:"encrypted_token"`
 	ExpirationTime       time.Time             `json:"expiration_time"`
 	CreatedAt            time.Time             `json:"created_at"`
 	UpdatedAt            time.Time             `json:"updated_at"`
