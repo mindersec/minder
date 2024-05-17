@@ -79,16 +79,21 @@ type ProviderClassManager interface {
 	GetSupportedClasses() []db.ProviderClass
 }
 
-type providerManager struct {
+type classTracker struct {
 	classManagers map[db.ProviderClass]ProviderClassManager
-	store         providers.ProviderStore
 }
 
-// NewProviderManager creates a new instance of ProviderManager
-func NewProviderManager(
-	store providers.ProviderStore,
+func (p *classTracker) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
+	manager, ok := p.classManagers[class]
+	if !ok {
+		return nil, fmt.Errorf("unexpected provider class: %s", class)
+	}
+	return manager, nil
+}
+
+func newClassTracker(
 	classManagers ...ProviderClassManager,
-) (ProviderManager, error) {
+) (*classTracker, error) {
 	classes := make(map[db.ProviderClass]ProviderClassManager)
 
 	for _, factory := range classManagers {
@@ -108,9 +113,29 @@ func NewProviderManager(
 		}
 	}
 
-	return &providerManager{
+	return &classTracker{
 		classManagers: classes,
-		store:         store,
+	}, nil
+}
+
+type providerManager struct {
+	classTracker
+	store providers.ProviderStore
+}
+
+// NewProviderManager creates a new instance of ProviderManager
+func NewProviderManager(
+	store providers.ProviderStore,
+	classManagers ...ProviderClassManager,
+) (ProviderManager, error) {
+	classes, err := newClassTracker(classManagers...)
+	if err != nil {
+		return nil, fmt.Errorf("error creating class tracker: %w", err)
+	}
+
+	return &providerManager{
+		classTracker: *classes,
+		store:        store,
 	}, nil
 }
 
@@ -221,12 +246,4 @@ func (p *providerManager) buildFromDBRecord(ctx context.Context, config *db.Prov
 		return nil, err
 	}
 	return manager.Build(ctx, config)
-}
-
-func (p *providerManager) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
-	manager, ok := p.classManagers[class]
-	if !ok {
-		return nil, fmt.Errorf("unexpected provider class: %s", class)
-	}
-	return manager, nil
 }
