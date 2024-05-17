@@ -122,6 +122,8 @@ type GitHub interface {
 	) ([]*github.IssueComment, error)
 	UpdateIssueComment(ctx context.Context, owner, repo string, number int64, comment string) error
 	AddAuthToPushOptions(ctx context.Context, options *git.PushOptions) error
+	StartCheckRun(context.Context, string, string, *github.CreateCheckRunOptions) (*github.CheckRun, error)
+	UpdateCheckRun(context.Context, string, string, int64, *github.UpdateCheckRunOptions) (*github.CheckRun, error)
 }
 
 // ImageLister is the interface for listing images

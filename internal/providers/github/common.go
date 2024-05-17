@@ -64,6 +64,9 @@ var (
 	ErrBranchNotFound = errors.New("branch not found")
 	// ErrNoPackageListingClient denotes if there is no package listing client available
 	ErrNoPackageListingClient = errors.New("no package listing client available")
+	// ErroNoCheckPermissions is a fixed error returned when the credentialed
+	// identity has not been authorized to use the checks API
+	ErroNoCheckPermissions = errors.New("missing permissions: check")
 )
 
 // GitHub is the struct that contains the shared GitHub client operations
@@ -975,4 +978,40 @@ func NewFallbackTokenClient(appConfig config.ProviderConfig) *github.Client {
 
 	packageListingClient = github.NewClient(fallbackTokenTC)
 	return packageListingClient
+}
+
+// StartCheckRun calls the GitHub API to initialize a new check using the
+// supplied options.
+func (c *GitHub) StartCheckRun(
+	ctx context.Context, owner, repo string, opts *github.CreateCheckRunOptions,
+) (*github.CheckRun, error) {
+	if opts.StartedAt == nil {
+		opts.StartedAt = &github.Timestamp{Time: time.Now()}
+	}
+
+	run, resp, err := c.client.Checks.CreateCheckRun(ctx, owner, repo, *opts)
+	if err != nil {
+		// If error is 403 then it means we are missing permissions
+		if resp.StatusCode == 403 {
+			return nil, fmt.Errorf("missing permissions: check")
+		}
+		return nil, ErroNoCheckPermissions
+	}
+	return run, nil
+}
+
+// UpdateCheckRun updates an existing check run in GitHub. The check run is referenced
+// using its run ID. This function returns the updated CheckRun srtuct.
+func (c *GitHub) UpdateCheckRun(
+	ctx context.Context, owner, repo string, checkRunID int64, opts *github.UpdateCheckRunOptions,
+) (*github.CheckRun, error) {
+	run, resp, err := c.client.Checks.UpdateCheckRun(ctx, owner, repo, checkRunID, *opts)
+	if err != nil {
+		// If error is 403 then it means we are missing permissions
+		if resp.StatusCode == 403 {
+			return nil, ErroNoCheckPermissions
+		}
+		return nil, fmt.Errorf("updating check: %w", err)
+	}
+	return run, nil
 }

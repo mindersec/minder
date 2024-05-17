@@ -847,6 +847,21 @@ func (mr *MockGitHubMockRecorder) SetCommitStatus(arg0, arg1, arg2, arg3, arg4 a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCommitStatus", reflect.TypeOf((*MockGitHub)(nil).SetCommitStatus), arg0, arg1, arg2, arg3, arg4)
 }
 
+// StartCheckRun mocks base method.
+func (m *MockGitHub) StartCheckRun(arg0 context.Context, arg1, arg2 string, arg3 *github.CreateCheckRunOptions) (*github.CheckRun, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StartCheckRun", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*github.CheckRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StartCheckRun indicates an expected call of StartCheckRun.
+func (mr *MockGitHubMockRecorder) StartCheckRun(arg0, arg1, arg2, arg3 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartCheckRun", reflect.TypeOf((*MockGitHub)(nil).StartCheckRun), arg0, arg1, arg2, arg3)
+}
+
 // UpdateBranchProtection mocks base method.
 func (m *MockGitHub) UpdateBranchProtection(arg0 context.Context, arg1, arg2, arg3 string, arg4 *github.ProtectionRequest) error {
 	m.ctrl.T.Helper()
@@ -859,6 +874,21 @@ func (m *MockGitHub) UpdateBranchProtection(arg0 context.Context, arg1, arg2, ar
 func (mr *MockGitHubMockRecorder) UpdateBranchProtection(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBranchProtection", reflect.TypeOf((*MockGitHub)(nil).UpdateBranchProtection), arg0, arg1, arg2, arg3, arg4)
+}
+
+// UpdateCheckRun mocks base method.
+func (m *MockGitHub) UpdateCheckRun(arg0 context.Context, arg1, arg2 string, arg3 int64, arg4 *github.UpdateCheckRunOptions) (*github.CheckRun, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateCheckRun", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*github.CheckRun)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateCheckRun indicates an expected call of UpdateCheckRun.
+func (mr *MockGitHubMockRecorder) UpdateCheckRun(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCheckRun", reflect.TypeOf((*MockGitHub)(nil).UpdateCheckRun), arg0, arg1, arg2, arg3, arg4)
 }
 
 // UpdateIssueComment mocks base method.
