@@ -33,29 +33,40 @@ type Type string
 const (
 	// Aes256Cfb is the AES-256-CFB algorithm
 	Aes256Cfb Type = "aes-256-cfb"
+	// Aes256Gcm is the AES-256-GCM algorithm
+	Aes256Gcm Type = "aes-256-gcm"
 )
 
-const maxSize = 32 * 1024 * 1024
+const maxPlaintextSize = 32 * 1024 * 1024
 
-// ErrUnknownAlgorithm is used when an incorrect algorithm name is used.
 var (
+	// ErrUnknownAlgorithm is returned when an incorrect algorithm name is used.
 	ErrUnknownAlgorithm = errors.New("unexpected encryption algorithm")
+	// ErrExceedsMaxSize is returned when the plaintext is too large.
+	ErrExceedsMaxSize = errors.New("plaintext is too large, limited to 32MiB")
 )
 
 // TypeFromString attempts to map a string to a `Type` value.
 func TypeFromString(name string) (Type, error) {
 	// TODO: use switch when we support more than once type.
-	if name == string(Aes256Cfb) {
+	switch name {
+	case string(Aes256Cfb):
 		return Aes256Cfb, nil
+	case string(Aes256Gcm):
+		return Aes256Gcm, nil
+	default:
+		return "", fmt.Errorf("%w: %s", ErrUnknownAlgorithm, name)
 	}
-	return "", fmt.Errorf("%w: %s", ErrUnknownAlgorithm, name)
 }
 
 // NewFromType instantiates an encryption algorithm by name
 func NewFromType(algoType Type) (EncryptionAlgorithm, error) {
-	// TODO: use switch when we support more than once type.
-	if algoType == Aes256Cfb {
+	switch algoType {
+	case Aes256Cfb:
 		return &AES256CFBAlgorithm{}, nil
+	case Aes256Gcm:
+		return &AES256GCMAlgorithm{}, nil
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrUnknownAlgorithm, algoType)
 	}
-	return nil, fmt.Errorf("%w: %s", ErrUnknownAlgorithm, algoType)
 }

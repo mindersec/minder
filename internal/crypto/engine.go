@@ -156,7 +156,7 @@ func (e *engine) DecryptString(encryptedString EncryptedData) (string, error) {
 	return string(decrypted), nil
 }
 
-func (e *engine) encrypt(data []byte) (EncryptedData, error) {
+func (e *engine) encrypt(plaintext []byte) (EncryptedData, error) {
 	// Neither of these lookups should ever fail.
 	algorithm, ok := e.supportedAlgorithms[e.defaultAlgorithm]
 	if !ok {
@@ -168,7 +168,7 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 		return EncryptedData{}, fmt.Errorf("unable to find preferred key with ID: %s", e.defaultKeyID)
 	}
 
-	encrypted, err := algorithm.Encrypt(data, key)
+	encrypted, err := algorithm.Encrypt(plaintext, key)
 	if err != nil {
 		return EncryptedData{}, errors.Join(ErrEncrypt, err)
 	}
