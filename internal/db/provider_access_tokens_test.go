@@ -20,7 +20,11 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 func TestUpsertProviderAccessToken(t *testing.T) {
@@ -30,11 +34,15 @@ func TestUpsertProviderAccessToken(t *testing.T) {
 	project := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, project.ID)
 
+	secret := createSecret(t, "abc")
+	serialized := serializeSecret(t, secret)
+
 	tok, err := testQueries.UpsertAccessToken(context.Background(), UpsertAccessTokenParams{
-		ProjectID:      project.ID,
-		Provider:       prov.Name,
-		EncryptedToken: "abc",
-		OwnerFilter:    sql.NullString{},
+		ProjectID:            project.ID,
+		Provider:             prov.Name,
+		EncryptedToken:       "abc",
+		EncryptedAccessToken: serialized,
+		OwnerFilter:          sql.NullString{},
 	})
 
 	require.NoError(t, err)
@@ -45,6 +53,7 @@ func TestUpsertProviderAccessToken(t *testing.T) {
 	require.Equal(t, project.ID, tok.ProjectID)
 	require.Equal(t, prov.Name, tok.Provider)
 	require.Equal(t, "abc", tok.EncryptedToken)
+	require.Equal(t, secret, deserializeSecret(t, tok.EncryptedAccessToken))
 	require.Equal(t, sql.NullString{}, tok.OwnerFilter)
 
 	tokUpdate, err := testQueries.UpsertAccessToken(context.Background(), UpsertAccessTokenParams{
@@ -62,4 +71,33 @@ func TestUpsertProviderAccessToken(t *testing.T) {
 	require.Equal(t, tok.ID, tokUpdate.ID)
 	require.Equal(t, tok.CreatedAt, tokUpdate.CreatedAt)
 	require.NotEqual(t, tok.UpdatedAt, tokUpdate.UpdatedAt)
+}
+
+func createSecret(t *testing.T, encryptedData string) crypto.EncryptedData {
+	t.Helper()
+
+	return crypto.EncryptedData{
+		Algorithm:   algorithms.Aes256Cfb,
+		EncodedData: encryptedData,
+		KeyVersion:  "12345",
+	}
+}
+
+func serializeSecret(t *testing.T, data crypto.EncryptedData) pqtype.NullRawMessage {
+	t.Helper()
+
+	serialized, err := data.Serialize()
+	require.NoError(t, err)
+	return pqtype.NullRawMessage{
+		RawMessage: serialized,
+		Valid:      true,
+	}
+}
+
+func deserializeSecret(t *testing.T, data pqtype.NullRawMessage) crypto.EncryptedData {
+	t.Helper()
+
+	result, err := crypto.DeserializeEncryptedData(data.RawMessage)
+	require.NoError(t, err)
+	return result
 }

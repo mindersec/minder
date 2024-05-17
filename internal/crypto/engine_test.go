@@ -167,20 +167,6 @@ func TestDecryptEmpty(t *testing.T) {
 	require.ErrorContains(t, err, "cannot decrypt empty data")
 }
 
-func TestDecryptEmptySalt(t *testing.T) {
-	t.Parallel()
-
-	engine, err := NewEngineFromConfig(config)
-	require.NoError(t, err)
-	encryptedToken := EncryptedData{
-		EncodedData: "abc",
-		Salt:        nil,
-	}
-
-	_, err = engine.DecryptString(encryptedToken)
-	require.ErrorContains(t, err, "cannot decrypt data with empty salt")
-}
-
 func TestDecryptBadAlgorithm(t *testing.T) {
 	t.Parallel()
 
@@ -189,7 +175,6 @@ func TestDecryptBadAlgorithm(t *testing.T) {
 	encryptedToken := EncryptedData{
 		Algorithm:   "I'm a little teapot",
 		EncodedData: "abc",
-		Salt:        legacySalt,
 		KeyVersion:  "",
 	}
 	require.NoError(t, err)
@@ -207,7 +192,6 @@ func TestDecryptBadEncoding(t *testing.T) {
 		Algorithm: algorithms.Aes256Cfb,
 		// Unicode snowman is _not_ a valid base64 character
 		EncodedData: "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃",
-		Salt:        legacySalt,
 		KeyVersion:  "",
 	}
 	require.NoError(t, err)
@@ -225,7 +209,6 @@ func TestDecryptFailedDecryption(t *testing.T) {
 		Algorithm: algorithms.Aes256Cfb,
 		// too small of a value - will trigger the ciphertext length check
 		EncodedData: "abcdef0123456789",
-		Salt:        legacySalt,
 		KeyVersion:  "",
 	}
 	require.NoError(t, err)

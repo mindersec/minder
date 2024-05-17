@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -31,6 +32,8 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto"
+	"github.com/stacklok/minder/internal/crypto/algorithms"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
@@ -87,7 +90,7 @@ func TestDeleteProvider(t *testing.T) {
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 		Return(db.ProviderAccessToken{
-			EncryptedToken: "encryptedToken",
+			EncryptedAccessToken: generateSecret(t),
 		}, nil).AnyTimes()
 	mockStore.EXPECT().DeleteProvider(gomock.Any(), db.DeleteProviderParams{
 		ID:        providerID,
@@ -206,7 +209,7 @@ func TestDeleteProviderByID(t *testing.T) {
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 		Return(db.ProviderAccessToken{
-			EncryptedToken: "encryptedToken",
+			EncryptedAccessToken: generateSecret(t),
 		}, nil).AnyTimes()
 	mockStore.EXPECT().
 		GetProviderWebhooks(gomock.Any(), gomock.Eq(providerID)).
@@ -266,4 +269,23 @@ func TestDeleteProviderByID(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, providerID.String(), resp.Id)
+}
+
+func generateSecret(t *testing.T) pqtype.NullRawMessage {
+	t.Helper()
+
+	data := crypto.EncryptedData{
+		Algorithm: algorithms.Aes256Cfb,
+		// randomly generated
+		EncodedData: "dnS6VFiMYrfnbeP6eixmBw==",
+		KeyVersion:  "",
+	}
+
+	serialized, err := data.Serialize()
+	require.NoError(t, err)
+
+	return pqtype.NullRawMessage{
+		RawMessage: serialized,
+		Valid:      true,
+	}
 }

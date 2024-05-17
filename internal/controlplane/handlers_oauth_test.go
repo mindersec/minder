@@ -33,6 +33,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -430,6 +431,8 @@ func TestProviderCallback(t *testing.T) {
 				Valid:  true,
 				String: encryptedUrlString.EncodedData,
 			}
+			serialized, err := encryptedUrlString.Serialize()
+			require.NoError(t, err)
 
 			tx := sql.Tx{}
 			store.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -441,7 +444,11 @@ func TestProviderCallback(t *testing.T) {
 				db.GetProjectIDBySessionStateRow{
 					ProjectID:   projectID,
 					RedirectUrl: encryptedUrl,
-					RemoteUser:  tc.remoteUser,
+					EncryptedRedirect: pqtype.NullRawMessage{
+						RawMessage: serialized,
+						Valid:      true,
+					},
+					RemoteUser: tc.remoteUser,
 				}, nil)
 
 			if tc.existingProvider {

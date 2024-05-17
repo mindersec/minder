@@ -29,32 +29,36 @@ import (
 // AES256CFBAlgorithm implements the AES-256-CFB algorithm
 type AES256CFBAlgorithm struct{}
 
+// Our current implementation of AES-256-CFB uses a fixed salt.
+// Since we are planning to move to AES-256-GCM, leave this hardcoded here.
+var legacySalt = []byte("somesalt")
+
 // Encrypt encrypts a row of data.
-func (a *AES256CFBAlgorithm) Encrypt(data []byte, key []byte, salt []byte) ([]byte, error) {
-	if len(data) > maxSize {
+func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
+	if len(plaintext) > maxSize {
 		return nil, status.Errorf(codes.InvalidArgument, "data is too large (>32MB)")
 	}
-	block, err := aes.NewCipher(a.deriveKey(key, salt))
+	block, err := aes.NewCipher(a.deriveKey(key))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
 
 	// The IV needs to be unique, but not secure. Therefore, it's common to include it at the beginning of the ciphertext.
-	ciphertext := make([]byte, aes.BlockSize+len(data))
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to read random bytes: %s", err)
 	}
 
 	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
 	return ciphertext, nil
 }
 
 // Decrypt decrypts a row of data.
-func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte) ([]byte, error) {
-	block, err := aes.NewCipher(a.deriveKey(key, salt))
+func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(a.deriveKey(key))
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
 	}
@@ -74,6 +78,6 @@ func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte)
 }
 
 // Function to derive a key from a passphrase using Argon2
-func (_ *AES256CFBAlgorithm) deriveKey(key []byte, salt []byte) []byte {
-	return argon2.IDKey(key, salt, 1, 64*1024, 4, 32)
+func (_ *AES256CFBAlgorithm) deriveKey(key []byte) []byte {
+	return argon2.IDKey(key, legacySalt, 1, 64*1024, 4, 32)
 }

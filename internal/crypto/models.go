@@ -28,8 +28,6 @@ type EncryptedData struct {
 	Algorithm algorithms.Type
 	// The encrypted data represented as a base64 encoded string.
 	EncodedData string
-	// The salt used in the encryption.
-	Salt []byte
 	// An identifier which specifies the key used.
 	// Used to handle multiple keys during key rotation.
 	KeyVersion string
@@ -48,7 +46,6 @@ func NewBackwardsCompatibleEncryptedData(encryptedData string) EncryptedData {
 	return EncryptedData{
 		Algorithm:   algorithms.Aes256Cfb,
 		EncodedData: encryptedData,
-		Salt:        legacySalt,
 		KeyVersion:  "",
 	}
 }
