@@ -23,8 +23,8 @@ import (
 
 // EncryptionAlgorithm represents a crypto algorithm used by the Engine
 type EncryptionAlgorithm interface {
-	Encrypt(data []byte, key []byte, salt []byte) ([]byte, error)
-	Decrypt(data []byte, key []byte, salt []byte) ([]byte, error)
+	Encrypt(plaintext []byte, key []byte) ([]byte, error)
+	Decrypt(ciphertext []byte, key []byte) ([]byte, error)
 }
 
 // Type is an enum of supported encryption algorithms

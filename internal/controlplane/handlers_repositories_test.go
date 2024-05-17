@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -549,7 +550,10 @@ func createServer(
 		store.EXPECT().
 			GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
 			Return(db.ProviderAccessToken{
-				EncryptedToken: "encryptedToken",
+				EncryptedAccessToken: pqtype.NullRawMessage{
+					Valid:      true,
+					RawMessage: make(json.RawMessage, 16),
+				},
 			}, nil).AnyTimes()
 		store.EXPECT().
 			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).

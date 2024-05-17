@@ -45,8 +45,6 @@ type Engine interface {
 }
 
 var (
-	// TODO: get rid of this when we allow per-secret salting.
-	legacySalt = []byte("somesalt")
 	// ErrDecrypt is returned when we cannot decrypt a secret.
 	ErrDecrypt = errors.New("unable to decrypt")
 	// ErrEncrypt is returned when we cannot encrypt a secret.
@@ -170,7 +168,7 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 		return EncryptedData{}, fmt.Errorf("unable to find preferred key with ID: %s", e.defaultKeyID)
 	}
 
-	encrypted, err := algorithm.Encrypt(data, key, legacySalt)
+	encrypted, err := algorithm.Encrypt(data, key)
 	if err != nil {
 		return EncryptedData{}, errors.Join(ErrEncrypt, err)
 	}
@@ -180,7 +178,6 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 	return EncryptedData{
 		Algorithm:   e.defaultAlgorithm,
 		EncodedData: encoded,
-		Salt:        legacySalt,
 		KeyVersion:  e.defaultKeyID,
 	}, nil
 }
@@ -188,10 +185,6 @@ func (e *engine) encrypt(data []byte) (EncryptedData, error) {
 func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 	if data.EncodedData == "" {
 		return nil, errors.New("cannot decrypt empty data")
-	}
-
-	if len(data.Salt) == 0 {
-		return nil, errors.New("cannot decrypt data with empty salt")
 	}
 
 	algorithm, ok := e.supportedAlgorithms[data.Algorithm]
@@ -218,7 +211,7 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 	}
 
 	// decrypt the data
-	result, err := algorithm.Decrypt(encrypted, key, data.Salt)
+	result, err := algorithm.Decrypt(encrypted, key)
 	if err != nil {
 		return nil, errors.Join(ErrDecrypt, err)
 	}
