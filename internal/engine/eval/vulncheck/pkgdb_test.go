@@ -37,6 +37,7 @@ func TestNpmPkgDb(t *testing.T) {
 		depName        string
 		patchedVersion string
 		expectError    bool
+		errorToExpect  error
 		expectReply    *packageJson
 	}{
 		{
@@ -117,8 +118,9 @@ func TestNpmPkgDb(t *testing.T) {
 					t.Fatal(err)
 				}
 			},
-			depName:     "non-existing-package",
-			expectError: true,
+			depName:       "non-existing-package",
+			expectError:   true,
+			errorToExpect: ErrPkgNotFound,
 		},
 		{
 			name: "InvalidJSON",
@@ -154,6 +156,9 @@ func TestNpmPkgDb(t *testing.T) {
 			}
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
+				if tt.errorToExpect != nil {
+					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+				}
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
@@ -302,6 +307,7 @@ func TestPyPiPkgDb(t *testing.T) {
 		depName         string
 		patchedVersion  string
 		expectError     bool
+		errorToExpect   error
 		expectReply     string
 	}{
 		{
@@ -348,8 +354,9 @@ func TestPyPiPkgDb(t *testing.T) {
 					t.Fatal(err)
 				}
 			},
-			depName:     "non-existing-package",
-			expectError: true,
+			depName:       "non-existing-package",
+			expectError:   true,
+			errorToExpect: ErrPkgNotFound,
 		},
 		{
 			name: "InvalidJSON",
@@ -386,6 +393,9 @@ func TestPyPiPkgDb(t *testing.T) {
 			}
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
+				if tt.errorToExpect != nil {
+					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+				}
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
@@ -411,6 +421,7 @@ func TestGoPkgDb(t *testing.T) {
 		depName          string
 		patchedVersion   string
 		expectError      bool
+		errorToExpect    error
 		expectReply      *goModPackage
 	}{
 		{
@@ -493,8 +504,9 @@ go.sum database tree
 					t.Fatal(err)
 				}
 			},
-			depName:     "non-existing-package",
-			expectError: true,
+			depName:       "non-existing-package",
+			expectError:   true,
+			errorToExpect: ErrPkgNotFound,
 		},
 		{
 			name: "InvalidJSONProxy",
@@ -539,8 +551,9 @@ go.sum database tree
 			mockSumHandler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
-			depName:     "golang.org/x/text",
-			expectError: true,
+			depName:       "golang.org/x/text",
+			expectError:   true,
+			errorToExpect: ErrPkgNotFound,
 		},
 		{
 			name: "TooFewLinesSum",
@@ -589,6 +602,9 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 			}
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
+				if tt.errorToExpect != nil {
+					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+				}
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
