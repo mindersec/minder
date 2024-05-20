@@ -35,8 +35,8 @@ var legacySalt = []byte("somesalt")
 
 // Encrypt encrypts a row of data.
 func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
-	if len(plaintext) > maxSize {
-		return nil, status.Errorf(codes.InvalidArgument, "data is too large (>32MB)")
+	if len(plaintext) > maxPlaintextSize {
+		return nil, ErrExceedsMaxSize
 	}
 	block, err := aes.NewCipher(a.deriveKey(key))
 	if err != nil {
