@@ -21,8 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto/algorithms"
@@ -137,7 +135,7 @@ func TestEncryptTooLarge(t *testing.T) {
 	require.NoError(t, err)
 	large := make([]byte, 34000000) // More than 32 MB
 	_, err = engine.EncryptString(string(large))
-	assert.ErrorIs(t, err, status.Error(codes.InvalidArgument, "data is too large (>32MB)"))
+	assert.ErrorIs(t, err, algorithms.ErrExceedsMaxSize)
 }
 
 func TestEncryptDecryptOAuthToken(t *testing.T) {
