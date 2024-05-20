@@ -206,7 +206,7 @@ func (e *Evaluator) checkVulnerabilities(
 	if patched, latest, noFix := getPatchedVersion(response.Vulns); noFix {
 		patchFormatter = pkgRepo.NoPatchAvailableFormatter(dep.Dep)
 	} else if patchFormatter, err = pkgRepo.SendRecvRequest(ctx, dep.Dep, patched, latest); err != nil {
-		return false, fmt.Errorf("failed to send package request: %w", err)
+		patchFormatter = pkgRepo.PkgRegistryErrorFormatter(dep.Dep, err)
 	}
 
 	if err := prHandler.trackVulnerableDep(ctx, dep, response, patchFormatter); err != nil {
