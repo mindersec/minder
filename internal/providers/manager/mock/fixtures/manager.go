@@ -48,12 +48,14 @@ func WithSuccessfulInstantiateFromID(provider provinfv1.Provider) func(mock Prov
 	return func(mock ProviderManagerMock) {
 		mock.EXPECT().
 			InstantiateFromID(gomock.Any(), gomock.Any()).
-			Return(provider, nil)
+			Return(provider, nil).
+			AnyTimes()
 	}
 }
 
 func WithFailedInstantiateFromID(mock ProviderManagerMock) {
 	mock.EXPECT().
 		InstantiateFromID(gomock.Any(), gomock.Any()).
-		Return(nil, errDefault)
+		Return(nil, errDefault).
+		AnyTimes()
 }
