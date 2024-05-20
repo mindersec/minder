@@ -56,7 +56,7 @@ require (
 	github.com/stacklok/frizbee v0.0.15
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.22.0
-	github.com/thomaspoignant/go-feature-flag v1.27.0
+	github.com/thomaspoignant/go-feature-flag v1.28.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.52.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0
@@ -165,7 +165,7 @@ require (
 	github.com/sigstore/sigstore v1.8.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
-	github.com/testcontainers/testcontainers-go v0.30.0 // indirect
+	github.com/testcontainers/testcontainers-go v0.31.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.30.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.30.0 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.0-20240223092044-1e7978e83f63 // indirect
