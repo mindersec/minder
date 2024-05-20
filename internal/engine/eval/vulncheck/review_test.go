@@ -192,6 +192,100 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockClient := mock_ghclient.NewMockGitHub(ctrl)
+	pr := &pb.PullRequest{
+		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
+		CommitSha: commitSHA,
+		Number:    43,
+		RepoOwner: "jakubtestorg",
+		RepoName:  "bad-npm",
+		AuthorId:  githubSubmitterID,
+	}
+
+	mockClient.EXPECT().GetUserId(gomock.Any()).Return(int64(githubMinderID), nil)
+	handler, err := newReviewPrHandler(context.TODO(), pr, mockClient)
+	require.NoError(t, err)
+	require.NotNil(t, handler)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, err := w.Write([]byte(`+    "mongodb": {
++      "version": "5.1.0",
++      }`))
+		assert.NoError(t, err)
+	}))
+	defer server.Close()
+
+	dep := &pb.PrDependencies_ContextualDependency{
+		Dep: &pb.Dependency{
+			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+			Name:      "mongodb",
+			Version:   "0.5.0",
+		},
+		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+			Name:     "package-lock.json",
+			PatchUrl: server.URL,
+		},
+	}
+
+	patchPackage := &packageJson{
+		formatterMeta: formatterMeta{
+			pkgRegistryLookupError: ErrPkgNotFound,
+		},
+		Name:    "mongodb",
+		Version: "0.6.0",
+	}
+	mockClient.EXPECT().
+		NewRequest("GET", server.URL, nil).
+		Return(http.NewRequest("GET", server.URL, nil))
+	mockClient.EXPECT().
+		Do(gomock.Any(), gomock.Any()).
+		Return(&http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(fmt.Sprintf(`"%s": {`, patchPackage.Name))),
+		}, nil)
+
+	vulnResp := VulnerabilityResponse{
+		[]Vulnerability{
+			{ID: "mongodb"},
+		},
+	}
+	err = handler.trackVulnerableDep(context.TODO(), dep, &vulnResp, patchPackage)
+	require.NoError(t, err)
+
+	mockClient.EXPECT().
+		ListIssueComments(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return([]*github.IssueComment{}, nil)
+
+	mockClient.EXPECT().
+		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
+			CommitID: github.String(commitSHA),
+			Event:    github.String("REQUEST_CHANGES"),
+			Comments: []*github.DraftReviewComment{
+				{
+					Path: github.String(dep.File.Name),
+					Line: github.Int(1),
+					Body: github.String(pkgRepoInfoNotFound),
+				},
+			}}).Return(
+		&github.PullRequestReview{
+			HTMLURL: github.String(minderReviewUrl),
+			ID:      github.Int64(minderReviewID),
+		}, nil)
+
+	mockClient.EXPECT().
+		CreateIssueComment(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), gomock.Any()).
+		Return(&github.IssueComment{ID: github.Int64(123)}, nil)
+
+	err = handler.submit(context.Background())
+	require.NoError(t, err)
+}
+
 func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	t.Parallel()
 

@@ -31,6 +31,9 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// ErrPkgNotFound is returned when the package is not found in the package repository
+var ErrPkgNotFound = fmt.Errorf("package not found")
+
 func urlFromEndpointAndPaths(
 	endpoint string,
 	pathComponents ...string,
@@ -44,6 +47,10 @@ func urlFromEndpointAndPaths(
 	return u, nil
 }
 
+type formatterMeta struct {
+	pkgRegistryLookupError error
+}
+
 // The patchLocatorFormatter interface is used to format the patch suggestion
 // for the particular package manager. The interface should probably be refactored
 // and each type implementing its own interface should handle the indenting rather
@@ -53,12 +60,14 @@ type patchLocatorFormatter interface {
 	IndentedString(indent int, oldDepLine string, oldDep *pb.Dependency) string
 	HasPatchedVersion() bool
 	GetPatchedVersion() string
+	GetFormatterMeta() formatterMeta
 }
 
 // RepoQuerier is the interface for querying a repository
 type RepoQuerier interface {
 	SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (patchLocatorFormatter, error)
 	NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter
+	PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter
 }
 
 type repoCache struct {
@@ -93,6 +102,8 @@ func (rc *repoCache) newRepository(ecoConfig *ecosystemConfig) (RepoQuerier, err
 }
 
 type packageJson struct {
+	formatterMeta
+
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	Dist    struct {
@@ -137,6 +148,13 @@ func (pj *packageJson) GetPatchedVersion() string {
 	return pj.Version
 }
 
+func (pj *packageJson) GetFormatterMeta() formatterMeta {
+	if pj == nil {
+		return formatterMeta{}
+	}
+	return pj.formatterMeta
+}
+
 // check that pypi repository implements RepoQuerier
 var _ RepoQuerier = (*pypiRepository)(nil)
 
@@ -147,6 +165,8 @@ type pypiRepository struct {
 
 // PyPiReply is the reply from the PyPi API
 type PyPiReply struct {
+	formatterMeta
+
 	Info struct {
 		Name    string `json:"name"`
 		Version string `json:"version"`
@@ -184,6 +204,14 @@ func (p *PyPiReply) GetPatchedVersion() string {
 	return p.Info.Version
 }
 
+// GetFormatterMeta returns the formatterMeta for the PyPiReply
+func (p *PyPiReply) GetFormatterMeta() formatterMeta {
+	if p == nil {
+		return formatterMeta{}
+	}
+	return p.formatterMeta
+}
+
 func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
 ) (patchLocatorFormatter, error) {
 	req, err := p.newRequest(ctx, dep, patched, latest)
@@ -197,7 +225,9 @@ func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, ErrPkgNotFound
+	} else if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("received non-200 response: %d", resp.StatusCode)
 	}
 
@@ -212,6 +242,18 @@ func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency
 
 func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
 	return &PyPiReply{
+		Info: struct {
+			Name    string `json:"name"`
+			Version string `json:"version"`
+		}{Name: dep.Name, Version: ""},
+	}
+}
+
+func (_ *pypiRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+	return &PyPiReply{
+		formatterMeta: formatterMeta{
+			pkgRegistryLookupError: registryErr,
+		},
 		Info: struct {
 			Name    string `json:"name"`
 			Version string `json:"version"`
@@ -296,7 +338,9 @@ func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency,
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, ErrPkgNotFound
+	} else if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("received non-200 response: %d", resp.StatusCode)
 	}
 
@@ -316,7 +360,19 @@ func (_ *npmRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocat
 	}
 }
 
+func (_ *npmRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+	return &packageJson{
+		formatterMeta: formatterMeta{
+			pkgRegistryLookupError: registryErr,
+		},
+		Name:    dep.Name,
+		Version: "",
+	}
+}
+
 type goModPackage struct {
+	formatterMeta
+
 	// just for locating in the patch
 	oldVersion string
 
@@ -340,6 +396,13 @@ func (gmp *goModPackage) HasPatchedVersion() bool {
 
 func (gmp *goModPackage) GetPatchedVersion() string {
 	return gmp.Version
+}
+
+func (gmp *goModPackage) GetFormatterMeta() formatterMeta {
+	if gmp == nil {
+		return formatterMeta{}
+	}
+	return gmp.formatterMeta
 }
 
 type goProxyRepository struct {
@@ -455,7 +518,9 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 	}
 	defer proxyResp.Body.Close()
 
-	if proxyResp.StatusCode != http.StatusOK {
+	if proxyResp.StatusCode == http.StatusNotFound {
+		return nil, ErrPkgNotFound
+	} else if proxyResp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("received non-200 response: %d", proxyResp.StatusCode)
 	}
 
@@ -483,8 +548,10 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 	}
 	defer sumResp.Body.Close()
 
-	if sumResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non-200 response from gosum: %d", proxyResp.StatusCode)
+	if sumResp.StatusCode == http.StatusNotFound {
+		return nil, ErrPkgNotFound
+	} else if sumResp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-200 response: %d", sumResp.StatusCode)
 	}
 
 	if err := parseGoSumReply(goPackage, sumResp.Body); err != nil {
@@ -496,6 +563,16 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 
 func (_ *goProxyRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
 	return &goModPackage{
+		Name:       dep.Name,
+		oldVersion: dep.Version,
+	}
+}
+
+func (_ *goProxyRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+	return &goModPackage{
+		formatterMeta: formatterMeta{
+			pkgRegistryLookupError: registryErr,
+		},
 		Name:       dep.Name,
 		oldVersion: dep.Version,
 	}
