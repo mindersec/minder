@@ -176,7 +176,7 @@ func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provide
 	}
 
 	// carry out provider-specific cleanup
-	if err := manager.Delete(ctx, config); err != nil {
+	if err = manager.Delete(ctx, config); err != nil {
 		return fmt.Errorf("error while cleaning up provider: %w", err)
 	}
 

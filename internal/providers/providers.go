@@ -78,30 +78,27 @@ func GetCredentialStateForProvider(
 	s db.Store,
 	cryptoEngine crypto.Engine,
 	provCfg *serverconfig.ProviderConfig,
-) string {
-	var credState string
+) (string, error) {
 	// if the provider doesn't support any auth flow
 	// credentials state is not applicable
 	if slices.Equal(prov.AuthFlows, []db.AuthorizationFlow{db.AuthorizationFlowNone}) {
-		credState = provinfv1.CredentialStateNotApplicable
-	} else {
-		credState = provinfv1.CredentialStateUnset
-		cred, err := getCredentialForProvider(ctx, prov, cryptoEngine, s, provCfg)
-		if err != nil {
-			// This is non-fatal
-			zerolog.Ctx(ctx).Error().Err(err).Str("provider", prov.Name).Msg("error getting credential")
-		} else {
-			// check if the credential is EmptyCredential
-			// if it is, then the state is not applicable
-			if _, ok := cred.(*credentials.EmptyCredential); ok {
-				credState = provinfv1.CredentialStateUnset
-			} else {
-				credState = provinfv1.CredentialStateSet
-			}
-		}
+		return provinfv1.CredentialStateNotApplicable, nil
 	}
 
-	return credState
+	cred, err := getCredentialForProvider(ctx, prov, cryptoEngine, s, provCfg)
+	if err != nil {
+		// One of the callers of this function treats this error as non-fatal
+		// and uses the credState value.
+		return provinfv1.CredentialStateUnset, err
+	}
+
+	// check if the credential is EmptyCredential
+	// if it is, then the state is not applicable
+	if _, ok := cred.(*credentials.EmptyCredential); ok {
+		return provinfv1.CredentialStateUnset, nil
+	}
+
+	return provinfv1.CredentialStateSet, nil
 }
 
 func getCredentialForProvider(

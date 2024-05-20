@@ -199,6 +199,12 @@ func protobufProviderFromDB(
 		}
 	}
 
+	state, err := providers.GetCredentialStateForProvider(ctx, *p, store, cryptoEngine, pc)
+	if err != nil {
+		// This is non-fatal
+		zerolog.Ctx(ctx).Error().Err(err).Str("provider", p.Name).Msg("error getting credential")
+	}
+
 	return &minderv1.Provider{
 		Name:             p.Name,
 		Project:          p.ProjectID.String(),
@@ -206,7 +212,7 @@ func protobufProviderFromDB(
 		Implements:       protobufProviderImplementsFromDB(ctx, *p),
 		AuthFlows:        protobufProviderAuthFlowFromDB(ctx, *p),
 		Config:           cfg,
-		CredentialsState: providers.GetCredentialStateForProvider(ctx, *p, store, cryptoEngine, pc),
+		CredentialsState: state,
 		Class:            string(p.Class),
 	}, nil
 }

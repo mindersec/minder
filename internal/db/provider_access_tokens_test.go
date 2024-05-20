@@ -56,17 +56,21 @@ func TestUpsertProviderAccessToken(t *testing.T) {
 	require.Equal(t, secret, deserializeSecret(t, tok.EncryptedAccessToken))
 	require.Equal(t, sql.NullString{}, tok.OwnerFilter)
 
+	newSecret := createSecret(t, "def")
+	newSerialized := serializeSecret(t, newSecret)
 	tokUpdate, err := testQueries.UpsertAccessToken(context.Background(), UpsertAccessTokenParams{
-		ProjectID:      project.ID,
-		Provider:       prov.Name,
-		EncryptedToken: "def",
-		OwnerFilter:    sql.NullString{},
+		ProjectID:            project.ID,
+		Provider:             prov.Name,
+		EncryptedToken:       "def",
+		EncryptedAccessToken: newSerialized,
+		OwnerFilter:          sql.NullString{},
 	})
 
 	require.NoError(t, err)
 	require.Equal(t, project.ID, tokUpdate.ProjectID)
 	require.Equal(t, prov.Name, tokUpdate.Provider)
 	require.Equal(t, "def", tokUpdate.EncryptedToken)
+	require.Equal(t, newSecret, deserializeSecret(t, tokUpdate.EncryptedAccessToken))
 	require.Equal(t, sql.NullString{}, tokUpdate.OwnerFilter)
 	require.Equal(t, tok.ID, tokUpdate.ID)
 	require.Equal(t, tok.CreatedAt, tokUpdate.CreatedAt)
