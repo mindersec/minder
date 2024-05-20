@@ -157,7 +157,7 @@ func TestNpmPkgDb(t *testing.T) {
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				if tt.errorToExpect != nil {
-					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+					assert.ErrorIs(t, err, tt.errorToExpect, "Expected error")
 				}
 				assert.Error(t, err, "Expected error")
 			} else {
@@ -394,7 +394,7 @@ func TestPyPiPkgDb(t *testing.T) {
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				if tt.errorToExpect != nil {
-					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+					assert.ErrorIs(t, err, tt.errorToExpect, "Expected error")
 				}
 				assert.Error(t, err, "Expected error")
 			} else {
@@ -603,7 +603,7 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 			reply, err := repo.SendRecvRequest(context.Background(), dep, tt.patchedVersion, latest)
 			if tt.expectError {
 				if tt.errorToExpect != nil {
-					assert.Equal(t, tt.errorToExpect, err, "Expected error")
+					assert.ErrorIs(t, err, tt.errorToExpect, "Expected error")
 				}
 				assert.Error(t, err, "Expected error")
 			} else {
