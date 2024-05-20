@@ -44,7 +44,7 @@ archives:
 brews:
   - homepage: 'https://github.com/stacklok/minder'
     description: 'minder is the client CLI for interacting with Minder by Stacklok.'
-    folder: Formula
+    directory: Formula
     commit_author:
       name: stacklokbot
       email: info@stacklok.com
