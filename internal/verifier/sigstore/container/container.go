@@ -24,6 +24,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -49,6 +50,10 @@ var (
 	// ErrProvenanceNotFoundOrIncomplete is returned when there's no provenance info (missing .sig or attestation) or
 	// has incomplete data
 	ErrProvenanceNotFoundOrIncomplete = errors.New("provenance not found or incomplete")
+
+	// MaxAttestationsBytesLimit is the maximum number of bytes we're willing to read from the attestation endpoint
+	// We'll limit this to 10mb for now
+	MaxAttestationsBytesLimit int64 = 10 * 1024 * 1024
 )
 
 const (
@@ -291,8 +296,9 @@ func getAttestationReply(
 	}
 	defer resp.Body.Close()
 
+	lr := io.LimitReader(resp.Body, MaxAttestationsBytesLimit)
 	var attestationReply AttestationReply
-	if err := json.NewDecoder(resp.Body).Decode(&attestationReply); err != nil {
+	if err := json.NewDecoder(lr).Decode(&attestationReply); err != nil {
 		return nil, fmt.Errorf("error decoding response: %w", err)
 	}
 
@@ -446,7 +452,8 @@ func getSimpleSigningLayersFromSignatureManifest(manifestRef string, auth authn.
 	}
 
 	// Parse the manifest
-	manifest, err := v1.ParseManifest(bytes.NewReader(mf))
+	r := io.LimitReader(bytes.NewReader(mf), MaxAttestationsBytesLimit)
+	manifest, err := v1.ParseManifest(r)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing signature manifest: %w", err)
 	}
