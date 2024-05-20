@@ -45,6 +45,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/github/installations"
 	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/util/testqueue"
@@ -449,10 +450,11 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		event   string
-		payload any
-		queued  bool
+		name       string
+		event      string
+		payload    any
+		statusCode int
+		queued     bool
 	}{
 		{
 			name: "ping",
@@ -475,6 +477,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "ping no hook",
@@ -497,6 +500,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					HTMLURL: github.String("https://example.com/random/url"),
 				},
 			},
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "package published",
@@ -528,7 +532,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "package updated",
@@ -559,6 +564,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "package no package",
@@ -577,6 +583,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "meta",
@@ -599,7 +606,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "meta no hook",
@@ -619,7 +627,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "branch_protection_rule created",
@@ -638,7 +647,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "branch_protection_rule deleted",
@@ -657,7 +667,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "branch_protection_rule edited",
@@ -676,7 +687,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "code_scanning_alert",
@@ -695,7 +707,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "create",
@@ -713,7 +726,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "member",
@@ -732,7 +746,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "public",
@@ -750,7 +765,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository archived",
@@ -766,7 +782,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository created",
@@ -782,7 +799,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository deleted",
@@ -798,7 +816,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository edited",
@@ -814,7 +833,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository privatized",
@@ -830,7 +850,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository publicized",
@@ -846,7 +867,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository renamed",
@@ -862,7 +884,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository transferred",
@@ -878,7 +901,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository unarchived",
@@ -894,7 +918,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository_import",
@@ -909,7 +934,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "secret_scanning_alert created",
@@ -925,7 +951,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "secret_scanning_alert reopened",
@@ -941,7 +968,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "secret_scanning_alert resolved",
@@ -957,7 +985,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "secret_scanning_alert revoked",
@@ -973,7 +1002,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "secret_scanning_alert validated",
@@ -989,7 +1019,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team_add",
@@ -1004,7 +1035,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team added_to_repository",
@@ -1020,7 +1052,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team created",
@@ -1036,7 +1069,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team deleted",
@@ -1052,7 +1086,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team edited",
@@ -1068,7 +1103,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "team removed_from_repository",
@@ -1084,7 +1120,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository_vulnerability_alert create",
@@ -1100,7 +1137,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository_vulnerability_alert dismiss",
@@ -1116,7 +1154,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository_vulnerability_alert reopen",
@@ -1132,7 +1171,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "repository_vulnerability_alert resolve",
@@ -1148,7 +1188,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "security_advisory",
@@ -1163,7 +1204,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "security_and_analysis",
@@ -1178,22 +1220,26 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "org_block",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#org_block
 			event: "org_block",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#OrgBlockEvent
-			payload: &github.OrgBlockEvent{},
-			queued:  false,
+			payload:    &github.OrgBlockEvent{},
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "push",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
-			payload: &github.PushEvent{},
+			payload:    &github.PushEvent{},
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 
 		// The following test cases are related to events not
@@ -1214,7 +1260,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "branch_protection_configuration disabled",
@@ -1232,7 +1279,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "repository_advisory published",
@@ -1250,7 +1298,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "repository_advisory reported",
@@ -1268,7 +1317,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "repository_ruleset created",
@@ -1286,7 +1336,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "repository_ruleset deleted",
@@ -1304,7 +1355,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "repository_ruleset created",
@@ -1322,7 +1374,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "secret_scanning_alert_location",
@@ -1340,7 +1393,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 
 		// package/artifact specific tests
@@ -1368,7 +1422,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					},
 				},
 			},
-			queued: true,
+			statusCode: http.StatusOK,
+			queued:     true,
 		},
 		{
 			name: "pull_request closed",
@@ -1394,7 +1449,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					},
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "pull_request not handled",
@@ -1420,7 +1476,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					},
 				},
 			},
-			queued: false,
+			statusCode: http.StatusOK,
+			queued:     false,
 		},
 		{
 			name: "pull_request no details",
@@ -1442,7 +1499,8 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			queued: false,
+			statusCode: http.StatusInternalServerError,
+			queued:     false,
 		},
 
 		// garbage
@@ -1454,6 +1512,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 				Action:  github.String("created"),
 				Garbage: github.String("garbage"),
 			},
+			statusCode: http.StatusOK,
 		},
 		{
 			name:  "total garbage",
@@ -1463,6 +1522,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 				Action:  github.String("created"),
 				Garbage: github.String("garbage"),
 			},
+			statusCode: http.StatusOK,
 		},
 	}
 
@@ -1470,6 +1530,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
@@ -1593,7 +1654,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 			resp, err := httpDoWithRetry(client, req)
 			require.NoError(t, err, "failed to make request")
 			// We expect OK since we don't want to leak information about registered repositories
-			require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
+			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
 
 			require.Len(t, queued, 0)
 			if tt.queued {
@@ -1612,9 +1673,259 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 	}
 }
 
+func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
+	t := s.T()
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		event      string
+		payload    any
+		statusCode int
+		queued     bool
+	}{
+		{
+			name: "installation created",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationEvent{
+				Action: github.String("created"),
+				Repositories: []*github.Repository{
+					newRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+				},
+				Org: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				// Installation field is left blank on
+				// purpose, to attest the fact that
+				// this particolar event/action
+				// combination does not use it.
+				Installation: &github.Installation{},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			statusCode: http.StatusOK,
+			queued:     false,
+		},
+		{
+			name: "installation deleted",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationEvent{
+				Action: github.String("deleted"),
+				Repositories: []*github.Repository{
+					newRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+				},
+				Org: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				Installation: &github.Installation{
+					ID: github.Int64(12345),
+				},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			statusCode: http.StatusOK,
+			queued:     true,
+		},
+		{
+			name: "installation new_permissions_accepted",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationEvent{
+				Action: github.String("new_permissions_accepted"),
+				Repositories: []*github.Repository{
+					newRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+				},
+				Org: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				// Installation field is left blank on
+				// purpose, to attest the fact that
+				// this particolar event/action
+				// combination does not use it.
+				Installation: &github.Installation{},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			statusCode: http.StatusOK,
+			queued:     false,
+		},
+		{
+			name: "installation suspend",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationEvent{
+				Action: github.String("suspend"),
+				Repositories: []*github.Repository{
+					newRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+				},
+				Org: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				// Installation field is left blank on
+				// purpose, to attest the fact that
+				// this particolar event/action
+				// combination does not use it.
+				Installation: &github.Installation{},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			statusCode: http.StatusOK,
+			queued:     false,
+		},
+		{
+			name: "installation unsuspend",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationEvent{
+				Action: github.String("unsuspend"),
+				Repositories: []*github.Repository{
+					newRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+				},
+				Org: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				// Installation field is left blank on
+				// purpose, to attest the fact that
+				// this particolar event/action
+				// combination does not use it.
+				Installation: &github.Installation{},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			statusCode: http.StatusOK,
+			queued:     false,
+		},
+
+		// garbage
+		{
+			name:  "garbage",
+			event: "repository",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
+			payload: &garbage{
+				Action:  github.String("created"),
+				Garbage: github.String("garbage"),
+			},
+			statusCode: http.StatusOK,
+		},
+		{
+			name:  "total garbage",
+			event: "garbage",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
+			payload: &garbage{
+				Action:  github.String("created"),
+				Garbage: github.String("garbage"),
+			},
+			statusCode: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			srv, evt := newDefaultServer(t, mockStore, nil)
+			srv.cfg.WebhookConfig.WebhookSecret = "test"
+
+			pq := testqueue.NewPassthroughQueue(t)
+			queued := pq.GetQueue()
+
+			evt.Register(installations.ProviderInstallationTopic, pq.Pass)
+
+			go func() {
+				err := evt.Run(context.Background())
+				require.NoError(t, err, "failed to run eventer")
+			}()
+
+			<-evt.Running()
+
+			ts := httptest.NewServer(http.HandlerFunc(srv.HandleGitHubAppWebhook()))
+			defer ts.Close()
+
+			packageJson, err := json.Marshal(tt.payload)
+			require.NoError(t, err, "failed to marshal package event")
+
+			mac := hmac.New(sha256.New, []byte("test"))
+			mac.Write(packageJson)
+			expectedMAC := hex.EncodeToString(mac.Sum(nil))
+
+			client := &http.Client{}
+			req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+			require.NoError(t, err, "failed to create request")
+
+			req.Header.Add("X-GitHub-Event", tt.event)
+			req.Header.Add("X-GitHub-Delivery", "12345")
+			req.Header.Add("Content-Type", "application/json")
+			req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
+			resp, err := httpDoWithRetry(client, req)
+			require.NoError(t, err, "failed to make request")
+			// We expect OK since we don't want to leak information about registered repositories
+			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
+
+			require.Len(t, queued, 0)
+			if tt.queued {
+				received := <-queued
+
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, tt.event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+			}
+
+			// TODO: assert payload is Repository protobuf
+		})
+	}
+}
+
+//nolint:unparam
 func newRepo(id int, name, fullname, url string) *github.Repository {
 	return &github.Repository{
-		ID:       github.Int64(12345),
+		ID:       github.Int64(int64(id)),
 		Name:     github.String(name),
 		FullName: github.String(fullname),
 		HTMLURL:  github.String(url),

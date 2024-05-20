@@ -104,7 +104,11 @@ func newDefaultServer(
 		eng,
 		metrics.NewNoopMetrics(),
 		// These nil dependencies do not matter for the current tests
-		nil,
+		&serverconfig.ProviderConfig{
+			GitHubApp: &serverconfig.GitHubAppConfig{
+				WebhookSecret: "test",
+			},
+		},
 		nil,
 		ghClientFactory,
 	)
