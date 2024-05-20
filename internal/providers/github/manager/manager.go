@@ -148,7 +148,10 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 }
 
 func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider) error {
-	state := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.config)
+	state, err := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.config)
+	if err != nil {
+		return fmt.Errorf("unable to get credential state for provider %s: %w", config.ID, err)
+	}
 	if state == v1.CredentialStateSet {
 		provider, err := g.Build(ctx, config)
 		if err != nil {
