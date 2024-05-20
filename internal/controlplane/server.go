@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -321,9 +322,29 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 
 	mux.Handle("/", withMaxSizeMiddleware(s.handlerWithHTTPMiddleware(gwmux)))
-	mux.Handle("/api/v1/webhook/", mw(withMaxSizeMiddleware(s.HandleGitHubWebHook())))
-	mux.Handle("/api/v1/ghapp/", mw(withMaxSizeMiddleware(s.HandleGitHubAppWebhook())))
-	mux.Handle("/api/v1/gh-marketplace/", mw(withMaxSizeMiddleware(s.NoopWebhookHandler())))
+
+	s.providerManager.RegisterWebhookHandlers(func(s string, h http.Handler) {
+		webhookSufixPath := "/api/v1/webhook/"
+		path, err := url.JoinPath(webhookSufixPath, s)
+		if err != nil {
+			log.Printf("failed to join path: %v", err)
+			// malformed provider
+			panic(err)
+		}
+		mux.Handle(path, mw(withMaxSizeMiddleware(h)))
+	})
+
+	s.providerManager.RegisterOtherHandlers(func(s string, h http.Handler) {
+		webhookSufixPath := "/api/v1/"
+		path, err := url.JoinPath(webhookSufixPath, s)
+		if err != nil {
+			log.Printf("failed to join path: %v", err)
+			// malformed provider
+			panic(err)
+		}
+		mux.Handle(path, mw(withMaxSizeMiddleware(h)))
+	})
+
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)

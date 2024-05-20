@@ -327,6 +327,7 @@ default allow = true`,
 		nil,
 		mockStore,
 		ghProviderService,
+		metrics.NewNoopMetrics(),
 	)
 
 	providerStore := providers.NewProviderStore(mockStore)

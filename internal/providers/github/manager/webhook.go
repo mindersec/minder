@@ -1,5 +1,4 @@
-//
-// Copyright 2023 Stacklok, Inc.
+// Copyright 2024 Stacklok, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package controlplane contains the control plane API for the minder.
-package controlplane
+package manager
 
 import (
 	"bytes"
@@ -126,7 +124,7 @@ func entityFromWebhookEventTypeKey(m *message.Message) pb.Entity {
 }
 
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
-func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
+func (s *githubProviderManager) HandleGitHubAppWebhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wes := &metrics.WebhookEventState{
 			Typ:      "unknown",
@@ -137,7 +135,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			s.mt.AddWebhookEventTypeCount(r.Context(), wes)
 		}()
 
-		rawWBPayload, err := s.ghProviders.ValidateGitHubAppWebhookPayload(r)
+		rawWBPayload, err := s.ghService.ValidateGitHubAppWebhookPayload(r)
 		if err != nil {
 			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -191,7 +189,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 // HandleGitHubWebHook handles incoming GitHub webhooks
 // See https://docs.github.com/en/developers/webhooks-and-events/webhooks/about-webhooks
 // for more information.
-func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
+func (s *githubProviderManager) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wes := &metrics.WebhookEventState{
 			Typ:      "unknown",
@@ -210,7 +208,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		segments := strings.Split(r.URL.Path, "/")
 		_ = segments[len(segments)-1]
 
-		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
+		rawWBPayload, err := validatePayloadSignature(r, s.webhookConfig)
 		if err != nil {
 			log.Printf("Error validating webhook payload: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
@@ -316,7 +314,7 @@ func logPingReceivedEvent(ctx context.Context, rawWHPayload []byte) {
 }
 
 // NoopWebhookHandler is a no-op handler for webhooks
-func (s *Server) NoopWebhookHandler() http.HandlerFunc {
+func (s *githubProviderManager) NoopWebhookHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wes := &metrics.WebhookEventState{
 			Typ:      "unknown",
@@ -433,7 +431,7 @@ func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
 	return state
 }
 
-func (_ *Server) parseGithubAppEventForProcessing(
+func (_ *githubProviderManager) parseGithubAppEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
@@ -478,7 +476,7 @@ func (_ *Server) parseGithubAppEventForProcessing(
 	return nil
 }
 
-func (s *Server) parseGithubEventForProcessing(
+func (s *githubProviderManager) parseGithubEventForProcessing(
 	rawWHPayload []byte,
 	msg *message.Message,
 ) error {
@@ -559,7 +557,7 @@ func parseRepoEvent(
 	return eiw.ToMessage(msg)
 }
 
-func (s *Server) parseArtifactPublishedEvent(
+func (s *githubProviderManager) parseArtifactPublishedEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
@@ -573,7 +571,7 @@ func (s *Server) parseArtifactPublishedEvent(
 		return nil
 	}
 
-	provider, err := s.providerManager.InstantiateFromID(ctx, providerID)
+	provider, err := s.InstantiateFromID(ctx, providerID)
 	if err != nil {
 		log.Printf("error instantiating provider: %v", err)
 		return err
@@ -624,7 +622,7 @@ func (s *Server) parseArtifactPublishedEvent(
 	return eiw.ToMessage(msg)
 }
 
-func (s *Server) parsePullRequestModEvent(
+func (s *githubProviderManager) parsePullRequestModEvent(
 	ctx context.Context,
 	whPayload map[string]any,
 	msg *message.Message,
@@ -852,7 +850,7 @@ func getPullRequestInfoFromPayload(
 	}, nil
 }
 
-func (s *Server) reconcilePrWithDb(
+func (s *githubProviderManager) reconcilePrWithDb(
 	ctx context.Context,
 	dbrepo db.Repository,
 	prEvalInfo *pb.PullRequest,

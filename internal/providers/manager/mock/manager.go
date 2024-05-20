@@ -16,6 +16,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
+	manager "github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -132,6 +133,30 @@ func (mr *MockProviderManagerMockRecorder) InstantiateFromNameProject(ctx, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantiateFromNameProject", reflect.TypeOf((*MockProviderManager)(nil).InstantiateFromNameProject), ctx, name, projectID)
 }
 
+// RegisterOtherHandlers mocks base method.
+func (m *MockProviderManager) RegisterOtherHandlers(handler manager.HandlerRegisterer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterOtherHandlers", handler)
+}
+
+// RegisterOtherHandlers indicates an expected call of RegisterOtherHandlers.
+func (mr *MockProviderManagerMockRecorder) RegisterOtherHandlers(handler any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOtherHandlers", reflect.TypeOf((*MockProviderManager)(nil).RegisterOtherHandlers), handler)
+}
+
+// RegisterWebhookHandlers mocks base method.
+func (m *MockProviderManager) RegisterWebhookHandlers(webhook manager.HandlerRegisterer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterWebhookHandlers", webhook)
+}
+
+// RegisterWebhookHandlers indicates an expected call of RegisterWebhookHandlers.
+func (mr *MockProviderManagerMockRecorder) RegisterWebhookHandlers(webhook any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterWebhookHandlers", reflect.TypeOf((*MockProviderManager)(nil).RegisterWebhookHandlers), webhook)
+}
+
 // MockProviderClassManager is a mock of ProviderClassManager interface.
 type MockProviderClassManager struct {
 	ctrl     *gomock.Controller
@@ -211,4 +236,28 @@ func (m *MockProviderClassManager) GetSupportedClasses() []db.ProviderClass {
 func (mr *MockProviderClassManagerMockRecorder) GetSupportedClasses() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedClasses", reflect.TypeOf((*MockProviderClassManager)(nil).GetSupportedClasses))
+}
+
+// RegisterOtherHandlers mocks base method.
+func (m *MockProviderClassManager) RegisterOtherHandlers(handler manager.HandlerRegisterer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterOtherHandlers", handler)
+}
+
+// RegisterOtherHandlers indicates an expected call of RegisterOtherHandlers.
+func (mr *MockProviderClassManagerMockRecorder) RegisterOtherHandlers(handler any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOtherHandlers", reflect.TypeOf((*MockProviderClassManager)(nil).RegisterOtherHandlers), handler)
+}
+
+// RegisterWebhookHandlers mocks base method.
+func (m *MockProviderClassManager) RegisterWebhookHandlers(webhook manager.HandlerRegisterer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterWebhookHandlers", webhook)
+}
+
+// RegisterWebhookHandlers indicates an expected call of RegisterWebhookHandlers.
+func (mr *MockProviderClassManagerMockRecorder) RegisterWebhookHandlers(webhook any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterWebhookHandlers", reflect.TypeOf((*MockProviderClassManager)(nil).RegisterWebhookHandlers), webhook)
 }

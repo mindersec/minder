@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -30,6 +31,8 @@ import (
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+type HandlerRegisterer func(string, http.Handler)
 
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
@@ -62,6 +65,13 @@ type ProviderManager interface {
 	// Deletion will only occur if the provider is in the specified project -
 	// it will not attempt to find a provider elsewhere in the hierarchy.
 	DeleteByName(ctx context.Context, name string, projectID uuid.UUID) error
+
+	// RegisterWebhookHandlers registers webhook handlers for the provider
+	// manager
+	RegisterWebhookHandlers(webhook HandlerRegisterer)
+
+	// RegisterOtherHandlers registers other handlers for the provider manager
+	RegisterOtherHandlers(handler HandlerRegisterer)
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -76,6 +86,13 @@ type ProviderClassManager interface {
 	// GetSupportedClasses lists the types of Provider class which this manager
 	// can produce.
 	GetSupportedClasses() []db.ProviderClass
+
+	// RegisterWebhookHandlers registers webhook handlers for the provider
+	// manager
+	RegisterWebhookHandlers(webhook HandlerRegisterer)
+
+	// RegisterOtherHandlers registers other handlers for the provider manager
+	RegisterOtherHandlers(handler HandlerRegisterer)
 }
 
 type providerManager struct {
@@ -189,6 +206,18 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 	}
 
 	return p.deleteByRecord(ctx, config)
+}
+
+func (p *providerManager) RegisterWebhookHandlers(webhook HandlerRegisterer) {
+	for _, manager := range p.classManagers {
+		manager.RegisterWebhookHandlers(webhook)
+	}
+}
+
+func (p *providerManager) RegisterOtherHandlers(handler HandlerRegisterer) {
+	for _, manager := range p.classManagers {
+		manager.RegisterOtherHandlers(handler)
+	}
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

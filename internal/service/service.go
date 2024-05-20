@@ -107,11 +107,14 @@ func AllInOneServerService(
 		restClientCache,
 		ghClientFactory,
 		&cfg.Provider,
+		&cfg.WebhookConfig,
 		fallbackTokenClient,
 		cryptoEngine,
 		whManager,
 		store,
 		ghProviders,
+		serverMetrics,
+		evt,
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
 		cryptoEngine,

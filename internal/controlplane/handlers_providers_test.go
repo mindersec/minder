@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/crypto/algorithms"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
@@ -128,6 +129,7 @@ func TestDeleteProvider(t *testing.T) {
 		whManager,
 		mockStore,
 		mockProvidersSvc,
+		metrics.NewNoopMetrics(),
 	)
 	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
 	require.NoError(t, err)
@@ -241,6 +243,7 @@ func TestDeleteProviderByID(t *testing.T) {
 		whManager,
 		mockStore,
 		mockProvidersSvc,
+		metrics.NewNoopMetrics(),
 	)
 	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
 	require.NoError(t, err)

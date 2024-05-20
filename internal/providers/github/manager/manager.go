@@ -28,8 +28,10 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -46,21 +48,27 @@ func NewGitHubProviderClassManager(
 	restClientCache ratecache.RestClientCache,
 	ghClientFactory clients.GitHubClientFactory,
 	providerConfig *server.ProviderConfig,
+	webhookConfig *server.WebhookConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
 	whManager webhooks.WebhookManager,
 	store db.Store,
 	ghService service.GitHubProviderService,
+	mt metrics.Metrics,
+	evt events.Publisher,
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
 		ghClientFactory:     ghClientFactory,
 		config:              providerConfig,
+		webhookConfig:       webhookConfig,
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
 		webhooks:            whManager,
 		ghService:           ghService,
+		mt:                  mt,
+		evt:                 evt,
 	}
 }
 
@@ -68,11 +76,14 @@ type githubProviderManager struct {
 	restClientCache     ratecache.RestClientCache
 	ghClientFactory     clients.GitHubClientFactory
 	config              *server.ProviderConfig
+	webhookConfig       *server.WebhookConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
 	webhooks            webhooks.WebhookManager
 	store               db.Store
 	ghService           service.GitHubProviderService
+	mt                  metrics.Metrics
+	evt                 events.Publisher
 }
 
 var (
@@ -189,6 +200,15 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 
 	// clean up the app installation (if any)
 	return g.ghService.DeleteInstallation(ctx, config.ID)
+}
+
+func (g *githubProviderManager) RegisterWebhookHandlers(webhook m.HandlerRegisterer) {
+	webhook("github", g.HandleGitHubWebHook())
+}
+
+func (g *githubProviderManager) RegisterOtherHandlers(handler m.HandlerRegisterer) {
+	handler("ghapp", g.HandleGitHubAppWebhook())
+	handler("gh-marketplace", g.NoopWebhookHandler())
 }
 
 func (g *githubProviderManager) createProviderWithAccessToken(

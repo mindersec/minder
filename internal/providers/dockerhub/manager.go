@@ -25,6 +25,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
+	m "github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -82,6 +83,12 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 // TODO: Implement this
 func (_ *providerClassManager) Delete(_ context.Context, _ *db.Provider) error {
 	return nil
+}
+
+func (_ *providerClassManager) RegisterWebhookHandlers(webhook m.HandlerRegisterer) {
+}
+
+func (_ *providerClassManager) RegisterOtherHandlers(handler m.HandlerRegisterer) {
 }
 
 func (m *providerClassManager) getProviderCredentials(
