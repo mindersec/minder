@@ -69,6 +69,11 @@ spec:
           - "--github-app-client-id-file=/secrets/github-app/github_app_client_id"
           - "--github-app-client-secret-file=/secrets/github-app/github_app_client_secret"
           env:
+          - name: "MINDER_KEY_PATH"
+            value: "/secrets/auth/"
+          - name: "MINDER_DEFAULT_TOKEN_FILENAME"
+            value: "token_key_passphrase"
+          # TODO: remove this value once we migrate to the new structure
           - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
           - name: "MINDER_IDENTITY_SERVER_CLIENT_SECRET_FILE"
@@ -90,7 +95,7 @@ spec:
           {{- if .Values.deploymentSettings.extraEnv }}
           {{- toYaml .Values.deploymentSettings.extraEnv | nindent 10 }}
           {{- end }}
-          
+
           # ko will always specify a digest, so we don't need to worry about
           # CRI image caching
           imagePullPolicy: "{{ .Values.deploymentSettings.imagePullPolicy }}"
@@ -147,7 +152,7 @@ spec:
       - name: flags
         configMap:
           name: minder-flags
-          optional: true  # We expect the outside environment to create this ConfigMap
+          optional: true   # We expect the outside environment to create this ConfigMap
           items:
           - key: flags-config.yaml
             path: flags-config.yaml
