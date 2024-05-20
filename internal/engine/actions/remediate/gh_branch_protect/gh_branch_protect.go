@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"text/template"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/google/go-github/v61/github"
@@ -41,13 +40,18 @@ import (
 const (
 	// RemediateType is the type of the REST remediation engine
 	RemediateType = "gh_branch_protection"
+
+	// PatchTemplateLimit is the maximum number of bytes for the patch template
+	// Since patches may be medium sized JSON objects, we set a limit to avoid
+	// excessive memory usage.
+	PatchTemplateLimit = 2048
 )
 
 // GhBranchProtectRemediator keeps the status for a rule type that uses GH API to remediate branch protection
 type GhBranchProtectRemediator struct {
 	actionType    interfaces.ActionType
 	cli           provifv1.GitHub
-	patchTemplate *template.Template
+	patchTemplate *util.SafeTemplate
 }
 
 // NewGhBranchProtectRemediator creates a new remediation engine that uses the GitHub API for branch protection
@@ -60,7 +64,7 @@ func NewGhBranchProtectRemediator(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 
-	patchTemplate, err := util.ParseNewTextTemplate(&ghp.Patch, "patch")
+	patchTemplate, err := util.NewSafeTextTemplate(&ghp.Patch, "patch")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse patch template: %w", err)
 	}
@@ -143,7 +147,7 @@ func (r *GhBranchProtectRemediator) Do(
 	req := protectionResultToRequest(res)
 
 	var patch bytes.Buffer
-	err = r.patchTemplate.Execute(&patch, retp)
+	err = r.patchTemplate.Execute(ctx, &patch, retp, PatchTemplateLimit)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
@@ -159,14 +163,14 @@ func (r *GhBranchProtectRemediator) Do(
 	case interfaces.ActionOptOn:
 		err = r.cli.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
 	case interfaces.ActionOptDryRun:
-		err = dryRun(r.cli.GetBaseURL(), repo.Owner, repo.Name, branch, updatedRequest)
+		err = dryRun(ctx, r.cli.GetBaseURL(), repo.Owner, repo.Name, branch, updatedRequest)
 	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
 	return nil, err
 }
 
-func dryRun(baseUrl, owner, repo, branch string, req *github.ProtectionRequest) error {
+func dryRun(ctx context.Context, baseUrl, owner, repo, branch string, req *github.ProtectionRequest) error {
 	jsonReq, err := json.Marshal(req)
 	if err != nil {
 		// this should not be fatal
@@ -175,7 +179,7 @@ func dryRun(baseUrl, owner, repo, branch string, req *github.ProtectionRequest) 
 	}
 
 	endpoint := fmt.Sprintf("repos/%v/%v/branches/%v/protection", owner, repo, branch)
-	curlCmd, err := util.GenerateCurlCommand(http.MethodPut, baseUrl, endpoint, string(jsonReq))
+	curlCmd, err := util.GenerateCurlCommand(ctx, http.MethodPut, baseUrl, endpoint, string(jsonReq))
 	if err != nil {
 		return fmt.Errorf("cannot generate curl command: %w", err)
 	}

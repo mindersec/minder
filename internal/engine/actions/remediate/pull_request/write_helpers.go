@@ -21,15 +21,16 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"text/template"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/rs/zerolog/log"
+
+	"github.com/stacklok/minder/internal/util"
 )
 
 type fsEntry struct {
-	contentTemplate *template.Template
+	contentTemplate *util.SafeTemplate
 
 	Path    string `json:"path"`
 	Content string `json:"content"`

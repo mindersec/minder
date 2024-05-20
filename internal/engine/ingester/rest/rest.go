@@ -16,7 +16,6 @@
 package rest
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,7 +23,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"text/template"
 
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
@@ -44,6 +42,8 @@ const (
 	// MaxBytesLimit is the maximum number of bytes to read from the response body
 	// We limit to 1MB to prevent abuse
 	MaxBytesLimit int64 = 1 << 20
+	// EndpointBytesLimit is the maximum number of bytes for the endpoint
+	EndpointBytesLimit = 1024
 )
 
 type ingestorFallback struct {
@@ -57,7 +57,7 @@ type ingestorFallback struct {
 type Ingestor struct {
 	restCfg          *pb.RestType
 	cli              provifv1.REST
-	endpointTemplate *template.Template
+	endpointTemplate *util.SafeTemplate
 	method           string
 	fallback         []ingestorFallback
 }
@@ -71,7 +71,7 @@ func NewRestRuleDataIngest(
 		return nil, fmt.Errorf("missing endpoint")
 	}
 
-	tmpl, err := util.ParseNewTextTemplate(&restCfg.Endpoint, "endpoint")
+	tmpl, err := util.NewSafeTextTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
@@ -116,13 +116,13 @@ func (rdi *Ingestor) GetConfig() protoreflect.ProtoMessage {
 
 // Ingest calls the REST endpoint and returns the data
 func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
-	endpoint := new(bytes.Buffer)
 	retp := &EndpointTemplateParams{
 		Entity: ent,
 		Params: params,
 	}
 
-	if err := rdi.endpointTemplate.Execute(endpoint, retp); err != nil {
+	endpoint, err := rdi.endpointTemplate.Render(ctx, retp, EndpointBytesLimit)
+	if err != nil {
 		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
@@ -132,7 +132,7 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 		bodyr = strings.NewReader(*rdi.restCfg.Body)
 	}
 
-	req, err := rdi.cli.NewRequest(rdi.method, endpoint.String(), bodyr)
+	req, err := rdi.cli.NewRequest(rdi.method, endpoint, bodyr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
