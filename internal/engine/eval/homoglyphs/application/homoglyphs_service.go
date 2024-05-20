@@ -60,6 +60,9 @@ func NewHomoglyphsEvaluator(
 }
 
 // evaluateHomoglyphs is a helper function to evaluate the homoglyphs rule type
+// Return parameters:
+// - bool: whether the evaluation has found violations
+// - error: an error if the evaluation failed
 func evaluateHomoglyphs(
 	ctx context.Context,
 	processor domain.HomoglyphProcessor,
@@ -112,14 +115,9 @@ func evaluateHomoglyphs(
 		}
 	}
 
-	var reviewText string
-	var hasFoundViolations bool
 	if len(reviewHandler.GetComments()) > 0 {
-		reviewText = processor.GetFailedReviewText()
-		hasFoundViolations = true
-	} else {
-		reviewText = processor.GetPassedReviewText()
+		return true, reviewHandler.SubmitReview(ctx, processor.GetFailedReviewText())
 	}
 
-	return hasFoundViolations, reviewHandler.SubmitReview(ctx, reviewText)
+	return false, nil
 }
