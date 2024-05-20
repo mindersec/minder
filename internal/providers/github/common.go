@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
@@ -252,8 +254,8 @@ func (c *GitHub) ListPackagesByRepository(
 	return allContainers, nil
 }
 
-// GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *GitHub) GetPackageVersions(ctx context.Context, owner string, package_type string, package_name string,
+// getPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *GitHub) getPackageVersions(ctx context.Context, owner string, package_type string, package_name string,
 ) ([]*github.PackageVersion, error) {
 	state := "active"
 
@@ -300,32 +302,6 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, owner string, package_t
 
 	// return the slice
 	return allVersions, nil
-}
-
-// GetPackageVersionByTag returns a single package version for the specific tag
-func (c *GitHub) GetPackageVersionByTag(ctx context.Context, owner string, package_type string, package_name string,
-	tag string) (*github.PackageVersion, error) {
-
-	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
-	package_type = strings.ToLower(package_type)
-
-	// get all versions
-	versions, err := c.GetPackageVersions(ctx, owner, package_type, package_name)
-	if err != nil {
-		return nil, err
-	}
-
-	// iterate for all versions until we find the specific tag
-	for _, version := range versions {
-		tags := version.Metadata.Container.Tags
-		for _, t := range tags {
-			if t == tag {
-				return version, nil
-			}
-		}
-	}
-	return nil, nil
-
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org
@@ -790,6 +766,44 @@ func (c *GitHub) ListImages(ctx context.Context) ([]string, error) {
 // GetNamespaceURL returns the URL for the repository
 func (c *GitHub) GetNamespaceURL() string {
 	return c.ghcrwrap.GetNamespaceURL()
+}
+
+// GetArtifactVersions returns a list of all versions for a specific artifact
+func (gv *GitHub) GetArtifactVersions(
+	ctx context.Context, artifact *minderv1.Artifact,
+	filter provifv1.GetArtifactVersionsFilter,
+) ([]*minderv1.ArtifactVersion, error) {
+	artifactName := url.QueryEscape(artifact.GetName())
+	upstreamVersions, err := gv.getPackageVersions(
+		ctx, artifact.GetOwner(), artifact.GetTypeLower(), artifactName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
+	}
+
+	out := make([]*minderv1.ArtifactVersion, 0, len(upstreamVersions))
+	for _, uv := range upstreamVersions {
+		tags := uv.Metadata.Container.Tags
+
+		if err := filter.IsSkippable(uv.CreatedAt.Time, tags); err != nil {
+			zerolog.Ctx(ctx).Debug().Str("name", artifact.GetName()).Strs("tags", tags).
+				Str("reason", err.Error()).Msg("skipping artifact version")
+			continue
+		}
+
+		sort.Strings(tags)
+
+		// only the tags and creation time is relevant to us.
+		out = append(out, &minderv1.ArtifactVersion{
+			Tags: tags,
+			// NOTE: GitHub's name is actually a SHA. This is misleading...
+			// but it is what it is. We'll use it as the SHA for now.
+			Sha:       *uv.Name,
+			CreatedAt: timestamppb.New(uv.CreatedAt.Time),
+		})
+	}
+
+	return out, nil
 }
 
 // setAsRateLimited adds the GitHub to the cache as rate limited.

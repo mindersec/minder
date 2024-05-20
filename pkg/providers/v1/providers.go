@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-playground/validator/v10"
@@ -74,6 +75,25 @@ type RepoLister interface {
 	ListAllRepositories(context.Context) ([]*minderv1.Repository, error)
 }
 
+var (
+	// ArtifactTypeContainerRetentionPeriod represents the retention period for container artifacts
+	ArtifactTypeContainerRetentionPeriod = time.Now().AddDate(0, -6, 0)
+)
+
+// GetArtifactVersionsFilter is the options to filter GetArtifactVersions
+type GetArtifactVersionsFilter interface {
+	// IsSkippable determines if an artifact should be skipped
+	IsSkippable(createdAt time.Time, tags []string) error
+}
+
+// ArtifactProvider is the interface for artifact providers. This will
+// contain methods for interacting with artifacts.
+type ArtifactProvider interface {
+	// GetArtifactVersions returns the versions of the given artifact.
+	GetArtifactVersions(ctx context.Context, artifact *minderv1.Artifact,
+		filter GetArtifactVersionsFilter) ([]*minderv1.ArtifactVersion, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
@@ -82,6 +102,7 @@ type GitHub interface {
 	REST
 	Git
 	ImageLister
+	ArtifactProvider
 
 	GetCredential() GitHubCredential
 	GetRepository(context.Context, string, string) (*github.Repository, error)
@@ -89,8 +110,6 @@ type GitHub interface {
 	UpdateBranchProtection(context.Context, string, string, string, *github.ProtectionRequest) error
 	ListPackagesByRepository(context.Context, string, string, int64, int, int) ([]*github.Package, error)
 	GetPackageByName(context.Context, string, string, string) (*github.Package, error)
-	GetPackageVersions(context.Context, string, string, string) ([]*github.PackageVersion, error)
-	GetPackageVersionByTag(context.Context, string, string, string, string) (*github.PackageVersion, error)
 	GetPackageVersionById(context.Context, string, string, string, int64) (*github.PackageVersion, error)
 	GetPullRequest(context.Context, string, string, int) (*github.PullRequest, error)
 	CreateReview(context.Context, string, string, int, *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
@@ -140,6 +159,7 @@ type ImageLister interface {
 // OCI is the interface for interacting with OCI registries
 type OCI interface {
 	Provider
+	ArtifactProvider
 
 	// ListTags lists the tags available for the given container in the given namespace
 	// for the OCI provider.

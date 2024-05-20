@@ -19,11 +19,15 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/constants"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -179,6 +183,66 @@ func (o *OCI) GetAuthenticator() (authn.Authenticator, error) {
 	}
 
 	return &authn.Bearer{Token: t.AccessToken}, nil
+}
+
+// GetArtifactVersions returns the artifact versions for the given artifact
+func (ov *OCI) GetArtifactVersions(
+	ctx context.Context,
+	artifact *minderv1.Artifact,
+	filter provifv1.GetArtifactVersionsFilter,
+) ([]*minderv1.ArtifactVersion, error) {
+	tags, err := ov.ListTags(ctx, artifact.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
+	}
+
+	out := make([]*minderv1.ArtifactVersion, 0, len(tags))
+	for _, t := range tags {
+		// TODO: We probably should try to surface errors while returning a subset
+		// of manifests.
+		man, err := ov.GetManifest(ctx, artifact.GetName(), t)
+		if err != nil {
+			return nil, err
+		}
+
+		// NOTE/FIXME: This is going to be a hassle as not a lot of
+		// container images have the needed annotations. We'd need
+		// go down to a specific image configuration (e.g. for _some_
+		// architecture) to actually verify the creation date...
+		// Anybody has other ideas?
+		strcreated, ok := man.Annotations[imgspecv1.AnnotationCreated]
+		var createdAt time.Time
+		if ok {
+			// TODO: Verify if this is correct
+			createdAt, err = time.Parse(time.RFC3339, strcreated)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
+			}
+		} else {
+			// FIXME: This is a hack
+			createdAt = time.Now()
+		}
+
+		if err := filter.IsSkippable(createdAt, []string{t}); err != nil {
+			zerolog.Ctx(ctx).Debug().Str("name", artifact.GetName()).Strs("tags", tags).
+				Str("reason", err.Error()).Msg("skipping artifact version")
+			continue
+		}
+
+		// TODO: Consider caching
+		digest, err := ov.GetDigest(ctx, artifact.GetName(), t)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get digest")
+		}
+
+		out = append(out, &minderv1.ArtifactVersion{
+			Tags:      []string{t},
+			Sha:       digest,
+			CreatedAt: timestamppb.New(createdAt),
+		})
+	}
+
+	return out, nil
 }
 
 // getReferenceString returns the reference string for a given container name and tag
