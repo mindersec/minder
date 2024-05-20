@@ -16,6 +16,7 @@ package manager_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -29,6 +30,62 @@ import (
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	"github.com/stacklok/minder/internal/providers/mock/fixtures"
 )
+
+func TestProviderManager_CreateFromConfig(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name          string
+		Provider      *db.Provider
+		Config        json.RawMessage
+		ExpectedError string
+	}{
+		{
+			Name:          "CreateFromConfig returns error when provider class has no associated manager",
+			Provider:      githubAppProvider,
+			ExpectedError: "unexpected provider class",
+		},
+		{
+			Name:     "CreateFromConfig creates a github provider with default configuration",
+			Provider: githubProvider,
+			Config:   json.RawMessage(`{ github: {} }`),
+		},
+		{
+			Name:     "CreateFromConfig creates a github provider with custom configuration",
+			Provider: githubProvider,
+			Config:   json.RawMessage(`{ github: { key: value} }`),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			store := fixtures.NewProviderStoreMock()(ctrl)
+
+			classManager := mockmanager.NewMockProviderClassManager(ctrl)
+			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
+			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
+
+			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(scenario.Provider, nil).MaxTimes(1)
+
+			provManager, err := manager.NewProviderManager(store, classManager)
+			require.NoError(t, err)
+
+			newProv, err := provManager.CreateFromConfig(ctx, scenario.Provider.Class, scenario.Provider.ProjectID, scenario.Provider.Name, scenario.Config)
+			if scenario.ExpectedError != "" {
+				require.ErrorContains(t, err, scenario.ExpectedError)
+			} else {
+				require.NoError(t, err)
+				scenario.Provider.Definition = scenario.Config
+				require.Equal(t, scenario.Provider, newProv)
+			}
+		})
+	}
+}
 
 // Test both create by name/project, and create by ID together.
 // This is because the test logic is basically identical.

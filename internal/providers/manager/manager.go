@@ -17,6 +17,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -32,6 +33,10 @@ import (
 
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
+	// CreateFromConfig creates a new Provider instance in the database with a given configuration or the provider default
+	CreateFromConfig(
+		ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+	) (*db.Provider, error)
 	// InstantiateFromID creates the provider from the Provider's UUID
 	InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error)
 	// InstantiateFromNameProject creates the provider using the provider's name and
@@ -63,6 +68,7 @@ type ProviderManager interface {
 // specific Provider class. The idea is that ProviderManager determines the
 // class of the Provider, and delegates to the appropraite ProviderClassManager
 type ProviderClassManager interface {
+	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
 	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
 	// Delete deletes an instance of this provider
@@ -105,6 +111,22 @@ func NewProviderManager(
 		classManagers: classes,
 		store:         store,
 	}, nil
+}
+
+func (p *providerManager) CreateFromConfig(
+	ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+) (*db.Provider, error) {
+	manager, err := p.getClassManager(providerClass)
+	if err != nil {
+		return nil, fmt.Errorf("error getting class manager: %w", err)
+	}
+
+	provConfig, err := manager.GetConfig(ctx, providerClass, config)
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider config: %w", err)
+	}
+
+	return p.store.Create(ctx, providerClass, name, projectID, provConfig)
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {
@@ -170,7 +192,7 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return err
 	}
@@ -188,15 +210,14 @@ func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provide
 }
 
 func (p *providerManager) buildFromDBRecord(ctx context.Context, config *db.Provider) (v1.Provider, error) {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return nil, err
 	}
 	return manager.Build(ctx, config)
 }
 
-func (p *providerManager) getClassManager(config *db.Provider) (ProviderClassManager, error) {
-	class := config.Class
+func (p *providerManager) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
 	manager, ok := p.classManagers[class]
 	if !ok {
 		return nil, fmt.Errorf("unexpected provider class: %s", class)

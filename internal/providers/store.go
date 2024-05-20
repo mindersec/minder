@@ -17,6 +17,7 @@ package providers
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -32,6 +33,10 @@ import (
 
 // ProviderStore provides methods for retrieving Providers from the database
 type ProviderStore interface {
+	// Create creates a new provider in the database
+	Create(
+		ctx context.Context, providerClass db.ProviderClass, name string, projectID uuid.UUID, config json.RawMessage,
+	) (*db.Provider, error)
 	// GetByID returns the provider identified by its UUID primary key.
 	// This should only be used in places when it is certain that the requester
 	// is authorized to access this provider.
@@ -88,6 +93,38 @@ type providerStore struct {
 // NewProviderStore returns a new instance of ProviderStore.
 func NewProviderStore(store db.Store) ProviderStore {
 	return &providerStore{store: store}
+}
+
+func (p *providerStore) Create(
+	ctx context.Context,
+	providerClass db.ProviderClass,
+	name string,
+	projectID uuid.UUID,
+	config json.RawMessage,
+) (*db.Provider, error) {
+	if projectID == uuid.Nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid arguments")
+	}
+
+	providerDef, err := GetProviderClassDefinition(string(providerClass))
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider definition: %w", err)
+	}
+
+	provParams := db.CreateProviderParams{
+		Name:       name,
+		ProjectID:  projectID,
+		Class:      providerClass,
+		Implements: providerDef.Traits,
+		Definition: config,
+		AuthFlows:  providerDef.AuthorizationFlows,
+	}
+
+	prov, err := p.store.CreateProvider(ctx, provParams)
+	if err != nil {
+		return nil, fmt.Errorf("error creating provider: %w", err)
+	}
+	return &prov, nil
 }
 
 func (p *providerStore) GetByID(ctx context.Context, providerID uuid.UUID) (*db.Provider, error) {

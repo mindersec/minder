@@ -11,6 +11,7 @@ package mock_manager
 
 import (
 	context "context"
+	json "encoding/json"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -56,6 +57,21 @@ func (m *MockProviderManager) BulkInstantiateByTrait(ctx context.Context, projec
 func (mr *MockProviderManagerMockRecorder) BulkInstantiateByTrait(ctx, projectID, trait, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkInstantiateByTrait", reflect.TypeOf((*MockProviderManager)(nil).BulkInstantiateByTrait), ctx, projectID, trait, name)
+}
+
+// CreateFromConfig mocks base method.
+func (m *MockProviderManager) CreateFromConfig(ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage) (*db.Provider, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFromConfig", ctx, providerClass, projectID, name, config)
+	ret0, _ := ret[0].(*db.Provider)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFromConfig indicates an expected call of CreateFromConfig.
+func (mr *MockProviderManagerMockRecorder) CreateFromConfig(ctx, providerClass, projectID, name, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFromConfig", reflect.TypeOf((*MockProviderManager)(nil).CreateFromConfig), ctx, providerClass, projectID, name, config)
 }
 
 // DeleteByID mocks base method.
@@ -166,6 +182,21 @@ func (m *MockProviderClassManager) Delete(ctx context.Context, config *db.Provid
 func (mr *MockProviderClassManagerMockRecorder) Delete(ctx, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProviderClassManager)(nil).Delete), ctx, config)
+}
+
+// GetConfig mocks base method.
+func (m *MockProviderClassManager) GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConfig", ctx, class, userConfig)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConfig indicates an expected call of GetConfig.
+func (mr *MockProviderClassManagerMockRecorder) GetConfig(ctx, class, userConfig any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockProviderClassManager)(nil).GetConfig), ctx, class, userConfig)
 }
 
 // GetSupportedClasses mocks base method.
