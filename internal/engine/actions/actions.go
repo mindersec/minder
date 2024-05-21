@@ -45,6 +45,7 @@ type RuleActionsEngine struct {
 
 // NewRuleActions creates a new rule actions engine
 func NewRuleActions(
+	ctx context.Context,
 	profile *minderv1.Profile,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
@@ -56,7 +57,7 @@ func NewRuleActions(
 	}
 
 	// Create the alert engine
-	alertEngine, err := alert.NewRuleAlert(ruletype, provider)
+	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}
