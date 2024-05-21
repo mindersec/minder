@@ -18,8 +18,10 @@
 package alert
 
 import (
-	"errors"
+	"context"
 	"fmt"
+
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/actions/alert/noop"
 	"github.com/stacklok/minder/internal/engine/actions/alert/security_advisory"
@@ -33,6 +35,7 @@ const ActionType engif.ActionType = "alert"
 
 // NewRuleAlert creates a new rule alert engine
 func NewRuleAlert(
+	ctx context.Context,
 	ruletype *pb.RuleType,
 	provider provinfv1.Provider,
 ) (engif.Action, error) {
@@ -49,7 +52,9 @@ func NewRuleAlert(
 		}
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, errors.New("provider does not implement git trait")
+			zerolog.Ctx(ctx).Debug().Str("rule-type", ruletype.GetName()).
+				Msg("provider is not a GitHub provider. Silently skipping alerts.")
+			return noop.NewNoopAlert(ActionType)
 		}
 		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype.GetSeverity(), alertCfg.GetSecurityAdvisory(), client)
 	}

@@ -100,7 +100,7 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
-	ae, err := actions.NewRuleActions(profile, ruletype, provider)
+	ae, err := actions.NewRuleActions(ctx, profile, ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
