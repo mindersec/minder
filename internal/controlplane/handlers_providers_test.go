@@ -18,15 +18,22 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
@@ -38,6 +45,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
@@ -47,6 +55,360 @@ import (
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
+
+func newPbStruct(t *testing.T, data map[string]interface{}) *structpb.Struct {
+	t.Helper()
+
+	pbs, err := structpb.NewStruct(data)
+	require.NoError(t, err)
+	return pbs
+}
+
+type mockServer struct {
+	server    *Server
+	mockStore *mockdb.MockStore
+}
+
+func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
+	t.Helper()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
+	providerStore := providers.NewProviderStore(mockStore)
+	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
+	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
+
+	cancelable, cancel := context.WithCancel(context.Background())
+	clientCache := ratecache.NewRestClientCache(cancelable)
+	defer cancel()
+
+	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
+		clientCache,
+		nil,
+		&serverconfig.ProviderConfig{},
+		nil,
+		mockCryptoEngine,
+		whManager,
+		mockStore,
+		mockProvidersSvc,
+	)
+	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
+
+	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	require.NoError(t, err)
+
+	authzClient := &mock.SimpleClient{
+		Allowed: []uuid.UUID{uuid.New()},
+	}
+
+	server := Server{
+		authzClient:     authzClient,
+		cryptoEngine:    mockCryptoEngine,
+		store:           mockStore,
+		providerManager: providerManager,
+		cfg:             &serverconfig.Config{},
+	}
+
+	return &mockServer{
+		server:    &server,
+		mockStore: mockStore,
+	}
+}
+
+func TestCreateProvider(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name          string
+		providerClass db.ProviderClass
+		userConfig    *structpb.Struct
+		expected      minder.Provider
+		expectedErr   string
+	}{
+		{
+			name:          "test-github-defaults",
+			providerClass: db.ProviderClassGithub,
+			expected: minder.Provider{
+				Name: "test-github-defaults",
+				Config: newPbStruct(t, map[string]interface{}{
+					"github": map[string]interface{}{},
+				}),
+				Class: string(db.ProviderClassGithub),
+			},
+		},
+		{
+			name:          "test-github-config",
+			providerClass: db.ProviderClassGithub,
+			userConfig: newPbStruct(t, map[string]interface{}{
+				"github": map[string]interface{}{
+					"key": "value",
+				},
+			}),
+			expected: minder.Provider{
+				Name: "test-github-config",
+				Config: newPbStruct(t, map[string]interface{}{
+					"github": map[string]interface{}{
+						"key": "value",
+					},
+				}),
+				Class: string(db.ProviderClassGithub),
+			},
+		},
+		{
+			name:          "test-github-app-defaults",
+			providerClass: db.ProviderClassGithubApp,
+			expected: minder.Provider{
+				Name: "test-github-app-defaults",
+				Config: newPbStruct(t, map[string]interface{}{
+					"github-app": map[string]interface{}{},
+				}),
+				Class: string(db.ProviderClassGithubApp),
+			},
+		},
+		{
+			name:          "test-github-app-config",
+			providerClass: db.ProviderClassGithubApp,
+			userConfig: newPbStruct(t, map[string]interface{}{
+				"github-app": map[string]interface{}{
+					"key": "value",
+				},
+			}),
+			expected: minder.Provider{
+				Name: "test-github-app-config",
+				Config: newPbStruct(t, map[string]interface{}{
+					"github-app": map[string]interface{}{
+						"key": "value",
+					},
+				}),
+				Class: string(db.ProviderClassGithubApp),
+			},
+		},
+		{
+			name:          "test-dockerhub-defaults",
+			providerClass: db.ProviderClassDockerhub,
+			expected: minder.Provider{
+				Name: "test-dockerhub-defaults",
+				Config: newPbStruct(t, map[string]interface{}{
+					"dockerhub": map[string]interface{}{},
+				}),
+				Class: string(db.ProviderClassDockerhub),
+			},
+		},
+		{
+			name:          "test-dockerhub-config",
+			providerClass: db.ProviderClassDockerhub,
+			userConfig: newPbStruct(t, map[string]interface{}{
+				"dockerhub": map[string]interface{}{
+					"key": "value",
+				},
+			}),
+			expected: minder.Provider{
+				Name: "test-dockerhub-config",
+				Config: newPbStruct(t, map[string]interface{}{
+					"dockerhub": map[string]interface{}{
+						"key": "value",
+					},
+				}),
+				Class: string(db.ProviderClassDockerhub),
+			},
+		},
+	}
+
+	for i := range scenarios {
+		scenario := &scenarios[i]
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			projectID := uuid.New()
+			projectIDStr := projectID.String()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			fakeServer := testServer(t, ctrl)
+			require.NotNil(t, fakeServer)
+
+			user := openid.New()
+			assert.NoError(t, user.Set("sub", "testuser"))
+
+			ctx := context.Background()
+			ctx = auth.WithAuthTokenContext(ctx, user)
+			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
+				Project:  engine.Project{ID: projectID},
+				Provider: engine.Provider{Name: scenario.name},
+			})
+
+			jsonConfig, err := scenario.expected.Config.MarshalJSON()
+			require.NoError(t, err)
+
+			fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), partialCreateParamsMatcher{
+				value: db.CreateProviderParams{
+					Name:       scenario.name,
+					ProjectID:  projectID,
+					Class:      scenario.providerClass,
+					Definition: jsonConfig,
+				}}).
+				Return(db.Provider{
+					Name: scenario.name,
+				}, nil)
+
+			fakeServer.mockStore.EXPECT().GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
+				Return(db.ProviderAccessToken{}, sql.ErrNoRows)
+			fakeServer.mockStore.EXPECT().GetInstallationIDByProviderID(gomock.Any(), gomock.Any()).
+				Return(db.ProviderGithubAppInstallation{}, sql.ErrNoRows)
+
+			resp, err := fakeServer.server.CreateProvider(ctx, &minder.CreateProviderRequest{
+				Context: &minder.Context{
+					Project:  &projectIDStr,
+					Provider: &scenario.name,
+				},
+				Provider: &minder.Provider{
+					Name:   scenario.name,
+					Class:  string(scenario.providerClass),
+					Config: scenario.userConfig,
+				},
+			})
+			assert.NoError(t, err)
+
+			// The config is tested by checking the expected parameters passed to the store
+			assert.Equal(t, scenario.expected.Name, resp.GetProvider().GetName())
+			assert.Equal(t, provinfv1.CredentialStateUnset, resp.GetProvider().GetCredentialsState())
+		})
+	}
+}
+
+func TestCreateProviderFailures(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unknown-class", func(t *testing.T) {
+		t.Parallel()
+
+		projectID := uuid.New()
+		projectIDStr := projectID.String()
+
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+
+		fakeServer := testServer(t, ctrl)
+		providerName := "uknown-class-provider"
+
+		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
+			Context: &minder.Context{
+				Project:  &projectIDStr,
+				Provider: &providerName,
+			},
+			Provider: &minder.Provider{
+				Name:  providerName,
+				Class: "unknown-class",
+			},
+		})
+		assert.Error(t, err)
+		require.ErrorContains(t, err, "unexpected provider class")
+	})
+
+	t.Run("error-no-provider-param", func(t *testing.T) {
+		t.Parallel()
+
+		projectID := uuid.New()
+		projectIDStr := projectID.String()
+
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+
+		fakeServer := testServer(t, ctrl)
+		providerName := "test-provider-no-params"
+
+		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
+			Context: &minder.Context{
+				Project:  &projectIDStr,
+				Provider: &providerName,
+			},
+		})
+		assert.Error(t, err)
+		require.ErrorContains(t, err, "provider is required")
+	})
+
+	t.Run("provider-already-exists", func(t *testing.T) {
+		t.Parallel()
+
+		projectID := uuid.New()
+		projectIDStr := projectID.String()
+
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+
+		fakeServer := testServer(t, ctrl)
+		providerName := "test-provider-duplicate"
+
+		user := openid.New()
+		assert.NoError(t, user.Set("sub", "testuser"))
+
+		ctx := context.Background()
+		ctx = auth.WithAuthTokenContext(ctx, user)
+		ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
+			Project:  engine.Project{ID: projectID},
+			Provider: engine.Provider{Name: providerName},
+		})
+
+		fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
+			Return(db.Provider{}, &pq.Error{Code: "23505"}) // unique_violation
+
+		resp, err := fakeServer.server.CreateProvider(ctx, &minder.CreateProviderRequest{
+			Context: &minder.Context{
+				Project:  &projectIDStr,
+				Provider: &providerName,
+			},
+			Provider: &minder.Provider{
+				Name:  providerName,
+				Class: string(db.ProviderClassGithub),
+			},
+		})
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		assert.Equal(t, codes.AlreadyExists, st.Code())
+	})
+}
+
+type partialCreateParamsMatcher struct {
+	value db.CreateProviderParams
+}
+
+func (p partialCreateParamsMatcher) configMatches(name string, gotBytes json.RawMessage) bool {
+	var exp, got interface{}
+
+	if err := json.Unmarshal(p.value.Definition, &exp); err != nil {
+		return false
+	}
+	if err := json.Unmarshal(gotBytes, &got); err != nil {
+		return false
+	}
+	if !cmp.Equal(exp, got) {
+		fmt.Printf("config mismatch for %s: %s\n", name, cmp.Diff(gotBytes, p.value.Definition))
+		return false
+	}
+	return true
+}
+
+func (p partialCreateParamsMatcher) Matches(x interface{}) bool {
+	typedX, ok := x.(db.CreateProviderParams)
+	if !ok {
+		return false
+	}
+
+	if !p.configMatches(p.value.Name, typedX.Definition) {
+		return false
+	}
+
+	return cmp.Equal(typedX, p.value,
+		cmpopts.IgnoreFields(db.CreateProviderParams{}, "Implements", "Definition", "AuthFlows"))
+}
+
+func (p partialCreateParamsMatcher) String() string {
+	return fmt.Sprintf("partialCreateParamsMatcher %+v", p.value)
+}
 
 func TestDeleteProvider(t *testing.T) {
 	t.Parallel()
