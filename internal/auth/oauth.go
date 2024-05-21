@@ -31,6 +31,7 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/stacklok/minder/internal/config"
+	"github.com/stacklok/minder/internal/db"
 )
 
 const (
@@ -149,8 +150,9 @@ func DeleteAccessToken(ctx context.Context, provider string, token string) error
 }
 
 // ValidateProviderToken validates the given token for the given provider
-func ValidateProviderToken(_ context.Context, provider string, token string) error {
-	if provider == Github {
+func ValidateProviderToken(_ context.Context, provider db.ProviderClass, token string) error {
+	// Fixme: this should really be handled by the provider. Should this be in the credentials API or the manager?
+	if provider == db.ProviderClassGithub {
 		// Create an OAuth2 token source with the PAT
 		tokenSource := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 

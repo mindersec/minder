@@ -465,9 +465,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// validate token
-	err = auth.ValidateProviderToken(ctx, provider.Name, in.AccessToken)
+	err = auth.ValidateProviderToken(ctx, provider.Class, in.AccessToken)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided: %v", err)
 	}
 
 	ftoken := &oauth2.Token{
