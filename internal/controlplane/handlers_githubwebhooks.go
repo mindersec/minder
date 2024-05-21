@@ -712,7 +712,13 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 	if err != nil {
 		return nil, err
 	}
-	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.container_metadata.tag.name", payload)
+	// Previous lookup was done at this path
+	// ".package.package_version.container_metadata.tag.name",
+	// which is unfortunately not have available under go-github,
+	// as field "container_metadata" is missing form its structs.
+	// I suggest using the following, although it's still to be
+	// verified whether that's the right one.
+	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.tag_name", payload)
 	if err != nil {
 		return nil, err
 	}
@@ -855,7 +861,11 @@ func (s *Server) reconcilePrWithDb(
 	var retPr *db.PullRequest
 
 	switch prEvalInfo.Action {
-	case WebhookActionEventOpened, WebhookActionEventSynchronize:
+	// TODO mic go-github documentation reportes that
+	// PullRequestEvents with action "synchronize" are not
+	// published, see here
+	// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
+	case WebhookActionEventOpened:
 		dbPr, err := s.store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
