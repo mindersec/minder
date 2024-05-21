@@ -17,16 +17,25 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -67,11 +76,16 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	if provider == "" {
 		provider = viper.GetString("class")
 	}
+	providerName := viper.GetString("name")
+	if providerName == "" {
+		providerName = provider
+	}
 	project := viper.GetString("project")
 	token := viper.GetString("token")
 	owner := viper.GetString("owner")
 	yesFlag := viper.GetBool("yes")
 	skipBrowser := viper.GetBool("skip-browser")
+	cfgFlag := viper.GetString("config")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -98,9 +112,20 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 		}
 	}
 
+	config, err := providerConfigFromArg(cfgFlag, cmd.InOrStdin())
+	if err != nil {
+		return cli.MessageAndError("Error reading provider configuration", err)
+	}
+
 	// the token only applies to the old flow
-	if token != "" && provider == legacyGitHubProvider.ToString() {
-		return enrollUsingToken(ctx, cmd, oauthClient, provider, project, token, owner)
+	// TODO: allow for token to be passed in if the provider allows it, don't hardcode
+	userFlow, err := supportsToken(provider)
+	if err != nil {
+		return cli.MessageAndError("Error checking provider support", err)
+	}
+
+	if token != "" && userFlow {
+		return enrollUsingToken(ctx, cmd, oauthClient, providerClient, providerName, provider, project, token, owner, config)
 	}
 
 	// This will have a different timeout
@@ -113,13 +138,35 @@ func enrollUsingToken(
 	ctx context.Context,
 	cmd *cobra.Command,
 	client minderv1.OAuthServiceClient,
-	provider string,
+	provClient minderv1.ProvidersServiceClient,
+	providerName string,
+	providerClass string,
 	project string,
 	token string,
 	owner string,
+	providerConfig *structpb.Struct,
 ) error {
-	_, err := client.StoreProviderToken(ctx, &minderv1.StoreProviderTokenRequest{
-		Context:     &minderv1.Context{Provider: &provider, Project: &project},
+	_, err := provClient.CreateProvider(ctx, &minderv1.CreateProviderRequest{
+		Context: &minderv1.Context{Provider: &providerName, Project: &project},
+		Provider: &minderv1.Provider{
+			Name:   providerName,
+			Class:  providerClass,
+			Config: providerConfig,
+		},
+	})
+	st, ok := status.FromError(err)
+	if !ok {
+		// We can't parse the error, so just return it
+		return err
+	}
+
+	if st.Code() != codes.AlreadyExists {
+		return err
+	}
+
+	// the provider already exists, turn this call into an update of the token
+	_, err = client.StoreProviderToken(ctx, &minderv1.StoreProviderTokenRequest{
+		Context:     &minderv1.Context{Provider: &providerName, Project: &project},
 		AccessToken: token,
 		Owner:       &owner,
 	})
@@ -284,6 +331,36 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 	}
 }
 
+func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb.Struct, error) {
+	if configSource == "" {
+		return nil, nil
+	}
+
+	reader, closer, err := util.OpenFileArg(configSource, dashReader)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file arg: %w", err)
+	}
+	defer closer()
+
+	var config map[string]any
+
+	// TODO: handle YAML and JSON
+	err = json.NewDecoder(reader).Decode(&config)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing provider configuration: %w", err)
+	}
+
+	return structpb.NewStruct(config)
+}
+
+func supportsToken(providerClass string) (bool, error) {
+	providerDef, err := providers.GetProviderClassDefinition(providerClass)
+	if err != nil {
+		return false, err
+	}
+	return slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowUserInput), nil
+}
+
 func init() {
 	ProviderCmd.AddCommand(enrollCmd)
 	// Flags
@@ -291,6 +368,8 @@ func init() {
 	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy GitHub only)")
 	enrollCmd.Flags().BoolP("yes", "y", false, "Bypass any yes/no prompts when enrolling a new provider")
 	enrollCmd.Flags().StringP("class", "c", githubAppProvider.ToString(), "Provider class, defaults to github-app")
+	enrollCmd.Flags().StringP("config", "f", "", "Path to the provider configuration (or - for stdin)")
+	enrollCmd.Flags().StringP("name", "n", "", "Name of the new provider. (Only when using a token)")
 
 	// Bind flags
 	if err := viper.BindPFlag("token", enrollCmd.Flags().Lookup("token")); err != nil {
