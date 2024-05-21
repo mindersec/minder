@@ -18,18 +18,19 @@ minder provider enroll [flags]
 ### Options
 
 ```
-  -c, --class string   Provider class, defaults to github-app (default "github-app")
-  -h, --help           help for enroll
-  -o, --owner string   Owner to filter on for provider resources (Legacy GitHub only)
-      --skip-browser   Skip opening the browser for OAuth flow
-  -t, --token string   Personal Access Token (PAT) to use for enrollment (Legacy GitHub only)
-  -y, --yes            Bypass any yes/no prompts when enrolling a new provider
+  -c, --class string    Provider class, defaults to github-app (default "github-app")
+  -f, --config string   Path to the provider configuration (or - for stdin)
+  -h, --help            help for enroll
+  -n, --name string     Name of the new provider. (Only when using a token)
+  -o, --owner string    Owner to filter on for provider resources (Legacy GitHub only)
+      --skip-browser    Skip opening the browser for OAuth flow
+  -t, --token string    Personal Access Token (PAT) to use for enrollment (Legacy GitHub only)
+  -y, --yes             Bypass any yes/no prompts when enrolling a new provider
 ```
 
 ### Options inherited from parent commands
 
 ```
-      --config string            Config file (default is $PWD/config.yaml)
       --grpc-host string         Server host (default "api.stacklok.com")
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
