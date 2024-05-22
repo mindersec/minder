@@ -25,17 +25,12 @@ import (
 
 	go_github "github.com/google/go-github/v61/github"
 	"github.com/spf13/viper"
+	"github.com/stacklok/minder/internal/db"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
-
-	"github.com/stacklok/minder/internal/db"
 )
 
 const (
-	// Google OAuth2 provider
-	Google = "google"
-
 	// Github OAuth2 provider
 	Github = "github"
 
@@ -44,7 +39,7 @@ const (
 )
 
 // TODO:
-var knownProviders = []string{Google, Github, GitHubApp}
+var knownProviders = []string{Github, GitHubApp}
 
 // NewOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
@@ -62,9 +57,6 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	}
 
 	scopes := func(provider string) []string {
-		if provider == Google {
-			return []string{"profile", "email"}
-		}
 		if provider == GitHubApp {
 			return []string{}
 		}
@@ -72,9 +64,6 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 	}
 
 	endpoint := func(provider string) oauth2.Endpoint {
-		if provider == Google {
-			return google.Endpoint
-		}
 		return github.Endpoint
 	}
 
