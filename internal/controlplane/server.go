@@ -84,7 +84,7 @@ type Server struct {
 	mt                  metrics.Metrics
 	grpcServer          *grpc.Server
 	jwt                 auth.JwtValidator
-	providerAuthFactory func(string, bool) (*oauth2.Config, error)
+	providerAuthFactory func(*serverconfig.ProviderConfig, string, bool) (*oauth2.Config, error)
 	authzClient         authz.Client
 	idClient            auth.Resolver
 	cryptoEngine        crypto.Engine

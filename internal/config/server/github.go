@@ -17,5 +17,5 @@ package server
 
 // GitHubConfig is the configuration for the GitHub OAuth providers
 type GitHubConfig struct {
-	OAuthClientConfig
+	OAuthClientConfig `mapstructure:",squash"`
 }

@@ -39,7 +39,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -62,38 +61,18 @@ import (
 func TestNewOAuthConfig(t *testing.T) {
 	t.Parallel()
 
-	// Test with CLI set
-	cfg, err := auth.NewOAuthConfig("google", true)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
-
-	if cfg.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
-
-	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("github", true)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
-
-	if cfg.Endpoint != github.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
+	pc := &serverconfig.ProviderConfig{
+		GitHub: &serverconfig.GitHubConfig{
+			OAuthClientConfig: serverconfig.OAuthClientConfig{
+				ClientID:     "clientID",
+				ClientSecret: "clientSecret",
+				RedirectURI:  "redirectURI",
+			},
+		},
 	}
 
 	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("google", false)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
-
-	if cfg.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
-
-	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("github", false)
+	cfg, err := auth.NewOAuthConfig(pc, "github", true)
 	if err != nil {
 		t.Errorf("Error in newOAuthConfig: %v", err)
 	}
@@ -102,7 +81,17 @@ func TestNewOAuthConfig(t *testing.T) {
 		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
 	}
 
-	_, err = auth.NewOAuthConfig("invalid", true)
+	// Test with CLI set
+	cfg, err = auth.NewOAuthConfig(pc, "github", false)
+	if err != nil {
+		t.Errorf("Error in newOAuthConfig: %v", err)
+	}
+
+	if cfg.Endpoint != github.Endpoint {
+		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
+	}
+
+	_, err = auth.NewOAuthConfig(pc, "invalid", true)
 	if err == nil {
 		t.Errorf("Expected error in newOAuthConfig, but got nil")
 	}
@@ -310,7 +299,19 @@ func TestGetAuthorizationURL(t *testing.T) {
 					TokenKey: tokenKeyPath,
 				},
 				Provider: serverconfig.ProviderConfig{
+					GitHub: &serverconfig.GitHubConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     "clientID",
+							ClientSecret: "clientSecret",
+							RedirectURI:  "redirectURI",
+						},
+					},
 					GitHubApp: &serverconfig.GitHubAppConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     "clientID",
+							ClientSecret: "clientSecret",
+							RedirectURI:  "redirectURI",
+						},
 						AppName: "test-app",
 					},
 				},
@@ -472,7 +473,7 @@ func TestProviderCallback(t *testing.T) {
 			store.EXPECT().Rollback(gomock.Any())
 
 			t.Logf("Request: %+v", req.URL)
-			s.providerAuthFactory = func(_ string, _ bool) (*oauth2.Config, error) {
+			s.providerAuthFactory = func(_ *serverconfig.ProviderConfig, _ string, _ bool) (*oauth2.Config, error) {
 				return &oauth2.Config{
 					Endpoint: oauth2.Endpoint{
 						TokenURL: oauthServer.URL,
@@ -652,7 +653,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 					}
 				}))
 			defer oauthServer.Close()
-			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
+			providerAuthFactory := func(_ *serverconfig.ProviderConfig, _ string, _ bool) (*oauth2.Config, error) {
 				return &oauth2.Config{
 					Endpoint: oauth2.Endpoint{
 						TokenURL: oauthServer.URL,
@@ -798,7 +799,7 @@ func TestVerifyProviderCredential(t *testing.T) {
 					}
 				}))
 			defer oauthServer.Close()
-			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
+			providerAuthFactory := func(_ *serverconfig.ProviderConfig, _ string, _ bool) (*oauth2.Config, error) {
 				return &oauth2.Config{
 					Endpoint: oauth2.Endpoint{
 						TokenURL: oauthServer.URL,

@@ -18,6 +18,7 @@ package server
 import (
 	"crypto/rsa"
 	"fmt"
+
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/stacklok/minder/internal/config"
@@ -25,7 +26,7 @@ import (
 
 // GitHubAppConfig is the configuration for the GitHub App providers
 type GitHubAppConfig struct {
-	OAuthClientConfig
+	OAuthClientConfig `mapstructure:",squash"`
 
 	// AppName is the name of the GitHub App
 	AppName string `mapstructure:"app_name"`

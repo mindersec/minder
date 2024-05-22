@@ -17,13 +17,14 @@ package server
 
 import (
 	"context"
+	"io"
+	"net/http"
+	"net/url"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"io"
-	"net/http"
-	"net/url"
 
 	"github.com/stacklok/minder/internal/config"
 )

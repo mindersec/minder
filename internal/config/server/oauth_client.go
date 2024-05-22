@@ -17,14 +17,21 @@ package server
 
 import "fmt"
 
+// OAuthClientConfig is the configuration for the OAuth client
 type OAuthClientConfig struct {
-	ClientID         string `mapstructure:"client_id"`
-	ClientIDFile     string `mapstructure:"client_id_file"`
-	ClientSecret     string `mapstructure:"client_secret"`
+	// ClientID is the OAuth client ID
+	ClientID string `mapstructure:"client_id"`
+	// ClientIDFile is the location of the file containing the OAuth client ID
+	ClientIDFile string `mapstructure:"client_id_file"`
+	// ClientSecret is the OAuth client secret
+	ClientSecret string `mapstructure:"client_secret"`
+	// ClientSecretFile is the location of the file containing the OAuth client secret
 	ClientSecretFile string `mapstructure:"client_secret_file"`
-	RedirectURI      string `mapstructure:"redirect_uri"`
+	// RedirectURI is the OAuth redirect URI
+	RedirectURI string `mapstructure:"redirect_uri"`
 }
 
+// GetClientID returns the OAuth client ID from either the file or the argument
 func (cfg *OAuthClientConfig) GetClientID() (string, error) {
 	if cfg == nil {
 		return "", fmt.Errorf("OAuthClientConfig is nil")
@@ -32,6 +39,7 @@ func (cfg *OAuthClientConfig) GetClientID() (string, error) {
 	return fileOrArg(cfg.ClientIDFile, cfg.ClientID, "client ID")
 }
 
+// GetClientSecret returns the OAuth client secret from either the file or the argument
 func (cfg *OAuthClientConfig) GetClientSecret() (string, error) {
 	if cfg == nil {
 		return "", fmt.Errorf("OAuthClientConfig is nil")

@@ -19,15 +19,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 
 	go_github "github.com/google/go-github/v61/github"
 	"github.com/spf13/viper"
-	"github.com/stacklok/minder/internal/db"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
+
+	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/db"
 )
 
 const (
@@ -38,14 +38,58 @@ const (
 	GitHubApp = "github-app"
 )
 
-// TODO:
 var knownProviders = []string{Github, GitHubApp}
+
+func getOAuthClientConfig(c *server.ProviderConfig, provider string) (*server.OAuthClientConfig, error) {
+	var oc *server.OAuthClientConfig
+	var err error
+
+	if !slices.Contains(knownProviders, provider) {
+		return nil, fmt.Errorf("invalid provider: %s", provider)
+	}
+
+	switch provider {
+	case Github:
+		if viper.IsSet(Github) {
+			oc, err = fallbackOAuthClientConfig("github")
+		} else if c != nil && c.GitHub != nil {
+			oc = &c.GitHub.OAuthClientConfig
+		} else {
+			return nil, fmt.Errorf("missing GitHub OAuth client config")
+		}
+	case GitHubApp:
+		if viper.IsSet(GitHubApp) {
+			oc, err = fallbackOAuthClientConfig(GitHubApp)
+		} else if c != nil && c.GitHubApp != nil {
+			oc = &c.GitHubApp.OAuthClientConfig
+		} else {
+			return nil, fmt.Errorf("missing GitHub App OAuth client config")
+		}
+	default:
+		err = fmt.Errorf("unknown provider: %s", provider)
+	}
+
+	return oc, err
+}
+
+func fallbackOAuthClientConfig(key string) (*server.OAuthClientConfig, error) {
+	var cfg server.OAuthClientConfig
+	if err := viper.UnmarshalKey(key, &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
 
 // NewOAuthConfig creates a new OAuth2 config for the given provider
 // and whether the client is a CLI or web client
-func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
+func NewOAuthConfig(c *server.ProviderConfig, provider string, cli bool) (*oauth2.Config, error) {
+	oauthConfig, err := getOAuthClientConfig(c, provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OAuth client config: %w", err)
+	}
+
 	redirectURL := func(provider string, cli bool) string {
-		base := viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
+		base := oauthConfig.RedirectURI
 		if provider == GitHubApp {
 			// GitHub App does not distinguish between CLI and web clients
 			return base
@@ -63,46 +107,27 @@ func NewOAuthConfig(provider string, cli bool) (*oauth2.Config, error) {
 		return []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"}
 	}
 
-	endpoint := func(provider string) oauth2.Endpoint {
+	endpoint := func() oauth2.Endpoint {
 		return github.Endpoint
 	}
 
-	if !slices.Contains(knownProviders, provider) {
-		return nil, fmt.Errorf("invalid provider: %s", provider)
+	clientID, err := oauthConfig.GetClientID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client ID: %w", err)
 	}
 
-	clientId, err := readFileOrConfig(fmt.Sprintf("%s.client_id", provider))
+	clientSecret, err := oauthConfig.GetClientSecret()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
-	}
-	clientSecret, err := readFileOrConfig(fmt.Sprintf("%s.client_secret", provider))
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %s.client_id: %w", provider, err)
+		return nil, fmt.Errorf("failed to get client secret: %w", err)
 	}
 
 	return &oauth2.Config{
-		ClientID:     clientId,
+		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL(provider, cli),
 		Scopes:       scopes(provider),
-		Endpoint:     endpoint(provider),
+		Endpoint:     endpoint(),
 	}, nil
-}
-
-// readFileOrConfig prefers reading from configKey_file (for Kubernetes distribution
-// of secrets), but falls back to a viper string value if the file is not present.
-func readFileOrConfig(configKey string) (string, error) {
-	fileKey := configKey + "_file"
-	if viper.IsSet(fileKey) && viper.GetString(fileKey) != "" {
-		filename := viper.GetString(fileKey)
-		// filepath.Clean avoids a gosec warning on reading a file by name
-		data, err := os.ReadFile(filepath.Clean(filename))
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
-	}
-	return viper.GetString(configKey), nil
 }
 
 // NewProviderHttpClient creates a new http client for the given provider
