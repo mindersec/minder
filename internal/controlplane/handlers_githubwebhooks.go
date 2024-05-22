@@ -712,13 +712,7 @@ func extractArtifactVersionFromPayload(ctx context.Context, payload map[string]a
 	if err != nil {
 		return nil, err
 	}
-	// Previous lookup was done at this path
-	// ".package.package_version.container_metadata.tag.name",
-	// which is unfortunately not have available under go-github,
-	// as field "container_metadata" is missing form its structs.
-	// I suggest using the following, although it's still to be
-	// verified whether that's the right one.
-	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.tag_name", payload)
+	tag, err := util.JQReadFrom[string](ctx, ".package.package_version.container_metadata.tag.name", payload)
 	if err != nil {
 		return nil, err
 	}
