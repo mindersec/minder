@@ -24,13 +24,11 @@ import (
 	"slices"
 
 	go_github "github.com/google/go-github/v61/github"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 	"golang.org/x/oauth2/google"
 
-	"github.com/stacklok/minder/internal/config"
 	"github.com/stacklok/minder/internal/db"
 )
 
@@ -168,28 +166,4 @@ func ValidateProviderToken(_ context.Context, provider db.ProviderClass, token s
 		return nil
 	}
 	return fmt.Errorf("invalid provider: %s", provider)
-}
-
-// RegisterOAuthFlags registers client ID and secret file flags for all known
-// providers.  This is pretty tied into the internal of the auth module, so it
-// lives here, but it would be nice if we have a consistent registration
-// pattern (database flags are registered in the config module).
-func RegisterOAuthFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	for _, provider := range knownProviders {
-		idFileKey := fmt.Sprintf("%s.client_id_file", provider)
-		idFileFlag := fmt.Sprintf("%s-client-id-file", provider)
-		idFileDesc := fmt.Sprintf("File containing %s client ID", provider)
-		secretFileKey := fmt.Sprintf("%s.client_secret_file", provider)
-		secretFileFlag := fmt.Sprintf("%s-client-secret-file", provider)
-		secretFileDesc := fmt.Sprintf("File containing %s client secret", provider)
-		if err := config.BindConfigFlag(
-			v, flags, idFileKey, idFileFlag, "", idFileDesc, flags.String); err != nil {
-			return err
-		}
-		if err := config.BindConfigFlag(
-			v, flags, secretFileKey, secretFileFlag, "", secretFileDesc, flags.String); err != nil {
-			return err
-		}
-	}
-	return nil
 }
