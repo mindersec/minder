@@ -106,13 +106,12 @@ authz:
 #    name: healthcheck
 
 crypto:
-    key_store:
+    keystore:
         type: local
-        config:
+        local:
             key_dir: "./.ssh"
     default:
         key_id:    token_key_passphrase
         algorithm: aes-256-gcm
     fallback:
-        algorithms:
-            - aes-256-cfb
+        algorithm: aes-256-cfb

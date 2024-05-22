@@ -31,21 +31,19 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 		ExpectedError string
 	}{
 		{
-			Name: "NewKeyStoreFromConfig rejects missing keystore config",
+			Name: "NewKeyStoreFromConfig rejects empty keystore config",
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
-					Type:   keystores.LocalKeyStore,
-					Config: nil,
+					Type: keystores.LocalKeyStore,
 				},
 			},
-			ExpectedError: "keystore config is missing",
+			ExpectedError: "key directory not defined in keystore config",
 		},
 		{
 			Name: "NewKeyStoreFromConfig rejects invalid keystore type",
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
-					Type:   "derp",
-					Config: map[string]any{},
+					Type: "derp",
 				},
 			},
 			ExpectedError: "unexpected keystore type",
@@ -55,8 +53,8 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
 					Type: keystores.LocalKeyStore,
-					Config: map[string]any{
-						"key_dir": "../testdata",
+					Local: server.LocalKeyStoreConfig{
+						KeyDir: "../testdata",
 					},
 				},
 				Default: server.DefaultCrypto{
@@ -70,8 +68,8 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 			Config: server.CryptoConfig{
 				KeyStore: server.KeyStoreConfig{
 					Type: keystores.LocalKeyStore,
-					Config: map[string]any{
-						"key_dir": "../testdata",
+					Local: server.LocalKeyStoreConfig{
+						KeyDir: "../testdata",
 					},
 				},
 				Default: server.DefaultCrypto{

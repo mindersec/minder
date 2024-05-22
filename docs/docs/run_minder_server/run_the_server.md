@@ -198,9 +198,15 @@ openssl rand -base64 32 > .ssh/token_key_passphrase
 If your key lives in a directory other than `.ssh`, you can specify the location of the key in the `server-config.yaml` file.
 
 ```yaml
-auth:
-   token_key: "./.ssh/token_key_passphrase"
+crypto:
+   keystore:
+      local:
+         key_dir: "./.ssh"
+   default:
+      key_id:    "token_key_passphrase"
 ```
+
+(Note that `key_id` is the filename, and `key_dir` is the path to the file)
 
 ## Configure the Repository Provider
 

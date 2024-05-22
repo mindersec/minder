@@ -69,10 +69,8 @@ spec:
           - "--github-app-client-id-file=/secrets/github-app/github_app_client_id"
           - "--github-app-client-secret-file=/secrets/github-app/github_app_client_secret"
           env:
-          - name: "MINDER_KEY_PATH"
+          - name: "MINDER_CRYPTO_KEYSTORE_LOCAL_KEY_DIR"
             value: "/secrets/auth/"
-          - name: "MINDER_DEFAULT_TOKEN_FILENAME"
-            value: "token_key_passphrase"
           # TODO: remove this value once we migrate to the new structure
           - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
@@ -152,7 +150,7 @@ spec:
       - name: flags
         configMap:
           name: minder-flags
-          optional: true   # We expect the outside environment to create this ConfigMap
+          optional: true  # We expect the outside environment to create this ConfigMap
           items:
           - key: flags-config.yaml
             path: flags-config.yaml
