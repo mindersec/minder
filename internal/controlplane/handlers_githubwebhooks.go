@@ -276,6 +276,14 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		var res *processingResult
 		var processingErr error
 
+		// The following two switch statements are effectively
+		// mutually exclusive and the set of events that they
+		// manage is non-overlapping.
+		//
+		// This is not verified statically and it is not yet
+		// verified via tests, but should be easy enough to
+		// verify by inspection.
+
 		switch github.WebHookType(r) {
 		// The following events are not available in go-github
 		// and must be handled manually.
@@ -423,7 +431,7 @@ func (s *Server) processPackageEvent(
 	}
 
 	if event.Action == nil {
-		return nil, errors.New("invalid event action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 	if event.Package == nil || event.Repo == nil {
 		log.Printf("could not determine relevant entity for event. Skipping execution.")
@@ -431,7 +439,7 @@ func (s *Server) processPackageEvent(
 	}
 
 	if event.Package.Owner == nil {
-		return nil, errors.New("could not determine articfact owner")
+		return nil, errors.New("invalid package: owner is nil")
 	}
 
 	dbrepo, err := s.fetchRepo(ctx, event.Repo)
@@ -617,7 +625,7 @@ func (s *Server) innerProcessGenericRepositoryEvent(
 		return nil, errRepoNotFound
 	}
 	if repo.GetID() == 0 {
-		return nil, errors.New("event repo id is null")
+		return nil, errors.New("invalid repo: id is 0")
 	}
 
 	log.Printf("handling event for repository %d", repo.GetID())
@@ -655,13 +663,13 @@ func (s *Server) processMetaEvent(
 	if event.GetAction() != webhookActionEventDeleted {
 		// "deleted" is the only allowed action for "meta"
 		// events
-		return nil, errors.New(`event action is not "deleted"`)
+		return nil, errors.New(`invalid event: action is not "deleted"`)
 	}
 	if event.GetRepo() == nil {
 		return nil, errRepoNotFound
 	}
 	if event.GetRepo().GetID() == 0 {
-		return nil, errors.New("event repo id is null")
+		return nil, errors.New("invalid repo: id is 0")
 	}
 
 	log.Printf("handling event for repository %d", event.GetRepo().GetID())
@@ -715,7 +723,7 @@ func (s *Server) processBranchProtectionConfigurationEvent(
 		return nil, err
 	}
 	if event.Action == nil {
-		return nil, errors.New("event has no action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 
 	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
@@ -730,7 +738,7 @@ func (s *Server) processRepositoryAdvisoryEvent(
 		return nil, err
 	}
 	if event.Action == nil {
-		return nil, errors.New("event has no action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 
 	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
@@ -745,7 +753,7 @@ func (s *Server) processRepositoryRulesetEvent(
 		return nil, err
 	}
 	if event.Action == nil {
-		return nil, errors.New("event has no action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 
 	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
@@ -760,7 +768,7 @@ func (s *Server) processSecretScanningAlertLocationEvent(
 		return nil, err
 	}
 	if event.Action == nil {
-		return nil, errors.New("event has no action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 
 	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
@@ -771,25 +779,25 @@ func (s *Server) processPullRequestEvent(
 	event *github.PullRequestEvent,
 ) (*processingResult, error) {
 	if event.GetAction() == "" {
-		return nil, errors.New("event has no action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 	if event.GetRepo() == nil {
-		return nil, errors.New("event has no repo")
+		return nil, errors.New("invalid event: repo is nil")
 	}
 	if event.GetPullRequest() == nil {
-		return nil, errors.New("pull request is null")
+		return nil, errors.New("invalid event: pull request is nil")
 	}
 	if event.GetPullRequest().GetURL() == "" {
-		return nil, errors.New("pull request has no URL")
+		return nil, errors.New("invalid pull request: URL is nil")
 	}
 	if event.GetPullRequest().GetNumber() == 0 {
-		return nil, errors.New("pull request has no number")
+		return nil, errors.New("invalid pull request: number is 0")
 	}
 	if event.GetPullRequest().GetUser() == nil {
-		return nil, errors.New("pull request has no user")
+		return nil, errors.New("invalid pull request: user is nil")
 	}
 	if event.GetPullRequest().GetUser().GetID() == 0 {
-		return nil, errors.New("pull request user has no id")
+		return nil, errors.New("invalid user: id is 0")
 	}
 
 	dbrepo, err := s.fetchRepo(ctx, event.GetRepo())
@@ -853,7 +861,7 @@ func (_ *Server) processInstallationAppEvent(
 ) (*processingResult, error) {
 	// Check fields mandatory for processing the event
 	if event.GetAction() == "" {
-		return nil, errors.New("invalid event action")
+		return nil, errors.New("invalid event: action is nil")
 	}
 	if event.GetAction() != webhookActionEventDeleted {
 		return nil, newErrNotHandled("event %s with action %s not handled",
@@ -862,10 +870,10 @@ func (_ *Server) processInstallationAppEvent(
 		)
 	}
 	if event.GetInstallation() == nil {
-		return nil, errors.New("event ")
+		return nil, errors.New("invalid event: installation is nil")
 	}
 	if event.GetInstallation().GetID() == 0 {
-		return nil, fmt.Errorf("installation ID is 0")
+		return nil, errors.New("invalid installation: id is 0")
 	}
 
 	payloadBytes, err := json.Marshal(
