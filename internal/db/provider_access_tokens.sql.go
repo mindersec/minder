@@ -136,17 +136,16 @@ func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessToke
 
 const upsertAccessToken = `-- name: UpsertAccessToken :one
 INSERT INTO provider_access_tokens
-(project_id, provider, encrypted_token, expiration_time, owner_filter, enrollment_nonce, encrypted_access_token)
+(project_id, provider, expiration_time, owner_filter, enrollment_nonce, encrypted_access_token)
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7)
+    ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (project_id, provider)
     DO UPDATE SET
-                  encrypted_token = $3,
-                  expiration_time = $4,
-                  owner_filter = $5,
-                  enrollment_nonce = $6,
+                  expiration_time = $3,
+                  owner_filter = $4,
+                  enrollment_nonce = $5,
                   updated_at = NOW(),
-                  encrypted_access_token = $7
+                  encrypted_access_token = $6
 WHERE provider_access_tokens.project_id = $1 AND provider_access_tokens.provider = $2
 RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token
 `
@@ -154,7 +153,6 @@ RETURNING id, provider, project_id, owner_filter, encrypted_token, expiration_ti
 type UpsertAccessTokenParams struct {
 	ProjectID            uuid.UUID             `json:"project_id"`
 	Provider             string                `json:"provider"`
-	EncryptedToken       string                `json:"encrypted_token"`
 	ExpirationTime       time.Time             `json:"expiration_time"`
 	OwnerFilter          sql.NullString        `json:"owner_filter"`
 	EnrollmentNonce      sql.NullString        `json:"enrollment_nonce"`
@@ -165,7 +163,6 @@ func (q *Queries) UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenPa
 	row := q.db.QueryRowContext(ctx, upsertAccessToken,
 		arg.ProjectID,
 		arg.Provider,
-		arg.EncryptedToken,
 		arg.ExpirationTime,
 		arg.OwnerFilter,
 		arg.EnrollmentNonce,

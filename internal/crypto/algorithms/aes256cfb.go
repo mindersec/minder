@@ -22,8 +22,6 @@ import (
 	"io"
 
 	"golang.org/x/crypto/argon2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // AES256CFBAlgorithm implements the AES-256-CFB algorithm
@@ -40,14 +38,14 @@ func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 	}
 	block, err := aes.NewCipher(a.deriveKey(key))
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	// The IV needs to be unique, but not secure. Therefore, it's common to include it at the beginning of the ciphertext.
 	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to read random bytes: %s", err)
+		return nil, fmt.Errorf("failed to read random bytes: %w", err)
 	}
 
 	stream := cipher.NewCFBEncrypter(block, iv)
@@ -60,7 +58,7 @@ func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(a.deriveKey(key))
 	if err != nil {
-		return nil, status.Errorf(codes.Unknown, "failed to create cipher: %s", err)
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	if len(ciphertext) < aes.BlockSize {

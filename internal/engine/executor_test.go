@@ -56,7 +56,7 @@ const (
 	fakeTokenKey = "foo-bar"
 )
 
-func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) string {
+func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) pqtype.NullRawMessage {
 	t.Helper()
 
 	ftoken := &oauth2.Token{
@@ -70,7 +70,12 @@ func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) string {
 	// encrypt token
 	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
 	require.NoError(t, err)
-	return encryptedToken.EncodedData
+	serialized, err := encryptedToken.Serialize()
+	require.NoError(t, err)
+	return pqtype.NullRawMessage{
+		RawMessage: serialized,
+		Valid:      true,
+	}
 }
 
 func TestExecutor_handleEntityEvent(t *testing.T) {
@@ -142,7 +147,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				ProjectID: projectID,
 			}).
 		Return(db.ProviderAccessToken{
-			EncryptedToken: authtoken,
+			EncryptedAccessToken: authtoken,
 		}, nil)
 
 	// list one profile

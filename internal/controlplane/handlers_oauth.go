@@ -116,7 +116,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		String: req.GetOwner(),
 	}
 
-	var redirectUrl sql.NullString
 	var encryptedBytes pqtype.NullRawMessage
 	// Empty redirect URL means null string (default condition)
 	if req.GetRedirectUrl() != "" {
@@ -132,7 +131,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 			RawMessage: serialized,
 			Valid:      true,
 		}
-		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectURL.EncodedData}
 	}
 
 	var confBytes []byte
@@ -151,7 +149,6 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		RemoteUser:        sql.NullString{Valid: user != "", String: user},
 		SessionState:      state,
 		OwnerFilter:       owner,
-		RedirectUrl:       redirectUrl,
 		ProviderConfig:    confBytes,
 		EncryptedRedirect: encryptedBytes,
 	})
@@ -272,8 +269,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 
 	logger.BusinessRecord(ctx).ProviderID = p.ID
 
-	// Note: right now, both RedirectUrl and EncryptedRedirect should both be valid
-	if stateData.RedirectUrl.Valid {
+	if stateData.RedirectUrl.Valid || stateData.EncryptedRedirect.Valid {
 		redirectURL, err := s.decryptRedirect(&stateData)
 		if err != nil {
 			return fmt.Errorf("unable to decrypt redirect URL: %w", err)
@@ -347,7 +343,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			return fmt.Errorf("error creating GitHub App provider: %w", err)
 		}
 
-		if stateData.RedirectUrl.Valid {
+		if stateData.RedirectUrl.Valid || stateData.EncryptedRedirect.Valid {
 			redirectURL, err := s.decryptRedirect(&stateData)
 			if err != nil {
 				return fmt.Errorf("unable to decrypt redirect URL: %w", err)
@@ -495,10 +491,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:      projectID,
-		Provider:       provider.Name,
-		EncryptedToken: encryptedToken.EncodedData,
-		OwnerFilter:    owner,
+		ProjectID:   projectID,
+		Provider:    provider.Name,
+		OwnerFilter: owner,
 		EncryptedAccessToken: pqtype.NullRawMessage{
 			RawMessage: serialized,
 			Valid:      true,
@@ -670,8 +665,10 @@ func (s *Server) decryptRedirect(stateData *db.GetProjectIDBySessionStateRow) (*
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if stateData.RedirectUrl.Valid {
 		encryptedData = mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
+	} else {
+		return nil, fmt.Errorf("no secret found in session data for provider %s", stateData.Provider)
 	}
 	redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
 	if err != nil {

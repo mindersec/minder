@@ -30,7 +30,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -45,7 +47,12 @@ func (_ *AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 		return nil, ErrExceedsMaxSize
 	}
 
-	block, err := aes.NewCipher(key[:])
+	decodedKey, err := decodeKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(decodedKey[:])
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +75,12 @@ func (_ *AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 // the data and provides a check that it hasn't been altered. Expects input
 // form nonce|ciphertext|tag where '|' indicates concatenation.
 func (_ *AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key[:])
+	decodedKey, err := decodeKey(key)
+	if err != nil {
+		return nil, err
+	}
+
+	block, err := aes.NewCipher(decodedKey[:])
 	if err != nil {
 		return nil, err
 	}
@@ -87,4 +99,16 @@ func (_ *AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, err
 		ciphertext[gcm.NonceSize():],
 		nil,
 	)
+}
+
+func decodeKey(key []byte) ([]byte, error) {
+	// Minder reads its keys as base64 encoded strings. Decode the string before
+	// using it as the key. Ideally, this would be done by the keystore, but there
+	// are some interesting quirks with how CFB uses the keys (see the comment
+	// in keystore.go) so I am doing it here for now.
+	decodedKey, err := base64.StdEncoding.DecodeString(string(key))
+	if err != nil {
+		return nil, fmt.Errorf("unable to base64 decode the encryption key: %w", err)
+	}
+	return decodedKey, nil
 }
