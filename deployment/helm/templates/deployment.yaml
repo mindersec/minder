@@ -71,8 +71,6 @@ spec:
           env:
           - name: "MINDER_CRYPTO_KEYSTORE_LOCAL_KEYDIR"
             value: "/secrets/auth/"
-          - name: "MINDER_CRYPTO_DEFAULT_KEYID"
-            value: "token_key_passphrase"
           # TODO: remove this value once we migrate to the new structure
           - name: "MINDER_AUTH_TOKEN_KEY"
             value: "/secrets/auth/token_key_passphrase"
