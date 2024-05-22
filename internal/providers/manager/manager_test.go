@@ -47,12 +47,12 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 		},
 		{
 			Name:     "CreateFromConfig creates a github provider with default configuration",
-			Provider: githubProvider,
+			Provider: providerWithClass(db.ProviderClassGithub),
 			Config:   json.RawMessage(`{ github: {} }`),
 		},
 		{
 			Name:     "CreateFromConfig creates a github provider with custom configuration",
-			Provider: githubProvider,
+			Provider: providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
 			Config:   json.RawMessage(`{ github: { key: value} }`),
 		},
 	}
@@ -70,7 +70,8 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
 			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
 
-			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(scenario.Provider, nil).MaxTimes(1)
+			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))
+			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(expectedProvider, nil).MaxTimes(1)
 
 			provManager, err := manager.NewProviderManager(store, classManager)
 			require.NoError(t, err)
@@ -80,8 +81,7 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 				require.ErrorContains(t, err, scenario.ExpectedError)
 			} else {
 				require.NoError(t, err)
-				scenario.Provider.Definition = scenario.Config
-				require.Equal(t, scenario.Provider, newProv)
+				require.Equal(t, newProv, expectedProvider)
 			}
 		})
 	}
@@ -381,9 +381,22 @@ var (
 	githubProvider    = providerWithClass(db.ProviderClassGithub)
 )
 
-func providerWithClass(class db.ProviderClass) *db.Provider {
+type createProviderOpt func(*db.Provider)
+
+func providerWithConfig(config json.RawMessage) createProviderOpt {
+	return func(p *db.Provider) {
+		p.Definition = config
+	}
+}
+
+func providerWithClass(class db.ProviderClass, opts ...createProviderOpt) *db.Provider {
 	newProvider := referenceProvider
 	newProvider.Class = class
+
+	for _, opt := range opts {
+		opt(&newProvider)
+	}
+
 	return &newProvider
 }
 
