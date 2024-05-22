@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.0
 
 require (
-	github.com/bufbuild/buf v1.32.0
+	github.com/bufbuild/buf v1.32.1
 	github.com/daixiang0/gci v0.13.4
 	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/go-critic/go-critic v0.11.3
