@@ -69,7 +69,7 @@ spec:
           - "--github-app-client-id-file=/secrets/github-app/github_app_client_id"
           - "--github-app-client-secret-file=/secrets/github-app/github_app_client_secret"
           env:
-          - name: "MINDER_CRYPTO_KEYSTORE_LOCAL_KEYDIR"
+          - name: "MINDER_CRYPTO_KEYSTORE_LOCAL_KEY_DIR"
             value: "/secrets/auth/"
           # TODO: remove this value once we migrate to the new structure
           - name: "MINDER_AUTH_TOKEN_KEY"
