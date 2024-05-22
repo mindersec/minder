@@ -18,9 +18,6 @@ package server
 import (
 	"crypto/rsa"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/stacklok/minder/internal/config"
@@ -63,24 +60,10 @@ func (ghcfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
 
 // GetWebhookSecret returns the GitHub App's webhook secret
 func (ghcfg *GitHubAppConfig) GetWebhookSecret() (string, error) {
-	if ghcfg.WebhookSecretFile != "" {
-		data, err := os.ReadFile(filepath.Clean(ghcfg.WebhookSecretFile))
-		if err != nil {
-			return "", fmt.Errorf("failed to read GitHub App webhook secret from file: %w", err)
-		}
-		return string(data), nil
-	}
-	return ghcfg.WebhookSecret, nil
+	return fileOrArg(ghcfg.WebhookSecretFile, ghcfg.WebhookSecret, "github app webhook secret")
 }
 
 // GetFallbackToken returns the GitHub App's fallback token
 func (ghcfg *GitHubAppConfig) GetFallbackToken() (string, error) {
-	if ghcfg.FallbackTokenFile != "" {
-		data, err := os.ReadFile(filepath.Clean(ghcfg.FallbackTokenFile))
-		if err != nil {
-			return "", fmt.Errorf("failed to read GitHub App fallback token from file: %w", err)
-		}
-		return string(data), nil
-	}
-	return ghcfg.FallbackToken, nil
+	return fileOrArg(ghcfg.FallbackTokenFile, ghcfg.FallbackToken, "github app fallback token")
 }

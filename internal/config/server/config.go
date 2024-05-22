@@ -19,6 +19,8 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -65,4 +67,15 @@ func SetViperDefaults(v *viper.Viper) {
 	v.SetEnvPrefix("minder")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	config.SetViperStructDefaults(v, "", Config{})
+}
+
+func fileOrArg(file, arg, desc string) (string, error) {
+	if file != "" {
+		data, err := os.ReadFile(filepath.Clean(file))
+		if err != nil {
+			return "", fmt.Errorf("failed to read %s from file: %w", desc, err)
+		}
+		return string(data), nil
+	}
+	return arg, nil
 }
