@@ -47,9 +47,12 @@ type ecosystemConfig struct {
 	// Activity is the minimal activity score that minder needs to find to
 	// consider the package as trustworthy.
 	Activity float64 `json:"activity" mapstructure:"activity"`
+
+	// AllowMalicious disables blocking PRs introducing malicious dependencies
+	AllowMalicious bool `json:"allow_malicious" mapstructure:"allow_malicious"`
 }
 
-// config is the configuration for the vulncheck evaluator
+// config is the configuration for the trusty evaluator
 type config struct {
 	Action          pr_actions.Action `json:"action" mapstructure:"action" validate:"required"`
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
@@ -57,25 +60,28 @@ type config struct {
 
 func defaultConfig() *config {
 	return &config{
-		Action: pr_actions.ActionSummary,
+		Action: pr_actions.ActionReviewPr,
 		EcosystemConfig: []ecosystemConfig{
 			{
-				Name:       "npm",
-				Score:      5.0,
-				Provenance: 5.0,
-				Activity:   5.0,
+				Name:           "npm",
+				Score:          5.0,
+				Provenance:     5.0,
+				Activity:       5.0,
+				AllowMalicious: false,
 			},
 			{
-				Name:       "pypi",
-				Score:      5.0,
-				Provenance: 5.0,
-				Activity:   5.0,
+				Name:           "pypi",
+				Score:          5.0,
+				Provenance:     5.0,
+				Activity:       5.0,
+				AllowMalicious: false,
 			},
 			{
-				Name:       "go",
-				Score:      5.0,
-				Provenance: 5.0,
-				Activity:   5.0,
+				Name:           "go",
+				Score:          5.0,
+				Provenance:     5.0,
+				Activity:       5.0,
+				AllowMalicious: false,
 			},
 		},
 	}
