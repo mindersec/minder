@@ -21,6 +21,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
+	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -50,6 +51,9 @@ import (
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/util/testqueue"
 )
+
+//go:embed package-published.json
+var rawPackageEventPublished string
 
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
@@ -453,6 +457,7 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 		name       string
 		event      string
 		payload    any
+		rawPayload []byte
 		statusCode int
 		queued     bool
 	}{
@@ -507,16 +512,21 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			payload: &github.PackageEvent{
+			payload: &packageEvent{
 				Action: github.String("published"),
-				Package: &github.Package{
+				Package: &pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
-					PackageVersion: &github.PackageVersion{
+					PackageVersion: &packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						TagName: github.String("tagname"),
+						ContainerMedatata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
 					},
 					Owner: &github.User{
 						Login: github.String("login"),
@@ -536,19 +546,34 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 			queued:     true,
 		},
 		{
+			name: "package published raw payload",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			rawPayload: []byte(rawPackageEventPublished),
+			statusCode: http.StatusOK,
+			queued:     true,
+		},
+		{
 			name: "package updated",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			payload: &github.PackageEvent{
+			payload: &packageEvent{
 				Action: github.String("updated"),
-				Package: &github.Package{
+				Package: &pkg{
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
-					PackageVersion: &github.PackageVersion{
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
 						ID:      github.Int64(1),
 						Version: github.String("version"),
-						TagName: github.String("tagname"),
+						ContainerMedatata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
 					},
 					Owner: &github.User{
 						Login: github.String("login"),
@@ -1636,8 +1661,13 @@ func (s *UnitTestSuite) TestHandlGitHubWebHook() {
 			ts := httptest.NewServer(http.HandlerFunc(srv.HandleGitHubWebHook()))
 			defer ts.Close()
 
-			packageJson, err := json.Marshal(tt.payload)
-			require.NoError(t, err, "failed to marshal package event")
+			var packageJson []byte
+			if tt.payload != nil {
+				packageJson, err = json.Marshal(tt.payload)
+				require.NoError(t, err, "failed to marshal package event")
+			} else {
+				packageJson = tt.rawPayload
+			}
 
 			mac := hmac.New(sha256.New, []byte("test"))
 			mac.Write(packageJson)
@@ -1953,6 +1983,35 @@ func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, er
 type garbage struct {
 	Action  *string `json:"action,omitempty"`
 	Garbage *string `json:"garbage,omitempty"`
+}
+
+type packageEvent struct {
+	Action  *string              `json:"action,omitempty"`
+	Repo    *github.Repository   `json:"repository,omitempty"`
+	Org     *github.Organization `json:"org,omitempty"`
+	Package *pkg                 `json:"package,omitempty"`
+}
+
+type pkg struct {
+	Name           *string         `json:"name,omitempty"`
+	PackageType    *string         `json:"package_type,omitempty"`
+	PackageVersion *packageVersion `json:"package_version,omitempty"`
+	Owner          *github.User    `json:"owner,omitempty"`
+}
+
+type packageVersion struct {
+	ID                *int64             `json:"id,omitempty"`
+	Version           *string            `json:"version,omitempty"`
+	ContainerMedatata *containerMetadata `json:"container_metadata,omitempty"`
+}
+
+type containerMetadata struct {
+	Tag *tag `json:"tag,omitempty"`
+}
+
+type tag struct {
+	Digest *string `json:"digest,omitempty"`
+	Name   *string `json:"name,omitempty"`
 }
 
 type branchProtectionConfigurationEvent struct {
