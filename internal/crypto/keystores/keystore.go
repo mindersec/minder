@@ -21,8 +21,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-viper/mapstructure/v2"
-
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 )
 
@@ -45,29 +43,24 @@ type keysByID map[string][]byte
 // Since our only implementation is based on reading from the local disk, do
 // all key loading during construction of the struct.
 func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
-	// Check if config is nil first - otherwise it will deserialize to an
-	// empty struct.
-	if config.KeyStore.Config == nil {
-		return nil, errors.New("keystore config is missing")
-	}
-
 	// TODO: support other methods in future
 	if config.KeyStore.Type != LocalKeyStore {
 		return nil, fmt.Errorf("unexpected keystore type: %s", config.KeyStore.Type)
 	}
 
-	var keystoreCfg serverconfig.LocalFileKeyStoreConfig
-	err := mapstructure.Decode(config.KeyStore.Config, &keystoreCfg)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read keystore config: %w", err)
+	if config.KeyStore.Local.KeyDir == "" {
+		return nil, errors.New("key directory not defined in keystore config")
 	}
 
 	// Join the default key to the fallback keys to assemble the full
 	// set of keys to load.
-	keyIDs := append([]string{config.Default.KeyID}, config.Fallback.KeyIDs...)
+	keyIDs := []string{config.Default.KeyID}
+	if config.Fallback.KeyID != "" {
+		keyIDs = append(keyIDs, config.Fallback.KeyID)
+	}
 	keys := make(keysByID, len(keyIDs))
 	for _, keyID := range keyIDs {
-		key, err := readKey(keystoreCfg.KeyDir, keyID)
+		key, err := readKey(config.KeyStore.Local.KeyDir, keyID)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read key %s: %w", keyID, err)
 		}

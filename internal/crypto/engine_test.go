@@ -36,8 +36,8 @@ func TestNewFromCryptoConfig(t *testing.T) {
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
-				Config: map[string]any{
-					"key_dir": "./testdata",
+				Local: server.LocalKeyStoreConfig{
+					KeyDir: "./testdata",
 				},
 			},
 			Default: server.DefaultCrypto{
@@ -77,8 +77,8 @@ func TestNewRejectsBadAlgo(t *testing.T) {
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
-				Config: map[string]any{
-					"key_dir": "./testdata",
+				Local: server.LocalKeyStoreConfig{
+					KeyDir: "./testdata",
 				},
 			},
 			Default: server.DefaultCrypto{
@@ -98,8 +98,8 @@ func TestNewRejectsBadFallbackAlgo(t *testing.T) {
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
-				Config: map[string]any{
-					"key_dir": "./testdata",
+				Local: server.LocalKeyStoreConfig{
+					KeyDir: "./testdata",
 				},
 			},
 			Default: server.DefaultCrypto{
@@ -107,7 +107,7 @@ func TestNewRejectsBadFallbackAlgo(t *testing.T) {
 				Algorithm: string(algorithms.Aes256Cfb),
 			},
 			Fallback: server.FallbackCrypto{
-				Algorithms: []string{"what even is this?"},
+				Algorithm: "what even is this?",
 			},
 		},
 	}
@@ -146,8 +146,8 @@ func TestFallbackDecrypt(t *testing.T) {
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
-				Config: map[string]any{
-					"key_dir": "./testdata",
+				Local: server.LocalKeyStoreConfig{
+					KeyDir: "./testdata",
 				},
 			},
 			Default: server.DefaultCrypto{
@@ -155,7 +155,8 @@ func TestFallbackDecrypt(t *testing.T) {
 				Algorithm: string(algorithms.Aes256Gcm),
 			},
 			Fallback: server.FallbackCrypto{
-				Algorithms: []string{string(algorithms.Aes256Cfb)},
+				Algorithm: string(algorithms.Aes256Cfb),
+				KeyID:     "test_encryption_key2",
 			},
 		},
 	}
