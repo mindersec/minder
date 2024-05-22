@@ -25,6 +25,8 @@ import (
 
 // GitHubAppConfig is the configuration for the GitHub App providers
 type GitHubAppConfig struct {
+	OAuthClientConfig
+
 	// AppName is the name of the GitHub App
 	AppName string `mapstructure:"app_name"`
 	// AppID is the ID of the GitHub App
