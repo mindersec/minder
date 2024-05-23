@@ -72,18 +72,69 @@ func newErrNotHandled(smft string, args ...any) error {
 	return fmt.Errorf("%w: %s", errNotHandled, msg)
 }
 
+const (
+	webhookActionEventDeleted   = "deleted"
+	webhookActionEventOpened    = "opened"
+	webhookActionEventClosed    = "closed"
+	webhookActionEventPublished = "published"
+)
+
+// pingEvent are messages sent from GitHub to check the status of a
+// specific webhook. Minder's processing of these events consists in
+// just reporting the source.
+type pingEvent struct {
+	HookID *int64 `json:"hook_id,omitempty"`
+	Repo   *repo  `json:"repository,omitempty"`
+	Sender *user  `json:"sender,omitempty"`
+}
+
+func (p *pingEvent) GetRepo() *repo {
+	return p.Repo
+}
+
+func (p *pingEvent) GetHookID() int64 {
+	if p.HookID != nil {
+		return *p.HookID
+	}
+	return 0
+}
+
+func (p *pingEvent) GetSender() *user {
+	return p.Sender
+}
+
+// packageEvent represent any event related to a repository and one of
+// its packages.
 type packageEvent struct {
-	Action  *string              `json:"action,omitempty"`
-	Repo    *github.Repository   `json:"repository,omitempty"`
-	Org     *github.Organization `json:"org,omitempty"`
-	Package *pkg                 `json:"package,omitempty"`
+	Action  *string `json:"action,omitempty"`
+	Repo    *repo   `json:"repository,omitempty"`
+	Package *pkg    `json:"package,omitempty"`
 }
 
 type pkg struct {
 	Name           *string         `json:"name,omitempty"`
 	PackageType    *string         `json:"package_type,omitempty"`
 	PackageVersion *packageVersion `json:"package_version,omitempty"`
-	Owner          *github.User    `json:"owner,omitempty"`
+	Owner          *user           `json:"owner,omitempty"`
+}
+
+type user struct {
+	Login   *string `json:"login,omitempty"`
+	HTMLURL *string `json:"html_url,omitempty"`
+}
+
+func (u *user) GetLogin() string {
+	if u.Login != nil {
+		return *u.Login
+	}
+	return ""
+}
+
+func (u *user) GetHTMLURL() string {
+	if u.HTMLURL != nil {
+		return *u.HTMLURL
+	}
+	return ""
 }
 
 type packageVersion struct {
@@ -101,35 +152,94 @@ type tag struct {
 	Name   *string `json:"name,omitempty"`
 }
 
-type branchProtectionConfigurationEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
+// repoEvent represents any event related to a repository.
+type repoEvent struct {
+	Action *string `json:"action,omitempty"`
+	Repo   *repo   `json:"repository,omitempty"`
+	HookID *int64  `json:"hook_id,omitempty"`
 }
 
-type repositoryAdvisoryEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
+func (r *repoEvent) GetAction() string {
+	if r.Action != nil {
+		return *r.Action
+	}
+	return ""
 }
 
-type repositoryRulesetEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
+func (r *repoEvent) GetRepo() *repo {
+	return r.Repo
 }
 
-type secretScanningAlertLocationEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
+func (r *repoEvent) GetHookID() int64 {
+	if r.HookID != nil {
+		return *r.HookID
+	}
+	return 0
 }
 
-const (
-	webhookActionEventDeleted = "deleted"
-	webhookActionEventOpened  = "opened"
-	webhookActionEventClosed  = "closed"
-)
+type repo struct {
+	ID       *int64  `json:"id,omitempty"`
+	FullName *string `json:"full_name,omitempty"`
+	HTMLURL  *string `json:"html_url,omitempty"`
+	Private  *bool   `json:"private,omitempty"`
+}
+
+func (r *repo) GetID() int64 {
+	if r.ID != nil {
+		return *r.ID
+	}
+	return 0
+}
+
+func (r *repo) GetFullName() string {
+	if r.FullName != nil {
+		return *r.FullName
+	}
+	return ""
+}
+
+func (r *repo) GetHTMLURL() string {
+	if r.HTMLURL != nil {
+		return *r.HTMLURL
+	}
+	return ""
+}
+
+func (r *repo) GetPrivate() bool {
+	if r.Private != nil {
+		return *r.Private
+	}
+	return false
+}
+
+// installationEvent are events related the GitHub App. Minder uses
+// them for provider enrollement.
+type installationEvent struct {
+	Action       *string       `json:"action,omitempty"`
+	Installation *installation `json:"installation,omitempty"`
+}
+
+func (i *installationEvent) GetAction() string {
+	if i.Action != nil {
+		return *i.Action
+	}
+	return ""
+}
+
+func (i *installationEvent) GetInstallation() *installation {
+	return i.Installation
+}
+
+type installation struct {
+	ID *int64 `json:"id,omitempty"`
+}
+
+func (i *installation) GetID() int64 {
+	if i.ID != nil {
+		return *i.ID
+	}
+	return 0
+}
 
 type processingResult struct {
 	topic string
@@ -157,10 +267,6 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		}
 
 		wes.Typ = github.WebHookType(r)
-		event, err := github.ParseWebHook(github.WebHookType(r), rawWBPayload)
-		if err != nil {
-			log.Error().Err(err).Msg("Error parsing github webhook message")
-		}
 
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
@@ -177,16 +283,17 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		wes.Accepted = true
 		var res *processingResult
 		var processingErr error
-		switch event := event.(type) {
-		case *github.PingEvent:
+
+		switch github.WebHookType(r) {
+		case "ping":
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant
 			// business events.
 			wes.Accepted = false
 			wes.Error = false
-			s.processPingEvent(ctx, event)
-		case *github.InstallationEvent:
-			res, processingErr = s.processInstallationAppEvent(ctx, event, m)
+			s.processPingEvent(ctx, rawWBPayload)
+		case "installation":
+			res, processingErr = s.processInstallationAppEvent(ctx, rawWBPayload, m)
 		default:
 			l.Info().Msgf("webhook event %s not handled", wes.Typ)
 		}
@@ -267,11 +374,6 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		l.Debug().Msg("parsing event")
 
-		event, err := github.ParseWebHook(github.WebHookType(r), rawWBPayload)
-		if err != nil {
-			l.Error().Err(err).Msg("Error parsing github webhook message")
-		}
-
 		wes.Accepted = true
 		var res *processingResult
 		var processingErr error
@@ -285,75 +387,55 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// verify by inspection.
 
 		switch github.WebHookType(r) {
-		// The following events are not available in go-github
-		// and must be handled manually.
-		case "branch_protection_configuration":
-			res, processingErr = s.processBranchProtectionConfigurationEvent(ctx, rawWBPayload)
-		case "repository_advisory":
-			res, processingErr = s.processRepositoryAdvisoryEvent(ctx, rawWBPayload)
-		case "repository_ruleset":
-			res, processingErr = s.processRepositoryRulesetEvent(ctx, rawWBPayload)
-		case "secret_scanning_alert_location":
-			res, processingErr = s.processSecretScanningAlertLocationEvent(ctx, rawWBPayload)
+		// All these events are related to a repo and usually
+		// contain an action. They all trigger a
+		// reconciliation or, in some cases, a deletion.
+		case "repository", "meta":
+			res, processingErr = s.processRelevantRepositoryEvent(ctx, rawWBPayload)
+		case "branch_protection_rule",
+			"code_scanning_alert",
+			"create",
+			"member",
+			"public",
+			"push",
+			"repository_import",
+			"repository_vulnerability_alert",
+			"secret_scanning_alert",
+			"security_advisory",
+			"security_and_analysis",
+			"team",
+			"team_add":
+			res, processingErr = s.processRepositoryEvent(ctx, rawWBPayload)
 		case "package":
 			// This is an artifact-related event, and can
 			// only trigger a reconciliation.
 			res, processingErr = s.processPackageEvent(ctx, rawWBPayload)
-		}
-
-		switch event := event.(type) {
-		case *github.PingEvent:
+		// This event is not currently handled.
+		case "branch_protection_configuration",
+			"repository_advisory",
+			"repository_ruleset",
+			"secret_scanning_alert_location":
+			break
+		case "org_block",
+			"organization":
+			l.Info().Msgf("webhook events %s do not contain repo", wes.Typ)
+		case "ping":
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant
 			// business events.
 			wes.Accepted = false
 			wes.Error = false
-			s.processPingEvent(ctx, event)
-		case *github.MetaEvent:
-			// As per github documentation, MetaEvent is
-			// triggered when the webhook that this event
-			// is configured on is deleted.
-			//
-			// Our action here is to de-register the
-			// related repo.
-			res, processingErr = s.processMetaEvent(ctx, event)
+			s.processPingEvent(ctx, rawWBPayload)
+		}
 
-		// All these events are related to a repo and usually
-		// contain an action. They all trigger a
-		// reconciliation or, in some cases, a deletion.
-		case *github.BranchProtectionRuleEvent:
-			res, processingErr = s.processBranchProtectionRuleEvent(ctx, event)
-		case *github.CodeScanningAlertEvent:
-			res, processingErr = s.processCodeScanningAlertEvent(ctx, event)
-		case *github.CreateEvent:
-			res, processingErr = s.processCreateEvent(ctx, event)
-		case *github.MemberEvent:
-			res, processingErr = s.processMemberEvent(ctx, event)
-		case *github.PublicEvent:
-			res, processingErr = s.processPublicEvent(ctx, event)
-		case *github.RepositoryEvent:
-			res, processingErr = s.processRepositoryEvent(ctx, event)
-		case *github.RepositoryImportEvent:
-			res, processingErr = s.processRepositoryImportEvent(ctx, event)
-		case *github.SecretScanningAlertEvent:
-			res, processingErr = s.processSecretScanningAlertEvent(ctx, event)
-		case *github.TeamAddEvent:
-			res, processingErr = s.processTeamAddEvent(ctx, event)
-		case *github.TeamEvent:
-			res, processingErr = s.processTeamEvent(ctx, event)
-		case *github.RepositoryVulnerabilityAlertEvent:
-			res, processingErr = s.processRepositoryVulnerabilityAlertEvent(ctx, event)
-		case *github.SecurityAdvisoryEvent:
-			res, processingErr = s.processSecurityAdvisoryEvent(ctx, event)
-		case *github.SecurityAndAnalysisEvent:
-			res, processingErr = s.processSecurityAndAnalysisEvent(ctx, event)
-		case *github.OrgBlockEvent,
-			*github.OrganizationEvent:
-			l.Info().Msgf("webhook events %s do not contain repo", wes.Typ)
-		case *github.PushEvent:
-			// TODO has GetRepo but the type is different :|
+		event, err := github.ParseWebHook(github.WebHookType(r), rawWBPayload)
+		if err != nil {
+			l.Error().Err(err).Msg("Error parsing github webhook message")
+		}
+
+		switch event := event.(type) {
 		case *github.PullRequestEvent:
-			res, processingErr = s.processPullRequestEvent(ctx, event)
+			res, processingErr = s.processPullRequestEvent(context.TODO(), event)
 		default:
 			l.Info().Msgf("webhook event %s not handled", wes.Typ)
 		}
@@ -400,9 +482,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 // repository.
 func (_ *Server) processPingEvent(
 	ctx context.Context,
-	event *github.PingEvent,
+	payload []byte,
 ) {
 	l := zerolog.Ctx(ctx).With().Logger()
+
+	var event *pingEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		l.Info().Err(err).Msg("received malformed ping event")
+		return
+	}
 
 	if event.GetRepo() != nil {
 		l = l.With().Int64("github-repository-id", event.GetRepo().GetID()).Logger()
@@ -436,6 +524,12 @@ func (s *Server) processPackageEvent(
 	if event.Package == nil || event.Repo == nil {
 		log.Printf("could not determine relevant entity for event. Skipping execution.")
 		return nil, nil // this is awkward
+	}
+
+	// We only process events "package" with action "published",
+	// i.e. we do not react to action "updated".
+	if *event.Action != webhookActionEventPublished {
+		return nil, nil
 	}
 
 	if event.Package.Owner == nil {
@@ -498,187 +592,38 @@ func (s *Server) processPackageEvent(
 	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
 }
 
-func (s *Server) processBranchProtectionRuleEvent(
+func (s *Server) processRelevantRepositoryEvent(
 	ctx context.Context,
-	event *github.BranchProtectionRuleEvent,
+	payload []byte,
 ) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processCodeScanningAlertEvent(
-	ctx context.Context,
-	event *github.CodeScanningAlertEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processCreateEvent(
-	ctx context.Context,
-	event *github.CreateEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := ""
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processMemberEvent(
-	ctx context.Context,
-	event *github.MemberEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processPublicEvent(
-	ctx context.Context,
-	event *github.PublicEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := ""
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processRepositoryEvent(
-	ctx context.Context,
-	event *github.RepositoryEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processRepositoryImportEvent(
-	ctx context.Context,
-	event *github.RepositoryImportEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := ""
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processSecretScanningAlertEvent(
-	ctx context.Context,
-	event *github.SecretScanningAlertEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processTeamAddEvent(
-	ctx context.Context,
-	event *github.TeamAddEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := ""
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processTeamEvent(
-	ctx context.Context,
-	event *github.TeamEvent,
-) (*processingResult, error) {
-	repo := event.GetRepo()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processRepositoryVulnerabilityAlertEvent(
-	ctx context.Context,
-	event *github.RepositoryVulnerabilityAlertEvent,
-) (*processingResult, error) {
-	repo := event.GetRepository()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processSecurityAdvisoryEvent(
-	ctx context.Context,
-	event *github.SecurityAdvisoryEvent,
-) (*processingResult, error) {
-	repo := event.GetRepository()
-	action := event.GetAction()
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) processSecurityAndAnalysisEvent(
-	ctx context.Context,
-	event *github.SecurityAndAnalysisEvent,
-) (*processingResult, error) {
-	repo := event.GetRepository()
-	action := ""
-	return s.innerProcessGenericRepositoryEvent(ctx, action, repo)
-}
-
-func (s *Server) innerProcessGenericRepositoryEvent(
-	ctx context.Context,
-	action string,
-	repo *github.Repository,
-) (*processingResult, error) {
-	// Check fields mandatory for processing the event
-	if repo == nil {
-		return nil, errRepoNotFound
-	}
-	if repo.GetID() == 0 {
-		return nil, errors.New("invalid repo: id is 0")
-	}
-
-	log.Printf("handling event for repository %d", repo.GetID())
-
-	dbrepo, err := s.fetchRepo(ctx, repo)
-	if err != nil {
+	var event *repoEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
 
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
-	eiw := entities.NewEntityInfoWrapper().
-		WithProviderID(dbrepo.ProviderID).
-		WithRepository(pbRepo).
-		WithProjectID(dbrepo.ProjectID).
-		WithRepositoryID(dbrepo.ID).
-		WithActionEvent(action)
-
-	topic := events.TopicQueueEntityEvaluate
-	if action == webhookActionEventDeleted {
-		topic = events.TopicQueueReconcileEntityDelete
-	}
-
-	return &processingResult{topic: topic, eiw: eiw}, nil
-}
-
-// processMetaEvent handles events related to the webhook itself. As
-// per GitHub's documentation, the only possible action is "deleted",
-// in which case we have to de-register the related repo.
-func (s *Server) processMetaEvent(
-	ctx context.Context,
-	event *github.MetaEvent,
-) (*processingResult, error) {
 	// Check fields mandatory for processing the event
-	if event.GetAction() != webhookActionEventDeleted {
-		// "deleted" is the only allowed action for "meta"
-		// events
-		return nil, errors.New(`invalid event: action is not "deleted"`)
-	}
 	if event.GetRepo() == nil {
 		return nil, errRepoNotFound
 	}
+
+	l := zerolog.Ctx(ctx).With().
+		Str("github-event-action", event.GetAction()).
+		Int64("github-repository-id", event.GetRepo().GetID()).
+		Str("github-repository-url", event.GetRepo().GetHTMLURL()).
+		Logger()
+
 	if event.GetRepo().GetID() == 0 {
 		return nil, errors.New("invalid repo: id is 0")
 	}
 
-	log.Printf("handling event for repository %d", event.GetRepo().GetID())
+	l.Info().Msg("handling event for repository")
 
 	dbrepo, err := s.fetchRepo(ctx, event.GetRepo())
 	if err != nil {
 		return nil, err
 	}
 
+	// This only makes sense for "meta" event type
 	if dbrepo.WebhookID.Valid {
 		// Check if the payload webhook ID matches the one we
 		// have stored in the DB for this repository
@@ -699,79 +644,64 @@ func (s *Server) processMetaEvent(
 	// proceed with the deletion event for this entity
 	// (repository).
 
-	// TODO: perhaps handle this better by trying to re-create the
-	// webhook if it was deleted manually
-
 	// protobufs are our API, so we always execute on these instead of the DB directly.
-	repo := repositories.PBRepositoryFromDB(*dbrepo)
+	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
 		WithProviderID(dbrepo.ProviderID).
-		WithRepository(repo).
+		WithRepository(pbRepo).
 		WithProjectID(dbrepo.ProjectID).
 		WithRepositoryID(dbrepo.ID).
 		WithActionEvent(event.GetAction())
 
-	return &processingResult{topic: events.TopicQueueReconcileEntityDelete, eiw: eiw}, nil
+	topic := events.TopicQueueEntityEvaluate
+	if event.GetAction() == webhookActionEventDeleted {
+		topic = events.TopicQueueReconcileEntityDelete
+	}
+
+	return &processingResult{topic: topic, eiw: eiw}, nil
 }
 
-func (s *Server) processBranchProtectionConfigurationEvent(
+func (s *Server) processRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
-	event := branchProtectionConfigurationEvent{}
+	var event *repoEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
 	}
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
+
+	// Check fields mandatory for processing the event
+	if event.GetRepo() == nil {
+		return nil, errRepoNotFound
 	}
 
-	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
-}
+	l := zerolog.Ctx(ctx).With().
+		Str("github-event-action", event.GetAction()).
+		Int64("github-repository-id", event.GetRepo().GetID()).
+		Str("github-repository-url", event.GetRepo().GetHTMLURL()).
+		Logger()
 
-func (s *Server) processRepositoryAdvisoryEvent(
-	ctx context.Context,
-	payload []byte,
-) (*processingResult, error) {
-	event := repositoryAdvisoryEvent{}
-	if err := json.Unmarshal(payload, &event); err != nil {
+	if event.GetRepo().GetID() == 0 {
+		return nil, errors.New("invalid repo: id is 0")
+	}
+
+	l.Info().Msg("handling event for repository")
+
+	dbrepo, err := s.fetchRepo(ctx, event.GetRepo())
+	if err != nil {
 		return nil, err
 	}
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
-	}
 
-	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
-}
+	// protobufs are our API, so we always execute on these instead of the DB directly.
+	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
+	eiw := entities.NewEntityInfoWrapper().
+		WithProviderID(dbrepo.ProviderID).
+		WithRepository(pbRepo).
+		WithProjectID(dbrepo.ProjectID).
+		WithRepositoryID(dbrepo.ID).
+		WithActionEvent(event.GetAction())
 
-func (s *Server) processRepositoryRulesetEvent(
-	ctx context.Context,
-	payload []byte,
-) (*processingResult, error) {
-	event := repositoryRulesetEvent{}
-	if err := json.Unmarshal(payload, &event); err != nil {
-		return nil, err
-	}
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
-	}
-
-	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
-}
-
-func (s *Server) processSecretScanningAlertLocationEvent(
-	ctx context.Context,
-	payload []byte,
-) (*processingResult, error) {
-	event := secretScanningAlertLocationEvent{}
-	if err := json.Unmarshal(payload, &event); err != nil {
-		return nil, err
-	}
-	if event.Action == nil {
-		return nil, errors.New("invalid event: action is nil")
-	}
-
-	return s.innerProcessGenericRepositoryEvent(ctx, *event.Action, event.Repo)
+	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
 }
 
 func (s *Server) processPullRequestEvent(
@@ -800,7 +730,12 @@ func (s *Server) processPullRequestEvent(
 		return nil, errors.New("invalid user: id is 0")
 	}
 
-	dbrepo, err := s.fetchRepo(ctx, event.GetRepo())
+	ghRepo := event.GetRepo()
+	dbrepo, err := s.fetchRepo(ctx, &repo{
+		ID:      ghRepo.ID,
+		HTMLURL: ghRepo.HTMLURL,
+		Private: ghRepo.Private,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -846,7 +781,7 @@ func (s *Server) processPullRequestEvent(
 		WithRepositoryID(dbrepo.ID).
 		WithActionEvent(event.GetAction())
 
-	return &processingResult{topic: events.TopicQueueReconcileEntityDelete, eiw: eiw}, nil
+	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
 }
 
 // processInstallationAppEvent processes events related to changes to
@@ -856,16 +791,20 @@ func (s *Server) processPullRequestEvent(
 // we only process.
 func (_ *Server) processInstallationAppEvent(
 	_ context.Context,
-	event *github.InstallationEvent,
+	payload []byte,
 	msg *message.Message,
 ) (*processingResult, error) {
+	var event *installationEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return nil, err
+	}
+
 	// Check fields mandatory for processing the event
 	if event.GetAction() == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
 	if event.GetAction() != webhookActionEventDeleted {
-		return nil, newErrNotHandled("event %s with action %s not handled",
-			msg.Metadata.Get(events.GithubWebhookEventTypeKey),
+		return nil, newErrNotHandled(`event "installation" with action %s not handled`,
 			event.GetAction(),
 		)
 	}
@@ -901,7 +840,7 @@ func (_ *Server) processInstallationAppEvent(
 
 func (s *Server) fetchRepo(
 	ctx context.Context,
-	repo *github.Repository,
+	repo *repo,
 ) (*db.Repository, error) {
 	dbrepo, err := s.store.GetRepositoryByRepoID(ctx, repo.GetID())
 	if err != nil {
@@ -1056,7 +995,7 @@ func gatherArtifactInfo(
 	client provifv1.GitHub,
 	event *packageEvent,
 ) (*pb.Artifact, error) {
-	if event.Repo.FullName == nil {
+	if event.Repo.GetFullName() == "" {
 		return nil, errors.New("invalid package: full name is nil")
 	}
 	if event.Package.Name == nil {
@@ -1075,7 +1014,7 @@ func gatherArtifactInfo(
 		Owner:      owner,
 		Name:       *event.Package.Name,
 		Type:       *event.Package.PackageType,
-		Repository: *event.Repo.FullName,
+		Repository: event.Repo.GetFullName(),
 		// visibility and createdAt are not in the payload, we need to get it with a REST call
 	}
 
@@ -1201,11 +1140,11 @@ func (s *Server) reconcilePrWithDb(
 	var retPr *db.PullRequest
 
 	switch prEvalInfo.Action {
-	// TODO mic go-github documentation reportes that
+	// TODO go-github documentation reportes that
 	// PullRequestEvents with action "synchronize" are not
 	// published, see here
 	// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
-	case webhookActionEventOpened:
+	case webhookActionEventOpened, "reopened":
 		dbPr, err := s.store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
