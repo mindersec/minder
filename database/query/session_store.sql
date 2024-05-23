@@ -7,5 +7,5 @@ SELECT provider, project_id, remote_user, owner_filter, provider_config, redirec
 -- name: DeleteSessionStateByProjectID :exec
 DELETE FROM session_store WHERE provider = $1 AND project_id = $2;
 
--- name: DeleteExpiredSessionStates :exec
+-- name: DeleteExpiredSessionStates :execrows
 DELETE FROM session_store WHERE created_at < NOW() - INTERVAL '1 day';

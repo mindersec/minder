@@ -74,10 +74,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 
 	providerName := cmd.Flag("provider").Value.String()
 
-	store, err := wireUpDB(ctx, cfg)
+	store, closer, err := wireUpDB(ctx, cfg)
 	if err != nil {
 		return err
 	}
+	defer closer()
 
 	allProviders, err := store.GlobalListProviders(ctx)
 	if err != nil {
@@ -237,21 +238,6 @@ func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.Pr
 	)
 
 	return manager.NewProviderManager(providerStore, githubProviderManager)
-}
-
-func wireUpDB(ctx context.Context, cfg *serverconfig.Config) (db.Store, error) {
-	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to connect to database: %w", err)
-	}
-	defer func(dbConn *sql.DB) {
-		err := dbConn.Close()
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error closing database connection")
-		}
-	}(dbConn)
-
-	return db.NewStore(dbConn), nil
 }
 
 func getWebhookSecret(cfg *serverconfig.Config) (string, error) {

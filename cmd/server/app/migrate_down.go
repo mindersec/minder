@@ -18,7 +18,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
@@ -50,28 +49,17 @@ var downCmd = &cobra.Command{
 		}
 		defer dbConn.Close()
 
-		yes, err := cmd.Flags().GetBool("yes")
+		yes, err := confirm(cmd, "Running this command will change the database structure")
 		if err != nil {
-			cmd.Printf("Error getting flag yes: %v", err)
+			return err
 		}
 		if !yes {
-			cmd.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
-			var response string
-			_, err := fmt.Scanln(&response)
-			if err != nil {
-				return fmt.Errorf("error reading response: %w", err)
-			}
-
-			if response == "n" {
-				cmd.Println("Exiting...")
-				return nil
-			}
+			return nil
 		}
 
 		m, err := database.NewFromConnectionString(connString)
 		if err != nil {
-			cmd.Printf("Error while creating migration instance: %v\n", err)
-			os.Exit(1)
+			cliErrorf(cmd, "Error while creating migration instance: %v\n", err)
 		}
 
 		var usteps uint
@@ -87,8 +75,7 @@ var downCmd = &cobra.Command{
 		}
 
 		if err != nil {
-			cmd.Printf("Error while migrating database: %v\n", err)
-			os.Exit(1)
+			cliErrorf(cmd, "Error while migrating database: %v\n", err)
 		}
 
 		cmd.Println("Database migration down done with success")
