@@ -118,6 +118,9 @@ type Querier interface {
 	// projects have a boolean field is_organization that is set to true if the project is an organization.
 	// this flag is no longer used and will be removed in the future.
 	ListOldOrgProjects(ctx context.Context) ([]Project, error)
+	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
+	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
 	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
@@ -131,6 +134,7 @@ type Querier interface {
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
 	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
+	ListRepositoriesAfterID(ctx context.Context, arg ListRepositoriesAfterIDParams) ([]Repository, error)
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
@@ -156,12 +160,14 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
+	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
 	UpdateProvider(ctx context.Context, arg UpdateProviderParams) error
+	UpdateReminderLastSentById(ctx context.Context, id uuid.UUID) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)

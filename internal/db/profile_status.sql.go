@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -124,6 +125,45 @@ func (q *Queries) GetProfileStatusByProject(ctx context.Context, projectID uuid.
 			&i.ProfileStatus,
 			&i.LastUpdated,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOldestRuleEvaluationsByRepositoryId = `-- name: ListOldestRuleEvaluationsByRepositoryId :many
+
+SELECT re.repository_id::uuid AS repository_id, MIN(rde.last_updated)::timestamp AS oldest_last_updated
+FROM rule_evaluations re
+    INNER JOIN rule_details_eval rde ON re.id = rde.rule_eval_id
+WHERE re.repository_id = ANY ($1::uuid[])
+GROUP BY re.repository_id
+`
+
+type ListOldestRuleEvaluationsByRepositoryIdRow struct {
+	RepositoryID      uuid.UUID `json:"repository_id"`
+	OldestLastUpdated time.Time `json:"oldest_last_updated"`
+}
+
+// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
+// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+func (q *Queries) ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error) {
+	rows, err := q.db.QueryContext(ctx, listOldestRuleEvaluationsByRepositoryId, pq.Array(repositoryIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOldestRuleEvaluationsByRepositoryIdRow{}
+	for rows.Next() {
+		var i ListOldestRuleEvaluationsByRepositoryIdRow
+		if err := rows.Scan(&i.RepositoryID, &i.OldestLastUpdated); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

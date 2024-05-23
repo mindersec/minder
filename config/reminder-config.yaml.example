@@ -16,8 +16,6 @@
 recurrence:
   interval: "1h"
   batch_size: 100
-  max_per_project: 10
-  min_project_fetch_limit: 10
   min_elapsed: "1h"
 
 database:
@@ -27,8 +25,6 @@ database:
   dbpass: postgres
   dbname: minder
   sslmode: disable
-
-cursor_file: "/tmp/reminder-cursor"
 
 logging
   level: "debug"

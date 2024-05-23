@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -34,21 +33,17 @@ func TestValidateConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name             string
-		config           reminder.Config
-		normalizedConfig reminder.Config
-		modified         bool
-		errMsg           string
+		name   string
+		config reminder.Config
+		errMsg string
 	}{
 		{
 			name: "ValidValues",
 			config: reminder.Config{
 				RecurrenceConfig: reminder.RecurrenceConfig{
-					Interval:             parseTimeDuration(t, "1h"),
-					BatchSize:            100,
-					MaxPerProject:        10,
-					MinProjectFetchLimit: 5,
-					MinElapsed:           parseTimeDuration(t, "1h"),
+					Interval:   parseTimeDuration(t, "1h"),
+					BatchSize:  100,
+					MinElapsed: parseTimeDuration(t, "1h"),
 				},
 				EventConfig: reminder.EventConfig{
 					Connection: config.DatabaseConfig{
@@ -58,36 +53,12 @@ func TestValidateConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "InvalidBatchSize",
-			config: reminder.Config{
-				RecurrenceConfig: reminder.RecurrenceConfig{
-					Interval:             parseTimeDuration(t, "1h"),
-					BatchSize:            10,
-					MaxPerProject:        10,
-					MinProjectFetchLimit: 5,
-					MinElapsed:           parseTimeDuration(t, "1h"),
-				},
-			},
-			normalizedConfig: reminder.Config{
-				RecurrenceConfig: reminder.RecurrenceConfig{
-					Interval:             parseTimeDuration(t, "1h"),
-					BatchSize:            50,
-					MaxPerProject:        10,
-					MinProjectFetchLimit: 5,
-					MinElapsed:           parseTimeDuration(t, "1h"),
-				},
-			},
-			modified: true,
-		},
-		{
 			name: "NegativeInterval",
 			config: reminder.Config{
 				RecurrenceConfig: reminder.RecurrenceConfig{
-					Interval:             parseTimeDuration(t, "-1h"),
-					BatchSize:            100,
-					MaxPerProject:        10,
-					MinProjectFetchLimit: 5,
-					MinElapsed:           parseTimeDuration(t, "1h"),
+					Interval:   parseTimeDuration(t, "-1h"),
+					BatchSize:  100,
+					MinElapsed: parseTimeDuration(t, "1h"),
 				},
 			},
 			errMsg: "cannot be negative",
@@ -96,11 +67,9 @@ func TestValidateConfig(t *testing.T) {
 			name: "NegativeMinElapsed",
 			config: reminder.Config{
 				RecurrenceConfig: reminder.RecurrenceConfig{
-					Interval:             parseTimeDuration(t, "1h"),
-					BatchSize:            100,
-					MaxPerProject:        10,
-					MinProjectFetchLimit: 5,
-					MinElapsed:           parseTimeDuration(t, "-1h"),
+					Interval:   parseTimeDuration(t, "1h"),
+					BatchSize:  100,
+					MinElapsed: parseTimeDuration(t, "-1h"),
 				},
 			},
 			errMsg: "cannot be negative",
@@ -113,15 +82,11 @@ func TestValidateConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			modified, err := tt.config.Normalize(&cobra.Command{})
+			err := tt.config.Validate()
 			if tt.errMsg != "" {
 				assert.ErrorContains(t, err, tt.errMsg)
 			} else {
 				assert.NoError(t, err)
-				if tt.modified {
-					assert.True(t, modified)
-					assert.Equal(t, tt.normalizedConfig, tt.config)
-				}
 			}
 		})
 	}
@@ -134,8 +99,6 @@ func TestReadConfig(t *testing.T) {
 recurrence:
   interval: "1m"
   batch_size: 100
-  max_per_project: 10
-  min_project_fetch_limit: 10
   min_elapsed: "1h"
 `
 
@@ -152,8 +115,6 @@ recurrence:
 
 	require.Equal(t, parseTimeDuration(t, "1m"), cfg.RecurrenceConfig.Interval)
 	require.Equal(t, 100, cfg.RecurrenceConfig.BatchSize)
-	require.Equal(t, 10, cfg.RecurrenceConfig.MaxPerProject)
-	require.Equal(t, 10, cfg.RecurrenceConfig.MinProjectFetchLimit)
 	require.Equal(t, parseTimeDuration(t, "1h"), cfg.RecurrenceConfig.MinElapsed)
 	require.Equal(t, "info", cfg.LoggingConfig.Level)
 }
@@ -165,8 +126,6 @@ func TestReadConfigWithCommandLineArgOverrides(t *testing.T) {
 recurrence:
   interval: "1m"
   batch_size: 100
-  max_per_project: 10
-  min_project_fetch_limit: 10
   min_elapsed: "1h"
 logging:
   level: "debug"
@@ -181,7 +140,7 @@ logging:
 
 	require.NoError(t, reminder.RegisterReminderFlags(v, flags), "Unexpected error")
 
-	require.NoError(t, flags.Parse([]string{"--interval=1h", "--batch-size=200", "--max-per-project=20", "--min-project-fetch-limit=20", "--min-elapsed=2h"}))
+	require.NoError(t, flags.Parse([]string{"--interval=1h", "--batch-size=200", "--min-elapsed=2h"}))
 
 	v.SetConfigType("yaml")
 	require.NoError(t, v.ReadConfig(cfgbuf), "Unexpected error")
@@ -191,8 +150,6 @@ logging:
 
 	require.Equal(t, parseTimeDuration(t, "1h"), cfg.RecurrenceConfig.Interval)
 	require.Equal(t, 200, cfg.RecurrenceConfig.BatchSize)
-	require.Equal(t, 20, cfg.RecurrenceConfig.MaxPerProject)
-	require.Equal(t, 20, cfg.RecurrenceConfig.MinProjectFetchLimit)
 	require.Equal(t, parseTimeDuration(t, "2h"), cfg.RecurrenceConfig.MinElapsed)
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 }
@@ -206,8 +163,6 @@ func TestSetViperDefaults(t *testing.T) {
 	require.Equal(t, "reminder", v.GetEnvPrefix())
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.interval")))
 	require.Equal(t, 100, v.GetInt("recurrence.batch_size"))
-	require.Equal(t, 10, v.GetInt("recurrence.max_per_project"))
-	require.Equal(t, 10, v.GetInt("recurrence.min_project_fetch_limit"))
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.min_elapsed")))
 	require.Equal(t, "reminder", v.GetString("events.sql_connection.dbname"))
 	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql_connection.dbhost"))
@@ -224,8 +179,6 @@ func TestOverrideConfigByEnvVar(t *testing.T) {
 recurrence:
   interval: "1m"
   batch_size: 100
-  max_per_project: 10
-  min_project_fetch_limit: 10
   min_elapsed: "1h"
 database:
   dbhost: "minder"
@@ -268,8 +221,6 @@ database:
 
 	require.Equal(t, parseTimeDuration(t, "1h"), cfg.RecurrenceConfig.Interval)
 	require.Equal(t, 100, cfg.RecurrenceConfig.BatchSize)
-	require.Equal(t, 10, cfg.RecurrenceConfig.MaxPerProject)
-	require.Equal(t, 10, cfg.RecurrenceConfig.MinProjectFetchLimit)
 	require.Equal(t, parseTimeDuration(t, "1h"), cfg.RecurrenceConfig.MinElapsed)
 	require.Equal(t, "foobar", cfg.Database.Host)
 }
