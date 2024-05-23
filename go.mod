@@ -45,8 +45,8 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.1.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.32.0
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.16.0
-	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.16.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.17.0
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.17.0
 	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sigstore/sigstore-go v0.3.0
 	github.com/spf13/cobra v1.8.0
@@ -55,10 +55,10 @@ require (
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.0.15
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.21.3
+	github.com/styrainc/regal v0.22.0
 	github.com/thomaspoignant/go-feature-flag v1.27.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.51.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.52.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.52.0
 	go.opentelemetry.io/otel v1.27.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.48.0
@@ -157,7 +157,7 @@ require (
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.16.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.17.0 // indirect
 	github.com/sigstore/sigstore v1.8.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
@@ -207,7 +207,7 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect
@@ -298,7 +298,7 @@ require (
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
