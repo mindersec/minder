@@ -17,12 +17,9 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -51,14 +48,7 @@ type IdentityConfig struct {
 
 // GetClientSecret returns the minder-server client secret
 func (sic *IdentityConfig) GetClientSecret() (string, error) {
-	if sic.ClientSecretFile != "" {
-		data, err := os.ReadFile(filepath.Clean(sic.ClientSecretFile))
-		if err != nil {
-			return "", fmt.Errorf("failed to read minder secret from file: %w", err)
-		}
-		return string(data), nil
-	}
-	return sic.ClientSecret, nil
+	return fileOrArg(sic.ClientSecretFile, sic.ClientSecret, "client secret")
 }
 
 // RegisterIdentityFlags registers the flags for the identity server

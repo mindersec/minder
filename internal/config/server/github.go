@@ -15,8 +15,7 @@
 
 package server
 
-// ProviderConfig is the configuration for the providers
-type ProviderConfig struct {
-	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
-	GitHub    *GitHubConfig    `mapstructure:"github"`
+// GitHubConfig is the configuration for the GitHub OAuth providers
+type GitHubConfig struct {
+	OAuthClientConfig `mapstructure:",squash"`
 }

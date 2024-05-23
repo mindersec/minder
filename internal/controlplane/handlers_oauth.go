@@ -157,7 +157,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(providerClass, req.Cli)
+	oauthConfig, err := s.providerAuthFactory(&s.cfg.Provider, providerClass, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +405,7 @@ func (s *Server) getValidSessionState(ctx context.Context, state string) (db.Get
 
 func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass string, code string) (*oauth2.Token, error) {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(providerClass, true)
+	oauthConfig, err := s.providerAuthFactory(&s.cfg.Provider, providerClass, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OAuth config: %w", err)
 	}

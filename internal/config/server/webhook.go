@@ -18,7 +18,6 @@ package server
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -53,12 +52,5 @@ func (wc *WebhookConfig) GetPreviousWebhookSecrets() ([]string, error) {
 
 // GetWebhookSecret returns the GitHub App's webhook secret
 func (wc *WebhookConfig) GetWebhookSecret() (string, error) {
-	if wc.WebhookSecretFile != "" {
-		data, err := os.ReadFile(filepath.Clean(wc.WebhookSecretFile))
-		if err != nil {
-			return "", fmt.Errorf("failed to read GitHub App webhook secret from file: %w", err)
-		}
-		return string(data), nil
-	}
-	return wc.WebhookSecret, nil
+	return fileOrArg(wc.WebhookSecretFile, wc.WebhookSecret, "webhook secret")
 }
