@@ -26,7 +26,10 @@ import (
 	template "text/template"
 	"unicode"
 
+	"github.com/google/go-github/v61/github"
+
 	"github.com/stacklok/minder/internal/constants"
+	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -140,7 +143,12 @@ type dependencyAlternatives struct {
 	Dependency *pb.Dependency
 
 	// Reason captures the reason why a package was flagged
-	Reasons     []RuleViolationReason
+	Reasons []RuleViolationReason
+
+	// BlockPR will cause the PR to be blocked as requesting changes when true
+	BlockPR bool
+
+	// trustyReply is the complete response from trusty for this package
 	trustyReply *Reply
 }
 
@@ -154,19 +162,11 @@ type summaryPrHandler struct {
 	commentTemplate     *template.Template
 }
 
-func (sph *summaryPrHandler) trackAlternatives(
-	dep *pb.PrDependencies_ContextualDependency,
-	violationReasons []RuleViolationReason,
-	trustyReply *Reply,
-) {
-	sph.trackedAlternatives = append(sph.trackedAlternatives, dependencyAlternatives{
-		Dependency:  dep.Dep,
-		Reasons:     violationReasons,
-		trustyReply: trustyReply,
-	})
+func (sph *summaryPrHandler) trackAlternatives(dep dependencyAlternatives) {
+	sph.trackedAlternatives = append(sph.trackedAlternatives, dep)
 }
 
-func (sph *summaryPrHandler) submit(ctx context.Context) error {
+func (sph *summaryPrHandler) submit(ctx context.Context, ruleConfig *config) error {
 	if len(sph.trackedAlternatives) == 0 {
 		return nil
 	}
@@ -176,11 +176,41 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 		return fmt.Errorf("could not generate summary: %w", err)
 	}
 
-	_, err = sph.cli.CreateIssueComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
-	if err != nil {
-		return fmt.Errorf("could not create comment: %w", err)
+	action := ruleConfig.Action
+
+	// Check all the tracked dependencies. If any of them call for the PR
+	// to be blocked, set the review action to REQUEST_CHANGES
+	var reviewAction string = "COMMENT"
+	for _, d := range sph.trackedAlternatives {
+		if d.BlockPR {
+			reviewAction = "REQUEST_CHANGES"
+			break
+		}
 	}
 
+	switch action {
+	case pr_actions.ActionReviewPr:
+		_, err = sph.cli.CreateReview(
+			ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()),
+			&github.PullRequestReviewRequest{
+				NodeID:   new(string),
+				CommitID: &sph.pr.CommitSha,
+				Body:     &summary,
+				Event:    github.String(reviewAction),
+				Comments: []*github.DraftReviewComment{},
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("submitting pr summary: %w", err)
+		}
+	case pr_actions.ActionSummary:
+		_, err = sph.cli.CreateIssueComment(ctx, sph.pr.GetRepoOwner(), sph.pr.GetRepoName(), int(sph.pr.GetNumber()), summary)
+		if err != nil {
+			return fmt.Errorf("could not create comment: %w", err)
+		}
+	case pr_actions.ActionComment, pr_actions.ActionCommitStatus, pr_actions.ActionProfileOnly:
+		return fmt.Errorf("pull request action not supported")
+	}
 	return nil
 }
 

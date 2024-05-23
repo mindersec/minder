@@ -121,8 +121,8 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return nil
 	}
 
-	if err := submitSummary(ctx, prSummaryHandler); err != nil {
-		logger.Err(err).Msgf("Failed Generating PR Summary: %s", err.Error())
+	if err := submitSummary(ctx, prSummaryHandler, ruleConfig); err != nil {
+		logger.Err(err).Msgf("Failed generating PR summary: %s", err.Error())
 		return fmt.Errorf("submitting pull request summary: %w", err)
 	}
 
@@ -160,7 +160,7 @@ func parseRuleConfig(pol map[string]any) (*config, error) {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	if ruleConfig.Action != pr_actions.ActionSummary {
+	if ruleConfig.Action != pr_actions.ActionSummary && ruleConfig.Action != pr_actions.ActionReviewPr {
 		return nil, fmt.Errorf("action %s is not implemented", ruleConfig.Action)
 	}
 
@@ -169,8 +169,8 @@ func parseRuleConfig(pol map[string]any) (*config, error) {
 
 // submitSummary submits the pull request summary. It will return an error if
 // something fails.
-func submitSummary(ctx context.Context, prSummary *summaryPrHandler) error {
-	if err := prSummary.submit(ctx); err != nil {
+func submitSummary(ctx context.Context, prSummary *summaryPrHandler, ruleConfig *config) error {
+	if err := prSummary.submit(ctx, ruleConfig); err != nil {
 		return fmt.Errorf("failed to submit summary: %w", err)
 	}
 	return nil
@@ -236,6 +236,9 @@ func classifyDependency(
 	// Check all the policy violations
 	reasons := []RuleViolationReason{}
 
+	// shouldBlockPR indicates if the PR should beblocked based on this dep
+	shouldBlockPR := false
+
 	ecoConfig := getEcosystemConfig(logger, ruleConfig, dep)
 	if ecoConfig == nil {
 		return
@@ -248,6 +251,10 @@ func classifyDependency(
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
 			Str("malicious", "true").
 			Msgf("malicious dependency")
+
+		if !ecoConfig.AllowMalicious {
+			shouldBlockPR = true
+		}
 
 		reasons = append(reasons, TRUSTY_MALICIOUS_PKG)
 	}
@@ -288,7 +295,13 @@ func classifyDependency(
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
 
-		prSummary.trackAlternatives(dep, reasons, resp)
+		//prSummary.trackAlternatives(dep, reasons, resp)
+		prSummary.trackAlternatives(dependencyAlternatives{
+			Dependency:  dep.Dep,
+			Reasons:     reasons,
+			BlockPR:     shouldBlockPR,
+			trustyReply: resp,
+		})
 	} else {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
