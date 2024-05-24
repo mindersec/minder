@@ -19,6 +19,7 @@ package installations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -91,13 +92,53 @@ func (im *InstallationManager) handleProviderInstanceRemovedEvent(ctx context.Co
 	return im.svc.DeleteGitHubAppInstallation(ctx, payload.InstallationID)
 }
 
-// ProviderInstanceRemovedMessage returns the provider installation event from the message
-func ProviderInstanceRemovedMessage(
-	msg *message.Message,
-	providerClass db.ProviderClass,
+// InstallationInfoWrapper is a helper struct to gether information
+// about installations from events.
+// It's able to build a message.Message from the information it
+// gathers.
+type InstallationInfoWrapper struct {
+	ProviderClass db.ProviderClass
+	Payload       []byte
+}
+
+// NewInstallationInfoWrapper returns an empty
+// *InstallationInfoWrapper for the caller to populate.
+func NewInstallationInfoWrapper() *InstallationInfoWrapper {
+	return &InstallationInfoWrapper{}
+}
+
+// WithProviderClass sets the provider class for this Installation
+func (iiw *InstallationInfoWrapper) WithProviderClass(
+	class db.ProviderClass,
+) *InstallationInfoWrapper {
+	iiw.ProviderClass = class
+	return iiw
+}
+
+// WithPayload sets the payload for the installation.
+//
+// It does not perform any sort of validation on the payload, i.e. it
+// coud be empty byte array, empty string, or even an invalid json.
+func (iiw *InstallationInfoWrapper) WithPayload(
 	payload []byte,
-) {
+) *InstallationInfoWrapper {
+	iiw.Payload = payload
+	return iiw
+}
+
+// ToMessage sets the information to a message.Message. It works via
+// side effect.
+func (iiw *InstallationInfoWrapper) ToMessage(msg *message.Message) error {
+	if iiw.ProviderClass == "" {
+		return errors.New("provider class is required")
+	}
+	if len(iiw.Payload) == 0 {
+		return errors.New("payload is empty")
+	}
+
 	msg.Metadata.Set(InstallationEventKey, string(ProviderInstanceRemovedEvent))
-	msg.Metadata.Set(ClassKey, string(providerClass))
-	msg.Payload = payload
+	msg.Metadata.Set(ClassKey, string(iiw.ProviderClass))
+	msg.Payload = iiw.Payload
+
+	return nil
 }

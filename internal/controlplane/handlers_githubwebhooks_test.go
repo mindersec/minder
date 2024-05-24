@@ -62,6 +62,9 @@ var rawPackageEventPublished string
 //go:embed test-payloads/push.json
 var rawPushEvent string
 
+//go:embed test-payloads/branch-protection-configuration-disabled.json
+var rawBranchProtectionConfigurationDisabledEvent string
+
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
 	mock.Mock
@@ -696,6 +699,158 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			mockStoreFunc: newMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
+		},
+
+		// Testing package mandatory fields
+		{
+			name: "package mandatory repo full name",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: nil,
+					HTMLURL:  github.String("https://example.com/random/url"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory package name",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        nil,
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory package type",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: nil,
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory owner",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package garbage",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			rawPayload:    []byte("ceci n'est pas une JSON"),
+			mockStoreFunc: newMockStore(),
+			statusCode:    http.StatusInternalServerError,
 		},
 
 		// Testing package mandatory fields
@@ -2500,10 +2655,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "branch_protection_configuration disabled",
@@ -2517,10 +2682,51 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
+		},
+		{
+			name: "branch_protection_configuration disabled raw event",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
+			event:      "branch_protection_configuration",
+			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_advisory published",
@@ -2534,10 +2740,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_advisory reported",
@@ -2551,10 +2778,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset created",
@@ -2568,10 +2816,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset deleted",
@@ -2585,10 +2854,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset edited",
@@ -2602,10 +2892,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "secret_scanning_alert_location",
@@ -2619,10 +2930,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 
 		// package/artifact specific tests
@@ -3026,6 +3358,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
+				require.Equal(t, "github-app", received.Metadata["class"])
 			},
 		},
 		{
@@ -3045,6 +3379,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
+				require.Equal(t, "github-app", received.Metadata["class"])
 			},
 		},
 		{

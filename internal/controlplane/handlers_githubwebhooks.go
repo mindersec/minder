@@ -297,9 +297,20 @@ func (i *installation) GetID() int64 {
 	return 0
 }
 
+// processingResult struct contains the sole information necessary to
+// send a message out from the handler, namely a destination topic and
+// an object that knows how to "convert itself" to a watermill message.
+//
+// It is supposed to just be an easy, uniform way of returning
+// results.
 type processingResult struct {
+	// destination topic
 	topic string
-	eiw   *entities.EntityInfoWrapper
+	// wrapper object for repository, pull-request, and artifact
+	// (package) events.
+	eiw *entities.EntityInfoWrapper
+	// wrapper object for installation (app) events
+	iiw *installations.InstallationInfoWrapper
 }
 
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
@@ -350,7 +361,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			wes.Error = false
 			s.processPingEvent(ctx, rawWBPayload)
 		case "installation":
-			res, processingErr = s.processInstallationAppEvent(ctx, rawWBPayload, m)
+			res, processingErr = s.processInstallationAppEvent(ctx, rawWBPayload)
 		default:
 			l.Info().Msgf("webhook event %s not handled", wes.Typ)
 		}
@@ -367,10 +378,15 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		}
 
 		if res != nil {
-			wes.Accepted = true
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
+			if err := res.iiw.ToMessage(m); err != nil {
+				wes.Error = true
+				log.Printf("Error creating event: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 
-			if err := s.evt.Publish(installations.ProviderInstallationTopic, m); err != nil {
+			if err := s.evt.Publish(res.topic, m); err != nil {
 				wes.Error = true
 				log.Printf("Error publishing message: %v", err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -450,15 +466,19 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		// reconciliation or, in some cases, a deletion.
 		case "repository", "meta":
 			res, processingErr = s.processRelevantRepositoryEvent(ctx, rawWBPayload)
-		case "branch_protection_rule",
+		case "branch_protection_configuration",
+			"branch_protection_rule",
 			"code_scanning_alert",
 			"create",
 			"member",
 			"public",
 			"push",
+			"repository_advisory",
 			"repository_import",
+			"repository_ruleset",
 			"repository_vulnerability_alert",
 			"secret_scanning_alert",
+			"secret_scanning_alert_location",
 			"security_advisory",
 			"security_and_analysis",
 			"team",
@@ -471,11 +491,6 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		case "pull_request":
 			res, processingErr = s.processPullRequestEvent(ctx, rawWBPayload)
 		// This event is not currently handled.
-		case "branch_protection_configuration",
-			"repository_advisory",
-			"repository_ruleset",
-			"secret_scanning_alert_location":
-			l.Info().Msgf("webhook events %s not handled", wes.Typ)
 		case "org_block",
 			"organization":
 			l.Info().Msgf("webhook events %s do not contain repo", wes.Typ)
@@ -486,6 +501,8 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			wes.Accepted = false
 			wes.Error = false
 			s.processPingEvent(ctx, rawWBPayload)
+		default:
+			l.Info().Msgf("webhook event %s not handled", wes.Typ)
 		}
 
 		if processingErr != nil {
@@ -841,11 +858,10 @@ func (s *Server) processPullRequestEvent(
 // the app itself as well as the list of accessible repositories.
 //
 // There are several possible actions, but in the current user flows
-// we only process.
+// we only process deletion.
 func (_ *Server) processInstallationAppEvent(
 	_ context.Context,
 	payload []byte,
-	msg *message.Message,
 ) (*processingResult, error) {
 	var event *installationEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
@@ -877,15 +893,13 @@ func (_ *Server) processInstallationAppEvent(
 		return nil, fmt.Errorf("error marshalling payload: %w", err)
 	}
 
-	// We could use something like an EntityInfoWrapper here as
-	// well.
-	installations.ProviderInstanceRemovedMessage(
-		msg,
-		db.ProviderClassGithubApp,
-		payloadBytes)
+	iiw := installations.NewInstallationInfoWrapper().
+		WithProviderClass(db.ProviderClassGithubApp).
+		WithPayload(payloadBytes)
 
 	res := &processingResult{
 		topic: installations.ProviderInstallationTopic,
+		iiw:   iiw,
 	}
 
 	return res, nil
