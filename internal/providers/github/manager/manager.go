@@ -300,27 +300,13 @@ type credentialDetails struct {
 }
 
 func (g *githubProviderManager) GetConfig(
-	_ context.Context, class db.ProviderClass, userConfig json.RawMessage,
+	ctx context.Context, class db.ProviderClass, userConfig json.RawMessage,
 ) (json.RawMessage, error) {
 	if !slices.Contains(g.GetSupportedClasses(), class) {
 		return nil, fmt.Errorf("provider does not implement %s", string(class))
 	}
 
-	var defaultConfig string
-	// nolint:exhaustive // we really want handle only the two
-	switch class {
-	case db.ProviderClassGithub:
-		defaultConfig = `{"github": {}}`
-	case db.ProviderClassGithubApp:
-		defaultConfig = `{"github-app": {}}`
-	default:
-		return nil, fmt.Errorf("unsupported provider class %s", class)
-	}
-	if len(userConfig) == 0 {
-		return json.RawMessage(defaultConfig), nil
-	}
-
-	return userConfig, nil
+	return g.ghService.GetConfig(ctx, class, userConfig)
 }
 
 func (g *githubProviderManager) ValidateConfig(
