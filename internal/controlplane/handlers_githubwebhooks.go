@@ -75,6 +75,7 @@ func newErrNotHandled(smft string, args ...any) error {
 const (
 	webhookActionEventDeleted   = "deleted"
 	webhookActionEventOpened    = "opened"
+	webhookActionEventReopened  = "reopened"
 	webhookActionEventClosed    = "closed"
 	webhookActionEventPublished = "published"
 )
@@ -119,8 +120,16 @@ type pkg struct {
 }
 
 type user struct {
+	ID      *int64  `json:"id,omitempty"`
 	Login   *string `json:"login,omitempty"`
 	HTMLURL *string `json:"html_url,omitempty"`
+}
+
+func (u *user) GetID() int64 {
+	if u.ID != nil {
+		return *u.ID
+	}
+	return 0
 }
 
 func (u *user) GetLogin() string {
@@ -212,6 +221,53 @@ func (r *repo) GetPrivate() bool {
 	return false
 }
 
+// pullRequestEvent are events related to pull requests issued around
+// a specific repository
+type pullRequestEvent struct {
+	Action      *string      `json:"action,omitempty"`
+	Repo        *repo        `json:"repository,omitempty"`
+	PullRequest *pullRequest `json:"pull_request,omitempty"`
+}
+
+func (p *pullRequestEvent) GetAction() string {
+	if p.Action != nil {
+		return *p.Action
+	}
+	return ""
+}
+
+func (p *pullRequestEvent) GetRepo() *repo {
+	return p.Repo
+}
+
+func (p *pullRequestEvent) GetPullRequest() *pullRequest {
+	return p.PullRequest
+}
+
+type pullRequest struct {
+	URL    *string `json:"url,omitempty"`
+	Number *int64  `json:"number,omitempty"`
+	User   *user   `json:"user,omitempty"`
+}
+
+func (p *pullRequest) GetURL() string {
+	if p.URL != nil {
+		return *p.URL
+	}
+	return ""
+}
+
+func (p *pullRequest) GetNumber() int64 {
+	if p.Number != nil {
+		return *p.Number
+	}
+	return 0
+}
+
+func (p *pullRequest) GetUser() *user {
+	return p.User
+}
+
 // installationEvent are events related the GitHub App. Minder uses
 // them for provider enrollement.
 type installationEvent struct {
@@ -279,6 +335,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
 			Logger()
+		ctx = l.WithContext(ctx)
 
 		wes.Accepted = true
 		var res *processingResult
@@ -371,6 +428,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
 			Logger()
+		ctx = l.WithContext(ctx)
 
 		l.Debug().Msg("parsing event")
 
@@ -410,12 +468,14 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			// This is an artifact-related event, and can
 			// only trigger a reconciliation.
 			res, processingErr = s.processPackageEvent(ctx, rawWBPayload)
+		case "pull_request":
+			res, processingErr = s.processPullRequestEvent(ctx, rawWBPayload)
 		// This event is not currently handled.
 		case "branch_protection_configuration",
 			"repository_advisory",
 			"repository_ruleset",
 			"secret_scanning_alert_location":
-			break
+			l.Info().Msgf("webhook events %s not handled", wes.Typ)
 		case "org_block",
 			"organization":
 			l.Info().Msgf("webhook events %s do not contain repo", wes.Typ)
@@ -426,18 +486,6 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			wes.Accepted = false
 			wes.Error = false
 			s.processPingEvent(ctx, rawWBPayload)
-		}
-
-		event, err := github.ParseWebHook(github.WebHookType(r), rawWBPayload)
-		if err != nil {
-			l.Error().Err(err).Msg("Error parsing github webhook message")
-		}
-
-		switch event := event.(type) {
-		case *github.PullRequestEvent:
-			res, processingErr = s.processPullRequestEvent(context.TODO(), event)
-		default:
-			l.Info().Msgf("webhook event %s not handled", wes.Typ)
 		}
 
 		if processingErr != nil {
@@ -706,8 +754,13 @@ func (s *Server) processRepositoryEvent(
 
 func (s *Server) processPullRequestEvent(
 	ctx context.Context,
-	event *github.PullRequestEvent,
+	payload []byte,
 ) (*processingResult, error) {
+	var event *pullRequestEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return nil, err
+	}
+
 	if event.GetAction() == "" {
 		return nil, errors.New("invalid event: action is nil")
 	}
@@ -1144,7 +1197,7 @@ func (s *Server) reconcilePrWithDb(
 	// PullRequestEvents with action "synchronize" are not
 	// published, see here
 	// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
-	case webhookActionEventOpened, "reopened":
+	case webhookActionEventOpened, webhookActionEventReopened:
 		dbPr, err := s.store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: dbrepo.ID,
 			PrNumber:     prEvalInfo.Number,
