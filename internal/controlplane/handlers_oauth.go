@@ -234,19 +234,9 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 
 	provider := pathParams["provider"]
 
-	// Check the nonce to make sure it's valid
-	valid, err := mcrypto.IsNonceValid(state, s.cfg.Auth.NoncePeriod)
+	stateData, err := s.getValidSessionState(ctx, state)
 	if err != nil {
-		return fmt.Errorf("error checking nonce: %w", err)
-	}
-	if !valid {
-		return errors.New("invalid nonce")
-	}
-
-	// get projectID from session along with state nonce from the database
-	stateData, err := s.store.GetProjectIDBySessionState(ctx, state)
-	if err != nil {
-		return fmt.Errorf("error getting project ID by session state: %w", err)
+		return fmt.Errorf("error validating session state: %w", err)
 	}
 
 	// Telemetry logging
