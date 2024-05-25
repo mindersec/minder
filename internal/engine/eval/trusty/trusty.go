@@ -42,7 +42,6 @@ type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
 	client   *trustyClient
-	logger   *zerolog.Logger
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -280,17 +279,7 @@ func classifyDependency(
 		packageScore = *resp.Summary.Score
 	}
 
-	descr := map[string]any{}
-	if resp.Summary.Description != nil {
-		descr = resp.Summary.Description
-	}
-
-	// Ensure don't panic checking all fields are there
-	for _, fld := range []string{"activity", "provenance"} {
-		if _, ok := descr[fld]; !ok {
-			descr[fld] = float64(0)
-		}
-	}
+	descr := readPackageDescription(resp)
 
 	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
@@ -322,6 +311,26 @@ func classifyDependency(
 			Str("dependency", dep.Dep.Name).
 			Float64("score", *resp.Summary.Score).
 			Float64("threshold", ecoConfig.Score).
-			Msgf("the dependency has lower score than threshold or is malicious, tracking")
+			Msgf("dependency ok")
 	}
+}
+
+// readPackageDescription reads the description from the package summary and
+// normlizes the required values when missing from a partial Trusty response
+func readPackageDescription(resp *Reply) map[string]any {
+	descr := map[string]any{}
+	if resp == nil {
+		resp = &Reply{}
+	}
+	if resp.Summary.Description != nil {
+		descr = resp.Summary.Description
+	}
+
+	// Ensure don't panic checking all fields are there
+	for _, fld := range []string{"activity", "provenance"} {
+		if _, ok := descr[fld]; !ok {
+			descr[fld] = float64(0)
+		}
+	}
+	return descr
 }

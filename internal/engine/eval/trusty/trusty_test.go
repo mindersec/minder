@@ -479,3 +479,42 @@ func TestBuildScoreMatrix(t *testing.T) {
 		})
 	}
 }
+
+func TestReadPackageDescription(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name string
+		sut  *Reply
+	}{
+		{
+			name: "normal",
+			sut:  &Reply{},
+		},
+		{
+			name: "no-provenance",
+			sut: &Reply{
+				Summary: ScoreSummary{
+					Description: map[string]any{
+						"provenance": 1,
+					},
+				},
+			},
+		},
+		{
+			name: "nil-response",
+			sut:  nil,
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			data := readPackageDescription(tc.sut)
+			require.NotNil(t, data)
+			require.NotNil(t, data)
+			_, ok := data["provenance"]
+			require.True(t, ok)
+			_, ok = data["activity"]
+			require.True(t, ok)
+		})
+	}
+}
