@@ -50,6 +50,9 @@ type ecosystemConfig struct {
 
 	// AllowMalicious disables blocking PRs introducing malicious dependencies
 	AllowMalicious bool `json:"allow_malicious" mapstructure:"allow_malicious"`
+
+	// AllowDeprecated disables blocking pull requests introducing deprecated packages
+	AllowDeprecated bool `json:"allow_deprecated" mapstructure:"allow_deprecated"`
 }
 
 // config is the configuration for the trusty evaluator
@@ -63,25 +66,26 @@ func defaultConfig() *config {
 		Action: pr_actions.ActionReviewPr,
 		EcosystemConfig: []ecosystemConfig{
 			{
-				Name:           "npm",
-				Score:          5.0,
-				Provenance:     5.0,
-				Activity:       5.0,
-				AllowMalicious: false,
+				Name:            "npm",
+				Score:           5.0,
+				Provenance:      5.0,
+				Activity:        5.0,
+				AllowMalicious:  false,
+				AllowDeprecated: false,
 			},
 			{
-				Name:           "pypi",
-				Score:          5.0,
-				Provenance:     5.0,
-				Activity:       5.0,
-				AllowMalicious: false,
+				Name:            "pypi",
+				Score:           5.0,
+				Provenance:      5.0,
+				Activity:        5.0,
+				AllowDeprecated: false,
 			},
 			{
-				Name:           "go",
-				Score:          5.0,
-				Provenance:     5.0,
-				Activity:       5.0,
-				AllowMalicious: false,
+				Name:            "go",
+				Score:           5.0,
+				Provenance:      5.0,
+				Activity:        5.0,
+				AllowDeprecated: false,
 			},
 		},
 	}

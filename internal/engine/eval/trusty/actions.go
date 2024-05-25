@@ -106,6 +106,9 @@ const (
 
 	// TRUSTY_LOW_PROVENANCE Low trust in proof of origin
 	TRUSTY_LOW_PROVENANCE
+
+	// TRUSTY_DEPRECATED means a package was marked upstream as deprecated
+	TRUSTY_DEPRECATED
 )
 
 type templatePackageData struct {

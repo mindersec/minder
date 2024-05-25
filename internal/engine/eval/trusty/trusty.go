@@ -42,6 +42,7 @@ type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
 	client   *trustyClient
+	logger   *zerolog.Logger
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -52,6 +53,7 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 
 	// Read the trusty endpoint from the environment
 	trustyEndpoint := os.Getenv(trustyEndpointEnvVar)
+
 	// If the environment variable is not set, use the default endpoint
 	if trustyEndpoint == "" {
 		trustyEndpoint = trustyEndpointURL
@@ -259,6 +261,20 @@ func classifyDependency(
 		reasons = append(reasons, TRUSTY_MALICIOUS_PKG)
 	}
 
+	// Note if the packages is deprecated
+	if resp.PackageData.Deprecated {
+		logger.Debug().
+			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
+			Str("deprecated", "true").
+			Msgf("deprecated dependency")
+
+		if !ecoConfig.AllowDeprecated {
+			shouldBlockPR = true
+		}
+
+		reasons = append(reasons, TRUSTY_DEPRECATED)
+	}
+
 	packageScore := float64(0)
 	if resp.Summary.Score != nil {
 		packageScore = *resp.Summary.Score
@@ -295,7 +311,6 @@ func classifyDependency(
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
 
-		//prSummary.trackAlternatives(dep, reasons, resp)
 		prSummary.trackAlternatives(dependencyAlternatives{
 			Dependency:  dep.Dep,
 			Reasons:     reasons,
