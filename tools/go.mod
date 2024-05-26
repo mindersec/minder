@@ -1,8 +1,6 @@
 module github.com/stacklok/minder/tools
 
-go 1.22
-
-toolchain go1.22.0
+go 1.22.3
 
 require (
 	github.com/bufbuild/buf v1.32.1
