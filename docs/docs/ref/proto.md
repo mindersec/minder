@@ -118,6 +118,7 @@ replies with OK
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
+| PatchProvider | [PatchProviderRequest](#minder-v1-PatchProviderRequest) | [PatchProviderResponse](#minder-v1-PatchProviderResponse) |  |
 | GetProvider | [GetProviderRequest](#minder-v1-GetProviderRequest) | [GetProviderResponse](#minder-v1-GetProviderResponse) |  |
 | ListProviders | [ListProvidersRequest](#minder-v1-ListProvidersRequest) | [ListProvidersResponse](#minder-v1-ListProvidersResponse) |  |
 | CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
@@ -1447,6 +1448,30 @@ ListRuleTypesResponse is the response to list rule types.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
+
+
+<a name="minder-v1-PatchProviderRequest"></a>
+
+#### PatchProviderRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| patch | [Provider](#minder-v1-Provider) |  |  |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+
+
+<a name="minder-v1-PatchProviderResponse"></a>
+
+#### PatchProviderResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | [Provider](#minder-v1-Provider) |  |  |
 
 
 <a name="minder-v1-PrContents"></a>

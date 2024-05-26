@@ -1425,6 +1425,50 @@
         "tags": [
           "ProvidersService"
         ]
+      },
+      "patch": {
+        "operationId": "ProvidersService_PatchProvider",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PatchProviderResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "patch",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1Provider"
+            }
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
       }
     },
     "/api/v1/providers/{id}": {
@@ -3630,6 +3674,14 @@
         "project": {
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
+        }
+      }
+    },
+    "v1PatchProviderResponse": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/v1Provider"
         }
       }
     },
