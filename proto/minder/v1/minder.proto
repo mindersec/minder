@@ -789,6 +789,18 @@ service ProjectsService {
 }
 
 service ProvidersService {
+    rpc PatchProvider(PatchProviderRequest) returns (PatchProviderResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/providers"
+            body: "patch"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_UPDATE
+        };
+    }
+
     rpc GetProvider(GetProviderRequest) returns (GetProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/providers/{name}"
@@ -2211,6 +2223,17 @@ message ListProviderClassesRequest {
 message ListProviderClassesResponse {
     // provider_classes is the list of provider classes.
     repeated string provider_classes = 1;
+}
+
+message PatchProviderRequest {
+    Context context = 1;
+    Provider patch = 2;
+
+    google.protobuf.FieldMask update_mask = 3;
+}
+
+message PatchProviderResponse {
+    Provider provider = 1;
 }
 
 message AuthorizationParams {
