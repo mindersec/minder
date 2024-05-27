@@ -48,23 +48,19 @@ func getOAuthClientConfig(c *server.ProviderConfig, provider string) (*server.OA
 		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 
+	// first read the new provider-nested key. If it's missing, fallback to using the older
+	// top-level keys.
 	switch provider {
 	case Github:
-		if viper.IsSet(Github) {
-			oc, err = fallbackOAuthClientConfig("github")
-		} else if c != nil && c.GitHub != nil {
+		if c != nil && c.GitHub != nil {
 			oc = &c.GitHub.OAuthClientConfig
-		} else {
-			return nil, fmt.Errorf("missing GitHub OAuth client config")
 		}
+		fallbackOAuthClientConfigValues("github", oc)
 	case GitHubApp:
-		if viper.IsSet(GitHubApp) {
-			oc, err = fallbackOAuthClientConfig(GitHubApp)
-		} else if c != nil && c.GitHubApp != nil {
+		if c != nil && c.GitHubApp != nil {
 			oc = &c.GitHubApp.OAuthClientConfig
-		} else {
-			return nil, fmt.Errorf("missing GitHub App OAuth client config")
 		}
+		fallbackOAuthClientConfigValues("github-app", oc)
 	default:
 		err = fmt.Errorf("unknown provider: %s", provider)
 	}
@@ -72,12 +68,14 @@ func getOAuthClientConfig(c *server.ProviderConfig, provider string) (*server.OA
 	return oc, err
 }
 
-func fallbackOAuthClientConfig(key string) (*server.OAuthClientConfig, error) {
-	var cfg server.OAuthClientConfig
-	if err := viper.UnmarshalKey(key, &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
+func fallbackOAuthClientConfigValues(provider string, cfg *server.OAuthClientConfig) {
+	// we read the values one-by-one instead of just getting the top-level key to allow
+	// for environment variables to be set per-variable
+	cfg.ClientID = viper.GetString(fmt.Sprintf("%s.client_id", provider))
+	cfg.ClientIDFile = viper.GetString(fmt.Sprintf("%s.client_id_file", provider))
+	cfg.ClientSecret = viper.GetString(fmt.Sprintf("%s.client_secret", provider))
+	cfg.ClientSecretFile = viper.GetString(fmt.Sprintf("%s.client_secret_file", provider))
+	cfg.RedirectURI = viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
 }
 
 // NewOAuthConfig creates a new OAuth2 config for the given provider
