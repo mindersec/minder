@@ -13,8 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-default: init-examples
+
+## use absolute makefile location
+MAKEFILE_DIR_LOCATION := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: clean
+clean:: ## clean up environment
+	rm -rf $(MAKEFILE_DIR_LOCATION)rules-and-profiles
 
 .PHONY: init-examples
-init-examples: ## clone example rules and profiles
-	git clone https://github.com/stacklok/minder-rules-and-profiles.git examples/rules-and-profiles | true
+init-examples: clean ## clone example rules and profiles
+	git clone https://github.com/stacklok/minder-rules-and-profiles.git $(MAKEFILE_DIR_LOCATION)rules-and-profiles || true

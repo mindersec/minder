@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+default: help
+
 SHELL       ?= /bin/bash
 .SHELLFLAGS ?= -ec
 
@@ -50,10 +52,8 @@ KO_PLATFORMS=linux/amd64,linux/arm64
 # Helm package version
 HELM_PACKAGE_VERSION?=0.1.0
 
-default: help
-
 .PHONY: help
 help: ## list makefile targets
-	@echo "Usage: make [target] ...\n"
+	@echo "Usage: make [target] ..."
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*##";} /^[$$()% a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST) | sort
