@@ -502,6 +502,8 @@ func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 		if respErr.Message == githubBranchNotFoundMsg {
 			return nil, ErrBranchNotFound
 		}
+
+		return nil, fmt.Errorf("error getting branch protection: %w", err)
 	} else if err != nil {
 		return nil, err
 	}
