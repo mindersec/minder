@@ -55,10 +55,7 @@ var upCmd = &cobra.Command{
 		}
 		defer dbConn.Close()
 
-		yes, err := confirm(cmd, "Running this command will change the database structure")
-		if err != nil {
-			return err
-		}
+		yes := confirm(cmd, "Running this command will change the database structure")
 		if !yes {
 			return nil
 		}

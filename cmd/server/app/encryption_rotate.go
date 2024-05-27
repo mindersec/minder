@@ -47,7 +47,7 @@ var rotateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 		if err != nil {
-			cliErrorf(cmd, "unable to read config: %w", err)
+			cliErrorf(cmd, "unable to read config: %s", err)
 		}
 
 		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
@@ -59,11 +59,7 @@ var rotateCmd = &cobra.Command{
 		}
 		defer closer()
 
-		yes, err := confirm(cmd, "Running this command will change encrypted secrets")
-		if err != nil {
-			cmd.Printf("Exiting without migrating\n")
-			cliErrorf(cmd, err.Error())
-		}
+		yes := confirm(cmd, "Running this command will change encrypted secrets")
 		if !yes {
 			return nil
 		}
@@ -117,10 +113,7 @@ func deleteStaleSessions(
 		}
 
 		// one last chance to reconsider your choices
-		yes, err := confirm(cmd, fmt.Sprintf("About to delete %d stale sessions", deleted))
-		if err != nil {
-			return 0, err
-		}
+		yes := confirm(cmd, fmt.Sprintf("About to delete %d stale sessions", deleted))
 		if !yes {
 			return 0, errCancelRotation
 		}
@@ -165,10 +158,7 @@ func rotateSecrets(
 			return 0, errCancelRotation
 		}
 		// one last chance to reconsider your choices
-		yes, err := confirm(cmd, fmt.Sprintf("About to rotate %d secrets, do you want to continue?", rotated))
-		if err != nil {
-			return 0, err
-		}
+		yes := confirm(cmd, fmt.Sprintf("About to rotate %d secrets, do you want to continue?", rotated))
 		if !yes {
 			return 0, errCancelRotation
 		}

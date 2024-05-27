@@ -43,9 +43,10 @@ func wireUpDB(ctx context.Context, cfg *serverconfig.Config) (db.Store, func(), 
 	return db.NewStore(dbConn), closer, nil
 }
 
-func confirm(cmd *cobra.Command, message string) (bool, error) {
+func confirm(cmd *cobra.Command, message string) bool {
 	yes, err := cmd.Flags().GetBool("yes")
 	if err != nil {
+		// non-fatal error
 		cmd.Printf("Error while getting yes flag: %v", err)
 	}
 	if !yes {
@@ -53,15 +54,17 @@ func confirm(cmd *cobra.Command, message string) (bool, error) {
 		var response string
 		_, err := fmt.Scanln(&response)
 		if err != nil {
-			return false, fmt.Errorf("error while reading user input: %w", err)
+			// for sake of simplicity, exit instead of returning error
+			cmd.Printf("error while reading user input: %s", err)
+			os.Exit(-1)
 		}
 
 		if response != "y" {
 			cmd.Printf("Exiting...")
-			return false, nil
+			return false
 		}
 	}
-	return true, nil
+	return true
 }
 
 // cliError prints the error and exits
