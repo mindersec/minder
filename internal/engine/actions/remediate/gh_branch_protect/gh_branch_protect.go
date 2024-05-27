@@ -132,6 +132,18 @@ func (r *GhBranchProtectRemediator) Do(
 		return nil, fmt.Errorf("error reading branch from params: %w", err)
 	}
 
+	// This check avoids passing around an empty branch name which
+	// causes issues down the road. Besides, it does not make
+	// sense to protect what does not exist. (cit. Ozz 2024-05-27)
+	if branch == "" && repo.DefaultBranch == "" {
+		return nil, fmt.Errorf("both rule param and default branch names are empty: %w", engerrors.ErrActionSkipped)
+	}
+	// This sets the branch to the default one of the repository
+	// in case no branch is configured via rule parameters.
+	if branch == "" {
+		branch = repo.DefaultBranch
+	}
+
 	// get the current protection
 	res, err := r.cli.GetBranchProtection(ctx, repo.Owner, repo.Name, branch)
 	if errors.Is(err, github.ErrBranchNotProtected) {
