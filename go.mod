@@ -29,7 +29,7 @@ require (
 	github.com/gorilla/securecookie v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
-	github.com/hashicorp/go-version v1.6.0
+	github.com/hashicorp/go-version v1.7.0
 	github.com/itchyny/gojq v0.12.15
 	github.com/lib/pq v1.10.9
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
