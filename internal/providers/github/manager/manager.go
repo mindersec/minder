@@ -334,11 +334,30 @@ func (g *githubProviderManager) ValidateConfig(
 func fallbackOAuthClientConfigValues(provider string, cfg *server.OAuthClientConfig) {
 	// we read the values one-by-one instead of just getting the top-level key to allow
 	// for environment variables to be set per-variable
-	cfg.ClientID = viper.GetString(fmt.Sprintf("%s.client_id", provider))
-	cfg.ClientIDFile = viper.GetString(fmt.Sprintf("%s.client_id_file", provider))
-	cfg.ClientSecret = viper.GetString(fmt.Sprintf("%s.client_secret", provider))
-	cfg.ClientSecretFile = viper.GetString(fmt.Sprintf("%s.client_secret_file", provider))
-	cfg.RedirectURI = viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
+	fallbackClientID := viper.GetString(fmt.Sprintf("%s.client_id", provider))
+	if fallbackClientID != "" {
+		cfg.ClientID = fallbackClientID
+	}
+
+	fallbackClientIDFile := viper.GetString(fmt.Sprintf("%s.client_id_file", provider))
+	if fallbackClientIDFile != "" {
+		cfg.ClientIDFile = fallbackClientIDFile
+	}
+
+	fallbackClientSecret := viper.GetString(fmt.Sprintf("%s.client_secret", provider))
+	if fallbackClientSecret != "" {
+		cfg.ClientSecret = fallbackClientSecret
+	}
+
+	fallbackClientSecretFile := viper.GetString(fmt.Sprintf("%s.client_secret_file", provider))
+	if fallbackClientSecretFile != "" {
+		cfg.ClientSecretFile = fallbackClientSecretFile
+	}
+
+	fallbackRedirectURI := viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
+	if fallbackRedirectURI != "" {
+		cfg.RedirectURI = fallbackRedirectURI
+	}
 }
 
 func getOAuthClientConfig(c *server.ProviderConfig, providerClass db.ProviderClass) (*server.OAuthClientConfig, error) {
