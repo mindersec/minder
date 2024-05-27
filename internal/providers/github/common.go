@@ -69,6 +69,8 @@ var (
 	// ErroNoCheckPermissions is a fixed error returned when the credentialed
 	// identity has not been authorized to use the checks API
 	ErroNoCheckPermissions = errors.New("missing permissions: check")
+	// ErrBranchNameEmpty is a fixed error returned when the branch name is empty
+	ErrBranchNameEmpty = errors.New("branch name cannot be empty")
 )
 
 // GitHub is the struct that contains the shared GitHub client operations
@@ -491,6 +493,9 @@ func (c *GitHub) GetRepository(ctx context.Context, owner string, name string) (
 func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 	repo_name string, branch_name string) (*github.Protection, error) {
 	var respErr *github.ErrorResponse
+	if branch_name == "" {
+		return nil, ErrBranchNameEmpty
+	}
 
 	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
 	if errors.As(err, &respErr) {
@@ -507,6 +512,9 @@ func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 func (c *GitHub) UpdateBranchProtection(
 	ctx context.Context, owner, repo, branch string, preq *github.ProtectionRequest,
 ) error {
+	if branch == "" {
+		return ErrBranchNameEmpty
+	}
 	_, _, err := c.client.Repositories.UpdateBranchProtection(ctx, owner, repo, branch, preq)
 	return err
 }
