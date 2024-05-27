@@ -36,7 +36,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.11.0
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.36
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
 	github.com/open-policy-agent/opa v0.64.1
 	github.com/openfga/go-sdk v0.3.7
 	github.com/openfga/openfga v1.5.3
