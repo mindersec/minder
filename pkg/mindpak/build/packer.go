@@ -109,7 +109,7 @@ func (_ *Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
 	if err := bundle.Manifest.Write(f); err != nil {
 		return nil, fmt.Errorf("writing manifest data: %w", err)
 	}
-	fmt.Printf("wrote to %s", f.Name())
+	fmt.Printf("wrote to %s\n", f.Name())
 	return bundle, nil
 }
 
