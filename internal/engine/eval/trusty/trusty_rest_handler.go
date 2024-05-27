@@ -86,6 +86,7 @@ type Reply struct {
 	Summary      ScoreSummary     `json:"summary"`
 	Alternatives AlternativesList `json:"alternatives"`
 	PackageData  PackageData      `json:"package_data"`
+	Provenance   *Provenance      `json:"provenance"`
 }
 
 // MaliciousData contains the security details when a dependency is malicious
@@ -95,6 +96,36 @@ type MaliciousData struct {
 	Published *time.Time `json:"published"`
 	Modified  *time.Time `json:"modified"`
 	Source    string     `json:"source"`
+}
+
+// Provenance has the package's provenance score and provenance type components
+type Provenance struct {
+	Score       float64               `json:"score"`
+	Description ProvenanceDescription `json:"description"`
+}
+
+// ProvenanceDescription contians the provenance types
+type ProvenanceDescription struct {
+	Historical HistoricalProvenance `json:"hp"`
+	Sigstore   SigstoreProvenance   `json:"provenance"`
+}
+
+// HistoricalProvenance has the historical provenance components from a package
+type HistoricalProvenance struct {
+	Tags     float64 `json:"tags"`
+	Common   float64 `json:"common"`
+	Overlap  float64 `json:"overlap"`
+	Versions float64 `json:"versions"`
+}
+
+// SigstoreProvenance has the sigstore certificate data when a package was signed
+// using a github actions workflow
+type SigstoreProvenance struct {
+	Issuer           string `json:"issuer"`
+	Workflow         string `json:"workflow"`
+	SourceRepository string `json:"source_repo"`
+	TokenIssuer      string `json:"token_issuer"`
+	Transparency     string `json:"transparency"`
 }
 
 func newPiClient(baseUrl string) *trustyClient {

@@ -52,6 +52,7 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 
 	// Read the trusty endpoint from the environment
 	trustyEndpoint := os.Getenv(trustyEndpointEnvVar)
+
 	// If the environment variable is not set, use the default endpoint
 	if trustyEndpoint == "" {
 		trustyEndpoint = trustyEndpointURL
@@ -103,6 +104,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	for _, dep := range prDependencies.Deps {
 		depscore, err := getDependencyScore(ctx, e.client, dep)
 		if err != nil {
+			logger.Error().Msgf("error fetching trusty data: %s", err)
 			return fmt.Errorf("getting dependency score: %w", err)
 		}
 
@@ -110,7 +112,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			logger.Info().
 				Str("dependency", dep.Dep.Name).
 				Msgf("no trusty data for dependency, skipping")
-			return nil
+			continue
 		}
 
 		classifyDependency(ctx, &logger, depscore, ruleConfig, prSummaryHandler, dep)
@@ -118,6 +120,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 
 	// If there are no problematic dependencies, return here
 	if len(prSummaryHandler.trackedAlternatives) == 0 {
+		logger.Debug().Msgf("no action, no packages tracked")
 		return nil
 	}
 
@@ -259,22 +262,26 @@ func classifyDependency(
 		reasons = append(reasons, TRUSTY_MALICIOUS_PKG)
 	}
 
+	// Note if the packages is deprecated
+	if resp.PackageData.Deprecated {
+		logger.Debug().
+			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
+			Str("deprecated", "true").
+			Msgf("deprecated dependency")
+
+		if !ecoConfig.AllowDeprecated {
+			shouldBlockPR = true
+		}
+
+		reasons = append(reasons, TRUSTY_DEPRECATED)
+	}
+
 	packageScore := float64(0)
 	if resp.Summary.Score != nil {
 		packageScore = *resp.Summary.Score
 	}
 
-	descr := map[string]any{}
-	if resp.Summary.Description != nil {
-		descr = resp.Summary.Description
-	}
-
-	// Ensure don't panic checking all fields are there
-	for _, fld := range []string{"activity", "provenance"} {
-		if _, ok := descr[fld]; !ok {
-			descr[fld] = float64(0)
-		}
-	}
+	descr := readPackageDescription(resp)
 
 	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
@@ -295,7 +302,6 @@ func classifyDependency(
 			Float64("threshold", ecoConfig.Score).
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
 
-		//prSummary.trackAlternatives(dep, reasons, resp)
 		prSummary.trackAlternatives(dependencyAlternatives{
 			Dependency:  dep.Dep,
 			Reasons:     reasons,
@@ -307,6 +313,26 @@ func classifyDependency(
 			Str("dependency", dep.Dep.Name).
 			Float64("score", *resp.Summary.Score).
 			Float64("threshold", ecoConfig.Score).
-			Msgf("the dependency has lower score than threshold or is malicious, tracking")
+			Msgf("dependency ok")
 	}
+}
+
+// readPackageDescription reads the description from the package summary and
+// normlizes the required values when missing from a partial Trusty response
+func readPackageDescription(resp *Reply) map[string]any {
+	descr := map[string]any{}
+	if resp == nil {
+		resp = &Reply{}
+	}
+	if resp.Summary.Description != nil {
+		descr = resp.Summary.Description
+	}
+
+	// Ensure don't panic checking all fields are there
+	for _, fld := range []string{"activity", "provenance"} {
+		if _, ok := descr[fld]; !ok {
+			descr[fld] = float64(0)
+		}
+	}
+	return descr
 }
