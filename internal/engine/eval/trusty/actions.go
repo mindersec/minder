@@ -27,6 +27,7 @@ import (
 	"unicode"
 
 	"github.com/google/go-github/v61/github"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
@@ -74,6 +75,35 @@ Minder analyzed the dependencies introduced in this pull request and detected th
 {{ end }}
 </details>
 {{ end }}
+{{ if .Provenance }}
+<details>
+  <summary>Proof of Origin (Provenance)</summary>
+  {{ if .Provenance.Historical }}
+
+  __This package can be linked back to its source code using a historical provenance map.__
+
+  We were able to correlate a significant number of git tags and tagged releases in this package’s source code to versions of the published package. This mapping creates a strong link from the package back to its source code repository, verifying proof of origin.
+
+  |              |   |
+  | ------------------- | ----: |
+  | Published package versions | {{ .Provenance.Historical.NumVersions }} |
+  | Number of git tags or releases | {{ .Provenance.Historical.NumTags }}
+  | Versions matched to tags or releases | {{ .Provenance.Historical.MatchedVersions }} |
+
+  {{- end -}}
+  {{ if .Provenance.Sigstore }}
+
+  __This package has been digitally signed using sigtore.__
+
+  |              |   |
+  | ------------------- | ----: |
+  | Source repository | {{ .Provenance.Sigstore.SourceRepository }} |
+  | Cerificate Issuer | {{ .Provenance.Sigstore.Issuer }} |
+  | GitHub action workflow | {{ .Provenance.Sigstore.Workflow }} |
+  | Rekor (public ledger) entry | {{ .Provenance.Sigstore.RekorURI }} |
+  {{- end -}}
+  </details>
+{{- end -}}
 {{ if .Alternatives }}
 <details>
   <summary>Alternatives</summary>
@@ -130,6 +160,25 @@ type templatePackage struct {
 	Archived        bool
 	ScoreComponents []templateScoreComponent
 	Alternatives    []templateAlternative
+	Provenance      *templateProvenance
+}
+
+type templateProvenance struct {
+	Historical *templateHistoricalProvenance
+	Sigstore   *templateSigstoreProvenance
+}
+
+type templateHistoricalProvenance struct {
+	NumVersions     int
+	NumTags         int
+	MatchedVersions int
+}
+
+type templateSigstoreProvenance struct {
+	SourceRepository string
+	Workflow         string
+	Issuer           string
+	RekorURI         string
 }
 
 type templateAlternative struct {
@@ -171,8 +220,17 @@ func (sph *summaryPrHandler) trackAlternatives(dep dependencyAlternatives) {
 
 func (sph *summaryPrHandler) submit(ctx context.Context, ruleConfig *config) error {
 	if len(sph.trackedAlternatives) == 0 {
+		zerolog.Ctx(ctx).Info().Msgf(
+			"trusty flagged no dependencies in pull request %s/%s#%d",
+			sph.pr.RepoOwner, sph.pr.RepoName, sph.pr.Number,
+		)
 		return nil
 	}
+
+	zerolog.Ctx(ctx).Debug().Msgf(
+		"trusty flagged %d dependencies in pull request %s/%s#%d",
+		len(sph.trackedAlternatives), sph.pr.RepoOwner, sph.pr.RepoName, sph.pr.Number,
+	)
 
 	summary, err := sph.generateSummary()
 	if err != nil {
@@ -255,6 +313,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				Archived:            alternative.trustyReply.PackageData.Archived,
 				ScoreComponents:     buildScoreMatrix(alternative),
 				Alternatives:        []templateAlternative{},
+				Provenance:          buildProvenanceStruct(alternative.trustyReply),
 			}
 		}
 
@@ -283,6 +342,38 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 
 	return sph.compileTemplate(malicious, lowScorePackages)
+}
+
+// buildProvenanceStruct builds the provenance data structure for the PR template
+func buildProvenanceStruct(r *Reply) *templateProvenance {
+	if r == nil || r.Provenance == nil {
+		return nil
+	}
+	var provenance *templateProvenance
+	if r.Provenance != nil {
+		provenance = &templateProvenance{}
+		if r.Provenance.Description.Historical.Overlap != 0 {
+			provenance.Historical = &templateHistoricalProvenance{
+				NumVersions:     int(r.Provenance.Description.Historical.Versions),
+				NumTags:         int(r.Provenance.Description.Historical.Tags),
+				MatchedVersions: int(r.Provenance.Description.Historical.Common),
+			}
+		}
+
+		if r.Provenance.Description.Sigstore.Issuer != "" {
+			provenance.Sigstore = &templateSigstoreProvenance{
+				SourceRepository: r.Provenance.Description.Sigstore.SourceRepository,
+				Workflow:         r.Provenance.Description.Sigstore.Workflow,
+				Issuer:           r.Provenance.Description.Sigstore.Issuer,
+				RekorURI:         r.Provenance.Description.Sigstore.Transparency,
+			}
+		}
+
+		if provenance.Historical == nil && provenance.Sigstore == nil {
+			provenance = nil
+		}
+	}
+	return provenance
 }
 
 // buildScoreMatrix builds the score components matrix that populates
@@ -332,7 +423,9 @@ func (sph *summaryPrHandler) compileTemplate(malicious []maliciousTemplateData, 
 	}); err != nil {
 		return "", fmt.Errorf("could not execute template: %w", err)
 	}
-	summary.WriteString(headerBuf.String())
+	if _, err := summary.WriteString(headerBuf.String()); err != nil {
+		return "", fmt.Errorf("writing to string buffer: %w", err)
+	}
 
 	return summary.String(), nil
 }

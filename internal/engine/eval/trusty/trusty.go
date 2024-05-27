@@ -104,6 +104,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	for _, dep := range prDependencies.Deps {
 		depscore, err := getDependencyScore(ctx, e.client, dep)
 		if err != nil {
+			logger.Error().Msgf("error fetching trusty data: %s", err)
 			return fmt.Errorf("getting dependency score: %w", err)
 		}
 
@@ -111,7 +112,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 			logger.Info().
 				Str("dependency", dep.Dep.Name).
 				Msgf("no trusty data for dependency, skipping")
-			return nil
+			continue
 		}
 
 		classifyDependency(ctx, &logger, depscore, ruleConfig, prSummaryHandler, dep)
@@ -119,6 +120,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 
 	// If there are no problematic dependencies, return here
 	if len(prSummaryHandler.trackedAlternatives) == 0 {
+		logger.Debug().Msgf("no action, no packages tracked")
 		return nil
 	}
 
