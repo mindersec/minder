@@ -85,7 +85,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	owner := viper.GetString("owner")
 	yesFlag := viper.GetBool("yes")
 	skipBrowser := viper.GetBool("skip-browser")
-	cfgFlag := viper.GetString("config")
+	cfgFlag := viper.GetString("provider-config")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -368,7 +368,7 @@ func init() {
 	enrollCmd.Flags().StringP("owner", "o", "", "Owner to filter on for provider resources (Legacy GitHub only)")
 	enrollCmd.Flags().BoolP("yes", "y", false, "Bypass any yes/no prompts when enrolling a new provider")
 	enrollCmd.Flags().StringP("class", "c", githubAppProvider.ToString(), "Provider class, defaults to github-app")
-	enrollCmd.Flags().StringP("config", "f", "", "Path to the provider configuration (or - for stdin)")
+	enrollCmd.Flags().StringP("provider-config", "f", "", "Path to the provider configuration (or - for stdin)")
 	enrollCmd.Flags().StringP("name", "n", "", "Name of the new provider. (Only when using a token)")
 
 	// Bind flags
