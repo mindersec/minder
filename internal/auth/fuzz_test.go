@@ -72,7 +72,7 @@ func FuzzParseAndValidate(f *testing.F) {
 		mockKeyFetcher.EXPECT().GetKeySet().Return(jwks, nil)
 
 		jwtValidator := JwkSetJwtValidator{jwksFetcher: mockKeyFetcher}
-
+		//nolint:gosec // Ignore return values
 		jwtValidator.ParseAndValidate(token)
 	})
 }
