@@ -26,21 +26,28 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 )
 
+//nolint:gosec // This test does not validate return values
 func FuzzAllAuthzApis(f *testing.F) {
 	f.Fuzz(func(t *testing.T, str1, str2, str3, str4, str5, str6 string) {
 		c, stopFunc := newOpenFGAServerAndClient(t)
 		defer stopFunc()
 		ctx := context.Background()
-		c.MigrateUp(ctx)
+		err := c.MigrateUp(ctx)
+		if err != nil {
+			panic(err.Error())
+		}
 
-		c.PrepareForRun(ctx)
+		err = c.PrepareForRun(ctx)
+		if err != nil {
+			panic(err.Error())
+		}
 		prj := uuid.New()
 
 		c.Write(ctx, str1, authz.AuthzRoleAdmin, prj)
 
 		userJWT := openid.New()
 
-		err := userJWT.Set(str2, str1)
+		err = userJWT.Set(str2, str1)
 		if err != nil {
 			return
 		}
