@@ -22,6 +22,8 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// FuzzRegoEval tests for unexpected behavior in e.Eval().
+// The test does not validate the return values from e.Eval().
 func FuzzRegoEval(f *testing.F) {
 	f.Fuzz(func(_ *testing.T, policy, data string) {
 		e, err := NewRegoEvaluator(
@@ -36,7 +38,10 @@ func FuzzRegoEval(f *testing.F) {
 
 		emptyPol := map[string]any{}
 
-		//nolint:gosec // Ignore the error; The test does not need it
+		// Call the main target of this test. Ignore the return values;
+		// The fuzzer tests for unexpected behavior, so it is not
+		// important what e.Eval() returns. 
+		//nolint:gosec // Ignore the return values from e.Eval()
 		e.Eval(context.Background(), emptyPol, &engif.Result{
 			Object: map[string]any{
 				"data": data,
