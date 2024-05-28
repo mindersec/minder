@@ -77,7 +77,7 @@ var rotateCmd = &cobra.Command{
 				cmd.Printf("Cleanup canceled, exiting\n")
 				return nil
 			}
-			cliErrorf(cmd, "error while cleanup up stale sessions: %s", err)
+			cliErrorf(cmd, "error while deleting stale sessions: %s", err)
 		}
 		if sessionsDeleted != 0 {
 			cmd.Printf("Successfully deleted %d stale sessions\n", sessionsDeleted)
