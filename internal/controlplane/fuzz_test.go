@@ -61,7 +61,7 @@ var eventTypes = map[int]string{
 }
 
 func FuzzGithubEventParsers(f *testing.F) {
-	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, entEnum int) {
+	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum int) {
 		mac := hmac.New(sha256.New, []byte("test"))
 		mac.Write(rawWHPayload)
 		expectedMAC := hex.EncodeToString(mac.Sum(nil))
@@ -71,9 +71,9 @@ func FuzzGithubEventParsers(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		entType := eventTypes[entEnum%len(eventTypes)]
+		eventType := eventTypes[eventEnum%len(eventTypes)]
 
-		req.Header.Add("X-GitHub-Event", entType)
+		req.Header.Add("X-GitHub-Event", eventType)
 		req.Header.Add("X-GitHub-Delivery", "12345")
 		req.Header.Add("Content-Type", "application/json")
 		req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
