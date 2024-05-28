@@ -230,6 +230,17 @@ ArtifactType defines the artifact data evaluation.
 | authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
 
 
+<a name="minder-v1-AutoRegistration"></a>
+
+#### AutoRegistration
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [string](#string) | repeated | There is no difference between intentionally unset and undefined so for the "let's not auto-register anything" case we'd just let the repeated Entity empty |
+
+
 <a name="minder-v1-BranchProtection"></a>
 
 #### BranchProtection
@@ -1536,6 +1547,17 @@ Project API Objects
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
 | credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
+
+
+<a name="minder-v1-ProviderConfig"></a>
+
+#### ProviderConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  |  |
 
 
 <a name="minder-v1-ProviderParameter"></a>
