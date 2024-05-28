@@ -808,9 +808,11 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	UserService_CreateUser_FullMethodName = "/minder.v1.UserService/CreateUser"
-	UserService_DeleteUser_FullMethodName = "/minder.v1.UserService/DeleteUser"
-	UserService_GetUser_FullMethodName    = "/minder.v1.UserService/GetUser"
+	UserService_CreateUser_FullMethodName        = "/minder.v1.UserService/CreateUser"
+	UserService_DeleteUser_FullMethodName        = "/minder.v1.UserService/DeleteUser"
+	UserService_GetUser_FullMethodName           = "/minder.v1.UserService/GetUser"
+	UserService_ListInvitations_FullMethodName   = "/minder.v1.UserService/ListInvitations"
+	UserService_ResolveInvitation_FullMethodName = "/minder.v1.UserService/ResolveInvitation"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -820,6 +822,25 @@ type UserServiceClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	// ListInvitations returns a list of invitations for the user
+	// based on the user's registered email address.  Note that a
+	// user who receives an invitation nonce may still accept the
+	// invitation even if the nonce was directed to a different
+	// email address.  This is beacuse understanding the routing of
+	// email messages is beyond the scope of Minder.
+	//
+	// This API endpoint may be called without the logged-in user
+	// previously having called `CreateUser`.
+	ListInvitations(ctx context.Context, in *ListInvitationsRequest, opts ...grpc.CallOption) (*ListInvitationsResponse, error)
+	// ResolveInvitation allows a user to accept or decline an
+	// invitation to a project given the nonce for the invitation.
+	// A user may call ResolveInvitation to accept or decline an
+	// invitation even if they have not called CreateUser.  If a
+	// user accepts an invitation via this call before calling
+	// CreateUser, a Minder user record will be created, but no
+	// additional projects will be created (unlike CreateUser,
+	// which will also create a default project).
+	ResolveInvitation(ctx context.Context, in *ResolveInvitationRequest, opts ...grpc.CallOption) (*ResolveInvitationResponse, error)
 }
 
 type userServiceClient struct {
@@ -857,6 +878,24 @@ func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opt
 	return out, nil
 }
 
+func (c *userServiceClient) ListInvitations(ctx context.Context, in *ListInvitationsRequest, opts ...grpc.CallOption) (*ListInvitationsResponse, error) {
+	out := new(ListInvitationsResponse)
+	err := c.cc.Invoke(ctx, UserService_ListInvitations_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) ResolveInvitation(ctx context.Context, in *ResolveInvitationRequest, opts ...grpc.CallOption) (*ResolveInvitationResponse, error) {
+	out := new(ResolveInvitationResponse)
+	err := c.cc.Invoke(ctx, UserService_ResolveInvitation_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -864,6 +903,25 @@ type UserServiceServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	// ListInvitations returns a list of invitations for the user
+	// based on the user's registered email address.  Note that a
+	// user who receives an invitation nonce may still accept the
+	// invitation even if the nonce was directed to a different
+	// email address.  This is beacuse understanding the routing of
+	// email messages is beyond the scope of Minder.
+	//
+	// This API endpoint may be called without the logged-in user
+	// previously having called `CreateUser`.
+	ListInvitations(context.Context, *ListInvitationsRequest) (*ListInvitationsResponse, error)
+	// ResolveInvitation allows a user to accept or decline an
+	// invitation to a project given the nonce for the invitation.
+	// A user may call ResolveInvitation to accept or decline an
+	// invitation even if they have not called CreateUser.  If a
+	// user accepts an invitation via this call before calling
+	// CreateUser, a Minder user record will be created, but no
+	// additional projects will be created (unlike CreateUser,
+	// which will also create a default project).
+	ResolveInvitation(context.Context, *ResolveInvitationRequest) (*ResolveInvitationResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -879,6 +937,12 @@ func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserReq
 }
 func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServiceServer) ListInvitations(context.Context, *ListInvitationsRequest) (*ListInvitationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListInvitations not implemented")
+}
+func (UnimplementedUserServiceServer) ResolveInvitation(context.Context, *ResolveInvitationRequest) (*ResolveInvitationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResolveInvitation not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -947,6 +1011,42 @@ func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListInvitations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListInvitationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListInvitations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListInvitations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListInvitations(ctx, req.(*ListInvitationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_ResolveInvitation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveInvitationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ResolveInvitation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ResolveInvitation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ResolveInvitation(ctx, req.(*ResolveInvitationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -965,6 +1065,14 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUser",
 			Handler:    _UserService_GetUser_Handler,
+		},
+		{
+			MethodName: "ListInvitations",
+			Handler:    _UserService_ListInvitations_Handler,
+		},
+		{
+			MethodName: "ResolveInvitation",
+			Handler:    _UserService_ResolveInvitation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
