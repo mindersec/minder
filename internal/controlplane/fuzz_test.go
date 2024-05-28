@@ -60,6 +60,11 @@ var eventTypes = [23]string{
 	"pull_request",
 }
 
+// FuzzGithubEventParsers tests Minders two GH event parsers:
+//   1: parseGithubEventForProcessing
+//   2: parseGithubAppEventForProcessing
+// The fuzzer does not validate return values of the parsers. It tests if any
+// input can cause code-level issues.
 func FuzzGithubEventParsers(f *testing.F) {
 	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum uint) {
 		mac := hmac.New(sha256.New, []byte("test"))
@@ -114,14 +119,14 @@ func FuzzGithubEventParsers(f *testing.F) {
 			if err != nil {
 				return
 			}
-			//nolint:gosec
+			//nolint:gosec // The fuzzer does not validate the return values
 			s.parseGithubEventForProcessing(payload, m)
 		case 1:
 			payload, err := github.ValidatePayload(req, []byte(secret))
 			if err != nil {
 				return
 			}
-			//nolint:gosec
+			//nolint:gosec // The fuzzer does not validate the return values
 			s.parseGithubAppEventForProcessing(payload, m)
 		}
 	})
