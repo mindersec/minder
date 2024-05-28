@@ -34,34 +34,34 @@ import (
 	"github.com/stacklok/minder/internal/events"
 )
 
-var eventTypes = map[int]string{
-	0:  "branch_protection_configuration",
-	1:  "branch_protection_rule",
-	2:  "code_scanning_alert",
-	3:  "create",
-	4:  "member",
-	5:  "meta",
-	6:  "repository_vulnerability_alert",
-	7:  "org_block",
-	8:  "organization",
-	9:  "public",
-	10: "push",
-	11: "repository",
-	12: "repository_advisory",
-	13: "repository_import",
-	14: "repository_ruleset",
-	15: "secret_scanning_alert",
-	16: "secret_scanning_alert_location",
-	17: "security_advisory",
-	18: "security_and_analysis",
-	19: "team",
-	20: "team_add",
-	21: "package",
-	22: "pull_request",
+var eventTypes = [23]string{
+	"branch_protection_configuration",
+	"branch_protection_rule",
+	"code_scanning_alert",
+	"create",
+	"member",
+	"meta",
+	"repository_vulnerability_alert",
+	"org_block",
+	"organization",
+	"public",
+	"push",
+	"repository",
+	"repository_advisory",
+	"repository_import",
+	"repository_ruleset",
+	"secret_scanning_alert",
+	"secret_scanning_alert_location",
+	"security_advisory",
+	"security_and_analysis",
+	"team",
+	"team_add",
+	"package",
+	"pull_request",
 }
 
 func FuzzGithubEventParsers(f *testing.F) {
-	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum int) {
+	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum uint) {
 		mac := hmac.New(sha256.New, []byte("test"))
 		mac.Write(rawWHPayload)
 		expectedMAC := hex.EncodeToString(mac.Sum(nil))
@@ -71,7 +71,7 @@ func FuzzGithubEventParsers(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		eventType := eventTypes[eventEnum%len(eventTypes)]
+		eventType := eventTypes[eventEnum%uint(len(eventTypes))]
 
 		req.Header.Add("X-GitHub-Event", eventType)
 		req.Header.Add("X-GitHub-Delivery", "12345")
