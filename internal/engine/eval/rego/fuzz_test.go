@@ -40,7 +40,7 @@ func FuzzRegoEval(f *testing.F) {
 
 		// Call the main target of this test. Ignore the return values;
 		// The fuzzer tests for unexpected behavior, so it is not
-		// important what e.Eval() returns. 
+		// important what e.Eval() returns.
 		//nolint:gosec // Ignore the return values from e.Eval()
 		e.Eval(context.Background(), emptyPol, &engif.Result{
 			Object: map[string]any{
