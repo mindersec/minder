@@ -24,7 +24,7 @@ import (
 )
 
 func FuzzJqEval(f *testing.F) {
-	f.Fuzz(func(t *testing.T, comp1, comp2, pol1, pol2, obj1, obj2 string) {
+	f.Fuzz(func(_ *testing.T, comp1, comp2, pol1, pol2, obj1, obj2 string) {
 		assertions := []*pb.RuleType_Definition_Eval_JQComparison{
 			{
 				Profile: &pb.RuleType_Definition_Eval_JQComparison_Operator{
