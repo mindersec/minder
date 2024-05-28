@@ -61,8 +61,10 @@ var eventTypes = [23]string{
 }
 
 // FuzzGithubEventParsers tests Minders two GH event parsers:
-//   1: parseGithubEventForProcessing
-//   2: parseGithubAppEventForProcessing
+//
+//	1: parseGithubEventForProcessing
+//	2: parseGithubAppEventForProcessing
+//
 // The fuzzer does not validate return values of the parsers. It tests if any
 // input can cause code-level issues.
 func FuzzGithubEventParsers(f *testing.F) {
