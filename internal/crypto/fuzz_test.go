@@ -39,11 +39,6 @@ var (
 			},
 		},
 	}
-	fuzzConfig2 = &server.Config{
-		Auth: server.AuthConfig{
-			TokenKey: "./testdata/test_encryption_key",
-		},
-	}
 	fuzzEngine Engine
 	err        error
 )
@@ -56,7 +51,7 @@ func init() {
 }
 
 func FuzzEncryptDecrypt(f *testing.F) {
-	f.Fuzz(func(t *testing.T, data string) {
+	f.Fuzz(func(_ *testing.T, data string) {
 		encrypted, err := fuzzEngine.EncryptString(data)
 		if err != nil {
 			return
