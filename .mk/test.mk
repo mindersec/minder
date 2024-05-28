@@ -19,6 +19,9 @@
 COVERAGE_EXCLUSIONS="internal/db\|/mock/\|internal/auth/keycloak/client"
 COVERAGE_PACKAGES=./internal/...
 
+FUZZ_TIME?=30s
+FUZZ_COUNT?=100
+
 .PHONY: clean
 clean:: ## clean up environment
 	rm -rf dist/* && rm -rf bin/*
@@ -48,3 +51,7 @@ lint-go:
 .PHONY: lint-buf
 lint-buf:
 	buf lint
+
+.PHONY: fuzz
+fuzz: ## run fuzz tests
+	FUZZ_TIME=$(FUZZ_TIME) FUZZ_COUNT=$(FUZZ_COUNT) ./.mk/fuzz.sh
