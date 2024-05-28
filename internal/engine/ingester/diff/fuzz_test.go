@@ -19,16 +19,16 @@ import (
 )
 
 func FuzzDiffParse(f *testing.F) {
-	f.Fuzz(func(t *testing.T, param string, parser int) {
+	f.Fuzz(func(_ *testing.T, param string, parser int) {
 		switch parser % 3 {
 		case 0:
-			//nolint:gosec
+			//nolint:gosec // The fuzzer does not validate the return values
 			requirementsParse(param)
 		case 1:
-			//nolint:gosec
+			//nolint:gosec // The fuzzer does not validate the return values
 			npmParse(param)
 		case 2:
-			//nolint:gosec
+			//nolint:gosec // The fuzzer does not validate the return values
 			goParse(param)
 		}
 	})
