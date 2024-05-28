@@ -50,6 +50,11 @@ var rotateCmd = &cobra.Command{
 			cliErrorf(cmd, "unable to read config: %s", err)
 		}
 
+		// ensure that the new config structure is set - otherwise bad things will happen
+		if cfg.Crypto.Default.KeyID == "" || cfg.Crypto.Default.Algorithm == "" {
+			cliErrorf(cmd, "defaults not defined in crypto config - exiting")
+		}
+
 		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
 
 		// instantiate `db.Store` so we can run queries
@@ -127,11 +132,6 @@ func rotateSecrets(
 	store db.Store,
 	cfg *serverconfig.Config,
 ) (int64, error) {
-	// ensure that the new config structure is set - otherwise bad things will happen
-	if cfg.Crypto.Default.KeyID == "" || cfg.Crypto.Default.Algorithm == "" {
-		cliErrorf(cmd, "defaults not defined in crypto config - exiting")
-	}
-
 	// instantiate crypto engine so that we can decrypt and re-encrypt
 	cryptoEngine, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
