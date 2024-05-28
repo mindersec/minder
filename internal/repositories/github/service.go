@@ -30,7 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/reconcilers"
+	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/util/ptr"

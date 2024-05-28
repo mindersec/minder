@@ -74,6 +74,10 @@ const (
 	ProjectIDEventKey = "project_id"
 	// RepositoryIDEventKey is the key for the repository ID
 	RepositoryIDEventKey = "repository_id"
+	// RepositoryNameEventKey is the key for the repository name
+	RepositoryNameEventKey = "repository_name"
+	// RepositoryOwnerEventKey is the key for the repository owner
+	RepositoryOwnerEventKey = "repository_owner"
 	// ArtifactIDEventKey is the key for the artifact ID
 	ArtifactIDEventKey = "artifact_id"
 	// PullRequestIDEventKey is the key for the pull request ID
@@ -139,6 +143,20 @@ func (eiw *EntityInfoWrapper) WithProjectID(id uuid.UUID) *EntityInfoWrapper {
 // WithRepositoryID sets the repository ID
 func (eiw *EntityInfoWrapper) WithRepositoryID(id uuid.UUID) *EntityInfoWrapper {
 	eiw.withID(RepositoryIDEventKey, id.String())
+
+	return eiw
+}
+
+// WithRepositoryName sets the repository name
+func (eiw *EntityInfoWrapper) WithRepositoryName(name string) *EntityInfoWrapper {
+	eiw.withID(RepositoryNameEventKey, name)
+
+	return eiw
+}
+
+// WithRepositoryOwner sets the repository owner
+func (eiw *EntityInfoWrapper) WithRepositoryOwner(owner string) *EntityInfoWrapper {
+	eiw.withID(RepositoryOwnerEventKey, owner)
 
 	return eiw
 }
@@ -279,6 +297,18 @@ func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.NullUUID, artifactID
 	return repoID, artifactID, pullRequestID
 }
 
+// GetRepositoryOwner returns the repository owner if set by the
+// sender, empty string otherwise.
+func (eiw *EntityInfoWrapper) GetRepositoryOwner() string {
+	return eiw.OwnershipData[RepositoryOwnerEventKey]
+}
+
+// GetRepositoryName returns the repository name if set by the sender,
+// empty string otherwise.
+func (eiw *EntityInfoWrapper) GetRepositoryName() string {
+	return eiw.OwnershipData[RepositoryNameEventKey]
+}
+
 func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) error {
 	rawID := msg.Metadata.Get(ProjectIDEventKey)
 	if rawID == "" {
@@ -316,6 +346,16 @@ func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) {
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
 	return eiw.withIDFromMessage(msg, RepositoryIDEventKey)
+}
+
+func (eiw *EntityInfoWrapper) withRepositoryNameFromMessage(msg *message.Message) {
+	repoName := msg.Metadata.Get(RepositoryNameEventKey)
+	eiw.OwnershipData[RepositoryNameEventKey] = repoName
+}
+
+func (eiw *EntityInfoWrapper) withRepositoryOwnerFromMessage(msg *message.Message) {
+	repoOwner := msg.Metadata.Get(RepositoryOwnerEventKey)
+	eiw.OwnershipData[RepositoryOwnerEventKey] = repoOwner
 }
 
 func (eiw *EntityInfoWrapper) withArtifactIDFromMessage(msg *message.Message) error {
@@ -401,10 +441,12 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	}
 
 	// We always have the repository ID.
-	if err := out.withRepositoryIDFromMessage(msg); err != nil {
-		return nil, err
-	}
-
+	// if err := out.withRepositoryIDFromMessage(msg); err != nil {
+	// 	return nil, err
+	// }
+	_ = out.withRepositoryIDFromMessage(msg)
+	out.withRepositoryNameFromMessage(msg)
+	out.withRepositoryOwnerFromMessage(msg)
 	out.withActionEventFromMessage(msg)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
