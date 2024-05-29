@@ -39,10 +39,10 @@ const batchSize = 100
 // used if rotation is cancelled before commit for one reason or another
 var errCancelRotation = errors.New("cancelling rotation process")
 
-// rotateCmd represents the up command
+// rotateCmd represents the `encryption rotate` command
 var rotateCmd = &cobra.Command{
-	Use:   "rotate",
-	Short: "Rotate keys and encryption algorithms",
+	Use:   "rotate-provider-tokens",
+	Short: "Rotate keys and encryption algorithms for provider tokens",
 	Long:  `re-encrypt all provider access tokens with the default key version and algorithm`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
@@ -64,23 +64,9 @@ var rotateCmd = &cobra.Command{
 		}
 		defer closer()
 
-		yes := confirm(cmd, "Running this command will change encrypted secrets")
+		yes := confirm(cmd, "Running this command will re-encrypt provider access tokens")
 		if !yes {
 			return nil
-		}
-
-		// Clean up old session secrets instead of migrating
-		sessionsDeleted, err := deleteStaleSessions(ctx, cmd, store)
-		if err != nil {
-			// if we cancel or have nothing to migrate...
-			if errors.Is(err, errCancelRotation) {
-				cmd.Printf("Cleanup canceled, exiting\n")
-				return nil
-			}
-			cliErrorf(cmd, "error while deleting stale sessions: %s", err)
-		}
-		if sessionsDeleted != 0 {
-			cmd.Printf("Successfully deleted %d stale sessions\n", sessionsDeleted)
 		}
 
 		// rotate the provider access tokens
@@ -97,33 +83,6 @@ var rotateCmd = &cobra.Command{
 		cmd.Printf("Successfully rotated %d secrets\n", totalRotated)
 		return nil
 	},
-}
-
-func deleteStaleSessions(
-	ctx context.Context,
-	cmd *cobra.Command,
-	store db.Store,
-) (int64, error) {
-	return db.WithTransaction[int64](store, func(qtx db.ExtendQuerier) (int64, error) {
-		// delete any sessions more than one day old
-		deleted, err := qtx.DeleteExpiredSessionStates(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		// skip the confirmation if there's nothing to do
-		if deleted == 0 {
-			cmd.Printf("No stale sessions to delete\n")
-			return 0, nil
-		}
-
-		// one last chance to reconsider your choices
-		yes := confirm(cmd, fmt.Sprintf("About to delete %d stale sessions", deleted))
-		if !yes {
-			return 0, errCancelRotation
-		}
-		return deleted, nil
-	})
 }
 
 func rotateSecrets(
