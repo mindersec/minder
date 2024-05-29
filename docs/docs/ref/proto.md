@@ -233,6 +233,19 @@ ArtifactType defines the artifact data evaluation.
 | authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
 
 
+<a name="minder-v1-AutoRegistration"></a>
+
+#### AutoRegistration
+AutoRegistration is the configuration for auto-registering entities.
+When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
+and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [string](#string) | repeated | enabled is the list of entities that are enabled for auto-registration. |
+
+
 <a name="minder-v1-BranchProtection"></a>
 
 #### BranchProtection
@@ -1570,6 +1583,17 @@ Project API Objects
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
 | credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
+
+
+<a name="minder-v1-ProviderConfig"></a>
+
+#### ProviderConfig
+ProviderConfig contains the generic configuration for a provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  | auto_registration is the configuration for auto-registering entities. |
 
 
 <a name="minder-v1-ProviderParameter"></a>

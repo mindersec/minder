@@ -54,13 +54,16 @@ func (q *Queries) CreateSessionState(ctx context.Context, arg CreateSessionState
 	return i, err
 }
 
-const deleteExpiredSessionStates = `-- name: DeleteExpiredSessionStates :exec
+const deleteExpiredSessionStates = `-- name: DeleteExpiredSessionStates :execrows
 DELETE FROM session_store WHERE created_at < NOW() - INTERVAL '1 day'
 `
 
-func (q *Queries) DeleteExpiredSessionStates(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, deleteExpiredSessionStates)
-	return err
+func (q *Queries) DeleteExpiredSessionStates(ctx context.Context) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteExpiredSessionStates)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }
 
 const deleteSessionStateByProjectID = `-- name: DeleteSessionStateByProjectID :exec

@@ -155,7 +155,7 @@ func getInstallationTokenCredential(
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
-	cfg, err := clients.ParseV1AppConfig(prov.Definition)
+	_, cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}

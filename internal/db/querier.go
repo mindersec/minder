@@ -30,7 +30,7 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
-	DeleteExpiredSessionStates(ctx context.Context) error
+	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
@@ -129,6 +129,15 @@ type Querier interface {
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
+	// When doing a key/algorithm rotation, identify the secrets which need to be
+	// rotated. The criteria for rotation are:
+	// 1) The encrypted_access_token is NULL (this should be removed when we make
+	//    this column non-nullable).
+	// 2) The access token does not use the configured default algorithm.
+	// 3) The access token does not use the default key version.
+	// This query accepts the default key version/algorithm as arguments since
+	// that information is not known to the database.
+	ListTokensToMigrate(ctx context.Context, arg ListTokensToMigrateParams) ([]ProviderAccessToken, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	// LockIfThresholdNotExceeded is used to lock an entity for execution. It will
 	// attempt to insert or update the entity_execution_lock table only if the
@@ -143,6 +152,7 @@ type Querier interface {
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
