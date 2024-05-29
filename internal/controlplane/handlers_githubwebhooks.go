@@ -348,7 +348,6 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			Logger()
 		ctx = l.WithContext(ctx)
 
-		wes.Accepted = true
 		var res *processingResult
 		var processingErr error
 
@@ -357,10 +356,10 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant
 			// business events.
-			wes.Accepted = false
 			wes.Error = false
 			s.processPingEvent(ctx, rawWBPayload)
 		case "installation":
+			wes.Accepted = true
 			res, processingErr = s.processInstallationAppEvent(ctx, rawWBPayload)
 		default:
 			l.Info().Msgf("webhook event %s not handled", wes.Typ)
@@ -377,7 +376,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			return
 		}
 
-		if res != nil {
+		if res != nil && res.iiw != nil {
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
 			if err := res.iiw.ToMessage(m); err != nil {
 				wes.Error = true
@@ -448,23 +447,15 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		l.Debug().Msg("parsing event")
 
-		wes.Accepted = true
 		var res *processingResult
 		var processingErr error
-
-		// The following two switch statements are effectively
-		// mutually exclusive and the set of events that they
-		// manage is non-overlapping.
-		//
-		// This is not verified statically and it is not yet
-		// verified via tests, but should be easy enough to
-		// verify by inspection.
 
 		switch github.WebHookType(r) {
 		// All these events are related to a repo and usually
 		// contain an action. They all trigger a
 		// reconciliation or, in some cases, a deletion.
 		case "repository", "meta":
+			wes.Accepted = true
 			res, processingErr = s.processRelevantRepositoryEvent(ctx, rawWBPayload)
 		case "branch_protection_configuration",
 			"branch_protection_rule",
@@ -483,22 +474,20 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			"security_and_analysis",
 			"team",
 			"team_add":
+			wes.Accepted = true
 			res, processingErr = s.processRepositoryEvent(ctx, rawWBPayload)
 		case "package":
 			// This is an artifact-related event, and can
 			// only trigger a reconciliation.
+			wes.Accepted = true
 			res, processingErr = s.processPackageEvent(ctx, rawWBPayload)
 		case "pull_request":
+			wes.Accepted = true
 			res, processingErr = s.processPullRequestEvent(ctx, rawWBPayload)
-		// This event is not currently handled.
-		case "org_block",
-			"organization":
-			l.Info().Msgf("webhook events %s do not contain repo", wes.Typ)
 		case "ping":
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant
 			// business events.
-			wes.Accepted = false
 			wes.Error = false
 			s.processPingEvent(ctx, rawWBPayload)
 		default:
@@ -517,7 +506,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		}
 
 		// res is null only when a ping event occurred.
-		if res != nil {
+		if res != nil && res.eiw != nil {
 			if err := res.eiw.ToMessage(m); err != nil {
 				wes.Error = true
 				log.Printf("Error creating event: %v", err)
@@ -588,13 +577,13 @@ func (s *Server) processPackageEvent(
 	}
 	if event.Package == nil || event.Repo == nil {
 		log.Printf("could not determine relevant entity for event. Skipping execution.")
-		return nil, nil // this is awkward
+		return nil, errNotHandled
 	}
 
 	// We only process events "package" with action "published",
 	// i.e. we do not react to action "updated".
 	if *event.Action != webhookActionEventPublished {
-		return nil, nil
+		return nil, errNotHandled
 	}
 
 	if event.Package.Owner == nil {
@@ -703,11 +692,6 @@ func (s *Server) processRelevantRepositoryEvent(
 			)
 		}
 	}
-	// If we get this far it means we got a deleted event for a
-	// webhook ID that corresponds to the one we have stored in
-	// the DB.  We will remove the repo from the DB, so we can
-	// proceed with the deletion event for this entity
-	// (repository).
 
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
