@@ -128,7 +128,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return cli, nil
 	}
 
-	cfg, err := clients.ParseV1AppConfig(config.Definition)
+	_, cfg, err := clients.ParseV1AppConfig(config.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -263,7 +263,7 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	cfg, err := clients.ParseV1AppConfig(prov.Definition)
+	_, cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}

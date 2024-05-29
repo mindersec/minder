@@ -39,6 +39,86 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+func TestParseV1AppConfig(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name       string
+		config     json.RawMessage
+		error      string
+		ghEvalFn   func(*testing.T, *minderv1.GitHubAppProviderConfig)
+		provEvalFn func(*testing.T, *minderv1.ProviderConfig)
+	}{
+		{
+			name:   "valid app config",
+			config: json.RawMessage(`{ "github-app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+		},
+		{
+			name:   "valid app and provider config",
+			config: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Equal(t, []string{"repository"}, providerConfig.AutoRegistration.Enabled)
+			},
+		},
+		{
+			name:   "auto_registration does not validate the enabled entities",
+			config: json.RawMessage(`{ "auto_registration": { "enabled": ["beer"] } , "github-app": { "endpoint": "https://api.github.com" }}`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Nil(t, ghConfig)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+			error: "error validating provider config: auto_registration: invalid entity type: beer",
+		},
+		{
+			name:   "missing required github key",
+			config: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Nil(t, ghConfig)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+			error: "Field validation for 'GitHubApp' failed on the 'required' tag",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			providerConfig, gitHubConfig, err := ParseV1AppConfig(scenario.config)
+			if scenario.error != "" {
+				assert.Error(t, err)
+				assert.Nil(t, providerConfig)
+				assert.Contains(t, err.Error(), scenario.error)
+			} else {
+				assert.NoError(t, err)
+				scenario.provEvalFn(t, providerConfig)
+				scenario.ghEvalFn(t, gitHubConfig)
+			}
+		})
+	}
+}
+
 func TestNewGitHubAppProvider(t *testing.T) {
 	t.Parallel()
 

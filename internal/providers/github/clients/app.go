@@ -111,22 +111,34 @@ func NewGitHubAppProvider(
 }
 
 // ParseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
-func ParseV1AppConfig(rawCfg json.RawMessage) (*minderv1.GitHubAppProviderConfig, error) {
+func ParseV1AppConfig(rawCfg json.RawMessage) (
+	*minderv1.ProviderConfig,
+	*minderv1.GitHubAppProviderConfig,
+	error,
+) {
+	// embedding the struct to expose its JSON tags
 	type wrapper struct {
+		*minderv1.ProviderConfig
 		GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
 	}
 
 	var w wrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Validate the config according to the protobuf validation rules.
 	if err := w.GitHubApp.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating GitHubOAuth v1 provider config: %w", err)
+		return nil, nil, fmt.Errorf("error validating GitHubApp v1 provider config: %w", err)
 	}
 
-	return w.GitHubApp, nil
+	if w.ProviderConfig != nil {
+		if err := w.ProviderConfig.Validate(); err != nil {
+			return nil, nil, fmt.Errorf("error validating provider config: %w", err)
+		}
+	}
+
+	return w.ProviderConfig, w.GitHubApp, nil
 }
 
 // Ensure that the GitHubAppDelegate client implements the GitHub Delegate interface
