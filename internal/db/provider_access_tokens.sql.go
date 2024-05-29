@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -132,6 +133,86 @@ func (q *Queries) GetAccessTokenSinceDate(ctx context.Context, arg GetAccessToke
 		&i.EncryptedAccessToken,
 	)
 	return i, err
+}
+
+const listTokensToMigrate = `-- name: ListTokensToMigrate :many
+SELECT id, provider, project_id, owner_filter, encrypted_token, expiration_time, created_at, updated_at, enrollment_nonce, encrypted_access_token FROM provider_access_tokens WHERE
+    encrypted_access_token IS NULL OR
+    encrypted_access_token->>'Algorithm'  <> $1::TEXT OR
+    encrypted_access_token->>'KeyVersion' <> $2::TEXT
+LIMIT  $4::bigint
+OFFSET $3::bigint
+`
+
+type ListTokensToMigrateParams struct {
+	DefaultAlgorithm  string `json:"default_algorithm"`
+	DefaultKeyVersion string `json:"default_key_version"`
+	BatchOffset       int64  `json:"batch_offset"`
+	BatchSize         int64  `json:"batch_size"`
+}
+
+// When doing a key/algorithm rotation, identify the secrets which need to be
+// rotated. The criteria for rotation are:
+//  1. The encrypted_access_token is NULL (this should be removed when we make
+//     this column non-nullable).
+//  2. The access token does not use the configured default algorithm.
+//  3. The access token does not use the default key version.
+//
+// This query accepts the default key version/algorithm as arguments since
+// that information is not known to the database.
+func (q *Queries) ListTokensToMigrate(ctx context.Context, arg ListTokensToMigrateParams) ([]ProviderAccessToken, error) {
+	rows, err := q.db.QueryContext(ctx, listTokensToMigrate,
+		arg.DefaultAlgorithm,
+		arg.DefaultKeyVersion,
+		arg.BatchOffset,
+		arg.BatchSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ProviderAccessToken{}
+	for rows.Next() {
+		var i ProviderAccessToken
+		if err := rows.Scan(
+			&i.ID,
+			&i.Provider,
+			&i.ProjectID,
+			&i.OwnerFilter,
+			&i.EncryptedToken,
+			&i.ExpirationTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.EnrollmentNonce,
+			&i.EncryptedAccessToken,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateEncryptedSecret = `-- name: UpdateEncryptedSecret :exec
+UPDATE provider_access_tokens
+SET encrypted_access_token = $2::JSONB
+WHERE id = $1
+`
+
+type UpdateEncryptedSecretParams struct {
+	ID     int32           `json:"id"`
+	Secret json.RawMessage `json:"secret"`
+}
+
+func (q *Queries) UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error {
+	_, err := q.db.ExecContext(ctx, updateEncryptedSecret, arg.ID, arg.Secret)
+	return err
 }
 
 const upsertAccessToken = `-- name: UpsertAccessToken :one

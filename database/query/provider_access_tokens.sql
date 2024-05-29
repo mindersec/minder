@@ -24,3 +24,24 @@ RETURNING *;
 
 -- name: GetAccessTokenByEnrollmentNonce :one
 SELECT * FROM provider_access_tokens WHERE project_id = $1 AND enrollment_nonce = $2;
+
+-- When doing a key/algorithm rotation, identify the secrets which need to be
+-- rotated. The criteria for rotation are:
+-- 1) The encrypted_access_token is NULL (this should be removed when we make
+--    this column non-nullable).
+-- 2) The access token does not use the configured default algorithm.
+-- 3) The access token does not use the default key version.
+-- This query accepts the default key version/algorithm as arguments since
+-- that information is not known to the database.
+-- name: ListTokensToMigrate :many
+SELECT * FROM provider_access_tokens WHERE
+    encrypted_access_token IS NULL OR
+    encrypted_access_token->>'Algorithm'  <> sqlc.arg(default_algorithm)::TEXT OR
+    encrypted_access_token->>'KeyVersion' <> sqlc.arg(default_key_version)::TEXT
+LIMIT  sqlc.arg(batch_size)::bigint
+OFFSET sqlc.arg(batch_offset)::bigint;
+
+-- name: UpdateEncryptedSecret :exec
+UPDATE provider_access_tokens
+SET encrypted_access_token = sqlc.arg(secret)::JSONB
+WHERE id = $1;
