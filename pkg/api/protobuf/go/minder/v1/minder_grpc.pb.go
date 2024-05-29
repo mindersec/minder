@@ -824,8 +824,8 @@ type UserServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	// ListInvitations returns a list of invitations for the user
 	// based on the user's registered email address.  Note that a
-	// user who receives an invitation nonce may still accept the
-	// invitation even if the nonce was directed to a different
+	// user who receives an invitation code may still accept the
+	// invitation even if the code was directed to a different
 	// email address.  This is beacuse understanding the routing of
 	// email messages is beyond the scope of Minder.
 	//
@@ -833,7 +833,7 @@ type UserServiceClient interface {
 	// previously having called `CreateUser`.
 	ListInvitations(ctx context.Context, in *ListInvitationsRequest, opts ...grpc.CallOption) (*ListInvitationsResponse, error)
 	// ResolveInvitation allows a user to accept or decline an
-	// invitation to a project given the nonce for the invitation.
+	// invitation to a project given the code for the invitation.
 	// A user may call ResolveInvitation to accept or decline an
 	// invitation even if they have not called CreateUser.  If a
 	// user accepts an invitation via this call before calling
@@ -905,8 +905,8 @@ type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	// ListInvitations returns a list of invitations for the user
 	// based on the user's registered email address.  Note that a
-	// user who receives an invitation nonce may still accept the
-	// invitation even if the nonce was directed to a different
+	// user who receives an invitation code may still accept the
+	// invitation even if the code was directed to a different
 	// email address.  This is beacuse understanding the routing of
 	// email messages is beyond the scope of Minder.
 	//
@@ -914,7 +914,7 @@ type UserServiceServer interface {
 	// previously having called `CreateUser`.
 	ListInvitations(context.Context, *ListInvitationsRequest) (*ListInvitationsResponse, error)
 	// ResolveInvitation allows a user to accept or decline an
-	// invitation to a project given the nonce for the invitation.
+	// invitation to a project given the code for the invitation.
 	// A user may call ResolveInvitation to accept or decline an
 	// invitation even if they have not called CreateUser.  If a
 	// user accepts an invitation via this call before calling

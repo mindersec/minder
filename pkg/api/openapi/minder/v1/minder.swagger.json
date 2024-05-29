@@ -2404,9 +2404,9 @@
         ]
       }
     },
-    "/api/v1/user/invitation/{nonce}": {
+    "/api/v1/user/invitation/{code}": {
       "post": {
-        "summary": "ResolveInvitation allows a user to accept or decline an\ninvitation to a project given the nonce for the invitation.\nA user may call ResolveInvitation to accept or decline an\ninvitation even if they have not called CreateUser.  If a\nuser accepts an invitation via this call before calling\nCreateUser, a Minder user record will be created, but no\nadditional projects will be created (unlike CreateUser,\nwhich will also create a default project).",
+        "summary": "ResolveInvitation allows a user to accept or decline an\ninvitation to a project given the code for the invitation.\nA user may call ResolveInvitation to accept or decline an\ninvitation even if they have not called CreateUser.  If a\nuser accepts an invitation via this call before calling\nCreateUser, a Minder user record will be created, but no\nadditional projects will be created (unlike CreateUser,\nwhich will also create a default project).",
         "operationId": "UserService_ResolveInvitation",
         "responses": {
           "200": {
@@ -2418,8 +2418,8 @@
         },
         "parameters": [
           {
-            "name": "nonce",
-            "description": "nonce is the nonce of the invitation to resolve.",
+            "name": "code",
+            "description": "code is the code of the invitation to resolve.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -2439,7 +2439,7 @@
     },
     "/api/v1/user/invitations": {
       "get": {
-        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation nonce may still accept the\ninvitation even if the nonce was directed to a different\nemail address.  This is beacuse understanding the routing of\nemail messages is beyond the scope of Minder.",
+        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is beacuse understanding the routing of\nemail messages is beyond the scope of Minder.",
         "description": "This API endpoint may be called without the logged-in user\npreviously having called `CreateUser`.",
         "operationId": "UserService_ListInvitations",
         "responses": {
@@ -3422,15 +3422,33 @@
         },
         "email": {
           "type": "string",
-          "description": "email is the email address of the invited user.  This is\npresented as a convenience for display purposes, and does\nnot affect who can accept the invitation using the nonce."
+          "description": "email is the email address of the invited user.  This is\npresented as a convenience for display purposes, and does\nnot affect who can accept the invitation using the code."
         },
         "project": {
           "type": "string",
           "description": "project is the project to which the user is invited."
         },
-        "nonce": {
+        "code": {
           "type": "string",
-          "description": "nonce is a unique identifier for the invitation, which can\nbe used by the recipient to accept or reject the invitation.\nThe nonce is only transmitted in response to AssignRole or\nListInvitations RPCs, and not transmitted in\nListRoleAssignments or other calls."
+          "description": "code is a unique identifier for the invitation, which can\nbe used by the recipient to accept or reject the invitation.\nThe code is only transmitted in response to AssignRole or\nListInvitations RPCs, and not transmitted in\nListRoleAssignments or other calls."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "created_at is the time at which the invitation was created."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expires_at is the time at which the invitation expires."
+        },
+        "sponsor": {
+          "type": "string",
+          "description": "sponsor is the account (ID) of the user who created the invitation."
+        },
+        "sponsorDisplay": {
+          "type": "string",
+          "description": "sponsor_display is the display name of the user who created the\ninvitation."
         }
       }
     },
@@ -3559,7 +3577,16 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1RoleAssignment"
-          }
+          },
+          "description": "role_assignments contains permission grants which have been accepted\nby a user."
+        },
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Invitation"
+          },
+          "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
         }
       }
     },

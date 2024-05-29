@@ -32,8 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 )
 
-// TestOpenFeatureProviderFromFlags tests the OpenFeatureProviderFromFlags function.
-//nolint: tparallel
+// nolint: tparallel
 func TestOpenFeatureProviderFromFlags(t *testing.T) {
 	t.Parallel()
 

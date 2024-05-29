@@ -454,8 +454,8 @@ service UserService {
 
     // ListInvitations returns a list of invitations for the user
     // based on the user's registered email address.  Note that a
-    // user who receives an invitation nonce may still accept the
-    // invitation even if the nonce was directed to a different
+    // user who receives an invitation code may still accept the
+    // invitation even if the code was directed to a different
     // email address.  This is beacuse understanding the routing of
     // email messages is beyond the scope of Minder.
     //
@@ -472,7 +472,7 @@ service UserService {
     }
 
     // ResolveInvitation allows a user to accept or decline an
-    // invitation to a project given the nonce for the invitation.
+    // invitation to a project given the code for the invitation.
     // A user may call ResolveInvitation to accept or decline an
     // invitation even if they have not called CreateUser.  If a
     // user accepts an invitation via this call before calling
@@ -481,7 +481,7 @@ service UserService {
     // which will also create a default project).
     rpc ResolveInvitation (ResolveInvitationRequest) returns (ResolveInvitationResponse) {
         option (google.api.http) = {
-            post: "/api/v1/user/invitation/{nonce}"
+            post: "/api/v1/user/invitation/{code}"
         };
 
         option (rpc_options) = {
@@ -1998,7 +1998,13 @@ message ListRoleAssignmentsRequest {
 }
 
 message ListRoleAssignmentsResponse {
+    // role_assignments contains permission grants which have been accepted
+    // by a user.
     repeated RoleAssignment role_assignments = 1;
+
+    // invitations contains outstanding role invitations which have not yet
+    // been accepted by a user.
+    repeated Invitation invitations = 2;
 }
 
 message AssignRoleRequest {
@@ -2058,8 +2064,8 @@ message ListInvitationsResponse {
 }
 
 message ResolveInvitationRequest {
-    // nonce is the nonce of the invitation to resolve.
-    string nonce = 1;
+    // code is the code of the invitation to resolve.
+    string code = 1;
     // accept is true if the invitation is accepted, false if it is rejected.
     bool accept = 2;
 }
@@ -2080,17 +2086,27 @@ message Invitation {
     string role = 1;
     // email is the email address of the invited user.  This is
     // presented as a convenience for display purposes, and does
-    // not affect who can accept the invitation using the nonce.
+    // not affect who can accept the invitation using the code.
     string email = 2;
     // project is the project to which the user is invited.
     string project = 3;
 
-    // nonce is a unique identifier for the invitation, which can
+    // code is a unique identifier for the invitation, which can
     // be used by the recipient to accept or reject the invitation.
-    // The nonce is only transmitted in response to AssignRole or
+    // The code is only transmitted in response to AssignRole or
     // ListInvitations RPCs, and not transmitted in
     // ListRoleAssignments or other calls.
-    string nonce = 4;
+    string code = 4;
+
+    // created_at is the time at which the invitation was created.
+    google.protobuf.Timestamp created_at = 5;
+    // expires_at is the time at which the invitation expires.
+    google.protobuf.Timestamp expires_at = 6;
+    // sponsor is the account (ID) of the user who created the invitation.
+    string sponsor = 7;
+    // sponsor_display is the display name of the user who created the
+    // invitation.
+    string sponsor_display = 8;
 }
 
 message GetProviderRequest {

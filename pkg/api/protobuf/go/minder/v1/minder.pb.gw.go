@@ -1452,7 +1452,7 @@ func local_request_UserService_ListInvitations_0(ctx context.Context, marshaler 
 }
 
 var (
-	filter_UserService_ResolveInvitation_0 = &utilities.DoubleArray{Encoding: map[string]int{"nonce": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_UserService_ResolveInvitation_0 = &utilities.DoubleArray{Encoding: map[string]int{"code": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_UserService_ResolveInvitation_0(ctx context.Context, marshaler runtime.Marshaler, client UserServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -1466,14 +1466,14 @@ func request_UserService_ResolveInvitation_0(ctx context.Context, marshaler runt
 		_   = err
 	)
 
-	val, ok = pathParams["nonce"]
+	val, ok = pathParams["code"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "nonce")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "code")
 	}
 
-	protoReq.Nonce, err = runtime.String(val)
+	protoReq.Code, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "nonce", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -1499,14 +1499,14 @@ func local_request_UserService_ResolveInvitation_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["nonce"]
+	val, ok = pathParams["code"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "nonce")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "code")
 	}
 
-	protoReq.Nonce, err = runtime.String(val)
+	protoReq.Code, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "nonce", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "code", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -3710,7 +3710,7 @@ func RegisterUserServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.UserService/ResolveInvitation", runtime.WithHTTPPathPattern("/api/v1/user/invitation/{nonce}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.UserService/ResolveInvitation", runtime.WithHTTPPathPattern("/api/v1/user/invitation/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5485,7 +5485,7 @@ func RegisterUserServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.UserService/ResolveInvitation", runtime.WithHTTPPathPattern("/api/v1/user/invitation/{nonce}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.UserService/ResolveInvitation", runtime.WithHTTPPathPattern("/api/v1/user/invitation/{code}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5513,7 +5513,7 @@ var (
 
 	pattern_UserService_ListInvitations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "user", "invitations"}, ""))
 
-	pattern_UserService_ResolveInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "user", "invitation", "nonce"}, ""))
+	pattern_UserService_ResolveInvitation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"api", "v1", "user", "invitation", "code"}, ""))
 )
 
 var (
