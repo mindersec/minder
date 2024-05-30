@@ -28,9 +28,12 @@ INSERT INTO entity_profiles (
 INSERT INTO entity_profiles (
     entity,
     profile_id,
-    contextual_rules) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb)
+    contextual_rules,
+    migrated
+) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
-    contextual_rules = sqlc.arg(contextual_rules)::jsonb
+    contextual_rules = sqlc.arg(contextual_rules)::jsonb,
+    migrated = false
 RETURNING *;
 
 -- name: DeleteProfileForEntity :exec
