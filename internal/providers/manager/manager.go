@@ -253,6 +253,16 @@ func (p *providerManager) PatchProviderConfig(
 		return fmt.Errorf("error marshalling provider config: %w", err)
 	}
 
+	manager, err := p.getClassManager(dbProvider.Class)
+	if err != nil {
+		return err
+	}
+
+	err = manager.ValidateConfig(ctx, dbProvider.Class, mergedJSON)
+	if err != nil {
+		return fmt.Errorf("error validating provider config: %w", err)
+	}
+
 	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, mergedJSON)
 }
 
