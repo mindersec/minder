@@ -66,6 +66,8 @@ type ProviderStore interface {
 	) ([]db.Provider, error)
 	// Delete removes the provider configuration from the database
 	Delete(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
+	// Update updates the provider configuration in the database
+	Update(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID, config json.RawMessage) error
 }
 
 // ErrProviderNotFoundBy is an error type which is returned when a provider is not found
@@ -201,6 +203,21 @@ func (p *providerStore) Delete(ctx context.Context, providerID uuid.UUID, projec
 	return p.store.DeleteProvider(ctx, db.DeleteProviderParams{
 		ID:        providerID,
 		ProjectID: projectID,
+	})
+}
+
+func (p *providerStore) Update(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID, config json.RawMessage) error {
+	currentProvider, err := p.GetByID(ctx, providerID)
+	if err != nil {
+		return err
+	}
+
+	return p.store.UpdateProvider(ctx, db.UpdateProviderParams{
+		Implements: currentProvider.Implements,
+		Definition: config,
+		AuthFlows:  currentProvider.AuthFlows,
+		ID:         providerID,
+		ProjectID:  projectID,
 	})
 }
 
