@@ -35,7 +35,7 @@ require (
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-feature/go-sdk v1.11.0
+	github.com/open-feature/go-sdk v1.12.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
 	github.com/open-policy-agent/opa v0.64.1
 	github.com/openfga/go-sdk v0.3.7
@@ -68,7 +68,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.27.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.23.0
-	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/term v0.20.0
