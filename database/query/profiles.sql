@@ -28,7 +28,7 @@ INSERT INTO entity_profiles (
     $1,
     $2,
     sqlc.arg(contextual_rules)::jsonb,
-    FALSE
+    TRUE
 ) RETURNING *;
 
 -- name: UpsertProfileForEntity :one
@@ -40,7 +40,7 @@ INSERT INTO entity_profiles (
 ) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
     contextual_rules = sqlc.arg(contextual_rules)::jsonb,
-    migrated = FALSE
+    migrated = TRUE
 RETURNING *;
 
 -- name: DeleteProfileForEntity :exec
@@ -110,7 +110,7 @@ GROUP BY profiles.id;
 -- name: CountProfilesByEntityType :many
 SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
 FROM profiles AS p
-         JOIN entity_profiles AS ep ON p.id = ep.profile_id
+JOIN entity_profiles AS ep ON p.id = ep.profile_id
 GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
