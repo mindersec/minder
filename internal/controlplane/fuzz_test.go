@@ -17,6 +17,7 @@ package controlplane
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -60,14 +61,20 @@ var eventTypes = [23]string{
 	"pull_request",
 }
 
-// FuzzGithubEventParsers tests Minders two GH event parsers:
+// FuzzGithubEventParsers tests Minder's GH event parsers:
 //
-//	1: parseGithubEventForProcessing
-//	2: parseGithubAppEventForProcessing
+//   - processPingEvent
+//   - processRelevantRepositoryEvent
+//   - processRepositoryEvent
+//   - processPackageEvent
+//   - processInstallationAppEvent
+//
+// It also tests validatePayloadSignature given it contains a fair
+// amount of logic specific to Minder that depends on external input.
 //
 // The fuzzer does not validate return values of the parsers. It tests if any
 // input can cause code-level issues.
-func FuzzGithubEventParsers(f *testing.F) {
+func FuzzGitHubEventParsers(f *testing.F) {
 	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum uint) {
 		mac := hmac.New(sha256.New, []byte("test"))
 		mac.Write(rawWHPayload)
@@ -114,22 +121,27 @@ func FuzzGithubEventParsers(f *testing.F) {
 		whConfig := &server.WebhookConfig{WebhookSecretFile: whSecretFile.Name()}
 
 		s := &Server{}
+		ctx := context.Background()
 
-		switch target % 2 {
+		switch target % 6 {
 		case 0:
-			payload, err := validatePayloadSignature(req, whConfig)
-			if err != nil {
-				return
-			}
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.parseGithubEventForProcessing(payload, m)
+			s.processInstallationAppEvent(ctx, rawWHPayload)
 		case 1:
-			payload, err := github.ValidatePayload(req, []byte(secret))
-			if err != nil {
-				return
-			}
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.parseGithubAppEventForProcessing(payload, m)
+			s.processRelevantRepositoryEvent(ctx, rawWHPayload)
+		case 2:
+			//nolint:gosec // The fuzzer does not validate the return values
+			s.processRepositoryEvent(ctx, rawWHPayload)
+		case 3:
+			//nolint:gosec // The fuzzer does not validate the return values
+			s.processPackageEvent(ctx, rawWHPayload)
+		case 4:
+			//nolint:gosec // The fuzzer does not validate the return values
+			s.processPingEvent(ctx, rawWHPayload)
+		case 5:
+			//nolint:gosec // The fuzzer does not validate the return values
+			validatePayloadSignature(req, whConfig)
 		}
 	})
 }

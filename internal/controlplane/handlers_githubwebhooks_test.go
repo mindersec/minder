@@ -53,11 +53,17 @@ import (
 	"github.com/stacklok/minder/internal/util/testqueue"
 )
 
+//go:embed test-payloads/installation-deleted.json
+var rawInstallationDeletedEvent string
+
 //go:embed test-payloads/package-published.json
 var rawPackageEventPublished string
 
 //go:embed test-payloads/push.json
 var rawPushEvent string
+
+//go:embed test-payloads/branch-protection-configuration-disabled.json
+var rawBranchProtectionConfigurationDisabledEvent string
 
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
@@ -249,7 +255,8 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 			RepoID:     12345,
 			Provider:   providerName,
 			ProviderID: providerID,
-		}, nil)
+		}, nil).
+		AnyTimes()
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -294,6 +301,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
 	require.NoError(t, err, "failed to create request")
+
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
@@ -333,9 +341,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 
 	<-evt.Running()
 
-	mockStore.EXPECT().
-		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, sql.ErrNoRows)
+	// mockStore.EXPECT().
+	// 	GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
+	// 	Return(db.Repository{}, sql.ErrNoRows)
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 
@@ -486,7 +494,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PingEvent
 			payload: &github.PingEvent{
 				HookID: github.Int64(54321),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -511,7 +519,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PingEvent
 			payload: &github.PingEvent{
 				HookID: nil,
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -550,19 +558,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 							},
 						},
 					},
-					Owner: &github.User{
+					Owner: &user{
 						Login: github.String("login"),
 					},
 				},
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -663,34 +667,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 							},
 						},
 					},
-					Owner: &github.User{
+					Owner: &user{
 						Login: github.String("login"),
 					},
 				},
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
 		},
 		{
 			name: "package no package",
@@ -699,29 +689,16 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			payload: &github.PackageEvent{
 				Action: github.String("updated"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
 		},
 
 		// Testing package mandatory fields
@@ -746,34 +723,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 							},
 						},
 					},
-					Owner: &github.User{
+					Owner: &user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &github.Repository{
+				Repo: &repo{
 					ID:       github.Int64(12345),
-					Name:     github.String("minder"),
 					FullName: nil,
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
 		},
 		{
 			name: "package mandatory package name",
@@ -796,34 +759,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 							},
 						},
 					},
-					Owner: &github.User{
+					Owner: &user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &github.Repository{
+				Repo: &repo{
 					ID:       github.Int64(12345),
-					Name:     github.String("minder"),
 					FullName: github.String("stacklok/minder"),
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
 		},
 		{
 			name: "package mandatory package type",
@@ -846,34 +795,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 							},
 						},
 					},
-					Owner: &github.User{
+					Owner: &user{
 						Login: github.String("login"),
 					},
 				},
-				Repo: &github.Repository{
+				Repo: &repo{
 					ID:       github.Int64(12345),
-					Name:     github.String("minder"),
 					FullName: github.String("stacklok/minder"),
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
 		},
 		{
 			name: "package mandatory owner",
@@ -897,40 +832,177 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						},
 					},
 				},
-				Repo: &github.Repository{
+				Repo: &repo{
 					ID:       github.Int64(12345),
-					Name:     github.String("minder"),
 					FullName: github.String("stacklok/minder"),
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusOK,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
 		},
-
 		{
 			name: "package garbage",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			rawPayload: []byte("ceci n'est pas une JSON"),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusInternalServerError,
+			rawPayload:    []byte("ceci n'est pas une JSON"),
+			mockStoreFunc: newMockStore(),
+			statusCode:    http.StatusInternalServerError,
+		},
+
+		// Testing package mandatory fields
+		{
+			name: "package mandatory repo full name",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: nil,
+					HTMLURL:  github.String("https://example.com/random/url"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory package name",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        nil,
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory package type",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: nil,
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+					Owner: &user{
+						Login: github.String("login"),
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package mandatory owner",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			payload: &packageEvent{
+				Action: github.String("updated"),
+				Package: &pkg{
+					Name:        github.String("package-name"),
+					PackageType: github.String("package-type"),
+					// .package.package_version.container_metadata.tag.name
+					PackageVersion: &packageVersion{
+						ID:      github.Int64(1),
+						Version: github.String("version"),
+						ContainerMetadata: &containerMetadata{
+							Tag: &tag{
+								Digest: github.String("digest"),
+								Name:   github.String("tag"),
+							},
+						},
+					},
+				},
+				Repo: &repo{
+					ID:       github.Int64(12345),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusOK,
+			queued:        nil,
+		},
+		{
+			name: "package garbage",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
+			event: "package",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
+			rawPayload:    []byte("ceci n'est pas une JSON"),
+			mockStoreFunc: newMockStore(),
+			statusCode:    http.StatusInternalServerError,
 		},
 		{
 			name: "meta",
@@ -943,15 +1015,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Hook: &github.Hook{
 					ID: github.Int64(54321),
 				},
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -961,6 +1030,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						RepoID:     12345,
 						Provider:   providerName,
 						ProviderID: providerID,
+						WebhookID: sql.NullInt64{
+							Int64: 54321,
+							Valid: true,
+						},
 					},
 				),
 			),
@@ -987,15 +1060,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			payload: &github.MetaEvent{
 				Action: github.String("deleted"),
 				HookID: github.Int64(54321),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1024,21 +1094,55 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "meta bad hook",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#meta
+			event: "meta",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#MetaEvent
+			payload: &github.MetaEvent{
+				Action: github.String("deleted"),
+				HookID: github.Int64(54321),
+				Hook: &github.Hook{
+					ID: github.Int64(54321),
+				},
+				Repo: newGitHubRepo(
+					12345,
+					"minder",
+					"stacklok/minder",
+					"https://github.com/stacklok/minder",
+				),
+			},
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+						WebhookID: sql.NullInt64{
+							Int64: 12345,
+							Valid: true,
+						},
+					},
+				),
+			),
+			topic:      events.TopicQueueReconcileEntityDelete,
+			statusCode: http.StatusOK,
+			queued:     nil,
+		},
+		{
 			name: "branch_protection_rule created",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_rule
 			event: "branch_protection_rule",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#BranchProtectionRuleEvent
 			payload: &github.BranchProtectionRuleEvent{
 				Action: github.String("created"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1073,15 +1177,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#BranchProtectionRuleEvent
 			payload: &github.BranchProtectionRuleEvent{
 				Action: github.String("deleted"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1116,15 +1217,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#BranchProtectionRuleEvent
 			payload: &github.BranchProtectionRuleEvent{
 				Action: github.String("edited"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1159,15 +1257,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#CodeScanningAlertEvent
 			payload: &github.CodeScanningAlertEvent{
 				Action: github.String("created"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1201,15 +1296,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "create",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#CreateEvent
 			payload: &github.CreateEvent{
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1244,15 +1336,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#MemberEvent
 			payload: &github.MemberEvent{
 				Action: github.String("added"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1286,15 +1375,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "public",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PublicEvent
 			payload: &github.PublicEvent{
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
 			mockStoreFunc: newMockStore(
 				withSuccessfulGetRepositoryByRepoID(
@@ -1329,7 +1415,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("archived"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1369,7 +1455,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("created"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1409,7 +1495,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("deleted"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1449,7 +1535,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("edited"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1489,7 +1575,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("privatized"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1529,7 +1615,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("publicized"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1569,7 +1655,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("renamed"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1609,7 +1695,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("transferred"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1649,7 +1735,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
 				Action: github.String("unarchived"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1683,12 +1769,86 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "repository private repos not enabled",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository
+			event: "repository",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
+			payload: &github.RepositoryEvent{
+				Action: github.String("transferred"),
+				Repo: &github.Repository{
+					ID:       github.Int64(12345),
+					Name:     github.String("minder"),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					Private:  github.Bool(true),
+				},
+			},
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+				withSuccessfulGetFeatureInProject(false),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
+		},
+		{
+			name: "repository private repos enabled",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository
+			event: "repository",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
+			payload: &github.RepositoryEvent{
+				Action: github.String("transferred"),
+				Repo: &github.Repository{
+					ID:       github.Int64(12345),
+					Name:     github.String("minder"),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					Private:  github.Bool(true),
+				},
+			},
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+				withSuccessfulGetFeatureInProject(true),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
+		},
+
+		{
 			name: "repository_import",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_import
 			event: "repository_import",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryImportEvent
 			payload: &github.RepositoryImportEvent{
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1728,7 +1888,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecretScanningAlertEvent
 			payload: &github.SecretScanningAlertEvent{
 				Action: github.String("created"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1768,7 +1928,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecretScanningAlertEvent
 			payload: &github.SecretScanningAlertEvent{
 				Action: github.String("reopened"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1808,7 +1968,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecretScanningAlertEvent
 			payload: &github.SecretScanningAlertEvent{
 				Action: github.String("resolved"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1848,7 +2008,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecretScanningAlertEvent
 			payload: &github.SecretScanningAlertEvent{
 				Action: github.String("revoked"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1888,7 +2048,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecretScanningAlertEvent
 			payload: &github.SecretScanningAlertEvent{
 				Action: github.String("validated"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1927,7 +2087,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "team_add",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamAddEvent
 			payload: &github.TeamAddEvent{
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -1967,7 +2127,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamEvent
 			payload: &github.TeamEvent{
 				Action: github.String("added_to_repository"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2007,7 +2167,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamEvent
 			payload: &github.TeamEvent{
 				Action: github.String("created"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2047,7 +2207,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamEvent
 			payload: &github.TeamEvent{
 				Action: github.String("deleted"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2087,7 +2247,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamEvent
 			payload: &github.TeamEvent{
 				Action: github.String("edited"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2127,7 +2287,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#TeamEvent
 			payload: &github.TeamEvent{
 				Action: github.String("removed_from_repository"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2167,7 +2327,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryVulnerabilityAlertEvent
 			payload: &github.RepositoryVulnerabilityAlertEvent{
 				Action: github.String("create"),
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2207,7 +2367,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryVulnerabilityAlertEvent
 			payload: &github.RepositoryVulnerabilityAlertEvent{
 				Action: github.String("dismiss"),
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2247,7 +2407,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryVulnerabilityAlertEvent
 			payload: &github.RepositoryVulnerabilityAlertEvent{
 				Action: github.String("reopen"),
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2287,7 +2447,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryVulnerabilityAlertEvent
 			payload: &github.RepositoryVulnerabilityAlertEvent{
 				Action: github.String("resolve"),
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2326,7 +2486,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "security_advisory",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecurityAdvisoryEvent
 			payload: &github.SecurityAdvisoryEvent{
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2365,7 +2525,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "security_and_analysis",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#SecurityAndAnalysisEvent
 			payload: &github.SecurityAndAnalysisEvent{
-				Repository: newRepo(
+				Repository: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2408,6 +2568,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
+
 		{
 			name: "push",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
@@ -2486,169 +2647,314 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			name: "branch_protection_configuration enabled",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event: "branch_protection_configuration",
-			payload: &branchProtectionConfigurationEvent{
+			payload: &repoEvent{
 				Action: github.String("enabled"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "branch_protection_configuration disabled",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event: "branch_protection_configuration",
-			payload: &branchProtectionConfigurationEvent{
+			payload: &repoEvent{
 				Action: github.String("disabled"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
+		},
+		{
+			name: "branch_protection_configuration disabled raw event",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
+			event:      "branch_protection_configuration",
+			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_advisory published",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_advisory
 			event: "repository_advisory",
-			payload: &repositoryAdvisoryEvent{
+			payload: &repoEvent{
 				Action: github.String("disabled"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_advisory reported",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_advisory
 			event: "repository_advisory",
-			payload: &repositoryAdvisoryEvent{
+			payload: &repoEvent{
 				Action: github.String("reported"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset created",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_ruleset
 			event: "repository_ruleset",
-			payload: &repositoryRulesetEvent{
+			payload: &repoEvent{
 				Action: github.String("created"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset deleted",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_ruleset
 			event: "repository_ruleset",
-			payload: &repositoryRulesetEvent{
+			payload: &repoEvent{
 				Action: github.String("deleted"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "repository_ruleset edited",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository_ruleset
 			event: "repository_ruleset",
-			payload: &repositoryRulesetEvent{
+			payload: &repoEvent{
 				Action: github.String("edited"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 		{
 			name: "secret_scanning_alert_location",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
 			event: "secret_scanning_alert_location",
-			payload: &secretScanningAlertLocationEvent{
+			payload: &repoEvent{
 				Action: github.String("created"),
 				Repo: newRepo(
 					12345,
-					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 			},
-			mockStoreFunc: newMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+					},
+				),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
 		},
 
 		// package/artifact specific tests
@@ -2659,7 +2965,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
 			payload: &github.PullRequestEvent{
 				Action: github.String("opened"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2712,7 +3018,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
 			payload: &github.PullRequestEvent{
 				Action: github.String("closed"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2752,7 +3058,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
 			payload: &github.PullRequestEvent{
 				Action: github.String("random"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2794,7 +3100,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				// PR events, but we don't really
 				// care.
 				Action: github.String("whatever"),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
@@ -2804,20 +3110,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
-			statusCode: http.StatusInternalServerError,
-			queued:     nil,
+			mockStoreFunc: newMockStore(),
+			topic:         events.TopicQueueEntityEvaluate,
+			statusCode:    http.StatusInternalServerError,
+			queued:        nil,
 		},
 
 		// garbage
@@ -2961,15 +3257,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PingEvent
 			payload: &github.PingEvent{
 				HookID: github.Int64(54321),
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
 					HTMLURL: github.String("https://github.com/apps"),
@@ -2986,15 +3279,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PingEvent
 			payload: &github.PingEvent{
 				HookID: nil,
-				Repo: newRepo(
+				Repo: newGitHubRepo(
 					12345,
 					"minder",
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
-				},
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
 					HTMLURL: github.String("https://example.com/random/url"),
@@ -3012,15 +3302,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			payload: &github.InstallationEvent{
 				Action: github.String("created"),
 				Repositories: []*github.Repository{
-					newRepo(
+					newGitHubRepo(
 						12345,
 						"minder",
 						"stacklok/minder",
 						"https://github.com/stacklok/minder",
 					),
-				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
 				},
 				// Installation field is left blank on
 				// purpose, to attest the fact that
@@ -3045,15 +3332,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			payload: &github.InstallationEvent{
 				Action: github.String("deleted"),
 				Repositories: []*github.Repository{
-					newRepo(
+					newGitHubRepo(
 						12345,
 						"minder",
 						"stacklok/minder",
 						"https://github.com/stacklok/minder",
 					),
-				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
 				},
 				Installation: &github.Installation{
 					ID: github.Int64(12345),
@@ -3074,6 +3358,29 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
+				require.Equal(t, "github-app", received.Metadata["class"])
+			},
+		},
+		{
+			name: "installation deleted raw payload",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			rawPayload:    []byte(rawInstallationDeletedEvent),
+			mockStoreFunc: newMockStore(),
+			topic:         installations.ProviderInstallationTopic,
+			statusCode:    http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
+				require.Equal(t, "github-app", received.Metadata["class"])
 			},
 		},
 		{
@@ -3084,15 +3391,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			payload: &github.InstallationEvent{
 				Action: github.String("new_permissions_accepted"),
 				Repositories: []*github.Repository{
-					newRepo(
+					newGitHubRepo(
 						12345,
 						"minder",
 						"stacklok/minder",
 						"https://github.com/stacklok/minder",
 					),
-				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
 				},
 				// Installation field is left blank on
 				// purpose, to attest the fact that
@@ -3117,15 +3421,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			payload: &github.InstallationEvent{
 				Action: github.String("suspend"),
 				Repositories: []*github.Repository{
-					newRepo(
+					newGitHubRepo(
 						12345,
 						"minder",
 						"stacklok/minder",
 						"https://github.com/stacklok/minder",
 					),
-				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
 				},
 				// Installation field is left blank on
 				// purpose, to attest the fact that
@@ -3150,15 +3451,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			payload: &github.InstallationEvent{
 				Action: github.String("unsuspend"),
 				Repositories: []*github.Repository{
-					newRepo(
+					newGitHubRepo(
 						12345,
 						"minder",
 						"stacklok/minder",
 						"https://github.com/stacklok/minder",
 					),
-				},
-				Org: &github.Organization{
-					Login: github.String("stacklok"),
 				},
 				// Installation field is left blank on
 				// purpose, to attest the fact that
@@ -3292,10 +3590,19 @@ func withTimeout(ch <-chan *message.Message, timeout time.Duration) *message.Mes
 }
 
 //nolint:unparam
-func newRepo(id int, name, fullname, url string) *github.Repository {
+func newGitHubRepo(id int, name, fullname, url string) *github.Repository {
 	return &github.Repository{
 		ID:       github.Int64(int64(id)),
 		Name:     github.String(name),
+		FullName: github.String(fullname),
+		HTMLURL:  github.String(url),
+	}
+}
+
+//nolint:unparam
+func newRepo(id int, fullname, url string) *repo {
+	return &repo{
+		ID:       github.Int64(int64(id)),
 		FullName: github.String(fullname),
 		HTMLURL:  github.String(url),
 	}
@@ -3324,64 +3631,26 @@ type garbage struct {
 	Garbage *string `json:"garbage,omitempty"`
 }
 
-type packageEvent struct {
-	Action  *string              `json:"action,omitempty"`
-	Repo    *github.Repository   `json:"repository,omitempty"`
-	Org     *github.Organization `json:"org,omitempty"`
-	Package *pkg                 `json:"package,omitempty"`
-}
-
-type pkg struct {
-	Name           *string         `json:"name,omitempty"`
-	PackageType    *string         `json:"package_type,omitempty"`
-	PackageVersion *packageVersion `json:"package_version,omitempty"`
-	Owner          *github.User    `json:"owner,omitempty"`
-}
-
-type packageVersion struct {
-	ID                *int64             `json:"id,omitempty"`
-	Version           *string            `json:"version,omitempty"`
-	ContainerMetadata *containerMetadata `json:"container_metadata,omitempty"`
-}
-
-type containerMetadata struct {
-	Tag *tag `json:"tag,omitempty"`
-}
-
-type tag struct {
-	Digest *string `json:"digest,omitempty"`
-	Name   *string `json:"name,omitempty"`
-}
-
-type branchProtectionConfigurationEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
-}
-
-type repositoryAdvisoryEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
-}
-
-type repositoryRulesetEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
-}
-
-type secretScanningAlertLocationEvent struct {
-	Action *string              `json:"action,omitempty"`
-	Repo   *github.Repository   `json:"repo,omitempty"`
-	Org    *github.Organization `json:"org,omitempty"`
-}
-
 func withSuccessfulGetRepositoryByRepoID(repository db.Repository) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
 			GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
 			Return(repository, nil)
+	}
+}
+
+func withSuccessfulGetFeatureInProject(active bool) func(*mockdb.MockStore) {
+	if active {
+		return func(mockStore *mockdb.MockStore) {
+			mockStore.EXPECT().
+				GetFeatureInProject(gomock.Any(), gomock.Any()).
+				Return(json.RawMessage{}, nil)
+		}
+	}
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetFeatureInProject(gomock.Any(), gomock.Any()).
+			Return(nil, sql.ErrNoRows)
 	}
 }
 
