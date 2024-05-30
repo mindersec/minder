@@ -28,6 +28,11 @@ CREATE TABLE IF NOT EXISTS rule_instances(
     UNIQUE (profile_id, entity_type, name)
 );
 
+-- this reflects likely access patterns for this table - retrieving all rule
+-- instances for a given profile, and all rules by profile and entity type
+CREATE INDEX idx_rule_instances_profile ON rule_instances(profile_id);
+CREATE INDEX idx_rule_instances_profile_entity ON rule_instances(profile_id, entity_type);
+
 -- this will be used for migration purposes
 ALTER TABLE entity_profiles ADD COLUMN migrated BOOL DEFAULT FALSE NOT NULL;
 
