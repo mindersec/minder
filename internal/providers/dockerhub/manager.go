@@ -131,3 +131,14 @@ func (m *providerClassManager) GetConfig(
 	// we just return the user config as is
 	return userConfig, nil
 }
+
+func (m *providerClassManager) ValidateConfig(
+	_ context.Context, class db.ProviderClass, config json.RawMessage,
+) error {
+	if !slices.Contains(m.GetSupportedClasses(), class) {
+		return fmt.Errorf("provider does not implement %s", string(class))
+	}
+
+	_, err := ParseV1Config(config)
+	return err
+}

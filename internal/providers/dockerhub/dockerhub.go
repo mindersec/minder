@@ -99,7 +99,7 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, e
 
 	// Validate the config according to the protobuf validation rules.
 	if err := w.DockerHub.Validate(); err != nil {
-		return nil, fmt.Errorf("error validating GitHubOAuth v1 provider config: %w", err)
+		return nil, fmt.Errorf("error validating DockerHub v1 provider config: %w", err)
 	}
 
 	return w.DockerHub, nil

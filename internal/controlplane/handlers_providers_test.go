@@ -184,29 +184,20 @@ func TestCreateProvider(t *testing.T) {
 			},
 		},
 		{
-			name:          "test-dockerhub-defaults",
-			providerClass: db.ProviderClassDockerhub,
-			expected: minder.Provider{
-				Name: "test-dockerhub-defaults",
-				Config: newPbStruct(t, map[string]interface{}{
-					"dockerhub": map[string]interface{}{},
-				}),
-				Class: string(db.ProviderClassDockerhub),
-			},
-		},
-		{
 			name:          "test-dockerhub-config",
 			providerClass: db.ProviderClassDockerhub,
 			userConfig: newPbStruct(t, map[string]interface{}{
 				"dockerhub": map[string]interface{}{
-					"key": "value",
+					"key":       "value",
+					"namespace": "myproject",
 				},
 			}),
 			expected: minder.Provider{
 				Name: "test-dockerhub-config",
 				Config: newPbStruct(t, map[string]interface{}{
 					"dockerhub": map[string]interface{}{
-						"key": "value",
+						"key":       "value",
+						"namespace": "myproject",
 					},
 				}),
 				Class: string(db.ProviderClassDockerhub),
@@ -369,6 +360,73 @@ func TestCreateProviderFailures(t *testing.T) {
 		st, ok := status.FromError(err)
 		require.True(t, ok)
 		assert.Equal(t, codes.AlreadyExists, st.Code())
+	})
+
+	t.Run("dockerhub-does-not-validate", func(t *testing.T) {
+		t.Parallel()
+
+		projectID := uuid.New()
+		projectIDStr := projectID.String()
+
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+
+		fakeServer := testServer(t, ctrl)
+		providerName := "bad-dockerhub"
+
+		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
+			Context: &minder.Context{
+				Project:  &projectIDStr,
+				Provider: &providerName,
+			},
+			Provider: &minder.Provider{
+				Name:  providerName,
+				Class: string(db.ProviderClassDockerhub),
+				Config: newPbStruct(t, map[string]interface{}{
+					"dockerhub": map[string]interface{}{
+						"key": "value",
+					},
+				}),
+			},
+		})
+		assert.Error(t, err)
+		require.ErrorContains(t, err, "error validating DockerHub v1 provider config: namespace is required")
+	})
+
+	t.Run("github-app-does-not-validate", func(t *testing.T) {
+		t.Parallel()
+
+		projectID := uuid.New()
+		projectIDStr := projectID.String()
+
+		ctrl := gomock.NewController(t)
+		t.Cleanup(ctrl.Finish)
+
+		fakeServer := testServer(t, ctrl)
+		providerName := "bad-github-app"
+
+		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
+			Context: &minder.Context{
+				Project:  &projectIDStr,
+				Provider: &providerName,
+			},
+			Provider: &minder.Provider{
+				Name:  providerName,
+				Class: string(db.ProviderClassGithubApp),
+				Config: newPbStruct(t, map[string]interface{}{
+					"auto_registration": map[string]interface{}{
+						"entities": map[string]interface{}{
+							"blah": map[string]interface{}{
+								"enabled": true,
+							},
+						},
+					},
+					"github-app": map[string]interface{}{},
+				}),
+			},
+		})
+		assert.Error(t, err)
+		require.ErrorContains(t, err, "error validating provider config: auto_registration: invalid entity type: blah")
 	})
 }
 

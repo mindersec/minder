@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -35,10 +36,11 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name          string
-		Provider      *db.Provider
-		Config        json.RawMessage
-		ExpectedError string
+		Name              string
+		Provider          *db.Provider
+		Config            json.RawMessage
+		ExpectedError     string
+		ValidateConfigErr bool
 	}{
 		{
 			Name:          "CreateFromConfig returns error when provider class has no associated manager",
@@ -55,6 +57,13 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			Provider: providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
 			Config:   json.RawMessage(`{ github: { key: value} }`),
 		},
+		{
+			Name:              "CreateFromConfig returns an error when the config is invalid",
+			Provider:          providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
+			Config:            json.RawMessage(`{ github: { key: value} }`),
+			ExpectedError:     "error validating provider config",
+			ValidateConfigErr: true,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -69,6 +78,11 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			classManager := mockmanager.NewMockProviderClassManager(ctrl)
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
 			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
+			if scenario.ValidateConfigErr {
+				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(fmt.Errorf("invalid config")).MaxTimes(1)
+			} else {
+				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(nil).MaxTimes(1)
+			}
 
 			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))
 			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(expectedProvider, nil).MaxTimes(1)
