@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 
+	"dario.cat/mergo"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
@@ -62,6 +63,9 @@ type ProviderManager interface {
 	// Deletion will only occur if the provider is in the specified project -
 	// it will not attempt to find a provider elsewhere in the hierarchy.
 	DeleteByName(ctx context.Context, name string, projectID uuid.UUID) error
+	// PatchProviderConfig updates the configuration of the specified provider with the specified patch.
+	// All keys in the configMap will overwrite the fields in the provider config.
+	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -223,6 +227,33 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 	}
 
 	return p.deleteByRecord(ctx, config)
+}
+
+func (p *providerManager) PatchProviderConfig(
+	ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any,
+) error {
+	dbProvider, err := p.store.GetByNameInSpecificProject(ctx, projectID, providerName)
+	if err != nil {
+		return fmt.Errorf("error retrieving db record: %w", err)
+	}
+
+	var originalConfig map[string]any
+
+	if err := json.Unmarshal(dbProvider.Definition, &originalConfig); err != nil {
+		return fmt.Errorf("error unmarshalling provider config: %w", err)
+	}
+
+	err = mergo.Map(&originalConfig, configPatch, mergo.WithOverride)
+	if err != nil {
+		return fmt.Errorf("error merging provider config: %w", err)
+	}
+
+	mergedJSON, err := json.Marshal(originalConfig)
+	if err != nil {
+		return fmt.Errorf("error marshalling provider config: %w", err)
+	}
+
+	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, mergedJSON)
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

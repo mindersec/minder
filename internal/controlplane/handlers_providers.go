@@ -234,6 +234,45 @@ func (s *Server) DeleteProviderByID(
 	}, nil
 }
 
+// PatchProvider patches a provider by name from a specific project.
+func (s *Server) PatchProvider(
+	ctx context.Context,
+	req *minderv1.PatchProviderRequest,
+) (*minderv1.PatchProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
+
+	if providerName == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	err := s.providerManager.PatchProviderConfig(ctx, providerName, projectID, req.GetPatch().GetConfig().AsMap())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error patching provider: %v", err)
+	}
+
+	dbProv, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
+	}
+
+	prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, dbProv)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
+	}
+
+	return &minderv1.PatchProviderResponse{
+		Provider: prov,
+	}, nil
+}
+
 func protobufProviderFromDB(
 	ctx context.Context, store db.Store,
 	cryptoEngine crypto.Engine, pc *config.ProviderConfig, p *db.Provider,

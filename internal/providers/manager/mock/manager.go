@@ -132,6 +132,20 @@ func (mr *MockProviderManagerMockRecorder) InstantiateFromNameProject(ctx, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantiateFromNameProject", reflect.TypeOf((*MockProviderManager)(nil).InstantiateFromNameProject), ctx, name, projectID)
 }
 
+// PatchProviderConfig mocks base method.
+func (m *MockProviderManager) PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchProviderConfig", ctx, providerName, projectID, configPatch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PatchProviderConfig indicates an expected call of PatchProviderConfig.
+func (mr *MockProviderManagerMockRecorder) PatchProviderConfig(ctx, providerName, projectID, configPatch any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchProviderConfig", reflect.TypeOf((*MockProviderManager)(nil).PatchProviderConfig), ctx, providerName, projectID, configPatch)
+}
+
 // MockProviderClassManager is a mock of ProviderClassManager interface.
 type MockProviderClassManager struct {
 	ctrl     *gomock.Controller
