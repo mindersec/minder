@@ -114,7 +114,14 @@ const createProfileForEntity = `-- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (
     entity,
     profile_id,
-    contextual_rules) VALUES ($1, $2, $3::jsonb) RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
+    contextual_rules,
+    migrated
+) VALUES (
+    $1,
+    $2,
+    $3::jsonb,
+    FALSE
+) RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 
 type CreateProfileForEntityParams struct {
@@ -571,7 +578,7 @@ INSERT INTO entity_profiles (
 ) VALUES ($1, $2, $3::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
     contextual_rules = $3::jsonb,
-    migrated = false
+    migrated = FALSE
 RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 

@@ -22,7 +22,14 @@ WHERE id = $1 AND project_id = $2 RETURNING *;
 INSERT INTO entity_profiles (
     entity,
     profile_id,
-    contextual_rules) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb) RETURNING *;
+    contextual_rules,
+    migrated
+) VALUES (
+    $1,
+    $2,
+    sqlc.arg(contextual_rules)::jsonb,
+    FALSE
+) RETURNING *;
 
 -- name: UpsertProfileForEntity :one
 INSERT INTO entity_profiles (
@@ -33,7 +40,7 @@ INSERT INTO entity_profiles (
 ) VALUES ($1, $2, sqlc.arg(contextual_rules)::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
     contextual_rules = sqlc.arg(contextual_rules)::jsonb,
-    migrated = false
+    migrated = FALSE
 RETURNING *;
 
 -- name: DeleteProfileForEntity :exec
