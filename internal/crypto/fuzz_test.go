@@ -21,7 +21,6 @@ import (
 	"testing"
 
 	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
 )
 
 var (
@@ -34,8 +33,7 @@ var (
 				},
 			},
 			Default: server.DefaultCrypto{
-				KeyID:     "test_encryption_key",
-				Algorithm: string(algorithms.Aes256Cfb),
+				KeyID: "test_encryption_key",
 			},
 		},
 	}

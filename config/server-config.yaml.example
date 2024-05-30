@@ -112,6 +112,3 @@ crypto:
             key_dir: "./.ssh"
     default:
         key_id:    token_key_passphrase
-        algorithm: aes-256-gcm
-    fallback:
-        algorithm: aes-256-cfb

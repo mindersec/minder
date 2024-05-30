@@ -16,7 +16,10 @@ package engine_test
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -50,10 +53,6 @@ import (
 	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
-)
-
-const (
-	fakeTokenKey = "foo-bar"
 )
 
 func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) pqtype.NullRawMessage {
@@ -100,8 +99,14 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	tmpdir := t.TempDir()
 	tokenKeyPath := tmpdir + "/token_key"
 
+	// generate 256-bit key
+	key := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, key)
+	require.NoError(t, err)
+	encodedKey := base64.StdEncoding.EncodeToString(key)
+
 	// write key to file
-	err := os.WriteFile(tokenKeyPath, []byte(fakeTokenKey), 0600)
+	err = os.WriteFile(tokenKeyPath, []byte(encodedKey), 0600)
 	require.NoError(t, err, "expected no error")
 
 	// Needed to keep these tests working as-is.
