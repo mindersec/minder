@@ -198,21 +198,6 @@ func (mr *MockProviderClassManagerMockRecorder) Delete(ctx, config any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProviderClassManager)(nil).Delete), ctx, config)
 }
 
-// GetConfig mocks base method.
-func (m *MockProviderClassManager) GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfig", ctx, class, userConfig)
-	ret0, _ := ret[0].(json.RawMessage)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfig indicates an expected call of GetConfig.
-func (mr *MockProviderClassManagerMockRecorder) GetConfig(ctx, class, userConfig any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockProviderClassManager)(nil).GetConfig), ctx, class, userConfig)
-}
-
 // GetSupportedClasses mocks base method.
 func (m *MockProviderClassManager) GetSupportedClasses() []db.ProviderClass {
 	m.ctrl.T.Helper()

@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/go-github/v61/github"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -76,7 +77,7 @@ func FromGitHubClient(client *github.Client, namespace string) *ImageLister {
 	return &ImageLister{
 		client: client,
 		cfg: &minderv1.GHCRProviderConfig{
-			Namespace: namespace,
+			Namespace: proto.String(namespace),
 		},
 	}
 }

@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 
-	"dario.cat/mergo"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
@@ -74,7 +73,6 @@ type ProviderManager interface {
 type ProviderClassManager interface {
 	providerClassAuthManager
 
-	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 	// MarshallConfig validates the config and marshalls it into a format that can be stored in the database
 	MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
@@ -154,12 +152,7 @@ func (p *providerManager) CreateFromConfig(
 		return nil, fmt.Errorf("error getting class manager: %w", err)
 	}
 
-	provConfig, err := manager.GetConfig(ctx, providerClass, config)
-	if err != nil {
-		return nil, fmt.Errorf("error getting provider config: %w", err)
-	}
-
-	marshalledConfig, err := manager.MarshallConfig(ctx, providerClass, provConfig)
+	marshalledConfig, err := manager.MarshallConfig(ctx, providerClass, config)
 	if err != nil {
 		return nil, providers.NewErrProviderInvalidConfig(err.Error())
 	}
@@ -237,23 +230,22 @@ func (p *providerManager) PatchProviderConfig(
 		return fmt.Errorf("error retrieving db record: %w", err)
 	}
 
-	var originalConfig map[string]any
-
-	if err := json.Unmarshal(dbProvider.Definition, &originalConfig); err != nil {
-		return fmt.Errorf("error unmarshalling provider config: %w", err)
-	}
-
-	err = mergo.Map(&originalConfig, configPatch, mergo.WithOverride)
-	if err != nil {
-		return fmt.Errorf("error merging provider config: %w", err)
-	}
-
-	mergedJSON, err := json.Marshal(originalConfig)
+	configPatchJson, err := json.Marshal(configPatch)
 	if err != nil {
 		return fmt.Errorf("error marshalling provider config: %w", err)
 	}
 
-	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, mergedJSON)
+	manager, err := p.getClassManager(dbProvider.Class)
+	if err != nil {
+		return err
+	}
+
+	marshalledConfig, err := manager.MarshallConfig(ctx, dbProvider.Class, configPatchJson)
+	if err != nil {
+		return fmt.Errorf("error validating provider config: %w", err)
+	}
+
+	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, marshalledConfig)
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

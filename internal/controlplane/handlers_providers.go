@@ -59,6 +59,7 @@ func (s *Server) CreateProvider(
 			return nil, status.Errorf(codes.InvalidArgument, "error marshalling provider provConfig: %v", marshallErr)
 		}
 	} else {
+		provConfig = json.RawMessage([]byte("{}"))
 		zerolog.Ctx(ctx).Debug().Msg("no provider provConfig, will use default")
 	}
 

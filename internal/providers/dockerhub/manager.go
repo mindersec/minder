@@ -114,24 +114,6 @@ func (m *providerClassManager) getProviderCredentials(
 	return credentials.NewOAuth2TokenCredential(decryptedToken.AccessToken), nil
 }
 
-func (m *providerClassManager) GetConfig(
-	_ context.Context, class db.ProviderClass, userConfig json.RawMessage,
-) (json.RawMessage, error) {
-	if !slices.Contains(m.GetSupportedClasses(), class) {
-		return nil, fmt.Errorf("provider does not implement %s", string(class))
-	}
-
-	const defaultConfig = `{"dockerhub": {}}`
-
-	if len(userConfig) == 0 {
-		return json.RawMessage(defaultConfig), nil
-	}
-
-	// in the future, we may want to validate the user config and merge it with the default config. Right now
-	// we just return the user config as is
-	return userConfig, nil
-}
-
 func (m *providerClassManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
 ) (json.RawMessage, error) {
@@ -139,10 +121,5 @@ func (m *providerClassManager) MarshallConfig(
 		return nil, fmt.Errorf("provider does not implement %s", string(class))
 	}
 
-	dc, err := ParseV1Config(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return MarshalV1Config(dc)
+	return MarshalV1Config(config)
 }

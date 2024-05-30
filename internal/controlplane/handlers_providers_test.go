@@ -132,11 +132,9 @@ func TestCreateProvider(t *testing.T) {
 			name:          "test-github-defaults",
 			providerClass: db.ProviderClassGithub,
 			expected: minder.Provider{
-				Name: "test-github-defaults",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github": map[string]interface{}{},
-				}),
-				Class: string(db.ProviderClassGithub),
+				Name:   "test-github-defaults",
+				Config: newPbStruct(t, map[string]interface{}{}),
+				Class:  string(db.ProviderClassGithub),
 			},
 		},
 		{
@@ -162,11 +160,9 @@ func TestCreateProvider(t *testing.T) {
 			name:          "test-github-app-defaults",
 			providerClass: db.ProviderClassGithubApp,
 			expected: minder.Provider{
-				Name: "test-github-app-defaults",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github_app": map[string]interface{}{},
-				}),
-				Class: string(db.ProviderClassGithubApp),
+				Name:   "test-github-app-defaults",
+				Config: newPbStruct(t, map[string]interface{}{}),
+				Class:  string(db.ProviderClassGithubApp),
 			},
 		},
 		{
@@ -254,17 +250,6 @@ func TestCreateProvider(t *testing.T) {
 
 			jsonConfig, err := scenario.expected.Config.MarshalJSON()
 			require.NoError(t, err)
-
-			var jsonUserConfig []byte
-			if scenario.userConfig != nil {
-				jsonUserConfig, err = scenario.userConfig.MarshalJSON()
-				require.NoError(t, err)
-			}
-
-			if scenario.providerClass == db.ProviderClassGithubApp || scenario.providerClass == db.ProviderClassGithub {
-				fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), scenario.providerClass, jsonUserConfig).
-					Return(jsonConfig, nil)
-			}
 
 			fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), partialCreateParamsMatcher{
 				value: db.CreateProviderParams{
@@ -375,9 +360,6 @@ func TestCreateProviderFailures(t *testing.T) {
 			Provider: engine.Provider{Name: providerName},
 		})
 
-		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithub, gomock.Any()).
-			Return(json.RawMessage(`{ "github": {} }`), nil)
-
 		fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
 			Return(db.Provider{}, &pq.Error{Code: "23505"}) // unique_violation
 
@@ -427,7 +409,10 @@ func TestCreateProviderFailures(t *testing.T) {
 			},
 		})
 		assert.Error(t, err)
-		require.ErrorContains(t, err, "error validating DockerHub v1 provider config: namespace is required")
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		assert.Equal(t, codes.InvalidArgument, st.Code())
+		require.ErrorContains(t, err, "namespace is required")
 	})
 
 	t.Run("github-app-does-not-validate", func(t *testing.T) {
@@ -441,9 +426,6 @@ func TestCreateProviderFailures(t *testing.T) {
 
 		fakeServer := testServer(t, ctrl)
 		providerName := "bad-github-app"
-
-		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithubApp, gomock.Any()).
-			Return(json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true }}}, "github-app": {}}`), nil)
 
 		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
 			Context: &minder.Context{

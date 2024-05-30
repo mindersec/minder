@@ -498,8 +498,11 @@ func TestProviderCallback(t *testing.T) {
 		code: 403,
 		err:  "The provided login token was associated with a different user.\n",
 	}, {
-		name:                       "No existing provider",
-		redirectUrl:                "http://localhost:8080",
+		name:        "No existing provider",
+		redirectUrl: "http://localhost:8080",
+		// such fallback config is stored when generating the authorization URL, but here we mock
+		// the state response, so let's provide the fallback ourselves.
+		config:                     []byte(`{}`),
 		code:                       307,
 		projectIDBySessionNumCalls: 2,
 		storeMockSetup: func(store *mockdb.MockStore) {
@@ -513,7 +516,7 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderNotFound(store)
 		},
-		config: []byte(`{"missing_github_key": true}`),
+		config: []byte(`{`),
 		code:   http.StatusBadRequest,
 	}}
 

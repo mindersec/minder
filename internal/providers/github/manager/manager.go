@@ -112,7 +112,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 	// previously this was done by checking the name, I think this is safer
 	if class == db.ProviderClassGithub {
 		// TODO: Parsing will change based on version
-		cfg, err := clients.ParseV1OAuthConfig(config.Definition)
+		cfg, err := clients.ParseAndMergeV1OAuthConfig(config.Definition)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing github config: %w", err)
 		}
@@ -131,7 +131,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return cli, nil
 	}
 
-	_, cfg, err := clients.ParseV1AppConfig(config.Definition)
+	_, cfg, err := clients.ParseAndMergeV1AppConfig(config.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -266,7 +266,7 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	_, cfg, err := clients.ParseV1AppConfig(prov.Definition)
+	_, cfg, err := clients.ParseAndMergeV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -276,7 +276,7 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error reading private key: %w", err)
 	}
 
-	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.config.GitHubApp.AppID, privateKey, cfg.Endpoint,
+	credential := credentials.NewGitHubInstallationTokenCredential(ctx, g.config.GitHubApp.AppID, privateKey, cfg.GetEndpoint(),
 		installation.AppInstallationID)
 
 	zerolog.Ctx(ctx).
@@ -299,20 +299,11 @@ type credentialDetails struct {
 	isOrg       bool
 }
 
-func (g *githubProviderManager) GetConfig(
-	ctx context.Context, class db.ProviderClass, userConfig json.RawMessage,
-) (json.RawMessage, error) {
-	if !slices.Contains(g.GetSupportedClasses(), class) {
-		return nil, fmt.Errorf("provider does not implement %s", string(class))
-	}
-
-	return g.ghService.GetConfig(ctx, class, userConfig)
-}
-
 func (g *githubProviderManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
 ) (json.RawMessage, error) {
 	var marshalledConfig json.RawMessage
+	var err error
 
 	if !slices.Contains(g.GetSupportedClasses(), class) {
 		return nil, fmt.Errorf("provider does not implement %s", string(class))
@@ -321,20 +312,12 @@ func (g *githubProviderManager) MarshallConfig(
 	// nolint:exhaustive // we really want handle only the two
 	switch class {
 	case db.ProviderClassGithub:
-		oauthCfg, err := clients.ParseV1OAuthConfig(config)
-		if err != nil {
-			return nil, err
-		}
-		marshalledConfig, err = clients.MarshalV1OAuthConfig(oauthCfg)
+		marshalledConfig, err = clients.MarshalV1OAuthConfig(config)
 		if err != nil {
 			return nil, err
 		}
 	case db.ProviderClassGithubApp:
-		pcfg, appCfg, err := clients.ParseV1AppConfig(config)
-		if err != nil {
-			return nil, err
-		}
-		marshalledConfig, err = clients.MarshalV1AppConfig(pcfg, appCfg)
+		marshalledConfig, err = clients.MarshalV1AppConfig(config)
 		if err != nil {
 			return nil, err
 		}

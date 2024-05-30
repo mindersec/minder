@@ -73,6 +73,7 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 		Patch         map[string]any
 		MergedConfig  json.RawMessage
 		ExpectedError string
+		ValidConfig   bool
 	}{
 		{
 			Name:          "Enabling the auto_enroll field",
@@ -83,18 +84,28 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 					"enabled": []string{"repository"},
 				},
 			},
-			MergedConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
+			MergedConfig: json.RawMessage(`{"auto_registration":{"enabled":["repository"]}}`),
+			ValidConfig:  true,
 		},
 		{
 			Name:          "Disabling the auto_enroll field",
 			Provider:      githubAppProvider,
 			CurrentConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
+			Patch:         map[string]any{},
+			MergedConfig:  json.RawMessage(`{}`),
+			ValidConfig:   true,
+		},
+		{
+			Name:          "Invalid config doesn't call the store.Update method",
+			Provider:      githubAppProvider,
+			CurrentConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
 			Patch: map[string]any{
 				"auto_registration": map[string]any{
-					"enabled": []string{},
+					"enabled": []string{"my_little_pony"},
 				},
 			},
-			MergedConfig: json.RawMessage(`{ "auto_registration": { "enabled": [] }, "github-app": {}}`),
+			ValidConfig:   false,
+			ExpectedError: "error validating provider config: invalid config",
 		},
 	}
 
@@ -119,9 +130,23 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 				Return(dbProvider, nil).
 				Times(1)
 
-			store.EXPECT().Update(ctx, dbProvider.ID, dbProvider.ProjectID, &configMatcher{expected: scenario.MergedConfig}).
-				Return(nil).
-				Times(1)
+			if scenario.ValidConfig {
+				configPatchJson, err := json.Marshal(scenario.Patch)
+				require.NoError(t, err)
+
+				classManager.EXPECT().MarshallConfig(ctx, dbProvider.Class, &configMatcher{expected: configPatchJson}).
+					Return(configPatchJson, nil).
+					Times(1)
+				store.EXPECT().Update(ctx, dbProvider.ID, dbProvider.ProjectID, &configMatcher{expected: scenario.MergedConfig}).
+					Return(nil).
+					Times(1)
+			} else {
+				classManager.EXPECT().MarshallConfig(ctx, dbProvider.Class, gomock.Any()).
+					Return(nil, errors.New("invalid config")).
+					Times(1)
+				store.EXPECT().Update(ctx, dbProvider.ID, dbProvider.ProjectID, gomock.Any()).
+					Times(0)
+			}
 
 			err = provManager.PatchProviderConfig(ctx, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Patch)
 			if scenario.ExpectedError != "" {
@@ -132,6 +157,7 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 		})
 	}
 }
+
 func TestProviderManager_CreateFromConfig(t *testing.T) {
 	t.Parallel()
 
@@ -177,7 +203,6 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 
 			classManager := mockmanager.NewMockProviderClassManager(ctrl)
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
-			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
 			if scenario.ValidateConfigErr {
 				classManager.EXPECT().MarshallConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).
 					Return(nil, fmt.Errorf("invalid config")).MaxTimes(1)

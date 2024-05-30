@@ -21,6 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
@@ -142,7 +143,7 @@ func TestNewRuleRemediator(t *testing.T) {
 }
 
 func HTTPProvider() (provifv1.Provider, error) {
-	cfg := pb.RESTProviderConfig{BaseUrl: "https://api.github.com/"}
+	cfg := pb.RESTProviderConfig{BaseUrl: proto.String("https://api.github.com/")}
 	return httpclient.NewREST(
 		&cfg,
 		telemetry.NewNoopMetrics(),

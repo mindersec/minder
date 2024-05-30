@@ -19,7 +19,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"dario.cat/mergo"
 	gogithub "github.com/google/go-github/v61/github"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
@@ -84,7 +86,7 @@ func NewRestClient(
 	ghClientFactory GitHubClientFactory,
 	owner string,
 ) (*github.GitHub, error) {
-	ghClient, delegate, err := ghClientFactory.BuildOAuthClient(cfg.Endpoint, credential, owner)
+	ghClient, delegate, err := ghClientFactory.BuildOAuthClient(cfg.GetEndpoint(), credential, owner)
 	if err != nil {
 		return nil, err
 	}
@@ -99,29 +101,50 @@ func NewRestClient(
 }
 
 type oauthConfigWrapper struct {
-	GitHub *minderv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
+	GitHub *minderv1.GitHubProviderConfig `json:"github,omitempty" yaml:"github" mapstructure:"github" validate:"required"`
 }
 
-// ParseV1OAuthConfig parses the raw config into a GitHubConfig struct
-func ParseV1OAuthConfig(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
+func getDefaultOAuthConfig() oauthConfigWrapper {
+	return oauthConfigWrapper{
+		GitHub: &minderv1.GitHubProviderConfig{
+			Endpoint: proto.String("https://api.github.com/"),
+		},
+	}
+}
+
+// ParseAndMergeV1OAuthConfig parses the raw config into a GitHubConfig struct
+func ParseAndMergeV1OAuthConfig(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
+	mergedCfg := getDefaultOAuthConfig()
+
 	var w oauthConfigWrapper
-	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
-		return nil, err
+	if err := json.Unmarshal(rawCfg, &w); err != nil {
+		return nil, fmt.Errorf("error parsing GitHubOAuth v1 provider user config: %w", err)
+	}
+
+	if err := mergo.Map(&mergedCfg, w, mergo.WithOverride); err != nil {
+		return nil, fmt.Errorf("error merging GitHubOAuth v1 provider config: %w", err)
 	}
 
 	// Validate the config according to the protobuf validation rules.
-	if err := w.GitHub.Validate(); err != nil {
+	if err := mergedCfg.GitHub.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating GitHubOAuth v1 provider config: %w", err)
 	}
 
-	return w.GitHub, nil
+	return mergedCfg.GitHub, nil
 }
 
 // MarshalV1OAuthConfig marshals the GitHubConfig struct into a raw config
-func MarshalV1OAuthConfig(cfg *minderv1.GitHubProviderConfig) (json.RawMessage, error) {
-	w := oauthConfigWrapper{
-		GitHub: cfg,
+func MarshalV1OAuthConfig(rawCfg json.RawMessage) (json.RawMessage, error) {
+	var w oauthConfigWrapper
+	if err := json.Unmarshal(rawCfg, &w); err != nil {
+		return nil, err
 	}
+
+	err := w.GitHub.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("error validating provider config: %w", err)
+	}
+
 	return json.Marshal(w)
 }
 

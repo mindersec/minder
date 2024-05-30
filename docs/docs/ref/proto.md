@@ -682,7 +682,7 @@ Namespace: is the namespace for the DockerHub provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| namespace | [string](#string) |  | namespace is the namespace for the DockerHub provider. |
+| namespace | [string](#string) | optional | namespace is the namespace for the DockerHub provider. |
 
 
 <a name="minder-v1-EntityAutoRegistrationConfig"></a>
@@ -693,7 +693,7 @@ Namespace: is the namespace for the DockerHub provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| enabled | [bool](#bool) |  |  |
+| enabled | [bool](#bool) | optional |  |
 
 
 <a name="minder-v1-EntityTypedId"></a>
@@ -733,7 +733,7 @@ Namespace: is the namespace for the GHCR provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| namespace | [string](#string) |  | namespace is the namespace for the GHCR provider. |
+| namespace | [string](#string) | optional | namespace is the namespace for the GHCR provider. |
 
 
 <a name="minder-v1-GetArtifactByIdRequest"></a>
@@ -1091,7 +1091,7 @@ GitHubAppProviderConfig contains the configuration for the GitHub App provider
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+| endpoint | [string](#string) | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
 <a name="minder-v1-GitHubProviderConfig"></a>
@@ -1108,7 +1108,7 @@ naming convention
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+| endpoint | [string](#string) | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
 <a name="minder-v1-GitType"></a>
@@ -1697,7 +1697,7 @@ ProviderConfig contains the generic configuration for a provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  | auto_registration is the configuration for auto-registering entities. |
+| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) | optional | auto_registration is the configuration for auto-registering entities. |
 
 
 <a name="minder-v1-ProviderParameter"></a>
@@ -1737,7 +1737,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
+| base_url | [string](#string) | optional | base_url is the base URL for the REST provider. |
 
 
 <a name="minder-v1-ReconcileEntityRegistrationRequest"></a>
