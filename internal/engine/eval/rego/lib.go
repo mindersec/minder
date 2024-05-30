@@ -29,8 +29,8 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
-	frizgh "github.com/stacklok/frizbee/pkg/ghactions"
-	"gopkg.in/yaml.v3"
+	"github.com/stacklok/frizbee/pkg/replacer"
+	"github.com/stacklok/frizbee/pkg/utils/config"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
@@ -358,20 +358,17 @@ func ListGithubActions(res *engif.Result) func(*rego.Rego) {
 			}
 
 			var terms []*ast.Term
-			err := frizgh.TraverseGitHubActionWorkflows(res.Fs, base, func(_ string, wflow *yaml.Node) error {
-				actions, err := frizgh.ListActionsInYAML(wflow)
-				if err != nil {
-					return err
-				}
 
-				for _, a := range actions {
-					terms = append(terms, ast.StringTerm(a.Action))
-				}
-
-				return nil
-			})
+			// Parse the ingested file system and extract all action references
+			r := replacer.NewGitHubActionsReplacer(&config.Config{})
+			actions, err := r.ListPathInFS(res.Fs, base)
 			if err != nil {
 				return nil, err
+			}
+
+			// Save the action names
+			for _, a := range actions.Entities {
+				terms = append(terms, ast.StringTerm(a.Name))
 			}
 
 			return ast.SetTerm(terms...), nil

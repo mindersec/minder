@@ -309,3 +309,5 @@ require (
 	k8s.io/klog/v2 v2.120.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/stacklok/frizbee v0.0.15 => ../frizbee
