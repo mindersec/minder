@@ -85,6 +85,10 @@ bootstrap: ## install build deps
 	# Make sure the keys are readable by the docker user
 	chmod 644 .ssh/*
 
+.PHONY: generate-encryption-key
+generate-encryption-key:	## Generates an encryption key that's useful for encrypting minder secrets.
+	@openssl rand -base64 32
+
 .PHONY: lint-fix
 lint-fix: ## fix all linting issues which can be automatically fixed
 	golangci-lint run --fix
