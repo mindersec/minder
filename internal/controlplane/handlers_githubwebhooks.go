@@ -345,6 +345,9 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			// This is added for consistency with logs in
+			// Entity Execution Aggregator
+			Str("event", m.UUID).
 			Logger()
 		ctx = l.WithContext(ctx)
 
@@ -380,14 +383,19 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
 			if err := res.iiw.ToMessage(m); err != nil {
 				wes.Error = true
-				log.Printf("Error creating event: %v", err)
+				l.Error().Err(err).Msg("Error creating event")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
+			// This ensures that loggers on downstream
+			// processors have all log attributes
+			// available.
+			m.SetContext(ctx)
+
 			if err := s.evt.Publish(res.topic, m); err != nil {
 				wes.Error = true
-				log.Printf("Error publishing message: %v", err)
+				l.Error().Err(err).Msg("Error publishing message")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -442,6 +450,9 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			// This is added for consistency with logs in
+			// Entity Execution Aggregator
+			Str("event", m.UUID).
 			Logger()
 		ctx = l.WithContext(ctx)
 
@@ -509,15 +520,20 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		if res != nil && res.eiw != nil {
 			if err := res.eiw.ToMessage(m); err != nil {
 				wes.Error = true
-				log.Printf("Error creating event: %v", err)
+				l.Error().Err(err).Msg("Error creating event")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
+			// This ensures that loggers on downstream
+			// processors have all log attributes
+			// available.
+			m.SetContext(ctx)
+
 			// Publish the message to the event router
 			if err := s.evt.Publish(res.topic, m); err != nil {
 				wes.Error = true
-				log.Printf("Error publishing message: %v", err)
+				l.Error().Err(err).Msg("Error publishing message")
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -678,7 +694,7 @@ func (s *Server) processRelevantRepositoryEvent(
 	}
 
 	// This only makes sense for "meta" event type
-	if dbrepo.WebhookID.Valid {
+	if event.GetHookID() != 0 && dbrepo.WebhookID.Valid {
 		// Check if the payload webhook ID matches the one we
 		// have stored in the DB for this repository
 		if event.GetHookID() != dbrepo.WebhookID.Int64 {
