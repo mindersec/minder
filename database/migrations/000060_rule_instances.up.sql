@@ -24,8 +24,7 @@ CREATE TABLE IF NOT EXISTS rule_instances(
     params       JSONB NOT NULL,
     created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP NOT NULL DEFAULT NOW(),
-    -- equivalent to constraint on entity_profile_rules
-    UNIQUE (profile_id, entity_type, rule_type_id),
+    -- equivalent to constraints enforced by rule validation
     UNIQUE (profile_id, entity_type, name)
 );
 
