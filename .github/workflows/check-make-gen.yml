@@ -1,0 +1,28 @@
+on:
+  workflow_call:
+jobs:
+  build:
+    name: Verify make gen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Extract version of Go to use
+        run: echo "GOVERSION=$(sed -n 's/^go \([0-9.]*\)/\1/p' go.mod)" >> $GITHUB_ENV
+      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        with:
+          go-version-file: 'go.mod'
+      - name: Run make gen
+        run: make gen
+      - name: Check for uncommitted changes
+        run: |
+          if [ -n "$(git diff)" ]; then
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            echo -e "\e[91m* Uncommitted changes found. Please run 'make gen' and commit the changes.                   *\e[0m"
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            git diff
+            exit 1
+          else
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+            echo -e "\e[92m* No uncommitted changes found.                                                              *\e[0m"
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+          fi

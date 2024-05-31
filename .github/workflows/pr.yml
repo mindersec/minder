@@ -22,6 +22,8 @@ permissions:
   contents: read
 
 jobs:
+  check-make-gen:
+    uses: ./.github/workflows/check-make-gen.yml
   license-check:
     uses: ./.github/workflows/license-check.yml
   lint:
