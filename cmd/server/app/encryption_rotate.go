@@ -51,8 +51,8 @@ var rotateCmd = &cobra.Command{
 		}
 
 		// ensure that the new config structure is set - otherwise bad things will happen
-		if cfg.Crypto.Default.KeyID == "" || cfg.Crypto.Default.Algorithm == "" {
-			cliErrorf(cmd, "defaults not defined in crypto config - exiting")
+		if cfg.Crypto.Default.KeyID == "" {
+			cliErrorf(cmd, "default key ID not defined in crypto config - exiting")
 		}
 
 		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
@@ -133,7 +133,7 @@ func runRotationBatch(
 	cfg *serverconfig.CryptoConfig,
 ) (int64, error) {
 	batch, err := store.ListTokensToMigrate(ctx, db.ListTokensToMigrateParams{
-		DefaultAlgorithm:  cfg.Default.Algorithm,
+		DefaultAlgorithm:  string(crypto.DefaultAlgorithm),
 		DefaultKeyVersion: cfg.Default.KeyID,
 		BatchOffset:       offset,
 		BatchSize:         batchSize,

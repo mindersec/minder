@@ -41,8 +41,7 @@ func TestNewFromCryptoConfig(t *testing.T) {
 				},
 			},
 			Default: server.DefaultCrypto{
-				KeyID:     "test_encryption_key",
-				Algorithm: string(algorithms.Aes256Cfb),
+				KeyID: "test_encryption_key",
 			},
 		},
 	}
@@ -70,51 +69,6 @@ func TestNewRejectsEmptyConfig(t *testing.T) {
 	require.ErrorContains(t, err, "no encryption keys configured")
 }
 
-func TestNewRejectsBadAlgo(t *testing.T) {
-	t.Parallel()
-
-	config := &server.Config{
-		Crypto: server.CryptoConfig{
-			KeyStore: server.KeyStoreConfig{
-				Type: "local",
-				Local: server.LocalKeyStoreConfig{
-					KeyDir: "./testdata",
-				},
-			},
-			Default: server.DefaultCrypto{
-				KeyID:     "test_encryption_key",
-				Algorithm: "I'm a little teapot",
-			},
-		},
-	}
-	_, err := NewEngineFromConfig(config)
-	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
-}
-
-func TestNewRejectsBadFallbackAlgo(t *testing.T) {
-	t.Parallel()
-
-	config := &server.Config{
-		Crypto: server.CryptoConfig{
-			KeyStore: server.KeyStoreConfig{
-				Type: "local",
-				Local: server.LocalKeyStoreConfig{
-					KeyDir: "./testdata",
-				},
-			},
-			Default: server.DefaultCrypto{
-				KeyID:     "test_encryption_key",
-				Algorithm: string(algorithms.Aes256Cfb),
-			},
-			Fallback: server.FallbackCrypto{
-				Algorithm: "what even is this?",
-			},
-		},
-	}
-	_, err := NewEngineFromConfig(config)
-	require.ErrorIs(t, err, algorithms.ErrUnknownAlgorithm)
-}
-
 func TestEncryptDecryptBytes(t *testing.T) {
 	t.Parallel()
 
@@ -131,7 +85,8 @@ func TestEncryptDecryptBytes(t *testing.T) {
 func TestFallbackDecrypt(t *testing.T) {
 	t.Parallel()
 
-	// instantiate engine with CFB as default algorithm
+	// instantiate engine with test_encryption_key
+	// as default key
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 
@@ -140,8 +95,8 @@ func TestFallbackDecrypt(t *testing.T) {
 	encrypted, err := engine.EncryptString(sampleData)
 	require.NoError(t, err)
 
-	// Create new config where we introduce a new default algorithm
-	// and make CFB the fallback.
+	// Create new config where we introduce a new key, and the old key as a
+	// fallback.
 	newConfig := &server.Config{
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
@@ -151,12 +106,10 @@ func TestFallbackDecrypt(t *testing.T) {
 				},
 			},
 			Default: server.DefaultCrypto{
-				KeyID:     "test_encryption_key",
-				Algorithm: string(algorithms.Aes256Gcm),
+				KeyID: "test_encryption_key2",
 			},
 			Fallback: server.FallbackCrypto{
-				Algorithm: string(algorithms.Aes256Cfb),
-				KeyID:     "test_encryption_key2",
+				KeyID: "test_encryption_key",
 			},
 		},
 	}

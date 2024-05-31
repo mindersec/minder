@@ -60,6 +60,13 @@ type engine struct {
 	defaultAlgorithm    algorithms.Type
 }
 
+const (
+	// DefaultAlgorithm defines the default algorithm to use for encryption.
+	DefaultAlgorithm = algorithms.Aes256Gcm
+	// FallbackAlgorithm defines an older algorithm we use for old data.
+	FallbackAlgorithm = algorithms.Aes256Cfb
+)
+
 // NewEngineFromConfig creates a new crypto engine from the service config
 // TODO: modify to support multiple keys/algorithms
 func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
@@ -82,22 +89,14 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 		return nil, fmt.Errorf("unable to create keystore: %s", err)
 	}
 
-	defaultAlgorithm, err := algorithms.TypeFromString(cryptoCfg.Default.Algorithm)
-	if err != nil {
-		return nil, fmt.Errorf("unexpected default algorithm: %w", err)
+	// Instantiate all the algorithms we need
+	algoTypes := []algorithms.Type{
+		DefaultAlgorithm,
+		FallbackAlgorithm,
 	}
 
-	// Instantiate all the algorithms we need
-	algoNames := []string{cryptoCfg.Default.Algorithm}
-	if cryptoCfg.Fallback.Algorithm != "" {
-		algoNames = append(algoNames, cryptoCfg.Fallback.Algorithm)
-	}
-	supportedAlgorithms := make(algorithmsByName, len(algoNames))
-	for _, algoName := range algoNames {
-		algoType, err := algorithms.TypeFromString(algoName)
-		if err != nil {
-			return nil, err
-		}
+	supportedAlgorithms := make(algorithmsByName, len(algoTypes))
+	for _, algoType := range algoTypes {
 		algorithm, err := algorithms.NewFromType(algoType)
 		if err != nil {
 			return nil, err
@@ -108,7 +107,7 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 	return &engine{
 		keystore:            keystore,
 		supportedAlgorithms: supportedAlgorithms,
-		defaultAlgorithm:    defaultAlgorithm,
+		defaultAlgorithm:    DefaultAlgorithm,
 		defaultKeyID:        cryptoCfg.Default.KeyID,
 	}, nil
 }
@@ -238,8 +237,7 @@ func convertToCryptoConfig(a *serverconfig.AuthConfig) (serverconfig.CryptoConfi
 			},
 		},
 		Default: serverconfig.DefaultCrypto{
-			KeyID:     name,
-			Algorithm: string(algorithms.Aes256Cfb),
+			KeyID: name,
 		},
 	}, nil
 }
