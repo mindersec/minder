@@ -1529,6 +1529,50 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "repository deleted had hook",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository
+			event: "repository",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
+			payload: &github.RepositoryEvent{
+				Action: github.String("deleted"),
+				Repo: &github.Repository{
+					ID:       github.Int64(12345),
+					Name:     github.String("minder"),
+					FullName: github.String("stacklok/minder"),
+					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+				},
+			},
+			mockStoreFunc: newMockStore(
+				withSuccessfulGetRepositoryByRepoID(
+					db.Repository{
+						ID:         repositoryID,
+						ProjectID:  projectID,
+						RepoID:     12345,
+						Provider:   providerName,
+						ProviderID: providerID,
+						WebhookID: sql.NullInt64{
+							Int64: 12345,
+							Valid: true,
+						},
+					},
+				),
+			),
+			topic:      events.TopicQueueReconcileEntityDelete,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
+		},
+		{
 			name: "repository edited",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#repository
 			event: "repository",
