@@ -88,9 +88,29 @@ installed in the namespace specified by your current Kubernetes context.
 | migrationSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy to use for the migration job |
 | migrationSettings.resources | object | `{"limits":{"cpu":1,"memory":"300Mi"},"requests":{"cpu":"200m","memory":"200Mi"}}` | Resources to use for the migration job |
 | migrationSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
+| rotateProviderTokensJobSettings.extraEnv | list | `[]` |  |
+| rotateProviderTokensJobSettings.extraVolumeMounts | list | `[]` |  |
+| rotateProviderTokensJobSettings.extraVolumes | list | `[]` |  |
+| rotateProviderTokensJobSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
+| rotateProviderTokensJobSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
+| rotateProviderTokensJobSettings.resources | object | `{}` |  |
+| rotateProviderTokensJobSettings.restartPolicy | string | `"OnFailure"` |  |
+| rotateProviderTokensJobSettings.schedule | string | `"0 2 * * *"` |  |
+| rotateProviderTokensJobSettings.sidecarContainers | list | `[]` |  |
 | service.grpcPort | int | `8090` | Port for the gRPC API |
 | service.httpPort | int | `8080` | Port for the HTTP API |
 | service.metricPort | int | `9090` | Port for the metrics endpoint |
 | serviceAccounts.migrate | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
+| serviceAccounts.rotateProviderTokensJob | string | `""` |  |
 | serviceAccounts.server | string, optional | `""` | If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount |
+| serviceAccounts.sessionExpirationPurgeJob | string | `""` |  |
+| sessionExpirationPurgeJobSettings.extraEnv | list | `[]` |  |
+| sessionExpirationPurgeJobSettings.extraVolumeMounts | list | `[]` |  |
+| sessionExpirationPurgeJobSettings.extraVolumes | list | `[]` |  |
+| sessionExpirationPurgeJobSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
+| sessionExpirationPurgeJobSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
+| sessionExpirationPurgeJobSettings.resources | object | `{}` |  |
+| sessionExpirationPurgeJobSettings.restartPolicy | string | `"OnFailure"` |  |
+| sessionExpirationPurgeJobSettings.schedule | string | `"0 0 * * *"` |  |
+| sessionExpirationPurgeJobSettings.sidecarContainers | list | `[]` |  |
 | trusty.endpoint | string | `"https://api.trustypkg.dev"` | Trusty host to use |
