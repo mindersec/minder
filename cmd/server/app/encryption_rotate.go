@@ -57,6 +57,11 @@ var rotateCmd = &cobra.Command{
 
 		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
 
+		zerolog.Ctx(ctx).Debug().
+			Str("default_key_id", cfg.Crypto.Default.KeyID).
+			Str("default_algorithm", string(crypto.DefaultAlgorithm)).
+			Msg("default encryption settings")
+
 		// instantiate `db.Store` so we can run queries
 		store, closer, err := wireUpDB(ctx, cfg)
 		if err != nil {
@@ -161,7 +166,7 @@ func runRotationBatch(
 			return 0, tokenError(token.ID, "secret retrieval", errors.New("no encrypted secret found"))
 		}
 
-		zerolog.Ctx(ctx).Info().
+		zerolog.Ctx(ctx).Debug().
 			Int32("token_id", token.ID).
 			Str("key_version", oldSecret.KeyVersion).
 			Str("algorithm", string(oldSecret.Algorithm)).

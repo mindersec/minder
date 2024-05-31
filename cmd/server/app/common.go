@@ -29,7 +29,7 @@ import (
 // This file contains logic shared between different commands.
 
 func wireUpDB(ctx context.Context, cfg *serverconfig.Config) (db.Store, func(), error) {
-	zerolog.Ctx(ctx).Info().
+	zerolog.Ctx(ctx).Debug().
 		Str("name", cfg.Database.Name).
 		Str("host", cfg.Database.Host).
 		Str("user", cfg.Database.User).
