@@ -151,32 +151,32 @@ func runRotationBatch(
 		if token.EncryptedAccessToken.Valid {
 			deserialized, err := crypto.DeserializeEncryptedData(token.EncryptedAccessToken.RawMessage)
 			if err != nil {
-				return 0, tokenError(token.ID, err)
+				return 0, tokenError(token.ID, "secret deserialization", err)
 			}
 			oldSecret = deserialized
 		} else if token.EncryptedToken.Valid {
 			oldSecret = crypto.NewBackwardsCompatibleEncryptedData(token.EncryptedToken.String)
 		} else {
 			// this should never happen
-			return 0, tokenError(token.ID, errors.New("no encrypted secret found"))
+			return 0, tokenError(token.ID, "secret retrieval", errors.New("no encrypted secret found"))
 		}
 
 		// decrypt the secret
 		decrypted, err := engine.DecryptOAuthToken(oldSecret)
 		if err != nil {
-			return 0, tokenError(token.ID, err)
+			return 0, tokenError(token.ID, "decryption", err)
 		}
 
 		// re-encrypt it with new key/algorithm
 		encrypted, err := engine.EncryptOAuthToken(&decrypted)
 		if err != nil {
-			return 0, tokenError(token.ID, err)
+			return 0, tokenError(token.ID, "encryption", err)
 		}
 
 		// update DB
 		serialized, err := encrypted.Serialize()
 		if err != nil {
-			return 0, tokenError(token.ID, err)
+			return 0, tokenError(token.ID, "secret serialization", err)
 		}
 
 		zerolog.Ctx(ctx).
@@ -188,15 +188,15 @@ func runRotationBatch(
 			Secret: serialized,
 		})
 		if err != nil {
-			return 0, tokenError(token.ID, err)
+			return 0, tokenError(token.ID, "secret update in database", err)
 		}
 	}
 
 	return int64(len(batch)), nil
 }
 
-func tokenError(tokenID int32, err error) error {
-	return fmt.Errorf("unable to re-encrypt provider token %d: %s", tokenID, err)
+func tokenError(tokenID int32, action string, err error) error {
+	return fmt.Errorf("unable to re-encrypt provider token %d during %s: %s", tokenID, action, err)
 }
 
 func init() {
