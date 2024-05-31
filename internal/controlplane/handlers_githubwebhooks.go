@@ -33,7 +33,6 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/artifacts"
@@ -317,6 +316,8 @@ type processingResult struct {
 func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		l := zerolog.Ctx(ctx).With().Logger()
+
 		wes := &metrics.WebhookEventState{
 			Typ:      "unknown",
 			Accepted: false,
@@ -328,7 +329,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 
 		rawWBPayload, err := s.ghProviders.ValidateGitHubAppWebhookPayload(r)
 		if err != nil {
-			log.Printf("Error validating webhook payload: %v", err)
+			l.Info().Err(err).Msg("Error validating webhook payload")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -341,13 +342,13 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/")
 		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
 
-		l := zerolog.Ctx(ctx).With().
+		l = l.With().
 			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
-			// This is added for consistency with logs in
-			// Entity Execution Aggregator
-			Str("event", m.UUID).
+			// This is added for consistency with how
+			// watermill tracks message UUID when logging.
+			Str("message_uuid", m.UUID).
 			Logger()
 		ctx = l.WithContext(ctx)
 
@@ -369,7 +370,7 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 		}
 
 		if processingErr != nil {
-			wes = handleParseError(wes.Typ, processingErr)
+			wes = handleParseError(ctx, wes.Typ, processingErr)
 			if wes.Error {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -412,6 +413,9 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 // nolint:gocyclo
 func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		l := zerolog.Ctx(ctx).With().Logger()
+
 		wes := &metrics.WebhookEventState{
 			Typ:      "unknown",
 			Accepted: false,
@@ -431,7 +435,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 
 		rawWBPayload, err := validatePayloadSignature(r, &s.cfg.WebhookConfig)
 		if err != nil {
-			log.Printf("Error validating webhook payload: %v", err)
+			l.Info().Err(err).Msg("Error validating webhook payload")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -445,14 +449,13 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
 		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
 
-		ctx := r.Context()
-		l := zerolog.Ctx(ctx).With().
+		l = l.With().
 			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
 			Str("providertype", m.Metadata[events.ProviderTypeKey]).
 			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
-			// This is added for consistency with logs in
-			// Entity Execution Aggregator
-			Str("event", m.UUID).
+			// This is added for consistency with how
+			// watermill tracks message UUID when logging.
+			Str("message_uuid", m.UUID).
 			Logger()
 		ctx = l.WithContext(ctx)
 
@@ -506,7 +509,7 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		}
 
 		if processingErr != nil {
-			wes = handleParseError(wes.Typ, processingErr)
+			wes = handleParseError(ctx, wes.Typ, processingErr)
 			if wes.Error {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -583,6 +586,8 @@ func (s *Server) processPackageEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
+	l := zerolog.Ctx(ctx)
+
 	var event *packageEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
@@ -592,7 +597,7 @@ func (s *Server) processPackageEvent(
 		return nil, errors.New("invalid event: action is nil")
 	}
 	if event.Package == nil || event.Repo == nil {
-		log.Printf("could not determine relevant entity for event. Skipping execution.")
+		l.Info().Msg("could not determine relevant entity for event. Skipping execution.")
 		return nil, errNotHandled
 	}
 
@@ -613,13 +618,13 @@ func (s *Server) processPackageEvent(
 
 	provider, err := s.providerManager.InstantiateFromID(ctx, dbrepo.ProviderID)
 	if err != nil {
-		log.Printf("error instantiating provider: %v", err)
+		l.Error().Err(err).Msg("error instantiating provider")
 		return nil, err
 	}
 
 	cli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
-		log.Printf("error instantiating provider: %v", err)
+		l.Error().Err(err).Msg("error instantiating provider")
 		return nil, err
 	}
 
@@ -773,6 +778,8 @@ func (s *Server) processPullRequestEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
+	l := zerolog.Ctx(ctx)
+
 	var event *pullRequestEvent
 	if err := json.Unmarshal(payload, &event); err != nil {
 		return nil, err
@@ -812,13 +819,13 @@ func (s *Server) processPullRequestEvent(
 
 	provider, err := s.providerManager.InstantiateFromID(ctx, dbrepo.ProviderID)
 	if err != nil {
-		log.Printf("error instantiating provider: %v", err)
+		l.Error().Err(err).Msg("error instantiating provider")
 		return nil, err
 	}
 
 	cli, err := provifv1.As[provifv1.GitHub](provider)
 	if err != nil {
-		log.Printf("error instantiating provider: %v", err)
+		l.Error().Err(err).Msg("error instantiating provider")
 		return nil, err
 	}
 
@@ -841,7 +848,7 @@ func (s *Server) processPullRequestEvent(
 		return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
 	}
 
-	log.Printf("evaluating PR %+v", prEvalInfo)
+	l.Info().Msgf("evaluating PR %+v", prEvalInfo)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithPullRequest(prEvalInfo).
@@ -909,10 +916,12 @@ func (s *Server) fetchRepo(
 	ctx context.Context,
 	repo *repo,
 ) (*db.Repository, error) {
+	l := zerolog.Ctx(ctx)
+
 	dbrepo, err := s.store.GetRepositoryByRepoID(ctx, repo.GetID())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("repository %d not found", repo.GetID())
+			l.Info().Msgf("repository %d not found", repo.GetID())
 			// no use in continuing if the repository doesn't exist
 			return nil, fmt.Errorf("repository %d not found: %w",
 				repo.GetID(),
@@ -1027,30 +1036,30 @@ func validatePreviousSecrets(
 	return
 }
 
-func handleParseError(typ string, parseErr error) *metrics.WebhookEventState {
+func handleParseError(ctx context.Context, typ string, parseErr error) *metrics.WebhookEventState {
 	state := &metrics.WebhookEventState{Typ: typ, Accepted: false, Error: true}
+	l := zerolog.Ctx(ctx)
 
-	var logMsg string
 	switch {
 	case errors.Is(parseErr, errRepoNotFound):
 		state.Error = false
-		logMsg = "repository not found"
+		l.Info().Msg("repository not found")
 	case errors.Is(parseErr, errArtifactNotFound):
 		state.Error = false
-		logMsg = "artifact not found"
+		l.Info().Msg("artifact not found")
 	case errors.Is(parseErr, errRepoIsPrivate):
 		state.Error = false
-		logMsg = "repository is private"
+		l.Info().Msg("repository is private")
 	case errors.Is(parseErr, errNotHandled):
 		state.Error = false
-		logMsg = fmt.Sprintf("webhook event not handled (%v)", parseErr)
+		l.Info().Msg("webhook event not handled")
 	case errors.Is(parseErr, errArtifactVersionSkipped):
 		state.Error = false
-		logMsg = "artifact version skipped, has no tags"
+		l.Info().Msg("artifact version skipped, has no tags")
 	default:
-		logMsg = fmt.Sprintf("Error parsing github webhook message: %v", parseErr)
+		l.Error().Err(parseErr).Msg("Error parsing github webhook message")
 	}
-	log.Print(logMsg)
+
 	return state
 }
 
@@ -1203,6 +1212,8 @@ func (s *Server) reconcilePrWithDb(
 	dbrepo db.Repository,
 	prEvalInfo *pb.PullRequest,
 ) (*db.PullRequest, error) {
+	l := zerolog.Ctx(ctx)
+
 	var retErr error
 	var retPr *db.PullRequest
 
@@ -1235,7 +1246,7 @@ func (s *Server) reconcilePrWithDb(
 		retPr = nil
 		retErr = errNotHandled
 	default:
-		log.Printf("action %s is not handled for pull requests", prEvalInfo.Action)
+		l.Info().Msgf("action %s is not handled for pull requests", prEvalInfo.Action)
 		retPr = nil
 		retErr = errNotHandled
 	}
