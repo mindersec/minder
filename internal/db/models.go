@@ -462,6 +462,7 @@ type EntityProfile struct {
 	ContextualRules json.RawMessage `json:"contextual_rules"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
+	Migrated        bool            `json:"migrated"`
 }
 
 type EntityProfileRule struct {
@@ -635,6 +636,18 @@ type RuleEvaluation struct {
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	RuleName      string        `json:"rule_name"`
+}
+
+type RuleInstance struct {
+	ID         uuid.UUID             `json:"id"`
+	ProfileID  uuid.UUID             `json:"profile_id"`
+	RuleTypeID uuid.UUID             `json:"rule_type_id"`
+	Name       string                `json:"name"`
+	EntityType Entities              `json:"entity_type"`
+	Def        pqtype.NullRawMessage `json:"def"`
+	Params     pqtype.NullRawMessage `json:"params"`
+	CreatedAt  time.Time             `json:"created_at"`
+	UpdatedAt  time.Time             `json:"updated_at"`
 }
 
 type RuleType struct {

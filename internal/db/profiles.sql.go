@@ -114,7 +114,14 @@ const createProfileForEntity = `-- name: CreateProfileForEntity :one
 INSERT INTO entity_profiles (
     entity,
     profile_id,
-    contextual_rules) VALUES ($1, $2, $3::jsonb) RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at
+    contextual_rules,
+    migrated
+) VALUES (
+    $1,
+    $2,
+    $3::jsonb,
+    FALSE
+) RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 
 type CreateProfileForEntityParams struct {
@@ -133,6 +140,7 @@ func (q *Queries) CreateProfileForEntity(ctx context.Context, arg CreateProfileF
 		&i.ContextualRules,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Migrated,
 	)
 	return i, err
 }
@@ -326,7 +334,7 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 }
 
 const getProfileForEntity = `-- name: GetProfileForEntity :one
-SELECT id, entity, profile_id, contextual_rules, created_at, updated_at FROM entity_profiles WHERE profile_id = $1 AND entity = $2
+SELECT id, entity, profile_id, contextual_rules, created_at, updated_at, migrated FROM entity_profiles WHERE profile_id = $1 AND entity = $2
 `
 
 type GetProfileForEntityParams struct {
@@ -344,6 +352,7 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 		&i.ContextualRules,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Migrated,
 	)
 	return i, err
 }
@@ -564,10 +573,13 @@ const upsertProfileForEntity = `-- name: UpsertProfileForEntity :one
 INSERT INTO entity_profiles (
     entity,
     profile_id,
-    contextual_rules) VALUES ($1, $2, $3::jsonb)
+    contextual_rules,
+    migrated
+) VALUES ($1, $2, $3::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
-    contextual_rules = $3::jsonb
-RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at
+    contextual_rules = $3::jsonb,
+    migrated = FALSE
+RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 
 type UpsertProfileForEntityParams struct {
@@ -586,6 +598,7 @@ func (q *Queries) UpsertProfileForEntity(ctx context.Context, arg UpsertProfileF
 		&i.ContextualRules,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Migrated,
 	)
 	return i, err
 }
