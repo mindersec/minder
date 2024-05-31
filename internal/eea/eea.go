@@ -88,7 +88,9 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 	logger := zerolog.Ctx(ctx).With().
 		Str("component", "EEA").
-		Str("event", msg.UUID).
+		// This is added for consistency with how watermill
+		// tracks message UUID when logging.
+		Str("message_uuid", msg.UUID).
 		Str("entity", inf.Type.ToString()).
 		Logger()
 
@@ -195,7 +197,9 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 	logger := zerolog.Ctx(ctx).With().
 		Str("component", "EEA").
 		Str("function", "FlushMessageHandler").
-		Str("event", msg.UUID).
+		// This is added for consistency with how watermill
+		// tracks message UUID when logging.
+		Str("message_uuid", msg.UUID).
 		Str("entity", inf.Type.ToString()).Logger()
 
 	logger.Debug().Msg("flushing event")
