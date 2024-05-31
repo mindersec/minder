@@ -29,6 +29,14 @@ import (
 // This file contains logic shared between different commands.
 
 func wireUpDB(ctx context.Context, cfg *serverconfig.Config) (db.Store, func(), error) {
+	zerolog.Ctx(ctx).Info().
+		Str("name", cfg.Database.Name).
+		Str("host", cfg.Database.Host).
+		Str("user", cfg.Database.User).
+		Str("ssl_mode", cfg.Database.SSLMode).
+		Int("port", cfg.Database.Port).
+		Msg("connecting to minder database")
+
 	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to connect to database: %w", err)
