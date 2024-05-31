@@ -42,6 +42,7 @@ spec:
               - encryption
               - purge-sessions
               - "--yes"
+              - "--db-host={{ .Values.db.host }}"
               - "--config=/config/server-config.yaml"
               # We use two config files, one with all the defaults, and one with
               # additional override values from helm.  (This is a viper feature.)
