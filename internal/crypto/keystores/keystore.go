@@ -55,8 +55,10 @@ func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
 	// Join the default key to the fallback keys to assemble the full
 	// set of keys to load.
 	keyIDs := []string{config.Default.KeyID}
+	fallbackKeyID := ""
 	if config.Fallback.KeyID != "" {
 		keyIDs = append(keyIDs, config.Fallback.KeyID)
+		fallbackKeyID = config.Fallback.KeyID
 	}
 	keys := make(keysByID, len(keyIDs))
 	for _, keyID := range keyIDs {
@@ -68,21 +70,30 @@ func NewKeyStoreFromConfig(config serverconfig.CryptoConfig) (KeyStore, error) {
 	}
 
 	return &localFileKeyStore{
-		keys: keys,
+		keys:          keys,
+		fallbackKeyID: fallbackKeyID,
 	}, nil
 }
 
 // NewKeyStoreFromMap constructs a keystore from a map of key ID to key bytes.
 // This is mostly useful for testing.
-func NewKeyStoreFromMap(keys keysByID) KeyStore {
-	return &localFileKeyStore{keys}
+func NewKeyStoreFromMap(keys keysByID, fallbackID string) KeyStore {
+	return &localFileKeyStore{keys, fallbackID}
 }
 
 type localFileKeyStore struct {
-	keys keysByID
+	keys          keysByID
+	fallbackKeyID string
 }
 
 func (l *localFileKeyStore) GetKey(id string) ([]byte, error) {
+	if id == "" {
+		if l.fallbackKeyID != "" {
+			id = l.fallbackKeyID
+		} else {
+			return nil, errors.New("empty key ID with no config defined")
+		}
+	}
 	key, ok := l.keys[id]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrUnknownKeyID, id)

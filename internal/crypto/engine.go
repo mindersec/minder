@@ -194,12 +194,6 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)
 	}
 
-	// for backwards compatibility with encrypted data which doesn't have the
-	// key ID stored in the DB.
-	if data.KeyVersion == "" {
-		data.KeyVersion = e.defaultKeyID
-	}
-
 	key, err := e.keystore.GetKey(data.KeyVersion)
 	if err != nil {
 		// error from keystore is good enough - we do not need more context
