@@ -5068,12 +5068,15 @@ func (x *GetProfileStatusByProjectResponse) GetProfileStatus() []*ProfileStatus 
 	return nil
 }
 
+// AutoRegistration is the configuration for auto-registering entities.
+// When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
+// and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 type AutoRegistration struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// There is no difference between intentionally unset and undefined so for the "let's not auto-register anything" case we'd just let the repeated Entity empty
+	// enabled is the list of entities that are enabled for auto-registration.
 	Enabled []string `protobuf:"bytes,1,rep,name=enabled,proto3" json:"enabled,omitempty"`
 }
 
@@ -5116,11 +5119,13 @@ func (x *AutoRegistration) GetEnabled() []string {
 	return nil
 }
 
+// ProviderConfig contains the generic configuration for a provider.
 type ProviderConfig struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// auto_registration is the configuration for auto-registering entities.
 	AutoRegistration *AutoRegistration `protobuf:"bytes,1,opt,name=auto_registration,json=autoRegistration,proto3" json:"auto_registration,omitempty"`
 }
 
