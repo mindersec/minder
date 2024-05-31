@@ -179,6 +179,22 @@ func TestDecryptBadEncoding(t *testing.T) {
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	encryptedToken := EncryptedData{
+		Algorithm:   algorithms.Aes256Cfb,
+		EncodedData: "abc",
+		KeyVersion:  "test_encryption_key",
+	}
+	require.NoError(t, err)
+
+	_, err = engine.DecryptString(encryptedToken)
+	require.ErrorContains(t, err, "error decoding secret")
+}
+
+func TestDecryptNoVersionNoFallback(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+	encryptedToken := EncryptedData{
 		Algorithm: algorithms.Aes256Cfb,
 		// Unicode snowman is _not_ a valid base64 character
 		EncodedData: "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃",
@@ -187,7 +203,7 @@ func TestDecryptBadEncoding(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = engine.DecryptString(encryptedToken)
-	require.ErrorContains(t, err, "error decoding secret")
+	require.ErrorContains(t, err, "empty key ID with no config defined")
 }
 
 func TestDecryptFailedDecryption(t *testing.T) {
@@ -199,7 +215,7 @@ func TestDecryptFailedDecryption(t *testing.T) {
 		Algorithm: algorithms.Aes256Cfb,
 		// too small of a value - will trigger the ciphertext length check
 		EncodedData: "abcdef0123456789",
-		KeyVersion:  "",
+		KeyVersion:  "test_encryption_key",
 	}
 	require.NoError(t, err)
 
