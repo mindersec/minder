@@ -233,12 +233,14 @@ ArtifactType defines the artifact data evaluation.
 <a name="minder-v1-AutoRegistration"></a>
 
 #### AutoRegistration
-
+AutoRegistration is the configuration for auto-registering entities.
+When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
+and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| enabled | [string](#string) | repeated | There is no difference between intentionally unset and undefined so for the "let's not auto-register anything" case we'd just let the repeated Entity empty |
+| enabled | [string](#string) | repeated | enabled is the list of entities that are enabled for auto-registration. |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -1552,12 +1554,12 @@ Project API Objects
 <a name="minder-v1-ProviderConfig"></a>
 
 #### ProviderConfig
-
+ProviderConfig contains the generic configuration for a provider.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  |  |
+| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  | auto_registration is the configuration for auto-registering entities. |
 
 
 <a name="minder-v1-ProviderParameter"></a>
