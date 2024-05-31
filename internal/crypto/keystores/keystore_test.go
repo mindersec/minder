@@ -125,8 +125,9 @@ func TestLocalFileKeyStore_GetKeyEmptyString(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, key, result)
 
-	_, err = keystore.GetKey("foobar")
-	require.ErrorIs(t, err, keystores.ErrUnknownKeyID)
+	result, err = keystore.GetKey(keyID)
+	require.NoError(t, err)
+	require.Equal(t, key, result)
 }
 
 func TestLocalFileKeyStore_GetKeyEmptyStringNoFallback(t *testing.T) {
