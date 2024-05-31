@@ -682,6 +682,13 @@
             "type": "string"
           },
           {
+            "name": "roleAssignment.displayName",
+            "description": "display_name is the display name of the subject.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "roleAssignment.project",
             "description": "projectt is the projectt in which the role is assigned.",
             "in": "query",
@@ -2396,6 +2403,57 @@
           "UserService"
         ]
       }
+    },
+    "/api/v1/user/invitation/{code}": {
+      "post": {
+        "summary": "ResolveInvitation allows a user to accept or decline an\ninvitation to a project given the code for the invitation.\nA user may call ResolveInvitation to accept or decline an\ninvitation even if they have not called CreateUser.  If a\nuser accepts an invitation via this call before calling\nCreateUser, a Minder user record will be created, but no\nadditional projects will be created (unlike CreateUser,\nwhich will also create a default project).",
+        "operationId": "UserService_ResolveInvitation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ResolveInvitationResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "description": "code is the code of the invitation to resolve.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "accept",
+            "description": "accept is true if the invitation is accepted, false if it is rejected.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "UserService"
+        ]
+      }
+    },
+    "/api/v1/user/invitations": {
+      "get": {
+        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is beacuse understanding the routing of\nemail messages is beyond the scope of Minder.",
+        "description": "This API endpoint may be called without the logged-in user\npreviously having called `CreateUser`.",
+        "operationId": "UserService_ListInvitations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListInvitationsResponse"
+            }
+          }
+        },
+        "tags": [
+          "UserService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -2852,6 +2910,10 @@
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment that was created."
+        },
+        "invitation": {
+          "$ref": "#/definitions/v1Invitation",
+          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member."
         }
       }
     },
@@ -3351,6 +3413,45 @@
       },
       "description": "GitType defines the git data ingester."
     },
+    "v1Invitation": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "role is the role that would be assigned if the user\naccepts the invitation."
+        },
+        "email": {
+          "type": "string",
+          "description": "email is the email address of the invited user.  This is\npresented as a convenience for display purposes, and does\nnot affect who can accept the invitation using the code."
+        },
+        "project": {
+          "type": "string",
+          "description": "project is the project to which the user is invited."
+        },
+        "code": {
+          "type": "string",
+          "description": "code is a unique identifier for the invitation, which can\nbe used by the recipient to accept or reject the invitation.\nThe code is only transmitted in response to AssignRole or\nListInvitations RPCs, and not transmitted in\nListRoleAssignments or other calls."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "created_at is the time at which the invitation was created."
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expires_at is the time at which the invitation expires."
+        },
+        "sponsor": {
+          "type": "string",
+          "description": "sponsor is the account (ID) of the user who created the invitation."
+        },
+        "sponsorDisplay": {
+          "type": "string",
+          "description": "sponsor_display is the display name of the user who created the\ninvitation."
+        }
+      }
+    },
     "v1ListArtifactsResponse": {
       "type": "object",
       "properties": {
@@ -3373,6 +3474,18 @@
             "$ref": "#/definitions/ListEvaluationResultsResponseEntityEvaluationResults"
           },
           "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
+        }
+      }
+    },
+    "v1ListInvitationsResponse": {
+      "type": "object",
+      "properties": {
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Invitation"
+          }
         }
       }
     },
@@ -3464,7 +3577,16 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1RoleAssignment"
-          }
+          },
+          "description": "role_assignments contains permission grants which have been accepted\nby a user."
+        },
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Invitation"
+          },
+          "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
         }
       }
     },
@@ -3841,6 +3963,23 @@
         }
       }
     },
+    "v1ResolveInvitationResponse": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "role is the role that would be assigned if the user\naccepts the invitation."
+        },
+        "email": {
+          "type": "string",
+          "description": "email is the email address of the invited user."
+        },
+        "project": {
+          "type": "string",
+          "description": "project is the project to which the user is invited."
+        }
+      }
+    },
     "v1RestType": {
       "type": "object",
       "properties": {
@@ -3901,6 +4040,10 @@
         "subject": {
           "type": "string",
           "description": "subject is the subject to which the role is assigned."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "display_name is the display name of the subject."
         },
         "project": {
           "type": "string",

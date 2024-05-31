@@ -153,6 +153,8 @@ manage Users CRUD
 | CreateUser | [CreateUserRequest](#minder-v1-CreateUserRequest) | [CreateUserResponse](#minder-v1-CreateUserResponse) |  |
 | DeleteUser | [DeleteUserRequest](#minder-v1-DeleteUserRequest) | [DeleteUserResponse](#minder-v1-DeleteUserResponse) |  |
 | GetUser | [GetUserRequest](#minder-v1-GetUserRequest) | [GetUserResponse](#minder-v1-GetUserResponse) |  |
+| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is beacuse understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
+| ResolveInvitation | [ResolveInvitationRequest](#minder-v1-ResolveInvitationRequest) | [ResolveInvitationResponse](#minder-v1-ResolveInvitationResponse) | ResolveInvitation allows a user to accept or decline an invitation to a project given the code for the invitation. A user may call ResolveInvitation to accept or decline an invitation even if they have not called CreateUser.  If a user accepts an invitation via this call before calling CreateUser, a Minder user record will be created, but no additional projects will be created (unlike CreateUser, which will also create a default project). |
 
 
 ### Messages
@@ -217,6 +219,7 @@ ArtifactType defines the artifact data evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
+| invitation | [Invitation](#minder-v1-Invitation) |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
 
 
 <a name="minder-v1-AuthorizationParams"></a>
@@ -1046,6 +1049,24 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
+<a name="minder-v1-Invitation"></a>
+
+#### Invitation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | [string](#string) |  | email is the email address of the invited user. This is presented as a convenience for display purposes, and does not affect who can accept the invitation using the code. |
+| project | [string](#string) |  | project is the project to which the user is invited. |
+| code | [string](#string) |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | created_at is the time at which the invitation was created. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
+| sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
+| sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
+
+
 <a name="minder-v1-ListArtifactsRequest"></a>
 
 #### ListArtifactsRequest
@@ -1120,6 +1141,23 @@ The default is to return all user-created profiles; the string "*" can be used t
 | ----- | ---- | ----- | ----------- |
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile - id, name, status, last_updated |
 | results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
+
+
+<a name="minder-v1-ListInvitationsRequest"></a>
+
+#### ListInvitationsRequest
+
+
+
+<a name="minder-v1-ListInvitationsResponse"></a>
+
+#### ListInvitationsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| invitations | [Invitation](#minder-v1-Invitation) | repeated |  |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -1279,7 +1317,8 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated |  |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments contains permission grants which have been accepted by a user. |
+| invitations | [Invitation](#minder-v1-Invitation) | repeated | invitations contains outstanding role invitations which have not yet been accepted by a user. |
 
 
 <a name="minder-v1-ListRolesRequest"></a>
@@ -1702,6 +1741,31 @@ RESTProviderConfig contains the configuration for the REST provider.
 | license | [string](#string) |  |  |
 
 
+<a name="minder-v1-ResolveInvitationRequest"></a>
+
+#### ResolveInvitationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [string](#string) |  | code is the code of the invitation to resolve. |
+| accept | [bool](#bool) |  | accept is true if the invitation is accepted, false if it is rejected. |
+
+
+<a name="minder-v1-ResolveInvitationResponse"></a>
+
+#### ResolveInvitationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | [string](#string) |  | email is the email address of the invited user. |
+| project | [string](#string) |  | project is the project to which the user is invited. |
+
+
 <a name="minder-v1-RestType"></a>
 
 #### RestType
@@ -1753,6 +1817,7 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | role | [string](#string) |  | role is the role that is assigned. |
 | subject | [string](#string) |  | subject is the subject to which the role is assigned. |
+| display_name | [string](#string) |  | display_name is the display name of the subject. |
 | project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
 
 
