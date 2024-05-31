@@ -161,6 +161,12 @@ func runRotationBatch(
 			return 0, tokenError(token.ID, "secret retrieval", errors.New("no encrypted secret found"))
 		}
 
+		zerolog.Ctx(ctx).Info().
+			Int32("token_id", token.ID).
+			Str("key_version", oldSecret.KeyVersion).
+			Str("algorithm", string(oldSecret.Algorithm)).
+			Msg("re-encrypting old secret")
+
 		// decrypt the secret
 		decrypted, err := engine.DecryptOAuthToken(oldSecret)
 		if err != nil {
