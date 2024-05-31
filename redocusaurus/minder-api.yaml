@@ -454,6 +454,11 @@ paths:
           in: query
           required: false
           type: string
+        - name: roleAssignment.displayName
+          description: display_name is the display name of the subject.
+          in: query
+          required: false
+          type: string
         - name: roleAssignment.project
           description: projectt is the projectt in which the role is assigned.
           in: query
@@ -1615,6 +1620,58 @@ paths:
             $ref: '#/definitions/v1CreateUserRequest'
       tags:
         - UserService
+  /api/v1/user/invitation/{code}:
+    post:
+      summary: |-
+        ResolveInvitation allows a user to accept or decline an
+        invitation to a project given the code for the invitation.
+        A user may call ResolveInvitation to accept or decline an
+        invitation even if they have not called CreateUser.  If a
+        user accepts an invitation via this call before calling
+        CreateUser, a Minder user record will be created, but no
+        additional projects will be created (unlike CreateUser,
+        which will also create a default project).
+      operationId: UserService_ResolveInvitation
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ResolveInvitationResponse'
+      parameters:
+        - name: code
+          description: code is the code of the invitation to resolve.
+          in: path
+          required: true
+          type: string
+        - name: accept
+          description: >-
+            accept is true if the invitation is accepted, false if it is
+            rejected.
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - UserService
+  /api/v1/user/invitations:
+    get:
+      summary: |-
+        ListInvitations returns a list of invitations for the user
+        based on the user's registered email address.  Note that a
+        user who receives an invitation code may still accept the
+        invitation even if the code was directed to a different
+        email address.  This is beacuse understanding the routing of
+        email messages is beyond the scope of Minder.
+      description: |-
+        This API endpoint may be called without the logged-in user
+        previously having called `CreateUser`.
+      operationId: UserService_ListInvitations
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListInvitationsResponse'
+      tags:
+        - UserService
 definitions:
   AlertAlertTypeSA:
     type: object
@@ -2013,6 +2070,12 @@ definitions:
       roleAssignment:
         $ref: '#/definitions/v1RoleAssignment'
         description: role_assignment is the role assignment that was created.
+      invitation:
+        $ref: '#/definitions/v1Invitation'
+        description: |-
+          invitation contains the details of the invitation for the
+          assigned user to join the project if the user is not already
+          a member.
   v1AuthorizationFlow:
     type: string
     enum:
@@ -2399,6 +2462,47 @@ definitions:
         type: string
         description: branch is the branch of the git repository.
     description: GitType defines the git data ingester.
+  v1Invitation:
+    type: object
+    properties:
+      role:
+        type: string
+        description: |-
+          role is the role that would be assigned if the user
+          accepts the invitation.
+      email:
+        type: string
+        description: |-
+          email is the email address of the invited user.  This is
+          presented as a convenience for display purposes, and does
+          not affect who can accept the invitation using the code.
+      project:
+        type: string
+        description: project is the project to which the user is invited.
+      code:
+        type: string
+        description: |-
+          code is a unique identifier for the invitation, which can
+          be used by the recipient to accept or reject the invitation.
+          The code is only transmitted in response to AssignRole or
+          ListInvitations RPCs, and not transmitted in
+          ListRoleAssignments or other calls.
+      createdAt:
+        type: string
+        format: date-time
+        description: created_at is the time at which the invitation was created.
+      expiresAt:
+        type: string
+        format: date-time
+        description: expires_at is the time at which the invitation expires.
+      sponsor:
+        type: string
+        description: sponsor is the account (ID) of the user who created the invitation.
+      sponsorDisplay:
+        type: string
+        description: |-
+          sponsor_display is the display name of the user who created the
+          invitation.
   v1ListArtifactsResponse:
     type: object
     properties:
@@ -2418,6 +2522,14 @@ definitions:
         description: >-
           Each entity selected by the list request will have _single_ entry in
           entities which contains results of all evaluations for each profile.
+  v1ListInvitationsResponse:
+    type: object
+    properties:
+      invitations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1Invitation'
   v1ListProfilesResponse:
     type: object
     properties:
@@ -2484,6 +2596,17 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1RoleAssignment'
+        description: |-
+          role_assignments contains permission grants which have been accepted
+          by a user.
+      invitations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1Invitation'
+        description: |-
+          invitations contains outstanding role invitations which have not yet
+          been accepted by a user.
   v1ListRolesResponse:
     type: object
     properties:
@@ -2791,6 +2914,20 @@ definitions:
         type: string
       license:
         type: string
+  v1ResolveInvitationResponse:
+    type: object
+    properties:
+      role:
+        type: string
+        description: |-
+          role is the role that would be assigned if the user
+          accepts the invitation.
+      email:
+        type: string
+        description: email is the email address of the invited user.
+      project:
+        type: string
+        description: project is the project to which the user is invited.
   v1RestType:
     type: object
     properties:
@@ -2845,6 +2982,9 @@ definitions:
       subject:
         type: string
         description: subject is the subject to which the role is assigned.
+      displayName:
+        type: string
+        description: display_name is the display name of the subject.
       project:
         type: string
         description: projectt is the projectt in which the role is assigned.
