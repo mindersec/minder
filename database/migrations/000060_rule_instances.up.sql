@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS rule_instances(
     rule_type_id UUID NOT NULL REFERENCES rule_type(id),
     name         TEXT NOT NULL,
     entity_type  entities NOT NULL,
-    def          JSONB NOT NULL,
-    params       JSONB NOT NULL,
+    def          JSONB, -- stores the values needed by the rule type's `def`
+    params       JSONB, -- stores the values needed by the rule type's `params`
     created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP NOT NULL DEFAULT NOW(),
     -- equivalent to constraints enforced by rule validation
