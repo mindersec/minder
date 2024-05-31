@@ -7,7 +7,7 @@ permissions:
   # pull-requests: read
 jobs:
   golangci-lint:
-    name: Go Lint
+    name: Run golangci-lint
     runs-on: ubuntu-latest
     permissions:
       # Required: allow read access to the content for analysis.
@@ -25,8 +25,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@a4f60bb28d35aeee14e6880718e0c85ff1882e64 # v6.0.1
 
-  mod-tidy:
-    name: Go mod tidy
+  check-go-mod-tidy-and-make-gen:
+    name: Uncommitted changes check - go mod tidy & make gen
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -34,10 +34,36 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: false
-      - name: go mod tidy
+      - name: Run go mod tidy
         run: go mod tidy
-      - name: git diff
-        run: git diff --exit-code
-      - name: Output message
-        if: ${{ failure() }}
-        run: echo "Please run 'go mod tidy' and commit changes"
+      - name: Check for uncommitted changes - go mod tidy
+        run: |
+          if [ -n "$(git diff)" ]; then
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            echo -e "\e[91m* Uncommitted changes found. Please run 'go mod tidy' and commit changes.                   *\e[0m"
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            git diff
+            exit 1
+          else
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+            echo -e "\e[92m* No uncommitted changes found.                                                              *\e[0m"
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+          fi
+      - name: Run make bootstrap to download the tool dependencies
+        run: |
+          make bootstrap
+      - name: Run make gen
+        run: make gen
+      - name: Check for uncommitted changes - make gen
+        run: |
+          if [ -n "$(git diff)" ]; then
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            echo -e "\e[91m* Uncommitted changes found. Please run 'make gen' and commit the changes.                   *\e[0m"
+            echo -e "\e[91m**********************************************************************************************\e[0m"
+            git diff
+            exit 1
+          else
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+            echo -e "\e[92m* No uncommitted changes found.                                                              *\e[0m"
+            echo -e "\e[92m**********************************************************************************************\e[0m"
+          fi
