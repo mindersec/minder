@@ -99,7 +99,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 
 	creds, err := g.getProviderCredentials(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch credentials")
+		return nil, fmt.Errorf("unable to fetch credentials: %w", err)
 	}
 
 	client, ok := g.restClientCache.Get(creds.ownerFilter.String, creds.credential.GetCacheKey(), db.ProviderTypeGithub)
