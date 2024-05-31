@@ -96,9 +96,6 @@ func TestNewKeyStoreFromConfig(t *testing.T) {
 func TestLocalFileKeyStore_GetKey(t *testing.T) {
 	t.Parallel()
 
-	keyID := "my_key"
-	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
 	keystore := keystores.NewKeyStoreFromMap(
 		map[string][]byte{
 			keyID: key,
@@ -116,9 +113,6 @@ func TestLocalFileKeyStore_GetKey(t *testing.T) {
 
 func TestLocalFileKeyStore_GetKeyEmptyString(t *testing.T) {
 	t.Parallel()
-
-	keyID := "my_key"
-	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 	keystore := keystores.NewKeyStoreFromMap(
 		map[string][]byte{
@@ -138,9 +132,6 @@ func TestLocalFileKeyStore_GetKeyEmptyString(t *testing.T) {
 func TestLocalFileKeyStore_GetKeyEmptyStringNoFallback(t *testing.T) {
 	t.Parallel()
 
-	keyID := "my_key"
-	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-
 	keystore := keystores.NewKeyStoreFromMap(
 		map[string][]byte{
 			keyID: key,
@@ -151,3 +142,11 @@ func TestLocalFileKeyStore_GetKeyEmptyStringNoFallback(t *testing.T) {
 	_, err := keystore.GetKey("")
 	require.ErrorContains(t, err, "empty key ID with no config defined")
 }
+
+const (
+	keyID = "my_key"
+)
+
+var (
+	key = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+)
