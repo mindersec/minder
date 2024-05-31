@@ -119,7 +119,10 @@ func (a *ClientWrapper) PrepareForRun(ctx context.Context) error {
 		return fmt.Errorf("unable to find authz store: %w", err)
 	}
 
-	a.cli.SetStoreId(storeID)
+	err = a.cli.SetStoreId(storeID)
+	if err != nil {
+		return fmt.Errorf("unable to store authz ID: %w", err)
+	}
 
 	modelID, err := a.findLatestModel(ctx)
 	if err != nil {
@@ -169,14 +172,20 @@ func (a *ClientWrapper) ensureAuthzStore(ctx context.Context) error {
 			return err
 		}
 		a.l.Printf("Created authz store %s/%s\n", id, storeName)
-		a.cli.SetStoreId(id)
+		err = a.cli.SetStoreId(id)
+		if err != nil {
+			return fmt.Errorf("unable to store authz ID: %w", err)
+		}
 		return nil
 	}
 
 	a.l.Printf("Not creating store. Found store with name '%s' and ID '%s'.\n",
 		storeName, storeID)
 
-	a.cli.SetStoreId(storeID)
+	err = a.cli.SetStoreId(storeID)
+	if err != nil {
+		return fmt.Errorf("unable to store authz ID: %w", err)
+	}
 	return nil
 }
 
