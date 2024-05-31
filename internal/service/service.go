@@ -81,6 +81,9 @@ func AllInOneServerService(
 		return fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 
+	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
+	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
+
 	profileSvc := profiles.NewProfileService(evt)
 	ruleSvc := ruletypes.NewRuleTypeService()
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)

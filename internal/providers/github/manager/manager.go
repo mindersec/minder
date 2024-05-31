@@ -26,7 +26,6 @@ import (
 	gogithub "github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 
@@ -331,70 +330,17 @@ func (g *githubProviderManager) ValidateConfig(
 	return err
 }
 
-func fallbackOAuthClientConfigValues(provider string, cfg *server.OAuthClientConfig) {
-	// we read the values one-by-one instead of just getting the top-level key to allow
-	// for environment variables to be set per-variable
-	fallbackClientID := viper.GetString(fmt.Sprintf("%s.client_id", provider))
-	if fallbackClientID != "" {
-		cfg.ClientID = fallbackClientID
-	}
-
-	fallbackClientIDFile := viper.GetString(fmt.Sprintf("%s.client_id_file", provider))
-	if fallbackClientIDFile != "" {
-		cfg.ClientIDFile = fallbackClientIDFile
-	}
-
-	fallbackClientSecret := viper.GetString(fmt.Sprintf("%s.client_secret", provider))
-	if fallbackClientSecret != "" {
-		cfg.ClientSecret = fallbackClientSecret
-	}
-
-	fallbackClientSecretFile := viper.GetString(fmt.Sprintf("%s.client_secret_file", provider))
-	if fallbackClientSecretFile != "" {
-		cfg.ClientSecretFile = fallbackClientSecretFile
-	}
-
-	fallbackRedirectURI := viper.GetString(fmt.Sprintf("%s.redirect_uri", provider))
-	if fallbackRedirectURI != "" {
-		cfg.RedirectURI = fallbackRedirectURI
-	}
-}
-
-func getOAuthClientConfig(c *server.ProviderConfig, providerClass db.ProviderClass) (*server.OAuthClientConfig, error) {
-	var oc *server.OAuthClientConfig
-	var err error
-
-	switch providerClass { // nolint:exhaustive // we really want handle only the two
-	case db.ProviderClassGithub:
-		if c != nil && c.GitHub != nil {
-			oc = &c.GitHub.OAuthClientConfig
-		}
-		fallbackOAuthClientConfigValues("github", oc)
-	case db.ProviderClassGithubApp:
-		if c != nil && c.GitHubApp != nil {
-			oc = &c.GitHubApp.OAuthClientConfig
-		}
-		fallbackOAuthClientConfigValues("github-app", oc)
-	default:
-		err = fmt.Errorf("unknown provider: %s", providerClass)
-	}
-
-	return oc, err
-}
-
 func (g *githubProviderManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
 	var oauthConfig *oauth2.Config
+	var oauthClientConfig *server.OAuthClientConfig
 	var err error
-
-	oauthClientConfig, err := getOAuthClientConfig(g.config, providerClass)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get OAuth client config: %w", err)
-	}
 
 	switch providerClass { // nolint:exhaustive // we really want handle only the two
 	case db.ProviderClassGithub:
+		oauthClientConfig = &g.config.GitHub.OAuthClientConfig
 		oauthConfig = githubOauthConfig(oauthClientConfig.RedirectURI, cli)
 	case db.ProviderClassGithubApp:
+		oauthClientConfig = &g.config.GitHubApp.OAuthClientConfig
 		oauthConfig = githubAppOauthConfig(oauthClientConfig.RedirectURI)
 	default:
 		err = fmt.Errorf("invalid provider class: %s", providerClass)
