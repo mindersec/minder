@@ -99,9 +99,12 @@ func TestLocalFileKeyStore_GetKey(t *testing.T) {
 	keyID := "my_key"
 	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 
-	keystore := keystores.NewKeyStoreFromMap(map[string][]byte{
-		keyID: key,
-	})
+	keystore := keystores.NewKeyStoreFromMap(
+		map[string][]byte{
+			keyID: key,
+		},
+		"",
+	)
 
 	result, err := keystore.GetKey(keyID)
 	require.NoError(t, err)
@@ -109,4 +112,42 @@ func TestLocalFileKeyStore_GetKey(t *testing.T) {
 
 	_, err = keystore.GetKey("foobar")
 	require.ErrorIs(t, err, keystores.ErrUnknownKeyID)
+}
+
+func TestLocalFileKeyStore_GetKeyEmptyString(t *testing.T) {
+	t.Parallel()
+
+	keyID := "my_key"
+	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	keystore := keystores.NewKeyStoreFromMap(
+		map[string][]byte{
+			keyID: key,
+		},
+		keyID,
+	)
+
+	result, err := keystore.GetKey("")
+	require.NoError(t, err)
+	require.Equal(t, key, result)
+
+	_, err = keystore.GetKey("foobar")
+	require.ErrorIs(t, err, keystores.ErrUnknownKeyID)
+}
+
+func TestLocalFileKeyStore_GetKeyEmptyStringNoFallback(t *testing.T) {
+	t.Parallel()
+
+	keyID := "my_key"
+	key := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+	keystore := keystores.NewKeyStoreFromMap(
+		map[string][]byte{
+			keyID: key,
+		},
+		"",
+	)
+
+	_, err := keystore.GetKey("")
+	require.ErrorContains(t, err, "empty key ID with no config defined")
 }
