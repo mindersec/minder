@@ -58,6 +58,8 @@ serviceAccounts:
   migrate: ""
   # -- (string, optional) If non-empty, minder will use the named ServiceAccount resources rather than creating a ServiceAccount
   server: ""
+  sessionExpirationPurgeJob: ""
+  rotateProviderTokensJob: ""
 
 # ingress settings
 ingress:
@@ -139,6 +141,28 @@ deploymentSettings:
       # -- (int) Max surge pods during a rolling update
       maxSurge: 2
 
+sessionExpirationPurgeJobSettings:
+  schedule: "0 0 * * *"
+  image: ko://github.com/stacklok/minder/cmd/server
+  restartPolicy: "OnFailure"
+  imagePullPolicy: "IfNotPresent"
+  resources: {}
+  extraEnv: []
+  extraVolumeMounts: []
+  extraVolumes: []
+  sidecarContainers: []
+
+rotateProviderTokensJobSettings:
+  # Run daily a couple of hours after the session expiration purge job
+  schedule: "0 2 * * *"
+  image: ko://github.com/stacklok/minder/cmd/server
+  restartPolicy: "OnFailure"
+  imagePullPolicy: "IfNotPresent"
+  resources: {}
+  extraEnv: []
+  extraVolumeMounts: []
+  extraVolumes: []
+  sidecarContainers: []
 
 # -- (string) Additional configuration yaml beyond what's in server-config.yaml.example
 extra_config: |
