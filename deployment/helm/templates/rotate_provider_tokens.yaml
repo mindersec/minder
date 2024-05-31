@@ -67,7 +67,7 @@ spec:
           volumes:
           - name: config
             configMap:
-              name: db-update-config
+              name: minder-config
               items:
               - key: server-config.yaml
                 path: server-config.yaml
