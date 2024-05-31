@@ -52,11 +52,15 @@ spec:
               {{- toYaml .Values.rotateProviderTokensJobSettings.resources | nindent 14 }}
             {{- if .Values.rotateProviderTokensJobSettings.extraEnv }}
             env:
+              - name: "MINDER_CRYPTO_KEYSTORE_LOCAL_KEY_DIR"
+                value: "/secrets/auth/"
               {{- toYaml .Values.rotateProviderTokensJobSettings.extraEnv | nindent 14 }}
             {{- end }}
             volumeMounts:
               - name: config
                 mountPath: /config
+              - name: auth-secrets
+                mountPath: /secrets/auth
               {{- if .Values.rotateProviderTokensJobSettings.extraVolumeMounts }}
               {{- toYaml .Values.rotateProviderTokensJobSettings.extraVolumeMounts | nindent 14 }}
               {{- end }}
@@ -73,6 +77,9 @@ spec:
                 path: server-config.yaml
               - key: overrides.yaml
                 path: overrides.yaml
+          - name: auth-secrets
+            secret:
+              secretName: {{ .Values.deploymentSettings.secrets.authSecretName }}
           {{- if .Values.rotateProviderTokensJobSettings.extraVolumes }}
           {{- toYaml .Values.rotateProviderTokensJobSettings.extraVolumes | nindent 10 }}
           {{- end }}
