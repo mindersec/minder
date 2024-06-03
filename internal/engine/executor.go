@@ -177,49 +177,79 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
-	// Get profiles relevant to project
-	dbpols, err := e.querier.ListProfilesByProjectID(ctx, inf.ProjectID)
-	if err != nil {
-		return fmt.Errorf("error getting profiles: %w", err)
-	}
-
-	for _, profile := range MergeDatabaseListIntoProfiles(dbpols) {
-		// Get only these rules that are relevant for this entity type
-		relevant, err := GetRulesForEntity(profile, inf.Type)
-		if err != nil {
-			return fmt.Errorf("error getting rules for entity: %w", err)
-		}
-
-		// Let's evaluate all the rules for this profile
-		err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
-			// Get the engine evaluator for this rule type
-			evalParams, rte, err := e.getEvaluator(ctx, inf, provider, profile, rule, ingestCache)
+	err = e.forProjectsInHierarchy(
+		ctx, inf, func(ctx context.Context, profile *pb.Profile, hierarchy []uuid.UUID) error {
+			// Get only these rules that are relevant for this entity type
+			relevant, err := GetRulesForEntity(profile, inf.Type)
 			if err != nil {
-				return err
+				return fmt.Errorf("error getting rules for entity: %w", err)
 			}
 
-			// Update the lock lease at the end of the evaluation
-			defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
+			// Let's evaluate all the rules for this profile
+			err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
+				// Get the engine evaluator for this rule type
+				evalParams, rte, err := e.getEvaluator(
+					ctx, inf, provider, profile, rule, hierarchy, ingestCache)
+				if err != nil {
+					return err
+				}
 
-			// Evaluate the rule
-			evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
+				// Update the lock lease at the end of the evaluation
+				defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
-			// Perform actions, if any
-			evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
+				// Evaluate the rule
+				evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
 
-			// Log the evaluation
-			logEval(ctx, inf, evalParams)
+				// Perform actions, if any
+				evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
 
-			// Create or update the evaluation status
-			return e.createOrUpdateEvalStatus(ctx, evalParams)
+				// Log the evaluation
+				logEval(ctx, inf, evalParams)
+
+				// Create or update the evaluation status
+				return e.createOrUpdateEvalStatus(ctx, evalParams)
+			})
+
+			if err != nil {
+				p := profile.Name
+				if profile.Id != nil {
+					p = *profile.Id
+				}
+				return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
+			}
+
+			return nil
 		})
 
+	if err != nil {
+		return fmt.Errorf("error evaluating entity event: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Executor) forProjectsInHierarchy(
+	ctx context.Context,
+	inf *entities.EntityInfoWrapper,
+	f func(context.Context, *pb.Profile, []uuid.UUID) error,
+) error {
+	projList, err := e.querier.GetParentProjects(ctx, inf.ProjectID)
+	if err != nil {
+		return fmt.Errorf("error getting parent projects: %w", err)
+	}
+
+	for idx, projID := range projList {
+		projectHierarchy := projList[idx:]
+		// Get profiles relevant to project
+		dbpols, err := e.querier.ListProfilesByProjectID(ctx, projID)
 		if err != nil {
-			p := profile.Name
-			if profile.Id != nil {
-				p = *profile.Id
+			return fmt.Errorf("error getting profiles: %w", err)
+		}
+
+		for _, profile := range MergeDatabaseListIntoProfiles(dbpols) {
+			if err := f(ctx, profile, projectHierarchy); err != nil {
+				return err
 			}
-			return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
 		}
 	}
 
@@ -232,6 +262,7 @@ func (e *Executor) getEvaluator(
 	provider provinfv1.Provider,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
+	hierarchy []uuid.UUID,
 	ingestCache ingestcache.Cache,
 ) (*engif.EvalStatusParams, *RuleTypeEngine, error) {
 	// Create eval status params
@@ -240,11 +271,16 @@ func (e *Executor) getEvaluator(
 		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
+	// NOTE: We're only using the first project in the hierarchy for now.
+	// This means that a rule type must exist in the same project as the profile.
+	// This will be revisited in the future.
+	projID := hierarchy[0]
+
 	// Load Rule Class from database
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		ProjectID: inf.ProjectID,
+		ProjectID: projID,
 		Name:      rule.Type,
 	})
 	if err != nil {
