@@ -1401,6 +1401,15 @@ message Context {
     optional string retired_organization = 2;
 }
 
+// ContextV2 defines the context in which a rule is evaluated.
+message ContextV2 {
+    // project is the project ID
+    string project_id = 1;
+
+    // name of the provider. Set to empty string when not applicable.
+    string provider = 2;
+}
+
 // --- START RuleType CRUD definitions
 
 // ListRuleTypesRequest is the request to list rule types.
