@@ -310,4 +310,4 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/stacklok/frizbee v0.0.15 => ../frizbee
+replace github.com/stacklok/frizbee v0.0.15 => github.com/stacklok/frizbee v0.0.16-0.20240603140957-7522446012f7
