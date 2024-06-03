@@ -1325,12 +1325,16 @@ enum Entity {
     ENTITY_PULL_REQUESTS = 4;
 }
 
+message EntityAutoRegistrationConfig {
+   bool enabled = 1;
+}
+
 // AutoRegistration is the configuration for auto-registering entities.
 // When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
 // and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 message AutoRegistration {
     // enabled is the list of entities that are enabled for auto-registration.
-    repeated string enabled = 1;
+    map<string, EntityAutoRegistrationConfig> entities = 1;
 }
 
 // ProviderConfig contains the generic configuration for a provider.

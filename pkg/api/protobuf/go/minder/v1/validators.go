@@ -57,9 +57,9 @@ var _ Validator = (*AutoRegistration)(nil)
 
 // Validate is a utility function which allows for the validation of the AutoRegistration struct.
 func (a *AutoRegistration) Validate() error {
-	for _, ent := range a.GetEnabled() {
-		if !EntityFromString(ent).IsValid() {
-			return fmt.Errorf("invalid entity type: %s", ent)
+	for entity := range a.GetEntities() {
+		if !EntityFromString(entity).IsValid() {
+			return fmt.Errorf("invalid entity type: %s", entity)
 		}
 	}
 
