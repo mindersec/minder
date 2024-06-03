@@ -17,7 +17,7 @@ require (
 	github.com/sqlc-dev/sqlc v1.26.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.21.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.4.0
 	google.golang.org/protobuf v1.34.1
 	mvdan.cc/gofumpt v0.6.0
 )
