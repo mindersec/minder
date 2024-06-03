@@ -168,6 +168,10 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
+		GetParentProjects(gomock.Any(), projectID).
+		Return([]uuid.UUID{projectID}, nil)
+
+	mockStore.EXPECT().
 		ListProfilesByProjectID(gomock.Any(), projectID).
 		Return([]db.ListProfilesByProjectIDRow{
 			{
