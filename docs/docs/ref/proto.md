@@ -243,7 +243,19 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| enabled | [string](#string) | repeated | enabled is the list of entities that are enabled for auto-registration. |
+| entities | [AutoRegistration.EntitiesEntry](#minder-v1-AutoRegistration-EntitiesEntry) | repeated | enabled is the list of entities that are enabled for auto-registration. |
+
+
+<a name="minder-v1-AutoRegistration-EntitiesEntry"></a>
+
+#### AutoRegistration.EntitiesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  |  |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -646,6 +658,17 @@ Namespace: is the namespace for the DockerHub provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | namespace | [string](#string) |  | namespace is the namespace for the DockerHub provider. |
+
+
+<a name="minder-v1-EntityAutoRegistrationConfig"></a>
+
+#### EntityAutoRegistrationConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
 
 
 <a name="minder-v1-EntityTypedId"></a>
