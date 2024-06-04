@@ -69,6 +69,8 @@ type GitHubProviderService interface {
 	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
 	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
 	VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error
+	// GetConfig returns the provider configuration
+	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -255,12 +257,18 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			return nil
 		}
 
+		finalConfig, err := p.GetConfig(ctx, db.ProviderClassGithubApp, stateData.ProviderConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error getting provider config: %w", err)
+		}
+
 		provider, err := createGitHubApp(
 			ctx,
 			qtx,
 			stateData.ProjectID,
 			installationOwner,
 			installationID,
+			finalConfig,
 			validateOwnership,
 			sql.NullString{
 				String: state,
@@ -317,7 +325,8 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("owner", installationOwner.GetID()).
 		Msg("Creating GitHub App Provider")
 
-	_, err = createGitHubApp(ctx, qtx, project.ID, installationOwner, installationID, nil, sql.NullString{})
+	_, err = createGitHubApp(
+		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github-app": {}}`), nil, sql.NullString{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
 
@@ -334,6 +343,7 @@ func createGitHubApp(
 	projectId uuid.UUID,
 	installationOwner *github.User,
 	installationID int64,
+	providerConfig json.RawMessage,
 	validateOwnership func(ctx context.Context) error,
 	nonce sql.NullString,
 ) (db.Provider, error) {
@@ -355,7 +365,7 @@ func createGitHubApp(
 		ProjectID:  projectId,
 		Class:      class,
 		Implements: providerDef.Traits,
-		Definition: json.RawMessage(`{"github-app": {}}`),
+		Definition: providerConfig,
 		AuthFlows:  providerDef.AuthorizationFlows,
 	})
 	if err != nil {
@@ -526,4 +536,24 @@ func (p *ghProviderService) getInstallationOwner(ctx context.Context, installati
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 	return installation.GetAccount(), nil
+}
+
+func (_ *ghProviderService) GetConfig(
+	_ context.Context, class db.ProviderClass, userConfig json.RawMessage,
+) (json.RawMessage, error) {
+	var defaultConfig string
+	// nolint:exhaustive // we really want handle only the two
+	switch class {
+	case db.ProviderClassGithub:
+		defaultConfig = `{"github": {}}`
+	case db.ProviderClassGithubApp:
+		defaultConfig = `{"github-app": {}}`
+	default:
+		return nil, fmt.Errorf("unsupported provider class %s", class)
+	}
+	if len(userConfig) == 0 {
+		return json.RawMessage(defaultConfig), nil
+	}
+
+	return userConfig, nil
 }

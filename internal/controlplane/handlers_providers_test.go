@@ -65,8 +65,9 @@ func newPbStruct(t *testing.T, data map[string]interface{}) *structpb.Struct {
 }
 
 type mockServer struct {
-	server    *Server
-	mockStore *mockdb.MockStore
+	server        *Server
+	mockStore     *mockdb.MockStore
+	mockGhService *mockprovsvc.MockGitHubProviderService
 }
 
 func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
@@ -106,12 +107,14 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 		cryptoEngine:    mockCryptoEngine,
 		store:           mockStore,
 		providerManager: providerManager,
+		ghProviders:     mockProvidersSvc,
 		cfg:             &serverconfig.Config{},
 	}
 
 	return &mockServer{
-		server:    &server,
-		mockStore: mockStore,
+		server:        &server,
+		mockStore:     mockStore,
+		mockGhService: mockProvidersSvc,
 	}
 }
 
@@ -232,6 +235,17 @@ func TestCreateProvider(t *testing.T) {
 			jsonConfig, err := scenario.expected.Config.MarshalJSON()
 			require.NoError(t, err)
 
+			var jsonUserConfig []byte
+			if scenario.userConfig != nil {
+				jsonUserConfig, err = scenario.userConfig.MarshalJSON()
+				require.NoError(t, err)
+			}
+
+			if scenario.providerClass == db.ProviderClassGithubApp || scenario.providerClass == db.ProviderClassGithub {
+				fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), scenario.providerClass, jsonUserConfig).
+					Return(jsonConfig, nil)
+			}
+
 			fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), partialCreateParamsMatcher{
 				value: db.CreateProviderParams{
 					Name:       scenario.name,
@@ -341,6 +355,9 @@ func TestCreateProviderFailures(t *testing.T) {
 			Provider: engine.Provider{Name: providerName},
 		})
 
+		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithub, gomock.Any()).
+			Return(json.RawMessage(`{ "github": {} }`), nil)
+
 		fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
 			Return(db.Provider{}, &pq.Error{Code: "23505"}) // unique_violation
 
@@ -404,6 +421,9 @@ func TestCreateProviderFailures(t *testing.T) {
 
 		fakeServer := testServer(t, ctrl)
 		providerName := "bad-github-app"
+
+		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithubApp, gomock.Any()).
+			Return(json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true }}}, "github-app": {}}`), nil)
 
 		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
 			Context: &minder.Context{

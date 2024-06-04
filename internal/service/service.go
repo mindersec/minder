@@ -46,6 +46,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
+	"github.com/stacklok/minder/internal/providers/session"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -79,6 +80,9 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("failed to create crypto engine: %w", err)
 	}
+
+	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
+	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
 
 	profileSvc := profiles.NewProfileService(evt)
 	ruleSvc := ruletypes.NewRuleTypeService()
@@ -121,8 +125,13 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
+	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+	if err != nil {
+		return fmt.Errorf("failed to create provider auth manager: %w", err)
+	}
 	repos := github.NewRepositoryService(whManager, store, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
+	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
 
 	s := controlplane.NewServer(
 		store,
@@ -138,7 +147,9 @@ func AllInOneServerService(
 		ruleSvc,
 		ghProviders,
 		providerManager,
+		providerAuthManager,
 		providerStore,
+		sessionsService,
 		projectDeleter,
 		projectCreator,
 	)

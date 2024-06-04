@@ -131,7 +131,8 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 	// This will have a different timeout
 	enrollemntCtx := cmd.Context()
 
-	return enrollUsingOAuth2Flow(enrollemntCtx, cmd, oauthClient, providerClient, provider, project, owner, skipBrowser)
+	return enrollUsingOAuth2Flow(
+		enrollemntCtx, cmd, oauthClient, providerClient, providerName, provider, project, owner, skipBrowser, config)
 }
 
 func enrollUsingToken(
@@ -183,10 +184,12 @@ func enrollUsingOAuth2Flow(
 	cmd *cobra.Command,
 	oauthClient minderv1.OAuthServiceClient,
 	providerClient minderv1.ProvidersServiceClient,
-	provider string,
+	providerName string,
+	providerClass string,
 	project string,
 	owner string,
 	skipBrowser bool,
+	providerConfig *structpb.Struct,
 ) error {
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(ctx, MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
@@ -197,7 +200,7 @@ func enrollUsingOAuth2Flow(
 
 	// If the user is using the legacy GitHub provider, don't let them enroll a new provider.
 	// However, they may update the credentials for the existing provider.
-	if legacyProviderEnrolled && provider != legacyGitHubProvider.ToString() {
+	if legacyProviderEnrolled && providerName != legacyGitHubProvider.ToString() {
 		return fmt.Errorf("it seems you are using the legacy github provider. " +
 			"If you would like to enroll a new provider, please delete your existing provider by " +
 			"running \"minder provider delete --name github\"")
@@ -210,10 +213,12 @@ func enrollUsingOAuth2Flow(
 	}
 
 	resp, err := oauthClient.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		Cli:     true,
-		Port:    int32(port),
-		Owner:   &owner,
+		Context:       &minderv1.Context{Provider: &providerName, Project: &project},
+		Cli:           true,
+		Port:          int32(port),
+		Owner:         &owner,
+		Config:        providerConfig,
+		ProviderClass: providerClass,
 	})
 	if err != nil {
 		return cli.MessageAndError("error getting authorization URL", err)

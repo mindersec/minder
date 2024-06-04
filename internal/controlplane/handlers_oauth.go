@@ -42,7 +42,9 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -63,11 +65,9 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		providerName = req.GetContext().GetProvider()
 	}
 
-	var providerClass string
-	if req.GetProviderClass() == "" {
+	providerClass := req.GetProviderClass()
+	if providerClass == "" {
 		providerClass = providerName
-	} else {
-		providerClass = req.GetProviderClass()
 	}
 
 	// Telemetry logging
@@ -157,7 +157,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(&s.cfg.Provider, providerClass, req.Cli)
+	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(db.ProviderClass(providerClass), req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -234,36 +234,51 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 
 	provider := pathParams["provider"]
 
-	// Check the nonce to make sure it's valid
-	valid, err := mcrypto.IsNonceValid(state, s.cfg.Auth.NoncePeriod)
+	stateData, err := s.getValidSessionState(ctx, state)
 	if err != nil {
-		return fmt.Errorf("error checking nonce: %w", err)
-	}
-	if !valid {
-		return errors.New("invalid nonce")
-	}
-
-	// get projectID from session along with state nonce from the database
-	stateData, err := s.store.GetProjectIDBySessionState(ctx, state)
-	if err != nil {
-		return fmt.Errorf("error getting project ID by session state: %w", err)
+		return fmt.Errorf("error validating session state: %w", err)
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = stateData.ProjectID
 	logger.BusinessRecord(ctx).Provider = provider
 
-	token, err := s.exchangeCodeForToken(ctx, provider, code)
+	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	p, err := s.ghProviders.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
+	tokenCred := credentials.NewOAuth2TokenCredential(token.AccessToken)
+
+	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
+	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
+	err = s.providerAuthManager.ValidateCredentials(
+		ctx, db.ProviderClass(provider), tokenCred, manager.WithRemoteUser(stateData.RemoteUser.String))
+	if errors.Is(err, service.ErrInvalidTokenIdentity) {
+		return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
+			"The provided login token was associated with a different user.")
+	}
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidTokenIdentity) {
-			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
-				"The provided login token was associated with a different GitHub user.")
-		}
+		return fmt.Errorf("error validating provider credentials: %w", err)
+	}
+
+	ftoken := &oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: "",
+	}
+
+	// encode token
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(ftoken)
+	if err != nil {
+		return fmt.Errorf("error encoding token: %w", err)
+	}
+
+	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
+	if db.ErrIsUniqueViolation(err) {
+		// todo: update config?
+		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
+	} else if err != nil {
 		return fmt.Errorf("error creating provider: %w", err)
 	}
 
@@ -310,9 +325,9 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		return err
 	}
 
-	token, err := s.exchangeCodeForToken(ctx, provider, code)
+	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
 	if err != nil {
-		return err
+		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
 	installationID, err := strconv.ParseInt(installationIDParam, 10, 64)
@@ -403,9 +418,9 @@ func (s *Server) getValidSessionState(ctx context.Context, state string) (db.Get
 	return stateData, nil
 }
 
-func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass string, code string) (*oauth2.Token, error) {
+func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass db.ProviderClass, code string) (*oauth2.Token, error) {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(&s.cfg.Provider, providerClass, true)
+	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(providerClass, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OAuth config: %w", err)
 	}
@@ -461,7 +476,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// validate token
-	err = auth.ValidateProviderToken(ctx, provider.Class, in.AccessToken)
+	err = s.providerAuthManager.ValidateCredentials(ctx, provider.Class, in.AccessToken)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided: %v", err)
 	}
