@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/gorilla/handlers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,8 +44,10 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
@@ -222,6 +226,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,
+		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(recoveryHandler)),
 	}
 
 	options := []grpc.ServerOption{
@@ -304,7 +309,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	fs := http.FileServer(http.FS(assets.StaticAssets))
 
-	mw := otelhttp.NewMiddleware("webhook")
+	otelmw := otelhttp.NewMiddleware("webhook")
 
 	// Explicitly handle HTTP only requests
 	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleOAuthCallback())
@@ -320,10 +325,13 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register GitHub App callback handler: %w", err)
 	}
 
-	mux.Handle("/", withMaxSizeMiddleware(s.handlerWithHTTPMiddleware(gwmux)))
-	mux.Handle("/api/v1/webhook/", mw(withMaxSizeMiddleware(s.HandleGitHubWebHook())))
-	mux.Handle("/api/v1/ghapp/", mw(withMaxSizeMiddleware(s.HandleGitHubAppWebhook())))
-	mux.Handle("/api/v1/gh-marketplace/", mw(withMaxSizeMiddleware(s.NoopWebhookHandler())))
+	// This already has _some_ middleware due to the GRPC handling
+	mux.Handle("/", withMaxSizeMiddleware(s.withCORSMiddleware(gwmux)))
+
+	// This requires explicit middleware. CORS is not required here.
+	mux.Handle("/api/v1/webhook/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
+	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
@@ -366,7 +374,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 }
 
-func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
+func (s *Server) withCORSMiddleware(h http.Handler) http.Handler {
 	if s.cfg.HTTPServer.CORS.Enabled {
 		var opts []handlers.CORSOption
 		if len(s.cfg.HTTPServer.CORS.AllowOrigins) > 0 {
@@ -389,6 +397,12 @@ func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
 	}
 
 	return h
+}
+
+// Sets up common middleawre
+func withMiddleware(h http.Handler) http.Handler {
+	l := log.Logger
+	return handlers.RecoveryHandler(handlers.RecoveryLogger(&l))(withMaxSizeMiddleware(h))
 }
 
 // startMetricServer starts a Prometheus metrics server and blocks while serving
@@ -441,6 +455,14 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 
 		return server.Shutdown(shutdownCtx)
 	}
+}
+
+func recoveryHandler(ctx context.Context, p any) error {
+	log.Ctx(ctx).Error().
+		Str("msg", "recovered from panic").
+		Any("panic", p).
+		Bytes("stack", debug.Stack())
+	return status.Errorf(codes.Internal, "%s", p)
 }
 
 type shutdowner func(context.Context) error
