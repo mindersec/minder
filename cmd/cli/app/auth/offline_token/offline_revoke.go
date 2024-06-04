@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// Package offline_token provides the auth offline_token command for the minder CLI.
+package offline_token
 
 import (
 	"fmt"
@@ -28,11 +29,11 @@ import (
 	"github.com/stacklok/minder/internal/util"
 )
 
-// offlineTokenUseCmd represents the offline-token use command
-var offlineTokenUseCmd = &cobra.Command{
-	Use:   "use",
-	Short: "Use an offline token",
-	Long: `The minder auth offline-token use command project lets you install and use an offline token
+// offlineTokenRevokeCmd represents the offline-token use command
+var offlineTokenRevokeCmd = &cobra.Command{
+	Use:   "revoke",
+	Short: "Revoke an offline token",
+	Long: `The minder auth offline-token use command project lets you revoke an offline token
 for the minder control plane.
 
 Offline tokens are used to authenticate to the minder control plane without
@@ -64,41 +65,30 @@ that need to authenticate to the control plane.`,
 		issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 		clientID := clientConfig.Identity.CLI.ClientId
 
-		creds, err := util.RefreshCredentials(tok, issuerUrlStr, clientID)
-		if err != nil {
-			return fmt.Errorf("couldn't fetch credentials: %v", err)
+		if err := util.RevokeOfflineToken(tok, issuerUrlStr, clientID); err != nil {
+			return fmt.Errorf("couldn't revoke token: %v", err)
 		}
 
-		// save credentials
-		filePath, err := util.SaveCredentials(util.OpenIdCredentials{
-			AccessToken:          creds.AccessToken,
-			RefreshToken:         creds.RefreshToken,
-			AccessTokenExpiresAt: creds.AccessTokenExpiresAt,
-		})
-		if err != nil {
-			cmd.PrintErrf("couldn't save credentials: %s\n", err)
-		}
-
-		cmd.Printf("Your access credentials have been saved to %s\n", filePath)
+		cmd.Printf("Token revoked\n")
 
 		return nil
 	},
 }
 
 func init() {
-	OfflineTokenCmd.AddCommand(offlineTokenUseCmd)
+	offlineTokenCmd.AddCommand(offlineTokenRevokeCmd)
 
-	offlineTokenUseCmd.Flags().StringP("file", "f", "offline.token", "The file that contains the offline token")
-	offlineTokenUseCmd.Flags().StringP("token", "t", "",
+	offlineTokenRevokeCmd.Flags().StringP("file", "f", "offline.token", "The file that contains the offline token")
+	offlineTokenRevokeCmd.Flags().StringP("token", "t", "",
 		"The environment variable to use for the offline token. "+
 			"Also settable through the MINDER_OFFLINE_TOKEN environment variable.")
 
-	offlineTokenUseCmd.MarkFlagsMutuallyExclusive("file", "token")
+	offlineTokenRevokeCmd.MarkFlagsMutuallyExclusive("file", "token")
 
-	if err := viper.BindPFlag("file", offlineTokenUseCmd.Flag("file")); err != nil {
+	if err := viper.BindPFlag("file", offlineTokenRevokeCmd.Flag("file")); err != nil {
 		panic(err)
 	}
-	if err := viper.BindPFlag("token", offlineTokenUseCmd.Flag("token")); err != nil {
+	if err := viper.BindPFlag("token", offlineTokenRevokeCmd.Flag("token")); err != nil {
 		panic(err)
 	}
 
