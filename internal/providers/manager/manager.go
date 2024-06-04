@@ -68,6 +68,7 @@ type ProviderManager interface {
 // specific Provider class. The idea is that ProviderManager determines the
 // class of the Provider, and delegates to the appropraite ProviderClassManager
 type ProviderClassManager interface {
+	ValidateConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error
 	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
 	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
@@ -124,6 +125,11 @@ func (p *providerManager) CreateFromConfig(
 	provConfig, err := manager.GetConfig(ctx, providerClass, config)
 	if err != nil {
 		return nil, fmt.Errorf("error getting provider config: %w", err)
+	}
+
+	err = manager.ValidateConfig(ctx, providerClass, provConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error validating provider config: %w", err)
 	}
 
 	return p.store.Create(ctx, providerClass, name, projectID, provConfig)

@@ -320,3 +320,25 @@ func (g *githubProviderManager) GetConfig(
 
 	return userConfig, nil
 }
+
+func (g *githubProviderManager) ValidateConfig(
+	_ context.Context, class db.ProviderClass, config json.RawMessage,
+) error {
+	var err error
+
+	if !slices.Contains(g.GetSupportedClasses(), class) {
+		return fmt.Errorf("provider does not implement %s", string(class))
+	}
+
+	// nolint:exhaustive // we really want handle only the two
+	switch class {
+	case db.ProviderClassGithub:
+		_, err = clients.ParseV1OAuthConfig(config)
+	case db.ProviderClassGithubApp:
+		_, _, err = clients.ParseV1AppConfig(config)
+	default:
+		return fmt.Errorf("unsupported provider class %s", class)
+	}
+
+	return err
+}
