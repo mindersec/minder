@@ -265,7 +265,7 @@ func (p *profileService) UpdateProfile(
 			return nil, err
 		}
 
-		updatedIDs, err := updateRuleInstances(
+		updatedIDs, err := upsertRuleInstances(
 			ctx,
 			qtx,
 			updatedProfile.ID,
@@ -384,7 +384,7 @@ func createProfileRulesForEntity(
 		return nil
 	}
 
-	_, err := updateRuleInstances(
+	_, err := upsertRuleInstances(
 		ctx,
 		qtx,
 		profile.ID,
@@ -744,7 +744,7 @@ func deleteRuleStatusesForProfile(
 	return nil
 }
 
-func updateRuleInstances(
+func upsertRuleInstances(
 	ctx context.Context,
 	qtx db.Querier,
 	profileID uuid.UUID,
