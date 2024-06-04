@@ -49,4 +49,4 @@ SELECT * FROM rule_instances WHERE profile_id = $1 AND entity_type = $2;
 DELETE FROM rule_instances
 WHERE profile_id = $1
 AND entity_type = $2
-AND id <> ALL(sqlc.arg(updated_ids)::UUID[]);
+AND NOT id = ANY(sqlc.arg(updated_ids)::UUID[]);

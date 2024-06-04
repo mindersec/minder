@@ -17,7 +17,7 @@ const deleteNonUpdatedRules = `-- name: DeleteNonUpdatedRules :exec
 DELETE FROM rule_instances
 WHERE profile_id = $1
 AND entity_type = $2
-AND id <> ALL($3::UUID[])
+AND NOT id = ANY($3::UUID[])
 `
 
 type DeleteNonUpdatedRulesParams struct {
