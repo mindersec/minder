@@ -265,7 +265,7 @@ func (p *profileService) UpdateProfile(
 			return nil, err
 		}
 
-		err = updateRuleInstances(
+		updatedIDs, err := updateRuleInstances(
 			ctx,
 			qtx,
 			updatedProfile.ID,
@@ -275,6 +275,17 @@ func (p *profileService) UpdateProfile(
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Any rule which was not updated was deleted from the profile.
+		// Remove from the database as well.
+		err = qtx.DeleteNonUpdatedRules(ctx, db.DeleteNonUpdatedRulesParams{
+			ProfileID:  updatedProfile.ID,
+			EntityType: entities.EntityTypeToDB(ent),
+			UpdatedIds: updatedIDs,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error while cleaning up rule instances: %w", err)
 		}
 	}
 
@@ -373,27 +384,16 @@ func createProfileRulesForEntity(
 		return nil
 	}
 
-	for _, rule := range rules {
-		entityRuleTuple, ok := rulesInProf[RuleTypeAndNamePair{
-			RuleType: rule.Type,
-			RuleName: rule.Name,
-		}]
-		if !ok {
-			return fmt.Errorf("unable to find rule type ID for %s/%s", rule.Name, rule.Type)
-		}
-
-		_, err := upsertRuleInstance(
-			ctx,
-			qtx,
-			profile.ID,
-			rule,
-			entityRuleTuple.RuleID,
-			entities.EntityTypeToDB(entity),
-		)
-
-		if err != nil {
-			return err
-		}
+	_, err := updateRuleInstances(
+		ctx,
+		qtx,
+		profile.ID,
+		rules,
+		entities.EntityTypeToDB(entity),
+		rulesInProf,
+	)
+	if err != nil {
+		return fmt.Errorf("error while creating rule instances: %w", err)
 	}
 
 	marshalled, err := json.Marshal(rules)
@@ -744,47 +744,6 @@ func deleteRuleStatusesForProfile(
 	return nil
 }
 
-func upsertRuleInstance(
-	ctx context.Context,
-	qtx db.Querier,
-	profileID uuid.UUID,
-	rule *minderv1.Profile_Rule,
-	ruleTypeID uuid.UUID,
-	entityType db.Entities,
-) (uuid.UUID, error) {
-	def, err := json.Marshal(rule.Def)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("unable to serialize rule def: %w", err)
-	}
-
-	params, err := json.Marshal(rule.Params)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("unable to serialize rule params: %w", err)
-	}
-
-	newInstance := db.UpsertRuleInstanceParams{
-		ProfileID:  profileID,
-		RuleTypeID: ruleTypeID,
-		Name:       rule.Name,
-		EntityType: entityType,
-		Def: pqtype.NullRawMessage{
-			RawMessage: def,
-			Valid:      def != nil,
-		},
-		Params: pqtype.NullRawMessage{
-			RawMessage: params,
-			Valid:      params != nil,
-		},
-	}
-
-	id, err := qtx.UpsertRuleInstance(ctx, newInstance)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("unable to insert new rule instance: %w", err)
-	}
-
-	return id, nil
-}
-
 func updateRuleInstances(
 	ctx context.Context,
 	qtx db.Querier,
@@ -792,7 +751,7 @@ func updateRuleInstances(
 	newRules []*minderv1.Profile_Rule,
 	entityType db.Entities,
 	rulesInProf RuleMapping,
-) error {
+) ([]uuid.UUID, error) {
 	updatedIDs := make([]uuid.UUID, len(newRules))
 	for i, rule := range newRules {
 		// TODO: Clean up this logic once we no longer have to support the old tables.
@@ -801,36 +760,41 @@ func updateRuleInstances(
 			RuleName: rule.Name,
 		}]
 		if !ok {
-			return fmt.Errorf("unable to find rule type ID for %s/%s", rule.Name, rule.Type)
+			return nil, fmt.Errorf("unable to find rule type ID for %s/%s", rule.Name, rule.Type)
 		}
 
-		id, err := upsertRuleInstance(
-			ctx,
-			qtx,
-			profileID,
-			rule,
-			entityRuleTuple.RuleID,
-			entityType,
-		)
+		def, err := json.Marshal(rule.Def)
 		if err != nil {
-			// enough context in error from upsertRuleInstance
-			return err
+			return nil, fmt.Errorf("unable to serialize rule def: %w", err)
+		}
+
+		params, err := json.Marshal(rule.Params)
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize rule params: %w", err)
+		}
+
+		newInstance := db.UpsertRuleInstanceParams{
+			ProfileID:  profileID,
+			RuleTypeID: entityRuleTuple.RuleID,
+			Name:       rule.Name,
+			EntityType: entityType,
+			Def: pqtype.NullRawMessage{
+				RawMessage: def,
+				Valid:      def != nil,
+			},
+			Params: pqtype.NullRawMessage{
+				RawMessage: params,
+				Valid:      params != nil,
+			},
+		}
+
+		id, err := qtx.UpsertRuleInstance(ctx, newInstance)
+		if err != nil {
+			return nil, fmt.Errorf("unable to insert new rule instance: %w", err)
 		}
 
 		updatedIDs[i] = id
-
 	}
 
-	// Any rule which was not updated was deleted from the profile.
-	// Remove from the database as well.
-	err := qtx.DeleteNonUpdatedRules(ctx, db.DeleteNonUpdatedRulesParams{
-		ProfileID:  profileID,
-		EntityType: entityType,
-		UpdatedIds: updatedIDs,
-	})
-	if err != nil {
-		return fmt.Errorf("error while cleaning up rule instances: %w", err)
-	}
-
-	return nil
+	return updatedIDs, nil
 }
