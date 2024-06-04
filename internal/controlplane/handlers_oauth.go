@@ -354,8 +354,13 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
+		var confErr providers.ErrProviderInvalidConfig
 		_, err = s.ghProviders.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
+			if errors.As(err, &confErr) {
+				return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
+					"The provider configuration is invalid: " + confErr.Details)
+			}
 			if errors.Is(err, service.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
 					"The provided login token was associated with a different GitHub user.")

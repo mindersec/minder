@@ -262,6 +262,11 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			return nil, fmt.Errorf("error getting provider config: %w", err)
 		}
 
+		_, _, err = clients.ParseV1AppConfig(finalConfig)
+		if err != nil {
+			return nil, providers.NewErrProviderInvalidConfig(err.Error())
+		}
+
 		provider, err := createGitHubApp(
 			ctx,
 			qtx,

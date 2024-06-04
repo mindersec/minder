@@ -784,6 +784,27 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 				assert.Equal(t, 403, resp.Code)
 			},
 		}, {
+			name:  "Invalid config",
+			state: validState,
+			buildStubs: func(store *mockdb.MockStore, service *mockprovsvc.MockGitHubProviderService, _ *mockgh.MockClientService) {
+				service.EXPECT().
+					ValidateGitHubInstallationId(gomock.Any(), gomock.Any(), installationID).
+					Return(nil)
+				store.EXPECT().
+					GetProjectIDBySessionState(gomock.Any(), validState).
+					Return(db.GetProjectIDBySessionStateRow{
+						ProjectID: uuid.New(),
+					}, nil)
+				service.EXPECT().
+					CreateGitHubAppProvider(gomock.Any(), gomock.Any(), gomock.Any(), installationID, gomock.Any()).
+					Return(nil, providers.NewErrProviderInvalidConfig("invalid config"))
+			},
+			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
+				t.Helper()
+				assert.Equal(t, http.StatusBadRequest, resp.Code)
+				assert.Contains(t, resp.Body.String(), "The provider configuration is invalid: invalid config")
+			},
+		}, {
 			name:        "Request to install",
 			state:       validState,
 			setupAction: "request",
