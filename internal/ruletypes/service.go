@@ -25,7 +25,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/util"
@@ -152,7 +151,7 @@ func (_ *ruleTypeService) CreateRuleType(
 
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
 
-	rt, err := engine.RuleTypePBFromDB(&newDBRecord)
+	rt, err := RuleTypePBFromDB(&newDBRecord)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", newDBRecord.Name, err)
 	}
@@ -223,7 +222,7 @@ func (_ *ruleTypeService) UpdateRuleType(
 
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: oldRuleType.Name, ID: oldRuleType.ID}
 
-	result, err := engine.RuleTypePBFromDB(&updatedRuleType)
+	result, err := RuleTypePBFromDB(&updatedRuleType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %w", oldRuleType.Name, err)
 	}
@@ -271,7 +270,7 @@ func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {
 }
 
 func validateRuleUpdate(existingRecord *db.RuleType, newRuleType *pb.RuleType) error {
-	oldRuleType, err := engine.RuleTypePBFromDB(existingRecord)
+	oldRuleType, err := RuleTypePBFromDB(existingRecord)
 	if err != nil {
 		return fmt.Errorf("cannot convert rule type %s to pb: %w", newRuleType.GetName(), err)
 	}

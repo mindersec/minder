@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -121,7 +122,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
 
-	profile, err := engine.ReadProfileFromFile(ppath.Value.String())
+	profile, err := profiles.ReadProfileFromFile(ppath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}

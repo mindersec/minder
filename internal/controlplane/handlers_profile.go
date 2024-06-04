@@ -143,7 +143,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 
 	var resp minderv1.ListProfilesResponse
 	resp.Profiles = make([]*minderv1.Profile, 0, len(profiles))
-	profileMap := engine.MergeDatabaseListIntoProfiles(profiles)
+	profileMap := prof.MergeDatabaseListIntoProfiles(profiles)
 
 	// Sort the profiles by name to get a consistent order. This is important for UI.
 	profileNames := make([]string, 0, len(profileMap))
@@ -211,7 +211,7 @@ func getProfilePBFromDB(
 		return nil, err
 	}
 
-	pols := engine.MergeDatabaseGetIntoProfiles(profiles)
+	pols := prof.MergeDatabaseGetIntoProfiles(profiles)
 	if len(pols) == 0 {
 		return nil, fmt.Errorf("profile not found")
 	} else if len(pols) > 1 {

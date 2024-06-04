@@ -13,7 +13,7 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package engine_test
+package profiles_test
 
 import (
 	"strings"
@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -314,7 +314,7 @@ repository:
 
 			r := strings.NewReader(tt.profile)
 
-			got, err := engine.ParseYAML(r)
+			got, err := profiles.ParseYAML(r)
 			if tt.wantErr {
 				require.Error(t, err, "ParseYAML should have errored")
 				if tt.errIs != nil {
@@ -499,7 +499,7 @@ func TestGetRulesForEntity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := engine.GetRulesForEntity(tt.args.p, tt.args.entity)
+			got, err := profiles.GetRulesForEntity(tt.args.p, tt.args.entity)
 			if tt.wantErr {
 				require.Error(t, err, "should have gotten error")
 				return
@@ -619,7 +619,7 @@ func TestFilterRulesForType(t *testing.T) {
 			t.Parallel()
 
 			got := []*minderv1.Profile_Rule{}
-			err := engine.TraverseRules(tt.args.cr, func(pp *minderv1.Profile_Rule) error {
+			err := profiles.TraverseRules(tt.args.cr, func(pp *minderv1.Profile_Rule) error {
 				if pp.Type == tt.args.rt.Name {
 					got = append(got, pp)
 				}

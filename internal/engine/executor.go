@@ -33,7 +33,9 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/events"
 	minderlogger "github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/manager"
+	"github.com/stacklok/minder/internal/ruletypes"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -180,13 +182,13 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 	err = e.forProjectsInHierarchy(
 		ctx, inf, func(ctx context.Context, profile *pb.Profile, hierarchy []uuid.UUID) error {
 			// Get only these rules that are relevant for this entity type
-			relevant, err := GetRulesForEntity(profile, inf.Type)
+			relevant, err := profiles.GetRulesForEntity(profile, inf.Type)
 			if err != nil {
 				return fmt.Errorf("error getting rules for entity: %w", err)
 			}
 
 			// Let's evaluate all the rules for this profile
-			err = TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
+			err = profiles.TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 				// Get the engine evaluator for this rule type
 				evalParams, rte, err := e.getEvaluator(
 					ctx, inf, provider, profile, rule, hierarchy, ingestCache)
@@ -246,7 +248,7 @@ func (e *Executor) forProjectsInHierarchy(
 			return fmt.Errorf("error getting profiles: %w", err)
 		}
 
-		for _, profile := range MergeDatabaseListIntoProfiles(dbpols) {
+		for _, profile := range profiles.MergeDatabaseListIntoProfiles(dbpols) {
 			if err := f(ctx, profile, projectHierarchy); err != nil {
 				return err
 			}
@@ -288,7 +290,7 @@ func (e *Executor) getEvaluator(
 	}
 
 	// Parse the rule type
-	rt, err := RuleTypePBFromDB(&dbrt)
+	rt, err := ruletypes.RuleTypePBFromDB(&dbrt)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
 	}

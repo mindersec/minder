@@ -13,7 +13,7 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package engine
+package profiles
 
 import (
 	"fmt"
