@@ -315,6 +315,18 @@ buf compatibility checks.
 | retired_organization | [string](#string) | optional |  |
 
 
+<a name="minder-v1-ContextV2"></a>
+
+#### ContextV2
+ContextV2 defines the context in which a rule is evaluated.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | project is the project ID |
+| provider | [string](#string) |  | name of the provider. Set to empty string when not applicable. |
+
+
 <a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
 
 #### CreateEntityReconciliationTaskRequest

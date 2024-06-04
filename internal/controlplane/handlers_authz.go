@@ -60,14 +60,12 @@ func EntityContextProjectInterceptor(ctx context.Context, req interface{}, info 
 		return handler(ctx, req)
 	}
 
-	request, ok := req.(HasProtoContext)
+	server, ok := info.Server.(*Server)
 	if !ok {
-		return nil, status.Errorf(codes.Internal, "Error extracting context from request")
+		return nil, status.Errorf(codes.Internal, "error casting serrver for request handling")
 	}
 
-	server := info.Server.(*Server)
-
-	ctx, err := populateEntityContext(ctx, server.store, server.authzClient, request)
+	ctx, err := populateEntityContext(ctx, server.store, server.authzClient, req)
 	if err != nil {
 		return nil, err
 	}
@@ -119,48 +117,66 @@ func populateEntityContext(
 	ctx context.Context,
 	store db.Store,
 	authzClient authz.Client,
-	in HasProtoContext,
+	req any,
 ) (context.Context, error) {
-	if in.GetContext() == nil {
-		return ctx, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
-	}
-
-	projectID, err := getProjectFromRequestOrDefault(ctx, store, authzClient, in)
+	projectID, err := getProjectIDFromContext(req)
 	if err != nil {
-		return ctx, err
+		if errors.Is(err, ErrNoProjectInContext) {
+			projectID, err = getDefaultProjectID(ctx, store, authzClient)
+			if err != nil {
+				return ctx, err
+			}
+		} else {
+			return ctx, err
+		}
 	}
-
-	// don't look up default provider until user has been authorized
-	providerName := in.GetContext().GetProvider()
 
 	entityCtx := &engine.EntityContext{
 		Project: engine.Project{
 			ID: projectID,
 		},
 		Provider: engine.Provider{
-			Name: providerName,
+			Name: getProviderFromContext(req),
 		},
 	}
 
 	return engine.WithEntityContext(ctx, entityCtx), nil
 }
 
-func getProjectFromRequestOrDefault(
+func getProjectIDFromContext(req any) (uuid.UUID, error) {
+	switch req := req.(type) {
+	case HasProtoContextV2Compat:
+		return getProjectFromContextV2Compat(req)
+	case HasProtoContextV2:
+		return getProjectFromContextV2(req)
+	case HasProtoContext:
+		return getProjectFromContext(req)
+	default:
+		return uuid.Nil, status.Errorf(codes.Internal, "Error extracting context from request")
+	}
+}
+
+func getProviderFromContext(req any) string {
+	switch req := req.(type) {
+	case HasProtoContextV2Compat:
+		if req.GetContextV2().GetProvider() != "" {
+			return req.GetContextV2().GetProvider()
+		}
+		return req.GetContext().GetProvider()
+	case HasProtoContextV2:
+		return req.GetContextV2().GetProvider()
+	case HasProtoContext:
+		return req.GetContext().GetProvider()
+	default:
+		return ""
+	}
+}
+
+func getDefaultProjectID(
 	ctx context.Context,
 	store db.Store,
 	authzClient authz.Client,
-	in HasProtoContext,
 ) (uuid.UUID, error) {
-	// Prefer the context message from the protobuf
-	if in.GetContext().GetProject() != "" {
-		requestedProject := in.GetContext().GetProject()
-		parsedProjectID, err := uuid.Parse(requestedProject)
-		if err != nil {
-			return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
-		}
-		return parsedProjectID, nil
-	}
-
 	subject := auth.GetUserSubjectFromContext(ctx)
 
 	userInfo, err := store.GetUserBySubject(ctx, subject)
