@@ -25,9 +25,8 @@ import (
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	db "github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
-	// "github.com/stacklok/minder/internal/util/testqueue"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -62,14 +61,12 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("added").
-					WithProjectID(projectID).
+				err := messages.NewRepoEvent().
 					WithProviderID(providerID).
-					WithRepositoryName(repoName).
-					WithRepositoryOwner(repoOwner).
-					WithRepository(&pb.Repository{})
-				err := eiw.ToMessage(m)
+					WithProjectID(projectID).
+					WithRepoName(repoName).
+					WithRepoOwner(repoOwner).
+					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
 			},
@@ -85,14 +82,12 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("added").
-					WithProjectID(projectID).
+				err := messages.NewRepoEvent().
 					WithProviderID(providerID).
-					WithRepositoryName(repoName).
-					WithRepositoryOwner(repoOwner).
-					WithRepository(&pb.Repository{})
-				err := eiw.ToMessage(m)
+					WithProjectID(projectID).
+					WithRepoName(repoName).
+					WithRepoOwner(repoOwner).
+					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
 			},
@@ -120,14 +115,12 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("added").
-					WithProjectID(projectID).
+				err := messages.NewRepoEvent().
 					WithProviderID(providerID).
-					WithRepositoryName(repoName).
-					WithRepositoryOwner(repoOwner).
-					WithRepository(&pb.Repository{})
-				err := eiw.ToMessage(m)
+					WithProjectID(projectID).
+					WithRepoName(repoName).
+					WithRepoOwner(repoOwner).
+					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
 			},
@@ -141,23 +134,6 @@ func TestHandleEntityAdd(t *testing.T) {
 				return message.NewMessage(uuid.New().String(), nil)
 			},
 			err: true,
-		},
-		{
-			name:          "not a repository",
-			mockStoreFunc: nil,
-			//nolint:thelper
-			messageFunc: func(t *testing.T) *message.Message {
-				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("added").
-					WithProjectID(projectID).
-					WithProviderID(providerID).
-					WithArtifact(&pb.Artifact{}).
-					WithArtifactID(uuid.New())
-				err := eiw.ToMessage(m)
-				require.NoError(t, err, "invalid message")
-				return m
-			},
 		},
 	}
 

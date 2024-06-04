@@ -97,7 +97,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner: repoOwner,
 			RepoName:  repoName,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
-				ghrepo.ErrPrivateRepoForbidden,
+				ghrepo.ErrArchivedRepoForbidden,
 				projectID,
 				repoOwner,
 				repoName,
@@ -109,7 +109,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner: repoOwner,
 			RepoName:  repoName,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
-				ghrepo.ErrPrivateRepoForbidden,
+				errDefault,
 				projectID,
 				repoOwner,
 				repoName,

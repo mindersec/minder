@@ -51,6 +51,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	"github.com/stacklok/minder/internal/util/testqueue"
 )
 
@@ -3290,6 +3291,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	projectID := uuid.New()
 	providerID := uuid.New()
 
+	autoregConfigEnabled := `{"github-app": {}, "auto_registration": {"entities": {"repository": {"enabled": true}}}}`
+	autoregConfigDisabled := `{"github-app": {}, "auto_registration": {"entities": {"repository": {"enabled": false}}}}`
+
 	tests := []struct {
 		name          string
 		event         string
@@ -3555,6 +3559,13 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				},
 			},
 			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:         providerID,
+						Definition: json.RawMessage(autoregConfigEnabled),
+					},
+					providerID,
+				),
 				df.WithSuccessfulGetInstallationIDByAppID(
 					db.ProviderGithubAppInstallation{
 						ProjectID: uuid.NullUUID{
@@ -3574,24 +3585,85 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				timeout := 1 * time.Second
 
+				var evt messages.RepoEvent
+
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, "", received.Metadata["repository_id"])
+
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, providerID.String(), evt.ProviderID.String())
+				require.Equal(t, projectID.String(), evt.ProjectID.String())
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, "", received.Metadata["repository_id"])
+
+				err = json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, providerID.String(), evt.ProviderID.String())
+				require.Equal(t, projectID.String(), evt.ProjectID.String())
 			},
+		},
+		{
+			name: "installation_repositories autoreg disabled",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#installation
+			event: "installation_repositories",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
+			payload: &github.InstallationRepositoriesEvent{
+				Action: github.String("added"),
+				RepositoriesAdded: []*github.Repository{
+					newGitHubRepo(
+						12345,
+						"minder",
+						"stacklok/minder",
+						"https://github.com/stacklok/minder",
+					),
+					newGitHubRepo(
+						67890,
+						"trusty",
+						"stacklok/trusty",
+						"https://github.com/stacklok/trusty",
+					),
+				},
+				Installation: &github.Installation{
+					ID: github.Int64(54321),
+				},
+				Sender: &github.User{
+					Login:   github.String("stacklok"),
+					HTMLURL: github.String("https://github.com/apps"),
+				},
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:         providerID,
+						Definition: json.RawMessage(autoregConfigDisabled),
+					},
+					providerID,
+				),
+				df.WithSuccessfulGetInstallationIDByAppID(
+					db.ProviderGithubAppInstallation{
+						ProjectID: uuid.NullUUID{
+							UUID:  projectID,
+							Valid: true,
+						},
+						ProviderID: uuid.NullUUID{
+							UUID:  providerID,
+							Valid: true,
+						},
+					},
+					54321),
+			),
+			topic:      events.TopicQueueReconcileEntityAdd,
+			statusCode: http.StatusOK,
+			//nolint:thelper
+			queued: nil,
 		},
 		{
 			name: "installation_repositories removed",
@@ -3623,6 +3695,13 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				},
 			},
 			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:         providerID,
+						Definition: json.RawMessage(autoregConfigEnabled),
+					},
+					providerID,
+				),
 				df.WithSuccessfulGetInstallationIDByAppID(
 					db.ProviderGithubAppInstallation{
 						ProjectID: uuid.NullUUID{
@@ -3660,23 +3739,31 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				timeout := 1 * time.Second
 
+				var evt messages.RepoEvent
+
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, providerID.String(), evt.ProviderID.String())
+				require.Equal(t, projectID.String(), evt.ProjectID.String())
+				require.Equal(t, repositoryID.String(), evt.RepoID.String())
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				err = json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, providerID.String(), evt.ProviderID.String())
+				require.Equal(t, projectID.String(), evt.ProjectID.String())
+				require.Equal(t, repositoryID.String(), evt.RepoID.String())
 			},
 		},
 

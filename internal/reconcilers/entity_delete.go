@@ -15,51 +15,53 @@
 package reconcilers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/entities"
 	minderlogger "github.com/stacklok/minder/internal/logger"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
 
 //nolint:exhaustive
 func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	ctx := msg.Context()
+	l := zerolog.Ctx(ctx).With().Logger()
 
-	inf, err := entities.ParseEntityEvent(msg)
-	if err != nil {
+	var event messages.RepoEvent
+	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	l := zerolog.Ctx(ctx).With().
-		Str("provider_id", inf.ProviderID.String()).
-		Str("project_id", inf.ProjectID.String()).
-		Str("entity_type", inf.Type.ToString()).
-		Str("action", inf.ActionEvent).
-		Logger()
-
-	repoID, _, _ := inf.GetEntityDBIDs()
-
-	// Telemetry logging
-	minderlogger.BusinessRecord(ctx).ProviderID = inf.ProviderID
-	minderlogger.BusinessRecord(ctx).Project = inf.ProjectID
-	switch inf.Type {
-	case pb.Entity_ENTITY_REPOSITORIES:
-		l.Info().Str("repo_id", repoID.UUID.String()).Msg("handling entity delete event")
-		// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
-		// will automatically remove them when the repository is deleted.
-		if err := r.repos.DeleteByID(ctx, repoID.UUID, inf.ProjectID); err != nil {
-			return fmt.Errorf("error deleting repository from DB: %w", err)
-		}
-		minderlogger.BusinessRecord(ctx).Repository = repoID.UUID
-		return nil
-	default:
-		err := fmt.Errorf("unsupported entity delete event for: %s", inf.Type)
-		l.Err(err).Msg("error handling entity delete event")
-		// Do not return the error, as we don't want to nack the message and retry
+	// validate event
+	validate := validator.New()
+	if err := validate.Struct(&event); err != nil {
+		// We don't return the event since there's no use
+		// retrying it if it's invalid.
+		l.Error().Err(err).Msg("error validating event")
 		return nil
 	}
+
+	l = zerolog.Ctx(ctx).With().
+		Str("provider_id", event.ProviderID.String()).
+		Str("project_id", event.ProjectID.String()).
+		Str("repo_id", event.RepoID.String()).
+		Logger()
+
+	// Telemetry logging
+	minderlogger.BusinessRecord(ctx).ProviderID = event.ProviderID
+	minderlogger.BusinessRecord(ctx).Project = event.ProjectID
+
+	l.Info().Msg("handling entity delete event")
+	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
+	// will automatically remove them when the repository is deleted.
+	if err := r.repos.DeleteByID(ctx, event.RepoID, event.ProjectID); err != nil {
+		return fmt.Errorf("error deleting repository from DB: %w", err)
+	}
+
+	minderlogger.BusinessRecord(ctx).Repository = event.RepoID
+	return nil
 }

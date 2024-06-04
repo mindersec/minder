@@ -42,8 +42,10 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
+	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprov "github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -357,6 +359,16 @@ func (i *installation) GetID() int64 {
 	return 0
 }
 
+// toMessage interface ensures that payloads returned by processor
+// routines can be turned into a message.Message
+type toMessage interface {
+	ToMessage(*message.Message) error
+}
+
+var _ toMessage = (*entities.EntityInfoWrapper)(nil)
+var _ toMessage = (*installations.InstallationInfoWrapper)(nil)
+var _ toMessage = (*messages.RepoEvent)(nil)
+
 // processingResult struct contains the sole information necessary to
 // send a message out from the handler, namely a destination topic and
 // an object that knows how to "convert itself" to a watermill message.
@@ -368,9 +380,7 @@ type processingResult struct {
 	topic string
 	// wrapper object for repository, pull-request, and artifact
 	// (package) events.
-	eiw *entities.EntityInfoWrapper
-	// wrapper object for installation (app) events
-	iiw *installations.InstallationInfoWrapper
+	wrapper toMessage
 }
 
 // HandleGitHubAppWebhook handles incoming GitHub App webhooks
@@ -446,16 +456,8 @@ func (s *Server) HandleGitHubAppWebhook() http.HandlerFunc {
 
 		for _, res := range results {
 			l.Info().Str("message-id", m.UUID).Msg("publishing event for execution")
-			if res.iiw != nil {
-				if err := res.iiw.ToMessage(m); err != nil {
-					wes.Error = true
-					l.Error().Err(err).Msg("Error creating event")
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-			}
-			if res.eiw != nil {
-				if err := res.eiw.ToMessage(m); err != nil {
+			if res.wrapper != nil {
+				if err := res.wrapper.ToMessage(m); err != nil {
 					wes.Error = true
 					l.Error().Err(err).Msg("Error creating event")
 					w.WriteHeader(http.StatusInternalServerError)
@@ -594,8 +596,8 @@ func (s *Server) HandleGitHubWebHook() http.HandlerFunc {
 		}
 
 		// res is null only when a ping event occurred.
-		if res != nil && res.eiw != nil {
-			if err := res.eiw.ToMessage(m); err != nil {
+		if res != nil && res.wrapper != nil {
+			if err := res.wrapper.ToMessage(m); err != nil {
 				wes.Error = true
 				l.Error().Err(err).Msg("Error creating event")
 				w.WriteHeader(http.StatusInternalServerError)
@@ -738,7 +740,7 @@ func (s *Server) processPackageEvent(
 		WithProviderID(dbrepo.ProviderID).
 		WithRepositoryID(dbrepo.ID)
 
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
+	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
 }
 
 func (s *Server) processRelevantRepositoryEvent(
@@ -802,7 +804,7 @@ func (s *Server) processRelevantRepositoryEvent(
 		topic = events.TopicQueueReconcileEntityDelete
 	}
 
-	return &processingResult{topic: topic, eiw: eiw}, nil
+	return &processingResult{topic: topic, wrapper: eiw}, nil
 }
 
 func (s *Server) processRepositoryEvent(
@@ -845,7 +847,7 @@ func (s *Server) processRepositoryEvent(
 		WithRepository(pbRepo).
 		WithRepositoryID(dbrepo.ID)
 
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
+	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
 }
 
 func (s *Server) processPullRequestEvent(
@@ -932,7 +934,7 @@ func (s *Server) processPullRequestEvent(
 		WithPullRequestID(dbPr.ID).
 		WithRepositoryID(dbrepo.ID)
 
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, eiw: eiw}, nil
+	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
 }
 
 // processInstallationAppEvent processes events related to changes to
@@ -980,14 +982,16 @@ func (_ *Server) processInstallationAppEvent(
 
 	return []*processingResult{
 		{
-			topic: installations.ProviderInstallationTopic,
-			iiw:   iiw,
+			topic:   installations.ProviderInstallationTopic,
+			wrapper: iiw,
 		},
 	}, nil
 }
 
 // processInstallationRepositoriesAppEvent processes events related to
 // changes to the list of repositories that the app can access.
+//
+//nolint:gocyclo
 func (s *Server) processInstallationRepositoriesAppEvent(
 	ctx context.Context,
 	payload []byte,
@@ -1023,14 +1027,32 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		return nil, errors.New("invalid project id")
 	}
 
-	results := make([]*processingResult, 0, len(event.GetRepositoriesAdded())+len(event.GetRepositoriesRemoved()))
-	for _, repo := range event.GetRepositoriesAdded() {
+	dbProv, err := s.providerStore.GetByID(ctx, installation.ProviderID.UUID)
+	if err != nil {
+		return nil, fmt.Errorf("could not determine provider id: %v", err)
+	}
+
+	providerConfig, _, err := clients.ParseV1AppConfig(dbProv.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse provider config: %v", err)
+	}
+
+	addedRepos := make([]*repo, 0)
+	autoRegEntities := providerConfig.GetAutoRegistration().GetEntities()
+	repoAutoReg, ok := autoRegEntities[string(pb.RepositoryEntity)]
+	if ok && repoAutoReg.GetEnabled() {
+		addedRepos = event.GetRepositoriesAdded()
+	} else {
+		zerolog.Ctx(ctx).Info().Msg("auto-registration is disabled for repositories")
+	}
+
+	results := make([]*processingResult, 0)
+	for _, repo := range addedRepos {
 		// caveat: we're accessing the database once for every
 		// repository, which might be inefficient at scale.
 		res, err := s.repositoryAdded(
 			ctx,
 			repo,
-			event.GetAction(),
 			installation,
 		)
 		if err != nil {
@@ -1050,7 +1072,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		res, err := s.repositoryRemoved(
 			ctx,
 			repo,
-			event.GetAction(),
 		)
 		if errors.Is(err, errRepoNotFound) {
 			continue
@@ -1068,48 +1089,41 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 func (s *Server) repositoryRemoved(
 	ctx context.Context,
 	repo *repo,
-	action string,
 ) (*processingResult, error) {
 	dbrepo, err := s.fetchRepo(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
-	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(action).
+	event := messages.NewRepoEvent().
 		WithProjectID(dbrepo.ProjectID).
 		WithProviderID(dbrepo.ProviderID).
-		WithRepository(pbRepo).
-		WithRepositoryID(dbrepo.ID)
+		WithRepoID(dbrepo.ID)
 
 	return &processingResult{
-		topic: events.TopicQueueReconcileEntityDelete,
-		eiw:   eiw,
+		topic:   events.TopicQueueReconcileEntityDelete,
+		wrapper: event,
 	}, nil
 }
 
 func (_ *Server) repositoryAdded(
 	_ context.Context,
 	repo *repo,
-	action string,
 	installation db.ProviderGithubAppInstallation,
 ) (*processingResult, error) {
 	if repo.GetName() == "" {
 		return nil, errors.New("invalid repository name")
 	}
 
-	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(action).
+	event := messages.NewRepoEvent().
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
-		WithRepositoryName(repo.GetName()).
-		WithRepositoryOwner(repo.GetOwner()).
-		WithRepository(&pb.Repository{})
+		WithRepoName(repo.GetName()).
+		WithRepoOwner(repo.GetOwner())
 
 	return &processingResult{
-		topic: events.TopicQueueReconcileEntityAdd,
-		eiw:   eiw,
+		topic:   events.TopicQueueReconcileEntityAdd,
+		wrapper: event,
 	}, nil
 }
 

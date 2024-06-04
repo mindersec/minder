@@ -27,12 +27,10 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
 	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
-	// "github.com/stacklok/minder/internal/util/testqueue"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -65,12 +63,10 @@ func TestHandleEntityDelete(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("deleted").
+				eiw := messages.NewRepoEvent().
 					WithProjectID(projectID).
 					WithProviderID(providerID).
-					WithRepository(&pb.Repository{}).
-					WithRepositoryID(repositoryID)
+					WithRepoID(repositoryID)
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -87,12 +83,10 @@ func TestHandleEntityDelete(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("deleted").
+				eiw := messages.NewRepoEvent().
 					WithProjectID(projectID).
 					WithProviderID(providerID).
-					WithRepository(&pb.Repository{}).
-					WithRepositoryID(repositoryID)
+					WithRepoID(repositoryID)
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -107,23 +101,6 @@ func TestHandleEntityDelete(t *testing.T) {
 				return message.NewMessage(uuid.New().String(), nil)
 			},
 			err: true,
-		},
-		{
-			name:          "not a repository",
-			mockStoreFunc: nil,
-			//nolint:thelper
-			messageFunc: func(t *testing.T) *message.Message {
-				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := entities.NewEntityInfoWrapper().
-					WithActionEvent("deleted").
-					WithProjectID(projectID).
-					WithProviderID(providerID).
-					WithArtifact(&pb.Artifact{}).
-					WithArtifactID(uuid.New())
-				err := eiw.ToMessage(m)
-				require.NoError(t, err, "invalid message")
-				return m
-			},
 		},
 	}
 
