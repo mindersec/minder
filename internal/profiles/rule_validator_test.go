@@ -13,7 +13,7 @@
 // limitations under the License.
 // Package rule provides the CLI subcommand for managing rules
 
-package engine_test
+package profiles_test
 
 import (
 	"os"
@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -30,7 +31,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 	t.Parallel()
 
 	t.Log("parsing example profile")
-	pol, err := engine.ReadProfileFromFile("../../examples/rules-and-profiles/profiles/github/profile.yaml")
+	pol, err := profiles.ReadProfileFromFile("../../examples/rules-and-profiles/profiles/github/profile.yaml")
 	require.NoError(t, err, "failed to parse example profile, make sure to do - make init-examples")
 
 	// open rules in example directory
@@ -63,7 +64,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			require.NoError(t, rt.Validate(), "failed to validate rule type %s", path)
 
 			t.Log("creating rule validator")
-			rval, err := engine.NewRuleValidator(rt)
+			rval, err := profiles.NewRuleValidator(rt)
 			require.NoError(t, err, "failed to create rule validator for rule type %s", path)
 
 			rules, err := engine.GetRulesFromProfileOfType(pol, rt)

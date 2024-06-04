@@ -54,7 +54,7 @@ func (s *Server) ListRuleTypes(
 
 	for idx := range lrt {
 		rt := lrt[idx]
-		rtpb, err := engine.RuleTypePBFromDB(&rt)
+		rtpb, err := ruletypes.RuleTypePBFromDB(&rt)
 		if err != nil {
 			return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rt.Name, err)
 		}
@@ -92,7 +92,7 @@ func (s *Server) GetRuleTypeByName(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&rtdb)
+	rt, err := ruletypes.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}
@@ -132,7 +132,7 @@ func (s *Server) GetRuleTypeById(
 		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
 	}
 
-	rt, err := engine.RuleTypePBFromDB(&rtdb)
+	rt, err := ruletypes.RuleTypePBFromDB(&rtdb)
 	if err != nil {
 		return nil, fmt.Errorf("cannot convert rule type %s to pb: %v", rtdb.Name, err)
 	}

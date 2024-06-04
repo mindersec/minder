@@ -28,7 +28,6 @@ import (
 
 	"github.com/stacklok/minder/internal/artifacts"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/repositories"
 )
@@ -78,14 +77,8 @@ func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		return nil
 	}
 
-	ectx := &engine.EntityContext{
-		Project: engine.Project{
-			ID: evt.Project,
-		},
-	}
-
 	zerolog.Ctx(ctx).Debug().Msg("handling profile init event")
-	if err := r.publishProfileInitEvents(ctx, ectx); err != nil {
+	if err := r.publishProfileInitEvents(ctx, evt.Project); err != nil {
 		// We don't return an error since watermill will retry
 		// the message.
 		zerolog.Ctx(ctx).Error().Msg("error publishing profile events")
@@ -97,15 +90,12 @@ func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 
 func (r *Reconciler) publishProfileInitEvents(
 	ctx context.Context,
-	ectx *engine.EntityContext,
+	projectID uuid.UUID,
 ) error {
 	dbrepos, err := r.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
 		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
-			Provider: sql.NullString{
-				String: ectx.Provider.Name,
-				Valid:  ectx.Provider.Name != "",
-			},
-			ProjectID: ectx.Project.ID,
+			Provider:  sql.NullString{Valid: false},
+			ProjectID: projectID,
 		})
 	if err != nil {
 		return fmt.Errorf("publishProfileInitEvents: error getting registered repos: %v", err)
@@ -116,7 +106,7 @@ func (r *Reconciler) publishProfileInitEvents(
 		repo := repositories.PBRepositoryFromDB(dbrepo)
 		err := entities.NewEntityInfoWrapper().
 			WithProviderID(dbrepo.ProviderID).
-			WithProjectID(ectx.Project.ID).
+			WithProjectID(projectID).
 			WithRepository(repo).
 			WithRepositoryID(dbrepo.ID).
 			Publish(r.evt)
@@ -132,7 +122,7 @@ func (r *Reconciler) publishProfileInitEvents(
 	// TODO(jakub): this should be done in an iterator of sorts
 	for i := range dbrepos {
 		pdb := &dbrepos[i]
-		err := r.publishArtifactProfileInitEvents(ctx, ectx, pdb)
+		err := r.publishArtifactProfileInitEvents(ctx, projectID, pdb)
 		if err != nil {
 			return fmt.Errorf("publishProfileInitEvents: error publishing artifact events: %v", err)
 		}
@@ -143,7 +133,7 @@ func (r *Reconciler) publishProfileInitEvents(
 
 func (r *Reconciler) publishArtifactProfileInitEvents(
 	ctx context.Context,
-	ectx *engine.EntityContext,
+	projectID uuid.UUID,
 	dbrepo *db.Repository,
 ) error {
 	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, uuid.NullUUID{
@@ -166,7 +156,7 @@ func (r *Reconciler) publishArtifactProfileInitEvents(
 
 		err = entities.NewEntityInfoWrapper().
 			WithProviderID(dbrepo.ProviderID).
-			WithProjectID(ectx.Project.ID).
+			WithProjectID(projectID).
 			WithArtifact(pbArtifact).
 			WithRepositoryID(dbrepo.ID).
 			WithArtifactID(dbA.ID).

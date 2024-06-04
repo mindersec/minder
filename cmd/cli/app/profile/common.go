@@ -21,7 +21,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
@@ -57,7 +57,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 }
 
 func parseProfile(r io.Reader, proj string) (*minderv1.Profile, error) {
-	p, err := engine.ParseYAML(r)
+	p, err := profiles.ParseYAML(r)
 	if err != nil {
 		return nil, fmt.Errorf("error reading profile from file: %w", err)
 	}

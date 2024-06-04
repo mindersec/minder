@@ -15,7 +15,6 @@
 package profiles
 
 import (
-	"github.com/stacklok/minder/internal/engine"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -32,7 +31,7 @@ func ComputeRuleName(rule *minderv1.Profile_Rule) string {
 
 // PopulateRuleNames fills in the rule name for all rule instances in a profile
 func PopulateRuleNames(profile *minderv1.Profile) {
-	_ = engine.TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
+	_ = TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
 		r.Name = ComputeRuleName(r)
 		return nil
 	},
