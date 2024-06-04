@@ -53,7 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/stacklok/frizbee v0.0.15
+	github.com/stacklok/frizbee v0.0.16
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.22.0
 	github.com/thomaspoignant/go-feature-flag v1.27.0
