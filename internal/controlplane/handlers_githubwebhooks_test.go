@@ -44,6 +44,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
@@ -482,7 +483,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 		event         string
 		payload       any
 		rawPayload    []byte
-		mockStoreFunc func(*gomock.Controller) *mockdb.MockStore
+		mockStoreFunc df.MockStoreBuilder
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -508,7 +509,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 		},
@@ -533,7 +534,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 		},
@@ -568,8 +569,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -578,12 +579,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulGetArtifactByID(
+				df.WithSuccessfulGetArtifactByID(
 					db.Artifact{
 						ID: artifactID,
 					},
 				),
-				withSuccessfulUpsertArtifact(
+				df.WithSuccessfulUpsertArtifact(
 					db.Artifact{
 						ID: uuid.New(),
 					},
@@ -610,8 +611,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -620,12 +621,12 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulGetArtifactByID(
+				df.WithSuccessfulGetArtifactByID(
 					db.Artifact{
 						ID: artifactID,
 					},
 				),
-				withSuccessfulUpsertArtifact(
+				df.WithSuccessfulUpsertArtifact(
 					db.Artifact{
 						ID: uuid.New(),
 					},
@@ -677,7 +678,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -696,7 +697,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 		},
@@ -733,7 +734,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -769,7 +770,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -805,7 +806,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -838,7 +839,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -849,7 +850,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload:    []byte("ceci n'est pas une JSON"),
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			statusCode:    http.StatusInternalServerError,
 		},
 
@@ -885,7 +886,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -921,7 +922,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -957,7 +958,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -990,7 +991,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -1001,7 +1002,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload:    []byte("ceci n'est pas une JSON"),
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			statusCode:    http.StatusInternalServerError,
 		},
 		{
@@ -1022,8 +1023,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1067,8 +1068,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1111,8 +1112,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1144,8 +1145,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1184,8 +1185,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1224,8 +1225,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1264,8 +1265,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1303,8 +1304,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1343,8 +1344,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1382,8 +1383,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1422,8 +1423,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1462,8 +1463,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1502,8 +1503,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1542,8 +1543,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1586,8 +1587,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1626,8 +1627,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1666,8 +1667,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1706,8 +1707,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1746,8 +1747,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1786,8 +1787,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1827,8 +1828,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1837,7 +1838,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulGetFeatureInProject(false),
+				df.WithSuccessfulGetFeatureInProject(false),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1858,8 +1859,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1868,7 +1869,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulGetFeatureInProject(true),
+				df.WithSuccessfulGetFeatureInProject(true),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1899,8 +1900,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1939,8 +1940,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -1979,8 +1980,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2019,8 +2020,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2059,8 +2060,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2099,8 +2100,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2138,8 +2139,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2178,8 +2179,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2218,8 +2219,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2258,8 +2259,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2298,8 +2299,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2338,8 +2339,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2378,8 +2379,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2418,8 +2419,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2458,8 +2459,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2498,8 +2499,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2537,8 +2538,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2576,8 +2577,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2626,8 +2627,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2658,8 +2659,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2699,8 +2700,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2726,8 +2727,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2746,8 +2747,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2784,8 +2785,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2822,8 +2823,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2860,8 +2861,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2898,8 +2899,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2936,8 +2937,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -2974,8 +2975,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3026,8 +3027,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3036,7 +3037,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulUpsertPullRequest(
+				df.WithSuccessfulUpsertPullRequest(
 					db.PullRequest{},
 				),
 			),
@@ -3079,8 +3080,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3089,7 +3090,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulDeletePullRequest(),
+				df.WithSuccessfulDeletePullRequest(),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -3119,8 +3120,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3154,7 +3155,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         events.TopicQueueEntityEvaluate,
 			statusCode:    http.StatusInternalServerError,
 			queued:        nil,
@@ -3294,7 +3295,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 		event         string
 		payload       any
 		rawPayload    []byte
-		mockStoreFunc func(*gomock.Controller) *mockdb.MockStore
+		mockStoreFunc df.MockStoreBuilder
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -3317,7 +3318,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 		},
@@ -3339,7 +3340,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 		},
@@ -3368,7 +3369,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -3396,7 +3397,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			//nolint:thelper
@@ -3417,7 +3418,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			event: "installation",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#InstallationEvent
 			rawPayload:    []byte(rawInstallationDeletedEvent),
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			//nolint:thelper
@@ -3457,7 +3458,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -3487,7 +3488,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -3517,7 +3518,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(),
+			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
 			queued:        nil,
@@ -3546,32 +3547,26 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					),
 				},
 				Installation: &github.Installation{
-					ID: github.Int64(12345),
+					ID: github.Int64(54321),
 				},
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetInstallationIDByAppID(
+					db.ProviderGithubAppInstallation{
+						ProjectID: uuid.NullUUID{
+							UUID:  projectID,
+							Valid: true,
+						},
+						ProviderID: uuid.NullUUID{
+							UUID:  providerID,
+							Valid: true,
+						},
 					},
-				),
-				withSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
+					54321),
 			),
 			topic:      events.TopicQueueReconcileEntityAdd,
 			statusCode: http.StatusOK,
@@ -3586,7 +3581,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, "", received.Metadata["repository_id"])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3595,7 +3590,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, "", received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3620,15 +3615,27 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					),
 				},
 				Installation: &github.Installation{
-					ID: github.Int64(12345),
+					ID: github.Int64(54321),
 				},
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: newMockStore(
-				withSuccessfulGetRepositoryByRepoID(
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetInstallationIDByAppID(
+					db.ProviderGithubAppInstallation{
+						ProjectID: uuid.NullUUID{
+							UUID:  projectID,
+							Valid: true,
+						},
+						ProviderID: uuid.NullUUID{
+							UUID:  providerID,
+							Valid: true,
+						},
+					},
+					54321),
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3637,7 +3644,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 						ProviderID: providerID,
 					},
 				),
-				withSuccessfulGetRepositoryByRepoID(
+				df.WithSuccessfulGetRepositoryByRepoID(
 					db.Repository{
 						ID:         repositoryID,
 						ProjectID:  projectID,
@@ -3834,71 +3841,4 @@ func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, er
 type garbage struct {
 	Action  *string `json:"action,omitempty"`
 	Garbage *string `json:"garbage,omitempty"`
-}
-
-func withSuccessfulGetRepositoryByRepoID(repository db.Repository) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-			Return(repository, nil)
-	}
-}
-
-func withSuccessfulGetFeatureInProject(active bool) func(*mockdb.MockStore) {
-	if active {
-		return func(mockStore *mockdb.MockStore) {
-			mockStore.EXPECT().
-				GetFeatureInProject(gomock.Any(), gomock.Any()).
-				Return(json.RawMessage{}, nil)
-		}
-	}
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			GetFeatureInProject(gomock.Any(), gomock.Any()).
-			Return(nil, sql.ErrNoRows)
-	}
-}
-
-func withSuccessfulUpsertPullRequest(pullRequest db.PullRequest) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			UpsertPullRequest(gomock.Any(), gomock.Any()).
-			Return(pullRequest, nil)
-	}
-}
-
-func withSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			DeletePullRequest(gomock.Any(), gomock.Any()).
-			Return(nil)
-	}
-}
-
-func withSuccessfulGetArtifactByID(artifact db.Artifact) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			GetArtifactByID(gomock.Any(), gomock.Any()).
-			Return(artifact, nil)
-	}
-}
-
-func withSuccessfulUpsertArtifact(artifact db.Artifact) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			UpsertArtifact(gomock.Any(), gomock.Any()).
-			Return(artifact, nil)
-	}
-}
-
-func newMockStore(funcs ...func(*mockdb.MockStore)) func(*gomock.Controller) *mockdb.MockStore {
-	return func(ctrl *gomock.Controller) *mockdb.MockStore {
-		mockStore := mockdb.NewMockStore(ctrl)
-
-		for _, fn := range funcs {
-			fn(mockStore)
-		}
-
-		return mockStore
-	}
 }

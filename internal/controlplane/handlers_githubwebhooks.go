@@ -1031,7 +1031,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 			ctx,
 			repo,
 			event.GetAction(),
-			events.TopicQueueReconcileEntityAdd,
 			installation,
 		)
 		if err != nil {
@@ -1052,7 +1051,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 			ctx,
 			repo,
 			event.GetAction(),
-			events.TopicQueueReconcileEntityDelete,
 		)
 		if errors.Is(err, errRepoNotFound) {
 			continue
@@ -1071,7 +1069,6 @@ func (s *Server) repositoryRemoved(
 	ctx context.Context,
 	repo *repo,
 	action string,
-	topic string,
 ) (*processingResult, error) {
 	dbrepo, err := s.fetchRepo(ctx, repo)
 	if err != nil {
@@ -1087,7 +1084,7 @@ func (s *Server) repositoryRemoved(
 		WithRepositoryID(dbrepo.ID)
 
 	return &processingResult{
-		topic: topic,
+		topic: events.TopicQueueReconcileEntityDelete,
 		eiw:   eiw,
 	}, nil
 }
@@ -1096,7 +1093,6 @@ func (_ *Server) repositoryAdded(
 	_ context.Context,
 	repo *repo,
 	action string,
-	topic string,
 	installation db.ProviderGithubAppInstallation,
 ) (*processingResult, error) {
 	if repo.GetName() == "" {
@@ -1108,13 +1104,11 @@ func (_ *Server) repositoryAdded(
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
 		WithRepositoryName(repo.GetName()).
-		WithRepositoryOwner(repo.GetOwner())
-
-	eiw.Type = pb.Entity_ENTITY_REPOSITORIES
-	eiw.Entity = &pb.Repository{}
+		WithRepositoryOwner(repo.GetOwner()).
+		WithRepository(&pb.Repository{})
 
 	return &processingResult{
-		topic: topic,
+		topic: events.TopicQueueReconcileEntityAdd,
 		eiw:   eiw,
 	}, nil
 }
