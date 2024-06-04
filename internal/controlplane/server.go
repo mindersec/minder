@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/gorilla/handlers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -40,10 +42,11 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
-	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
@@ -60,6 +63,7 @@ import (
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
+	"github.com/stacklok/minder/internal/providers/session"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
@@ -78,29 +82,30 @@ var (
 
 // Server represents the controlplane server
 type Server struct {
-	store               db.Store
-	cfg                 *serverconfig.Config
-	evt                 events.Publisher
-	mt                  metrics.Metrics
-	grpcServer          *grpc.Server
-	jwt                 auth.JwtValidator
-	providerAuthFactory func(string, bool) (*oauth2.Config, error)
-	authzClient         authz.Client
-	idClient            auth.Resolver
-	cryptoEngine        crypto.Engine
-	featureFlags        openfeature.IClient
+	store        db.Store
+	cfg          *serverconfig.Config
+	evt          events.Publisher
+	mt           metrics.Metrics
+	grpcServer   *grpc.Server
+	jwt          auth.JwtValidator
+	authzClient  authz.Client
+	idClient     auth.Resolver
+	cryptoEngine crypto.Engine
+	featureFlags openfeature.IClient
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
-	ruleTypes       ruletypes.RuleTypeService
-	repos           github.RepositoryService
-	profiles        profiles.ProfileService
-	ghProviders     service.GitHubProviderService
-	providerStore   providers.ProviderStore
-	ghClient        ghprov.ClientService
-	providerManager manager.ProviderManager
-	projectCreator  projects.ProjectCreator
-	projectDeleter  projects.ProjectDeleter
+	ruleTypes           ruletypes.RuleTypeService
+	repos               github.RepositoryService
+	profiles            profiles.ProfileService
+	ghProviders         service.GitHubProviderService
+	providerStore       providers.ProviderStore
+	ghClient            ghprov.ClientService
+	providerManager     manager.ProviderManager
+	sessionService      session.ProviderSessionService
+	providerAuthManager manager.AuthManager
+	projectCreator      projects.ProjectCreator
+	projectDeleter      projects.ProjectDeleter
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -130,7 +135,9 @@ func NewServer(
 	ruleService ruletypes.RuleTypeService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
+	providerAuthManager manager.AuthManager,
 	providerStore providers.ProviderStore,
+	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
 ) *Server {
@@ -140,7 +147,6 @@ func NewServer(
 		evt:                 evt,
 		cryptoEngine:        cryptoEngine,
 		jwt:                 jwt,
-		providerAuthFactory: auth.NewOAuthConfig,
 		mt:                  serverMetrics,
 		profiles:            profileService,
 		ruleTypes:           ruleService,
@@ -148,6 +154,8 @@ func NewServer(
 		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		providerManager:     providerManager,
+		providerAuthManager: providerAuthManager,
+		sessionService:      sessionService,
 		repos:               repoService,
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
@@ -222,6 +230,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,
+		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(recoveryHandler)),
 	}
 
 	options := []grpc.ServerOption{
@@ -304,7 +313,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 
 	fs := http.FileServer(http.FS(assets.StaticAssets))
 
-	mw := otelhttp.NewMiddleware("webhook")
+	otelmw := otelhttp.NewMiddleware("webhook")
 
 	// Explicitly handle HTTP only requests
 	err := gwmux.HandlePath(http.MethodGet, "/api/v1/auth/callback/{provider}/cli", s.HandleOAuthCallback())
@@ -320,10 +329,13 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register GitHub App callback handler: %w", err)
 	}
 
-	mux.Handle("/", withMaxSizeMiddleware(s.handlerWithHTTPMiddleware(gwmux)))
-	mux.Handle("/api/v1/webhook/", mw(withMaxSizeMiddleware(s.HandleGitHubWebHook())))
-	mux.Handle("/api/v1/ghapp/", mw(withMaxSizeMiddleware(s.HandleGitHubAppWebhook())))
-	mux.Handle("/api/v1/gh-marketplace/", mw(withMaxSizeMiddleware(s.NoopWebhookHandler())))
+	// This already has _some_ middleware due to the GRPC handling
+	mux.Handle("/", withMaxSizeMiddleware(s.withCORSMiddleware(gwmux)))
+
+	// This requires explicit middleware. CORS is not required here.
+	mux.Handle("/api/v1/webhook/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
+	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
@@ -366,7 +378,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 }
 
-func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
+func (s *Server) withCORSMiddleware(h http.Handler) http.Handler {
 	if s.cfg.HTTPServer.CORS.Enabled {
 		var opts []handlers.CORSOption
 		if len(s.cfg.HTTPServer.CORS.AllowOrigins) > 0 {
@@ -389,6 +401,12 @@ func (s *Server) handlerWithHTTPMiddleware(h http.Handler) http.Handler {
 	}
 
 	return h
+}
+
+// Sets up common middleawre
+func withMiddleware(h http.Handler) http.Handler {
+	l := log.Logger
+	return handlers.RecoveryHandler(handlers.RecoveryLogger(&l))(withMaxSizeMiddleware(h))
 }
 
 // startMetricServer starts a Prometheus metrics server and blocks while serving
@@ -441,6 +459,14 @@ func (s *Server) startMetricServer(ctx context.Context) error {
 
 		return server.Shutdown(shutdownCtx)
 	}
+}
+
+func recoveryHandler(ctx context.Context, p any) error {
+	log.Ctx(ctx).Error().
+		Str("msg", "recovered from panic").
+		Any("panic", p).
+		Bytes("stack", debug.Stack())
+	return status.Errorf(codes.Internal, "%s", p)
 }
 
 type shutdowner func(context.Context) error

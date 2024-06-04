@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -33,7 +34,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	cpmetrics "github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
@@ -118,12 +118,7 @@ var serveCmd = &cobra.Command{
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
 
-		tsmdw := logger.NewTelemetryStoreWMMiddleware(l)
-		executorOpts := []engine.ExecutorOption{
-			engine.WithProviderMetrics(providerMetrics),
-			engine.WithMiddleware(tsmdw.TelemetryStoreMiddleware),
-		}
-
+		telemetryMiddleware := logger.NewTelemetryStoreWMMiddleware(l)
 		return service.AllInOneServerService(
 			ctx,
 			cfg,
@@ -134,7 +129,7 @@ var serveCmd = &cobra.Command{
 			idClient,
 			cpmetrics.NewMetrics(),
 			providerMetrics,
-			executorOpts,
+			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},
 		)
 	},
 }

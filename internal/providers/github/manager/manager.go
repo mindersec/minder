@@ -18,6 +18,7 @@ package manager
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -25,6 +26,8 @@ import (
 	gogithub "github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -98,7 +101,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 
 	creds, err := g.getProviderCredentials(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch credentials")
+		return nil, fmt.Errorf("unable to fetch credentials: %w", err)
 	}
 
 	client, ok := g.restClientCache.Get(creds.ownerFilter.String, creds.credential.GetCacheKey(), db.ProviderTypeGithub)
@@ -127,7 +130,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return cli, nil
 	}
 
-	cfg, err := clients.ParseV1AppConfig(config.Definition)
+	_, cfg, err := clients.ParseV1AppConfig(config.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -148,7 +151,10 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 }
 
 func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider) error {
-	state := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.config)
+	state, err := providers.GetCredentialStateForProvider(ctx, *config, g.store, g.crypteng, g.config)
+	if err != nil {
+		return fmt.Errorf("unable to get credential state for provider %s: %w", config.ID, err)
+	}
 	if state == v1.CredentialStateSet {
 		provider, err := g.Build(ctx, config)
 		if err != nil {
@@ -191,7 +197,20 @@ func (g *githubProviderManager) createProviderWithAccessToken(
 	ctx context.Context,
 	encToken db.ProviderAccessToken,
 ) (*credentialDetails, error) {
-	decryptedToken, err := g.crypteng.DecryptOAuthToken(encToken.EncryptedToken)
+	// TODO: get rid of this once we migrate all secrets to use the new structure
+	var err error
+	var encryptedData crypto.EncryptedData
+	if encToken.EncryptedAccessToken.Valid {
+		encryptedData, err = crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
+		if err != nil {
+			return nil, err
+		}
+	} else if encToken.EncryptedToken.Valid {
+		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken.String)
+	} else {
+		return nil, fmt.Errorf("no secret found for provider %s", encToken.Provider)
+	}
+	decryptedToken, err := g.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
@@ -216,7 +235,6 @@ func (g *githubProviderManager) getProviderCredentials(
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
 	if errors.Is(err, sql.ErrNoRows) {
 		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
-
 		// If we don't have an access token, check if we have an installation ID
 		return g.createProviderWithInstallationToken(ctx, prov)
 	} else if err != nil {
@@ -247,7 +265,7 @@ func (g *githubProviderManager) createProviderWithInstallationToken(
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
 
-	cfg, err := clients.ParseV1AppConfig(prov.Definition)
+	_, cfg, err := clients.ParseV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -278,4 +296,127 @@ type credentialDetails struct {
 	credential  v1.GitHubCredential
 	ownerFilter sql.NullString
 	isOrg       bool
+}
+
+func (g *githubProviderManager) GetConfig(
+	ctx context.Context, class db.ProviderClass, userConfig json.RawMessage,
+) (json.RawMessage, error) {
+	if !slices.Contains(g.GetSupportedClasses(), class) {
+		return nil, fmt.Errorf("provider does not implement %s", string(class))
+	}
+
+	return g.ghService.GetConfig(ctx, class, userConfig)
+}
+
+func (g *githubProviderManager) ValidateConfig(
+	_ context.Context, class db.ProviderClass, config json.RawMessage,
+) error {
+	var err error
+
+	if !slices.Contains(g.GetSupportedClasses(), class) {
+		return fmt.Errorf("provider does not implement %s", string(class))
+	}
+
+	// nolint:exhaustive // we really want handle only the two
+	switch class {
+	case db.ProviderClassGithub:
+		_, err = clients.ParseV1OAuthConfig(config)
+	case db.ProviderClassGithubApp:
+		_, _, err = clients.ParseV1AppConfig(config)
+	default:
+		return fmt.Errorf("unsupported provider class %s", class)
+	}
+
+	return err
+}
+
+func (g *githubProviderManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
+	var oauthConfig *oauth2.Config
+	var oauthClientConfig *server.OAuthClientConfig
+	var err error
+
+	switch providerClass { // nolint:exhaustive // we really want handle only the two
+	case db.ProviderClassGithub:
+		oauthClientConfig = &g.config.GitHub.OAuthClientConfig
+		oauthConfig = githubOauthConfig(oauthClientConfig.RedirectURI, cli)
+	case db.ProviderClassGithubApp:
+		oauthClientConfig = &g.config.GitHubApp.OAuthClientConfig
+		oauthConfig = githubAppOauthConfig(oauthClientConfig.RedirectURI)
+	default:
+		err = fmt.Errorf("invalid provider class: %s", providerClass)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientId, err := oauthClientConfig.GetClientID()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client ID: %w", err)
+	}
+
+	clientSecret, err := oauthClientConfig.GetClientSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client secret: %w", err)
+	}
+
+	// this is currently only used for testing as github uses well-known endpoints
+	if oauthClientConfig.Endpoint != nil {
+		oauthConfig.Endpoint = oauth2.Endpoint{
+			TokenURL: oauthClientConfig.Endpoint.TokenURL,
+		}
+	}
+
+	oauthConfig.ClientID = clientId
+	oauthConfig.ClientSecret = clientSecret
+	return oauthConfig, nil
+}
+
+func githubOauthConfig(redirectUrlBase string, cli bool) *oauth2.Config {
+	var redirectUrl string
+
+	if cli {
+		redirectUrl = fmt.Sprintf("%s/cli", redirectUrlBase)
+	} else {
+		redirectUrl = fmt.Sprintf("%s/web", redirectUrlBase)
+	}
+
+	return &oauth2.Config{
+		RedirectURL: redirectUrl,
+		Scopes:      []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"},
+		Endpoint:    github.Endpoint,
+	}
+}
+
+func githubAppOauthConfig(redirectUrlBase string) *oauth2.Config {
+	return &oauth2.Config{
+		RedirectURL: redirectUrlBase,
+		Scopes:      []string{},
+		Endpoint:    github.Endpoint,
+	}
+}
+
+func (g *githubProviderManager) ValidateCredentials(
+	ctx context.Context, cred v1.Credential, params *m.CredentialVerifyParams,
+) error {
+	tokenCred, ok := cred.(v1.OAuth2TokenCredential)
+	if !ok {
+		return fmt.Errorf("invalid credential type: %T", cred)
+	}
+
+	token, err := tokenCred.GetAsOAuth2TokenSource().Token()
+	if err != nil {
+		return fmt.Errorf("cannot get token from credential: %w", err)
+	}
+
+	if params.RemoteUser != "" {
+		err := g.ghService.VerifyProviderTokenIdentity(ctx, params.RemoteUser, token.AccessToken)
+		if err != nil {
+			return fmt.Errorf("error verifying token identity: %w", err)
+		}
+	} else {
+		zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
+	}
+
+	return nil
 }

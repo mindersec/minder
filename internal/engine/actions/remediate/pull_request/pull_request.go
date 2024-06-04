@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	htmltemplate "html/template"
 	"os"
 	"strings"
 	"text/template"
@@ -60,6 +59,14 @@ const (
 	prBodyTmplStr  = "{{.PrText}}"
 )
 
+const (
+	// TitleMaxLength is the maximum number of bytes for the title
+	TitleMaxLength = 256
+
+	// BodyMaxLength is the maximum number of bytes for the body
+	BodyMaxLength = 5120
+)
+
 type pullRequestMetadata struct {
 	Number int `json:"pr_number,omitempty"`
 }
@@ -72,8 +79,8 @@ type Remediator struct {
 	prCfg                *pb.RuleType_Definition_Remediate_PullRequestRemediation
 	modificationRegistry modificationRegistry
 
-	titleTemplate *htmltemplate.Template
-	bodyTemplate  *htmltemplate.Template
+	titleTemplate *util.SafeTemplate
+	bodyTemplate  *util.SafeTemplate
 }
 
 type paramsPR struct {
@@ -97,12 +104,12 @@ func NewPullRequestRemediate(
 		return nil, fmt.Errorf("pull request remediation config is invalid: %w", err)
 	}
 
-	titleTmpl, err := util.ParseNewHtmlTemplate(&prCfg.Title, "title")
+	titleTmpl, err := util.NewSafeHTMLTemplate(&prCfg.Title, "title")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse title template: %w", err)
 	}
 
-	bodyTmpl, err := util.ParseNewHtmlTemplate(&prCfg.Body, "body")
+	bodyTmpl, err := util.NewSafeHTMLTemplate(&prCfg.Body, "body")
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse body template: %w", err)
 	}
@@ -195,8 +202,8 @@ func (r *Remediator) getParamsForPRRemediation(
 		return nil, errors.New("ingested filesystem is nil or no git repo was ingested")
 	}
 
-	title := new(bytes.Buffer)
-	if err := r.titleTemplate.Execute(title, tmplParams); err != nil {
+	title, err := r.titleTemplate.Render(ctx, tmplParams, TitleMaxLength)
+	if err != nil {
 		return nil, fmt.Errorf("cannot execute title template: %w", err)
 	}
 
@@ -215,7 +222,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		return nil, fmt.Errorf("cannot create PR entries: %w", err)
 	}
 
-	prFullBodyText, err := r.getPrBodyText(tmplParams)
+	prFullBodyText, err := r.getPrBodyText(ctx, tmplParams)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create PR full body text: %w", err)
 	}
@@ -232,7 +239,7 @@ func (r *Remediator) getParamsForPRRemediation(
 	return &paramsPR{
 		ingested:   ingested,
 		repo:       repo,
-		title:      title.String(),
+		title:      title,
 		modifier:   modification,
 		body:       prFullBodyText,
 		metadata:   meta,
@@ -265,7 +272,7 @@ func (r *Remediator) dryRun(
 		}
 		endpoint := fmt.Sprintf("repos/%v/%v/pulls/%d", p.repo.GetOwner(), p.repo.GetName(), p.metadata.Number)
 		body := "{\"state\": \"closed\"}"
-		curlCmd, err := util.GenerateCurlCommand("PATCH", r.ghCli.GetBaseURL(), endpoint, body)
+		curlCmd, err := util.GenerateCurlCommand(ctx, "PATCH", r.ghCli.GetBaseURL(), endpoint, body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate curl command to close a pull request: %w", err)
 		}
@@ -505,9 +512,9 @@ func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {
 	return name
 }
 
-func (r *Remediator) getPrBodyText(tmplParams *PrTemplateParams) (string, error) {
+func (r *Remediator) getPrBodyText(ctx context.Context, tmplParams *PrTemplateParams) (string, error) {
 	body := new(bytes.Buffer)
-	if err := r.bodyTemplate.Execute(body, tmplParams); err != nil {
+	if err := r.bodyTemplate.Execute(ctx, body, tmplParams, BodyMaxLength); err != nil {
 		return "", fmt.Errorf("cannot execute body template: %w", err)
 	}
 

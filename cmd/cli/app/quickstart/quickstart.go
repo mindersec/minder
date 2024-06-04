@@ -35,7 +35,7 @@ import (
 	"github.com/stacklok/minder/cmd/cli/app/profile"
 	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
 	"github.com/stacklok/minder/cmd/cli/app/repo"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -325,7 +325,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 	}
 
 	// Load the profile from the embedded file system
-	p, err := engine.ParseYAML(reader)
+	p, err := profiles.ParseYAML(reader)
 	if err != nil {
 		return cli.MessageAndError("error parsing profile", err)
 	}

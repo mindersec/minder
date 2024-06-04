@@ -19,7 +19,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,6 +29,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/sqlc-dev/pqtype"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -68,6 +68,9 @@ type GitHubProviderService interface {
 	ValidateGitHubAppWebhookPayload(r *http.Request) (payload []byte, err error)
 	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
 	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
+	VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error
+	// GetConfig returns the provider configuration
+	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -168,7 +171,7 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		if err != nil {
 			return nil, fmt.Errorf("unable to create github client: %w", err)
 		}
-		if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
+		if err := verifyProviderTokenIdentity(ctx, stateData.RemoteUser.String, delegate); err != nil {
 			return nil, ErrInvalidTokenIdentity
 		}
 	} else {
@@ -181,28 +184,28 @@ func (p *ghProviderService) CreateGitHubOAuthProvider(
 		RefreshToken: "",
 	}
 
-	// Convert token to JSON
-	jsonData, err := json.Marshal(ftoken)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling token: %w", err)
-	}
-
 	// encode token
-	encryptedToken, err := p.cryptoEngine.EncryptOAuthToken(jsonData)
+	encryptedToken, err := p.cryptoEngine.EncryptOAuthToken(ftoken)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding token: %w", err)
 	}
 
-	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
+	serialized, err := encryptedToken.Serialize()
+	if err != nil {
+		return nil, err
+	}
 
 	_, err = qtx.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:      stateData.ProjectID,
-		Provider:       providerName,
-		EncryptedToken: encodedToken,
-		OwnerFilter:    stateData.OwnerFilter,
+		ProjectID:   stateData.ProjectID,
+		Provider:    providerName,
+		OwnerFilter: stateData.OwnerFilter,
 		EnrollmentNonce: sql.NullString{
 			Valid:  true,
 			String: state,
+		},
+		EncryptedAccessToken: pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
 		},
 	})
 	if err != nil {
@@ -245,7 +248,7 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 				if err != nil {
 					return fmt.Errorf("unable to create github client: %w", err)
 				}
-				if err := verifyProviderTokenIdentity(ctx, stateData, delegate); err != nil {
+				if err := verifyProviderTokenIdentity(ctx, stateData.RemoteUser.String, delegate); err != nil {
 					return ErrInvalidTokenIdentity
 				}
 			} else {
@@ -254,12 +257,18 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			return nil
 		}
 
+		finalConfig, err := p.GetConfig(ctx, db.ProviderClassGithubApp, stateData.ProviderConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error getting provider config: %w", err)
+		}
+
 		provider, err := createGitHubApp(
 			ctx,
 			qtx,
 			stateData.ProjectID,
 			installationOwner,
 			installationID,
+			finalConfig,
 			validateOwnership,
 			sql.NullString{
 				String: state,
@@ -316,7 +325,8 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("owner", installationOwner.GetID()).
 		Msg("Creating GitHub App Provider")
 
-	_, err = createGitHubApp(ctx, qtx, project.ID, installationOwner, installationID, nil, sql.NullString{})
+	_, err = createGitHubApp(
+		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github-app": {}}`), nil, sql.NullString{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
 
@@ -333,6 +343,7 @@ func createGitHubApp(
 	projectId uuid.UUID,
 	installationOwner *github.User,
 	installationID int64,
+	providerConfig json.RawMessage,
 	validateOwnership func(ctx context.Context) error,
 	nonce sql.NullString,
 ) (db.Provider, error) {
@@ -354,7 +365,7 @@ func createGitHubApp(
 		ProjectID:  projectId,
 		Class:      class,
 		Implements: providerDef.Traits,
-		Definition: json.RawMessage(`{"github-app": {}}`),
+		Definition: providerConfig,
 		AuthFlows:  providerDef.AuthorizationFlows,
 	})
 	if err != nil {
@@ -481,16 +492,32 @@ func (p *ghProviderService) DeleteInstallation(ctx context.Context, providerID u
 
 func verifyProviderTokenIdentity(
 	ctx context.Context,
-	stateData db.GetProjectIDBySessionStateRow,
+	remoteUser string,
 	client ghprov.Delegate,
 ) error {
 	userId, err := client.GetUserId(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting user ID: %w", err)
 	}
-	if strconv.FormatInt(userId, 10) != stateData.RemoteUser.String {
-		return fmt.Errorf("user ID mismatch: %d != %s", userId, stateData.RemoteUser.String)
+	if strconv.FormatInt(userId, 10) != remoteUser {
+		return fmt.Errorf("user ID mismatch: %d != %s", userId, remoteUser)
 	}
+	return nil
+}
+
+func (p *ghProviderService) VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error {
+	credential := credentials.NewGitHubTokenCredential(accessToken)
+
+	// owner is empty, as per original logic
+	_, delegate, err := p.ghClientFactory.BuildOAuthClient("", credential, "")
+	if err != nil {
+		return fmt.Errorf("unable to create github client: %w", err)
+	}
+
+	if err := verifyProviderTokenIdentity(ctx, remoteUser, delegate); err != nil {
+		return fmt.Errorf("error verifying provider token identity: %w", ErrInvalidTokenIdentity)
+	}
+
 	return nil
 }
 
@@ -509,4 +536,24 @@ func (p *ghProviderService) getInstallationOwner(ctx context.Context, installati
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 	return installation.GetAccount(), nil
+}
+
+func (_ *ghProviderService) GetConfig(
+	_ context.Context, class db.ProviderClass, userConfig json.RawMessage,
+) (json.RawMessage, error) {
+	var defaultConfig string
+	// nolint:exhaustive // we really want handle only the two
+	switch class {
+	case db.ProviderClassGithub:
+		defaultConfig = `{"github": {}}`
+	case db.ProviderClassGithubApp:
+		defaultConfig = `{"github-app": {}}`
+	default:
+		return nil, fmt.Errorf("unsupported provider class %s", class)
+	}
+	if len(userConfig) == 0 {
+		return json.RawMessage(defaultConfig), nil
+	}
+
+	return userConfig, nil
 }

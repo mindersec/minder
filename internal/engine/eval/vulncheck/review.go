@@ -17,6 +17,7 @@ package vulncheck
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -197,12 +198,21 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 
 	var body string
 	var lineTo int
-	if patch.HasPatchedVersion() {
-		comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
-		body = reviewBodyWithSuggestion(comment)
-		lineTo = len(strings.Split(comment, "\n")) - 1
-	} else {
-		body = vulnFoundWithNoPatch
+
+	switch {
+	case errors.Is(patch.GetFormatterMeta().pkgRegistryLookupError, ErrPkgNotFound):
+		body = pkgRepoInfoNotFound
+	case patch.GetFormatterMeta().pkgRegistryLookupError == nil:
+		if !patch.HasPatchedVersion() {
+			body = vulnFoundWithNoPatch
+		} else {
+			comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
+			body = reviewBodyWithSuggestion(comment)
+			lineTo = len(strings.Split(comment, "\n")) - 1
+
+		}
+	default:
+		body = pkgRepoLookupError
 	}
 
 	reviewComment := &github.DraftReviewComment{

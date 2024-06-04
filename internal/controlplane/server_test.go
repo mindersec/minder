@@ -17,6 +17,9 @@ package controlplane
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -97,14 +100,18 @@ func newDefaultServer(
 	// Needed to keep these tests working as-is.
 	// In future, beef up unit test coverage in the dependencies
 	// of this code, and refactor these tests to use stubs.
-	eng, err := crypto.EngineFromAuthConfig(&c.Auth)
+	eng, err := crypto.NewEngineFromConfig(c)
 	require.NoError(t, err)
 	ghClientService := ghService.NewGithubProviderService(
 		mockStore,
 		eng,
 		metrics.NewNoopMetrics(),
 		// These nil dependencies do not matter for the current tests
-		nil,
+		&serverconfig.ProviderConfig{
+			GitHubApp: &serverconfig.GitHubAppConfig{
+				WebhookSecret: "test",
+			},
+		},
 		nil,
 		ghClientFactory,
 	)
@@ -132,8 +139,14 @@ func generateTokenKey(t *testing.T) string {
 
 	tokenKeyPath := filepath.Join(tmpdir, "/token_key")
 
+	// generate 256-bit key
+	key := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, key)
+	require.NoError(t, err)
+	encodedKey := base64.StdEncoding.EncodeToString(key)
+
 	// Write token key to file
-	err := os.WriteFile(tokenKeyPath, []byte("test"), 0600)
+	err = os.WriteFile(tokenKeyPath, []byte(encodedKey), 0600)
 	require.NoError(t, err, "failed to write token key to file")
 
 	return tokenKeyPath

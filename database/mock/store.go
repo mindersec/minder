@@ -326,11 +326,12 @@ func (mr *MockStoreMockRecorder) DeleteArtifact(arg0, arg1 any) *gomock.Call {
 }
 
 // DeleteExpiredSessionStates mocks base method.
-func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) error {
+func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteExpiredSessionStates", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteExpiredSessionStates indicates an expected call of DeleteExpiredSessionStates.
@@ -478,20 +479,6 @@ func (m *MockStore) DeleteRuleType(arg0 context.Context, arg1 uuid.UUID) error {
 func (mr *MockStoreMockRecorder) DeleteRuleType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), arg0, arg1)
-}
-
-// DeleteSessionState mocks base method.
-func (m *MockStore) DeleteSessionState(arg0 context.Context, arg1 int32) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSessionState", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteSessionState indicates an expected call of DeleteSessionState.
-func (mr *MockStoreMockRecorder) DeleteSessionState(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSessionState", reflect.TypeOf((*MockStore)(nil).DeleteSessionState), arg0, arg1)
 }
 
 // DeleteSessionStateByProjectID mocks base method.
@@ -1436,6 +1423,21 @@ func (mr *MockStoreMockRecorder) ListRuleTypesByProject(arg0, arg1 any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesByProject", reflect.TypeOf((*MockStore)(nil).ListRuleTypesByProject), arg0, arg1)
 }
 
+// ListTokensToMigrate mocks base method.
+func (m *MockStore) ListTokensToMigrate(arg0 context.Context, arg1 db.ListTokensToMigrateParams) ([]db.ProviderAccessToken, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListTokensToMigrate", arg0, arg1)
+	ret0, _ := ret[0].([]db.ProviderAccessToken)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListTokensToMigrate indicates an expected call of ListTokensToMigrate.
+func (mr *MockStoreMockRecorder) ListTokensToMigrate(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTokensToMigrate", reflect.TypeOf((*MockStore)(nil).ListTokensToMigrate), arg0, arg1)
+}
+
 // ListUsers mocks base method.
 func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
@@ -1521,6 +1523,20 @@ func (m *MockStore) SetCurrentVersion(arg0 context.Context, arg1 db.SetCurrentVe
 func (mr *MockStoreMockRecorder) SetCurrentVersion(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), arg0, arg1)
+}
+
+// UpdateEncryptedSecret mocks base method.
+func (m *MockStore) UpdateEncryptedSecret(arg0 context.Context, arg1 db.UpdateEncryptedSecretParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEncryptedSecret", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEncryptedSecret indicates an expected call of UpdateEncryptedSecret.
+func (mr *MockStoreMockRecorder) UpdateEncryptedSecret(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEncryptedSecret", reflect.TypeOf((*MockStore)(nil).UpdateEncryptedSecret), arg0, arg1)
 }
 
 // UpdateLease mocks base method.

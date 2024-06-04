@@ -59,6 +59,8 @@ const (
 	`
 	reviewBodyDismissCommentText = "Previous Minder review was dismissed because the PR was updated"
 	vulnFoundWithNoPatch         = "Vulnerability found, but no patched version exists yet."
+	pkgRepoInfoNotFound          = "Vulnerability found, but package not found in the package database."
+	pkgRepoLookupError           = "Error looking up package in the package database."
 )
 
 const (
@@ -180,28 +182,27 @@ const (
 <blockquote>
 <h3>Vulnerability scan of <code>{{slice .Report.CommitSHA 0 8 }}:</code></h3>
 <ul>
-	<li>{{ .Symbols.bug }} <b>vulnerable packages:</b> <code>{{ $vulnerabilityCount }}</code></li>
-	<li>{{ .Symbols.fix }} <b>fixes available for:</b> <code>{{ $remediationCount }}</code></li>
+    <li>{{ .Symbols.bug }} <b>vulnerable packages:</b> <code>{{ $vulnerabilityCount }}</code></li>
+    <li>{{ .Symbols.fix }} <b>fixes available for:</b> <code>{{ $remediationCount }}</code></li>
 </ul>
 </blockquote>
 {{- if .Report.TrackedDependencies }}
 <table>
-	<tr>
-		 <th>Package</th>
-		 <th>Version</th>
-		 <th>#Vulnerabilities</th>
-		 <th>#Fixes</th>
-		 <th>Patch</th>
-	</tr>
-	{{- range .Report.TrackedDependencies }}
-	<tr>
-		<td>{{.Dependency.Name}}</td>
-		<td>{{.Dependency.Version}}</td>
-		<td>{{len .Vulnerabilities}}</td>
-		<td>{{ (call $countVulnsWithFix .Vulnerabilities) }}</td>
-		<td>{{- if .PatchVersion }}{{.PatchVersion}}{{- else }}{{$warningSymbol}}{{- end }}</td>
-	</tr>
-	{{ end }}
+    <tr>
+        <th>Package</th>
+        <th>Version</th>
+        <th>#Vulnerabilities</th>
+        <th>#Fixes</th>
+        <th>Patch</th>
+    </tr>
+    {{- range .Report.TrackedDependencies }}
+    <tr>
+        <td>{{.Dependency.Name}}</td>
+        <td>{{.Dependency.Version}}</td>
+        <td>{{len .Vulnerabilities}}</td>
+        <td>{{ (call $countVulnsWithFix .Vulnerabilities) }}</td>
+        <td>{{- if .PatchVersion }}{{.PatchVersion}}{{- else }}{{$warningSymbol}}{{- end }}</td>
+    </tr>{{- end }}
 </table>
 {{ end -}}
 `

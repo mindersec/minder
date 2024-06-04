@@ -17,6 +17,7 @@ package rest
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -31,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -112,7 +114,7 @@ func testGithubProviderBuilder(baseURL string) (provifv1.REST, error) {
 		&pb.GitHubProviderConfig{
 			Endpoint: baseURL,
 		},
-		nil,
+		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		"",
@@ -315,6 +317,57 @@ func TestRestIngest(t *testing.T) {
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.Equal(t, tt.ingResultFn(), result, "unexpected result")
+		})
+	}
+}
+
+func TestIngestor_parseBodyDoesNotReadTooLargeRequests(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		cfg     *pb.RestType
+		body    string
+		wantErr bool
+	}{
+		{
+			name: "raw",
+			cfg:  &pb.RestType{},
+			// really large body
+			// casting to `int` should work.
+			body: strings.Repeat("a", int(MaxBytesLimit)+1),
+			// This case does not error, it simply truncates.
+			wantErr: false,
+		},
+		{
+			name: "json",
+			cfg: &pb.RestType{
+				Parse: "json",
+			},
+			// really large body
+			// casting to `int` should work.
+			body: "{\"a\":\"" + strings.Repeat("a", int(MaxBytesLimit)+1) + "\"}",
+			// This case will error out, as truncating
+			// makes the JSON invalid.
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rdi := &Ingestor{
+				restCfg: tt.cfg,
+			}
+
+			got, err := rdi.parseBody(strings.NewReader(tt.body))
+			if tt.wantErr {
+				assert.Error(t, err, "expected error")
+			} else {
+				assert.NoError(t, err, "expected no error")
+				assert.Equal(t, int(MaxBytesLimit), binary.Size(got), "expected body to be truncated")
+			}
 		})
 	}
 }

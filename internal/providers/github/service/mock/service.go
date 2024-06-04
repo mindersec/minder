@@ -11,6 +11,7 @@ package mock_service
 
 import (
 	context "context"
+	json "encoding/json"
 	http "net/http"
 	reflect "reflect"
 
@@ -116,6 +117,21 @@ func (mr *MockGitHubProviderServiceMockRecorder) DeleteInstallation(ctx, provide
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallation", reflect.TypeOf((*MockGitHubProviderService)(nil).DeleteInstallation), ctx, providerID)
 }
 
+// GetConfig mocks base method.
+func (m *MockGitHubProviderService) GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConfig", ctx, class, userConfig)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConfig indicates an expected call of GetConfig.
+func (mr *MockGitHubProviderServiceMockRecorder) GetConfig(ctx, class, userConfig any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfig", reflect.TypeOf((*MockGitHubProviderService)(nil).GetConfig), ctx, class, userConfig)
+}
+
 // ValidateGitHubAppWebhookPayload mocks base method.
 func (m *MockGitHubProviderService) ValidateGitHubAppWebhookPayload(r *http.Request) ([]byte, error) {
 	m.ctrl.T.Helper()
@@ -143,4 +159,18 @@ func (m *MockGitHubProviderService) ValidateGitHubInstallationId(ctx context.Con
 func (mr *MockGitHubProviderServiceMockRecorder) ValidateGitHubInstallationId(ctx, token, installationID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateGitHubInstallationId", reflect.TypeOf((*MockGitHubProviderService)(nil).ValidateGitHubInstallationId), ctx, token, installationID)
+}
+
+// VerifyProviderTokenIdentity mocks base method.
+func (m *MockGitHubProviderService) VerifyProviderTokenIdentity(ctx context.Context, remoteUser, accessToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyProviderTokenIdentity", ctx, remoteUser, accessToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// VerifyProviderTokenIdentity indicates an expected call of VerifyProviderTokenIdentity.
+func (mr *MockGitHubProviderServiceMockRecorder) VerifyProviderTokenIdentity(ctx, remoteUser, accessToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyProviderTokenIdentity", reflect.TypeOf((*MockGitHubProviderService)(nil).VerifyProviderTokenIdentity), ctx, remoteUser, accessToken)
 }

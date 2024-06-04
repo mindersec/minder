@@ -20,8 +20,8 @@ COVERAGE_EXCLUSIONS="internal/db\|/mock/\|internal/auth/keycloak/client"
 COVERAGE_PACKAGES=./internal/...
 
 .PHONY: clean
-clean: ## clean up environment
-	rm -rf dist/* & rm -rf bin/*
+clean:: ## clean up environment
+	rm -rf dist/* && rm -rf bin/*
 
 .PHONY: test
 test: clean init-examples ## run tests in verbose mode

@@ -29,14 +29,16 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -44,64 +46,150 @@ import (
 	mockjwt "github.com/stacklok/minder/internal/auth/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
+	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/dockerhub"
 	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
+	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
+	"github.com/stacklok/minder/internal/providers/manager"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
+	"github.com/stacklok/minder/internal/providers/session"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-func TestNewOAuthConfig(t *testing.T) {
+func Test_NewOAuthConfig(t *testing.T) {
 	t.Parallel()
 
-	// Test with CLI set
-	cfg, err := auth.NewOAuthConfig("google", true)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
+	const (
+		githubRedirectURI     = "http://github"
+		githubClientID        = "ghClientID"
+		githubClientSecret    = "ghClientSecret"
+		githubAppRedirectURI  = "http://github-app"
+		githubAppClientID     = "ghAppClientID"
+		githubAppClientSecret = "ghAppClientSecret" //nolint: gosec // This is a test file
+	)
+
+	scenarios := []struct {
+		name          string
+		providerClass db.ProviderClass
+		cli           bool
+		expected      *oauth2.Config
+		err           string
+	}{
+		{
+			name:          "github cli",
+			providerClass: db.ProviderClassGithub,
+			cli:           true,
+			expected: &oauth2.Config{
+				ClientID:     githubClientID,
+				ClientSecret: githubClientSecret,
+				RedirectURL:  githubRedirectURI + "/cli",
+				Endpoint:     github.Endpoint,
+				Scopes:       []string{"repo", "read:org", "workflow"},
+			},
+		},
+		{
+			name:          "github web",
+			providerClass: db.ProviderClassGithub,
+			cli:           false,
+			expected: &oauth2.Config{
+				ClientID:     githubClientID,
+				ClientSecret: githubClientSecret,
+				RedirectURL:  githubRedirectURI + "/web",
+				Endpoint:     github.Endpoint,
+				Scopes:       []string{"repo", "read:org", "workflow"},
+			},
+		},
+		{
+			name:          "github app cli",
+			providerClass: db.ProviderClassGithubApp,
+			cli:           true,
+			expected: &oauth2.Config{
+				ClientID:     githubAppClientID,
+				ClientSecret: githubAppClientSecret,
+				RedirectURL:  githubAppRedirectURI,
+				Endpoint:     github.Endpoint,
+				Scopes:       []string{},
+			},
+		},
+		{
+			name:          "github app web",
+			providerClass: db.ProviderClassGithubApp,
+			cli:           true,
+			expected: &oauth2.Config{
+				ClientID:     githubAppClientID,
+				ClientSecret: githubAppClientSecret,
+				RedirectURL:  githubAppRedirectURI,
+				Endpoint:     github.Endpoint,
+				Scopes:       []string{},
+			},
+		},
+		{
+			name:          "dockerhub fails as expected",
+			providerClass: db.ProviderClassDockerhub,
+			cli:           true,
+			err:           "class manager does not implement OAuthManager",
+		},
 	}
 
-	if cfg.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
 
-	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("github", true)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
 
-	if cfg.Endpoint != github.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
+			githubProviderManager := ghmanager.NewGitHubProviderClassManager(
+				nil,
+				nil,
+				&serverconfig.ProviderConfig{
+					GitHub: &serverconfig.GitHubConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     githubClientID,
+							ClientSecret: githubClientSecret,
+							RedirectURI:  githubRedirectURI,
+						},
+					},
+					GitHubApp: &serverconfig.GitHubAppConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     githubAppClientID,
+							ClientSecret: githubAppClientSecret,
+							RedirectURI:  githubAppRedirectURI,
+						},
+					},
+				},
+				nil,
+				nil,
+				nil,
+				nil,
+				nil,
+			)
+			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
-	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("google", false)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
+			providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+			require.NoError(t, err)
 
-	if cfg.Endpoint != google.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
-
-	// Test with CLI set
-	cfg, err = auth.NewOAuthConfig("github", false)
-	if err != nil {
-		t.Errorf("Error in newOAuthConfig: %v", err)
-	}
-
-	if cfg.Endpoint != github.Endpoint {
-		t.Errorf("Unexpected endpoint: %v", cfg.Endpoint)
-	}
-
-	_, err = auth.NewOAuthConfig("invalid", true)
-	if err == nil {
-		t.Errorf("Expected error in newOAuthConfig, but got nil")
+			config, err := providerAuthManager.NewOAuthConfig(scenario.providerClass, scenario.cli)
+			if scenario.err == "" {
+				require.NoError(t, err)
+				require.NotNil(t, config)
+				require.Equal(t, scenario.expected.ClientID, config.ClientID)
+				require.Equal(t, scenario.expected.ClientSecret, config.ClientSecret)
+				require.Equal(t, scenario.expected.RedirectURL, config.RedirectURL)
+				require.Equal(t, scenario.expected.Endpoint, config.Endpoint)
+				require.Subsetf(t, config.Scopes, scenario.expected.Scopes, "expected: %v, got: %v", scenario.expected.Scopes, config.Scopes)
+			} else {
+				require.Error(t, err)
+				require.ErrorContains(t, err, scenario.err)
+			}
+		})
 	}
 }
 
@@ -307,12 +395,26 @@ func TestGetAuthorizationURL(t *testing.T) {
 					TokenKey: tokenKeyPath,
 				},
 				Provider: serverconfig.ProviderConfig{
+					GitHub: &serverconfig.GitHubConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     "clientID",
+							ClientSecret: "clientSecret",
+							RedirectURI:  "redirectURI",
+						},
+					},
 					GitHubApp: &serverconfig.GitHubAppConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							ClientID:     "clientID",
+							ClientSecret: "clientSecret",
+							RedirectURI:  "redirectURI",
+						},
 						AppName: "test-app",
 					},
 				},
 			}
 			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
+			mockAuthManager := mockmanager.NewMockAuthManager(ctrl)
+			mockAuthManager.EXPECT().NewOAuthConfig(gomock.Any(), gomock.Any()).Return(&oauth2.Config{}, nil).AnyTimes()
 
 			server := &Server{
 				store:               store,
@@ -320,7 +422,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 				evt:                 evt,
 				cfg:                 c,
 				mt:                  metrics.NewNoopMetrics(),
-				providerAuthFactory: auth.NewOAuthConfig,
+				providerAuthManager: mockAuthManager,
 			}
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
@@ -335,35 +437,67 @@ func TestProviderCallback(t *testing.T) {
 	projectID := uuid.New()
 	code := "0xefbeadde"
 
+	withProviderSearch := func(store *mockdb.MockStore) {
+		store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+		store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).
+			Return([]db.Provider{
+				{
+					Name:       "github",
+					Implements: []db.ProviderType{db.ProviderTypeGithub},
+					Version:    provinfv1.V1,
+				},
+			}, nil)
+	}
+
+	withProviderCreate := func(store *mockdb.MockStore) {
+		store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+		store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).
+			Return([]db.Provider{}, nil)
+		store.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).Return(db.Provider{}, nil)
+	}
+
 	testCases := []struct {
-		name             string
-		redirectUrl      string
-		remoteUser       sql.NullString
-		code             int
-		existingProvider bool
-		err              string
+		name                       string
+		redirectUrl                string
+		remoteUser                 sql.NullString
+		code                       int
+		storeMockSetup             func(store *mockdb.MockStore)
+		projectIDBySessionNumCalls int
+		err                        string
 	}{{
-		name:             "Success",
-		redirectUrl:      "http://localhost:8080",
-		existingProvider: true,
-		code:             307,
+		name:                       "Success",
+		redirectUrl:                "http://localhost:8080",
+		projectIDBySessionNumCalls: 2,
+		storeMockSetup: func(store *mockdb.MockStore) {
+			withProviderSearch(store)
+		},
+		code: 307,
 	}, {
-		name:             "Success with remote user",
-		redirectUrl:      "http://localhost:8080",
-		remoteUser:       sql.NullString{Valid: true, String: "31337"},
-		existingProvider: true,
-		code:             307,
+		name:                       "Success with remote user",
+		redirectUrl:                "http://localhost:8080",
+		remoteUser:                 sql.NullString{Valid: true, String: "31337"},
+		projectIDBySessionNumCalls: 2,
+		storeMockSetup: func(store *mockdb.MockStore) {
+			withProviderSearch(store)
+		},
+		code: 307,
 	}, {
-		name:             "Wrong remote userid",
-		remoteUser:       sql.NullString{Valid: true, String: "1234"},
-		existingProvider: true,
-		code:             403,
-		err:              "The provided login token was associated with a different GitHub user.\n",
+		name:                       "Wrong remote userid",
+		remoteUser:                 sql.NullString{Valid: true, String: "1234"},
+		projectIDBySessionNumCalls: 1,
+		storeMockSetup: func(_ *mockdb.MockStore) {
+			// this codepath fails before the store is called
+		},
+		code: 403,
+		err:  "The provided login token was associated with a different user.\n",
 	}, {
-		name:             "No existing provider",
-		redirectUrl:      "http://localhost:8080",
-		existingProvider: false,
-		code:             307,
+		name:                       "No existing provider",
+		redirectUrl:                "http://localhost:8080",
+		code:                       307,
+		projectIDBySessionNumCalls: 2,
+		storeMockSetup: func(store *mockdb.MockStore) {
+			withProviderCreate(store)
+		},
 	}}
 
 	for _, tt := range testCases {
@@ -416,60 +550,102 @@ func TestProviderCallback(t *testing.T) {
 					BuildOAuthClient(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil, delegate, nil)
 			}
+			tc.storeMockSetup(store)
 
 			s, _ := newDefaultServer(t, store, clientFactory)
+			s.cfg.Provider = serverconfig.ProviderConfig{
+				GitHub: &serverconfig.GitHubConfig{
+					OAuthClientConfig: serverconfig.OAuthClientConfig{
+						Endpoint: &serverconfig.OAuthEndpoint{
+							TokenURL: oauthServer.URL,
+						},
+					},
+				},
+			}
 
-			var err error
+			tokenKeyPath := generateTokenKey(t)
+			eng, err := crypto.NewEngineFromConfig(&serverconfig.Config{
+				Auth: serverconfig.AuthConfig{
+					TokenKey: tokenKeyPath,
+				},
+			})
+			require.NoError(t, err)
+
+			ghClientService := ghService.NewGithubProviderService(
+				store,
+				eng,
+				metrics.NewNoopMetrics(),
+				// These nil dependencies do not matter for the current tests
+				&serverconfig.ProviderConfig{
+					GitHubApp: &serverconfig.GitHubAppConfig{
+						WebhookSecret: "test",
+					},
+				},
+				nil,
+				clientFactory,
+			)
+
+			githubProviderManager := ghmanager.NewGitHubProviderClassManager(
+				nil,
+				nil,
+				&serverconfig.ProviderConfig{
+					GitHub: &serverconfig.GitHubConfig{
+						OAuthClientConfig: serverconfig.OAuthClientConfig{
+							Endpoint: &serverconfig.OAuthEndpoint{
+								TokenURL: oauthServer.URL,
+							},
+						},
+					},
+				},
+				nil,
+				nil,
+				nil,
+				nil,
+				ghClientService,
+			)
+			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
+
+			authManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+			require.NoError(t, err)
+			s.providerAuthManager = authManager
+
+			providerStore := providers.NewProviderStore(store)
+			providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+			require.NoError(t, err)
+			s.providerManager = providerManager
+
+			sessionService := session.NewProviderSessionService(providerManager, providerStore, store)
+			s.sessionService = sessionService
+
 			encryptedUrlString, err := s.cryptoEngine.EncryptString(tc.redirectUrl)
 			if err != nil {
 				t.Fatalf("Failed to encrypt redirect URL: %v", err)
 			}
 			encryptedUrl := sql.NullString{
 				Valid:  true,
-				String: encryptedUrlString,
+				String: encryptedUrlString.EncodedData,
 			}
-
-			tx := sql.Tx{}
-			store.EXPECT().BeginTransaction().Return(&tx, nil)
-			store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-
-			gh.EXPECT().GetUserId(gomock.Any()).Return(int64(31337), nil).AnyTimes()
+			serialized, err := encryptedUrlString.Serialize()
+			require.NoError(t, err)
 
 			store.EXPECT().GetProjectIDBySessionState(gomock.Any(), state).Return(
 				db.GetProjectIDBySessionStateRow{
 					ProjectID:   projectID,
 					RedirectUrl: encryptedUrl,
-					RemoteUser:  tc.remoteUser,
-				}, nil)
-
-			if tc.existingProvider {
-				store.EXPECT().GetProviderByName(gomock.Any(), gomock.Any()).Return(
-					db.Provider{
-						Name:       "github",
-						Implements: []db.ProviderType{db.ProviderTypeGithub},
-						Version:    provinfv1.V1,
-					}, nil)
-			} else {
-				store.EXPECT().GetProviderByName(gomock.Any(), gomock.Any()).Return(
-					db.Provider{}, sql.ErrNoRows)
-				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).Return(db.Provider{}, nil)
-			}
+					EncryptedRedirect: pqtype.NullRawMessage{
+						RawMessage: serialized,
+						Valid:      true,
+					},
+					RemoteUser: tc.remoteUser,
+				}, nil).Times(tc.projectIDBySessionNumCalls)
 
 			if tc.code < http.StatusBadRequest {
 				store.EXPECT().UpsertAccessToken(gomock.Any(), gomock.Any()).Return(
 					db.ProviderAccessToken{}, nil)
-				store.EXPECT().Commit(gomock.Any())
 			}
-			store.EXPECT().Rollback(gomock.Any())
 
 			t.Logf("Request: %+v", req.URL)
-			s.providerAuthFactory = func(_ string, _ bool) (*oauth2.Config, error) {
-				return &oauth2.Config{
-					Endpoint: oauth2.Endpoint{
-						TokenURL: oauthServer.URL,
-					},
-				}, nil
-			}
+
 			s.HandleOAuthCallback()(&resp, &req, params)
 
 			t.Logf("Response: %v", resp.Code)
@@ -643,17 +819,17 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 					}
 				}))
 			defer oauthServer.Close()
-			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
-				return &oauth2.Config{
-					Endpoint: oauth2.Endpoint{
-						TokenURL: oauthServer.URL,
-					},
-				}, nil
-			}
 
 			providerService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 			store := mockdb.NewMockStore(ctrl)
 			gh := mockgh.NewMockClientService(ctrl)
+
+			mockAuthManager := mockmanager.NewMockAuthManager(ctrl)
+			mockAuthManager.EXPECT().NewOAuthConfig(gomock.Any(), gomock.Any()).Return(&oauth2.Config{
+				Endpoint: oauth2.Endpoint{
+					TokenURL: oauthServer.URL,
+				},
+			}, nil).AnyTimes()
 
 			tc.buildStubs(store, providerService, gh)
 
@@ -661,10 +837,20 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 				store:               store,
 				ghProviders:         providerService,
 				evt:                 evt,
-				providerAuthFactory: providerAuthFactory,
+				providerAuthManager: mockAuthManager,
 				ghClient:            gh,
 				cfg: &serverconfig.Config{
 					Auth: serverconfig.AuthConfig{},
+					Provider: serverconfig.ProviderConfig{
+						GitHub: &serverconfig.GitHubConfig{
+							OAuthClientConfig: serverconfig.OAuthClientConfig{
+								ClientID: "clientID",
+								Endpoint: &serverconfig.OAuthEndpoint{
+									TokenURL: oauthServer.URL,
+								},
+							},
+						},
+					},
 				},
 			}
 
@@ -789,25 +975,25 @@ func TestVerifyProviderCredential(t *testing.T) {
 					}
 				}))
 			defer oauthServer.Close()
-			providerAuthFactory := func(_ string, _ bool) (*oauth2.Config, error) {
-				return &oauth2.Config{
-					Endpoint: oauth2.Endpoint{
-						TokenURL: oauthServer.URL,
-					},
-				}, nil
-			}
-
 			store := mockdb.NewMockStore(ctrl)
 
 			tc.buildStubs(store)
 
 			s := &Server{
-				store:               store,
-				evt:                 evt,
-				providerAuthFactory: providerAuthFactory,
-				providerStore:       providers.NewProviderStore(store),
+				store:         store,
+				evt:           evt,
+				providerStore: providers.NewProviderStore(store),
 				cfg: &serverconfig.Config{
 					Auth: serverconfig.AuthConfig{},
+					Provider: serverconfig.ProviderConfig{
+						GitHub: &serverconfig.GitHubConfig{
+							OAuthClientConfig: serverconfig.OAuthClientConfig{
+								Endpoint: &serverconfig.OAuthEndpoint{
+									TokenURL: oauthServer.URL,
+								},
+							},
+						},
+					},
 				},
 			}
 
@@ -832,8 +1018,8 @@ func (p partialDbParamsMatcher) Matches(x interface{}) bool {
 	}
 
 	typedX.SessionState = ""
-
-	return typedX == p.value
+	return cmp.Equal(typedX, p.value,
+		cmpopts.IgnoreFields(db.CreateSessionStateParams{}, "ProviderConfig"))
 }
 
 func (m partialDbParamsMatcher) String() string {

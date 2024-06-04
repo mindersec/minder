@@ -18,6 +18,7 @@
 package ingester
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
@@ -26,8 +27,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // test that the ingester implementations implements the interface
@@ -38,7 +39,7 @@ var _ engif.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (engif.Ingester, error) {
 	ing := rt.Def.GetIngest()
 
 	switch ing.GetType() {
@@ -46,9 +47,9 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rt.Def.Ingest.GetRest() == nil {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
-		client, err := pbuild.GetHTTP()
+		client, err := provinfv1.As[provinfv1.REST](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement rest trait")
 		}
 
 		return rest.NewRestRuleDataIngest(ing.GetRest(), client)
@@ -62,22 +63,18 @@ func NewRuleDataIngest(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engi
 		if rt.Def.Ingest.GetArtifact() == nil {
 			return nil, fmt.Errorf("rule type engine missing artifact configuration")
 		}
-		client, err := pbuild.GetGitHub()
-		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
-		}
-		return artifact.NewArtifactDataIngest(client)
+		return artifact.NewArtifactDataIngest(provider)
 
 	case git.GitRuleDataIngestType:
-		client, err := pbuild.GetGit()
+		client, err := provinfv1.As[provinfv1.Git](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
 		return git.NewGitIngester(ing.GetGit(), client)
 	case diff.DiffRuleDataIngestType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement github trait")
 		}
 		return diff.NewDiffIngester(ing.GetDiff(), client)
 	default:

@@ -21,5 +21,7 @@ func ListProviderClasses() []string {
 	return []string{
 		string(db.ProviderClassGithub),
 		string(db.ProviderClassGithubApp),
+		string(db.ProviderClassDockerhub),
+		string(db.ProviderClassGhcr),
 	}
 }

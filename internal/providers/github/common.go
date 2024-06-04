@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,11 +32,13 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/github/ghcr"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -63,6 +66,11 @@ var (
 	ErrBranchNotFound = errors.New("branch not found")
 	// ErrNoPackageListingClient denotes if there is no package listing client available
 	ErrNoPackageListingClient = errors.New("no package listing client available")
+	// ErroNoCheckPermissions is a fixed error returned when the credentialed
+	// identity has not been authorized to use the checks API
+	ErroNoCheckPermissions = errors.New("missing permissions: check")
+	// ErrBranchNameEmpty is a fixed error returned when the branch name is empty
+	ErrBranchNameEmpty = errors.New("branch name cannot be empty")
 )
 
 // GitHub is the struct that contains the shared GitHub client operations
@@ -71,6 +79,7 @@ type GitHub struct {
 	packageListingClient *github.Client
 	cache                ratecache.RestClientCache
 	delegate             Delegate
+	ghcrwrap             *ghcr.ImageLister
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -153,6 +162,7 @@ func NewGitHub(
 		packageListingClient: packageListingClient,
 		cache:                cache,
 		delegate:             delegate,
+		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 	}
 }
 
@@ -246,8 +256,8 @@ func (c *GitHub) ListPackagesByRepository(
 	return allContainers, nil
 }
 
-// GetPackageVersions returns a list of all package versions for the authenticated user or org
-func (c *GitHub) GetPackageVersions(ctx context.Context, owner string, package_type string, package_name string,
+// getPackageVersions returns a list of all package versions for the authenticated user or org
+func (c *GitHub) getPackageVersions(ctx context.Context, owner string, package_type string, package_name string,
 ) ([]*github.PackageVersion, error) {
 	state := "active"
 
@@ -294,32 +304,6 @@ func (c *GitHub) GetPackageVersions(ctx context.Context, owner string, package_t
 
 	// return the slice
 	return allVersions, nil
-}
-
-// GetPackageVersionByTag returns a single package version for the specific tag
-func (c *GitHub) GetPackageVersionByTag(ctx context.Context, owner string, package_type string, package_name string,
-	tag string) (*github.PackageVersion, error) {
-
-	// since the GH API sometimes returns container and sometimes CONTAINER as the type, let's just lowercase it
-	package_type = strings.ToLower(package_type)
-
-	// get all versions
-	versions, err := c.GetPackageVersions(ctx, owner, package_type, package_name)
-	if err != nil {
-		return nil, err
-	}
-
-	// iterate for all versions until we find the specific tag
-	for _, version := range versions {
-		tags := version.Metadata.Container.Tags
-		for _, t := range tags {
-			if t == tag {
-				return version, nil
-			}
-		}
-	}
-	return nil, nil
-
 }
 
 // GetPackageByName returns a single package for the authenticated user or for the org
@@ -509,12 +493,17 @@ func (c *GitHub) GetRepository(ctx context.Context, owner string, name string) (
 func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 	repo_name string, branch_name string) (*github.Protection, error) {
 	var respErr *github.ErrorResponse
+	if branch_name == "" {
+		return nil, ErrBranchNameEmpty
+	}
 
 	protection, _, err := c.client.Repositories.GetBranchProtection(ctx, owner, repo_name, branch_name)
 	if errors.As(err, &respErr) {
 		if respErr.Message == githubBranchNotFoundMsg {
 			return nil, ErrBranchNotFound
 		}
+
+		return nil, fmt.Errorf("error getting branch protection: %w", err)
 	} else if err != nil {
 		return nil, err
 	}
@@ -525,6 +514,9 @@ func (c *GitHub) GetBranchProtection(ctx context.Context, owner string,
 func (c *GitHub) UpdateBranchProtection(
 	ctx context.Context, owner, repo, branch string, preq *github.ProtectionRequest,
 ) error {
+	if branch == "" {
+		return ErrBranchNameEmpty
+	}
 	_, _, err := c.client.Repositories.UpdateBranchProtection(ctx, owner, repo, branch, preq)
 	return err
 }
@@ -776,6 +768,54 @@ func (c *GitHub) GetPrimaryEmail(ctx context.Context) (string, error) {
 	return c.delegate.GetPrimaryEmail(ctx)
 }
 
+// ListImages lists all containers in the GitHub Container Registry
+func (c *GitHub) ListImages(ctx context.Context) ([]string, error) {
+	return c.ghcrwrap.ListImages(ctx)
+}
+
+// GetNamespaceURL returns the URL for the repository
+func (c *GitHub) GetNamespaceURL() string {
+	return c.ghcrwrap.GetNamespaceURL()
+}
+
+// GetArtifactVersions returns a list of all versions for a specific artifact
+func (gv *GitHub) GetArtifactVersions(
+	ctx context.Context, artifact *minderv1.Artifact,
+	filter provifv1.GetArtifactVersionsFilter,
+) ([]*minderv1.ArtifactVersion, error) {
+	artifactName := url.QueryEscape(artifact.GetName())
+	upstreamVersions, err := gv.getPackageVersions(
+		ctx, artifact.GetOwner(), artifact.GetTypeLower(), artifactName,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
+	}
+
+	out := make([]*minderv1.ArtifactVersion, 0, len(upstreamVersions))
+	for _, uv := range upstreamVersions {
+		tags := uv.Metadata.Container.Tags
+
+		if err := filter.IsSkippable(uv.CreatedAt.Time, tags); err != nil {
+			zerolog.Ctx(ctx).Debug().Str("name", artifact.GetName()).Strs("tags", tags).
+				Str("reason", err.Error()).Msg("skipping artifact version")
+			continue
+		}
+
+		sort.Strings(tags)
+
+		// only the tags and creation time is relevant to us.
+		out = append(out, &minderv1.ArtifactVersion{
+			Tags: tags,
+			// NOTE: GitHub's name is actually a SHA. This is misleading...
+			// but it is what it is. We'll use it as the SHA for now.
+			Sha:       *uv.Name,
+			CreatedAt: timestamppb.New(uv.CreatedAt.Time),
+		})
+	}
+
+	return out, nil
+}
+
 // setAsRateLimited adds the GitHub to the cache as rate limited.
 // An optimistic concurrency control mechanism is used to ensure that every request doesn't need
 // synchronization. GitHub only adds itself to the cache if it's not already there. It doesn't
@@ -962,4 +1002,40 @@ func NewFallbackTokenClient(appConfig config.ProviderConfig) *github.Client {
 
 	packageListingClient = github.NewClient(fallbackTokenTC)
 	return packageListingClient
+}
+
+// StartCheckRun calls the GitHub API to initialize a new check using the
+// supplied options.
+func (c *GitHub) StartCheckRun(
+	ctx context.Context, owner, repo string, opts *github.CreateCheckRunOptions,
+) (*github.CheckRun, error) {
+	if opts.StartedAt == nil {
+		opts.StartedAt = &github.Timestamp{Time: time.Now()}
+	}
+
+	run, resp, err := c.client.Checks.CreateCheckRun(ctx, owner, repo, *opts)
+	if err != nil {
+		// If error is 403 then it means we are missing permissions
+		if resp.StatusCode == 403 {
+			return nil, fmt.Errorf("missing permissions: check")
+		}
+		return nil, ErroNoCheckPermissions
+	}
+	return run, nil
+}
+
+// UpdateCheckRun updates an existing check run in GitHub. The check run is referenced
+// using its run ID. This function returns the updated CheckRun srtuct.
+func (c *GitHub) UpdateCheckRun(
+	ctx context.Context, owner, repo string, checkRunID int64, opts *github.UpdateCheckRunOptions,
+) (*github.CheckRun, error) {
+	run, resp, err := c.client.Checks.UpdateCheckRun(ctx, owner, repo, checkRunID, *opts)
+	if err != nil {
+		// If error is 403 then it means we are missing permissions
+		if resp.StatusCode == 403 {
+			return nil, ErroNoCheckPermissions
+		}
+		return nil, fmt.Errorf("updating check: %w", err)
+	}
+	return run, nil
 }

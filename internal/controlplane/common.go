@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -36,9 +37,84 @@ const (
 
 var validRepoSlugRe = regexp.MustCompile(`(?i)^[-a-z0-9_\.]+\/[-a-z0-9_\.]+$`)
 
+var (
+	// ErrNoProjectInContext is returned when no project is found in the context
+	ErrNoProjectInContext = errors.New("no project found in context")
+)
+
+// ProviderGetter is an interface that can be implemented by a context,
+// since both the context V1 and V2 have a provider field
+type ProviderGetter interface {
+	GetProvider() string
+}
+
+// HasProtoContextV2Compat is an interface that can be implemented by a request.
+// It implements the GetContext V1 and V2 methods for backwards compatibility.
+type HasProtoContextV2Compat interface {
+	HasProtoContext
+	GetContextV2() *pb.ContextV2
+}
+
+// HasProtoContextV2 is an interface that can be implemented by a request
+type HasProtoContextV2 interface {
+	GetContextV2() *pb.ContextV2
+}
+
 // HasProtoContext is an interface that can be implemented by a request
 type HasProtoContext interface {
 	GetContext() *pb.Context
+}
+
+func getProjectFromContextV2Compat(accessor HasProtoContextV2Compat) (uuid.UUID, error) {
+	// First check if the context is V2
+	if accessor.GetContextV2() != nil && accessor.GetContextV2().GetProjectId() != "" {
+		return parseProject(accessor.GetContextV2().GetProjectId())
+	}
+
+	// If the context is not V2, check if it is V1
+	if accessor.GetContext() != nil && accessor.GetContext().GetProject() != "" {
+		return parseProject(accessor.GetContext().GetProject())
+	}
+
+	if accessor.GetContextV2() == nil && accessor.GetContext() == nil {
+		return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
+	}
+
+	return uuid.Nil, ErrNoProjectInContext
+}
+
+func getProjectFromContextV2(accessor HasProtoContextV2) (uuid.UUID, error) {
+	if accessor.GetContextV2() == nil {
+		return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
+	}
+
+	// First check if the context is V2
+	if accessor.GetContextV2() != nil && accessor.GetContextV2().GetProjectId() != "" {
+		return parseProject(accessor.GetContextV2().GetProjectId())
+	}
+
+	return uuid.Nil, ErrNoProjectInContext
+}
+
+func getProjectFromContext(accessor HasProtoContext) (uuid.UUID, error) {
+	if accessor.GetContext() == nil {
+		return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
+	}
+
+	if accessor.GetContext() != nil && accessor.GetContext().GetProject() != "" {
+		return parseProject(accessor.GetContext().GetProject())
+	}
+
+	return uuid.Nil, ErrNoProjectInContext
+}
+
+func parseProject(project string) (uuid.UUID, error) {
+	projID, err := uuid.Parse(project)
+	if err != nil {
+		return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "malformed project ID")
+	}
+
+	return projID, nil
 }
 
 // providerError wraps an error with a user visible error message

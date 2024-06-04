@@ -31,6 +31,9 @@ const (
 	minderContentModification = "minder.content"
 	// minderFrizbeeTagResolve replaces a github action tag with the appropriate checksum
 	minderFrizbeeTagResolve = "minder.actions.replace_tags_with_sha"
+
+	// ContentBytesLimit is the maximum number of bytes for the content
+	ContentBytesLimit = 5120
 )
 
 var _ fsModifier = (*contentModification)(nil)
@@ -80,7 +83,7 @@ func newContentModification(
 func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation) ([]*fsEntry, error) {
 	entries := make([]*fsEntry, len(prCfg.Contents))
 	for i, cnt := range prCfg.Contents {
-		contentTemplate, err := util.ParseNewTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
+		contentTemplate, err := util.NewSafeTextTemplate(&cnt.Content, fmt.Sprintf("Content[%d]", i))
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)
 		}
@@ -101,7 +104,7 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 }
 
 func (ca *contentModification) createFsModEntries(
-	_ context.Context,
+	ctx context.Context,
 	params interfaces.ActionsParams,
 ) error {
 	data := map[string]interface{}{
@@ -111,7 +114,7 @@ func (ca *contentModification) createFsModEntries(
 	for i, entry := range ca.entries {
 		content := new(bytes.Buffer)
 
-		if err := entry.contentTemplate.Execute(content, data); err != nil {
+		if err := entry.contentTemplate.Execute(ctx, content, data, ContentBytesLimit); err != nil {
 			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
 		}
 		entry.Content = content.String()

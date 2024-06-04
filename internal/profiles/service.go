@@ -33,12 +33,12 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -501,7 +501,7 @@ func getProfilePBFromDB(
 		return nil, err
 	}
 
-	pols := engine.MergeDatabaseGetIntoProfiles(profiles)
+	pols := MergeDatabaseGetIntoProfiles(profiles)
 	if len(pols) == 0 {
 		return nil, fmt.Errorf("profile not found")
 	} else if len(pols) > 1 {
@@ -526,7 +526,7 @@ func (_ *profileService) getRulesFromProfile(
 	// track them in the db later.
 	rulesInProf := make(RuleMapping)
 
-	err := engine.TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
+	err := TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		rtdb, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -537,7 +537,7 @@ func (_ *profileService) getRulesFromProfile(
 			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
 		}
 
-		rtyppb, err := engine.RuleTypePBFromDB(&rtdb)
+		rtyppb, err := ruletypes.RuleTypePBFromDB(&rtdb)
 		if err != nil {
 			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
 		}

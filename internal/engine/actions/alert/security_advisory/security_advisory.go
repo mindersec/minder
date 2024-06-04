@@ -22,9 +22,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stacklok/minder/internal/db"
 	htmltemplate "html/template"
 	"strings"
+
+	"github.com/stacklok/minder/internal/db"
 
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
@@ -269,7 +270,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 	case interfaces.ActionCmdOn:
 		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories", params.Owner, params.Repo)
 		body := ""
-		curlCmd, err := util.GenerateCurlCommand("POST", alert.cli.GetBaseURL(), endpoint, body)
+		curlCmd, err := util.GenerateCurlCommand(ctx, "POST", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate curl command: %w", err)
 		}
@@ -284,7 +285,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsSA, cmd interfaces
 		endpoint := fmt.Sprintf("repos/%v/%v/security-advisories/%v",
 			params.Owner, params.Repo, params.Metadata.ID)
 		body := "{\"state\": \"closed\"}"
-		curlCmd, err := util.GenerateCurlCommand("PATCH", alert.cli.GetBaseURL(), endpoint, body)
+		curlCmd, err := util.GenerateCurlCommand(ctx, "PATCH", alert.cli.GetBaseURL(), endpoint, body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate curl command to close a security-adivsory: %w", err)
 		}

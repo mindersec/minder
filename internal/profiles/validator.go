@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -51,7 +51,7 @@ func (v *Validator) ValidateAndExtractRules(
 
 	// ensure that the rule names follow all naming constraints
 	if err := validateRuleNames(profile); err != nil {
-		var violation *engine.RuleValidationError
+		var violation *RuleValidationError
 		if errors.As(err, &violation) {
 			return nil, util.UserVisibleError(codes.InvalidArgument,
 				"profile failed rule name validation: %s", violation)
@@ -61,7 +61,7 @@ func (v *Validator) ValidateAndExtractRules(
 
 	// validate that the rule invocations match what the rule types expect
 	if err := validateEntities(ctx, qtx, profile, projectID); err != nil {
-		var violation *engine.RuleValidationError
+		var violation *RuleValidationError
 		if errors.As(err, &violation) {
 			return nil, util.UserVisibleError(codes.InvalidArgument,
 				"profile failed rule validation: %s", violation)
@@ -72,7 +72,7 @@ func (v *Validator) ValidateAndExtractRules(
 	// validate that the parameters for the rules match the expected schema
 	rulesInProf, err := v.validateRuleParams(ctx, qtx, profile, projectID)
 	if err != nil {
-		var violation *engine.RuleValidationError
+		var violation *RuleValidationError
 		if errors.As(err, &violation) {
 			log.Printf("error validating rule: %v", violation)
 			return nil, util.UserVisibleError(codes.InvalidArgument,
@@ -97,7 +97,7 @@ func (_ *Validator) validateRuleParams(
 	// track them in the db later.
 	rulesInProfile := make(RuleMapping)
 
-	err := engine.TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
+	err := TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -107,7 +107,7 @@ func (_ *Validator) validateRuleParams(
 
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				return &engine.RuleValidationError{
+				return &RuleValidationError{
 					Err:      fmt.Sprintf("cannot find rule type %s", profileRule.GetType()),
 					RuleType: profileRule.GetType(),
 				}
@@ -116,12 +116,12 @@ func (_ *Validator) validateRuleParams(
 			return fmt.Errorf("error getting rule type %s: %w", profileRule.GetType(), err)
 		}
 
-		ruleTypePB, err := engine.RuleTypePBFromDB(&ruleType)
+		ruleTypePB, err := ruletypes.RuleTypePBFromDB(&ruleType)
 		if err != nil {
 			return fmt.Errorf("cannot convert rule type %s to minderv1: %w", ruleType.Name, err)
 		}
 
-		ruleValidator, err := engine.NewRuleValidator(ruleTypePB)
+		ruleValidator, err := NewRuleValidator(ruleTypePB)
 		if err != nil {
 			return fmt.Errorf("error creating rule validator: %w", err)
 		}
@@ -189,7 +189,7 @@ func validateRuleNamesForEntity(entity minderv1.Entity, rules []*minderv1.Profil
 		typesSet.Insert(ruleType)
 
 		if typesSet.Has(ruleName) && ruleName != ruleType {
-			return &engine.RuleValidationError{
+			return &RuleValidationError{
 				Err: fmt.Sprintf("rule name '%s' conflicts with a rule type in entity '%s', rule name cannot match other rule types",
 					ruleName, entity.ToString()),
 				RuleType: ruleType,
@@ -221,7 +221,7 @@ func validateRuleWithEmptyName(
 	emptyNameTypesSet sets.Set[string],
 ) error {
 	if emptyNameTypesSet.Has(ruleType) {
-		return &engine.RuleValidationError{
+		return &RuleValidationError{
 			Err: fmt.Sprintf(
 				"multiple rules with empty name and same type in entity '%s', add unique names to rules", entity.ToString()),
 			RuleType: ruleType,
@@ -239,13 +239,13 @@ func validateRuleWithNonEmptyName(
 	ruleType := rule.GetType()
 	if existingType, ok := ruleNameToType[ruleName]; ok {
 		if existingType == ruleType {
-			return &engine.RuleValidationError{
+			return &RuleValidationError{
 				Err: fmt.Sprintf("multiple rules of same type with same name '%s' in entity '%s', assign unique names to rules",
 					ruleName, entity.ToString()),
 				RuleType: ruleType,
 			}
 		}
-		return &engine.RuleValidationError{
+		return &RuleValidationError{
 			Err: fmt.Sprintf("rule name '%s' conflicts with rule name of type '%s' in entity '%s', assign unique names to rules",
 				ruleName, existingType, entity.ToString()),
 			RuleType: ruleType,
@@ -254,7 +254,7 @@ func validateRuleWithNonEmptyName(
 	}
 
 	if ruleName == ruleType && emptyNameTypesSet.Has(ruleType) {
-		return &engine.RuleValidationError{
+		return &RuleValidationError{
 			Err: fmt.Sprintf(
 				"rule name '%s' conflicts with default rule name of unnamed rule in entity '%s', assign unique names to rules",
 				ruleName, entity.ToString()),
@@ -273,7 +273,7 @@ func validateEntities(
 	projectID uuid.UUID,
 ) error {
 	// validate that the entities in the profile match the entities in the project
-	err := engine.TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
+	err := TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
 		// TODO: This will need to be updated to support
 		// the hierarchy tree once that's settled in.
 		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
@@ -291,13 +291,13 @@ func validateEntities(
 			return fmt.Errorf("error getting rule type %s: %w", rule.GetType(), err)
 		}
 
-		ruleTypePB, err := engine.RuleTypePBFromDB(&ruleType)
+		ruleTypePB, err := ruletypes.RuleTypePBFromDB(&ruleType)
 		if err != nil {
 			return fmt.Errorf("cannot convert rule type %s to minderv1: %w", ruleType.Name, err)
 		}
 
 		if ruleTypePB.Def.InEntity != entity.ToString() {
-			return &engine.RuleValidationError{
+			return &RuleValidationError{
 				Err: fmt.Sprintf("rule type %s expects entity %s, but was given entity %s",
 					ruleTypePB.Name, ruleTypePB.Def.InEntity, entity.ToString()),
 				RuleType: ruleTypePB.Name,

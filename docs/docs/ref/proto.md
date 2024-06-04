@@ -153,6 +153,8 @@ manage Users CRUD
 | CreateUser | [CreateUserRequest](#minder-v1-CreateUserRequest) | [CreateUserResponse](#minder-v1-CreateUserResponse) |  |
 | DeleteUser | [DeleteUserRequest](#minder-v1-DeleteUserRequest) | [DeleteUserResponse](#minder-v1-DeleteUserResponse) |  |
 | GetUser | [GetUserRequest](#minder-v1-GetUserRequest) | [GetUserResponse](#minder-v1-GetUserResponse) |  |
+| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is beacuse understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
+| ResolveInvitation | [ResolveInvitationRequest](#minder-v1-ResolveInvitationRequest) | [ResolveInvitationResponse](#minder-v1-ResolveInvitationResponse) | ResolveInvitation allows a user to accept or decline an invitation to a project given the code for the invitation. A user may call ResolveInvitation to accept or decline an invitation even if they have not called CreateUser.  If a user accepts an invitation via this call before calling CreateUser, a Minder user record will be created, but no additional projects will be created (unlike CreateUser, which will also create a default project). |
 
 
 ### Messages
@@ -217,6 +219,7 @@ ArtifactType defines the artifact data evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
+| invitation | [Invitation](#minder-v1-Invitation) |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
 
 
 <a name="minder-v1-AuthorizationParams"></a>
@@ -228,6 +231,31 @@ ArtifactType defines the artifact data evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
+
+
+<a name="minder-v1-AutoRegistration"></a>
+
+#### AutoRegistration
+AutoRegistration is the configuration for auto-registering entities.
+When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
+and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entities | [AutoRegistration.EntitiesEntry](#minder-v1-AutoRegistration-EntitiesEntry) | repeated | enabled is the list of entities that are enabled for auto-registration. |
+
+
+<a name="minder-v1-AutoRegistration-EntitiesEntry"></a>
+
+#### AutoRegistration.EntitiesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  |  |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -285,6 +313,18 @@ buf compatibility checks.
 | provider | [string](#string) | optional | name of the provider |
 | project | [string](#string) | optional | ID of the project |
 | retired_organization | [string](#string) | optional |  |
+
+
+<a name="minder-v1-ContextV2"></a>
+
+#### ContextV2
+ContextV2 defines the context in which a rule is evaluated.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_id | [string](#string) |  | project is the project ID |
+| provider | [string](#string) |  | name of the provider. Set to empty string when not applicable. |
 
 
 <a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
@@ -619,6 +659,30 @@ DiffType defines the diff data ingester.
 | depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
+<a name="minder-v1-DockerHubProviderConfig"></a>
+
+#### DockerHubProviderConfig
+DockerHubProviderConfig contains the configuration for the DockerHub provider.
+
+Namespace: is the namespace for the DockerHub provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  | namespace is the namespace for the DockerHub provider. |
+
+
+<a name="minder-v1-EntityAutoRegistrationConfig"></a>
+
+#### EntityAutoRegistrationConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+
+
 <a name="minder-v1-EntityTypedId"></a>
 
 #### EntityTypedId
@@ -644,6 +708,19 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
 | details | [string](#string) |  | details is the description of the alert attempt if any |
 | url | [string](#string) |  | url is the URL to the alert |
+
+
+<a name="minder-v1-GHCRProviderConfig"></a>
+
+#### GHCRProviderConfig
+GHCRProviderConfig contains the configuration for the GHCR provider.
+
+Namespace: is the namespace for the GHCR provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| namespace | [string](#string) |  | namespace is the namespace for the GHCR provider. |
 
 
 <a name="minder-v1-GetArtifactByIdRequest"></a>
@@ -707,6 +784,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | redirect_url | [string](#string) | optional |  |
+| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is a JSON object that can be used to pass additional configuration |
+| provider_class | [string](#string) |  |  |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -1005,6 +1084,24 @@ GitType defines the git data ingester.
 | branch | [string](#string) |  | branch is the branch of the git repository. |
 
 
+<a name="minder-v1-Invitation"></a>
+
+#### Invitation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | [string](#string) |  | email is the email address of the invited user. This is presented as a convenience for display purposes, and does not affect who can accept the invitation using the code. |
+| project | [string](#string) |  | project is the project to which the user is invited. |
+| code | [string](#string) |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
+| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | created_at is the time at which the invitation was created. |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
+| sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
+| sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
+
+
 <a name="minder-v1-ListArtifactsRequest"></a>
 
 #### ListArtifactsRequest
@@ -1079,6 +1176,23 @@ The default is to return all user-created profiles; the string "*" can be used t
 | ----- | ---- | ----- | ----------- |
 | profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile - id, name, status, last_updated |
 | results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
+
+
+<a name="minder-v1-ListInvitationsRequest"></a>
+
+#### ListInvitationsRequest
+
+
+
+<a name="minder-v1-ListInvitationsResponse"></a>
+
+#### ListInvitationsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| invitations | [Invitation](#minder-v1-Invitation) | repeated |  |
 
 
 <a name="minder-v1-ListProfilesRequest"></a>
@@ -1238,7 +1352,8 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated |  |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments contains permission grants which have been accepted by a user. |
+| invitations | [Invitation](#minder-v1-Invitation) | repeated | invitations contains outstanding role invitations which have not yet been accepted by a user. |
 
 
 <a name="minder-v1-ListRolesRequest"></a>
@@ -1510,6 +1625,17 @@ Project API Objects
 | credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 
 
+<a name="minder-v1-ProviderConfig"></a>
+
+#### ProviderConfig
+ProviderConfig contains the generic configuration for a provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  | auto_registration is the configuration for auto-registering entities. |
+
+
 <a name="minder-v1-ProviderParameter"></a>
 
 #### ProviderParameter
@@ -1650,6 +1776,31 @@ RESTProviderConfig contains the configuration for the REST provider.
 | license | [string](#string) |  |  |
 
 
+<a name="minder-v1-ResolveInvitationRequest"></a>
+
+#### ResolveInvitationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | [string](#string) |  | code is the code of the invitation to resolve. |
+| accept | [bool](#bool) |  | accept is true if the invitation is accepted, false if it is rejected. |
+
+
+<a name="minder-v1-ResolveInvitationResponse"></a>
+
+#### ResolveInvitationResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | [string](#string) |  | email is the email address of the invited user. |
+| project | [string](#string) |  | project is the project to which the user is invited. |
+
+
 <a name="minder-v1-RestType"></a>
 
 #### RestType
@@ -1701,6 +1852,7 @@ This is used to fetch data from a REST endpoint.
 | ----- | ---- | ----- | ----------- |
 | role | [string](#string) |  | role is the role that is assigned. |
 | subject | [string](#string) |  | subject is the subject to which the role is assigned. |
+| display_name | [string](#string) |  | display_name is the display name of the subject. |
 | project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
 
 
@@ -2242,6 +2394,8 @@ Entity defines the entity that is supported by the provider.
 | PROVIDER_CLASS_UNSPECIFIED | 0 |  |
 | PROVIDER_CLASS_GITHUB | 1 |  |
 | PROVIDER_CLASS_GITHUB_APP | 2 |  |
+| PROVIDER_CLASS_GHCR | 3 |  |
+| PROVIDER_CLASS_DOCKERHUB | 4 |  |
 
 
 <a name="minder-v1-ProviderType"></a>
@@ -2257,6 +2411,7 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_GIT | 3 |  |
 | PROVIDER_TYPE_OCI | 4 |  |
 | PROVIDER_TYPE_REPO_LISTER | 5 |  |
+| PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
 
 
 <a name="minder-v1-Relation"></a>

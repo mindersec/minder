@@ -1,0 +1,81 @@
+{
+  "action": "deleted",
+  "installation": {
+    "id": 12345,
+    "account": {
+      "login": "stacklok",
+      "id": 12345,
+      "node_id": "node_id",
+      "avatar_url": "https://avatars.githubusercontent.com/u/0?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/stacklok",
+      "html_url": "https://github.com/stacklok",
+      "followers_url": "https://api.github.com/users/stacklok/followers",
+      "following_url": "https://api.github.com/users/stacklok/following{/other_user}",
+      "gists_url": "https://api.github.com/users/stacklok/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/stacklok/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/stacklok/subscriptions",
+      "organizations_url": "https://api.github.com/users/stacklok/orgs",
+      "repos_url": "https://api.github.com/users/stacklok/repos",
+      "events_url": "https://api.github.com/users/stacklok/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/stacklok/received_events",
+      "type": "User",
+      "site_admin": false
+    },
+    "repository_selection": "all",
+    "access_tokens_url": "https://api.github.com/app/installations/12345/access_tokens",
+    "repositories_url": "https://api.github.com/installation/repositories",
+    "html_url": "https://github.com/settings/installations/12345",
+    "app_id": 12345,
+    "app_slug": "minder",
+    "target_id": 12345,
+    "target_type": "User",
+    "permissions": {
+      "contents": "write",
+      "metadata": "read",
+      "packages": "write",
+      "workflows": "write",
+      "pull_requests": "write",
+      "administration": "write",
+      "repository_hooks": "write",
+      "repository_advisories": "write"
+    },
+    "events": [],
+    "created_at": "2024-05-24T12:17:33.000+02:00",
+    "updated_at": "2024-05-24T12:17:33.000+02:00",
+    "single_file_name": null,
+    "has_multiple_single_files": false,
+    "single_file_paths": [],
+    "suspended_by": null,
+    "suspended_at": null
+  },
+  "repositories": [
+    {
+      "id": 12345,
+      "node_id": "node_id",
+      "name": "libfixposix",
+      "full_name": "stacklok/minder",
+      "private": false
+    }
+  ],
+  "sender": {
+    "login": "stacklok",
+    "id": 12345,
+    "node_id": "node_id",
+    "avatar_url": "https://avatars.githubusercontent.com/u/0?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/stacklok",
+    "html_url": "https://github.com/stacklok",
+    "followers_url": "https://api.github.com/users/stacklok/followers",
+    "following_url": "https://api.github.com/users/stacklok/following{/other_user}",
+    "gists_url": "https://api.github.com/users/stacklok/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/stacklok/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/stacklok/subscriptions",
+    "organizations_url": "https://api.github.com/users/stacklok/orgs",
+    "repos_url": "https://api.github.com/users/stacklok/repos",
+    "events_url": "https://api.github.com/users/stacklok/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/stacklok/received_events",
+    "type": "User",
+    "site_admin": false
+  }
+}

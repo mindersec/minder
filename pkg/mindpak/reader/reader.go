@@ -20,7 +20,7 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/profiles"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/mindpak"
 )
@@ -40,25 +40,25 @@ type BundleReader interface {
 	ForEachRuleType(func(*v1.RuleType) error) error
 }
 
-type profileSet = map[string]struct{}
+type profileSetType = map[string]struct{}
 type bundleReader struct {
 	original *mindpak.Bundle
-	profiles profileSet
+	profiles profileSetType
 }
 
 // NewBundleReader creates an instance of BundleReader from mindpak.Bundle
 func NewBundleReader(bundle *mindpak.Bundle) BundleReader {
 	bundleProfiles := bundle.Files.Profiles
-	profiles := make(profileSet, len(bundleProfiles))
+	profileSet := make(profileSetType, len(bundleProfiles))
 	// build a set of profile names for `GetProfile`
 	// this saves us from searching the manifest each time this method is used
 	for _, profile := range bundleProfiles {
-		profiles[profile.Name] = struct{}{}
+		profileSet[profile.Name] = struct{}{}
 	}
 
 	return &bundleReader{
 		original: bundle,
-		profiles: profiles,
+		profiles: profileSet,
 	}
 }
 
@@ -89,7 +89,7 @@ func (b *bundleReader) GetProfile(name string) (*v1.Profile, error) {
 	defer file.Close()
 
 	// parse profile from YAML
-	profile, err := engine.ParseYAML(file)
+	profile, err := profiles.ParseYAML(file)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing profile yaml: %w", err)
 	}

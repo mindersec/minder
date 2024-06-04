@@ -18,6 +18,7 @@
 package remediate
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/stacklok/minder/internal/engine/actions/remediate/gh_branch_protect"
@@ -25,53 +26,56 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // ActionType is the type of the remediation engine
 const ActionType engif.ActionType = "remediate"
 
 // NewRuleRemediator creates a new rule remediator
-func NewRuleRemediator(rt *pb.RuleType, pbuild *providers.ProviderBuilder) (engif.Action, error) {
-	rem := rt.Def.GetRemediate()
-	if rem == nil {
+func NewRuleRemediator(
+	rt *pb.RuleType,
+	provider provinfv1.Provider,
+) (engif.Action, error) {
+	remediate := rt.Def.GetRemediate()
+	if remediate == nil {
 		return noop.NewNoopRemediate(ActionType)
 	}
 
 	// nolint:revive // let's keep the switch here, it would be nicer to extend a switch in the future
-	switch rem.GetType() {
+	switch remediate.GetType() {
 	case rest.RemediateType:
-		client, err := pbuild.GetHTTP()
+		client, err := provinfv1.As[provinfv1.REST](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement rest trait")
 		}
-		if rem.GetRest() == nil {
+		if remediate.GetRest() == nil {
 			return nil, fmt.Errorf("remediations engine missing rest configuration")
 		}
-		return rest.NewRestRemediate(ActionType, rem.GetRest(), client)
+		return rest.NewRestRemediate(ActionType, remediate.GetRest(), client)
 
 	case gh_branch_protect.RemediateType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
-		if rem.GetGhBranchProtection() == nil {
+		if remediate.GetGhBranchProtection() == nil {
 			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
 		}
-		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, rem.GetGhBranchProtection(), client)
+		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, remediate.GetGhBranchProtection(), client)
 
 	case pull_request.RemediateType:
-		client, err := pbuild.GetGitHub()
+		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, fmt.Errorf("could not instantiate provider: %w", err)
+			return nil, errors.New("provider does not implement git trait")
 		}
-		if rem.GetPullRequest() == nil {
+		if remediate.GetPullRequest() == nil {
 			return nil, fmt.Errorf("remediations engine missing pull request configuration")
 		}
 
-		return pull_request.NewPullRequestRemediate(ActionType, rem.GetPullRequest(), client)
+		return pull_request.NewPullRequestRemediate(ActionType, remediate.GetPullRequest(), client)
 	}
 
-	return nil, fmt.Errorf("unknown remediation type: %s", rem.GetType())
+	return nil, fmt.Errorf("unknown remediation type: %s", remediate.GetType())
 }

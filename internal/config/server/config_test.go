@@ -17,9 +17,6 @@ package server_test
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -179,57 +176,6 @@ func TestReadDefaultConfig(t *testing.T) {
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
-}
-
-func TestReadAuthConfig(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name     string
-		mutate   func(*testing.T, *serverconfig.AuthConfig)
-		keyError string
-	}{
-		{
-			name: "valid config",
-		},
-		{
-			name: "missing keys",
-			mutate: func(t *testing.T, cfg *serverconfig.AuthConfig) {
-				t.Helper()
-				require.NoError(t, os.Remove(cfg.TokenKey))
-			},
-			keyError: "no such file or directory",
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			tmpdir := t.TempDir()
-			cfg := serverconfig.AuthConfig{
-				TokenKey: filepath.Join(tmpdir, "token_key"),
-			}
-			if err := os.WriteFile(cfg.TokenKey, []byte("test"), 0600); err != nil {
-				t.Fatalf("Error generating access token key pair: %v", err)
-			}
-
-			if tc.mutate != nil {
-				tc.mutate(t, &cfg)
-			}
-
-			if _, err := cfg.GetTokenKey(); !errMatches(err, tc.keyError) {
-				t.Errorf("Expected error containing %q, but got %v", tc.keyError, err)
-			}
-		})
-	}
-}
-
-func errMatches(got error, want string) bool {
-	if want == "" {
-		return got == nil
-	}
-	return strings.Contains(got.Error(), want)
 }
 
 const (

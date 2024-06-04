@@ -42,9 +42,11 @@ import (
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
+	"github.com/stacklok/minder/internal/crypto"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
@@ -156,9 +158,11 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 		})
 	require.NoError(t, err)
 
+	encryptedValue := base64.StdEncoding.EncodeToString([]byte("my-encrypted-token"))
+	encryptedToken := crypto.NewBackwardsCompatibleEncryptedData(encryptedValue)
 	mocks.cryptoMocks.EXPECT().
 		EncryptOAuthToken(gomock.Any()).
-		Return([]byte("my-encrypted-token"), nil)
+		Return(encryptedToken, nil)
 
 	dbProv, err := provSvc.CreateGitHubOAuthProvider(
 		context.Background(),
@@ -189,14 +193,17 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	dbToken, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
 	require.NoError(t, err)
 	require.Len(t, dbToken, 1)
-	require.Equal(t, dbToken[0].EncryptedToken, base64.StdEncoding.EncodeToString([]byte("my-encrypted-token")))
+	require.True(t, dbToken[0].EncryptedAccessToken.Valid)
+	deserialized, err := crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
+	require.NoError(t, err)
+	require.Equal(t, deserialized, encryptedToken)
 	require.Equal(t, dbToken[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbToken[0].EnrollmentNonce, sql.NullString{String: stateNonce, Valid: true})
 
 	// test updating token
 	mocks.cryptoMocks.EXPECT().
 		EncryptOAuthToken(gomock.Any()).
-		Return([]byte("my-new-encrypted-token"), nil)
+		Return(encryptedToken, nil)
 
 	dbProvUpdated, err := provSvc.CreateGitHubOAuthProvider(
 		context.Background(),
@@ -226,9 +233,47 @@ func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
 	dbTokenUpdate, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
 	require.NoError(t, err)
 	require.Len(t, dbTokenUpdate, 1)
-	require.Equal(t, dbTokenUpdate[0].EncryptedToken, base64.StdEncoding.EncodeToString([]byte("my-new-encrypted-token")))
+	require.True(t, dbToken[0].EncryptedAccessToken.Valid)
+	deserialized, err = crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
+	require.NoError(t, err)
+	require.Equal(t, deserialized, encryptedToken)
 	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
 	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
+}
+
+func TestProviderService_VerifyProviderTokenIdentity(t *testing.T) {
+	t.Parallel()
+
+	const (
+		accountID   = 456
+		accessToken = "my-access-token"
+	)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ghCredential := credentials.NewGitHubTokenCredential(accessToken)
+
+	delegate := mockgh.NewMockDelegate(ctrl)
+	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
+
+	clientFactory.EXPECT().
+		BuildOAuthClient(gomock.Any(), ghCredential, gomock.Any()).
+		Return(nil, delegate, nil).AnyTimes()
+
+	delegate.EXPECT().
+		GetUserId(gomock.Any()).
+		Return(int64(accountID), nil).AnyTimes()
+
+	cfg := &server.ProviderConfig{}
+
+	provSvc, _ := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
+
+	err := provSvc.VerifyProviderTokenIdentity(context.Background(), "456", accessToken)
+	require.NoError(t, err)
+
+	err = provSvc.VerifyProviderTokenIdentity(context.Background(), "123", accessToken)
+	require.ErrorIs(t, err, ErrInvalidTokenIdentity)
 }
 
 func TestProviderService_CreateGitHubAppProvider(t *testing.T) {

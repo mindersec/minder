@@ -41,6 +41,31 @@ type Validator interface {
 	Validate() error
 }
 
+// ensure ProviderConfig implements the Validator interface
+var _ Validator = (*ProviderConfig)(nil)
+
+// Validate is a utility function which allows for the validation of the ProviderConfig struct.
+func (p *ProviderConfig) Validate() error {
+	if err := p.GetAutoRegistration().Validate(); err != nil {
+		return fmt.Errorf("auto_registration: %w", err)
+	}
+	return nil
+}
+
+// ensure AutoRegistration implements the Validator interface
+var _ Validator = (*AutoRegistration)(nil)
+
+// Validate is a utility function which allows for the validation of the AutoRegistration struct.
+func (a *AutoRegistration) Validate() error {
+	for entity := range a.GetEntities() {
+		if !EntityFromString(entity).IsValid() {
+			return fmt.Errorf("invalid entity type: %s", entity)
+		}
+	}
+
+	return nil
+}
+
 // ensure GitHubProviderConfig implements the Validator interface
 var _ Validator = (*GitHubProviderConfig)(nil)
 
@@ -70,6 +95,18 @@ func (rpcfg *RESTProviderConfig) Validate() error {
 	// protobuf-generated structs, so we have to do this manually.
 	if rpcfg.GetBaseUrl() == "" {
 		return fmt.Errorf("base_url is required")
+	}
+
+	return nil
+}
+
+// Ensure DockerHubProviderConfig implements the Validator interface
+var _ Validator = (*DockerHubProviderConfig)(nil)
+
+// Validate is a utility function which allows for the validation of a struct.
+func (d *DockerHubProviderConfig) Validate() error {
+	if d.GetNamespace() == "" {
+		return fmt.Errorf("namespace is required")
 	}
 
 	return nil

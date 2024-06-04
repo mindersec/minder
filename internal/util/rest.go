@@ -18,12 +18,16 @@ package util
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
-	htmltemplate "html/template"
 	"net/url"
 	"strings"
-	"text/template"
+)
+
+const (
+	// CurlCmdMaxSize is the maximum size of the rendered curl command
+	CurlCmdMaxSize = 2048
 )
 
 // HttpMethodFromString returns the HTTP method from a string based on upprecase inMeth, defaulting to dfl
@@ -36,39 +40,9 @@ func HttpMethodFromString(inMeth, dfl string) string {
 	return method
 }
 
-// ParseNewTextTemplate parses a named template from a string, ensuring it is not empty
-func ParseNewTextTemplate(tmpl *string, name string) (*template.Template, error) {
-	if tmpl == nil || len(*tmpl) == 0 {
-		return nil, fmt.Errorf("missing template")
-	}
-
-	t := template.New(name).Option("missingkey=error")
-	t, err := t.Parse(*tmpl)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse template: %w", err)
-	}
-
-	return t, nil
-}
-
-// ParseNewHtmlTemplate parses a named template from a string, ensuring it is not empty
-func ParseNewHtmlTemplate(tmpl *string, name string) (*htmltemplate.Template, error) {
-	if tmpl == nil || len(*tmpl) == 0 {
-		return nil, fmt.Errorf("missing template")
-	}
-
-	t := htmltemplate.New(name).Option("missingkey=error")
-	t, err := t.Parse(*tmpl)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse template: %w", err)
-	}
-
-	return t, nil
-}
-
 // GenerateCurlCommand generates a curl command from a method, apiBaseURL, endpoint, and body
 // this is useful to provide a dry-run for remediations
-func GenerateCurlCommand(method, apiBaseURL, endpoint, body string) (string, error) {
+func GenerateCurlCommand(ctx context.Context, method, apiBaseURL, endpoint, body string) (string, error) {
 	if len(method) == 0 {
 		return "", errors.New("method cannot be empty")
 	}
@@ -79,14 +53,14 @@ func GenerateCurlCommand(method, apiBaseURL, endpoint, body string) (string, err
 
 	// TODO: add support for headers
 	// TODO: add toggle for token header
-	const tmplStr = `curl -L -X {{ .Method }} \
+	tmplStr := `curl -L -X {{ .Method }} \
  -H "Accept: application/vnd.github+json" \
  -H "Authorization: Bearer $TOKEN" \
  -H "X-GitHub-Api-Version: 2022-11-28" \
  {{.URL}} \
  -d '{{.Body}}'`
 
-	tmpl, err := template.New("curlCmd").Option("missingkey=error").Parse(tmplStr)
+	tmpl, err := NewSafeTextTemplate(&tmplStr, "curlCmd")
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +78,7 @@ func GenerateCurlCommand(method, apiBaseURL, endpoint, body string) (string, err
 		"Body":   body,
 	}
 
-	if err := tmpl.Execute(&buf, data); err != nil {
+	if err := tmpl.Execute(ctx, &buf, data, CurlCmdMaxSize); err != nil {
 		return "", err
 	}
 

@@ -17,7 +17,9 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -26,6 +28,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	config "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/providers"
@@ -34,12 +38,55 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// CreateProvider implements the CreateProvider RPC method.
+func (s *Server) CreateProvider(
+	ctx context.Context, req *minderv1.CreateProviderRequest,
+) (*minderv1.CreateProviderResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	provider := req.GetProvider()
+
+	if provider == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "provider is required")
+	}
+
+	var provConfig json.RawMessage
+	if provider.Config != nil {
+		var marshallErr error
+
+		provConfig, marshallErr = provider.Config.MarshalJSON()
+		if marshallErr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error marshalling provider provConfig: %v", marshallErr)
+		}
+	} else {
+		zerolog.Ctx(ctx).Debug().Msg("no provider provConfig, will use default")
+	}
+
+	dbProv, err := s.providerManager.CreateFromConfig(
+		ctx, db.ProviderClass(provider.GetClass()), projectID, provider.Name, provConfig)
+	if db.ErrIsUniqueViolation(err) {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("provider already exists")
+		return nil, util.UserVisibleError(codes.AlreadyExists, "provider already exists")
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
+	}
+
+	prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, dbProv)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error converting provider to protobuf: %v", err)
+	}
+
+	return &minderv1.CreateProviderResponse{
+		Provider: prov,
+	}, nil
+}
+
 // GetProvider gets a given provider available in a specific project.
 func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderRequest) (*minderv1.GetProviderResponse, error) {
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	prov, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, req.GetName())
+	dbProv, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, req.GetName())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
@@ -47,26 +94,13 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 		return nil, status.Errorf(codes.Internal, "error getting provider: %v", err)
 	}
 
-	var cfg *structpb.Struct
-
-	if len(prov.Definition) > 0 {
-		cfg = &structpb.Struct{}
-		if err := protojson.Unmarshal(prov.Definition, cfg); err != nil {
-			return nil, status.Errorf(codes.Internal, "error unmarshalling provider definition: %v", err)
-		}
+	prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, dbProv)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
 	}
 
 	return &minderv1.GetProviderResponse{
-		Provider: &minderv1.Provider{
-			Name:             prov.Name,
-			Project:          projectID.String(),
-			Version:          prov.Version,
-			Implements:       protobufProviderImplementsFromDB(ctx, *prov),
-			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, *prov),
-			Config:           cfg,
-			CredentialsState: providers.GetCredentialStateForProvider(ctx, *prov, s.store, s.cryptoEngine, &s.cfg.Provider),
-			Class:            string(prov.Class),
-		},
+		Provider: prov,
 	}, nil
 }
 
@@ -110,26 +144,13 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 	zerolog.Ctx(ctx).Debug().Int("count", len(list)).Msg("providers")
 
 	provs := make([]*minderv1.Provider, 0, len(list))
-	for _, p := range list {
-		var cfg *structpb.Struct
-
-		if len(p.Definition) > 0 {
-			cfg = &structpb.Struct{}
-			if err := protojson.Unmarshal(p.Definition, cfg); err != nil {
-				return nil, status.Errorf(codes.Internal, "error unmarshalling provider definition: %v", err)
-			}
+	for _, dbProv := range list {
+		prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, &dbProv)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
 		}
 
-		provs = append(provs, &minderv1.Provider{
-			Name:             p.Name,
-			Project:          projectID.String(),
-			Version:          p.Version,
-			Implements:       protobufProviderImplementsFromDB(ctx, p),
-			AuthFlows:        protobufProviderAuthFlowFromDB(ctx, p),
-			CredentialsState: providers.GetCredentialStateForProvider(ctx, p, s.store, s.cryptoEngine, &s.cfg.Provider),
-			Config:           cfg,
-			Class:            string(p.Class),
-		})
+		provs = append(provs, prov)
 	}
 
 	cursor := ""
@@ -206,6 +227,37 @@ func (s *Server) DeleteProviderByID(
 
 	return &minderv1.DeleteProviderByIDResponse{
 		Id: in.Id,
+	}, nil
+}
+
+func protobufProviderFromDB(
+	ctx context.Context, store db.Store,
+	cryptoEngine crypto.Engine, pc *config.ProviderConfig, p *db.Provider,
+) (*minderv1.Provider, error) {
+	var cfg *structpb.Struct
+
+	if len(p.Definition) > 0 {
+		cfg = &structpb.Struct{}
+		if err := protojson.Unmarshal(p.Definition, cfg); err != nil {
+			return nil, fmt.Errorf("error unmarshalling provider definition: %w", err)
+		}
+	}
+
+	state, err := providers.GetCredentialStateForProvider(ctx, *p, store, cryptoEngine, pc)
+	if err != nil {
+		// This is non-fatal
+		zerolog.Ctx(ctx).Error().Err(err).Str("provider", p.Name).Msg("error getting credential")
+	}
+
+	return &minderv1.Provider{
+		Name:             p.Name,
+		Project:          p.ProjectID.String(),
+		Version:          p.Version,
+		Implements:       protobufProviderImplementsFromDB(ctx, *p),
+		AuthFlows:        protobufProviderAuthFlowFromDB(ctx, *p),
+		Config:           cfg,
+		CredentialsState: state,
+		Class:            string(p.Class),
 	}, nil
 }
 

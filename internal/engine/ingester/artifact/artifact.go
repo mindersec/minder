@@ -19,8 +19,6 @@ package artifact
 import (
 	"context"
 	"fmt"
-	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -30,6 +28,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	artif "github.com/stacklok/minder/internal/providers/artifact"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -50,7 +49,7 @@ const (
 // Ingest is the engine for a rule type that uses artifact data ingest
 // Implements enginer.ingester.Ingester
 type Ingest struct {
-	ghCli provifv1.GitHub
+	prov provifv1.Provider
 
 	// artifactVerifier is the verifier for sigstore. It's only used in the Ingest method
 	// but we store it in the Ingest structure to allow tests to set a custom artifactVerifier
@@ -74,9 +73,9 @@ type verifiedAttestation struct {
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
-func NewArtifactDataIngest(ghCli provifv1.GitHub) (*Ingest, error) {
+func NewArtifactDataIngest(prov provifv1.Provider) (*Ingest, error) {
 	return &Ingest{
-		ghCli: ghCli,
+		prov: prov,
 	}, nil
 }
 
@@ -124,24 +123,23 @@ func (i *Ingest) getApplicableArtifactVersions(
 	artifact *pb.Artifact,
 	cfg *ingesterConfig,
 ) ([]map[string]any, error) {
-	// Make sure the artifact type matches
-	if newArtifactIngestType(artifact.Type) != cfg.Type {
-		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact type mismatch")
+	if err := validateConfiguration(artifact, cfg); err != nil {
+		return nil, err
 	}
 
-	// If a name is specified, make sure it matches
-	if cfg.Name != "" && cfg.Name != artifact.Name {
-		return nil, evalerrors.NewErrEvaluationSkipSilently("artifact name mismatch")
+	vers, err := getVersioner(i.prov)
+	if err != nil {
+		return nil, err
 	}
 
-	// Get all artifact versions filtering out those that don't apply to this rule
-	versions, err := getAndFilterArtifactVersions(ctx, cfg, i.ghCli, artifact)
+	// Get all artifact checksums filtering out those that don't apply to this rule
+	checksums, err := getAndFilterArtifactVersions(ctx, cfg, vers, artifact)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the provenance info for all artifact versions that apply to this rule
-	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, versions)
+	verificationResults, err := i.getVerificationResult(ctx, cfg, artifact, checksums)
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +158,32 @@ func (i *Ingest) getApplicableArtifactVersions(
 	return result, nil
 }
 
+func validateConfiguration(
+	artifact *pb.Artifact,
+	cfg *ingesterConfig,
+) error {
+	// Make sure the artifact type matches
+	if newArtifactIngestType(artifact.Type) != cfg.Type {
+		return evalerrors.NewErrEvaluationSkipSilently("artifact type mismatch")
+	}
+
+	if cfg.Type != artifactTypeContainer {
+		return evalerrors.NewErrEvaluationSkipSilently("only container artifacts are supported at the moment")
+	}
+
+	// If a name is specified, make sure it matches
+	if cfg.Name != "" && cfg.Name != artifact.Name {
+		return evalerrors.NewErrEvaluationSkipSilently("artifact name mismatch")
+	}
+
+	return nil
+}
+
 func (i *Ingest) getVerificationResult(
 	ctx context.Context,
 	cfg *ingesterConfig,
 	artifact *pb.Artifact,
-	versions []string,
+	checksums []string,
 ) ([]verification, error) {
 	var versionResults []verification
 	// Get the verifier for sigstore
@@ -174,13 +193,13 @@ func (i *Ingest) getVerificationResult(
 	}
 
 	// Loop through all artifact versions that apply to this rule and get the provenance info for each
-	for _, artifactVersion := range versions {
+	for _, artifactChecksum := range checksums {
 		// Try getting provenance info for the artifact version
-		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer, "",
-			artifact.Owner, artifact.Name, artifactVersion)
+		results, err := artifactVerifier.Verify(ctx, verifyif.ArtifactTypeContainer,
+			artifact.Owner, artifact.Name, artifactChecksum)
 		if err != nil {
 			// We consider err != nil as a fatal error, so we'll fail the rule evaluation here
-			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
+			artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
 			zerolog.Ctx(ctx).Debug().Err(err).Str("name", artifactName).Msg("failed getting signature information")
 			return nil, fmt.Errorf("failed getting signature information: %w", err)
 		}
@@ -188,7 +207,7 @@ func (i *Ingest) getVerificationResult(
 		for _, res := range results {
 			// Log a debug message in case we failed to find or verify any signature information for the artifact version
 			if !res.IsSigned || !res.IsVerified {
-				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactVersion)
+				artifactName := container.BuildImageRef("", artifact.Owner, artifact.Name, artifactChecksum)
 				zerolog.Ctx(ctx).Debug().Str("name", artifactName).Msg("failed to find or verify signature information")
 			}
 
@@ -230,10 +249,31 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 		return i.artifactVerifier, nil
 	}
 
+	verifieropts := []container.AuthMethod{}
+	if i.prov.CanImplement(pb.ProviderType_PROVIDER_TYPE_GITHUB) {
+		ghcli, err := provifv1.As[provifv1.GitHub](i.prov)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get github provider from provider configuration")
+		}
+		verifieropts = append(verifieropts, container.WithGitHubClient(ghcli))
+	} else if i.prov.CanImplement(pb.ProviderType_PROVIDER_TYPE_OCI) {
+		ocicli, err := provifv1.As[provifv1.OCI](i.prov)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get oci provider from provider configuration")
+		}
+		cauthn, err := ocicli.GetAuthenticator()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get oci authenticator: %w", err)
+		}
+		verifieropts = append(verifieropts, container.WithRegistry(ocicli.GetRegistry()),
+			container.WithAuthenticator(cauthn))
+	}
+
 	artifactVerifier, err := verifier.NewVerifier(
 		verifier.VerifierSigstore,
 		cfg.Sigstore,
-		container.WithGitHubClient(i.ghCli))
+		verifieropts...,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting sigstore verifier: %w", err)
 	}
@@ -241,47 +281,31 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 	return artifactVerifier, nil
 }
 
+// getAndFilterArtifactVersions fetches the available versions and filters the
+// ones that apply to the rule. Note that this returns the checksums of the
+// applicable artifact versions.
 func getAndFilterArtifactVersions(
 	ctx context.Context,
 	cfg *ingesterConfig,
-	ghCli provifv1.GitHub,
+	vers provifv1.ArtifactProvider,
 	artifact *pb.Artifact,
 ) ([]string, error) {
 	var res []string
 
 	// Build a tag filter based on the configuration
-	filter, err := buildTagMatcher(cfg.Tags, cfg.TagRegex)
+	filter, err := artif.BuildFilter(cfg.Tags, cfg.TagRegex)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building filter from artifact ingester config: %w", err)
 	}
 
 	// Fetch all available versions of the artifact
-	artifactName := url.QueryEscape(artifact.GetName())
-	upstreamVersions, err := ghCli.GetPackageVersions(
-		ctx, artifact.Owner, artifact.GetTypeLower(), artifactName,
-	)
+	upstreamVersions, err := vers.GetArtifactVersions(ctx, artifact, filter)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)
 	}
 
-	// Loop through all and filter out the versions that don't apply to this rule
 	for _, version := range upstreamVersions {
-		tags := version.Metadata.Container.Tags
-		sort.Strings(tags)
-
-		// Decide if the artifact version should be skipped or not
-		err = isSkippable(verifyif.ArtifactTypeContainer, version.CreatedAt.Time, map[string]interface{}{"tags": tags}, filter)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().Str("name", *version.Name).Strs("tags", tags).Str(
-				"reason",
-				err.Error(),
-			).Msg("skipping artifact version")
-			continue
-		}
-
-		// If the artifact version is applicable to this rule, add it to the list
-		zerolog.Ctx(ctx).Debug().Str("name", *version.Name).Strs("tags", tags).Msg("artifact version matched")
-		res = append(res, *version.Name)
+		res = append(res, version.Sha)
 	}
 
 	// If no applicable artifact versions were found for this rule, we can go ahead and fail the rule evaluation here
@@ -297,36 +321,6 @@ var (
 	// ArtifactTypeContainerRetentionPeriod represents the retention period for container artifacts
 	ArtifactTypeContainerRetentionPeriod = time.Now().AddDate(0, -6, 0)
 )
-
-// isSkippable determines if an artifact should be skipped
-// TODO - this should be refactored as well, for now just a forklift from reconciler
-func isSkippable(artifactType verifyif.ArtifactType, createdAt time.Time, opts map[string]interface{}, filter tagMatcher) error {
-	switch artifactType {
-	case verifyif.ArtifactTypeContainer:
-		// if the artifact is older than the retention period, skip it
-		if createdAt.Before(ArtifactTypeContainerRetentionPeriod) {
-			return fmt.Errorf("artifact is older than retention period - %s", ArtifactTypeContainerRetentionPeriod)
-		}
-		tags, ok := opts["tags"].([]string)
-		if !ok {
-			return nil
-		} else if len(tags) == 0 {
-			// if the artifact has no tags, skip it
-			return fmt.Errorf("artifact has no tags")
-		}
-		// if the artifact has a .sig tag it's a signature, skip it
-		if verifier.GetSignatureTag(tags) != "" {
-			return fmt.Errorf("artifact is a signature")
-		}
-		// if the artifact tags don't match the tag matcher, skip it
-		if !filter.MatchTag(tags...) {
-			return fmt.Errorf("artifact tags does not match")
-		}
-		return nil
-	default:
-		return nil
-	}
-}
 
 func branchFromRef(ref string) string {
 	if strings.HasPrefix(ref, "refs/heads/") {
@@ -376,4 +370,13 @@ func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	builderURL = strings.TrimPrefix(builderURL, c.Extensions.SourceRepositoryURI)
 
 	return builderURL, nil
+}
+
+func getVersioner(prov provifv1.Provider) (provifv1.ArtifactProvider, error) {
+	ap, ok := prov.(provifv1.ArtifactProvider)
+	if !ok {
+		return nil, fmt.Errorf("provider does not implement ArtifactProvider")
+	}
+
+	return ap, nil
 }

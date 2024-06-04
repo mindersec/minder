@@ -16,7 +16,9 @@ package manager_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -29,6 +31,75 @@ import (
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	"github.com/stacklok/minder/internal/providers/mock/fixtures"
 )
+
+func TestProviderManager_CreateFromConfig(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name              string
+		Provider          *db.Provider
+		Config            json.RawMessage
+		ExpectedError     string
+		ValidateConfigErr bool
+	}{
+		{
+			Name:          "CreateFromConfig returns error when provider class has no associated manager",
+			Provider:      githubAppProvider,
+			ExpectedError: "unexpected provider class",
+		},
+		{
+			Name:     "CreateFromConfig creates a github provider with default configuration",
+			Provider: providerWithClass(db.ProviderClassGithub),
+			Config:   json.RawMessage(`{ github: {} }`),
+		},
+		{
+			Name:     "CreateFromConfig creates a github provider with custom configuration",
+			Provider: providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
+			Config:   json.RawMessage(`{ github: { key: value} }`),
+		},
+		{
+			Name:              "CreateFromConfig returns an error when the config is invalid",
+			Provider:          providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
+			Config:            json.RawMessage(`{ github: { key: value} }`),
+			ExpectedError:     "error validating provider config",
+			ValidateConfigErr: true,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			store := fixtures.NewProviderStoreMock()(ctrl)
+
+			classManager := mockmanager.NewMockProviderClassManager(ctrl)
+			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
+			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
+			if scenario.ValidateConfigErr {
+				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(fmt.Errorf("invalid config")).MaxTimes(1)
+			} else {
+				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(nil).MaxTimes(1)
+			}
+
+			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))
+			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(expectedProvider, nil).MaxTimes(1)
+
+			provManager, err := manager.NewProviderManager(store, classManager)
+			require.NoError(t, err)
+
+			newProv, err := provManager.CreateFromConfig(ctx, scenario.Provider.Class, scenario.Provider.ProjectID, scenario.Provider.Name, scenario.Config)
+			if scenario.ExpectedError != "" {
+				require.ErrorContains(t, err, scenario.ExpectedError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, newProv, expectedProvider)
+			}
+		})
+	}
+}
 
 // Test both create by name/project, and create by ID together.
 // This is because the test logic is basically identical.
@@ -324,9 +395,22 @@ var (
 	githubProvider    = providerWithClass(db.ProviderClassGithub)
 )
 
-func providerWithClass(class db.ProviderClass) *db.Provider {
+type createProviderOpt func(*db.Provider)
+
+func providerWithConfig(config json.RawMessage) createProviderOpt {
+	return func(p *db.Provider) {
+		p.Definition = config
+	}
+}
+
+func providerWithClass(class db.ProviderClass, opts ...createProviderOpt) *db.Provider {
 	newProvider := referenceProvider
 	newProvider.Class = class
+
+	for _, opt := range opts {
+		opt(&newProvider)
+	}
+
 	return &newProvider
 }
 

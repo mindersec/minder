@@ -39,6 +39,89 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+func TestParseV1AppConfig(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name       string
+		config     json.RawMessage
+		error      string
+		ghEvalFn   func(*testing.T, *minderv1.GitHubAppProviderConfig)
+		provEvalFn func(*testing.T, *minderv1.ProviderConfig)
+	}{
+		{
+			name:   "valid app config",
+			config: json.RawMessage(`{ "github-app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+		},
+		{
+			name:   "valid app and provider config",
+			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } }, "github-app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				entityConfig := providerConfig.AutoRegistration.GetEntities()
+				assert.NotNil(t, entityConfig)
+				assert.Len(t, entityConfig, 1)
+				assert.True(t, entityConfig["repository"].Enabled)
+			},
+		},
+		{
+			name:   "auto_registration does not validate the enabled entities",
+			config: json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true} } }, "github-app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Nil(t, ghConfig)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+			error: "error validating provider config: auto_registration: invalid entity type: blah",
+		},
+		{
+			name:   "missing required github key",
+			config: json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true} } } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Nil(t, ghConfig)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+			error: "Field validation for 'GitHubApp' failed on the 'required' tag",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			providerConfig, gitHubConfig, err := ParseV1AppConfig(scenario.config)
+			if scenario.error != "" {
+				assert.Error(t, err)
+				assert.Nil(t, providerConfig)
+				assert.Contains(t, err.Error(), scenario.error)
+			} else {
+				assert.NoError(t, err)
+				scenario.provEvalFn(t, providerConfig)
+				scenario.ghEvalFn(t, gitHubConfig)
+			}
+		})
+	}
+}
+
 func TestNewGitHubAppProvider(t *testing.T) {
 	t.Parallel()
 
@@ -113,28 +196,6 @@ func TestArtifactAPIEscapesApp(t *testing.T) {
 			},
 			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageByName(context.Background(), "stacklok", "container", "helm/mediator")
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "GetPackageVersions escapes the package name",
-			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
-				w.WriteHeader(http.StatusOK)
-			},
-			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersions(context.Background(), "stacklok", "container", "helm/mediator")
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "GetPackageVersionByTag escapes the package name",
-			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
-				w.WriteHeader(http.StatusOK)
-			},
-			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionByTag(context.Background(), "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
 		},

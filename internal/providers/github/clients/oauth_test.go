@@ -16,6 +16,7 @@ package clients
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -34,6 +35,44 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+func TestParseV1OAuthConfig(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name     string
+		config   json.RawMessage
+		error    string
+		ghEvalFn func(*minderv1.GitHubProviderConfig)
+	}{
+		{
+			name:   "valid oauth config",
+			config: json.RawMessage(`{ "github": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+		},
+		{
+			name:   "missing required github key",
+			config: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] } }`),
+			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
+				assert.Nil(t, ghConfig)
+			},
+			error: "Field validation for 'GitHub' failed on the 'required' tag",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		gitHubConfig, err := ParseV1OAuthConfig(scenario.config)
+		if scenario.error != "" {
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), scenario.error)
+		} else {
+			assert.NoError(t, err)
+			scenario.ghEvalFn(gitHubConfig)
+		}
+	}
+}
 
 func TestNewRestClient(t *testing.T) {
 	t.Parallel()
@@ -69,28 +108,6 @@ func TestArtifactAPIEscapesOAuth(t *testing.T) {
 			},
 			cliFn: func(cli *github2.GitHub) {
 				_, err := cli.GetPackageByName(context.Background(), "stacklok", "container", "helm/mediator")
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "GetPackageVersions escapes the package name",
-			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
-				w.WriteHeader(http.StatusOK)
-			},
-			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersions(context.Background(), "stacklok", "container", "helm/mediator")
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "GetPackageVersionByTag escapes the package name",
-			testHandler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "/orgs/stacklok/packages/container/helm%2Fmediator/versions?package_type=container&page=1&per_page=100&state=active", r.URL.RequestURI())
-				w.WriteHeader(http.StatusOK)
-			},
-			cliFn: func(cli *github2.GitHub) {
-				_, err := cli.GetPackageVersionByTag(context.Background(), "stacklok", "container", "helm/mediator", "v1.0.0")
 				assert.NoError(t, err)
 			},
 		},

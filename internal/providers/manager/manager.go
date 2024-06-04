@@ -17,6 +17,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -32,6 +33,10 @@ import (
 
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
+	// CreateFromConfig creates a new Provider instance in the database with a given configuration or the provider default
+	CreateFromConfig(
+		ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+	) (*db.Provider, error)
 	// InstantiateFromID creates the provider from the Provider's UUID
 	InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error)
 	// InstantiateFromNameProject creates the provider using the provider's name and
@@ -63,6 +68,10 @@ type ProviderManager interface {
 // specific Provider class. The idea is that ProviderManager determines the
 // class of the Provider, and delegates to the appropraite ProviderClassManager
 type ProviderClassManager interface {
+	providerClassAuthManager
+
+	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
+	ValidateConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error
 	// Build creates an instance of Provider based on the config in the DB
 	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
 	// Delete deletes an instance of this provider
@@ -72,16 +81,21 @@ type ProviderClassManager interface {
 	GetSupportedClasses() []db.ProviderClass
 }
 
-type providerManager struct {
+type classTracker struct {
 	classManagers map[db.ProviderClass]ProviderClassManager
-	store         providers.ProviderStore
 }
 
-// NewProviderManager creates a new instance of ProviderManager
-func NewProviderManager(
-	store providers.ProviderStore,
+func (p *classTracker) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
+	manager, ok := p.classManagers[class]
+	if !ok {
+		return nil, fmt.Errorf("unexpected provider class: %s", class)
+	}
+	return manager, nil
+}
+
+func newClassTracker(
 	classManagers ...ProviderClassManager,
-) (ProviderManager, error) {
+) (*classTracker, error) {
 	classes := make(map[db.ProviderClass]ProviderClassManager)
 
 	for _, factory := range classManagers {
@@ -101,10 +115,51 @@ func NewProviderManager(
 		}
 	}
 
-	return &providerManager{
+	return &classTracker{
 		classManagers: classes,
-		store:         store,
 	}, nil
+}
+
+type providerManager struct {
+	classTracker
+	store providers.ProviderStore
+}
+
+// NewProviderManager creates a new instance of ProviderManager
+func NewProviderManager(
+	store providers.ProviderStore,
+	classManagers ...ProviderClassManager,
+) (ProviderManager, error) {
+	classes, err := newClassTracker(classManagers...)
+	if err != nil {
+		return nil, fmt.Errorf("error creating class tracker: %w", err)
+	}
+
+	return &providerManager{
+		classTracker: *classes,
+		store:        store,
+	}, nil
+}
+
+func (p *providerManager) CreateFromConfig(
+	ctx context.Context, providerClass db.ProviderClass, projectID uuid.UUID, name string, config json.RawMessage,
+) (*db.Provider, error) {
+	manager, err := p.getClassManager(providerClass)
+	if err != nil {
+		return nil, fmt.Errorf("error getting class manager: %w", err)
+	}
+
+	provConfig, err := manager.GetConfig(ctx, providerClass, config)
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider config: %w", err)
+	}
+
+	err = manager.ValidateConfig(ctx, providerClass, provConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error validating provider config: %w", err)
+	}
+
+	return p.store.Create(ctx, providerClass, name, projectID, provConfig)
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {
@@ -170,13 +225,13 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return err
 	}
 
 	// carry out provider-specific cleanup
-	if err := manager.Delete(ctx, config); err != nil {
+	if err = manager.Delete(ctx, config); err != nil {
 		return fmt.Errorf("error while cleaning up provider: %w", err)
 	}
 
@@ -188,18 +243,9 @@ func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provide
 }
 
 func (p *providerManager) buildFromDBRecord(ctx context.Context, config *db.Provider) (v1.Provider, error) {
-	manager, err := p.getClassManager(config)
+	manager, err := p.getClassManager(config.Class)
 	if err != nil {
 		return nil, err
 	}
 	return manager.Build(ctx, config)
-}
-
-func (p *providerManager) getClassManager(config *db.Provider) (ProviderClassManager, error) {
-	class := config.Class
-	manager, ok := p.classManagers[class]
-	if !ok {
-		return nil, fmt.Errorf("unexpected provider class: %s", class)
-	}
-	return manager, nil
 }

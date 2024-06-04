@@ -20,10 +20,8 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/plumbing/filemode"
-	fzconfig "github.com/stacklok/frizbee/pkg/config"
-	"github.com/stacklok/frizbee/pkg/ghactions"
-	"github.com/stacklok/frizbee/pkg/utils"
-	"gopkg.in/yaml.v3"
+	"github.com/stacklok/frizbee/pkg/replacer"
+	"github.com/stacklok/frizbee/pkg/utils/config"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -34,7 +32,7 @@ var _ fsModifier = (*frizbeeTagResolveModification)(nil)
 type frizbeeTagResolveModification struct {
 	fsChangeSet
 
-	fzcfg *fzconfig.GHActions
+	fzcfg *config.GHActions
 
 	ghCli v1.GitHub
 }
@@ -56,8 +54,8 @@ func newFrizbeeTagResolveModification(
 		fsChangeSet: fsChangeSet{
 			fs: params.bfs,
 		},
-		fzcfg: &fzconfig.GHActions{
-			Filter: fzconfig.Filter{
+		fzcfg: &config.GHActions{
+			Filter: config.Filter{
 				Exclude: exclude,
 			},
 		},
@@ -66,35 +64,24 @@ func newFrizbeeTagResolveModification(
 }
 
 func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context, _ interfaces.ActionsParams) error {
-	entries := []*fsEntry{}
-	cache := utils.NewRefCacher()
+	// Create a new Frizbee instance
+	r := replacer.NewGitHubActionsReplacer(&config.Config{GHActions: *ftr.fzcfg}).WithGitHubClient(ftr.ghCli)
 
-	err := ghactions.TraverseGitHubActionWorkflows(ftr.fs, ".github/workflows", func(path string, wflow *yaml.Node) error {
-		m, err := ghactions.ModifyReferencesInYAMLWithCache(ctx, ftr.ghCli, wflow, ftr.fzcfg, cache)
-		if err != nil {
-			return fmt.Errorf("failed to process YAML file %s: %w", path, err)
-		}
-
-		buf, err := utils.YAMLToBuffer(wflow)
-		if err != nil {
-			return fmt.Errorf("failed to convert YAML to buffer: %w", err)
-		}
-
-		if m {
-			entries = append(entries, &fsEntry{
-				Path:    path,
-				Content: buf.String(),
-				Mode:    filemode.Regular.String(),
-			})
-		}
-
-		return nil
-	})
+	// Parse the .github/workflows directory and replace tags with digests
+	ret, err := r.ParsePathInFS(ctx, ftr.fs, ".github/workflows")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse path in filesystem: %w", err)
 	}
 
-	ftr.entries = entries
+	// Add the modified paths and contents to the fsChangeSet, if any
+	for modifiedPath, modifiedContent := range ret.Modified {
+		ftr.entries = append(ftr.entries, &fsEntry{
+			Path:    modifiedPath,
+			Content: modifiedContent,
+			Mode:    filemode.Regular.String(),
+		})
+	}
+	// All good
 	return nil
 }
 
@@ -136,7 +123,7 @@ func parseExcludeFromDef(def map[string]any) []string {
 
 func parseExcludesFromRepoConfig(fs billy.Filesystem) []string {
 	for _, fname := range []string{".frizbee.yml", ".frizbee.yaml"} {
-		cfg, err := fzconfig.ParseConfigFileFromFS(fs, fname)
+		cfg, err := config.ParseConfigFileFromFS(fs, fname)
 		if err != nil {
 			continue
 		}

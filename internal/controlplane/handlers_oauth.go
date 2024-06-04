@@ -17,8 +17,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -31,6 +29,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/sqlc-dev/pqtype"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/oauth2"
@@ -43,7 +42,9 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -57,19 +58,24 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
-	var provider string
+	var providerName string
 	if req.GetContext().GetProvider() == "" {
-		provider = defaultProvider
+		providerName = defaultProvider
 	} else {
-		provider = req.GetContext().GetProvider()
+		providerName = req.GetContext().GetProvider()
+	}
+
+	providerClass := req.GetProviderClass()
+	if providerClass == "" {
+		providerClass = providerName
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Provider = provider
+	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
 	// get provider info
-	providerDef, err := providers.GetProviderClassDefinition(provider)
+	providerDef, err := providers.GetProviderClassDefinition(providerClass)
 	if err != nil {
 		return nil, providerError(err)
 	}
@@ -84,7 +90,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// trace call to AuthCodeURL
 	span := trace.SpanFromContext(ctx)
 	span.SetName("server.GetAuthorizationURL")
-	span.SetAttributes(attribute.Key("provider").String(provider))
+	span.SetAttributes(attribute.Key("provider").String(providerName))
 	defer span.End()
 
 	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
@@ -99,7 +105,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
-		Provider:  provider,
+		Provider:  providerName,
 		ProjectID: projectID})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
@@ -110,32 +116,48 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		String: req.GetOwner(),
 	}
 
-	var redirectUrl sql.NullString
+	var encryptedBytes pqtype.NullRawMessage
 	// Empty redirect URL means null string (default condition)
 	if req.GetRedirectUrl() != "" {
-		encryptedRedirectUrl, err := s.cryptoEngine.EncryptString(*req.RedirectUrl)
+		encryptedRedirectURL, err := s.cryptoEngine.EncryptString(req.GetRedirectUrl())
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error encrypting redirect URL: %s", err)
 		}
-		redirectUrl = sql.NullString{Valid: true, String: encryptedRedirectUrl}
+		serialized, err := encryptedRedirectURL.Serialize()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "unable to serialize secret: %v", err)
+		}
+		encryptedBytes = pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
+		}
+	}
+
+	var confBytes []byte
+	if conf := req.GetConfig(); conf != nil {
+		confBytes, err = conf.MarshalJSON()
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "error marshalling config: %s", err)
+		}
 	}
 
 	// Insert the new session state into the database along with the user's project ID
 	// retrieved from the JWT token
 	_, err = s.store.CreateSessionState(ctx, db.CreateSessionStateParams{
-		Provider:     provider,
-		ProjectID:    projectID,
-		RemoteUser:   sql.NullString{Valid: user != "", String: user},
-		SessionState: state,
-		OwnerFilter:  owner,
-		RedirectUrl:  redirectUrl,
+		Provider:          providerName,
+		ProjectID:         projectID,
+		RemoteUser:        sql.NullString{Valid: user != "", String: user},
+		SessionState:      state,
+		OwnerFilter:       owner,
+		ProviderConfig:    confBytes,
+		EncryptedRedirect: encryptedBytes,
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "error inserting session state: %s", err)
 	}
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(provider, req.Cli)
+	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(db.ProviderClass(providerClass), req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -212,51 +234,62 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 
 	provider := pathParams["provider"]
 
-	// Check the nonce to make sure it's valid
-	valid, err := mcrypto.IsNonceValid(state, s.cfg.Auth.NoncePeriod)
+	stateData, err := s.getValidSessionState(ctx, state)
 	if err != nil {
-		return fmt.Errorf("error checking nonce: %w", err)
-	}
-	if !valid {
-		return errors.New("invalid nonce")
-	}
-
-	// get projectID from session along with state nonce from the database
-	stateData, err := s.store.GetProjectIDBySessionState(ctx, state)
-	if err != nil {
-		return fmt.Errorf("error getting project ID by session state: %w", err)
+		return fmt.Errorf("error validating session state: %w", err)
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).Project = stateData.ProjectID
 	logger.BusinessRecord(ctx).Provider = provider
 
-	token, err := s.exchangeCodeForToken(ctx, provider, code)
+	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
-	p, err := s.ghProviders.CreateGitHubOAuthProvider(ctx, provider, db.ProviderClassGithub, *token, stateData, state)
+	tokenCred := credentials.NewOAuth2TokenCredential(token.AccessToken)
+
+	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
+	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
+	err = s.providerAuthManager.ValidateCredentials(
+		ctx, db.ProviderClass(provider), tokenCred, manager.WithRemoteUser(stateData.RemoteUser.String))
+	if errors.Is(err, service.ErrInvalidTokenIdentity) {
+		return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
+			"The provided login token was associated with a different user.")
+	}
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidTokenIdentity) {
-			return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
-				"The provided login token was associated with a different GitHub user.")
-		}
+		return fmt.Errorf("error validating provider credentials: %w", err)
+	}
+
+	ftoken := &oauth2.Token{
+		AccessToken:  token.AccessToken,
+		TokenType:    token.TokenType,
+		RefreshToken: "",
+	}
+
+	// encode token
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(ftoken)
+	if err != nil {
+		return fmt.Errorf("error encoding token: %w", err)
+	}
+
+	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
+	if db.ErrIsUniqueViolation(err) {
+		// todo: update config?
+		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
+	} else if err != nil {
 		return fmt.Errorf("error creating provider: %w", err)
 	}
 
 	logger.BusinessRecord(ctx).ProviderID = p.ID
 
-	if stateData.RedirectUrl.Valid {
-		redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
+	if stateData.RedirectUrl.Valid || stateData.EncryptedRedirect.Valid {
+		redirectURL, err := s.decryptRedirect(&stateData)
 		if err != nil {
-			return fmt.Errorf("error decrypting redirect URL: %w", err)
+			return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 		}
-		parsedURL, err := url.Parse(redirectUrl)
-		if err != nil {
-			return fmt.Errorf("error parsing redirect URL: %w", err)
-		}
-		http.Redirect(w, r, parsedURL.String(), http.StatusTemporaryRedirect)
+		http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 		return nil
 	}
 
@@ -292,9 +325,9 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		return err
 	}
 
-	token, err := s.exchangeCodeForToken(ctx, provider, code)
+	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
 	if err != nil {
-		return err
+		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
 
 	installationID, err := strconv.ParseInt(installationIDParam, 10, 64)
@@ -325,17 +358,12 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			return fmt.Errorf("error creating GitHub App provider: %w", err)
 		}
 
-		// If we have a redirect URL, redirect the user, otherwise show a success page
-		if stateData.RedirectUrl.Valid {
-			redirectUrl, err := s.cryptoEngine.DecryptString(stateData.RedirectUrl.String)
+		if stateData.RedirectUrl.Valid || stateData.EncryptedRedirect.Valid {
+			redirectURL, err := s.decryptRedirect(&stateData)
 			if err != nil {
-				return fmt.Errorf("error decrypting redirect URL: %w", err)
+				return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 			}
-			parsedURL, err := url.Parse(redirectUrl)
-			if err != nil {
-				return fmt.Errorf("error parsing redirect URL: %w", err)
-			}
-			http.Redirect(w, r, parsedURL.String(), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 			return nil
 		}
 	} else {
@@ -390,9 +418,9 @@ func (s *Server) getValidSessionState(ctx context.Context, state string) (db.Get
 	return stateData, nil
 }
 
-func (s *Server) exchangeCodeForToken(ctx context.Context, providerName string, code string) (*oauth2.Token, error) {
+func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass db.ProviderClass, code string) (*oauth2.Token, error) {
 	// generate a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthFactory(providerName, true)
+	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(providerClass, true)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OAuth config: %w", err)
 	}
@@ -448,9 +476,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// validate token
-	err = auth.ValidateProviderToken(ctx, provider.Name, in.AccessToken)
+	err = s.providerAuthManager.ValidateCredentials(ctx, provider.Class, in.AccessToken)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided: %v", err)
 	}
 
 	ftoken := &oauth2.Token{
@@ -458,18 +486,16 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 		RefreshToken: "",
 	}
 
-	// Convert token to JSON
-	jsonData, err := json.Marshal(ftoken)
+	// encode token
+	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(ftoken)
 	if err != nil {
 		return nil, err
 	}
 
-	// encode token
-	encryptedToken, err := s.cryptoEngine.EncryptOAuthToken(jsonData)
+	serialized, err := encryptedToken.Serialize()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error serializing secret: %s", err)
 	}
-	encodedToken := base64.StdEncoding.EncodeToString(encryptedToken)
 
 	// additionally, add an owner
 	var owner sql.NullString
@@ -480,10 +506,13 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	_, err = s.store.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:      projectID,
-		Provider:       provider.Name,
-		EncryptedToken: encodedToken,
-		OwnerFilter:    owner,
+		ProjectID:   projectID,
+		Provider:    provider.Name,
+		OwnerFilter: owner,
+		EncryptedAccessToken: pqtype.NullRawMessage{
+			RawMessage: serialized,
+			Valid:      true,
+		},
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error storing access token: %v", err)
@@ -640,4 +669,29 @@ func (e *httpResponseError) Error() string {
 
 func (e *httpResponseError) WriteError(w http.ResponseWriter) {
 	http.Error(w, e.pageContents, e.statusCode)
+}
+
+func (s *Server) decryptRedirect(stateData *db.GetProjectIDBySessionStateRow) (*url.URL, error) {
+	var err error
+	// TODO: get rid of this once we migrate all secrets to use the new structure
+	var encryptedData mcrypto.EncryptedData
+	if stateData.EncryptedRedirect.Valid {
+		encryptedData, err = mcrypto.DeserializeEncryptedData(stateData.EncryptedRedirect.RawMessage)
+		if err != nil {
+			return nil, err
+		}
+	} else if stateData.RedirectUrl.Valid {
+		encryptedData = mcrypto.NewBackwardsCompatibleEncryptedData(stateData.RedirectUrl.String)
+	} else {
+		return nil, fmt.Errorf("no secret found in session data for provider %s", stateData.Provider)
+	}
+	redirectUrl, err := s.cryptoEngine.DecryptString(encryptedData)
+	if err != nil {
+		return nil, fmt.Errorf("error decrypting redirect URL: %w", err)
+	}
+	parsedURL, err := url.Parse(redirectUrl)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing redirect URL: %w", err)
+	}
+	return parsedURL, nil
 }

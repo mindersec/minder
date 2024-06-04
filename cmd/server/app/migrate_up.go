@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
@@ -56,28 +55,14 @@ var upCmd = &cobra.Command{
 		}
 		defer dbConn.Close()
 
-		yes, err := cmd.Flags().GetBool("yes")
-		if err != nil {
-			cmd.Printf("Error while getting yes flag: %v", err)
-		}
+		yes := confirm(cmd, "Running this command will change the database structure")
 		if !yes {
-			cmd.Print("WARNING: Running this command will change the database structure. Are you want to continue? (y/n): ")
-			var response string
-			_, err := fmt.Scanln(&response)
-			if err != nil {
-				return fmt.Errorf("error while reading user input: %w", err)
-			}
-
-			if response == "n" {
-				cmd.Printf("Exiting...")
-				return nil
-			}
+			return nil
 		}
 
 		m, err := database.NewFromConnectionString(connString)
 		if err != nil {
-			cmd.Printf("Error while creating migration instance: %v\n", err)
-			os.Exit(1)
+			cliErrorf(cmd, "Error while creating migration instance: %v\n", err)
 		}
 
 		var usteps uint
@@ -94,8 +79,7 @@ var upCmd = &cobra.Command{
 
 		if err != nil {
 			if !errors.Is(err, migrate.ErrNoChange) {
-				cmd.Printf("Error while migrating database: %v\n", err)
-				os.Exit(1)
+				cliErrorf(cmd, "Error while migrating database: %v\n", err)
 			} else {
 				cmd.Println("Database already up-to-date")
 			}

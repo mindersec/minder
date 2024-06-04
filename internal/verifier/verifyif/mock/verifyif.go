@@ -41,31 +41,31 @@ func (m *MockArtifactVerifier) EXPECT() *MockArtifactVerifierMockRecorder {
 }
 
 // Verify mocks base method.
-func (m *MockArtifactVerifier) Verify(ctx context.Context, artifactType verifyif.ArtifactType, registry verifyif.ArtifactRegistry, owner, name, version string) ([]verifyif.Result, error) {
+func (m *MockArtifactVerifier) Verify(ctx context.Context, artifactType verifyif.ArtifactType, owner, name, checksumref string) ([]verifyif.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Verify", ctx, artifactType, registry, owner, name, version)
+	ret := m.ctrl.Call(m, "Verify", ctx, artifactType, owner, name, checksumref)
 	ret0, _ := ret[0].([]verifyif.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Verify indicates an expected call of Verify.
-func (mr *MockArtifactVerifierMockRecorder) Verify(ctx, artifactType, registry, owner, name, version any) *gomock.Call {
+func (mr *MockArtifactVerifierMockRecorder) Verify(ctx, artifactType, owner, name, checksumref any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Verify", reflect.TypeOf((*MockArtifactVerifier)(nil).Verify), ctx, artifactType, registry, owner, name, version)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Verify", reflect.TypeOf((*MockArtifactVerifier)(nil).Verify), ctx, artifactType, owner, name, checksumref)
 }
 
 // VerifyContainer mocks base method.
-func (m *MockArtifactVerifier) VerifyContainer(ctx context.Context, registry, owner, artifact, version string) ([]verifyif.Result, error) {
+func (m *MockArtifactVerifier) VerifyContainer(ctx context.Context, owner, artifact, checksumref string) ([]verifyif.Result, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VerifyContainer", ctx, registry, owner, artifact, version)
+	ret := m.ctrl.Call(m, "VerifyContainer", ctx, owner, artifact, checksumref)
 	ret0, _ := ret[0].([]verifyif.Result)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // VerifyContainer indicates an expected call of VerifyContainer.
-func (mr *MockArtifactVerifierMockRecorder) VerifyContainer(ctx, registry, owner, artifact, version any) *gomock.Call {
+func (mr *MockArtifactVerifierMockRecorder) VerifyContainer(ctx, owner, artifact, checksumref any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyContainer", reflect.TypeOf((*MockArtifactVerifier)(nil).VerifyContainer), ctx, registry, owner, artifact, version)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyContainer", reflect.TypeOf((*MockArtifactVerifier)(nil).VerifyContainer), ctx, owner, artifact, checksumref)
 }
