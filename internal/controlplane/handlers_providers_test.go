@@ -356,7 +356,7 @@ func TestCreateProviderFailures(t *testing.T) {
 		})
 
 		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithub, gomock.Any()).
-			Return(json.RawMessage(`{}`), nil)
+			Return(json.RawMessage(`{ "github": {} }`), nil)
 
 		fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
 			Return(db.Provider{}, &pq.Error{Code: "23505"}) // unique_violation
@@ -421,6 +421,9 @@ func TestCreateProviderFailures(t *testing.T) {
 
 		fakeServer := testServer(t, ctrl)
 		providerName := "bad-github-app"
+
+		fakeServer.mockGhService.EXPECT().GetConfig(gomock.Any(), db.ProviderClassGithubApp, gomock.Any()).
+			Return(json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true }}}, "github-app": {}}`), nil)
 
 		_, err := fakeServer.server.CreateProvider(context.Background(), &minder.CreateProviderRequest{
 			Context: &minder.Context{
