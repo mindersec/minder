@@ -156,7 +156,7 @@ func (p *providerManager) CreateFromConfig(
 
 	err = manager.ValidateConfig(ctx, providerClass, provConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error validating provider config: %w", err)
+		return nil, providers.NewErrProviderInvalidConfig(err.Error())
 	}
 
 	return p.store.Create(ctx, providerClass, name, projectID, provConfig)

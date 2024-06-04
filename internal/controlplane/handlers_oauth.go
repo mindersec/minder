@@ -274,10 +274,15 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
+	var errConfig providers.ErrProviderInvalidConfig
+
 	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
 	if db.ErrIsUniqueViolation(err) {
 		// todo: update config?
 		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
+	} else if errors.As(err, &errConfig) {
+		return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
+			"The provider configuration is invalid: " + errConfig.Details)
 	} else if err != nil {
 		return fmt.Errorf("error creating provider: %w", err)
 	}

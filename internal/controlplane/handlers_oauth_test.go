@@ -456,6 +456,12 @@ func TestProviderCallback(t *testing.T) {
 		store.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).Return(db.Provider{}, nil)
 	}
 
+	withProviderNotFound := func(store *mockdb.MockStore) {
+		store.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+		store.EXPECT().FindProviders(gomock.Any(), gomock.Any()).
+			Return([]db.Provider{}, nil)
+	}
+
 	testCases := []struct {
 		name                       string
 		redirectUrl                string
@@ -464,6 +470,7 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup             func(store *mockdb.MockStore)
 		projectIDBySessionNumCalls int
 		err                        string
+		config                     []byte
 	}{{
 		name:                       "Success",
 		redirectUrl:                "http://localhost:8080",
@@ -498,6 +505,16 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderCreate(store)
 		},
+	}, {
+		name:                       "Config does not validate",
+		redirectUrl:                "http://localhost:8080",
+		remoteUser:                 sql.NullString{Valid: true, String: "31337"},
+		projectIDBySessionNumCalls: 2,
+		storeMockSetup: func(store *mockdb.MockStore) {
+			withProviderNotFound(store)
+		},
+		config: []byte(`{"missing_github_key": true}`),
+		code:   http.StatusBadRequest,
 	}}
 
 	for _, tt := range testCases {
@@ -636,7 +653,8 @@ func TestProviderCallback(t *testing.T) {
 						RawMessage: serialized,
 						Valid:      true,
 					},
-					RemoteUser: tc.remoteUser,
+					RemoteUser:     tc.remoteUser,
+					ProviderConfig: tc.config,
 				}, nil).Times(tc.projectIDBySessionNumCalls)
 
 			if tc.code < http.StatusBadRequest {
