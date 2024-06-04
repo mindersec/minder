@@ -325,6 +325,7 @@ ContextV2 defines the context in which a rule is evaluated.
 | ----- | ---- | ----- | ----------- |
 | project_id | [string](#string) |  | project is the project ID |
 | provider | [string](#string) |  | name of the provider. Set to empty string when not applicable. |
+| provider_id | [string](#string) |  | The provider's ID in UUID format. Set to empty string when not applicable. |
 
 
 <a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
