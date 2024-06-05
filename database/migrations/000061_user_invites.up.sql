@@ -26,11 +26,14 @@ CREATE TABLE IF NOT EXISTS user_invites(
     role         user_role NOT NULL DEFAULT 'viewer',
     project      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     invitee      INTEGER NULL REFERENCES users(id) ON DELETE CASCADE,
-    invited_by   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sponsor      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code         TEXT NOT NULL,
     created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMP NOT NULL DEFAULT NOW(),
     -- ensure there's one invite for this email per project
-    UNIQUE (email, project)
+    UNIQUE (email, project),
+    -- ensure code/nonce is unique
+    UNIQUE (code)
 );
 
 -- create an index on the email column
@@ -43,6 +46,6 @@ CREATE INDEX idx_user_invites_project ON user_invites(project);
 CREATE INDEX idx_user_invites_invitee ON user_invites(invitee);
 
 -- create an index on the invited_by column
-CREATE INDEX idx_user_invites_invited_by ON user_invites(invited_by);
+CREATE INDEX idx_user_invites_sponsor ON user_invites(sponsor);
 
 COMMIT;

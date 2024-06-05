@@ -791,7 +791,8 @@ type UserInvite struct {
 	Role      UserRole      `json:"role"`
 	Project   uuid.UUID     `json:"project"`
 	Invitee   sql.NullInt32 `json:"invitee"`
-	InvitedBy int32         `json:"invited_by"`
+	Sponsor   int32         `json:"sponsor"`
+	Code      string        `json:"code"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }

@@ -18,7 +18,7 @@ BEGIN;
 DROP INDEX IF EXISTS idx_user_invites_email;
 DROP INDEX IF EXISTS idx_user_invites_project;
 DROP INDEX IF EXISTS idx_user_invites_invitee;
-DROP INDEX IF EXISTS idx_user_invites_invited_by;
+DROP INDEX IF EXISTS idx_user_invites_sponsor;
 
 -- drop the table
 DROP TABLE IF EXISTS user_invites;
