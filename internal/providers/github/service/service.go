@@ -29,10 +29,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/sqlc-dev/pqtype"
 	"golang.org/x/oauth2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -48,9 +45,6 @@ import (
 
 // GitHubProviderService encapsulates methods for creating and updating providers
 type GitHubProviderService interface {
-	// CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential
-	CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass,
-		token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, state string) (*db.Provider, error)
 	// CreateGitHubAppProvider creates a GitHub App provider with an installation ID in a known project
 	CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow,
 		installationID int64, state string) (*db.Provider, error)
@@ -114,108 +108,6 @@ func NewGithubProviderService(
 		ghClientService: ghprov.ClientServiceImplementation{},
 		ghClientFactory: ghClientFactory,
 	}
-}
-
-// CreateGitHubOAuthProvider creates a GitHub OAuth provider with an access token credential
-func (p *ghProviderService) CreateGitHubOAuthProvider(
-	ctx context.Context,
-	providerName string,
-	providerClass db.ProviderClass,
-	token oauth2.Token,
-	stateData db.GetProjectIDBySessionStateRow,
-	state string,
-) (*db.Provider, error) {
-	tx, err := p.store.BeginTransaction()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-	}
-	defer p.store.Rollback(tx)
-
-	qtx := p.store.GetQuerierWithTransaction(tx)
-
-	// Check if the provider exists
-	provider, err := qtx.GetProviderByName(ctx, db.GetProviderByNameParams{
-		Name:     providerName,
-		Projects: []uuid.UUID{stateData.ProjectID},
-	})
-	if errors.Is(err, sql.ErrNoRows) {
-
-		// If the provider does not exist, create it
-		providerDef, err := providers.GetProviderClassDefinition(providerName)
-		if err != nil {
-			return nil, fmt.Errorf("error getting provider definition: %w", err)
-		}
-
-		createdProvider, err := qtx.CreateProvider(ctx, db.CreateProviderParams{
-			Name:       providerName,
-			ProjectID:  stateData.ProjectID,
-			Class:      providerClass,
-			Implements: providerDef.Traits,
-			Definition: json.RawMessage(`{"github": {}}`),
-			AuthFlows:  providerDef.AuthorizationFlows,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating provider: %w", err)
-		}
-		provider = createdProvider
-	} else if err != nil {
-		return nil, fmt.Errorf("error getting provider from DB: %w", err)
-	}
-
-	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
-	p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
-	if stateData.RemoteUser.Valid {
-		credential := credentials.NewGitHubTokenCredential(token.AccessToken)
-		// owner is empty, as per original logic
-		_, delegate, err := p.ghClientFactory.BuildOAuthClient("", credential, "")
-		if err != nil {
-			return nil, fmt.Errorf("unable to create github client: %w", err)
-		}
-		if err := verifyProviderTokenIdentity(ctx, stateData.RemoteUser.String, delegate); err != nil {
-			return nil, ErrInvalidTokenIdentity
-		}
-	} else {
-		zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
-	}
-
-	ftoken := &oauth2.Token{
-		AccessToken:  token.AccessToken,
-		TokenType:    token.TokenType,
-		RefreshToken: "",
-	}
-
-	// encode token
-	encryptedToken, err := p.cryptoEngine.EncryptOAuthToken(ftoken)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding token: %w", err)
-	}
-
-	serialized, err := encryptedToken.Serialize()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = qtx.UpsertAccessToken(ctx, db.UpsertAccessTokenParams{
-		ProjectID:   stateData.ProjectID,
-		Provider:    providerName,
-		OwnerFilter: stateData.OwnerFilter,
-		EnrollmentNonce: sql.NullString{
-			Valid:  true,
-			String: state,
-		},
-		EncryptedAccessToken: pqtype.NullRawMessage{
-			RawMessage: serialized,
-			Valid:      true,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error inserting access token: %w", err)
-	}
-	if err := p.store.Commit(tx); err != nil {
-
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-	}
-	return &provider, nil
 }
 
 // CreateGitHubAppProvider creates a GitHub App provider with an installation ID
