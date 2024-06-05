@@ -14,7 +14,7 @@
 
 BEGIN;
 
--- in case we need rollback, wipe out the rule_instances table and mark all rows
+-- in case we need to rollback, wipe out the rule_instances table and mark all rows
 -- in entity_profiles as unmigrated. A re-run of the migration will recreate all
 -- rows in the rule_instances of table since we are dual writing at this point.
 DELETE FROM rule_instances;
