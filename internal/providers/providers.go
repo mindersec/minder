@@ -35,6 +35,22 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// ErrProviderInvalidConfig is an error type which is returned when a provider configuration is invalid
+type ErrProviderInvalidConfig struct {
+	Details string
+}
+
+func (e ErrProviderInvalidConfig) Error() string {
+	return fmt.Sprintf("invalid provider configuration: %s", e.Details)
+}
+
+// NewErrProviderInvalidConfig returns a new instance of ErrProviderInvalidConfig with details
+// about the invalid configuration. This is meant for user-facing errors so that the only thing
+// displayed to the user is the details of the error.
+func NewErrProviderInvalidConfig(details string) ErrProviderInvalidConfig {
+	return ErrProviderInvalidConfig{Details: details}
+}
+
 // DBToPBType converts a database provider type to a protobuf provider type.
 func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 	switch t {
