@@ -46,6 +46,7 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
+	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
@@ -274,6 +275,63 @@ func TestProviderService_VerifyProviderTokenIdentity(t *testing.T) {
 
 	err = provSvc.VerifyProviderTokenIdentity(context.Background(), "123", accessToken)
 	require.ErrorIs(t, err, ErrInvalidTokenIdentity)
+}
+
+func TestProviderService_CreateGitHubOAuthProviderWithInvalidConfig(t *testing.T) {
+	t.Parallel()
+
+	const (
+		installationID = 123
+		accountLogin   = "test-user"
+		accountID      = 456
+		stateNonce     = "test-githubapp-nonce"
+	)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pvtKeyFile := testCreatePrivateKeyFile(t)
+	defer os.Remove(pvtKeyFile.Name())
+	cfg := &server.ProviderConfig{
+		GitHubApp: &server.GitHubAppConfig{
+			PrivateKey: pvtKeyFile.Name(),
+		},
+	}
+
+	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
+
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
+	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
+		db.CreateProjectParams{
+			Name:     "test",
+			Metadata: []byte(`{}`),
+		})
+	require.NoError(t, err)
+
+	mocks.svcMock.EXPECT().
+		GetInstallation(gomock.Any(), int64(installationID), gomock.Any()).
+		Return(&github.Installation{
+			Account: &github.User{
+				Login: github.String(accountLogin),
+				ID:    github.Int64(accountID),
+			},
+		}, nil, nil)
+
+	dbProv, err := provSvc.CreateGitHubAppProvider(
+		context.Background(), oauth2.Token{},
+		db.GetProjectIDBySessionStateRow{
+			ProjectID: dbproj.ID,
+			RemoteUser: sql.NullString{
+				Valid:  true,
+				String: strconv.Itoa(accountID),
+			},
+			ProviderConfig: []byte(`{ "auto_registration": { "entities": { "blah": {"enabled": true }}}, "github-app": {}}`),
+		},
+		installationID,
+		stateNonce)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &providers.ErrProviderInvalidConfig{})
+	require.Nil(t, dbProv)
 }
 
 func TestProviderService_CreateGitHubAppProvider(t *testing.T) {

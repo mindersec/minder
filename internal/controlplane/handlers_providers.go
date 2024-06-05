@@ -62,11 +62,15 @@ func (s *Server) CreateProvider(
 		zerolog.Ctx(ctx).Debug().Msg("no provider provConfig, will use default")
 	}
 
+	var configErr providers.ErrProviderInvalidConfig
 	dbProv, err := s.providerManager.CreateFromConfig(
 		ctx, db.ProviderClass(provider.GetClass()), projectID, provider.Name, provConfig)
 	if db.ErrIsUniqueViolation(err) {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("provider already exists")
 		return nil, util.UserVisibleError(codes.AlreadyExists, "provider already exists")
+	} else if errors.As(err, &configErr) {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("provider config does not validate")
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider config: "+configErr.Details)
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
 	}

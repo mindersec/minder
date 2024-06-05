@@ -447,6 +447,12 @@ func TestCreateProviderFailures(t *testing.T) {
 		})
 		assert.Error(t, err)
 		require.ErrorContains(t, err, "error validating provider config: auto_registration: invalid entity type: blah")
+
+		// test special-casing of the invalid config error
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		assert.Equal(t, codes.InvalidArgument, st.Code())
+		require.ErrorContains(t, err, "invalid provider config")
 	})
 }
 
