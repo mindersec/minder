@@ -12,5 +12,12 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- Undoing the `up` query automatically is probably not a good idea.
--- Leaving this as a no-op.
+BEGIN;
+
+-- in case we need rollback, wipe out the rule_instances table and mark all rows
+-- in entity_profiles as unmigrated. A re-run of the migration will recreate all
+-- rows in the rule_instances of table since we are dual writing at this point.
+DELETE FROM rule_instances;
+UPDATE entity_profiles SET migrated = FALSE;
+
+COMMIT;
