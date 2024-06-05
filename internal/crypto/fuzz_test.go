@@ -18,54 +18,47 @@ package crypto
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stacklok/minder/internal/config/server"
 )
 
-var (
-	fuzzTestDir = "fuzz-test-dir"
-	fuzzConfig  = &server.Config{
+func FuzzEncryptDecrypt(f *testing.F) {
+	rawKey := []byte("2hcGLimy2i7LAknby2AFqYx87CaaCAtjxDiorRxYq8Q=")
+
+	file, err := os.CreateTemp("", "-fuzz-key-test")
+	if err != nil {
+		f.Fatal(err)
+	}
+	fileName := file.Name()
+
+	//defer os.Remove(fileName)
+	err = os.WriteFile("fileName", rawKey, 0600)
+	if err != nil {
+		f.Fatal(err)
+	}
+
+	fuzzConfig := &server.Config{
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
 				Local: server.LocalKeyStoreConfig{
-					KeyDir: fuzzTestDir,
+					KeyDir: os.TempDir(),
 				},
 			},
 			Default: server.DefaultCrypto{
-				KeyID: "test_encryption_key",
+				KeyID: filepath.Base(fileName),
 			},
 		},
 	}
-	fuzzEngine Engine
-	err        error
-)
 
-func init() {
-	// When ClusterfuzzLite runs this fuzzer, it does not have access
-	// to any files in Minders source tree, so we create the necessary
-	// key here to create the engine.
-	rawKey := []byte("2hcGLimy2i7LAknby2AFqYx87CaaCAtjxDiorRxYq8Q=")
-	_, err = os.Stat(fuzzTestDir)
-	if os.IsNotExist(err) {
-		err = os.Mkdir(fuzzTestDir, 0750)
-		if err != nil && !os.IsExist(err) {
-			panic(err)
-		}
-		err = os.WriteFile("fuzz-test-dir/test_encryption_key", rawKey, 0600)
-		if err != nil {
-			panic(err)
-		}
-	}
-	fuzzEngine, err = NewEngineFromConfig(fuzzConfig)
+	fuzzEngine, err := NewEngineFromConfig(fuzzConfig)
 	if err != nil {
 		panic(err)
 	}
-}
 
-func FuzzEncryptDecrypt(f *testing.F) {
 	f.Fuzz(func(_ *testing.T, data string) {
 		encrypted, err := fuzzEngine.EncryptString(data)
 		if err != nil {
@@ -79,4 +72,5 @@ func FuzzEncryptDecrypt(f *testing.F) {
 			panic(fmt.Sprintf("data '%s' and decrypted '%s' should be equal but are not", data, decrypted))
 		}
 	})
+
 }
