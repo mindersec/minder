@@ -82,7 +82,23 @@ clientScopes:
     attributes:
       "include.in.token.scope": "true"
       "display.on.consent.screen": "false"
-
+  - name: minder-audience
+    description: "Add minder to audience claim"
+    protocol: openid-connect
+    attributes:
+      "include.in.token.scope": "true"
+      "display.on.consent.screen": "false"
+    protocolMappers:
+      - name: minder_audience
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        consentRequired: false
+        config:
+          id.token.claim: "false"
+          access.token.claim: "true"
+          introspection.token.claim: "true"
+          included.custom.audience: "minder"
+          userinfo.token.claim: "false"
 
 clients:
   # From:
@@ -100,6 +116,7 @@ clients:
       - roles
       - web-origins
       - gh-data
+      - minder-audience
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
@@ -118,6 +135,7 @@ clients:
       - roles
       - web-origins
       - gh-data
+      - minder-audience
     optionalClientScopes:
       - microprofile-jwt
       - offline_access

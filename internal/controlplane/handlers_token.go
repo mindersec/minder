@@ -67,7 +67,13 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 
 	parsedToken, err := server.jwt.ParseAndValidate(token)
 	if err != nil {
-		zerolog.Ctx(ctx).Info().Msgf("Error validating token %s", token)
+		// We don't want to _actually_ log a bearer token.  JWTs will always be > 10 chars,
+		// but by logging the start, we can see if it's actually a JWT or something else.
+		shortToken := token
+		if len(token) > 10 {
+			shortToken = token[:10]
+		}
+		zerolog.Ctx(ctx).Info().Msgf("Error validating token %s", shortToken)
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 

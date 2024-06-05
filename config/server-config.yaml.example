@@ -49,6 +49,7 @@ identity:
     issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker compose
     client_id: minder-server
     client_secret: secret
+    audience: minder
 
 # Crypto (these should be ultimately stored in a secure vault)
 # The token key can be generated with:
