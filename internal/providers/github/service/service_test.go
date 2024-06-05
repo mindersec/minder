@@ -22,7 +22,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
@@ -42,7 +41,6 @@ import (
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/crypto"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
@@ -127,119 +125,6 @@ func testCreatePrivateKeyFile(t *testing.T) *os.File {
 	require.NoError(t, err)
 
 	return tmpFile
-}
-
-func TestProviderService_CreateGitHubOAuthProvider(t *testing.T) {
-	t.Parallel()
-
-	const (
-		stateNonce       = "test-oauth-nonce"
-		stateNonceUpdate = "test-oauth-nonce-update"
-		accountID        = 12345
-	)
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := &server.ProviderConfig{}
-
-	delegate := mockgh.NewMockDelegate(ctrl)
-	delegate.EXPECT().
-		GetUserId(gomock.Any()).
-		Return(int64(accountID), nil)
-	clientFactory := mockclients.NewMockGitHubClientFactory(ctrl)
-	clientFactory.EXPECT().
-		BuildOAuthClient(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, delegate, nil)
-
-	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, clientFactory)
-	dbproj, err := mocks.fakeStore.CreateProject(context.Background(),
-		db.CreateProjectParams{
-			Name:     "test",
-			Metadata: []byte(`{}`),
-		})
-	require.NoError(t, err)
-
-	encryptedValue := base64.StdEncoding.EncodeToString([]byte("my-encrypted-token"))
-	encryptedToken := crypto.NewBackwardsCompatibleEncryptedData(encryptedValue)
-	mocks.cryptoMocks.EXPECT().
-		EncryptOAuthToken(gomock.Any()).
-		Return(encryptedToken, nil)
-
-	dbProv, err := provSvc.CreateGitHubOAuthProvider(
-		context.Background(),
-		clients.Github,
-		db.ProviderClassGithub,
-		oauth2.Token{
-			AccessToken: "my-access",
-			TokenType:   "Bearer",
-		},
-		db.GetProjectIDBySessionStateRow{
-			ProjectID: dbproj.ID,
-			OwnerFilter: sql.NullString{
-				Valid:  true,
-				String: "testorg",
-			},
-			RemoteUser: sql.NullString{
-				Valid:  true,
-				String: strconv.Itoa(accountID),
-			},
-		},
-		stateNonce)
-	require.NoError(t, err)
-	require.NotNil(t, dbProv)
-	require.Equal(t, dbProv.ProjectID, dbproj.ID)
-	require.Equal(t, dbProv.AuthFlows, clients.OAuthAuthorizationFlows)
-	require.Equal(t, dbProv.Implements, clients.OAuthImplements)
-
-	dbToken, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
-	require.NoError(t, err)
-	require.Len(t, dbToken, 1)
-	require.True(t, dbToken[0].EncryptedAccessToken.Valid)
-	deserialized, err := crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
-	require.NoError(t, err)
-	require.Equal(t, deserialized, encryptedToken)
-	require.Equal(t, dbToken[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
-	require.Equal(t, dbToken[0].EnrollmentNonce, sql.NullString{String: stateNonce, Valid: true})
-
-	// test updating token
-	mocks.cryptoMocks.EXPECT().
-		EncryptOAuthToken(gomock.Any()).
-		Return(encryptedToken, nil)
-
-	dbProvUpdated, err := provSvc.CreateGitHubOAuthProvider(
-		context.Background(),
-		clients.Github,
-		db.ProviderClassGithub,
-		oauth2.Token{
-			AccessToken: "my-access2",
-			TokenType:   "Bearer",
-		},
-		db.GetProjectIDBySessionStateRow{
-			ProjectID: dbproj.ID,
-			OwnerFilter: sql.NullString{
-				Valid:  true,
-				String: "testorg",
-			},
-			RemoteUser: sql.NullString{
-				Valid: false,
-			},
-		},
-		stateNonceUpdate)
-	require.NoError(t, err)
-	require.NotNil(t, dbProv)
-	require.Equal(t, dbProvUpdated.ProjectID, dbProv.ProjectID)
-	require.Equal(t, dbProvUpdated.AuthFlows, dbProv.AuthFlows)
-	require.Equal(t, dbProvUpdated.Implements, dbProv.Implements)
-
-	dbTokenUpdate, err := mocks.fakeStore.GetAccessTokenByProvider(context.Background(), dbProv.Name)
-	require.NoError(t, err)
-	require.Len(t, dbTokenUpdate, 1)
-	require.True(t, dbToken[0].EncryptedAccessToken.Valid)
-	deserialized, err = crypto.DeserializeEncryptedData(dbToken[0].EncryptedAccessToken.RawMessage)
-	require.NoError(t, err)
-	require.Equal(t, deserialized, encryptedToken)
-	require.Equal(t, dbTokenUpdate[0].OwnerFilter, sql.NullString{String: "testorg", Valid: true})
-	require.Equal(t, dbTokenUpdate[0].EnrollmentNonce, sql.NullString{String: stateNonceUpdate, Valid: true})
 }
 
 func TestProviderService_VerifyProviderTokenIdentity(t *testing.T) {

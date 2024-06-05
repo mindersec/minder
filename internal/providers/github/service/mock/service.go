@@ -74,21 +74,6 @@ func (mr *MockGitHubProviderServiceMockRecorder) CreateGitHubAppWithoutInvitatio
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubAppWithoutInvitation", reflect.TypeOf((*MockGitHubProviderService)(nil).CreateGitHubAppWithoutInvitation), ctx, qtx, userID, installationID)
 }
 
-// CreateGitHubOAuthProvider mocks base method.
-func (m *MockGitHubProviderService) CreateGitHubOAuthProvider(ctx context.Context, providerName string, providerClass db.ProviderClass, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, state string) (*db.Provider, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateGitHubOAuthProvider", ctx, providerName, providerClass, token, stateData, state)
-	ret0, _ := ret[0].(*db.Provider)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateGitHubOAuthProvider indicates an expected call of CreateGitHubOAuthProvider.
-func (mr *MockGitHubProviderServiceMockRecorder) CreateGitHubOAuthProvider(ctx, providerName, providerClass, token, stateData, state any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGitHubOAuthProvider", reflect.TypeOf((*MockGitHubProviderService)(nil).CreateGitHubOAuthProvider), ctx, providerName, providerClass, token, stateData, state)
-}
-
 // DeleteGitHubAppInstallation mocks base method.
 func (m *MockGitHubProviderService) DeleteGitHubAppInstallation(ctx context.Context, installationID int64) error {
 	m.ctrl.T.Helper()
