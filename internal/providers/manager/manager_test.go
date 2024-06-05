@@ -61,7 +61,7 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			Name:              "CreateFromConfig returns an error when the config is invalid",
 			Provider:          providerWithClass(db.ProviderClassGithub, providerWithConfig(json.RawMessage(`{ github: { key: value} }`))),
 			Config:            json.RawMessage(`{ github: { key: value} }`),
-			ExpectedError:     "error validating provider config",
+			ExpectedError:     "invalid provider configuration",
 			ValidateConfigErr: true,
 		},
 	}

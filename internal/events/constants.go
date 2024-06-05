@@ -45,4 +45,6 @@ const (
 	TopicQueueReconcileProfileInit = "internal.profile.init.event"
 	// TopicQueueReconcileEntityDelete is the topic for reconciling when an entity is deleted
 	TopicQueueReconcileEntityDelete = "internal.entity.delete.event"
+	// TopicQueueReconcileEntityAdd is the topic for reconciling when an entity is added
+	TopicQueueReconcileEntityAdd = "internal.entity.add.event"
 )

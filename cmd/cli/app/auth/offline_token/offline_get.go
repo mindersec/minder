@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// Package offline_token provides the auth offline_token command for the minder CLI.\
+package offline_token
 
 import (
 	"fmt"
@@ -22,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/stacklok/minder/cmd/cli/app/auth"
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -55,7 +57,7 @@ that need to authenticate to the control plane.`,
 		cmd.SilenceUsage = true
 
 		// wait for the token to be received
-		token, err := login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
+		token, err := auth.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
 		if err != nil {
 			return err
 		}
@@ -72,7 +74,7 @@ that need to authenticate to the control plane.`,
 }
 
 func init() {
-	OfflineTokenCmd.AddCommand(offlineTokenGetCmd)
+	offlineTokenCmd.AddCommand(offlineTokenGetCmd)
 
 	offlineTokenGetCmd.Flags().StringP("file", "f", "offline.token", "The file to write the offline token to")
 

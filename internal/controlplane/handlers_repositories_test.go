@@ -37,6 +37,7 @@ import (
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	ghrepo "github.com/stacklok/minder/internal/repositories/github"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
+	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -67,38 +68,64 @@ func TestServer_RegisterRepository(t *testing.T) {
 			ExpectedError: "missing repository name",
 		},
 		{
-			Name:             "Repo creation fails when repo does not exist in Github",
-			RepoOwner:        repoOwner,
-			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withFailedCreate(errDefault)),
-			ExpectedError:    errDefault.Error(),
+			Name:      "Repo creation fails when repo does not exist in Github",
+			RepoOwner: repoOwner,
+			RepoName:  repoName,
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithFailedCreate(
+					errDefault,
+					projectID,
+					repoOwner,
+					repoName,
+				)),
+			ExpectedError: errDefault.Error(),
 		},
 		{
-			Name:             "Repo creation fails repo is private, and private repos are not allowed",
-			RepoOwner:        repoOwner,
-			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withFailedCreate(ghrepo.ErrPrivateRepoForbidden)),
-			ExpectedError:    "private repos cannot be registered in this project",
+			Name:      "Repo creation fails repo is private, and private repos are not allowed",
+			RepoOwner: repoOwner,
+			RepoName:  repoName,
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
+				ghrepo.ErrPrivateRepoForbidden,
+				projectID,
+				repoOwner,
+				repoName,
+			)),
+			ExpectedError: "private repos cannot be registered in this project",
 		},
 		{
-			Name:             "Repo creation fails repo is archived, and archived repos are not allowed",
-			RepoOwner:        repoOwner,
-			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withFailedCreate(ghrepo.ErrArchivedRepoForbidden)),
-			ExpectedError:    "archived repos cannot be registered in this project",
+			Name:      "Repo creation fails repo is archived, and archived repos are not allowed",
+			RepoOwner: repoOwner,
+			RepoName:  repoName,
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
+				ghrepo.ErrArchivedRepoForbidden,
+				projectID,
+				repoOwner,
+				repoName,
+			)),
+			ExpectedError: "archived repos cannot be registered in this project",
 		},
 		{
-			Name:             "Repo creation on unexpected error",
-			RepoOwner:        repoOwner,
-			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withFailedCreate(errDefault)),
-			ExpectedError:    errDefault.Error(),
+			Name:      "Repo creation on unexpected error",
+			RepoOwner: repoOwner,
+			RepoName:  repoName,
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
+				errDefault,
+				projectID,
+				repoOwner,
+				repoName,
+			)),
+			ExpectedError: errDefault.Error(),
 		},
 		{
-			Name:             "Repo creation is successful",
-			RepoOwner:        repoOwner,
-			RepoName:         repoName,
-			RepoServiceSetup: newRepoService(withSuccessfulCreate),
+			Name:      "Repo creation is successful",
+			RepoOwner: repoOwner,
+			RepoName:  repoName,
+			RepoServiceSetup: rf.NewRepoService(rf.WithSuccessfulCreate(
+				projectID,
+				repoOwner,
+				repoName,
+				creationResult,
+			)),
 		},
 	}
 
@@ -165,8 +192,8 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:        "List remote repositories succeeds when all providers succeed",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			RepoServiceSetup: newRepoService(
-				withSuccessfulListRepositories(
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(
 					simpleDbRepository(repoName, remoteRepoId),
 				),
 			),
@@ -178,8 +205,8 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		{
 			Name:        "List remote repositories fails when db fails",
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
-			RepoServiceSetup: newRepoService(
-				withFailedListRepositories(errors.New("oops")),
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithFailedListRepositories(errors.New("oops")),
 			),
 			ExpectedError: "cannot list registered repositories",
 		},
@@ -257,36 +284,36 @@ func TestServer_DeleteRepository(t *testing.T) {
 		{
 			Name:             "deletion fails when repo service returns error",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withFailedDeleteByName(errDefault)),
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByName(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
 		},
 		{
 			Name:             "delete by ID fails when repo service returns error",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withFailedDeleteByID(errDefault)),
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByID(errDefault)),
 			ExpectedError:    "unexpected error deleting repo",
 		},
 		{
 			Name:             "deletion fails when repo is not found",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withFailedDeleteByName(sql.ErrNoRows)),
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByName(sql.ErrNoRows)),
 			ExpectedError:    "repository not found",
 		},
 		{
 			Name:             "delete by ID fails when repo is not found",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withFailedDeleteByID(sql.ErrNoRows)),
+			RepoServiceSetup: rf.NewRepoService(rf.WithFailedDeleteByID(sql.ErrNoRows)),
 			ExpectedError:    "repository not found",
 		},
 		{
 			Name:             "delete by name succeeds",
 			RepoName:         repoOwnerAndName,
-			RepoServiceSetup: newRepoService(withSuccessfulDeleteByName),
+			RepoServiceSetup: rf.NewRepoService(rf.WithSuccessfulDeleteByName()),
 		},
 		{
 			Name:             "delete by ID succeeds",
 			RepoID:           repoID,
-			RepoServiceSetup: newRepoService(withSuccessfulDeleteByID),
+			RepoServiceSetup: rf.NewRepoService(rf.WithSuccessfulDeleteByID()),
 		},
 	}
 
@@ -416,16 +443,6 @@ func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *pb.Ups
 	}
 }
 
-func newRepoService(opts ...func(repoServiceMock)) repoMockBuilder {
-	return func(ctrl *gomock.Controller) repoServiceMock {
-		mock := mockghrepo.NewMockRepositoryService(ctrl)
-		for _, opt := range opts {
-			opt(mock)
-		}
-		return mock
-	}
-}
-
 func newGitHub(opts ...func(mock githubMock)) githubMockBuilder {
 	return func(ctrl *gomock.Controller) githubMock {
 		mock := mockgh.NewMockGitHub(ctrl)
@@ -433,68 +450,6 @@ func newGitHub(opts ...func(mock githubMock)) githubMockBuilder {
 			opt(mock)
 		}
 		return mock
-	}
-}
-
-func withSuccessfulCreate(mock repoServiceMock) {
-	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
-		Return(creationResult, nil)
-}
-
-func withFailedCreate(err error) func(repoServiceMock) {
-	return func(mock repoServiceMock) {
-		mock.EXPECT().
-			CreateRepository(gomock.Any(), gomock.Any(), projectID, repoOwner, repoName).
-			Return(nil, err)
-	}
-}
-
-func withSuccessfulDeleteByID(mock repoServiceMock) {
-	withFailedDeleteByID(nil)(mock)
-}
-
-func withFailedDeleteByID(err error) func(repoServiceMock) {
-	return func(mock repoServiceMock) {
-		mock.EXPECT().
-			DeleteByID(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(err)
-	}
-}
-
-func withSuccessfulDeleteByName(mock repoServiceMock) {
-	withFailedDeleteByName(nil)(mock)
-}
-
-func withFailedDeleteByName(err error) func(repoServiceMock) {
-	return func(mock repoServiceMock) {
-		mock.EXPECT().
-			DeleteByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(err)
-	}
-}
-
-func withSuccessfulListRepositories(repositories ...db.Repository) func(repoServiceMock) {
-	return func(mock repoServiceMock) {
-		mock.EXPECT().
-			ListRepositories(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-			).
-			Return(repositories, nil).AnyTimes()
-	}
-}
-
-func withFailedListRepositories(err error) func(repoServiceMock) {
-	return func(mock repoServiceMock) {
-		mock.EXPECT().
-			ListRepositories(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-			).
-			Return(nil, err).AnyTimes()
 	}
 }
 

@@ -149,9 +149,9 @@ func writeError(w http.ResponseWriter, loginerr loginError) (string, error) {
 	return "", nil
 }
 
-// login is a helper function to handle the login process
+// Login is a helper function to handle the login process
 // and return the access token
-func login(
+func Login(
 	ctx context.Context,
 	cmd *cobra.Command,
 	cfg *clientconfig.Config,

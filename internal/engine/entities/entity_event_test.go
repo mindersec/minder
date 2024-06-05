@@ -66,9 +66,11 @@ func Test_parseEntityEvent(t *testing.T) {
 					Name:   "test",
 					RepoId: 123,
 				},
-				ProviderID:    providerID,
-				Type:          pb.Entity_ENTITY_REPOSITORIES,
-				OwnershipData: map[string]string{RepositoryIDEventKey: repoID},
+				ProviderID: providerID,
+				Type:       pb.Entity_ENTITY_REPOSITORIES,
+				OwnershipData: map[string]string{
+					RepositoryIDEventKey: repoID,
+				},
 			},
 		},
 		{

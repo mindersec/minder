@@ -260,8 +260,31 @@ func (p *profileService) UpdateProfile(
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: profile.GetBuildEnvironment(),
 		minderv1.Entity_ENTITY_PULL_REQUESTS:      profile.GetPullRequest(),
 	} {
-		if err := updateProfileRulesForEntity(ctx, ent, &updatedProfile, qtx, entRules, rules); err != nil {
+		if err = updateProfileRulesForEntity(ctx, ent, &updatedProfile, qtx, entRules, rules); err != nil {
 			return nil, err
+		}
+
+		updatedIDs, err := upsertRuleInstances(
+			ctx,
+			qtx,
+			updatedProfile.ID,
+			entRules,
+			entities.EntityTypeToDB(ent),
+			rules,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Any rule which was not updated was deleted from the profile.
+		// Remove from the database as well.
+		err = qtx.DeleteNonUpdatedRules(ctx, db.DeleteNonUpdatedRulesParams{
+			ProfileID:  updatedProfile.ID,
+			EntityType: entities.EntityTypeToDB(ent),
+			UpdatedIds: updatedIDs,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error while cleaning up rule instances: %w", err)
 		}
 	}
 
@@ -358,6 +381,18 @@ func createProfileRulesForEntity(
 ) error {
 	if rules == nil {
 		return nil
+	}
+
+	_, err := upsertRuleInstances(
+		ctx,
+		qtx,
+		profile.ID,
+		rules,
+		entities.EntityTypeToDB(entity),
+		rulesInProf,
+	)
+	if err != nil {
+		return fmt.Errorf("error while creating rule instances: %w", err)
 	}
 
 	marshalled, err := json.Marshal(rules)
@@ -706,4 +741,51 @@ func deleteRuleStatusesForProfile(
 	}
 
 	return nil
+}
+
+func upsertRuleInstances(
+	ctx context.Context,
+	qtx db.Querier,
+	profileID uuid.UUID,
+	newRules []*minderv1.Profile_Rule,
+	entityType db.Entities,
+	rulesInProf RuleMapping,
+) ([]uuid.UUID, error) {
+	updatedIDs := make([]uuid.UUID, len(newRules))
+	for i, rule := range newRules {
+		// TODO: Clean up this logic once we no longer have to support the old tables.
+		entityRuleTuple, ok := rulesInProf[RuleTypeAndNamePair{
+			RuleType: rule.Type,
+			RuleName: rule.Name,
+		}]
+		if !ok {
+			return nil, fmt.Errorf("unable to find rule type ID for %s/%s", rule.Name, rule.Type)
+		}
+
+		def, err := json.Marshal(rule.Def)
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize rule def: %w", err)
+		}
+
+		params, err := json.Marshal(rule.Params)
+		if err != nil {
+			return nil, fmt.Errorf("unable to serialize rule params: %w", err)
+		}
+
+		id, err := qtx.UpsertRuleInstance(ctx, db.UpsertRuleInstanceParams{
+			ProfileID:  profileID,
+			RuleTypeID: entityRuleTuple.RuleID,
+			Name:       rule.Name,
+			EntityType: entityType,
+			Def:        def,
+			Params:     params,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("unable to insert new rule instance: %w", err)
+		}
+
+		updatedIDs[i] = id
+	}
+
+	return updatedIDs, nil
 }

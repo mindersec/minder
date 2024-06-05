@@ -199,11 +199,22 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			return nil, err
 		}
 
+		// Try to parse the project metadata to complete the response fields
+		pDisplay := pinfo.Name
+		pDescr := ""
+		meta, err := projects.ParseMetadata(&pinfo)
+		if err == nil {
+			pDisplay = meta.Public.DisplayName
+			pDescr = meta.Public.Description
+		}
+
 		projectsPB = append(projectsPB, &pb.Project{
-			ProjectId: proj.String(),
-			Name:      pinfo.Name,
-			CreatedAt: timestamppb.New(pinfo.CreatedAt),
-			UpdatedAt: timestamppb.New(pinfo.UpdatedAt),
+			ProjectId:   proj.String(),
+			Name:        pinfo.Name,
+			CreatedAt:   timestamppb.New(pinfo.CreatedAt),
+			UpdatedAt:   timestamppb.New(pinfo.UpdatedAt),
+			DisplayName: pDisplay,
+			Description: pDescr,
 		})
 	}
 

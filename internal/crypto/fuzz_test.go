@@ -17,6 +17,7 @@ package crypto
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -24,12 +25,13 @@ import (
 )
 
 var (
-	fuzzConfig = &server.Config{
+	fuzzTestDir = "fuzz-test-dir"
+	fuzzConfig  = &server.Config{
 		Crypto: server.CryptoConfig{
 			KeyStore: server.KeyStoreConfig{
 				Type: "local",
 				Local: server.LocalKeyStoreConfig{
-					KeyDir: "./testdata",
+					KeyDir: fuzzTestDir,
 				},
 			},
 			Default: server.DefaultCrypto{
@@ -42,6 +44,21 @@ var (
 )
 
 func init() {
+	// When ClusterfuzzLite runs this fuzzer, it does not have access
+	// to any files in Minders source tree, so we create the necessary
+	// key here to create the engine.
+	rawKey := []byte("2hcGLimy2i7LAknby2AFqYx87CaaCAtjxDiorRxYq8Q=")
+	_, err = os.Stat(fuzzTestDir)
+	if os.IsNotExist(err) {
+		err = os.Mkdir(fuzzTestDir, 0750)
+		if err != nil && !os.IsExist(err) {
+			panic(err)
+		}
+		err = os.WriteFile("fuzz-test-dir/test_encryption_key", rawKey, 0600)
+		if err != nil {
+			panic(err)
+		}
+	}
 	fuzzEngine, err = NewEngineFromConfig(fuzzConfig)
 	if err != nil {
 		panic(err)
