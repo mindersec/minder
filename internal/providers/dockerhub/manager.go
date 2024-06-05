@@ -132,7 +132,7 @@ func (m *providerClassManager) GetConfig(
 	return userConfig, nil
 }
 
-func (m *providerClassManager) ValidateConfig(
+func (m *providerClassManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
 ) error {
 	if !slices.Contains(m.GetSupportedClasses(), class) {

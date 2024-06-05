@@ -213,16 +213,17 @@ func (mr *MockProviderClassManagerMockRecorder) GetSupportedClasses() *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedClasses", reflect.TypeOf((*MockProviderClassManager)(nil).GetSupportedClasses))
 }
 
-// ValidateConfig mocks base method.
-func (m *MockProviderClassManager) ValidateConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error {
+// MarshallConfig mocks base method.
+func (m *MockProviderClassManager) MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateConfig", ctx, class, config)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "MarshallConfig", ctx, class, config)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ValidateConfig indicates an expected call of ValidateConfig.
-func (mr *MockProviderClassManagerMockRecorder) ValidateConfig(ctx, class, config any) *gomock.Call {
+// MarshallConfig indicates an expected call of MarshallConfig.
+func (mr *MockProviderClassManagerMockRecorder) MarshallConfig(ctx, class, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateConfig", reflect.TypeOf((*MockProviderClassManager)(nil).ValidateConfig), ctx, class, config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallConfig", reflect.TypeOf((*MockProviderClassManager)(nil).MarshallConfig), ctx, class, config)
 }

@@ -308,7 +308,7 @@ func (g *githubProviderManager) GetConfig(
 	return g.ghService.GetConfig(ctx, class, userConfig)
 }
 
-func (g *githubProviderManager) ValidateConfig(
+func (g *githubProviderManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
 ) error {
 	var err error

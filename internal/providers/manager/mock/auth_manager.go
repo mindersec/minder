@@ -198,9 +198,9 @@ func (mr *MockproviderClassOAuthManagerMockRecorder) NewOAuthConfig(providerClas
 }
 
 // ValidateConfig mocks base method.
-func (m *MockproviderClassOAuthManager) ValidateConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error {
+func (m *MockproviderClassOAuthManager) MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateConfig", ctx, class, config)
+	ret := m.ctrl.Call(m, "MarshallConfig", ctx, class, config)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -208,7 +208,7 @@ func (m *MockproviderClassOAuthManager) ValidateConfig(ctx context.Context, clas
 // ValidateConfig indicates an expected call of ValidateConfig.
 func (mr *MockproviderClassOAuthManagerMockRecorder) ValidateConfig(ctx, class, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateConfig", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).ValidateConfig), ctx, class, config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallConfig", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).MarshallConfig), ctx, class, config)
 }
 
 // ValidateCredentials mocks base method.
