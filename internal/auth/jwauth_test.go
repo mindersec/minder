@@ -149,7 +149,7 @@ func TestParseAndValidate(t *testing.T) {
 
 			jwtValidator := JwkSetJwtValidator{
 				jwksFetcher: mockKeyFetcher,
-				aud: "minder",
+				aud:         "minder",
 			}
 			_, err := jwtValidator.ParseAndValidate(tc.buildToken())
 			tc.checkError(t, err)
