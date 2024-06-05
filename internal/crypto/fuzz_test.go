@@ -35,7 +35,7 @@ func FuzzEncryptDecrypt(f *testing.F) {
 	fileName := file.Name()
 
 	defer os.Remove(fileName)
-	err = os.WriteFile("fileName", rawKey, 0600)
+	err = os.WriteFile(fileName, rawKey, 0600)
 	if err != nil {
 		f.Fatal(err)
 	}
@@ -72,5 +72,4 @@ func FuzzEncryptDecrypt(f *testing.F) {
 			panic(fmt.Sprintf("data '%s' and decrypted '%s' should be equal but are not", data, decrypted))
 		}
 	})
-
 }
