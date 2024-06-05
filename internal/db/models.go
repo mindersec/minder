@@ -639,15 +639,15 @@ type RuleEvaluation struct {
 }
 
 type RuleInstance struct {
-	ID         uuid.UUID             `json:"id"`
-	ProfileID  uuid.UUID             `json:"profile_id"`
-	RuleTypeID uuid.UUID             `json:"rule_type_id"`
-	Name       string                `json:"name"`
-	EntityType Entities              `json:"entity_type"`
-	Def        pqtype.NullRawMessage `json:"def"`
-	Params     pqtype.NullRawMessage `json:"params"`
-	CreatedAt  time.Time             `json:"created_at"`
-	UpdatedAt  time.Time             `json:"updated_at"`
+	ID         uuid.UUID       `json:"id"`
+	ProfileID  uuid.UUID       `json:"profile_id"`
+	RuleTypeID uuid.UUID       `json:"rule_type_id"`
+	Name       string          `json:"name"`
+	EntityType Entities        `json:"entity_type"`
+	Def        json.RawMessage `json:"def"`
+	Params     json.RawMessage `json:"params"`
+	CreatedAt  time.Time       `json:"created_at"`
+	UpdatedAt  time.Time       `json:"updated_at"`
 }
 
 type RuleType struct {

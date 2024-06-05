@@ -354,6 +354,20 @@ func (mr *MockStoreMockRecorder) DeleteInstallationIDByAppID(arg0, arg1 any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallationIDByAppID", reflect.TypeOf((*MockStore)(nil).DeleteInstallationIDByAppID), arg0, arg1)
 }
 
+// DeleteNonUpdatedRules mocks base method.
+func (m *MockStore) DeleteNonUpdatedRules(arg0 context.Context, arg1 db.DeleteNonUpdatedRulesParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteNonUpdatedRules", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteNonUpdatedRules indicates an expected call of DeleteNonUpdatedRules.
+func (mr *MockStoreMockRecorder) DeleteNonUpdatedRules(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNonUpdatedRules", reflect.TypeOf((*MockStore)(nil).DeleteNonUpdatedRules), arg0, arg1)
+}
+
 // DeleteProfile mocks base method.
 func (m *MockStore) DeleteProfile(arg0 context.Context, arg1 db.DeleteProfileParams) error {
 	m.ctrl.T.Helper()
@@ -1108,6 +1122,36 @@ func (mr *MockStoreMockRecorder) GetRuleEvaluationByProfileIdAndRuleType(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationByProfileIdAndRuleType", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationByProfileIdAndRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// GetRuleInstancesForProfile mocks base method.
+func (m *MockStore) GetRuleInstancesForProfile(arg0 context.Context, arg1 uuid.UUID) ([]db.RuleInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleInstancesForProfile", arg0, arg1)
+	ret0, _ := ret[0].([]db.RuleInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleInstancesForProfile indicates an expected call of GetRuleInstancesForProfile.
+func (mr *MockStoreMockRecorder) GetRuleInstancesForProfile(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleInstancesForProfile", reflect.TypeOf((*MockStore)(nil).GetRuleInstancesForProfile), arg0, arg1)
+}
+
+// GetRuleInstancesForProfileEntity mocks base method.
+func (m *MockStore) GetRuleInstancesForProfileEntity(arg0 context.Context, arg1 db.GetRuleInstancesForProfileEntityParams) ([]db.RuleInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleInstancesForProfileEntity", arg0, arg1)
+	ret0, _ := ret[0].([]db.RuleInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleInstancesForProfileEntity indicates an expected call of GetRuleInstancesForProfileEntity.
+func (mr *MockStoreMockRecorder) GetRuleInstancesForProfileEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleInstancesForProfileEntity", reflect.TypeOf((*MockStore)(nil).GetRuleInstancesForProfileEntity), arg0, arg1)
+}
+
 // GetRuleTypeByID mocks base method.
 func (m *MockStore) GetRuleTypeByID(arg0 context.Context, arg1 uuid.UUID) (db.RuleType, error) {
 	m.ctrl.T.Helper()
@@ -1759,6 +1803,21 @@ func (m *MockStore) UpsertRuleEvaluations(arg0 context.Context, arg1 db.UpsertRu
 func (mr *MockStoreMockRecorder) UpsertRuleEvaluations(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluations", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluations), arg0, arg1)
+}
+
+// UpsertRuleInstance mocks base method.
+func (m *MockStore) UpsertRuleInstance(arg0 context.Context, arg1 db.UpsertRuleInstanceParams) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertRuleInstance", arg0, arg1)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertRuleInstance indicates an expected call of UpsertRuleInstance.
+func (mr *MockStoreMockRecorder) UpsertRuleInstance(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleInstance", reflect.TypeOf((*MockStore)(nil).UpsertRuleInstance), arg0, arg1)
 }
 
 // UpsertRuleInstantiation mocks base method.

@@ -17,7 +17,7 @@ import (
 const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
 SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
 FROM profiles AS p
-         JOIN entity_profiles AS ep ON p.id = ep.profile_id
+JOIN entity_profiles AS ep ON p.id = ep.profile_id
 GROUP BY ep.entity
 `
 
@@ -120,7 +120,7 @@ INSERT INTO entity_profiles (
     $1,
     $2,
     $3::jsonb,
-    FALSE
+    TRUE
 ) RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 
@@ -578,7 +578,7 @@ INSERT INTO entity_profiles (
 ) VALUES ($1, $2, $3::jsonb, false)
 ON CONFLICT (entity, profile_id) DO UPDATE SET
     contextual_rules = $3::jsonb,
-    migrated = FALSE
+    migrated = TRUE
 RETURNING id, entity, profile_id, contextual_rules, created_at, updated_at, migrated
 `
 
