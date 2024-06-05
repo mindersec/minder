@@ -14,17 +14,10 @@
 
 BEGIN;
 
--- drop the indexes
-DROP INDEX IF EXISTS idx_user_invites_email;
+-- drop the index on the project column
 DROP INDEX IF EXISTS idx_user_invites_project;
-DROP INDEX IF EXISTS idx_user_invites_invitee;
-DROP INDEX IF EXISTS idx_user_invites_sponsor;
 
--- drop the table
+-- drop the user_invites table
 DROP TABLE IF EXISTS user_invites;
-
--- drop the types
-DROP TYPE IF EXISTS invite_status;
-DROP TYPE IF EXISTS user_role;
 
 COMMIT;

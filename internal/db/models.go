@@ -236,51 +236,6 @@ func (ns NullEvalStatusTypes) Value() (driver.Value, error) {
 	return string(ns.EvalStatusTypes), nil
 }
 
-type InviteStatus string
-
-const (
-	InviteStatusPending  InviteStatus = "pending"
-	InviteStatusAccepted InviteStatus = "accepted"
-	InviteStatusDeclined InviteStatus = "declined"
-	InviteStatusExpired  InviteStatus = "expired"
-	InviteStatusRevoked  InviteStatus = "revoked"
-)
-
-func (e *InviteStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = InviteStatus(s)
-	case string:
-		*e = InviteStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for InviteStatus: %T", src)
-	}
-	return nil
-}
-
-type NullInviteStatus struct {
-	InviteStatus InviteStatus `json:"invite_status"`
-	Valid        bool         `json:"valid"` // Valid is true if InviteStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullInviteStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.InviteStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.InviteStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullInviteStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.InviteStatus), nil
-}
-
 type ProviderClass string
 
 const (
@@ -461,51 +416,6 @@ func (ns NullSeverity) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.Severity), nil
-}
-
-type UserRole string
-
-const (
-	UserRoleAdmin              UserRole = "admin"
-	UserRoleEditor             UserRole = "editor"
-	UserRoleViewer             UserRole = "viewer"
-	UserRolePolicyWriter       UserRole = "policy_writer"
-	UserRolePermissionsManager UserRole = "permissions_manager"
-)
-
-func (e *UserRole) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = UserRole(s)
-	case string:
-		*e = UserRole(s)
-	default:
-		return fmt.Errorf("unsupported scan type for UserRole: %T", src)
-	}
-	return nil
-}
-
-type NullUserRole struct {
-	UserRole UserRole `json:"user_role"`
-	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullUserRole) Scan(value interface{}) error {
-	if value == nil {
-		ns.UserRole, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.UserRole.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullUserRole) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.UserRole), nil
 }
 
 type Artifact struct {
@@ -785,14 +695,11 @@ type User struct {
 }
 
 type UserInvite struct {
-	ID        uuid.UUID     `json:"id"`
-	Email     string        `json:"email"`
-	Status    InviteStatus  `json:"status"`
-	Role      UserRole      `json:"role"`
-	Project   uuid.UUID     `json:"project"`
-	Invitee   sql.NullInt32 `json:"invitee"`
-	Sponsor   int32         `json:"sponsor"`
-	Code      string        `json:"code"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
+	Code      string    `json:"code"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	Project   uuid.UUID `json:"project"`
+	Sponsor   int32     `json:"sponsor"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
