@@ -27,7 +27,6 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -773,22 +772,14 @@ func upsertRuleInstances(
 			return nil, fmt.Errorf("unable to serialize rule params: %w", err)
 		}
 
-		newInstance := db.UpsertRuleInstanceParams{
+		id, err := qtx.UpsertRuleInstance(ctx, db.UpsertRuleInstanceParams{
 			ProfileID:  profileID,
 			RuleTypeID: entityRuleTuple.RuleID,
 			Name:       rule.Name,
 			EntityType: entityType,
-			Def: pqtype.NullRawMessage{
-				RawMessage: def,
-				Valid:      def != nil,
-			},
-			Params: pqtype.NullRawMessage{
-				RawMessage: params,
-				Valid:      params != nil,
-			},
-		}
-
-		id, err := qtx.UpsertRuleInstance(ctx, newInstance)
+			Def:        def,
+			Params:     params,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("unable to insert new rule instance: %w", err)
 		}

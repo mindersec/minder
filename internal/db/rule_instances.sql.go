@@ -7,10 +7,10 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const deleteNonUpdatedRules = `-- name: DeleteNonUpdatedRules :exec
@@ -140,12 +140,12 @@ RETURNING id
 `
 
 type UpsertRuleInstanceParams struct {
-	ProfileID  uuid.UUID             `json:"profile_id"`
-	RuleTypeID uuid.UUID             `json:"rule_type_id"`
-	Name       string                `json:"name"`
-	EntityType Entities              `json:"entity_type"`
-	Def        pqtype.NullRawMessage `json:"def"`
-	Params     pqtype.NullRawMessage `json:"params"`
+	ProfileID  uuid.UUID       `json:"profile_id"`
+	RuleTypeID uuid.UUID       `json:"rule_type_id"`
+	Name       string          `json:"name"`
+	EntityType Entities        `json:"entity_type"`
+	Def        json.RawMessage `json:"def"`
+	Params     json.RawMessage `json:"params"`
 }
 
 // Copyright 2024 Stacklok, Inc
