@@ -18,4 +18,6 @@ package flags
 const (
 	// IDPResolver enables identity provider name resolution, see https://github.com/stacklok/minder/issues/3150
 	IDPResolver Experiment = "idp_resolver"
+	// UserManagement enables user management, i.e. invitations, role assignments, etc.
+	UserManagement Experiment = "user_management"
 )
