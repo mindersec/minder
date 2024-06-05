@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
@@ -50,20 +51,20 @@ func TestBuildEvalResult(t *testing.T) {
 						Name:      "requests",
 						Version:   "0.0.1",
 					},
-					trustyReply: &Reply{
+					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
 						PackageType: v1.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
-						Summary: ScoreSummary{
+						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
 						PackageData: struct {
-							Archived   bool           `json:"archived"`
-							Deprecated bool           `json:"is_deprecated"`
-							Malicious  *MaliciousData `json:"malicious"`
+							Archived   bool                       `json:"archived"`
+							Deprecated bool                       `json:"is_deprecated"`
+							Malicious  *trustytypes.MaliciousData `json:"malicious"`
 						}{
 							Archived:   false,
 							Deprecated: false,
-							Malicious: &MaliciousData{
+							Malicious: &trustytypes.MaliciousData{
 								Summary:   "malicuous",
 								Published: &now,
 							},
@@ -80,10 +81,10 @@ func TestBuildEvalResult(t *testing.T) {
 						Name:      "requests",
 						Version:   "0.0.1",
 					},
-					trustyReply: &Reply{
+					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
 						PackageType: v1.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
-						Summary: ScoreSummary{
+						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
 					},
@@ -98,10 +99,10 @@ func TestBuildEvalResult(t *testing.T) {
 						Name:      "python-oauth",
 						Version:   "0.0.1",
 					},
-					trustyReply: &Reply{
+					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
 						PackageType: v1.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
-						Summary: ScoreSummary{
+						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
 					},
@@ -112,20 +113,20 @@ func TestBuildEvalResult(t *testing.T) {
 						Name:      "requestts",
 						Version:   "0.0.1",
 					},
-					trustyReply: &Reply{
+					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
 						PackageType: v1.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
-						Summary: ScoreSummary{
+						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
 						PackageData: struct {
-							Archived   bool           `json:"archived"`
-							Deprecated bool           `json:"is_deprecated"`
-							Malicious  *MaliciousData `json:"malicious"`
+							Archived   bool                       `json:"archived"`
+							Deprecated bool                       `json:"is_deprecated"`
+							Malicious  *trustytypes.MaliciousData `json:"malicious"`
 						}{
 							Archived:   false,
 							Deprecated: false,
-							Malicious: &MaliciousData{
+							Malicious: &trustytypes.MaliciousData{
 								Summary:   "malicuous",
 								Published: &now,
 							},
@@ -251,17 +252,17 @@ func TestClassifyDependency(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		name       string
-		score      *Reply
+		score      *trustytypes.Reply
 		config     *config
 		mustFilter bool
 		expected   *dependencyAlternatives
 	}{
 		{
 			name: "normal-good-score",
-			score: &Reply{
+			score: &trustytypes.Reply{
 				PackageName: "test",
 				PackageType: "npm",
-				Summary: ScoreSummary{
+				Summary: trustytypes.ScoreSummary{
 					Score: mkfloat(6.4),
 				},
 			},
@@ -273,30 +274,30 @@ func TestClassifyDependency(t *testing.T) {
 		},
 		{
 			name: "normal-bad-score",
-			score: &Reply{
+			score: &trustytypes.Reply{
 				PackageName: "test",
 				PackageType: "npm",
-				Summary: ScoreSummary{
+				Summary: trustytypes.ScoreSummary{
 					Score: mkfloat(4.0),
 				},
 			},
 			config: defaultConfig(),
 			expected: &dependencyAlternatives{
 				Reasons:     []RuleViolationReason{TRUSTY_LOW_SCORE},
-				trustyReply: &Reply{},
+				trustyReply: &trustytypes.Reply{},
 			},
 			mustFilter: true,
 		},
 		{
 			name: "normal-malicious",
-			score: &Reply{
+			score: &trustytypes.Reply{
 				PackageName: "test",
 				PackageType: "npm",
-				Summary:     ScoreSummary{Score: mkfloat(8.0)},
-				PackageData: PackageData{
+				Summary:     trustytypes.ScoreSummary{Score: mkfloat(8.0)},
+				PackageData: trustytypes.PackageData{
 					Archived:   false,
 					Deprecated: false,
-					Malicious: &MaliciousData{
+					Malicious: &trustytypes.MaliciousData{
 						Summary: "it is malicious",
 						Details: "some details",
 					},
@@ -305,16 +306,16 @@ func TestClassifyDependency(t *testing.T) {
 			config: defaultConfig(),
 			expected: &dependencyAlternatives{
 				Reasons:     []RuleViolationReason{TRUSTY_MALICIOUS_PKG},
-				trustyReply: &Reply{},
+				trustyReply: &trustytypes.Reply{},
 			},
 			mustFilter: true,
 		},
 		{
 			name: "normal-lowactivity",
-			score: &Reply{
+			score: &trustytypes.Reply{
 				PackageName: "test",
 				PackageType: "npm",
-				Summary: ScoreSummary{
+				Summary: trustytypes.ScoreSummary{
 					Score: mkfloat(8.0),
 					Description: map[string]any{
 						"activity": float64(3.0),
@@ -324,16 +325,16 @@ func TestClassifyDependency(t *testing.T) {
 			config: defaultConfig(),
 			expected: &dependencyAlternatives{
 				Reasons:     []RuleViolationReason{TRUSTY_LOW_ACTIVITY},
-				trustyReply: &Reply{},
+				trustyReply: &trustytypes.Reply{},
 			},
 			mustFilter: true,
 		},
 		{
 			name: "normal-low-provenance",
-			score: &Reply{
+			score: &trustytypes.Reply{
 				PackageName: "test",
 				PackageType: "npm",
-				Summary: ScoreSummary{
+				Summary: trustytypes.ScoreSummary{
 					Score: mkfloat(8.0),
 					Description: map[string]any{
 						"provenance": float64(3.0),
@@ -343,7 +344,7 @@ func TestClassifyDependency(t *testing.T) {
 			config: defaultConfig(),
 			expected: &dependencyAlternatives{
 				Reasons:     []RuleViolationReason{TRUSTY_LOW_PROVENANCE},
-				trustyReply: &Reply{},
+				trustyReply: &trustytypes.Reply{},
 			},
 			mustFilter: true,
 		},
@@ -381,8 +382,8 @@ func TestBuildScoreMatrix(t *testing.T) {
 			sut: dependencyAlternatives{
 				Dependency: &v1.Dependency{},
 				Reasons:    []RuleViolationReason{},
-				trustyReply: &Reply{
-					Summary: ScoreSummary{},
+				trustyReply: &trustytypes.Reply{
+					Summary: trustytypes.ScoreSummary{},
 				},
 			},
 		},
@@ -391,8 +392,8 @@ func TestBuildScoreMatrix(t *testing.T) {
 			sut: dependencyAlternatives{
 				Dependency: &v1.Dependency{},
 				Reasons:    []RuleViolationReason{},
-				trustyReply: &Reply{
-					Summary: ScoreSummary{
+				trustyReply: &trustytypes.Reply{
+					Summary: trustytypes.ScoreSummary{
 						Description: map[string]any{
 							"activity":      "a",
 							"activity_user": "b",
@@ -414,8 +415,8 @@ func TestBuildScoreMatrix(t *testing.T) {
 			sut: dependencyAlternatives{
 				Dependency: &v1.Dependency{},
 				Reasons:    []RuleViolationReason{},
-				trustyReply: &Reply{
-					Summary: ScoreSummary{
+				trustyReply: &trustytypes.Reply{
+					Summary: trustytypes.ScoreSummary{
 						Description: map[string]any{
 							"activity":      "a",
 							"activity_user": "b",
@@ -437,8 +438,8 @@ func TestBuildScoreMatrix(t *testing.T) {
 			sut: dependencyAlternatives{
 				Dependency: &v1.Dependency{},
 				Reasons:    []RuleViolationReason{},
-				trustyReply: &Reply{
-					Summary: ScoreSummary{
+				trustyReply: &trustytypes.Reply{
+					Summary: trustytypes.ScoreSummary{
 						Description: map[string]any{
 							"typosquatting": float64(10),
 						},
@@ -452,8 +453,8 @@ func TestBuildScoreMatrix(t *testing.T) {
 			sut: dependencyAlternatives{
 				Dependency: &v1.Dependency{},
 				Reasons:    []RuleViolationReason{},
-				trustyReply: &Reply{
-					Summary: ScoreSummary{
+				trustyReply: &trustytypes.Reply{
+					Summary: trustytypes.ScoreSummary{
 						Description: map[string]any{
 							"typosquatting": float64(1),
 						},
@@ -484,16 +485,16 @@ func TestReadPackageDescription(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name string
-		sut  *Reply
+		sut  *trustytypes.Reply
 	}{
 		{
 			name: "normal",
-			sut:  &Reply{},
+			sut:  &trustytypes.Reply{},
 		},
 		{
 			name: "no-provenance",
-			sut: &Reply{
-				Summary: ScoreSummary{
+			sut: &trustytypes.Reply{
+				Summary: trustytypes.ScoreSummary{
 					Description: map[string]any{
 						"provenance": 1,
 					},

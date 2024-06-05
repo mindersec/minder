@@ -22,6 +22,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	trusty "github.com/stacklok/trusty-sdk-go/pkg/client"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
@@ -41,7 +43,7 @@ const (
 type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
-	client   *trustyClient
+	client   *trusty.Trusty
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -55,21 +57,21 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 
 	// If the environment variable is not set, use the default endpoint
 	if trustyEndpoint == "" {
-		trustyEndpoint = trustyEndpointURL
+		trustyEndpoint = trusty.DefaultOptions.BaseURL
 		zerolog.Ctx(ctx).Info().Str("trusty-endpoint", trustyEndpoint).Msg("using default trusty endpoint")
 	} else {
 		zerolog.Ctx(ctx).Info().Str("trusty-endpoint", trustyEndpoint).Msg("using trusty endpoint from environment")
 	}
 
-	piCli := newPiClient(trustyEndpoint)
-	if piCli == nil {
-		return nil, fmt.Errorf("failed to create pi client")
-	}
+	trustyClient := trusty.NewWithOptions(trusty.Options{
+		HttpClient: trusty.DefaultOptions.HttpClient,
+		BaseURL:    trustyEndpoint,
+	})
 
 	return &Evaluator{
 		cli:      ghcli,
 		endpoint: trustyEndpoint,
-		client:   piCli,
+		client:   trustyClient,
 	}, nil
 }
 
@@ -221,9 +223,15 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	return nil
 }
 
-func getDependencyScore(ctx context.Context, trusty *trustyClient, dep *pb.PrDependencies_ContextualDependency) (*Reply, error) {
+func getDependencyScore(
+	ctx context.Context, trustyClient *trusty.Trusty, dep *pb.PrDependencies_ContextualDependency,
+) (*trustytypes.Reply, error) {
 	// Call the Trusty API
-	resp, err := trusty.SendRecvRequest(ctx, dep.Dep)
+	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
+		Name:      dep.Dep.Name,
+		Version:   dep.Dep.Version,
+		Ecosystem: trustytypes.Ecosystem(dep.Dep.Ecosystem),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
@@ -233,7 +241,7 @@ func getDependencyScore(ctx context.Context, trusty *trustyClient, dep *pb.PrDep
 // classifyDependency checks the dependencies from the PR for maliciousness or
 // low scores and adds them to the summary if needed
 func classifyDependency(
-	_ context.Context, logger *zerolog.Logger, resp *Reply, ruleConfig *config,
+	_ context.Context, logger *zerolog.Logger, resp *trustytypes.Reply, ruleConfig *config,
 	prSummary *summaryPrHandler, dep *pb.PrDependencies_ContextualDependency,
 ) {
 	// Check all the policy violations
@@ -319,10 +327,10 @@ func classifyDependency(
 
 // readPackageDescription reads the description from the package summary and
 // normlizes the required values when missing from a partial Trusty response
-func readPackageDescription(resp *Reply) map[string]any {
+func readPackageDescription(resp *trustytypes.Reply) map[string]any {
 	descr := map[string]any{}
 	if resp == nil {
-		resp = &Reply{}
+		resp = &trustytypes.Reply{}
 	}
 	if resp.Summary.Description != nil {
 		descr = resp.Summary.Description
