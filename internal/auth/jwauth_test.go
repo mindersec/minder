@@ -58,7 +58,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Valid token",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Subject("123").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				token, _ := jwt.NewBuilder().Subject("123").Audience([]string{"minder"}).Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -71,7 +71,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Expired token",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Subject("123").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				token, _ := jwt.NewBuilder().Subject("123").Audience([]string{"minder"}).Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -122,6 +122,19 @@ func TestParseAndValidate(t *testing.T) {
 				assert.Error(t, err)
 			},
 		},
+		{
+			name: "Missing audience claim",
+			buildToken: func() string {
+				token, _ := jwt.NewBuilder().Subject("123").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				return string(signed)
+			},
+			checkError: func(t *testing.T, err error) {
+				t.Helper()
+
+				assert.Error(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -134,7 +147,10 @@ func TestParseAndValidate(t *testing.T) {
 			mockKeyFetcher := mockjwt.NewMockKeySetFetcher(ctrl)
 			mockKeyFetcher.EXPECT().GetKeySet().Return(jwks, nil)
 
-			jwtValidator := JwkSetJwtValidator{jwksFetcher: mockKeyFetcher}
+			jwtValidator := JwkSetJwtValidator{
+				jwksFetcher: mockKeyFetcher,
+				aud:         "minder",
+			}
 			_, err := jwtValidator.ParseAndValidate(tc.buildToken())
 			tc.checkError(t, err)
 		})

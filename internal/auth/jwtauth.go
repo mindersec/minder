@@ -34,6 +34,7 @@ type JwtValidator interface {
 // JwkSetJwtValidator is a JWT validator that uses a JWK set URL to validate the tokens
 type JwkSetJwtValidator struct {
 	jwksFetcher KeySetFetcher
+	aud         string
 }
 
 // KeySetFetcher provides the functions to fetch a JWK set
@@ -60,7 +61,12 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 		return nil, err
 	}
 
-	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(set), jwt.WithValidate(true), jwt.WithToken(openid.New()))
+	token, err := jwt.ParseString(
+		tokenString,
+		jwt.WithKeySet(set),
+		jwt.WithValidate(true),
+		jwt.WithToken(openid.New()),
+		jwt.WithAudience(j.aud))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +84,7 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 }
 
 // NewJwtValidator creates a new JWT validator that uses a JWK set URL to validate the tokens
-func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) {
+func NewJwtValidator(ctx context.Context, jwksUrl string, aud string) (JwtValidator, error) {
 	// Cache the JWK set
 	// The cache will refresh every 15 minutes by default
 	jwks := jwk.NewCache(ctx)
@@ -100,6 +106,7 @@ func NewJwtValidator(ctx context.Context, jwksUrl string) (JwtValidator, error) 
 	}
 	return &JwkSetJwtValidator{
 		jwksFetcher: &keySetCache,
+		aud:         aud,
 	}, nil
 }
 
