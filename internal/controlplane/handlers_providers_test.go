@@ -144,14 +144,15 @@ func TestCreateProvider(t *testing.T) {
 			providerClass: db.ProviderClassGithub,
 			userConfig: newPbStruct(t, map[string]interface{}{
 				"github": map[string]interface{}{
-					"key": "value",
+					"key":      "value", // will be ignored
+					"endpoint": "my.little.github",
 				},
 			}),
 			expected: minder.Provider{
 				Name: "test-github-config",
 				Config: newPbStruct(t, map[string]interface{}{
 					"github": map[string]interface{}{
-						"key": "value",
+						"endpoint": "my.little.github",
 					},
 				}),
 				Class: string(db.ProviderClassGithub),
@@ -173,14 +174,15 @@ func TestCreateProvider(t *testing.T) {
 			providerClass: db.ProviderClassGithubApp,
 			userConfig: newPbStruct(t, map[string]interface{}{
 				"github-app": map[string]interface{}{
-					"key": "value",
+					"key":      "value", // will be ignored
+					"endpoint": "my.little.github",
 				},
 			}),
 			expected: minder.Provider{
 				Name: "test-github-app-config",
 				Config: newPbStruct(t, map[string]interface{}{
 					"github-app": map[string]interface{}{
-						"key": "value",
+						"endpoint": "my.little.github",
 					},
 				}),
 				Class: string(db.ProviderClassGithubApp),
@@ -191,7 +193,7 @@ func TestCreateProvider(t *testing.T) {
 			providerClass: db.ProviderClassDockerhub,
 			userConfig: newPbStruct(t, map[string]interface{}{
 				"dockerhub": map[string]interface{}{
-					"key":       "value",
+					"key":       "value", // will be ignored
 					"namespace": "myproject",
 				},
 			}),
@@ -199,7 +201,6 @@ func TestCreateProvider(t *testing.T) {
 				Name: "test-dockerhub-config",
 				Config: newPbStruct(t, map[string]interface{}{
 					"dockerhub": map[string]interface{}{
-						"key":       "value",
 						"namespace": "myproject",
 					},
 				}),

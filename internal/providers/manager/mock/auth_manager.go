@@ -182,6 +182,21 @@ func (mr *MockproviderClassOAuthManagerMockRecorder) GetSupportedClasses() *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedClasses", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).GetSupportedClasses))
 }
 
+// MarshallConfig mocks base method.
+func (m *MockproviderClassOAuthManager) MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarshallConfig", ctx, class, config)
+	ret0, _ := ret[0].(json.RawMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MarshallConfig indicates an expected call of MarshallConfig.
+func (mr *MockproviderClassOAuthManagerMockRecorder) MarshallConfig(ctx, class, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallConfig", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).MarshallConfig), ctx, class, config)
+}
+
 // NewOAuthConfig mocks base method.
 func (m *MockproviderClassOAuthManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
 	m.ctrl.T.Helper()
@@ -195,20 +210,6 @@ func (m *MockproviderClassOAuthManager) NewOAuthConfig(providerClass db.Provider
 func (mr *MockproviderClassOAuthManagerMockRecorder) NewOAuthConfig(providerClass, cli any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewOAuthConfig", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).NewOAuthConfig), providerClass, cli)
-}
-
-// ValidateConfig mocks base method.
-func (m *MockproviderClassOAuthManager) MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarshallConfig", ctx, class, config)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateConfig indicates an expected call of ValidateConfig.
-func (mr *MockproviderClassOAuthManagerMockRecorder) ValidateConfig(ctx, class, config any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshallConfig", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).MarshallConfig), ctx, class, config)
 }
 
 // ValidateCredentials mocks base method.

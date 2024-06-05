@@ -71,7 +71,8 @@ type ProviderClassManager interface {
 	providerClassAuthManager
 
 	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
-	MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) error
+	// MarshallConfig validates the config and marshalls it into a format that can be stored in the database
+	MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
 	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
 	// Delete deletes an instance of this provider
@@ -154,12 +155,12 @@ func (p *providerManager) CreateFromConfig(
 		return nil, fmt.Errorf("error getting provider config: %w", err)
 	}
 
-	err = manager.MarshallConfig(ctx, providerClass, provConfig)
+	marshalledConfig, err := manager.MarshallConfig(ctx, providerClass, provConfig)
 	if err != nil {
 		return nil, providers.NewErrProviderInvalidConfig(err.Error())
 	}
 
-	return p.store.Create(ctx, providerClass, name, projectID, provConfig)
+	return p.store.Create(ctx, providerClass, name, projectID, marshalledConfig)
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {

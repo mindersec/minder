@@ -134,11 +134,15 @@ func (m *providerClassManager) GetConfig(
 
 func (m *providerClassManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
-) error {
+) (json.RawMessage, error) {
 	if !slices.Contains(m.GetSupportedClasses(), class) {
-		return fmt.Errorf("provider does not implement %s", string(class))
+		return nil, fmt.Errorf("provider does not implement %s", string(class))
 	}
 
-	_, err := ParseV1Config(config)
-	return err
+	dc, err := ParseV1Config(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return MarshalV1Config(dc)
 }

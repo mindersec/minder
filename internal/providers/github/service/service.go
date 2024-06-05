@@ -149,14 +149,19 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			return nil
 		}
 
-		finalConfig, err := p.GetConfig(ctx, db.ProviderClassGithubApp, stateData.ProviderConfig)
+		providerConfig, err := p.GetConfig(ctx, db.ProviderClassGithubApp, stateData.ProviderConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error getting provider config: %w", err)
 		}
 
-		_, _, err = clients.ParseV1AppConfig(finalConfig)
+		pcfg, appCfg, err := clients.ParseV1AppConfig(providerConfig)
 		if err != nil {
 			return nil, providers.NewErrProviderInvalidConfig(err.Error())
+		}
+
+		marshalledConfig, err := clients.MarshalV1AppConfig(pcfg, appCfg)
+		if err != nil {
+			return nil, err
 		}
 
 		provider, err := createGitHubApp(
@@ -165,7 +170,7 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			stateData.ProjectID,
 			installationOwner,
 			installationID,
-			finalConfig,
+			marshalledConfig,
 			validateOwnership,
 			sql.NullString{
 				String: state,
