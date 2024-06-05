@@ -13,14 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// Package offline_token provides the auth offline_token command for the minder CLI.
+package offline_token
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/stacklok/minder/cmd/cli/app/auth"
 )
 
-// OfflineTokenCmd represents the offline-token set of sub-commands
-var OfflineTokenCmd = &cobra.Command{
+// offlineTokenCmd represents the offline-token set of sub-commands
+var offlineTokenCmd = &cobra.Command{
 	Use:   "offline-token",
 	Short: "Manage offline tokens",
 	Long: `The minder auth offline-token command project lets you manage offline tokens
@@ -36,5 +39,5 @@ that need to authenticate to the control plane.`,
 }
 
 func init() {
-	AuthCmd.AddCommand(OfflineTokenCmd)
+	auth.AuthCmd.AddCommand(offlineTokenCmd)
 }
