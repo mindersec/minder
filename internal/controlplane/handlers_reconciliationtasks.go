@@ -29,7 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/reconcilers"
+	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 

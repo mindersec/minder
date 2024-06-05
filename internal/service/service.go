@@ -178,7 +178,7 @@ func AllInOneServerService(
 
 	evt.ConsumeEvents(exec)
 
-	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager)
+	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}

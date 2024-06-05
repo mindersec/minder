@@ -31,40 +31,16 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-// RepoReconcilerEvent is an event that is sent to the reconciler topic
-type RepoReconcilerEvent struct {
-	// Project is the project that the event is relevant to
-	Project uuid.UUID `json:"project"`
-	// Repository is the repository to be reconciled
-	Repository int64 `json:"repository" validate:"gte=0"`
-}
-
-// NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid.UUID) (*message.Message, error) {
-	evt := &RepoReconcilerEvent{
-		Repository: repoID,
-		Project:    projectID,
-	}
-
-	evtStr, err := json.Marshal(evt)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling init event: %w", err)
-	}
-
-	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider_id", providerID.String())
-	return msg, nil
-}
-
 // handleRepoReconcilerEvent handles events coming from the reconciler topic
 func (r *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
-	var evt RepoReconcilerEvent
+	var evt messages.RepoReconcilerEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -86,7 +62,7 @@ func (r *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 // HandleArtifactsReconcilerEvent recreates the artifacts belonging to
 // an specific repository
 // nolint: gocyclo
-func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *RepoReconcilerEvent) error {
+func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *messages.RepoReconcilerEvent) error {
 	// first retrieve data for the repository
 	repository, err := r.store.GetRepositoryByRepoID(ctx, evt.Repository)
 	if err != nil {
