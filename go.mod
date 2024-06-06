@@ -37,7 +37,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.12.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
-	github.com/open-policy-agent/opa v0.64.1
+	github.com/open-policy-agent/opa v0.65.0
 	github.com/openfga/go-sdk v0.4.0
 	github.com/openfga/openfga v1.5.4
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -55,7 +55,7 @@ require (
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.0.16
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.22.0
+	github.com/styrainc/regal v0.23.0
 	github.com/thomaspoignant/go-feature-flag v1.27.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.52.0
@@ -88,7 +88,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
-	github.com/Microsoft/hcsshim v0.11.4 // indirect
+	github.com/Microsoft/hcsshim v0.11.5 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -98,7 +98,7 @@ require (
 	github.com/charmbracelet/x/input v0.1.0 // indirect
 	github.com/charmbracelet/x/term v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.1.0 // indirect
-	github.com/containerd/containerd v1.7.15 // indirect
+	github.com/containerd/containerd v1.7.17 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
@@ -184,7 +184,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.0
-	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
@@ -301,7 +301,6 @@ require (
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
