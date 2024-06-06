@@ -26,5 +26,7 @@ CREATE TABLE IF NOT EXISTS user_invites (
 
 -- create an index on the project column
 CREATE INDEX IF NOT EXISTS idx_user_invites_project ON user_invites(project);
+-- create an index on the email column
+CREATE INDEX IF NOT EXISTS idx_user_invites_email ON user_invites(email);
 
 COMMIT;
