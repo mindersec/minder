@@ -28,11 +28,12 @@ import (
 
 // inviteDeclineCmd represents the decline command
 var inviteDeclineCmd = &cobra.Command{
-	Use:   "decline",
-	Short: "Declines a pending invitation",
-	Long:  `Declines a pending invitation for the current minder user`,
-	RunE:  cli.GRPCClientWrapRunE(inviteDeclineCommand),
-	Args:  cobra.ExactArgs(1),
+	Hidden: true, // TODO: This hides the command, remove it once it's implemented
+	Use:    "decline",
+	Short:  "Declines a pending invitation",
+	Long:   `Declines a pending invitation for the current minder user`,
+	RunE:   cli.GRPCClientWrapRunE(inviteDeclineCommand),
+	Args:   cobra.ExactArgs(1),
 }
 
 // inviteAcceptCommand is the whoami subcommand

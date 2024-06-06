@@ -28,11 +28,12 @@ import (
 
 // inviteAcceptCmd represents the accept command
 var inviteAcceptCmd = &cobra.Command{
-	Use:   "accept",
-	Short: "Accept a pending invitation",
-	Long:  `Accept a pending invitation for the current minder user`,
-	RunE:  cli.GRPCClientWrapRunE(inviteAcceptCommand),
-	Args:  cobra.ExactArgs(1),
+	Hidden: true, // TODO: This hides the command, remove it once it's implemented
+	Use:    "accept",
+	Short:  "Accept a pending invitation",
+	Long:   `Accept a pending invitation for the current minder user`,
+	RunE:   cli.GRPCClientWrapRunE(inviteAcceptCommand),
+	Args:   cobra.ExactArgs(1),
 }
 
 // inviteAcceptCommand is the whoami subcommand
