@@ -95,13 +95,13 @@ func NewRestClient(
 	), nil
 }
 
+type oauthConfigWrapper struct {
+	GitHub *minderv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
+}
+
 // ParseV1OAuthConfig parses the raw config into a GitHubConfig struct
 func ParseV1OAuthConfig(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig, error) {
-	type wrapper struct {
-		GitHub *minderv1.GitHubProviderConfig `json:"github" yaml:"github" mapstructure:"github" validate:"required"`
-	}
-
-	var w wrapper
+	var w oauthConfigWrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
 		return nil, err
 	}
@@ -112,6 +112,14 @@ func ParseV1OAuthConfig(rawCfg json.RawMessage) (*minderv1.GitHubProviderConfig,
 	}
 
 	return w.GitHub, nil
+}
+
+// MarshalV1OAuthConfig marshals the GitHubConfig struct into a raw config
+func MarshalV1OAuthConfig(cfg *minderv1.GitHubProviderConfig) (json.RawMessage, error) {
+	w := oauthConfigWrapper{
+		GitHub: cfg,
+	}
+	return json.Marshal(w)
 }
 
 // GetCredential returns the GitHub OAuth credential

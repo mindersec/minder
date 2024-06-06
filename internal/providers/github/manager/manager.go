@@ -308,26 +308,40 @@ func (g *githubProviderManager) GetConfig(
 	return g.ghService.GetConfig(ctx, class, userConfig)
 }
 
-func (g *githubProviderManager) ValidateConfig(
+func (g *githubProviderManager) MarshallConfig(
 	_ context.Context, class db.ProviderClass, config json.RawMessage,
-) error {
-	var err error
+) (json.RawMessage, error) {
+	var marshalledConfig json.RawMessage
 
 	if !slices.Contains(g.GetSupportedClasses(), class) {
-		return fmt.Errorf("provider does not implement %s", string(class))
+		return nil, fmt.Errorf("provider does not implement %s", string(class))
 	}
 
 	// nolint:exhaustive // we really want handle only the two
 	switch class {
 	case db.ProviderClassGithub:
-		_, err = clients.ParseV1OAuthConfig(config)
+		oauthCfg, err := clients.ParseV1OAuthConfig(config)
+		if err != nil {
+			return nil, err
+		}
+		marshalledConfig, err = clients.MarshalV1OAuthConfig(oauthCfg)
+		if err != nil {
+			return nil, err
+		}
 	case db.ProviderClassGithubApp:
-		_, _, err = clients.ParseV1AppConfig(config)
+		pcfg, appCfg, err := clients.ParseV1AppConfig(config)
+		if err != nil {
+			return nil, err
+		}
+		marshalledConfig, err = clients.MarshalV1AppConfig(pcfg, appCfg)
+		if err != nil {
+			return nil, err
+		}
 	default:
-		return fmt.Errorf("unsupported provider class %s", class)
+		return nil, fmt.Errorf("unsupported provider class %s", class)
 	}
 
-	return err
+	return marshalledConfig, nil
 }
 
 func (g *githubProviderManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {

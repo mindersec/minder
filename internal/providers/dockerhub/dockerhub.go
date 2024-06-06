@@ -86,13 +86,13 @@ func New(cred provifv1.OAuth2TokenCredential, cfg *minderv1.DockerHubProviderCon
 	}, nil
 }
 
+type dhConfigWrapper struct {
+	DockerHub *minderv1.DockerHubProviderConfig `json:"dockerhub" yaml:"dockerhub" mapstructure:"dockerhub" validate:"required"`
+}
+
 // ParseV1Config parses the raw config into a DockerHubProviderConfig struct
 func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, error) {
-	type wrapper struct {
-		DockerHub *minderv1.DockerHubProviderConfig `json:"dockerhub" yaml:"dockerhub" mapstructure:"dockerhub" validate:"required"`
-	}
-
-	var w wrapper
+	var w dhConfigWrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
 		return nil, err
 	}
@@ -103,6 +103,14 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, e
 	}
 
 	return w.DockerHub, nil
+}
+
+// MarshalV1Config marshals the DockerHubProviderConfig struct into a raw config
+func MarshalV1Config(cfg *minderv1.DockerHubProviderConfig) (json.RawMessage, error) {
+	w := dhConfigWrapper{
+		DockerHub: cfg,
+	}
+	return json.Marshal(w)
 }
 
 func (d *dockerHubImageLister) GetNamespaceURL() string {
