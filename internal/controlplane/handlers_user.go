@@ -17,10 +17,13 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"path"
+	"slices"
 	"strconv"
+	"time"
 
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
@@ -30,6 +33,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
@@ -258,4 +262,73 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 	resp.Projects = projs
 
 	return &resp, nil
+}
+
+// ListInvitations is a service for listing invitations.
+func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsRequest) (*pb.ListInvitationsResponse, error) {
+	// TODO: This is a temporary implementation. Replace with a real implementation.
+	// Check if the UserManagement feature is enabled
+	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		return nil, status.Error(codes.Unimplemented, "feature not enabled")
+	}
+	return &pb.ListInvitationsResponse{
+		Invitations: []*pb.Invitation{
+			{
+				Role:           "admin",
+				Email:          "bluey@sparkles.com",
+				Project:        "Stacklok-Labs",
+				Code:           base64.StdEncoding.EncodeToString([]byte("0123456789")), // MDEyMzQ1Njc4OQ==
+				Sponsor:        "rusty_sparkles89",
+				SponsorDisplay: "Rusty Sparkles",
+				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
+			},
+			{
+				Role:           "viewer",
+				Email:          "bluey@sparkles.com",
+				Project:        "Stacklok",
+				Code:           base64.StdEncoding.EncodeToString([]byte("9876543210")), // OTg3NjU0MzIxMA==
+				Sponsor:        "bingo_sparkles93",
+				SponsorDisplay: "Bingo Sparkles",
+				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
+			},
+		},
+	}, nil
+}
+
+// ResolveInvitation is a service for resolving an invitation.
+func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitationRequest) (*pb.ResolveInvitationResponse, error) {
+	// TODO: This is a temporary implementation. Replace with a real implementation.
+	inviteCodes := []string{"0123456789", "9876543210"}
+	// Check if the UserManagement feature is enabled
+	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		return nil, status.Error(codes.Unimplemented, "feature not enabled")
+	}
+
+	// Check if the invitation code is valid
+	reqCode, err := base64.StdEncoding.DecodeString(req.Code)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid invitation code: %v", err)
+	}
+
+	if !slices.Contains(inviteCodes, string(reqCode)) {
+		return nil, status.Error(codes.NotFound, "invitation not found")
+	}
+
+	// Accept invitation
+	if req.Accept {
+		return &pb.ResolveInvitationResponse{
+			Role:    "admin",
+			Project: "Accepted Project",
+			Email:   "duncan@sparkles.com",
+		}, nil
+	}
+
+	// Decline invitation
+	return &pb.ResolveInvitationResponse{
+		Role:    "viewer",
+		Project: "Declined Project",
+		Email:   "rusty@sparkles.com",
+	}, nil
 }
