@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -70,9 +71,9 @@ func inviteListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Role", "Code"})
+		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Role", "Expires", "Code"})
 		for _, v := range res.Invitations {
-			t.AddRow(v.SponsorDisplay, v.Project, v.Role, v.Code)
+			t.AddRow(v.SponsorDisplay, v.Project, v.Role, v.ExpiresAt.AsTime().Format(time.RFC3339), v.Code)
 		}
 		t.Render()
 	default:
