@@ -575,3 +575,33 @@ func (s *SimpleResolver) Resolve(_ context.Context, id string) (*auth.Identity, 
 func (_ *SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity, error) {
 	panic("unimplemented")
 }
+
+func TestIsSubjectEmail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		subject  string
+		expected bool
+	}{
+		{"Valid email", "test@example.com", true},
+		{"Invalid email missing @", "testexample.com", false},
+		{"Invalid email missing domain", "test@", false},
+		{"Invalid email missing tld", "test@example", false},
+		{"Valid email with subdomain", "user.name+tag+sorting@example.com", true},
+		{"Valid email with multiple dots", "another.test@sub.domain.co.uk", true},
+		{"Invalid email missing domain and tld", "example@com", false},
+		{"Invalid email with spaces", "user @example.com", false},
+		{"Invalid email with special characters", "user@exa!mple.com", false},
+		{"Invalid email", "91abede98a29dbfec05daa22e2bf80850ba4ca3d209bd78d0f84adc402638446", false},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := isSubjectEmail(tt.subject)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}

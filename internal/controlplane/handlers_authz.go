@@ -17,7 +17,9 @@ package controlplane
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -271,6 +273,7 @@ func (s *Server) ListRoleAssignments(
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error getting invitations")
 		}
 		for _, invite := range invites {
+			// nolint
 			invitations = append(invitations, &minder.Invitation{
 				Role:           invite.Role,
 				Email:          invite.Email,
@@ -285,7 +288,31 @@ func (s *Server) ListRoleAssignments(
 
 	return &minder.ListRoleAssignmentsResponse{
 		RoleAssignments: as,
-		Invitations:     invitations,
+		// TODO: for mocking purposes only, remove it when we implement the invitation flow
+		// Invitations: invitations,
+		Invitations: []*minder.Invitation{
+			{
+				Role:  "admin",
+				Email: "bluey@sparkles.com",
+				// TODO: project ID or name?
+				Project:        projectID.String(),
+				Code:           base64.StdEncoding.EncodeToString([]byte("0123456789")), // MDEyMzQ1Njc4OQ==
+				Sponsor:        "rusty_sparkles89",
+				SponsorDisplay: "Rusty Sparkles",
+				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
+			},
+			{
+				Role:           "permissions_manager",
+				Email:          "bluey@sparkles.com",
+				Project:        projectID.String(),
+				Code:           base64.StdEncoding.EncodeToString([]byte("9876543210")), // OTg3NjU0MzIxMA==
+				Sponsor:        "bingo_sparkles93",
+				SponsorDisplay: "Bingo Sparkles",
+				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
+			},
+		},
 	}, nil
 }
 
@@ -306,6 +333,28 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
+	// TODO: for mocking purposes only, remove it when we implement the invitation flow
+	// If the subject is an email, we can assume it's an invitation
+	// TODO: Is there a problem that we reuse the subject?
+	if isSubjectEmail(sub) {
+		prj := engine.EntityFromContext(ctx).Project.ID.String()
+		return &minder.AssignRoleResponse{
+			// TODO: Should there be a role assignment when it's an invitation?
+			Invitation: &minder.Invitation{
+				Role:  role,
+				Email: sub,
+				// TODO: project ID or name?
+				Project: prj,
+				// TODO: is the nonce format okay?
+				Code: base64.StdEncoding.EncodeToString([]byte("0123456789")), // MDEyMzQ1Njc4OQ==
+				// TODO: resolve to the user who triggered the assignment
+				Sponsor:        "rusty_sparkles89",
+				SponsorDisplay: "Rusty Sparkles",
+				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
+				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 604800}, // 1 week
+			},
+		}, nil
+	}
 	// We may be given a human-readable identifier which can vary over time. Resolve
 	// it to an IDP-specific stable identifier so that we can support subject renames.
 	identity := &auth.Identity{
@@ -408,4 +457,12 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 			Project: &respProj,
 		},
 	}, nil
+}
+
+// isSubjectEmail checks if the subject is an email address or not
+func isSubjectEmail(subject string) bool {
+	// Define the regular expression for validating an email address
+	const emailRegexPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	emailRegex := regexp.MustCompile(emailRegexPattern)
+	return emailRegex.MatchString(subject)
 }
