@@ -104,7 +104,8 @@ func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout 
 	v.SetDefault("cli.context_timeout", tout)
 	timeout := v.GetInt("cli.context_timeout")
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+	// TODO: This is a temporary patch to avoid the context deadline exceeded error while debugging
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Hour)
 	return ctx, cancel
 }
 

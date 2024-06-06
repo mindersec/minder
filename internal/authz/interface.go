@@ -73,6 +73,9 @@ func (r Role) String() string {
 
 // ParseRole parses a string into a Role
 func ParseRole(r string) (Role, error) {
+	if r == "" {
+		return "", fmt.Errorf("role cannot be empty")
+	}
 	rr := Role(r)
 	if _, ok := AllRoles[rr]; !ok {
 		return "", fmt.Errorf("invalid role %s", r)
