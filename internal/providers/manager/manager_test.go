@@ -79,9 +79,11 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
 			classManager.EXPECT().GetConfig(gomock.Any(), scenario.Provider.Class, gomock.Any()).Return(scenario.Config, nil).MaxTimes(1)
 			if scenario.ValidateConfigErr {
-				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(fmt.Errorf("invalid config")).MaxTimes(1)
+				classManager.EXPECT().MarshallConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).
+					Return(nil, fmt.Errorf("invalid config")).MaxTimes(1)
 			} else {
-				classManager.EXPECT().ValidateConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).Return(nil).MaxTimes(1)
+				classManager.EXPECT().MarshallConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).
+					Return(scenario.Config, nil).MaxTimes(1)
 			}
 
 			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))

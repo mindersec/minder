@@ -110,19 +110,19 @@ func NewGitHubAppProvider(
 	), nil
 }
 
+// embedding the struct to expose its JSON tags
+type appConfigWrapper struct {
+	*minderv1.ProviderConfig
+	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
+}
+
 // ParseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
 func ParseV1AppConfig(rawCfg json.RawMessage) (
 	*minderv1.ProviderConfig,
 	*minderv1.GitHubAppProviderConfig,
 	error,
 ) {
-	// embedding the struct to expose its JSON tags
-	type wrapper struct {
-		*minderv1.ProviderConfig
-		GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
-	}
-
-	var w wrapper
+	var w appConfigWrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
 		return nil, nil, err
 	}
@@ -139,6 +139,19 @@ func ParseV1AppConfig(rawCfg json.RawMessage) (
 	}
 
 	return w.ProviderConfig, w.GitHubApp, nil
+}
+
+// MarshalV1AppConfig marshals the GitHubAppProviderConfig struct into a raw config
+func MarshalV1AppConfig(
+	providerCfg *minderv1.ProviderConfig,
+	appCfg *minderv1.GitHubAppProviderConfig,
+) (json.RawMessage, error) {
+	w := appConfigWrapper{
+		ProviderConfig: providerCfg,
+		GitHubApp:      appCfg,
+	}
+
+	return json.Marshal(w)
 }
 
 // Ensure that the GitHubAppDelegate client implements the GitHub Delegate interface
