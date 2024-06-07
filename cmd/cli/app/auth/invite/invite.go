@@ -27,8 +27,7 @@ var inviteCmd = &cobra.Command{
 	Hidden: true, // TODO: This hides the command, remove it once it's implemented
 	Use:    "invite",
 	Short:  "Manage user invitations",
-	Long: `The minder auth invite command lets you manage user invitations
-for the minder control plane.`,
+	Long: `The minder auth invite command lets you manage (accept/reject) your invitations.`
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
