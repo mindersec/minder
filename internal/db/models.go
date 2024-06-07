@@ -693,3 +693,13 @@ type User struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
+
+type UserInvite struct {
+	Code      string    `json:"code"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	Project   uuid.UUID `json:"project"`
+	Sponsor   int32     `json:"sponsor"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
