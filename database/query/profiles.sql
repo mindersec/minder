@@ -106,7 +106,6 @@ JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_pr
 WHERE entity_profile_rules.rule_type_id = $1
 GROUP BY profiles.id;
 
-
 -- name: CountProfilesByEntityType :many
 SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
 FROM profiles AS p
@@ -115,3 +114,7 @@ GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
+
+-- used when cleaning up a project to avoid FK dependency issues between rule_types and rule_instances
+-- name: DeleteProfilesInProject :exec
+DELETE FROM profiles WHERE project_id = $1;

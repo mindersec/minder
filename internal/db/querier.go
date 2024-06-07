@@ -35,6 +35,8 @@ type Querier interface {
 	DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdatedRulesParams) error
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
+	// used when cleaning up a project to avoid FK dependency issues between rule_types and rule_instances
+	DeleteProfilesInProject(ctx context.Context, projectID uuid.UUID) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
