@@ -17,7 +17,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,7 +30,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
@@ -112,7 +113,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 		}
 	}
 
-	config, err := providerConfigFromArg(cfgFlag, cmd.InOrStdin())
+	config, err := providerConfigFromArg(cfgFlag, provider, cmd.InOrStdin())
 	if err != nil {
 		return cli.MessageAndError("Error reading provider configuration", err)
 	}
@@ -145,7 +146,7 @@ func enrollUsingToken(
 	project string,
 	token string,
 	owner string,
-	providerConfig *structpb.Struct,
+	providerConfig *anypb.Any,
 ) error {
 	_, err := provClient.CreateProvider(ctx, &minderv1.CreateProviderRequest{
 		Context: &minderv1.Context{Provider: &providerName, Project: &project},
@@ -189,7 +190,7 @@ func enrollUsingOAuth2Flow(
 	project string,
 	owner string,
 	skipBrowser bool,
-	providerConfig *structpb.Struct,
+	providerConfig *anypb.Any,
 ) error {
 	oAuthCallbackCtx, oAuthCancel := context.WithTimeout(ctx, MAX_WAIT+5*time.Second)
 	defer oAuthCancel()
@@ -336,7 +337,11 @@ func callBackServer(ctx context.Context, cmd *cobra.Command, project string, por
 	}
 }
 
-func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb.Struct, error) {
+func providerConfigFromArg(
+	configSource string,
+	providerClass string,
+	dashReader io.Reader,
+) (*anypb.Any, error) {
 	if configSource == "" {
 		return nil, nil
 	}
@@ -347,15 +352,32 @@ func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb
 	}
 	defer closer()
 
-	var config map[string]any
-
-	// TODO: handle YAML and JSON
-	err = json.NewDecoder(reader).Decode(&config)
+	payload, err := io.ReadAll(io.LimitReader(reader, 1<<20))
 	if err != nil {
-		return nil, fmt.Errorf("error parsing provider configuration: %w", err)
+		return nil, fmt.Errorf("error reading provider configuration: %w", err)
 	}
 
-	return structpb.NewStruct(config)
+	// TODO: handle YAML and JSON
+	var specificConfig proto.Message
+	//nolint:revive // We want to keep this switch for clarity.
+	switch providerClass {
+	case minderv1.ProviderClass_PROVIDER_CLASS_GITHUB_APP.String():
+		specificConfig = &minderv1.ProviderConfig{}
+		err = protojson.Unmarshal(
+			payload,
+			specificConfig,
+		)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling provider configuration: %w", err)
+	}
+
+	config, err := anypb.New(specificConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling provider configuration: %w", err)
+	}
+
+	return config, nil
 }
 
 func supportsToken(providerClass string) (bool, error) {

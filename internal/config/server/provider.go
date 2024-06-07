@@ -17,7 +17,7 @@ package server
 
 // ProviderConfig is the configuration for the providers
 type ProviderConfig struct {
-	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
+	GitHubApp *GitHubAppConfig `mapstructure:"github_app"`
 	GitHub    *GitHubConfig    `mapstructure:"github"`
 	Git       GitConfig        `mapstructure:"git"`
 }

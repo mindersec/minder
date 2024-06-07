@@ -35,6 +35,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/stacklok/minder/internal/auth"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
@@ -135,7 +136,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 
 	var confBytes []byte
 	if conf := req.GetConfig(); conf != nil {
-		confBytes, err = conf.MarshalJSON()
+		confBytes, err = protojson.Marshal(conf)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "error marshalling config: %s", err)
 		}

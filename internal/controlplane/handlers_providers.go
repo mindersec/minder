@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -54,7 +54,7 @@ func (s *Server) CreateProvider(
 	if provider.Config != nil {
 		var marshallErr error
 
-		provConfig, marshallErr = provider.Config.MarshalJSON()
+		provConfig, marshallErr = protojson.Marshal(provider.Config)
 		if marshallErr != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "error marshalling provider provConfig: %v", marshallErr)
 		}
@@ -65,6 +65,7 @@ func (s *Server) CreateProvider(
 	var configErr providers.ErrProviderInvalidConfig
 	dbProv, err := s.providerManager.CreateFromConfig(
 		ctx, db.ProviderClass(provider.GetClass()), projectID, provider.Name, provConfig)
+
 	if db.ErrIsUniqueViolation(err) {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("provider already exists")
 		return nil, util.UserVisibleError(codes.AlreadyExists, "provider already exists")
@@ -72,7 +73,7 @@ func (s *Server) CreateProvider(
 		zerolog.Ctx(ctx).Error().Err(err).Msg("provider config does not validate")
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider config: "+configErr.Details)
 	} else if err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
+		return nil, status.Errorf(codes.Internal, "invalid provider config: %v", err)
 	}
 
 	prov, err := protobufProviderFromDB(ctx, s.store, s.cryptoEngine, &s.cfg.Provider, dbProv)
@@ -247,7 +248,12 @@ func (s *Server) PatchProvider(
 		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
 	}
 
-	err := s.providerManager.PatchProviderConfig(ctx, providerName, projectID, req.GetPatch().GetConfig().AsMap())
+	cfg, err := req.GetPatch().GetConfig().UnmarshalNew()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error unmarshalling configuration: %v", err)
+	}
+
+	err = s.providerManager.PatchProviderConfig(ctx, providerName, projectID, cfg)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
@@ -277,13 +283,18 @@ func protobufProviderFromDB(
 	ctx context.Context, store db.Store,
 	cryptoEngine crypto.Engine, pc *config.ProviderConfig, p *db.Provider,
 ) (*minderv1.Provider, error) {
-	var cfg *structpb.Struct
+	var cfg *anypb.Any
 
 	if len(p.Definition) > 0 {
-		cfg = &structpb.Struct{}
-		if err := protojson.Unmarshal(p.Definition, cfg); err != nil {
+		m := &minderv1.ProviderConfig{}
+		if err := protojson.Unmarshal(p.Definition, m); err != nil {
 			return nil, fmt.Errorf("error unmarshalling provider definition: %w", err)
 		}
+		anyCfg, err := anypb.New(m)
+		if err != nil {
+			return nil, fmt.Errorf("error wrapping provider config into any: %w", err)
+		}
+		cfg = anyCfg
 	}
 
 	state, err := providers.GetCredentialStateForProvider(ctx, *p, store, cryptoEngine, pc)

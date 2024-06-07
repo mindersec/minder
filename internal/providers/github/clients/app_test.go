@@ -87,7 +87,7 @@ func TestParseV1AppConfig(t *testing.T) {
 		},
 		{
 			name:   "valid app and provider config",
-			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } }, "github-app": { "endpoint": "https://api.github.com" } }`),
+			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } }, "github_app": { "endpoint": "https://api.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
 				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
@@ -96,22 +96,8 @@ func TestParseV1AppConfig(t *testing.T) {
 				t.Helper()
 				entityConfig := providerConfig.AutoRegistration.GetEntities()
 				assert.NotNil(t, entityConfig)
-				assert.Len(t, entityConfig, 1)
-				assert.True(t, entityConfig["repository"].Enabled)
+				assert.True(t, entityConfig.Repository.Enabled)
 			},
-		},
-		{
-			name:   "auto_registration does not validate the enabled entities",
-			config: json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true} } }, "github-app": { "endpoint": "https://api.github.com" } }`),
-			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
-				t.Helper()
-				assert.Nil(t, ghConfig)
-			},
-			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
-				t.Helper()
-				assert.Nil(t, providerConfig)
-			},
-			error: "error validating provider config: auto_registration: invalid entity type: blah",
 		},
 		{
 			name:   "missing required github key",

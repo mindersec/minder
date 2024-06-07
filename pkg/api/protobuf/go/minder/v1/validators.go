@@ -52,18 +52,28 @@ func (p *ProviderConfig) Validate() error {
 	return nil
 }
 
+// ensure EntityAutoRegistrationConfig implements the Validator interface
+var _ Validator = (*EntityAutoRegistrationConfig)(nil)
+
+// Validate is a utility function which allows for the validation of the EntityAutoRegistrationConfig struct.
+func (_ *EntityAutoRegistrationConfig) Validate() error {
+	return nil
+}
+
+// ensure EntitiesConfig implements the Validator interface
+var _ Validator = (*EntitiesConfig)(nil)
+
+// Validate is a utility function which allows for the validation of the EntitiesConfig struct.
+func (a *EntitiesConfig) Validate() error {
+	return a.GetRepository().Validate()
+}
+
 // ensure AutoRegistration implements the Validator interface
 var _ Validator = (*AutoRegistration)(nil)
 
 // Validate is a utility function which allows for the validation of the AutoRegistration struct.
 func (a *AutoRegistration) Validate() error {
-	for entity := range a.GetEntities() {
-		if !EntityFromString(entity).IsValid() {
-			return fmt.Errorf("invalid entity type: %s", entity)
-		}
-	}
-
-	return nil
+	return a.GetEntities().Validate()
 }
 
 // ensure GitHubProviderConfig implements the Validator interface

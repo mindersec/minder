@@ -33,6 +33,8 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -56,10 +58,13 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-func newPbStruct(t *testing.T, data map[string]interface{}) *structpb.Struct {
+func newPbStruct(t *testing.T, data func(*minder.ProviderConfig)) *anypb.Any {
 	t.Helper()
 
-	pbs, err := structpb.NewStruct(data)
+	cfg := &minder.ProviderConfig{}
+	data(cfg)
+
+	pbs, err := anypb.New(cfg)
 	require.NoError(t, err)
 	return pbs
 }
@@ -124,7 +129,7 @@ func TestCreateProvider(t *testing.T) {
 	scenarios := []struct {
 		name          string
 		providerClass db.ProviderClass
-		userConfig    *structpb.Struct
+		userConfig    *anypb.Any
 		expected      minder.Provider
 		expectedErr   string
 	}{
@@ -133,8 +138,10 @@ func TestCreateProvider(t *testing.T) {
 			providerClass: db.ProviderClassGithub,
 			expected: minder.Provider{
 				Name: "test-github-defaults",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github": map[string]interface{}{},
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					serialized, err := structpb.NewStruct(map[string]interface{}{})
+					require.NoError(t, err)
+					cfg.Github = serialized
 				}),
 				Class: string(db.ProviderClassGithub),
 			},
@@ -142,18 +149,22 @@ func TestCreateProvider(t *testing.T) {
 		{
 			name:          "test-github-config",
 			providerClass: db.ProviderClassGithub,
-			userConfig: newPbStruct(t, map[string]interface{}{
-				"github": map[string]interface{}{
+			userConfig: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+				s, err := structpb.NewStruct(map[string]interface{}{
 					"key":      "value", // will be ignored
 					"endpoint": "my.little.github",
-				},
+				})
+				require.NoError(t, err)
+				cfg.Github = s
 			}),
 			expected: minder.Provider{
 				Name: "test-github-config",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github": map[string]interface{}{
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(map[string]interface{}{
 						"endpoint": "my.little.github",
-					},
+					})
+					require.NoError(t, err)
+					cfg.Github = s
 				}),
 				Class: string(db.ProviderClassGithub),
 			},
@@ -163,8 +174,10 @@ func TestCreateProvider(t *testing.T) {
 			providerClass: db.ProviderClassGithubApp,
 			expected: minder.Provider{
 				Name: "test-github-app-defaults",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github_app": map[string]interface{}{},
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(map[string]interface{}{})
+					require.NoError(t, err)
+					cfg.GithubApp = s
 				}),
 				Class: string(db.ProviderClassGithubApp),
 			},
@@ -172,18 +185,30 @@ func TestCreateProvider(t *testing.T) {
 		{
 			name:          "test-github-app-config-newkey",
 			providerClass: db.ProviderClassGithubApp,
-			userConfig: newPbStruct(t, map[string]interface{}{
-				"github_app": map[string]interface{}{
-					"key":      "value", // will be ignored
-					"endpoint": "my.little.github",
-				},
+			userConfig: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+				s, err := structpb.NewStruct(
+					map[string]interface{}{
+						"github_app": map[string]interface{}{
+							"key":      "value", // will be ignored
+							"endpoint": "my.little.github",
+						},
+					},
+				)
+				require.NoError(t, err)
+				cfg.GithubApp = s
 			}),
 			expected: minder.Provider{
 				Name: "test-github-app-config-newkey",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github_app": map[string]interface{}{
-						"endpoint": "my.little.github",
-					},
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(
+						map[string]interface{}{
+							"github_app": map[string]interface{}{
+								"endpoint": "my.little.github",
+							},
+						},
+					)
+					require.NoError(t, err)
+					cfg.GithubApp = s
 				}),
 				Class: string(db.ProviderClassGithubApp),
 			},
@@ -191,18 +216,22 @@ func TestCreateProvider(t *testing.T) {
 		{
 			name:          "test-github-app-config-oldkey",
 			providerClass: db.ProviderClassGithubApp,
-			userConfig: newPbStruct(t, map[string]interface{}{
-				"github-app": map[string]interface{}{
+			userConfig: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+				s, err := structpb.NewStruct(map[string]interface{}{
 					"key":      "value", // will be ignored
 					"endpoint": "my.little.github",
-				},
+				})
+				require.NoError(t, err)
+				cfg.GithubApp = s
 			}),
 			expected: minder.Provider{
-				Name: "test-github-app-config-oldkey",
-				Config: newPbStruct(t, map[string]interface{}{
-					"github_app": map[string]interface{}{
+				Name: "test-github-app-config",
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(map[string]interface{}{
 						"endpoint": "my.little.github",
-					},
+					})
+					require.NoError(t, err)
+					cfg.GithubApp = s
 				}),
 				Class: string(db.ProviderClassGithubApp),
 			},
@@ -210,18 +239,22 @@ func TestCreateProvider(t *testing.T) {
 		{
 			name:          "test-dockerhub-config",
 			providerClass: db.ProviderClassDockerhub,
-			userConfig: newPbStruct(t, map[string]interface{}{
-				"dockerhub": map[string]interface{}{
+			userConfig: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+				s, err := structpb.NewStruct(map[string]interface{}{
 					"key":       "value", // will be ignored
 					"namespace": "myproject",
-				},
+				})
+				require.NoError(t, err)
+				cfg.Dockerhub = s
 			}),
 			expected: minder.Provider{
 				Name: "test-dockerhub-config",
-				Config: newPbStruct(t, map[string]interface{}{
-					"dockerhub": map[string]interface{}{
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(map[string]interface{}{
 						"namespace": "myproject",
-					},
+					})
+					require.NoError(t, err)
+					cfg.Dockerhub = s
 				}),
 				Class: string(db.ProviderClassDockerhub),
 			},
@@ -252,12 +285,12 @@ func TestCreateProvider(t *testing.T) {
 				Provider: engine.Provider{Name: scenario.name},
 			})
 
-			jsonConfig, err := scenario.expected.Config.MarshalJSON()
-			require.NoError(t, err)
+			jsonConfig, err := protojson.Marshal(scenario.expected.Config)
+			assert.NoError(t, err)
 
 			var jsonUserConfig []byte
 			if scenario.userConfig != nil {
-				jsonUserConfig, err = scenario.userConfig.MarshalJSON()
+				jsonUserConfig, err = protojson.Marshal(scenario.userConfig)
 				require.NoError(t, err)
 			}
 
@@ -419,10 +452,12 @@ func TestCreateProviderFailures(t *testing.T) {
 			Provider: &minder.Provider{
 				Name:  providerName,
 				Class: string(db.ProviderClassDockerhub),
-				Config: newPbStruct(t, map[string]interface{}{
-					"dockerhub": map[string]interface{}{
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					s, err := structpb.NewStruct(map[string]interface{}{
 						"key": "value",
-					},
+					})
+					require.NoError(t, err)
+					cfg.Dockerhub = s
 				}),
 			},
 		})
@@ -453,25 +488,33 @@ func TestCreateProviderFailures(t *testing.T) {
 			Provider: &minder.Provider{
 				Name:  providerName,
 				Class: string(db.ProviderClassGithubApp),
-				Config: newPbStruct(t, map[string]interface{}{
-					"auto_registration": map[string]interface{}{
-						"entities": map[string]interface{}{
-							"blah": map[string]interface{}{
-								"enabled": true,
+				Config: newPbStruct(t, func(cfg *minder.ProviderConfig) {
+					// This struct cannot deserialize into a minder.ProviderConfig
+					// as "blah" is not a valid field.
+					// It is not possible to construct this using protobuf messages,
+					// hence it's an internal error
+					s, err := structpb.NewStruct(map[string]interface{}{
+						"auto_registration": map[string]interface{}{
+							"entities": map[string]interface{}{
+								"blah": map[string]interface{}{
+									"enabled": true,
+								},
 							},
 						},
-					},
-					"github-app": map[string]interface{}{},
+						"github-app": map[string]interface{}{},
+					})
+					require.NoError(t, err)
+					cfg.Dockerhub = s
 				}),
 			},
 		})
 		assert.Error(t, err)
-		require.ErrorContains(t, err, "error validating provider config: auto_registration: invalid entity type: blah")
+		require.ErrorContains(t, err, "invalid arguments")
 
 		// test special-casing of the invalid config error
 		st, ok := status.FromError(err)
 		require.True(t, ok)
-		assert.Equal(t, codes.InvalidArgument, st.Code())
+		assert.Equal(t, codes.Internal, st.Code())
 		require.ErrorContains(t, err, "invalid provider config")
 	})
 }

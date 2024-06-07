@@ -228,7 +228,7 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 		Msg("Creating GitHub App Provider")
 
 	_, err = createGitHubApp(
-		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github-app": {}}`), nil, sql.NullString{})
+		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github_app": {}}`), nil, sql.NullString{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
 

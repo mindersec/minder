@@ -25,12 +25,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/stacklok/minder/internal/db"
 	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	"github.com/stacklok/minder/internal/providers/mock/fixtures"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type configMatcher struct {
@@ -65,52 +68,54 @@ func (m *configMatcher) String() string {
 func TestProviderManager_PatchProviderConfig(t *testing.T) {
 	t.Parallel()
 
+	fm, err := fieldmaskpb.New(&minderv1.ProviderConfig{}, "auto_registration.entities.repository.enabled")
+	require.NoError(t, err)
+
 	scenarios := []struct {
 		Name          string
 		FieldMask     []string
 		Provider      *db.Provider
 		CurrentConfig json.RawMessage
-		Patch         map[string]any
+		Patch         proto.Message
 		MergedConfig  json.RawMessage
 		ExpectedError string
 		ValidConfig   bool
 	}{
 		{
-			Name:          "Enabling the auto_enroll field",
+			Name:          "Enabling the auto_registration field",
 			Provider:      githubAppProvider,
-			CurrentConfig: json.RawMessage(`{ "github-app": {} }`),
-			Patch: map[string]any{
-				"auto_registration": map[string]any{
-					"enabled": []string{"repository"},
+			CurrentConfig: json.RawMessage(`{ "github_app": {} }`),
+			Patch: &minderv1.ProviderConfig{
+				AutoRegistration: &minderv1.AutoRegistration{
+					Entities: &minderv1.EntitiesConfig{
+						Repository: &minderv1.EntityAutoRegistrationConfig{
+							Enabled: true,
+						},
+					},
 				},
+				UpdateMask: fm,
 			},
-			MergedConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
+			MergedConfig: json.RawMessage(`{ "auto_registration": { "entities": {"repository": {"enabled": true}}}, "github_app": {}}`),
 			ValidConfig:  true,
 		},
 		{
 			Name:          "Disabling the auto_enroll field",
 			Provider:      githubAppProvider,
-			CurrentConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
-			Patch: map[string]any{
-				"auto_registration": map[string]any{
-					"enabled": []string{},
-				},
+			CurrentConfig: json.RawMessage(`{ "auto_registration": { "entities": {"repository": {"enabled": true}}}, "github_app": {}}`),
+			Patch: &minderv1.ProviderConfig{
+				UpdateMask: fm,
 			},
-			MergedConfig: json.RawMessage(`{ "auto_registration": { "enabled": [] }, "github-app": {}}`),
+			MergedConfig: json.RawMessage(`{ "github_app": {}}`),
 			ValidConfig:  true,
 		},
 		{
 			Name:          "Invalid config doesn't call the store.Update method",
 			Provider:      githubAppProvider,
-			CurrentConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github-app": {}}`),
-			Patch: map[string]any{
-				"auto_registration": map[string]any{
-					"enabled": []string{"my_little_pony"},
-				},
-			},
-			MergedConfig:  json.RawMessage(`{ "auto_registration": { "enabled": [] }, "github-app": {}}`),
+			CurrentConfig: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] }, "github_app": {}}`),
+			Patch:         &minderv1.ProviderConfig{},
+			MergedConfig:  json.RawMessage(`{ "auto_registration": { "entities": {} }, "github_app": {}}`),
 			ValidConfig:   false,
-			ExpectedError: "error validating provider config: invalid config",
+			ExpectedError: "error unmarshalling provider config",
 		},
 	}
 
@@ -136,16 +141,16 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 				Times(1)
 
 			if scenario.ValidConfig {
-				classManager.EXPECT().ValidateConfig(ctx, dbProvider.Class, gomock.Any()).
-					Return(nil).
-					Times(1)
+				// classManager.EXPECT().MarshallConfig(ctx, dbProvider.Class, gomock.Any()).
+				// 	Return(nil, nil).
+				// 	Times(1)
 				store.EXPECT().Update(ctx, dbProvider.ID, dbProvider.ProjectID, &configMatcher{expected: scenario.MergedConfig}).
 					Return(nil).
 					Times(1)
 			} else {
-				classManager.EXPECT().ValidateConfig(ctx, dbProvider.Class, gomock.Any()).
-					Return(errors.New("invalid config")).
-					Times(1)
+				// classManager.EXPECT().MarshallConfig(ctx, dbProvider.Class, gomock.Any()).
+				// 	Return(errors.New("invalid config")).
+				// 	Times(1)
 				store.EXPECT().Update(ctx, dbProvider.ID, dbProvider.ProjectID, gomock.Any()).
 					Times(0)
 			}

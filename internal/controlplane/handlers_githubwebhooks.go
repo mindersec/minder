@@ -1038,9 +1038,7 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 	}
 
 	addedRepos := make([]*repo, 0)
-	autoRegEntities := providerConfig.GetAutoRegistration().GetEntities()
-	repoAutoReg, ok := autoRegEntities[string(pb.RepositoryEntity)]
-	if ok && repoAutoReg.GetEnabled() {
+	if providerConfig.GetAutoRegistration().GetEntities().GetRepository().Enabled {
 		addedRepos = event.GetRepositoriesAdded()
 	} else {
 		zerolog.Ctx(ctx).Info().Msg("auto-registration is disabled for repositories")

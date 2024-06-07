@@ -20,13 +20,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
-	"dario.cat/mergo"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -65,7 +69,7 @@ type ProviderManager interface {
 	DeleteByName(ctx context.Context, name string, projectID uuid.UUID) error
 	// PatchProviderConfig updates the configuration of the specified provider with the specified patch.
 	// All keys in the configMap will overwrite the fields in the provider config.
-	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
+	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch proto.Message) error
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -230,40 +234,87 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 }
 
 func (p *providerManager) PatchProviderConfig(
-	ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any,
+	ctx context.Context,
+	providerName string,
+	projectID uuid.UUID,
+	configPatch proto.Message,
 ) error {
 	dbProvider, err := p.store.GetByNameInSpecificProject(ctx, projectID, providerName)
 	if err != nil {
 		return fmt.Errorf("error retrieving db record: %w", err)
 	}
 
-	var originalConfig map[string]any
-
-	if err := json.Unmarshal(dbProvider.Definition, &originalConfig); err != nil {
+	originalProto := &minderv1.ProviderConfig{}
+	if err := protojson.Unmarshal(dbProvider.Definition, originalProto); err != nil {
 		return fmt.Errorf("error unmarshalling provider config: %w", err)
 	}
 
-	err = mergo.Map(&originalConfig, configPatch, mergo.WithOverride)
-	if err != nil {
+	updateMask := configPatch.(*minderv1.ProviderConfig).UpdateMask.GetPaths()
+
+	if err := overwrite(originalProto, configPatch, updateMask); err != nil {
 		return fmt.Errorf("error merging provider config: %w", err)
 	}
 
-	mergedJSON, err := json.Marshal(originalConfig)
+	// Here encoding/json is used instead of protojson because
+	// protojson apparently does not honor json tags on protobuf
+	// structs, but rather it uses json tags internal to protobuf
+	// tags.
+	//
+	// Here's an example
+	// e.g. `protobuf:"bytes,2,opt,name=github_app,json=githubApp,proto3"
+	// json:"github_app,omitempty"`
+	newConfig, err := json.Marshal(originalProto)
 	if err != nil {
 		return fmt.Errorf("error marshalling provider config: %w", err)
 	}
 
-	manager, err := p.getClassManager(dbProvider.Class)
-	if err != nil {
-		return err
+	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, newConfig)
+}
+
+// overwrite routine sets value from its second argument to its first
+// argument for the specified list of field paths.
+//
+// For each path it takes the value from `patch` and sets the same
+// path in `original` to the same value. Extra care is needed when
+// dealing with null references.
+func overwrite(original, patch proto.Message, paths []string) error {
+	for _, attrName := range paths {
+		// Their path part must be of the form
+		// <root>.<field1>.<field2>...
+		attrPath := strings.Split(attrName, ".")
+		original := original
+		patch := patch
+
+		// Here we loop over the path steps to reach the field
+		// we want to initialize.
+		for _, fieldName := range attrPath {
+			// We retrieve the field by name. ByTextName
+			// and the other functions used to lookup
+			// fields return nil in case it does not exist.
+			fd := original.ProtoReflect().
+				Descriptor().
+				Fields().
+				ByTextName(fieldName)
+			// We treat non-existing field lookups as a
+			// user errors.
+			if fd == nil {
+				return fmt.Errorf("config does not have %s field", fieldName)
+			}
+
+			if fd.Kind() == protoreflect.MessageKind {
+				if !patch.ProtoReflect().Has(fd) || !patch.ProtoReflect().Get(fd).Message().IsValid() {
+					original.ProtoReflect().Clear(fd)
+					break
+				}
+				original = original.ProtoReflect().Mutable(fd).Message().Interface()
+				patch = patch.ProtoReflect().Get(fd).Message().Interface()
+			} else {
+				original.ProtoReflect().Set(fd, patch.ProtoReflect().Get(fd))
+			}
+		}
 	}
 
-	err = manager.ValidateConfig(ctx, dbProvider.Class, mergedJSON)
-	if err != nil {
-		return fmt.Errorf("error validating provider config: %w", err)
-	}
-
-	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, mergedJSON)
+	return nil
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

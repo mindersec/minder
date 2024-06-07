@@ -244,19 +244,7 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| entities | [AutoRegistration.EntitiesEntry](#minder-v1-AutoRegistration-EntitiesEntry) | repeated | enabled is the list of entities that are enabled for auto-registration. |
-
-
-<a name="minder-v1-AutoRegistration-EntitiesEntry"></a>
-
-#### AutoRegistration.EntitiesEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  |  |
+| entities | [EntitiesConfig](#minder-v1-EntitiesConfig) |  | enabled is the list of entities that are enabled for auto-registration. |
 
 
 <a name="minder-v1-BranchProtection"></a>
@@ -673,6 +661,20 @@ Namespace: is the namespace for the DockerHub provider.
 | namespace | [string](#string) |  | namespace is the namespace for the DockerHub provider. |
 
 
+<a name="minder-v1-EntitiesConfig"></a>
+
+#### EntitiesConfig
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  |  |
+| container | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  | e.g.
+
+EntityAutoRegistrationConfig deployment = 3; |
+
+
 <a name="minder-v1-EntityAutoRegistrationConfig"></a>
 
 #### EntityAutoRegistrationConfig
@@ -785,8 +787,8 @@ Namespace: is the namespace for the GHCR provider.
 | owner | [string](#string) | optional |  |
 | context | [Context](#minder-v1-Context) |  |  |
 | redirect_url | [string](#string) | optional |  |
-| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is a JSON object that can be used to pass additional configuration |
 | provider_class | [string](#string) |  |  |
+| config | [google.protobuf.Any](#google-protobuf-Any) |  | config is a JSON object that can be used to pass additional configuration |
 
 
 <a name="minder-v1-GetAuthorizationURLResponse"></a>
@@ -1460,7 +1462,6 @@ ListRuleTypesResponse is the response to list rule types.
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  |  |
 | patch | [Provider](#minder-v1-Provider) |  |  |
-| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
 
 
 <a name="minder-v1-PatchProviderResponse"></a>
@@ -1644,10 +1645,10 @@ Project API Objects
 | project | [string](#string) |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
 | version | [string](#string) |  | version is the version of the provider. |
 | implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
-| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
 | auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
 | parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
 | credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
+| config | [google.protobuf.Any](#google-protobuf-Any) |  | config is the configuration of the provider. |
 
 
 <a name="minder-v1-ProviderConfig"></a>
@@ -1658,7 +1659,11 @@ ProviderConfig contains the generic configuration for a provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| github | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
+| github_app | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
+| dockerhub | [google.protobuf.Struct](#google-protobuf-Struct) |  |  |
 | auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) |  | auto_registration is the configuration for auto-registering entities. |
+| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
 
 
 <a name="minder-v1-ProviderParameter"></a>

@@ -16,6 +16,7 @@
 syntax = "proto3";
 package minder.v1;
 import "google/api/annotations.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
@@ -899,12 +900,12 @@ message GetAuthorizationURLRequest {
     Context context = 6;
     optional string redirect_url = 7;
 
-    // config is a JSON object that can be used to pass additional configuration
-    google.protobuf.Struct config = 8;
-
     string provider_class = 9;
 
-    reserved 1, 2; // deprecated provider and project_id
+    // config is a JSON object that can be used to pass additional configuration
+    google.protobuf.Any config = 10;
+
+    reserved 1, 2, 8; // deprecated provider and project_id
 }
 
 message GetAuthorizationURLResponse {
@@ -1339,7 +1340,14 @@ enum Entity {
 }
 
 message EntityAutoRegistrationConfig {
-   bool enabled = 1;
+    bool enabled = 1;
+}
+
+message EntitiesConfig {
+    EntityAutoRegistrationConfig repository = 1;
+    // e.g.
+    EntityAutoRegistrationConfig container = 2;
+    // EntityAutoRegistrationConfig deployment = 3;
 }
 
 // AutoRegistration is the configuration for auto-registering entities.
@@ -1347,13 +1355,19 @@ message EntityAutoRegistrationConfig {
 // and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 message AutoRegistration {
     // enabled is the list of entities that are enabled for auto-registration.
-    map<string, EntityAutoRegistrationConfig> entities = 1;
+     EntitiesConfig entities = 1;
 }
 
 // ProviderConfig contains the generic configuration for a provider.
 message ProviderConfig {
+    google.protobuf.Struct github = 1;
+    google.protobuf.Struct github_app = 3;
+    google.protobuf.Struct dockerhub = 4;
+
     // auto_registration is the configuration for auto-registering entities.
-    AutoRegistration auto_registration = 1;
+    AutoRegistration auto_registration = 10;
+
+    google.protobuf.FieldMask update_mask = 15;
 }
 
 // RESTProviderConfig contains the configuration for the REST provider.
@@ -2229,8 +2243,6 @@ message ListProviderClassesResponse {
 message PatchProviderRequest {
     Context context = 1;
     Provider patch = 2;
-
-    google.protobuf.FieldMask update_mask = 3;
 }
 
 message PatchProviderResponse {
@@ -2313,8 +2325,7 @@ message Provider {
     // implements is the list of interfaces that the provider implements.
     repeated ProviderType implements = 4;
 
-    // config is the configuration of the provider.
-    google.protobuf.Struct config = 5;
+    reserved 5; // deprecated Struct config
 
     // auth_flows is the list of authorization flows that the provider supports.
     repeated AuthorizationFlow auth_flows = 6;
@@ -2325,4 +2336,7 @@ message Provider {
     // credentials_state is the state of the credentials for the provider.
     // This is an output-only field. It may be: "set", "unset", "not_applicable".
     string credentials_state = 9;
+
+    // config is the configuration of the provider.
+    google.protobuf.Any config = 10;
 }

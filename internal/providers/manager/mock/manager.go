@@ -18,6 +18,7 @@ import (
 	db "github.com/stacklok/minder/internal/db"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
+	proto "google.golang.org/protobuf/proto"
 )
 
 // MockProviderManager is a mock of ProviderManager interface.
@@ -133,7 +134,7 @@ func (mr *MockProviderManagerMockRecorder) InstantiateFromNameProject(ctx, name,
 }
 
 // PatchProviderConfig mocks base method.
-func (m *MockProviderManager) PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error {
+func (m *MockProviderManager) PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch proto.Message) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PatchProviderConfig", ctx, providerName, projectID, configPatch)
 	ret0, _ := ret[0].(error)
