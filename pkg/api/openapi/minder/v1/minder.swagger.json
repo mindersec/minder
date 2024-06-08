@@ -3944,9 +3944,6 @@
         "isFork": {
           "type": "boolean"
         },
-        "registered": {
-          "type": "boolean"
-        },
         "createdAt": {
           "type": "string",
           "format": "date-time"
