@@ -511,6 +511,7 @@ var OAuthService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	RepositoryService_RegisterRepository_FullMethodName                 = "/minder.v1.RepositoryService/RegisterRepository"
+	RepositoryService_ReconcileEntityRegistration_FullMethodName        = "/minder.v1.RepositoryService/ReconcileEntityRegistration"
 	RepositoryService_ListRemoteRepositoriesFromProvider_FullMethodName = "/minder.v1.RepositoryService/ListRemoteRepositoriesFromProvider"
 	RepositoryService_ListRepositories_FullMethodName                   = "/minder.v1.RepositoryService/ListRepositories"
 	RepositoryService_GetRepositoryById_FullMethodName                  = "/minder.v1.RepositoryService/GetRepositoryById"
@@ -524,6 +525,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RepositoryServiceClient interface {
 	RegisterRepository(ctx context.Context, in *RegisterRepositoryRequest, opts ...grpc.CallOption) (*RegisterRepositoryResponse, error)
+	ReconcileEntityRegistration(ctx context.Context, in *ReconcileEntityRegistrationRequest, opts ...grpc.CallOption) (*ReconcileEntityRegistrationResponse, error)
 	ListRemoteRepositoriesFromProvider(ctx context.Context, in *ListRemoteRepositoriesFromProviderRequest, opts ...grpc.CallOption) (*ListRemoteRepositoriesFromProviderResponse, error)
 	ListRepositories(ctx context.Context, in *ListRepositoriesRequest, opts ...grpc.CallOption) (*ListRepositoriesResponse, error)
 	GetRepositoryById(ctx context.Context, in *GetRepositoryByIdRequest, opts ...grpc.CallOption) (*GetRepositoryByIdResponse, error)
@@ -544,6 +546,16 @@ func (c *repositoryServiceClient) RegisterRepository(ctx context.Context, in *Re
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RegisterRepositoryResponse)
 	err := c.cc.Invoke(ctx, RepositoryService_RegisterRepository_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *repositoryServiceClient) ReconcileEntityRegistration(ctx context.Context, in *ReconcileEntityRegistrationRequest, opts ...grpc.CallOption) (*ReconcileEntityRegistrationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReconcileEntityRegistrationResponse)
+	err := c.cc.Invoke(ctx, RepositoryService_ReconcileEntityRegistration_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -615,6 +627,7 @@ func (c *repositoryServiceClient) DeleteRepositoryByName(ctx context.Context, in
 // for forward compatibility
 type RepositoryServiceServer interface {
 	RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error)
+	ReconcileEntityRegistration(context.Context, *ReconcileEntityRegistrationRequest) (*ReconcileEntityRegistrationResponse, error)
 	ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error)
 	ListRepositories(context.Context, *ListRepositoriesRequest) (*ListRepositoriesResponse, error)
 	GetRepositoryById(context.Context, *GetRepositoryByIdRequest) (*GetRepositoryByIdResponse, error)
@@ -630,6 +643,9 @@ type UnimplementedRepositoryServiceServer struct {
 
 func (UnimplementedRepositoryServiceServer) RegisterRepository(context.Context, *RegisterRepositoryRequest) (*RegisterRepositoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterRepository not implemented")
+}
+func (UnimplementedRepositoryServiceServer) ReconcileEntityRegistration(context.Context, *ReconcileEntityRegistrationRequest) (*ReconcileEntityRegistrationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReconcileEntityRegistration not implemented")
 }
 func (UnimplementedRepositoryServiceServer) ListRemoteRepositoriesFromProvider(context.Context, *ListRemoteRepositoriesFromProviderRequest) (*ListRemoteRepositoriesFromProviderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListRemoteRepositoriesFromProvider not implemented")
@@ -676,6 +692,24 @@ func _RepositoryService_RegisterRepository_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RepositoryServiceServer).RegisterRepository(ctx, req.(*RegisterRepositoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RepositoryService_ReconcileEntityRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReconcileEntityRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RepositoryServiceServer).ReconcileEntityRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RepositoryService_ReconcileEntityRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RepositoryServiceServer).ReconcileEntityRegistration(ctx, req.(*ReconcileEntityRegistrationRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -798,6 +832,10 @@ var RepositoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegisterRepository",
 			Handler:    _RepositoryService_RegisterRepository_Handler,
+		},
+		{
+			MethodName: "ReconcileEntityRegistration",
+			Handler:    _RepositoryService_ReconcileEntityRegistration_Handler,
 		},
 		{
 			MethodName: "ListRemoteRepositoriesFromProvider",

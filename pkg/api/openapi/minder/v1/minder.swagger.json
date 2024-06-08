@@ -507,7 +507,18 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/OAuthServiceStoreProviderTokenBody"
+              "type": "object",
+              "properties": {
+                "accessToken": {
+                  "type": "string"
+                },
+                "owner": {
+                  "type": "string"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                }
+              }
             }
           }
         ],
@@ -1276,6 +1287,72 @@
         ]
       }
     },
+    "/api/v1/provider/register_all": {
+      "post": {
+        "operationId": "RepositoryService_ReconcileEntityRegistration2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReconcileEntityRegistrationResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ReconcileEntityRegistrationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
+    "/api/v1/provider/{provider}/register_all": {
+      "post": {
+        "operationId": "RepositoryService_ReconcileEntityRegistration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReconcileEntityRegistrationResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                },
+                "entity": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "RepositoryService"
+        ]
+      }
+    },
     "/api/v1/provider_classes": {
       "get": {
         "operationId": "ProvidersService_ListProviderClasses",
@@ -2028,7 +2105,15 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/RepositoryServiceRegisterRepositoryBody"
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "$ref": "#/definitions/v1UpstreamRepositoryRef"
+                },
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                }
+              }
             }
           }
         ],
@@ -2661,20 +2746,6 @@
         }
       }
     },
-    "OAuthServiceStoreProviderTokenBody": {
-      "type": "object",
-      "properties": {
-        "accessToken": {
-          "type": "string"
-        },
-        "owner": {
-          "type": "string"
-        },
-        "context": {
-          "$ref": "#/definitions/v1Context"
-        }
-      }
-    },
     "ProfileRule": {
       "type": "object",
       "properties": {
@@ -2767,17 +2838,6 @@
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
     },
-    "RepositoryServiceRegisterRepositoryBody": {
-      "type": "object",
-      "properties": {
-        "repository": {
-          "$ref": "#/definitions/v1UpstreamRepositoryRef"
-        },
-        "context": {
-          "$ref": "#/definitions/v1Context"
-        }
-      }
-    },
     "RestTypeFallback": {
       "type": "object",
       "properties": {
@@ -2826,7 +2886,7 @@
         "NULL_VALUE"
       ],
       "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "v1Artifact": {
       "type": "object",
@@ -3842,6 +3902,23 @@
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
+    },
+    "v1ReconcileEntityRegistrationRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "entity": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ReconcileEntityRegistrationResponse": {
+      "type": "object"
     },
     "v1RegisterRepoResult": {
       "type": "object",

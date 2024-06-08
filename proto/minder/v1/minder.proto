@@ -342,6 +342,21 @@ service RepositoryService {
             relation: RELATION_REPO_CREATE
         };
     }
+    rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/provider/{provider}/register_all"
+            additional_bindings {
+                post: "/api/v1/provider/register_all"
+                body: "*"
+            }
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_CREATE
+        };
+    }
     rpc ListRemoteRepositoriesFromProvider(ListRemoteRepositoriesFromProviderRequest) returns (ListRemoteRepositoriesFromProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}/remote"
@@ -1052,6 +1067,16 @@ message ListRepositoriesResponse {
 
     // cursor is the cursor to use for the next page of results, empty if at the end
     string cursor = 2;
+}
+
+message ReconcileEntityRegistrationRequest {
+    Context context = 1;
+    string entity = 2;
+
+    string provider = 3 [deprecated=true];
+}
+
+message ReconcileEntityRegistrationResponse {
 }
 
 message VerifyProviderTokenFromRequest {

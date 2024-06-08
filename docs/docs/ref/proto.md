@@ -135,6 +135,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#minder-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#minder-v1-RegisterRepositoryResponse) |  |
+| ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 | ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#minder-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#minder-v1-ListRemoteRepositoriesFromProviderResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#minder-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#minder-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#minder-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#minder-v1-GetRepositoryByIdResponse) |  |
@@ -1674,6 +1675,25 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
+
+
+<a name="minder-v1-ReconcileEntityRegistrationRequest"></a>
+
+#### ReconcileEntityRegistrationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| entity | [string](#string) |  |  |
+| provider | [string](#string) |  | **Deprecated.**  |
+
+
+<a name="minder-v1-ReconcileEntityRegistrationResponse"></a>
+
+#### ReconcileEntityRegistrationResponse
+
 
 
 <a name="minder-v1-RegisterRepoResult"></a>
