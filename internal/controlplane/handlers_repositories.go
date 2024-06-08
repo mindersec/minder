@@ -333,46 +333,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	for providerName, provider := range provs {
-		zerolog.Ctx(ctx).Trace().
-			Str("provider", providerName).
-			Str("project_id", projectID.String()).
-			Msg("listing repositories")
-
-		repoLister, err := v1.As[v1.RepoLister](provider)
+		results, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error instantiating repo lister")
 			errorProvs = append(errorProvs, providerName)
 			continue
-		}
-
-		results, err := s.listRemoteRepositoriesForProvider(ctx, providerName, repoLister, projectID)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("cannot list repositories for provider")
-			errorProvs = append(errorProvs, providerName)
-
-			// skip over this provider
-			continue
-		}
-
-		registeredRepos, err := s.repos.ListRepositories(
-			ctx,
-			projectID,
-			providerName,
-		)
-		if err != nil {
-			return nil, util.UserVisibleError(
-				codes.Internal,
-				"cannot list registered repositories",
-			)
-		}
-
-		registered := make(map[int64]bool)
-		for _, repo := range registeredRepos {
-			registered[repo.RepoID] = true
-		}
-
-		for _, result := range results {
-			result.Registered = registered[result.RepoId]
 		}
 		out.Results = append(out.Results, results...)
 	}
@@ -383,6 +347,56 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	return out, nil
+}
+
+// fetchRepositoriesForProvider fetches repositories for a given provider
+//
+// Returns a list of repositories that with an up-to-date status of whether they are registered
+func (s *Server) fetchRepositoriesForProvider(
+	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
+	provider v1.Provider,
+) ([]*pb.UpstreamRepositoryRef, error) {
+	zerolog.Ctx(ctx).Trace().
+		Str("provider", providerName).
+		Str("project_id", projectID.String()).
+		Msg("listing repositories")
+
+	repoLister, err := v1.As[v1.RepoLister](provider)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error instantiating repo lister")
+		return nil, err
+	}
+
+	results, err := s.listRemoteRepositoriesForProvider(ctx, providerName, repoLister, projectID)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("cannot list repositories for provider")
+		return nil, err
+	}
+
+	registeredRepos, err := s.repos.ListRepositories(
+		ctx,
+		projectID,
+		providerName,
+	)
+	if err != nil {
+		return nil, util.UserVisibleError(
+			codes.Internal,
+			"cannot list registered repositories",
+		)
+	}
+
+	registered := make(map[int64]bool)
+	for _, repo := range registeredRepos {
+		registered[repo.RepoID] = true
+	}
+
+	for _, result := range results {
+		result.Registered = registered[result.RepoId]
+	}
+
+	return results, nil
 }
 
 func (s *Server) listRemoteRepositoriesForProvider(

@@ -27,6 +27,10 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
 
+// handleEntityAddEvent handles the entity add event.
+// Although this method is meant to be generic and handle all types of entities,
+// it currently only does so for repositories.
+// Todo: Utilise for other entities when such are supported.
 // nolint
 func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	ctx := msg.Context()
