@@ -114,7 +114,3 @@ GROUP BY ep.entity;
 
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
-
--- used when cleaning up a project to avoid FK dependency issues between rule_types and rule_instances
--- name: DeleteProfilesInProject :exec
-DELETE FROM profiles WHERE project_id = $1;
