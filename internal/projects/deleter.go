@@ -145,6 +145,13 @@ func (p *projectDeleter) DeleteProject(
 		}
 	}
 
+	// Delete the project's profiles. This avoids foreign key issues with
+	// rule_instances when deleting rows from rule_type.
+	err = querier.DeleteProfilesInProject(ctx, proj)
+	if err != nil {
+		return fmt.Errorf("unable to delete profiles: %w", err)
+	}
+
 	// no role assignments for this project
 	// we can safely delete it.
 	l.Debug().Msg("deleting project from database")

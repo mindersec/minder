@@ -45,6 +45,7 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), proj).Return(
 		db.Project{ID: proj}, nil)
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), proj)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{ID: proj},
@@ -90,6 +91,7 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), proj)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -141,6 +143,7 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), proj)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -198,6 +201,7 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), proj).Return(nil)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{
@@ -247,6 +251,7 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), proj).Return(
 		db.Project{ID: proj}, nil)
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), proj)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
 		Return([]db.DeleteProjectRow{
 			{ID: proj},
@@ -302,6 +307,7 @@ func TestCleanupUnmanaged(t *testing.T) {
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), projThree).Return(
 		db.Project{ID: projThree}, nil).Times(2)
 	// Project 3 has no other admins, so it will be deleted.
+	mockStore.EXPECT().DeleteProfilesInProject(gomock.Any(), projThree).Return(nil)
 	mockStore.EXPECT().DeleteProject(gomock.Any(), projThree).Return(
 		[]db.DeleteProjectRow{
 			{ID: projThree},
