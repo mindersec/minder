@@ -418,6 +418,15 @@ func (ns NullSeverity) Value() (driver.Value, error) {
 	return string(ns.Severity), nil
 }
 
+type AlertEvent struct {
+	ID           uuid.UUID        `json:"id"`
+	EvaluationID uuid.UUID        `json:"evaluation_id"`
+	Status       AlertStatusTypes `json:"status"`
+	Details      string           `json:"details"`
+	Metadata     json.RawMessage  `json:"metadata"`
+	CreatedAt    time.Time        `json:"created_at"`
+}
+
 type Artifact struct {
 	ID                 uuid.UUID     `json:"id"`
 	RepositoryID       uuid.NullUUID `json:"repository_id"`
@@ -472,6 +481,18 @@ type EntityProfileRule struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
+type EvaluationHistory struct {
+	ID           uuid.UUID       `json:"id"`
+	RuleEntityID uuid.UUID       `json:"rule_entity_id"`
+	Status       EvalStatusTypes `json:"status"`
+	Details      string          `json:"details"`
+}
+
+type EvaluationInstance struct {
+	EvaluationID   uuid.UUID `json:"evaluation_id"`
+	EvaluationTime time.Time `json:"evaluation_time"`
+}
+
 type Feature struct {
 	Name      string          `json:"name"`
 	Settings  json.RawMessage `json:"settings"`
@@ -487,6 +508,11 @@ type FlushCache struct {
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	QueuedAt      time.Time     `json:"queued_at"`
 	ProjectID     uuid.NullUUID `json:"project_id"`
+}
+
+type LatestEvaluationState struct {
+	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
+	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
 }
 
 type MigrationProfileBackfillLog struct {
@@ -581,6 +607,15 @@ type PullRequest struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type RemediationEvent struct {
+	ID           uuid.UUID              `json:"id"`
+	EvaluationID uuid.UUID              `json:"evaluation_id"`
+	Status       RemediationStatusTypes `json:"status"`
+	Details      string                 `json:"details"`
+	Metadata     json.RawMessage        `json:"metadata"`
+	CreatedAt    time.Time              `json:"created_at"`
+}
+
 type Repository struct {
 	ID            uuid.UUID      `json:"id"`
 	Provider      string         `json:"provider"`
@@ -625,6 +660,14 @@ type RuleDetailsRemediate struct {
 	Details     string                 `json:"details"`
 	LastUpdated time.Time              `json:"last_updated"`
 	Metadata    json.RawMessage        `json:"metadata"`
+}
+
+type RuleEntityEvaluation struct {
+	ID            uuid.UUID     `json:"id"`
+	RuleID        uuid.UUID     `json:"rule_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 }
 
 type RuleEvaluation struct {
@@ -692,4 +735,14 @@ type User struct {
 	IdentitySubject string    `json:"identity_subject"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type UserInvite struct {
+	Code      string    `json:"code"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	Project   uuid.UUID `json:"project"`
+	Sponsor   int32     `json:"sponsor"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

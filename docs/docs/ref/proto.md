@@ -1769,7 +1769,6 @@ RESTProviderConfig contains the configuration for the REST provider.
 | hook_uuid | [string](#string) |  |  |
 | is_private | [bool](#bool) |  |  |
 | is_fork | [bool](#bool) |  |  |
-| registered | [bool](#bool) |  |  |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
 | default_branch | [string](#string) |  |  |
