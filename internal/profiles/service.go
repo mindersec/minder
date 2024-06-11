@@ -778,10 +778,7 @@ func upsertRuleInstances(
 		id, err := qtx.UpsertRuleInstance(ctx, db.UpsertRuleInstanceParams{
 			ProfileID: profileID,
 			// TODO: Make non nullable in future PR
-			ProjectID: uuid.NullUUID{
-				UUID:  projectID,
-				Valid: true,
-			},
+			ProjectID:  projectID,
 			RuleTypeID: entityRuleTuple.RuleID,
 			Name:       rule.Name,
 			EntityType: entityType,
