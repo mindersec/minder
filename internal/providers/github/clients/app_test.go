@@ -50,11 +50,35 @@ func TestParseV1AppConfig(t *testing.T) {
 		provEvalFn func(*testing.T, *minderv1.ProviderConfig)
 	}{
 		{
-			name:   "valid app config",
+			name:   "valid app config - new key",
+			config: json.RawMessage(`{ "github_app": { "endpoint": "https://api.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+		},
+		{
+			name:   "valid app config - old key",
 			config: json.RawMessage(`{ "github-app": { "endpoint": "https://api.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
 				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig)
+			},
+		},
+		{
+			name:   "valid app config - both keys prefers the new one",
+			config: json.RawMessage(`{ "github_app": { "endpoint": "https://new.github.com" }, "github-app": { "endpoint": "https://old.github.com" } }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://new.github.com", ghConfig.Endpoint)
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
@@ -91,7 +115,7 @@ func TestParseV1AppConfig(t *testing.T) {
 		},
 		{
 			name:   "missing required github key",
-			config: json.RawMessage(`{ "auto_registration": { "entities": { "blah": {"enabled": true} } } }`),
+			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
 				assert.Nil(t, ghConfig)
@@ -100,7 +124,7 @@ func TestParseV1AppConfig(t *testing.T) {
 				t.Helper()
 				assert.Nil(t, providerConfig)
 			},
-			error: "Field validation for 'GitHubApp' failed on the 'required' tag",
+			error: "no GitHub App config found",
 		},
 	}
 
