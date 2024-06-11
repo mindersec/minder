@@ -962,6 +962,8 @@ message UpstreamRepositoryRef {
 }
 
 message Repository {
+    reserved 15;
+    reserved "registered";
     optional string id = 1; // This is optional when returning remote repositories
     optional Context context = 2;
     string owner = 3;
@@ -976,7 +978,6 @@ message Repository {
     string hook_uuid = 12;
     bool is_private = 13;
     bool is_fork = 14;
-    bool registered = 15;
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;

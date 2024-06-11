@@ -164,13 +164,32 @@ func TestCreateProvider(t *testing.T) {
 			expected: minder.Provider{
 				Name: "test-github-app-defaults",
 				Config: newPbStruct(t, map[string]interface{}{
-					"github-app": map[string]interface{}{},
+					"github_app": map[string]interface{}{},
 				}),
 				Class: string(db.ProviderClassGithubApp),
 			},
 		},
 		{
-			name:          "test-github-app-config",
+			name:          "test-github-app-config-newkey",
+			providerClass: db.ProviderClassGithubApp,
+			userConfig: newPbStruct(t, map[string]interface{}{
+				"github_app": map[string]interface{}{
+					"key":      "value", // will be ignored
+					"endpoint": "my.little.github",
+				},
+			}),
+			expected: minder.Provider{
+				Name: "test-github-app-config-newkey",
+				Config: newPbStruct(t, map[string]interface{}{
+					"github_app": map[string]interface{}{
+						"endpoint": "my.little.github",
+					},
+				}),
+				Class: string(db.ProviderClassGithubApp),
+			},
+		},
+		{
+			name:          "test-github-app-config-oldkey",
 			providerClass: db.ProviderClassGithubApp,
 			userConfig: newPbStruct(t, map[string]interface{}{
 				"github-app": map[string]interface{}{
@@ -179,9 +198,9 @@ func TestCreateProvider(t *testing.T) {
 				},
 			}),
 			expected: minder.Provider{
-				Name: "test-github-app-config",
+				Name: "test-github-app-config-oldkey",
 				Config: newPbStruct(t, map[string]interface{}{
-					"github-app": map[string]interface{}{
+					"github_app": map[string]interface{}{
 						"endpoint": "my.little.github",
 					},
 				}),

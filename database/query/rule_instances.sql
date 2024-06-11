@@ -20,6 +20,7 @@ INSERT INTO rule_instances (
     entity_type,
     def,
     params,
+    project_id,
     created_at,
     updated_at
 ) VALUES(
@@ -29,6 +30,7 @@ INSERT INTO rule_instances (
     $4,
     $5,
     $6,
+    $7,
     NOW(),
     NOW()
 )

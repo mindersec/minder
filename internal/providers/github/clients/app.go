@@ -113,7 +113,8 @@ func NewGitHubAppProvider(
 // embedding the struct to expose its JSON tags
 type appConfigWrapper struct {
 	*minderv1.ProviderConfig
-	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app" validate:"required"`
+	GitHubAppOldKey *minderv1.GitHubAppProviderConfig `json:"github-app" yaml:"github-app" mapstructure:"github-app"`
+	GitHubApp       *minderv1.GitHubAppProviderConfig `json:"github_app" yaml:"github_app" mapstructure:"github_app"`
 }
 
 // ParseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
@@ -138,7 +139,23 @@ func ParseV1AppConfig(rawCfg json.RawMessage) (
 		}
 	}
 
-	return w.ProviderConfig, w.GitHubApp, nil
+	// we used to have a required key on the gh app config, so we need to check both
+	// until we migrate and can remove the old key
+	ghAppConfig := w.GitHubApp
+	if ghAppConfig == nil {
+		ghAppConfig = w.GitHubAppOldKey
+	}
+	if ghAppConfig == nil {
+		return nil, nil, fmt.Errorf("no GitHub App config found")
+	}
+
+	return w.ProviderConfig, ghAppConfig, nil
+}
+
+// embedding the struct to expose its JSON tags
+type appConfigWrapperWrite struct {
+	*minderv1.ProviderConfig
+	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github_app" yaml:"github_app" mapstructure:"github_app" validate:"required"`
 }
 
 // MarshalV1AppConfig marshals the GitHubAppProviderConfig struct into a raw config
@@ -146,7 +163,7 @@ func MarshalV1AppConfig(
 	providerCfg *minderv1.ProviderConfig,
 	appCfg *minderv1.GitHubAppProviderConfig,
 ) (json.RawMessage, error) {
-	w := appConfigWrapper{
+	w := appConfigWrapperWrite{
 		ProviderConfig: providerCfg,
 		GitHubApp:      appCfg,
 	}

@@ -106,7 +106,6 @@ JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_pr
 WHERE entity_profile_rules.rule_type_id = $1
 GROUP BY profiles.id;
 
-
 -- name: CountProfilesByEntityType :many
 SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
 FROM profiles AS p
