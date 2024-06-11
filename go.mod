@@ -48,12 +48,12 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.17.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.17.0
 	github.com/sigstore/protobuf-specs v0.3.2
-	github.com/sigstore/sigstore-go v0.3.0
+	github.com/sigstore/sigstore-go v0.4.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/stacklok/frizbee v0.0.16
+	github.com/stacklok/frizbee v0.0.19
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.22.0
 	github.com/thomaspoignant/go-feature-flag v1.27.0
