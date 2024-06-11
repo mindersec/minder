@@ -449,7 +449,7 @@ func (_ *ghProviderService) GetConfig(
 	case db.ProviderClassGithub:
 		defaultConfig = `{"github": {}}`
 	case db.ProviderClassGithubApp:
-		defaultConfig = `{"github-app": {}}`
+		defaultConfig = `{"github_app": {}}`
 	default:
 		return nil, fmt.Errorf("unsupported provider class %s", class)
 	}
