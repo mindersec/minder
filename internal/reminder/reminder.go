@@ -185,24 +185,25 @@ func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, err
 func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repository) ([]db.Repository, error) {
 	eligibleRepos := make([]db.Repository, 0, len(repos))
 
+	// We have a slice of repositories, but the sqlc-generated code wants a slice of UUIDs,
+	// and similarly returns slices of ID -> date (in possibly different order), so we need
+	// to do a bunch of mapping here.
 	repoIds := make([]uuid.UUID, 0, len(repos))
 	for _, repo := range repos {
 		repoIds = append(repoIds, repo.ID)
 	}
-
 	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByRepositoryId(ctx, repoIds)
 	if err != nil {
 		return nil, err
 	}
-
-	idToLastUpdatedMap := make(map[uuid.UUID]time.Time)
-	for _, oldestRuleEval := range oldestRuleEvals {
-		idToLastUpdatedMap[oldestRuleEval.RepositoryID] = oldestRuleEval.OldestLastUpdated
+	idToLastUpdate := make(map[uuid.UUID]time.Time, len(oldestRuleEvals))
+	for _, times := range oldestRuleEvals {
+		idToLastUpdate[times.RepositoryID] = times.OldestLastUpdated
 	}
 
+	cutoff := time.Now().Add(-1 * r.cfg.RecurrenceConfig.MinElapsed)
 	for _, repo := range repos {
-		if oldestRuleEval, ok := idToLastUpdatedMap[repo.ID]; ok &&
-			oldestRuleEval.Add(r.cfg.RecurrenceConfig.MinElapsed).Before(time.Now()) {
+		if t, ok := idToLastUpdate[repo.ID]; ok && t.Before(cutoff) {
 			eligibleRepos = append(eligibleRepos, repo)
 		}
 	}
