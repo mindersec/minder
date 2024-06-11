@@ -16,12 +16,9 @@
 package reminder
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
 	"errors"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -32,10 +29,6 @@ import (
 	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
 	"github.com/stacklok/minder/internal/db"
 )
-
-func init() {
-	gob.Register(map[projectProviderPair]string{})
-}
 
 // Interface is an interface over the reminder service
 type Interface interface {
@@ -53,8 +46,7 @@ type reminder struct {
 	stop     chan struct{}
 	stopOnce sync.Once
 
-	projectListCursor string
-	repoListCursor    map[projectProviderPair]string
+	repositoryCursor uuid.UUID
 
 	ticker *time.Ticker
 
@@ -62,27 +54,18 @@ type reminder struct {
 	eventDBCloser  driverCloser
 }
 
-type projectProviderPair struct {
-	// Exported for gob
-
-	ProjectId uuid.UUID
-	Provider  string
-}
-
 // NewReminder creates a new reminder instance
 func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Config) (Interface, error) {
-	logger := zerolog.Ctx(ctx)
 	r := &reminder{
-		store:          store,
-		cfg:            config,
-		stop:           make(chan struct{}),
-		repoListCursor: make(map[projectProviderPair]string),
+		store: store,
+		cfg:   config,
+		stop:  make(chan struct{}),
 	}
-	err := r.restoreCursorState(ctx)
-	if err != nil {
-		// Non-fatal error, if we can't restore the cursor state, we'll start from scratch.
-		logger.Error().Err(err).Msg("error restoring cursor state")
-	}
+
+	// Set to a random UUID to start
+	r.repositoryCursor = uuid.New()
+	logger := zerolog.Ctx(ctx)
+	logger.Info().Msgf("initial repository cursor: %s", r.repositoryCursor)
 
 	pub, cl, err := r.setupSQLPublisher(ctx)
 	if err != nil {
@@ -149,70 +132,111 @@ func (r *reminder) Stop() {
 	})
 }
 
-// storeCursorState stores the cursor state to a file
-// Not thread-safe, should be called from a single goroutine
-func (r *reminder) storeCursorState(ctx context.Context) error {
+func (r *reminder) sendReminders(ctx context.Context) []error {
 	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msg("storing cursor state")
 
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-
-	data := map[string]interface{}{
-		"projectListCursor": r.projectListCursor,
-		"repoListCursor":    r.repoListCursor,
-	}
-	if err := enc.Encode(data); err != nil {
-		return err
-	}
-
-	return os.WriteFile(r.cfg.CursorFile, buf.Bytes(), 0600)
-}
-
-// restoreCursorState restores the cursor state from a file
-// Not thread-safe, should be called from a single goroutine
-func (r *reminder) restoreCursorState(ctx context.Context) error {
-	logger := zerolog.Ctx(ctx)
-	logger.Debug().Msg("restoring cursor state")
-
-	if _, err := os.Stat(r.cfg.CursorFile); os.IsNotExist(err) {
-		return nil
-	}
-
-	data, err := os.ReadFile(r.cfg.CursorFile)
+	// Fetch a batch of repositories
+	repos, err := r.getRepositoryBatch(ctx)
 	if err != nil {
-		return err
+		logger.Error().Err(err).Msg("unable to fetch repositories")
+		return []error{err}
 	}
 
-	buf := bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
+	logger.Info().Msgf("created repository batch of size: %d", len(repos))
 
-	cursorData := make(map[string]interface{})
-
-	if err := dec.Decode(&cursorData); err != nil {
-		return err
-	}
-
-	if val, ok := cursorData["projectListCursor"]; ok {
-		if v, ok := val.(string); ok {
-			r.projectListCursor = v
-		} else {
-			return fmt.Errorf("projectListCursor is not a string")
+	// Update the reminder_last_sent for each repository to export as metrics
+	for _, repo := range repos {
+		logger.Debug().Str("repo", repo.ID.String()).
+			Time("previously", repo.ReminderLastSent.Time).Msg("updating reminder_last_sent")
+		err := r.store.UpdateReminderLastSentById(ctx, repo.ID)
+		if err != nil {
+			logger.Error().Err(err).Str("repo", repo.ID.String()).Msg("unable to update reminder_last_sent")
+			return []error{err}
 		}
-	}
-
-	if val, ok := cursorData["repoListCursor"]; ok {
-		if v, ok := val.(map[projectProviderPair]string); ok {
-			r.repoListCursor = v
-		} else {
-			return fmt.Errorf("repoListCursor is not a map[projectProviderPair]string")
-		}
+		// TODO: Send the actual reminders
 	}
 
 	return nil
 }
 
-// TODO: Will be implemented in a separate PR
-func (_ *reminder) sendReminders(_ context.Context) []error {
-	return nil
+func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, error) {
+	logger := zerolog.Ctx(ctx)
+
+	logger.Debug().Msgf("fetching repositories after cursor: %s", r.repositoryCursor)
+	repos, err := r.store.ListRepositoriesAfterID(ctx, db.ListRepositoriesAfterIDParams{
+		ID:    r.repositoryCursor,
+		Limit: int64(r.cfg.RecurrenceConfig.BatchSize),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	eligibleRepos, err := r.getEligibleRepositories(ctx, repos)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debug().Msgf("%d/%d repositories are eligible for reminders", len(eligibleRepos), len(repos))
+
+	r.updateRepositoryCursor(ctx, repos)
+
+	return eligibleRepos, nil
+}
+
+func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repository) ([]db.Repository, error) {
+	eligibleRepos := make([]db.Repository, 0, len(repos))
+
+	repoIds := make([]uuid.UUID, 0, len(repos))
+	for _, repo := range repos {
+		repoIds = append(repoIds, repo.ID)
+	}
+
+	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByRepositoryId(ctx, repoIds)
+	if err != nil {
+		return nil, err
+	}
+
+	idToLastUpdatedMap := make(map[uuid.UUID]time.Time)
+	for _, oldestRuleEval := range oldestRuleEvals {
+		idToLastUpdatedMap[oldestRuleEval.RepositoryID] = oldestRuleEval.OldestLastUpdated
+	}
+
+	for _, repo := range repos {
+		if oldestRuleEval, ok := idToLastUpdatedMap[repo.ID]; ok &&
+			oldestRuleEval.Add(r.cfg.RecurrenceConfig.MinElapsed).Before(time.Now()) {
+			eligibleRepos = append(eligibleRepos, repo)
+		}
+	}
+
+	return eligibleRepos, nil
+}
+
+func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.Repository) {
+	logger := zerolog.Ctx(ctx)
+
+	if len(repos) == 0 {
+		r.repositoryCursor = uuid.Nil
+	} else {
+		r.repositoryCursor = repos[len(repos)-1].ID
+		r.adjustCursorForEndOfList(ctx)
+	}
+
+	logger.Debug().Msgf("updated repository cursor to: %s", r.repositoryCursor)
+}
+
+func (r *reminder) adjustCursorForEndOfList(ctx context.Context) {
+	logger := zerolog.Ctx(ctx)
+	// Check if the cursor is the last element in the db
+	exists, err := r.store.RepositoryExistsAfterID(ctx, r.repositoryCursor)
+	if err != nil {
+		logger.Error().Err(err).Msgf("unable to check if repository exists after cursor: %s"+
+			", resetting cursor to zero uuid", r.repositoryCursor)
+		r.repositoryCursor = uuid.Nil
+		return
+	}
+
+	if !exists {
+		logger.Info().Msgf("cursor %s is at the end of the list, resetting cursor to zero uuid",
+			r.repositoryCursor)
+		r.repositoryCursor = uuid.Nil
+	}
 }

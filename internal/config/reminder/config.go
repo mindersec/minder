@@ -16,11 +16,8 @@
 package reminder
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -33,46 +30,16 @@ type Config struct {
 	RecurrenceConfig RecurrenceConfig      `mapstructure:"recurrence"`
 	EventConfig      EventConfig           `mapstructure:"events"`
 	LoggingConfig    LoggingConfig         `mapstructure:"logging"`
-	CursorFile       string                `mapstructure:"cursor_file" default:"/tmp/reminder_cursor"`
 }
 
-// Normalize normalizes the configuration
-// Returns a boolean indicating if the config was modified and an error if the config is invalid
-func (c *Config) Normalize(cmd *cobra.Command) (bool, error) {
-	err := c.validate()
-	if err != nil {
-		return c.patchConfig(cmd, err)
-	}
-
-	return false, nil
-}
-
-func (c *Config) validate() error {
-	if c == nil {
-		return errors.New("config cannot be nil")
-	}
-
+// Validate validates the configuration
+func (c Config) Validate() error {
 	err := c.RecurrenceConfig.Validate()
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (c *Config) patchConfig(cmd *cobra.Command, err error) (bool, error) {
-	var batchSizeErr *InvalidBatchSizeError
-	if errors.As(err, &batchSizeErr) {
-		minAllowedBatchSize := batchSizeErr.MaxPerProject * batchSizeErr.MinProjectFetchLimit
-		cmd.Println("⚠ WARNING: " + batchSizeErr.Error())
-		cmd.Printf("Setting batch size to minimum allowed value: %d\n", minAllowedBatchSize)
-
-		// Update the config with the minimum allowed batch size
-		c.RecurrenceConfig.BatchSize = minAllowedBatchSize
-		return true, nil
-	}
-
-	return false, fmt.Errorf("invalid config: %w", err)
 }
 
 // SetViperDefaults sets the default values for the configuration to be picked up by viper
@@ -84,13 +51,7 @@ func SetViperDefaults(v *viper.Viper) {
 
 // RegisterReminderFlags registers the flags for the minder cli
 func RegisterReminderFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	viperPath := "cursor_file"
-	if err := config.BindConfigFlag(v, flags, viperPath, "cursor-file",
-		v.GetString(viperPath), "DB Cursor file path for reminder", flags.String); err != nil {
-		return err
-	}
-
-	viperPath = "logging.level"
+	viperPath := "logging.level"
 	if err := config.BindConfigFlag(v, flags, viperPath, "logging-level",
 		v.GetString(viperPath), "Logging level for reminder", flags.String); err != nil {
 		return err

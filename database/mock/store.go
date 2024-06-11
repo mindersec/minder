@@ -1332,6 +1332,21 @@ func (mr *MockStoreMockRecorder) ListOldOrgProjects(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldOrgProjects", reflect.TypeOf((*MockStore)(nil).ListOldOrgProjects), arg0)
 }
 
+// ListOldestRuleEvaluationsByRepositoryId mocks base method.
+func (m *MockStore) ListOldestRuleEvaluationsByRepositoryId(arg0 context.Context, arg1 []uuid.UUID) ([]db.ListOldestRuleEvaluationsByRepositoryIdRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOldestRuleEvaluationsByRepositoryId", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListOldestRuleEvaluationsByRepositoryIdRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOldestRuleEvaluationsByRepositoryId indicates an expected call of ListOldestRuleEvaluationsByRepositoryId.
+func (mr *MockStoreMockRecorder) ListOldestRuleEvaluationsByRepositoryId(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldestRuleEvaluationsByRepositoryId", reflect.TypeOf((*MockStore)(nil).ListOldestRuleEvaluationsByRepositoryId), arg0, arg1)
+}
+
 // ListProfilesByProjectID mocks base method.
 func (m *MockStore) ListProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesByProjectIDRow, error) {
 	m.ctrl.T.Helper()
@@ -1420,6 +1435,21 @@ func (m *MockStore) ListRegisteredRepositoriesByProjectIDAndProvider(arg0 contex
 func (mr *MockStoreMockRecorder) ListRegisteredRepositoriesByProjectIDAndProvider(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRegisteredRepositoriesByProjectIDAndProvider", reflect.TypeOf((*MockStore)(nil).ListRegisteredRepositoriesByProjectIDAndProvider), arg0, arg1)
+}
+
+// ListRepositoriesAfterID mocks base method.
+func (m *MockStore) ListRepositoriesAfterID(arg0 context.Context, arg1 db.ListRepositoriesAfterIDParams) ([]db.Repository, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRepositoriesAfterID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Repository)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListRepositoriesAfterID indicates an expected call of ListRepositoriesAfterID.
+func (mr *MockStoreMockRecorder) ListRepositoriesAfterID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesAfterID", reflect.TypeOf((*MockStore)(nil).ListRepositoriesAfterID), arg0, arg1)
 }
 
 // ListRepositoriesByProjectID mocks base method.
@@ -1541,6 +1571,21 @@ func (mr *MockStoreMockRecorder) ReleaseLock(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReleaseLock", reflect.TypeOf((*MockStore)(nil).ReleaseLock), arg0, arg1)
 }
 
+// RepositoryExistsAfterID mocks base method.
+func (m *MockStore) RepositoryExistsAfterID(arg0 context.Context, arg1 uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RepositoryExistsAfterID", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RepositoryExistsAfterID indicates an expected call of RepositoryExistsAfterID.
+func (mr *MockStoreMockRecorder) RepositoryExistsAfterID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoryExistsAfterID", reflect.TypeOf((*MockStore)(nil).RepositoryExistsAfterID), arg0, arg1)
+}
+
 // Rollback mocks base method.
 func (m *MockStore) Rollback(arg0 *sql.Tx) error {
 	m.ctrl.T.Helper()
@@ -1639,6 +1684,20 @@ func (m *MockStore) UpdateProvider(arg0 context.Context, arg1 db.UpdateProviderP
 func (mr *MockStoreMockRecorder) UpdateProvider(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProvider", reflect.TypeOf((*MockStore)(nil).UpdateProvider), arg0, arg1)
+}
+
+// UpdateReminderLastSentById mocks base method.
+func (m *MockStore) UpdateReminderLastSentById(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateReminderLastSentById", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateReminderLastSentById indicates an expected call of UpdateReminderLastSentById.
+func (mr *MockStoreMockRecorder) UpdateReminderLastSentById(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReminderLastSentById", reflect.TypeOf((*MockStore)(nil).UpdateReminderLastSentById), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.
