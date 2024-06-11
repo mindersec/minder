@@ -174,16 +174,6 @@ func (q *Queries) DeleteProfileForEntity(ctx context.Context, arg DeleteProfileF
 	return err
 }
 
-const deleteProfilesInProject = `-- name: DeleteProfilesInProject :exec
-DELETE FROM profiles WHERE project_id = $1
-`
-
-// used when cleaning up a project to avoid FK dependency issues between rule_types and rule_instances
-func (q *Queries) DeleteProfilesInProject(ctx context.Context, projectID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteProfilesInProject, projectID)
-	return err
-}
-
 const deleteRuleInstantiation = `-- name: DeleteRuleInstantiation :exec
 DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2
 `

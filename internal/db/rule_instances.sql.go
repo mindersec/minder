@@ -32,7 +32,7 @@ func (q *Queries) DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdate
 }
 
 const getRuleInstancesForProfile = `-- name: GetRuleInstancesForProfile :many
-SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at FROM rule_instances WHERE profile_id = $1
+SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1
 `
 
 func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error) {
@@ -54,6 +54,7 @@ func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid
 			&i.Params,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -69,7 +70,7 @@ func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid
 }
 
 const getRuleInstancesForProfileEntity = `-- name: GetRuleInstancesForProfileEntity :many
-SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at FROM rule_instances WHERE profile_id = $1 AND entity_type = $2
+SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1 AND entity_type = $2
 `
 
 type GetRuleInstancesForProfileEntityParams struct {
@@ -96,6 +97,7 @@ func (q *Queries) GetRuleInstancesForProfileEntity(ctx context.Context, arg GetR
 			&i.Params,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ProjectID,
 		); err != nil {
 			return nil, err
 		}
@@ -119,6 +121,7 @@ INSERT INTO rule_instances (
     entity_type,
     def,
     params,
+    project_id,
     created_at,
     updated_at
 ) VALUES(
@@ -128,6 +131,7 @@ INSERT INTO rule_instances (
     $4,
     $5,
     $6,
+    $7,
     NOW(),
     NOW()
 )
@@ -146,6 +150,7 @@ type UpsertRuleInstanceParams struct {
 	EntityType Entities        `json:"entity_type"`
 	Def        json.RawMessage `json:"def"`
 	Params     json.RawMessage `json:"params"`
+	ProjectID  uuid.NullUUID   `json:"project_id"`
 }
 
 // Copyright 2024 Stacklok, Inc
@@ -169,6 +174,7 @@ func (q *Queries) UpsertRuleInstance(ctx context.Context, arg UpsertRuleInstance
 		arg.EntityType,
 		arg.Def,
 		arg.Params,
+		arg.ProjectID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

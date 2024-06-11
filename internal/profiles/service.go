@@ -268,6 +268,7 @@ func (p *profileService) UpdateProfile(
 			ctx,
 			qtx,
 			updatedProfile.ID,
+			updatedProfile.ProjectID,
 			entRules,
 			entities.EntityTypeToDB(ent),
 			rules,
@@ -387,6 +388,7 @@ func createProfileRulesForEntity(
 		ctx,
 		qtx,
 		profile.ID,
+		profile.ProjectID,
 		rules,
 		entities.EntityTypeToDB(entity),
 		rulesInProf,
@@ -747,6 +749,7 @@ func upsertRuleInstances(
 	ctx context.Context,
 	qtx db.Querier,
 	profileID uuid.UUID,
+	projectID uuid.UUID,
 	newRules []*minderv1.Profile_Rule,
 	entityType db.Entities,
 	rulesInProf RuleMapping,
@@ -773,7 +776,12 @@ func upsertRuleInstances(
 		}
 
 		id, err := qtx.UpsertRuleInstance(ctx, db.UpsertRuleInstanceParams{
-			ProfileID:  profileID,
+			ProfileID: profileID,
+			// TODO: Make non nullable in future PR
+			ProjectID: uuid.NullUUID{
+				UUID:  projectID,
+				Valid: true,
+			},
 			RuleTypeID: entityRuleTuple.RuleID,
 			Name:       rule.Name,
 			EntityType: entityType,

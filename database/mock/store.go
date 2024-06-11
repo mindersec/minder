@@ -396,20 +396,6 @@ func (mr *MockStoreMockRecorder) DeleteProfileForEntity(arg0, arg1 any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProfileForEntity", reflect.TypeOf((*MockStore)(nil).DeleteProfileForEntity), arg0, arg1)
 }
 
-// DeleteProfilesInProject mocks base method.
-func (m *MockStore) DeleteProfilesInProject(arg0 context.Context, arg1 uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteProfilesInProject", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteProfilesInProject indicates an expected call of DeleteProfilesInProject.
-func (mr *MockStoreMockRecorder) DeleteProfilesInProject(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProfilesInProject", reflect.TypeOf((*MockStore)(nil).DeleteProfilesInProject), arg0, arg1)
-}
-
 // DeleteProject mocks base method.
 func (m *MockStore) DeleteProject(arg0 context.Context, arg1 uuid.UUID) ([]db.DeleteProjectRow, error) {
 	m.ctrl.T.Helper()
