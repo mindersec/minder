@@ -345,10 +345,6 @@ service RepositoryService {
     rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
         option (google.api.http) = {
             post: "/api/v1/provider/{provider}/register_all"
-            additional_bindings {
-                post: "/api/v1/provider/register_all"
-                body: "*"
-            }
             body: "*"
         };
 

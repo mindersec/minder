@@ -1287,32 +1287,6 @@
         ]
       }
     },
-    "/api/v1/provider/register_all": {
-      "post": {
-        "operationId": "RepositoryService_ReconcileEntityRegistration2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ReconcileEntityRegistrationResponse"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1ReconcileEntityRegistrationRequest"
-            }
-          }
-        ],
-        "tags": [
-          "RepositoryService"
-        ]
-      }
-    },
     "/api/v1/provider/{provider}/register_all": {
       "post": {
         "operationId": "RepositoryService_ReconcileEntityRegistration",
@@ -3902,20 +3876,6 @@
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
-    },
-    "v1ReconcileEntityRegistrationRequest": {
-      "type": "object",
-      "properties": {
-        "context": {
-          "$ref": "#/definitions/v1Context"
-        },
-        "entity": {
-          "type": "string"
-        },
-        "provider": {
-          "type": "string"
-        }
-      }
     },
     "v1ReconcileEntityRegistrationResponse": {
       "type": "object"

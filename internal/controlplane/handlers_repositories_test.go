@@ -208,7 +208,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			RepoServiceSetup: rf.NewRepoService(
 				rf.WithFailedListRepositories(errors.New("oops")),
 			),
-			ExpectedError: "cannot list registered repositories",
+			ExpectedError: "cannot list repositories for providers: [github]",
 		},
 	}
 
