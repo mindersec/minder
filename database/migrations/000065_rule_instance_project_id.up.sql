@@ -12,18 +12,5 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-BEGIN;
-
--- add column, leave as not null until we populate the column
+-- add column, do not mark as NOT NULL since we need to populate it
 ALTER TABLE rule_instances ADD COLUMN project_id UUID REFERENCES projects(id) ON DELETE CASCADE;
-
--- populate by joining on profiles table
-UPDATE rule_instances AS ri
-SET project_id = pf.project_id
-FROM profiles AS pf
-WHERE ri.profile_id = pf.id;
-
--- now we can add the not null constraint
-ALTER TABLE rule_instances ALTER COLUMN project_id SET NOT NULL;
-
-COMMIT;
