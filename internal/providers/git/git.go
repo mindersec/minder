@@ -45,6 +45,7 @@ const maxCachedObjectSize = 100 * 1024 // 100KiB
 // Ensure that the Git client implements the Git interface
 var _ provifv1.Git = (*Git)(nil)
 
+// Options implements the "functional options" pattern for Git
 type Options func(*Git)
 
 // NewGit creates a new GitHub client
@@ -58,6 +59,7 @@ func NewGit(token provifv1.GitCredential, opts ...Options) *Git {
 	return ret
 }
 
+// WithConfig configures the Git implementation with server-side configuration options.
 func WithConfig(cfg server.GitConfig) Options {
 	return func(g *Git) {
 		g.maxFiles = cfg.MaxFiles
@@ -121,7 +123,7 @@ func (g *Git) Clone(ctx context.Context, url, branch string) (*git.Repository, e
 			return nil, provifv1.ErrRepositoryEmpty
 		} else if errors.Is(err, memboxfs.ErrTooManyFiles) {
 			return nil, fmt.Errorf("%w: %w", provifv1.ErrRepositoryTooLarge, err)
-		}else if errors.Is(err, memboxfs.ErrTooBig) {
+		} else if errors.Is(err, memboxfs.ErrTooBig) {
 			return nil, fmt.Errorf("%w: %w", provifv1.ErrRepositoryTooLarge, err)
 		}
 		return nil, fmt.Errorf("could not clone repo: %w", err)

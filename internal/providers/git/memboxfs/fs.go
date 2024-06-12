@@ -28,12 +28,12 @@ import (
 // LimitedFs provides a size-limited billy.Filesystem.  This is a struct, there's
 // no constructor here. Note that LimitedFs is not thread-safe.
 type LimitedFs struct {
-	Fs billy.Filesystem
+	Fs            billy.Filesystem
 	MaxFiles      int64
 	TotalFileSize int64
 
-	currentFiles  int64
-	currentSize   int64
+	currentFiles int64
+	currentSize  int64
 }
 
 // ErrNotImplemented is returned when a method is not implemented.
