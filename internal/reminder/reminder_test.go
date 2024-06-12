@@ -16,57 +16,169 @@ package reminder
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 
+	mockdb "github.com/stacklok/minder/database/mock"
 	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
+	"github.com/stacklok/minder/internal/db"
 )
 
-func Test_cursorStateBackup(t *testing.T) {
+func Test_getRepositoryBatch(t *testing.T) {
 	t.Parallel()
 
-	tempDirPath := t.TempDir()
-	cursorFilePath := filepath.Join(tempDirPath, "cursor")
-	repoListCursor := map[projectProviderPair]string{
-		{
-			ProjectId: generateUUIDFromNum(t, 1),
-			Provider:  "github",
-		}: "repo-cursor-1",
-		{
-			ProjectId: generateUUIDFromNum(t, 2),
-			Provider:  "gitlab",
-		}: "repo-cursor-2",
+	type expectedOutput struct {
+		repos      []db.Repository
+		repoCursor uuid.UUID
 	}
-	projectCursor := "project-cursor"
 
-	r := &reminder{
-		cfg: &reminderconfig.Config{
-			CursorFile: cursorFilePath,
+	type input struct {
+		repos []db.Repository
+		cfg   reminderconfig.RecurrenceConfig
+	}
+
+	tests := []struct {
+		name           string
+		input          input
+		expectedOutput expectedOutput
+		setup          func(store *mockdb.MockStore, in input)
+		err            string
+	}{
+		{
+			name: "no repos",
+			input: input{
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: time.Hour,
+				},
+			},
+			setup: func(store *mockdb.MockStore, _ input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(nil, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), []uuid.UUID{}).Return(nil, nil)
+			},
 		},
-		projectListCursor: projectCursor,
-		repoListCursor:    repoListCursor,
+		{
+			name: "error listing repos",
+			input: input{
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: time.Hour,
+				},
+			},
+			setup: func(store *mockdb.MockStore, _ input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(nil, sql.ErrConnDone)
+			},
+			err: sql.ErrConnDone.Error(),
+		},
+		{
+			name: "repo exists after ID",
+			input: input{
+				repos: getReposTillId(t, 2),
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: time.Minute,
+				},
+			},
+			expectedOutput: expectedOutput{
+				repos:      getReposTillId(t, 2),
+				repoCursor: generateUUIDFromNum(t, 2),
+			},
+			setup: func(store *mockdb.MockStore, in input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
+			},
+		},
+		{
+			name: "repo does not exist after ID",
+			input: input{
+				repos: getReposTillId(t, 2),
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: time.Minute,
+				},
+			},
+			expectedOutput: expectedOutput{
+				repos: getReposTillId(t, 2),
+			},
+			setup: func(store *mockdb.MockStore, in input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(false, nil)
+			},
+		},
+		{
+			name: "error checking if repo exists after ID",
+			input: input{
+				repos: getReposTillId(t, 3),
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: time.Minute,
+				},
+			},
+			expectedOutput: expectedOutput{
+				repos: getReposTillId(t, 3),
+			},
+			setup: func(store *mockdb.MockStore, in input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(false, sql.ErrConnDone)
+			},
+		},
+		{
+			name: "some repos are eligible",
+			input: input{
+				repos: getReposTillId(t, 3),
+				cfg: reminderconfig.RecurrenceConfig{
+					BatchSize:  5,
+					MinElapsed: 10 * time.Minute,
+				},
+			},
+			expectedOutput: expectedOutput{
+				repos:      getReposTillId(t, 2),
+				repoCursor: generateUUIDFromNum(t, 3),
+			},
+			setup: func(store *mockdb.MockStore, in input) {
+				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				oldestRuleEvals := getStandardOldestRuleEvals(t, in.repos)
+				oldestRuleEvals[2].OldestLastUpdated = time.Now().Add(-time.Second)
+				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(oldestRuleEvals, nil)
+				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
+			},
+		},
 	}
 
-	ctx := context.Background()
+	for _, test := range tests {
+		test := test
 
-	err := r.storeCursorState(ctx)
-	require.NoError(t, err)
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-	// Set cursors to empty values to check if they are restored
-	r.projectListCursor = ""
-	r.repoListCursor = nil
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			store := mockdb.NewMockStore(ctrl)
+			test.setup(store, test.input)
+			cfg := &reminderconfig.Config{
+				RecurrenceConfig: test.input.cfg,
+			}
 
-	err = r.restoreCursorState(ctx)
-	require.NoError(t, err)
+			r := createTestReminder(t, store, cfg)
 
-	require.Equal(t, projectCursor, r.projectListCursor)
-	require.Equal(t, len(repoListCursor), len(r.repoListCursor))
-	for k, v := range repoListCursor {
-		require.Equal(t, v, r.repoListCursor[k])
+			got, err := r.getRepositoryBatch(context.Background())
+			if test.err != "" {
+				require.ErrorContains(t, err, test.err)
+				return
+			}
+			require.NoError(t, err)
+			require.ElementsMatch(t, got, test.expectedOutput.repos)
+			require.Equal(t, test.expectedOutput.repoCursor, r.repositoryCursor)
+		})
 	}
 }
 
@@ -83,4 +195,38 @@ func generateUUIDFromNum(t *testing.T, num int) uuid.UUID {
 	}
 
 	return u
+}
+
+func getReposTillId(t *testing.T, id int) []db.Repository {
+	t.Helper()
+
+	repos := make([]db.Repository, 0, id)
+	for i := 1; i <= id; i++ {
+		repos = append(repos, db.Repository{ID: generateUUIDFromNum(t, i)})
+	}
+
+	return repos
+}
+
+func createTestReminder(t *testing.T, store db.Store, config *reminderconfig.Config) *reminder {
+	t.Helper()
+
+	return &reminder{
+		store: store,
+		cfg:   config,
+	}
+}
+
+func getStandardOldestRuleEvals(t *testing.T, repos []db.Repository) []db.ListOldestRuleEvaluationsByRepositoryIdRow {
+	t.Helper()
+
+	oldestRuleEvals := make([]db.ListOldestRuleEvaluationsByRepositoryIdRow, 0, len(repos))
+	for _, repo := range repos {
+		oldestRuleEvals = append(oldestRuleEvals, db.ListOldestRuleEvaluationsByRepositoryIdRow{
+			RepositoryID:      repo.ID,
+			OldestLastUpdated: time.Now().Add(-time.Hour),
+		})
+	}
+
+	return oldestRuleEvals
 }
