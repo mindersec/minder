@@ -22,6 +22,7 @@ type ProviderConfig struct {
 	Git       GitConfig        `mapstructure:"git"`
 }
 
+// GitConfig is server-level configuration for cloning Git repositories.
 type GitConfig struct {
 	MaxFiles int64 `mapstructure:"max_files" default:"10000"`
 	MaxBytes int64 `mapstructure:"max_bytes" default:"100_000_000"`

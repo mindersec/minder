@@ -22,12 +22,12 @@ import (
 	"io/fs"
 
 	"github.com/go-git/go-billy/v5/memfs"
-	"github.com/go-git/go-git/v5/plumbing/cache"
-	"github.com/go-git/go-git/v5/storage/filesystem"
-
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/storage/filesystem"
+
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/providers/git/memboxfs"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -46,6 +46,7 @@ const maxCachedObjectSize = 100 * 1024 // 100KiB
 // Ensure that the Git client implements the Git interface
 var _ provifv1.Git = (*Git)(nil)
 
+// Options implements the "functional options" pattern for Git.
 type Options func(*Git)
 
 // NewGit creates a new GitHub client
@@ -59,6 +60,7 @@ func NewGit(token provifv1.GitCredential, opts ...Options) *Git {
 	return ret
 }
 
+// WithConfig applies the GitConfig options to the produced Git client.
 func WithConfig(cfg server.GitConfig) Options {
 	return func(g *Git) {
 		g.maxFiles = cfg.MaxFiles
