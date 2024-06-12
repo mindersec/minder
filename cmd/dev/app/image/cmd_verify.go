@@ -112,6 +112,7 @@ func runCmdVerify(cmd *cobra.Command, _ []string) error {
 func buildGitHubClient(token string) (provifv1.GitHub, error) {
 	return clients.NewRestClient(
 		&minderv1.GitHubProviderConfig{},
+		nil,
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential(token),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

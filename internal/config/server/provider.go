@@ -19,4 +19,10 @@ package server
 type ProviderConfig struct {
 	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
 	GitHub    *GitHubConfig    `mapstructure:"github"`
+	Git       GitConfig        `mapstructure:"git"`
+}
+
+type GitConfig struct {
+	MaxFiles int64 `mapstructure:"max_files" default:"10000"`
+	MaxBytes int64 `mapstructure:"max_bytes" default:"100_000_000"`
 }

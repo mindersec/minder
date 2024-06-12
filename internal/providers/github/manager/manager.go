@@ -119,6 +119,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 
 		cli, err := clients.NewRestClient(
 			cfg,
+			nil,
 			g.restClientCache,
 			creds.credential,
 			g.ghClientFactory,
@@ -137,7 +138,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 
 	cli, err := clients.NewGitHubAppProvider(
 		cfg,
-		g.config.GitHubApp,
+		g.config,
 		g.restClientCache,
 		creds.credential,
 		g.fallbackTokenClient,

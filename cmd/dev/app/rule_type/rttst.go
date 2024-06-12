@@ -302,7 +302,9 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 	case "github":
 		client, err := clients.NewGitHubAppProvider(
 			&minderv1.GitHubAppProviderConfig{},
-			&serverconfig.GitHubAppConfig{AppName: "test"},
+			&serverconfig.ProviderConfig{
+				GitHubApp: &serverconfig.GitHubAppConfig{AppName: "test"},
+			},
 			&ratecache.NoopRestClientCache{},
 			credentials.NewGitHubTokenCredential(token),
 			nil,
