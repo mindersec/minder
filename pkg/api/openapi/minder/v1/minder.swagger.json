@@ -507,18 +507,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "accessToken": {
-                  "type": "string"
-                },
-                "owner": {
-                  "type": "string"
-                },
-                "context": {
-                  "$ref": "#/definitions/v1Context"
-                }
-              }
+              "$ref": "#/definitions/OAuthServiceStoreProviderTokenBody"
             }
           }
         ],
@@ -1310,15 +1299,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "context": {
-                  "$ref": "#/definitions/v1Context"
-                },
-                "entity": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/RepositoryServiceReconcileEntityRegistrationBody"
             }
           }
         ],
@@ -2079,15 +2060,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "repository": {
-                  "$ref": "#/definitions/v1UpstreamRepositoryRef"
-                },
-                "context": {
-                  "$ref": "#/definitions/v1Context"
-                }
-              }
+              "$ref": "#/definitions/RepositoryServiceRegisterRepositoryBody"
             }
           }
         ],
@@ -2720,6 +2693,20 @@
         }
       }
     },
+    "OAuthServiceStoreProviderTokenBody": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        }
+      }
+    },
     "ProfileRule": {
       "type": "object",
       "properties": {
@@ -2812,6 +2799,28 @@
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
     },
+    "RepositoryServiceReconcileEntityRegistrationBody": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "entity": {
+          "type": "string"
+        }
+      }
+    },
+    "RepositoryServiceRegisterRepositoryBody": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        }
+      }
+    },
     "RestTypeFallback": {
       "type": "object",
       "properties": {
@@ -2860,7 +2869,7 @@
         "NULL_VALUE"
       ],
       "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
     },
     "v1Artifact": {
       "type": "object",
