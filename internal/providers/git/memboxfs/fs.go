@@ -28,16 +28,22 @@ import (
 // LimitedFs provides a size-limited billy.Filesystem.  This is a struct, there's
 // no constructor here. Note that LimitedFs is not thread-safe.
 type LimitedFs struct {
-	Fs billy.Filesystem
+	Fs            billy.Filesystem
 	MaxFiles      int64
 	TotalFileSize int64
 
-	currentFiles  int64
-	currentSize   int64
+	currentFiles int64
+	currentSize  int64
 }
 
 // ErrNotImplemented is returned when a method is not implemented.
 var ErrNotImplemented = fmt.Errorf("not implemented")
+
+// ErrTooBig is returned when a file is too big.
+var ErrTooBig = fmt.Errorf("file too big")
+
+// ErrTooManyFiles is returned when there are too many files.
+var ErrTooManyFiles = fmt.Errorf("too many files")
 
 var _ billy.Filesystem = (*LimitedFs)(nil)
 
@@ -50,7 +56,7 @@ func (_ *LimitedFs) Chroot(_ string) (billy.Filesystem, error) {
 func (f *LimitedFs) Create(filename string) (billy.File, error) {
 	f.currentFiles++
 	if f.currentFiles >= f.MaxFiles {
-		return nil, fs.ErrPermission
+		return nil, fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
 	}
 	file, err := f.Fs.Create(filename)
 	return &fileWrapper{f: file, fs: f}, err
@@ -71,7 +77,7 @@ func (f *LimitedFs) MkdirAll(filename string, perm fs.FileMode) error {
 	// TODO: account for path segments correctly
 	f.currentFiles++
 	if f.currentFiles >= f.MaxFiles {
-		return fs.ErrPermission
+		return fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
 	}
 	return f.Fs.MkdirAll(filename, perm)
 }
@@ -86,7 +92,7 @@ func (f *LimitedFs) OpenFile(filename string, flag int, perm fs.FileMode) (billy
 	if flag&os.O_CREATE != 0 {
 		f.currentFiles++
 		if f.currentFiles >= f.MaxFiles {
-			return nil, fs.ErrPermission
+			return nil, fmt.Errorf("%w: %s", ErrTooManyFiles, filename)
 		}
 	}
 	file, err := f.Fs.OpenFile(filename, flag, perm)
@@ -129,7 +135,7 @@ func (f *LimitedFs) Stat(filename string) (fs.FileInfo, error) {
 func (f *LimitedFs) Symlink(target string, link string) error {
 	f.currentFiles++
 	if f.currentFiles >= f.MaxFiles {
-		return fs.ErrPermission
+		return fmt.Errorf("%w: %s", ErrTooManyFiles, link)
 	}
 	return f.Fs.Symlink(target, link)
 }
@@ -138,7 +144,7 @@ func (f *LimitedFs) Symlink(target string, link string) error {
 func (f *LimitedFs) TempFile(dir string, prefix string) (billy.File, error) {
 	f.currentFiles++
 	if f.currentFiles >= f.MaxFiles {
-		return nil, fs.ErrPermission
+		return nil, fmt.Errorf("%w: %s/%s", ErrTooManyFiles, dir, prefix)
 	}
 	file, err := f.Fs.TempFile(dir, prefix)
 	return &fileWrapper{f: file, fs: f}, err
@@ -191,7 +197,7 @@ func (f *fileWrapper) Truncate(size int64) error {
 
 	growth := size - existingSize
 	if growth+f.fs.currentSize > f.fs.TotalFileSize {
-		return fs.ErrPermission
+		return fmt.Errorf("%w: %s", ErrTooBig, f.Name())
 	}
 
 	f.fs.currentSize += growth
@@ -219,7 +225,7 @@ func (f *fileWrapper) Write(p []byte) (n int, err error) {
 		growth = 0
 	}
 	if growth+f.fs.currentSize > f.fs.TotalFileSize {
-		return 0, fs.ErrPermission
+		return 0, fmt.Errorf("%w: %s", ErrTooBig, f.Name())
 	}
 
 	f.fs.currentSize += growth

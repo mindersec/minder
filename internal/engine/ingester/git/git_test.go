@@ -17,17 +17,17 @@ package git_test
 import (
 	"bytes"
 	"context"
-	"github.com/stacklok/minder/internal/config/server"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/config/server"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
