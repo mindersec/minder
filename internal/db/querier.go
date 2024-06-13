@@ -66,6 +66,12 @@ type Querier interface {
 	GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByEnrollmentNonce(ctx context.Context, arg GetInstallationIDByEnrollmentNonceParams) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error)
+	// GetInvitationByEmail retrieves all invitations for a given email address.
+	// This is intended to be called by a logged in user with their own email address,
+	// to allow them to accept invitations even if email delivery was not working.
+	// Note that this requires that the destination email address matches the email
+	// address of the logged in user in the external identity service / auth token.
+	GetInvitationByEmail(ctx context.Context, email string) ([]GetInvitationByEmailRow, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error)
@@ -108,6 +114,11 @@ type Querier interface {
 	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
+	// ListInvitationsForProject collects the information visible to project
+	// administrators after an invitation has been issued.  In particular, it
+	// *does not* report the invitation code, which is a secret intended for
+	// the invitee.
+	ListInvitationsForProject(ctx context.Context, project uuid.UUID) ([]ListInvitationsForProjectRow, error)
 	// ListNonOrgProjects is a query that lists all non-organization projects.
 	// projects have a boolean field is_organization that is set to true if the project is an organization.
 	// this flag is no longer used and will be removed in the future.

@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -25,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
@@ -229,6 +231,7 @@ func (s *Server) ListRoleAssignments(
 	// Determine target project.
 	entityCtx := engine.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	invitations := make([]*minder.Invitation, 0)
 
 	as, err := s.authzClient.AssignmentsToProject(ctx, projectID)
 	if err != nil {
@@ -246,9 +249,38 @@ func (s *Server) ListRoleAssignments(
 			as[i].Subject = identity.Human()
 		}
 	}
+	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		for i := range as {
+			user, err := s.idClient.Resolve(ctx, as[i].Subject)
+			if err != nil {
+				// if we can't resolve the subject, report the raw ID value
+				zerolog.Ctx(ctx).Error().Err(err).Str("user", as[i].Subject).Msg("error resolving user")
+				continue
+			}
+			as[i].DisplayName = user.Human()
+		}
+		// Add invitations, which are only stored in the Minder DB
+		invites, err := s.store.ListInvitationsForProject(ctx, projectID)
+		if err != nil {
+			// return the information we can and log the error
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error getting invitations")
+		}
+		for _, invite := range invites {
+			invitations = append(invitations, &minder.Invitation{
+				Role:           invite.Role,
+				Email:          invite.Email,
+				Project:        projectID.String(),
+				CreatedAt:      timestamppb.New(invite.CreatedAt),
+				ExpiresAt:      timestamppb.New(invite.UpdatedAt.Add(7 * 24 * time.Hour)),
+				Sponsor:        invite.IdentitySubject,
+				SponsorDisplay: "TODO", // This should re-use the resolve from line 253.
+			})
+		}
+	}
 
 	return &minder.ListRoleAssignmentsResponse{
 		RoleAssignments: as,
+		Invitations:     invitations,
 	}, nil
 }
 
