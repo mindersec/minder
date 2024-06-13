@@ -172,21 +172,29 @@ func extractGoDepFromPatchLine(line string) *pb.Dependency {
 	if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") && !strings.Contains(line, "// indirect") {
 		// Extract the part after the '+' sign.
 		lineContent := line[1:]
+
 		fields := strings.Fields(lineContent)
 		if len(fields) < 2 {
 			// No match
 			return nil
 		}
+
 		dep := &pb.Dependency{
 			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
 		}
 		if fields[0] == "require" && fields[1] != "(" {
+			if len(fields) < 3 {
+				return nil
+			}
 			dep.Name = fields[1]
 			dep.Version = fields[2]
 		} else if strings.HasPrefix(lineContent, "\t") {
 			dep.Name = fields[0]
 			dep.Version = fields[1]
 		} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
+			if len(fields) < 5 {
+				return nil
+			}
 			// For lines with version replacements, the new version is after the "=>"
 			// Assuming format is module path version => newModulePath newVersion
 			dep.Name = fields[3]
