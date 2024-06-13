@@ -67,6 +67,7 @@ enum Relation {
     RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
     RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
+    RELATION_ENTITY_RECONCILE = 36 [(name) = "entity_reconcile"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -880,7 +881,7 @@ service ProvidersService {
 
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_REPO_CREATE
+            relation: RELATION_ENTITY_RECONCILE
         };
     }
 }
