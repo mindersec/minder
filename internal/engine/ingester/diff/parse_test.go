@@ -105,6 +105,28 @@ func TestGoParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			description: "Bad Replace",
+			content: `
+	k8s.io/klog/v2 v2.110.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
+)
++
++replace github.com/opencontainers/runc => `,
+			expectedCount:        0,
+			expectedDependencies: []*pb.Dependency{},
+		},
+		{
+			description: "Bad Require",
+			content: `
+	k8s.io/klog/v2 v2.110.1 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
+)
++
++require github.com/opencontainers/runc`,
+			expectedCount:        0,
+			expectedDependencies: []*pb.Dependency{},
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
