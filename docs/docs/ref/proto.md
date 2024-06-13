@@ -1687,7 +1687,6 @@ RESTProviderConfig contains the configuration for the REST provider.
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  |  |
 | entity | [string](#string) |  |  |
-| provider | [string](#string) |  | **Deprecated.**  |
 
 
 <a name="minder-v1-ReconcileEntityRegistrationResponse"></a>

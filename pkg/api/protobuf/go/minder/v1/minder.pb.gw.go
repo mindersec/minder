@@ -707,23 +707,6 @@ func request_RepositoryService_ReconcileEntityRegistration_0(ctx context.Context
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["provider"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
-	}
-
-	protoReq.Provider, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
-	}
-
 	msg, err := client.ReconcileEntityRegistration(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -735,23 +718,6 @@ func local_request_RepositoryService_ReconcileEntityRegistration_0(ctx context.C
 
 	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["provider"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "provider")
-	}
-
-	protoReq.Provider, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "provider", err)
 	}
 
 	msg, err := server.ReconcileEntityRegistration(ctx, &protoReq)
@@ -3411,7 +3377,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ReconcileEntityRegistration", runtime.WithHTTPPathPattern("/api/v1/provider/{provider}/register_all"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.RepositoryService/ReconcileEntityRegistration", runtime.WithHTTPPathPattern("/api/v1/provider/register_all"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5169,7 +5135,7 @@ func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.Se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ReconcileEntityRegistration", runtime.WithHTTPPathPattern("/api/v1/provider/{provider}/register_all"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.RepositoryService/ReconcileEntityRegistration", runtime.WithHTTPPathPattern("/api/v1/provider/register_all"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5413,7 +5379,7 @@ var (
 
 	pattern_RepositoryService_RegisterRepository_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "repository", "register"}, ""))
 
-	pattern_RepositoryService_ReconcileEntityRegistration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"api", "v1", "provider", "register_all"}, ""))
+	pattern_RepositoryService_ReconcileEntityRegistration_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "provider", "register_all"}, ""))
 
 	pattern_RepositoryService_ListRemoteRepositoriesFromProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "repositories", "provider", "remote"}, ""))
 

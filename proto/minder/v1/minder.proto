@@ -344,7 +344,7 @@ service RepositoryService {
     }
     rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
         option (google.api.http) = {
-            post: "/api/v1/provider/{provider}/register_all"
+            post: "/api/v1/provider/register_all"
             body: "*"
         };
 
@@ -1068,8 +1068,6 @@ message ListRepositoriesResponse {
 message ReconcileEntityRegistrationRequest {
     Context context = 1;
     string entity = 2;
-
-    string provider = 3 [deprecated=true];
 }
 
 message ReconcileEntityRegistrationResponse {
