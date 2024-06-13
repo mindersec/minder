@@ -748,6 +748,21 @@ func (mr *MockStoreMockRecorder) GetInstallationIDByProviderID(arg0, arg1 any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallationIDByProviderID", reflect.TypeOf((*MockStore)(nil).GetInstallationIDByProviderID), arg0, arg1)
 }
 
+// GetInvitationByEmail mocks base method.
+func (m *MockStore) GetInvitationByEmail(arg0 context.Context, arg1 string) ([]db.GetInvitationByEmailRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationByEmail", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetInvitationByEmailRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationByEmail indicates an expected call of GetInvitationByEmail.
+func (mr *MockStoreMockRecorder) GetInvitationByEmail(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByEmail", reflect.TypeOf((*MockStore)(nil).GetInvitationByEmail), arg0, arg1)
+}
+
 // GetParentProjects mocks base method.
 func (m *MockStore) GetParentProjects(arg0 context.Context, arg1 uuid.UUID) ([]uuid.UUID, error) {
 	m.ctrl.T.Helper()
@@ -1300,6 +1315,21 @@ func (m *MockStore) ListFlushCache(arg0 context.Context) ([]db.FlushCache, error
 func (mr *MockStoreMockRecorder) ListFlushCache(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFlushCache", reflect.TypeOf((*MockStore)(nil).ListFlushCache), arg0)
+}
+
+// ListInvitationsForProject mocks base method.
+func (m *MockStore) ListInvitationsForProject(arg0 context.Context, arg1 uuid.UUID) ([]db.ListInvitationsForProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListInvitationsForProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListInvitationsForProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListInvitationsForProject indicates an expected call of ListInvitationsForProject.
+func (mr *MockStoreMockRecorder) ListInvitationsForProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvitationsForProject", reflect.TypeOf((*MockStore)(nil).ListInvitationsForProject), arg0, arg1)
 }
 
 // ListNonOrgProjects mocks base method.

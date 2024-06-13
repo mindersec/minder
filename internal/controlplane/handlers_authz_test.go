@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -30,6 +31,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
@@ -298,12 +300,14 @@ func TestRoleManagement(t *testing.T) {
 	user2 := uuid.New()
 
 	tests := []struct {
-		name    string
-		idpFlag bool
-		adds    []*minder.RoleAssignment
-		removes []*minder.RoleAssignment
-		result  []*minder.RoleAssignment
-		stored  []*minder.RoleAssignment
+		name               string
+		idpFlag            bool
+		userManagementFlag bool
+		adds               []*minder.RoleAssignment
+		removes            []*minder.RoleAssignment
+		invites            []db.ListInvitationsForProjectRow
+		result             *minder.ListRoleAssignmentsResponse
+		stored             []*minder.RoleAssignment
 	}{{
 		name: "simple adds",
 		adds: []*minder.RoleAssignment{{
@@ -313,15 +317,17 @@ func TestRoleManagement(t *testing.T) {
 			Role:    authz.AuthzRoleAdmin.String(),
 			Subject: user2.String(),
 		}},
-		result: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: user1.String(),
-			Project: proto.String(project.String()),
-		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: user2.String(),
-			Project: proto.String(project.String()),
-		}},
+		result: &minder.ListRoleAssignmentsResponse{
+			RoleAssignments: []*minder.RoleAssignment{{
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: user1.String(),
+				Project: proto.String(project.String()),
+			}, {
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: user2.String(),
+				Project: proto.String(project.String()),
+			}},
+		},
 		stored: []*minder.RoleAssignment{{
 			Role:    authz.AuthzRoleAdmin.String(),
 			Subject: user1.String(),
@@ -344,11 +350,13 @@ func TestRoleManagement(t *testing.T) {
 			Role:    authz.AuthzRoleAdmin.String(),
 			Subject: user2.String(),
 		}},
-		result: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: user1.String(),
-			Project: proto.String(project.String()),
-		}},
+		result: &minder.ListRoleAssignmentsResponse{
+			RoleAssignments: []*minder.RoleAssignment{{
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: user1.String(),
+				Project: proto.String(project.String()),
+			}},
+		},
 	}, {
 		name:    "IDP resolution",
 		idpFlag: true,
@@ -359,15 +367,66 @@ func TestRoleManagement(t *testing.T) {
 			Role:    authz.AuthzRoleAdmin.String(),
 			Subject: user2.String(),
 		}},
-		result: []*minder.RoleAssignment{{
+		result: &minder.ListRoleAssignmentsResponse{
+			RoleAssignments: []*minder.RoleAssignment{{
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: "user1",
+				Project: proto.String(project.String()),
+			}, {
+				Role:    authz.AuthzRoleAdmin.String(),
+				Subject: "user2",
+				Project: proto.String(project.String()),
+			}},
+		},
+		stored: []*minder.RoleAssignment{{
 			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: "user1",
+			Subject: user1.String(),
 			Project: proto.String(project.String()),
 		}, {
 			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: "user2",
+			Subject: user2.String(),
 			Project: proto.String(project.String()),
 		}},
+	}, {
+		name: "User Management enabled",
+		// NOTE: we don't have a way to create invitations yet.
+		userManagementFlag: true,
+		adds: []*minder.RoleAssignment{{
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user1.String(),
+		}, {
+			Role:    authz.AuthzRoleAdmin.String(),
+			Subject: user2.String(),
+		}},
+		invites: []db.ListInvitationsForProjectRow{{
+			Email:           "george@happyplace.dev",
+			Role:            authz.AuthzRoleEditor.String(),
+			IdentitySubject: user1.String(),
+			CreatedAt:       time.Time{},
+			UpdatedAt:       time.Time{},
+		}},
+		result: &minder.ListRoleAssignmentsResponse{
+			RoleAssignments: []*minder.RoleAssignment{{
+				Role:        authz.AuthzRoleAdmin.String(),
+				Subject:     user1.String(),
+				DisplayName: "user1",
+				Project:     proto.String(project.String()),
+			}, {
+				Role:        authz.AuthzRoleAdmin.String(),
+				Subject:     user2.String(),
+				DisplayName: "user2",
+				Project:     proto.String(project.String()),
+			}},
+			Invitations: []*minder.Invitation{{
+				Role:           authz.AuthzRoleEditor.String(),
+				Email:          "george@happyplace.dev",
+				Project:        project.String(),
+				Sponsor:        user1.String(),
+				SponsorDisplay: "user1",
+				CreatedAt:      timestamppb.New(time.Time{}),
+				ExpiresAt:      timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
+			}},
+		},
 		stored: []*minder.RoleAssignment{{
 			Role:    authz.AuthzRoleAdmin.String(),
 			Subject: user1.String(),
@@ -409,9 +468,15 @@ func TestRoleManagement(t *testing.T) {
 				}
 				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
 			}
+			if tc.userManagementFlag {
+				mockStore.EXPECT().ListInvitationsForProject(gomock.Any(), project).Return(tc.invites, nil)
+			}
 
 			featureClient := &flags.FakeClient{}
-			featureClient.Data = map[string]any{"idp_resolver": tc.idpFlag}
+			featureClient.Data = map[string]any{
+				"idp_resolver":    tc.idpFlag,
+				"user_management": tc.userManagementFlag,
+			}
 
 			server := Server{
 				store:        mockStore,
@@ -448,9 +513,13 @@ func TestRoleManagement(t *testing.T) {
 			result, err := server.ListRoleAssignments(ctx, &minder.ListRoleAssignmentsRequest{})
 			assert.NoError(t, err)
 
-			wantJSON := RoleAssignmentsToJson(t, tc.result)
+			wantJSON := RoleAssignmentsToJson(t, tc.result.RoleAssignments)
 			gotJSON := RoleAssignmentsToJson(t, result.RoleAssignments)
 			assert.ElementsMatchf(t, wantJSON, gotJSON, "RPC results mismatch, want: A, got: B")
+
+			wantJSON = InvitationsToJson(t, tc.result.Invitations)
+			gotJSON = InvitationsToJson(t, result.Invitations)
+			assert.ElementsMatchf(t, wantJSON, gotJSON, "Invitations mismatch, want: A, got: B")
 
 			if len(tc.stored) > 0 {
 				wantStored := RoleAssignmentsToJson(t, tc.stored)
@@ -465,6 +534,17 @@ func RoleAssignmentsToJson(t *testing.T, assignments []*minder.RoleAssignment) [
 	t.Helper()
 	json := make([]string, 0, len(assignments))
 	for _, p := range assignments {
+		j, err := protojson.Marshal(p)
+		assert.NoError(t, err)
+		json = append(json, string(j))
+	}
+	return json
+}
+
+func InvitationsToJson(t *testing.T, invites []*minder.Invitation) []string {
+	t.Helper()
+	json := make([]string, 0, len(invites))
+	for _, p := range invites {
 		j, err := protojson.Marshal(p)
 		assert.NoError(t, err)
 		json = append(json, string(j))
