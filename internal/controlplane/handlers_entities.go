@@ -49,6 +49,12 @@ func (s *Server) ReconcileEntityRegistration(
 
 	logger.BusinessRecord(ctx).Project = projectID
 
+	// Todo: We don't support other entities yet. This should be updated when we do.
+	entityType := in.GetEntity()
+	if pb.EntityFromString(entityType) != pb.Entity_ENTITY_REPOSITORIES {
+		return nil, util.UserVisibleError(codes.Internal, "entity type %s not supported", entityType)
+	}
+
 	providerName := in.GetContext().GetProvider()
 	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(ctx, projectID, db.ProviderTypeRepoLister, providerName)
 	if err != nil {

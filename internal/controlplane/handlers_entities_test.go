@@ -40,12 +40,14 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 		GitHubSetup      githubMockBuilder
 		ProviderSetup    func(ctrl *gomock.Controller) *mockmanager.MockProviderManager
 		EventerSetup     func(ctrl *gomock.Controller) *mockevents.MockInterface
+		EntityType       pb.Entity
 		ProviderFails    bool
 		ExpectedResults  []*pb.UpstreamRepositoryRef
 		ExpectedError    string
 	}{
 		{
 			Name:        "[positive] successful reconciliation",
+			EntityType:  pb.Entity_ENTITY_REPOSITORIES,
 			GitHubSetup: newGitHub(withSuccessfulListAllRepositories),
 			RepoServiceSetup: rf.NewRepoService(
 				rf.WithSuccessfulListRepositories(
@@ -67,6 +69,7 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 		},
 		{
 			Name:        "[negative] failed to list repositories",
+			EntityType:  pb.Entity_ENTITY_REPOSITORIES,
 			GitHubSetup: newGitHub(withFailedListAllRepositories(errDefault)),
 			RepoServiceSetup: rf.NewRepoService(
 				rf.WithSuccessfulListRepositories(
@@ -82,8 +85,12 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 			},
 			ExpectedError: "cannot register entities for providers: [github]",
 		},
+		{
+			Name:          "[negative] unexpected entity type",
+			EntityType:    pb.Entity_ENTITY_ARTIFACTS,
+			ExpectedError: "entity type artifact not supported",
+		},
 	}
-
 	for _, scenario := range scenarios {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
@@ -94,14 +101,16 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 				Project: engine.Project{ID: projectID},
 			})
 
-			prov := scenario.GitHubSetup(ctrl)
 			manager := mockmanager.NewMockProviderManager(ctrl)
-			manager.EXPECT().BulkInstantiateByTrait(
-				gomock.Any(),
-				gomock.Eq(projectID),
-				gomock.Eq(db.ProviderTypeRepoLister),
-				gomock.Eq(""),
-			).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
+			if scenario.ProviderSetup != nil && scenario.GitHubSetup != nil {
+				prov := scenario.GitHubSetup(ctrl)
+				manager.EXPECT().BulkInstantiateByTrait(
+					gomock.Any(),
+					gomock.Eq(projectID),
+					gomock.Eq(db.ProviderTypeRepoLister),
+					gomock.Eq(""),
+				).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
+			}
 
 			server := createServer(
 				ctrl,
@@ -119,6 +128,7 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 				Context: &pb.Context{
 					Project: &projectIDStr,
 				},
+				Entity: scenario.EntityType.ToString(),
 			}
 			res, err := server.ReconcileEntityRegistration(ctx, req)
 			if scenario.ExpectedError == "" {
