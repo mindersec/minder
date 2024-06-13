@@ -93,6 +93,7 @@ func testGithubProvider() (provifv1.GitHub, error) {
 		&pb.GitHubProviderConfig{
 			Endpoint: ghApiUrl + "/",
 		},
+		nil,
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

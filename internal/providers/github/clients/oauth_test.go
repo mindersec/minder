@@ -82,6 +82,7 @@ func TestNewRestClient(t *testing.T) {
 			Endpoint: "https://api.github.com",
 		},
 		nil,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 		"",
@@ -136,6 +137,7 @@ func TestArtifactAPIEscapesOAuth(t *testing.T) {
 			client, err := NewRestClient(
 				&minderv1.GitHubProviderConfig{Endpoint: testServer.URL + "/"},
 				nil,
+				nil,
 				credentials.NewGitHubTokenCredential("token"),
 				NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 				"stacklok",
@@ -169,6 +171,7 @@ func TestWaitForRateLimitResetOAuth(t *testing.T) {
 
 	client, err := NewRestClient(
 		&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"},
+		nil,
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
@@ -219,6 +222,7 @@ func TestConcurrentWaitForRateLimitResetOAuth(t *testing.T) {
 		defer wg.Done()
 		client, err := NewRestClient(
 			&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"},
+			nil,
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
 			NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),

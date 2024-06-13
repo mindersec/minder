@@ -78,6 +78,7 @@ services:
         condition: service_completed_successfully
       keycloak-config:
         condition: service_completed_successfully
+
   migrate:
     container_name: minder_migrate_up
     build:

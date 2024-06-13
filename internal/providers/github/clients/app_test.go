@@ -151,7 +151,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
-		&config.GitHubAppConfig{},
+		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 		nil,
 		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
@@ -173,10 +173,12 @@ func TestUserInfo(t *testing.T) {
 
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
-		&config.GitHubAppConfig{
-			AppName: appName,
-			AppID:   appId,
-			UserID:  expectedUserId,
+		&config.ProviderConfig{
+			GitHubApp: &config.GitHubAppConfig{
+				AppName: appName,
+				AppID:   appId,
+				UserID:  expectedUserId,
+			},
 		},
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential("token"),
@@ -252,7 +254,7 @@ func TestArtifactAPIEscapesApp(t *testing.T) {
 
 			client, err := NewGitHubAppProvider(
 				&minderv1.GitHubAppProviderConfig{Endpoint: testServer.URL + "/"},
-				&config.GitHubAppConfig{},
+				&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential("token"),
 				packageListingClient,
@@ -339,8 +341,10 @@ func TestListPackagesByRepository(t *testing.T) {
 
 			provider, err := NewGitHubAppProvider(
 				&minderv1.GitHubAppProviderConfig{},
-				&config.GitHubAppConfig{
-					FallbackToken: accessToken,
+				&config.ProviderConfig{
+					GitHubApp: &config.GitHubAppConfig{
+						FallbackToken: accessToken,
+					},
 				},
 				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential(accessToken),
@@ -389,7 +393,7 @@ func TestWaitForRateLimitResetApp(t *testing.T) {
 
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
-		&config.GitHubAppConfig{},
+		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
 		packageListingClient,
@@ -446,7 +450,7 @@ func TestConcurrentWaitForRateLimitResetApp(t *testing.T) {
 		defer wg.Done()
 		client, err := NewGitHubAppProvider(
 			&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
-			&config.GitHubAppConfig{},
+			&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
 			packageListingClient,

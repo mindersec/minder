@@ -258,7 +258,7 @@ func getDefaultValueForInt64(value string) (any, error) {
 	var defaultValue any
 	var err error
 
-	defaultValue, err = strconv.Atoi(value)
+	defaultValue, err = strconv.ParseInt(value, 0, 0)
 	if err == nil {
 		return defaultValue, nil
 	}
@@ -285,7 +285,7 @@ func getDefaultValue(field reflect.StructField, value string, valueName string) 
 		defaultValue, err = getDefaultValueForInt64(value)
 	case reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int,
 		reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
-		defaultValue, err = strconv.Atoi(value)
+		defaultValue, err = strconv.ParseInt(value, 0, 0)
 	case reflect.Float64:
 		defaultValue, err = strconv.ParseFloat(value, 64)
 	case reflect.Bool:

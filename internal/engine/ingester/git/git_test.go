@@ -21,19 +21,30 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/config/server"
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	t.Parallel()
 
+	cfg := server.GitConfig{
+		MaxFiles: 100,
+		MaxBytes: 1_000_000,
+	}
+	gitClient := gitclient.NewGit(
+		credentials.NewEmptyCredential(),
+		gitclient.WithConfig(cfg),
+	)
+
 	gi, err := gitengine.NewGitIngester(
 		&pb.GitType{Branch: "master"},
-		gitclient.NewGit(credentials.NewEmptyCredential()),
+		gitClient,
 	)
 	require.NoError(t, err, "expected no error")
 
@@ -192,4 +203,60 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	})
 	require.Error(t, err, "expected error")
 	require.Nil(t, got, "expected nil result")
+}
+
+func TestGitIngestFailsWhenRepoTooLarge(t *testing.T) {
+	t.Parallel()
+
+	// set size limit to 1 byte
+	cfg := server.GitConfig{
+		MaxFiles: 100,
+		MaxBytes: 1,
+	}
+	gitClient := gitclient.NewGit(
+		credentials.NewEmptyCredential(),
+		gitclient.WithConfig(cfg),
+	)
+
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitClient,
+	)
+
+	require.NoError(t, err, "expected no error")
+
+	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+		"clone_url": "https://github.com/octocat/Hello-World.git",
+	})
+	require.Error(t, err, "expected error")
+	require.ErrorIs(t, err, v1.ErrRepositoryTooLarge, "expected ErrRepositoryTooLarge")
+	require.Nil(t, got, "expected non-nil result")
+}
+
+func TestGitIngestFailsWhenRepoHasTooManyFiles(t *testing.T) {
+	t.Parallel()
+
+	// will fail because of files in .git
+	cfg := server.GitConfig{
+		MaxFiles: 1,
+		MaxBytes: 1_000_000,
+	}
+	gitClient := gitclient.NewGit(
+		credentials.NewEmptyCredential(),
+		gitclient.WithConfig(cfg),
+	)
+
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{Branch: "master"},
+		gitClient,
+	)
+
+	require.NoError(t, err, "expected no error")
+
+	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+		"clone_url": "https://github.com/octocat/Hello-World.git",
+	})
+	require.Error(t, err, "expected error")
+	require.ErrorIs(t, err, v1.ErrRepositoryTooLarge, "expected ErrRepositoryTooLarge")
+	require.Nil(t, got, "expected non-nil result")
 }

@@ -46,7 +46,8 @@ database:
 
 identity:
   server:
-    issuer_url: http://keycloak:8080 # Use http://localhost:8081 instead for running minder outside of docker compose
+    issuer_url: http://localhost:8081
+    issuer_claim: http://localhost:8081/realms/stacklok
     client_id: minder-server
     client_secret: secret
     audience: minder

@@ -80,15 +80,18 @@ func NewAppDelegate(
 // the GitHubConfig struct
 func NewGitHubAppProvider(
 	cfg *minderv1.GitHubAppProviderConfig,
-	appConfig *server.GitHubAppConfig,
+	appConfig *server.ProviderConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	packageListingClient *gogithub.Client,
 	ghClientFactory GitHubClientFactory,
 	isOrg bool,
 ) (*github.GitHub, error) {
-	appName := appConfig.AppName
-	userId := appConfig.UserID
+	if appConfig == nil || appConfig.GitHubApp == nil {
+		return nil, fmt.Errorf("missing GitHub App configuration")
+	}
+	appName := appConfig.GitHubApp.AppName
+	userId := appConfig.GitHubApp.UserID
 
 	ghClient, delegate, err := ghClientFactory.BuildAppClient(
 		cfg.Endpoint,
@@ -107,6 +110,7 @@ func NewGitHubAppProvider(
 		packageListingClient,
 		restClientCache,
 		delegate,
+		appConfig,
 	), nil
 }
 

@@ -87,11 +87,19 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Identity
-		jwksUrl, err := cfg.Identity.Server.Path("realms/stacklok/protocol/openid-connect/certs")
+		// TODO: cfg.Identity.Server.IssuerUrl _should_ be a URL to an issuer that has an
+		// .../.well-known/jwks.json or .../.well-known/openid-configuration endpoint.  Right
+		// now it's just a hostname.  When we have this, we can consolidate the jwksUrl and issUrl,
+		// and remove the Keycloak-specific paths.
+		jwksUrl, err := cfg.Identity.Server.Path("/realms/stacklok/protocol/openid-connect/certs")
 		if err != nil {
 			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
 		}
-		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String(), cfg.Identity.Server.Audience)
+		issUrl, err := cfg.Identity.Server.JwtUrl()
+		if err != nil {
+			return fmt.Errorf("failed to create issuer URL: %w\n", err)
+		}
+		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}

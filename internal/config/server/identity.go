@@ -36,8 +36,12 @@ type IdentityConfigWrapper struct {
 
 // IdentityConfig is the configuration for the identity provider in minder server
 type IdentityConfig struct {
-	// IssuerUrl is the base URL where the identity server is running
+	// IssuerUrl is the base URL for calling APIs on the identity server.  Note that this URL
+	// ised for direct communication with the identity server, and is not the URL that
+	// is included in the JWT tokens.  It is named 'issuer_url' for historical compatibility.
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
+	// IssuerClaim is the claim in the JWT token that identifies the issuer
+	IssuerClaim string `mapstructure:"issuer_claim" default:"http://localhost:8081/realms/stacklok"`
 	// ClientId is the client ID that identifies the minder server
 	ClientId string `mapstructure:"client_id" default:"minder-server"`
 	// ClientSecret is the client secret for the minder server
@@ -57,6 +61,15 @@ func (sic *IdentityConfig) GetClientSecret() (string, error) {
 func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	return config.BindConfigFlag(v, flags, "identity.server.issuer_url", "issuer-url", "",
 		"The base URL where the identity server is running", flags.String)
+}
+
+// JwtUrl returns the base `iss` claim as a URL.
+func (sic *IdentityConfig) JwtUrl(elem ...string) (*url.URL, error) {
+	parsedUrl, err := url.Parse(sic.IssuerClaim)
+	if err != nil {
+		return nil, err
+	}
+	return parsedUrl.JoinPath(elem...), nil
 }
 
 // Path returns a URL for the given path on the identity server
