@@ -24,6 +24,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/entities"
+	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester"
