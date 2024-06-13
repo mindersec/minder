@@ -3564,6 +3564,10 @@
           "format": "date-time",
           "description": "expires_at is the time at which the invitation expires."
         },
+        "expired": {
+          "type": "boolean",
+          "description": "expired is true if the invitation has expired."
+        },
         "sponsor": {
           "type": "string",
           "description": "sponsor is the account (ID) of the user who created the invitation."

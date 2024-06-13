@@ -1136,6 +1136,7 @@ GitType defines the git data ingester.
 | code | [string](#string) |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | created_at is the time at which the invitation was created. |
 | expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
+| expired | [bool](#bool) |  | expired is true if the invitation has expired. |
 | sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
 | sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
 

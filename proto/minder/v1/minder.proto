@@ -2194,6 +2194,9 @@ message Invitation {
     google.protobuf.Timestamp created_at = 5;
     // expires_at is the time at which the invitation expires.
     google.protobuf.Timestamp expires_at = 6;
+    // expired is true if the invitation has expired.
+    bool expired = 9;
+
     // sponsor is the account (ID) of the user who created the invitation.
     string sponsor = 7;
     // sponsor_display is the display name of the user who created the
