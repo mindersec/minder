@@ -56,6 +56,7 @@ func testGithubProvider(baseURL string) (provifv1.GitHub, error) {
 		&pb.GitHubProviderConfig{
 			Endpoint: baseURL,
 		},
+		nil,
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

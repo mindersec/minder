@@ -160,6 +160,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 
 			client, err := clients.NewRestClient(
 				&pb.GitHubProviderConfig{},
+				nil,
 				&ratecache.NoopRestClientCache{},
 				credentials.NewGitHubTokenCredential("token"),
 				clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

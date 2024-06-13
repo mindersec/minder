@@ -21,6 +21,7 @@ import (
 
 	gogithub "github.com/google/go-github/v61/github"
 
+	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
@@ -77,6 +78,7 @@ func NewOAuthDelegate(
 // the GitHubConfig struct
 func NewRestClient(
 	cfg *minderv1.GitHubProviderConfig,
+	providerCfg *server.ProviderConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	ghClientFactory GitHubClientFactory,
@@ -92,6 +94,7 @@ func NewRestClient(
 		ghClient, // use the same client for listing packages and all other operations
 		restClientCache,
 		delegate,
+		providerCfg,
 	), nil
 }
 

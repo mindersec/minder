@@ -80,6 +80,7 @@ type GitHub struct {
 	cache                ratecache.RestClientCache
 	delegate             Delegate
 	ghcrwrap             *ghcr.ImageLister
+	gitConfig            config.GitConfig
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -156,13 +157,19 @@ func NewGitHub(
 	packageListingClient *github.Client,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
+	cfg *config.ProviderConfig,
 ) *GitHub {
+	var gitConfig config.GitConfig
+	if cfg != nil {
+		gitConfig = cfg.Git
+	}
 	return &GitHub{
 		client:               client,
 		packageListingClient: packageListingClient,
 		cache:                cache,
 		delegate:             delegate,
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
+		gitConfig:            gitConfig,
 	}
 }
 
@@ -729,7 +736,7 @@ func (c *GitHub) UpdateIssueComment(ctx context.Context, owner, repo string, num
 
 // Clone clones a GitHub repository
 func (c *GitHub) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
-	delegator := gitclient.NewGit(c.delegate.GetCredential())
+	delegator := gitclient.NewGit(c.delegate.GetCredential(), gitclient.WithConfig(c.gitConfig))
 	return delegator.Clone(ctx, cloneUrl, branch)
 }
 

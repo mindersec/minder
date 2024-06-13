@@ -49,11 +49,9 @@ func start(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to read config: %w", err)
 	}
 
-	// Configuration is normalized to ensure that all values are valid
-	// and if they can't be fixed, an error is returned
-	_, err = cfg.Normalize(cmd)
+	err = cfg.Validate()
 	if err != nil {
-		return fmt.Errorf("unable to normalize config: %w", err)
+		return fmt.Errorf("error validating config: %w", err)
 	}
 
 	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)

@@ -45,6 +45,25 @@ WHERE project_id = $1 AND webhook_id IS NOT NULL
     AND (lower(provider) = lower(sqlc.narg('provider')::text) OR sqlc.narg('provider')::text IS NULL)
 ORDER BY repo_name;
 
+-- name: ListRepositoriesAfterID :many
+SELECT *
+FROM repositories
+WHERE id > $1
+ORDER BY id
+LIMIT sqlc.arg('limit')::bigint;
+
+-- name: UpdateReminderLastSentById :exec
+UPDATE repositories
+SET reminder_last_sent = NOW()
+WHERE id = $1;
+
+-- name: RepositoryExistsAfterID :one
+SELECT EXISTS (
+  SELECT 1
+  FROM repositories
+  WHERE id > $1)
+AS exists;
+
 -- name: DeleteRepository :exec
 DELETE FROM repositories
 WHERE id = $1;

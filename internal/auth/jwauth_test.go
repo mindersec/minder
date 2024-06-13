@@ -50,6 +50,8 @@ func TestParseAndValidate(t *testing.T) {
 	err = jwks.AddKey(publicJwk)
 	require.NoError(t, err, "failed to setup JWK set")
 
+	issUrl := "https://localhost/realm/foo"
+
 	testCases := []struct {
 		name       string
 		buildToken func() string
@@ -58,7 +60,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Valid token",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Subject("123").Audience([]string{"minder"}).Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -71,7 +73,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Expired token",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Subject("123").Audience([]string{"minder"}).Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -88,7 +90,7 @@ func TestParseAndValidate(t *testing.T) {
 				otherJwk, _ := jwk.FromRaw(otherKey)
 				err = otherJwk.Set(jwk.KeyIDKey, `otherKey`)
 				require.NoError(t, err, "failed to setup signing key ID")
-				token, _ := jwt.NewBuilder().Subject("123").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
+				token, _ := jwtBuilder("123", issUrl, "minder").Expiration(time.Now().Add(time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, otherJwk))
 				return string(signed)
 			},
@@ -112,7 +114,20 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Missing subject claim",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				token, _ := jwtBuilder("", issUrl, "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
+				return string(signed)
+			},
+			checkError: func(t *testing.T, err error) {
+				t.Helper()
+
+				assert.Error(t, err)
+			},
+		},
+		{
+			name: "Missing issuer claim",
+			buildToken: func() string {
+				token, _ := jwtBuilder("123", "", "minder").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -125,7 +140,7 @@ func TestParseAndValidate(t *testing.T) {
 		{
 			name: "Missing audience claim",
 			buildToken: func() string {
-				token, _ := jwt.NewBuilder().Subject("123").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
+				token, _ := jwtBuilder("123", issUrl, "").Expiration(time.Now().Add(-time.Duration(1) * time.Minute)).Build()
 				signed, _ := jwt.Sign(token, jwt.WithKey(jwa.RS256, privateJwk))
 				return string(signed)
 			},
@@ -149,6 +164,7 @@ func TestParseAndValidate(t *testing.T) {
 
 			jwtValidator := JwkSetJwtValidator{
 				jwksFetcher: mockKeyFetcher,
+				iss:         issUrl,
 				aud:         "minder",
 			}
 			_, err := jwtValidator.ParseAndValidate(tc.buildToken())
@@ -166,4 +182,20 @@ func randomKeypair(length int) (*rsa.PrivateKey, *rsa.PublicKey) {
 	publicKey := &privateKey.PublicKey
 
 	return privateKey, publicKey
+}
+
+func jwtBuilder(sub, iss, aud string) *jwt.Builder {
+	r := jwt.NewBuilder()
+
+	if sub != "" {
+		r = r.Subject(sub)
+	}
+	if iss != "" {
+		r = r.Issuer(iss)
+	}
+	if aud != "" {
+		r = r.Audience([]string{aud})
+	}
+
+	return r
 }

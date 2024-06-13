@@ -21,4 +21,6 @@ var (
 	ErrProviderGitBranchNotFound = errors.New("branch not found")
 	// ErrRepositoryEmpty is returned when the repository is empty
 	ErrRepositoryEmpty = errors.New("repository is empty")
+	// ErrRepositoryTooLarge is returned when the configured size limit is exceeded
+	ErrRepositoryTooLarge = errors.New("repository is too large to clone")
 )
