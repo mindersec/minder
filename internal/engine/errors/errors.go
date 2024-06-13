@@ -24,6 +24,9 @@ import (
 	"github.com/stacklok/minder/internal/db"
 )
 
+// ErrInternal is an error that occurs when there is an internal error in the minder engine.
+var ErrInternal = errors.New("internal minder error")
+
 // EvaluationError is a custom error type for evaluation errors.
 type EvaluationError struct {
 	Base error
