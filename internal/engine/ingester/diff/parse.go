@@ -182,19 +182,13 @@ func extractGoDepFromPatchLine(line string) *pb.Dependency {
 		dep := &pb.Dependency{
 			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
 		}
-		if fields[0] == "require" && fields[1] != "(" {
-			if len(fields) < 3 {
-				return nil
-			}
+		if fields[0] == "require" && fields[1] != "(" && len(fields) >= 3 {
 			dep.Name = fields[1]
 			dep.Version = fields[2]
 		} else if strings.HasPrefix(lineContent, "\t") {
 			dep.Name = fields[0]
 			dep.Version = fields[1]
 		} else if fields[0] == "replace" && strings.Contains(lineContent, "=>") && len(fields) >= 5 {
-			if len(fields) < 5 {
-				return nil
-			}
 			// For lines with version replacements, the new version is after the "=>"
 			// Assuming format is module path version => newModulePath newVersion
 			dep.Name = fields[3]
