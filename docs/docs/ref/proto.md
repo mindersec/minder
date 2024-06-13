@@ -80,6 +80,7 @@ replies with OK
 | ListRoles | [ListRolesRequest](#minder-v1-ListRolesRequest) | [ListRolesResponse](#minder-v1-ListRolesResponse) |  |
 | ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
 | AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
+| UpdateRole | [UpdateRoleRequest](#minder-v1-UpdateRoleRequest) | [UpdateRoleResponse](#minder-v1-UpdateRoleResponse) |  |
 | RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
 
 
@@ -2264,6 +2265,29 @@ Severity defines the severity of the rule.
 | project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
 
 
+<a name="minder-v1-UpdateRoleRequest"></a>
+
+#### UpdateRoleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be updated. |
+
+
+<a name="minder-v1-UpdateRoleResponse"></a>
+
+#### UpdateRoleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was updated. |
+
+
 <a name="minder-v1-UpdateRuleTypeRequest"></a>
 
 #### UpdateRuleTypeRequest
@@ -2513,6 +2537,7 @@ ProviderTrait is the type of the provider.
 | RELATION_REMOTE_REPO_GET | 34 |  |
 | RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 | RELATION_ENTITY_RECONCILE | 36 |  |
+| RELATION_ROLE_ASSIGNMENT_UPDATE | 37 |  |
 
 
 <a name="minder-v1-Severity-Value"></a>

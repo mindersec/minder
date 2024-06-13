@@ -68,6 +68,7 @@ enum Relation {
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
     RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
     RELATION_ENTITY_RECONCILE = 36 [(name) = "entity_reconcile"];
+    RELATION_ROLE_ASSIGNMENT_UPDATE = 37 [(name) = "role_assignment_update"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -700,6 +701,18 @@ service PermissionsService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_ROLE_ASSIGNMENT_CREATE
+        };
+    }
+
+    rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/permissions/update"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_UPDATE
         };
     }
 
@@ -2087,6 +2100,19 @@ message AssignRoleResponse {
     // a member.
     Invitation invitation = 2;
 }
+
+message UpdateRoleRequest {
+    // context is the context in which the role assignment is evaluated.
+    Context context = 1;
+    // role_assignment is the role assignment to be updated.
+    RoleAssignment role_assignment = 2;
+}
+
+message UpdateRoleResponse {
+    // role_assignment is the role assignment that was updated.
+    RoleAssignment role_assignment = 1;
+}
+
 
 message RemoveRoleRequest {
     // context is the context in which the role assignment is evaluated.

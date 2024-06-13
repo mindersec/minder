@@ -787,6 +787,32 @@
         ]
       }
     },
+    "/api/v1/permissions/update": {
+      "post": {
+        "operationId": "PermissionsService_UpdateRole",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateRoleResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateRoleRequest"
+            }
+          }
+        ],
+        "tags": [
+          "PermissionsService"
+        ]
+      }
+    },
     "/api/v1/profile": {
       "post": {
         "operationId": "ProfileService_CreateProfile",
@@ -4370,6 +4396,28 @@
         "project": {
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
+        }
+      }
+    },
+    "v1UpdateRoleRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "context is the context in which the role assignment is evaluated."
+        },
+        "roleAssignment": {
+          "$ref": "#/definitions/v1RoleAssignment",
+          "description": "role_assignment is the role assignment to be updated."
+        }
+      }
+    },
+    "v1UpdateRoleResponse": {
+      "type": "object",
+      "properties": {
+        "roleAssignment": {
+          "$ref": "#/definitions/v1RoleAssignment",
+          "description": "role_assignment is the role assignment that was updated."
         }
       }
     },
