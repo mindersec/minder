@@ -28,6 +28,7 @@ import (
 
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
@@ -201,7 +202,7 @@ type dependencyAlternatives struct {
 	BlockPR bool
 
 	// trustyReply is the complete response from trusty for this package
-	trustyReply *Reply
+	trustyReply *trustytypes.Reply
 }
 
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
@@ -345,7 +346,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 }
 
 // buildProvenanceStruct builds the provenance data structure for the PR template
-func buildProvenanceStruct(r *Reply) *templateProvenance {
+func buildProvenanceStruct(r *trustytypes.Reply) *templateProvenance {
 	if r == nil || r.Provenance == nil {
 		return nil
 	}
