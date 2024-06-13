@@ -150,7 +150,7 @@ type UpsertRuleInstanceParams struct {
 	EntityType Entities        `json:"entity_type"`
 	Def        json.RawMessage `json:"def"`
 	Params     json.RawMessage `json:"params"`
-	ProjectID  uuid.NullUUID   `json:"project_id"`
+	ProjectID  uuid.UUID       `json:"project_id"`
 }
 
 // Copyright 2024 Stacklok, Inc
