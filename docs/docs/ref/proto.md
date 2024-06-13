@@ -2275,7 +2275,7 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be updated. |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments to be updated. |
 
 
 <a name="minder-v1-UpdateRoleResponse"></a>
@@ -2286,7 +2286,7 @@ Severity defines the severity of the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was updated. |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments that were updated. |
 
 
 <a name="minder-v1-UpdateRuleTypeRequest"></a>

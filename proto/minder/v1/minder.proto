@@ -2104,13 +2104,13 @@ message AssignRoleResponse {
 message UpdateRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
-    // role_assignment is the role assignment to be updated.
-    RoleAssignment role_assignment = 2;
+    // role_assignments are the role assignments to be updated.
+    repeated RoleAssignment role_assignments = 2;
 }
 
 message UpdateRoleResponse {
-    // role_assignment is the role assignment that was updated.
-    RoleAssignment role_assignment = 1;
+    // role_assignments are the role assignments that were updated.
+    repeated RoleAssignment role_assignments = 1;
 }
 
 

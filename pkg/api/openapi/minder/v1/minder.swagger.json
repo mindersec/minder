@@ -4410,18 +4410,26 @@
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the role assignment is evaluated."
         },
-        "roleAssignment": {
-          "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment to be updated."
+        "roleAssignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleAssignment"
+          },
+          "description": "role_assignments are the role assignments to be updated."
         }
       }
     },
     "v1UpdateRoleResponse": {
       "type": "object",
       "properties": {
-        "roleAssignment": {
-          "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment that was updated."
+        "roleAssignments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RoleAssignment"
+          },
+          "description": "role_assignments are the role assignments that were updated."
         }
       }
     },
