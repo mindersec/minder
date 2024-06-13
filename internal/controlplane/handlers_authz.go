@@ -297,7 +297,7 @@ func (s *Server) ListRoleAssignments(
 				// TODO: project ID or name?
 				Project:        projectID.String(),
 				Code:           base64.StdEncoding.EncodeToString([]byte("0123456789")), // MDEyMzQ1Njc4OQ==
-				Sponsor:        "rusty_sparkles89",
+				Sponsor:        "5d9266d3-9bb7-4a20-b61c-019ca4bb75ac",
 				SponsorDisplay: "Rusty Sparkles",
 				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
 				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
@@ -307,7 +307,7 @@ func (s *Server) ListRoleAssignments(
 				Email:          "bluey@sparkles.com",
 				Project:        projectID.String(),
 				Code:           base64.StdEncoding.EncodeToString([]byte("9876543210")), // OTg3NjU0MzIxMA==
-				Sponsor:        "bingo_sparkles93",
+				Sponsor:        "24f66e9f-fb3f-4c54-9e1a-e13d516b270d",
 				SponsorDisplay: "Bingo Sparkles",
 				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
 				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 36000},
@@ -337,18 +337,16 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// If the subject is an email, we can assume it's an invitation
 	// TODO: Is there a problem that we reuse the subject?
 	if isSubjectEmail(sub) {
-		prj := engine.EntityFromContext(ctx).Project.ID.String()
 		return &minder.AssignRoleResponse{
 			// TODO: Should there be a role assignment when it's an invitation?
 			Invitation: &minder.Invitation{
-				Role:  role,
-				Email: sub,
-				// TODO: project ID or name?
-				Project: prj,
+				Role:    role,
+				Email:   sub,
+				Project: engine.EntityFromContext(ctx).Project.ID.String(),
 				// TODO: is the nonce format okay?
 				Code: base64.StdEncoding.EncodeToString([]byte("0123456789")), // MDEyMzQ1Njc4OQ==
 				// TODO: resolve to the user who triggered the assignment
-				Sponsor:        "rusty_sparkles89",
+				Sponsor:        "8efdfd4f-180e-4528-8bd7-dfe7f4aeff0a",
 				SponsorDisplay: "Rusty Sparkles",
 				CreatedAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix()},
 				ExpiresAt:      &timestamppb.Timestamp{Seconds: time.Now().Unix() + 604800}, // 1 week
