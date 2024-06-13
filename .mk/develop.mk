@@ -62,7 +62,7 @@ pre-commit:	## run pre-commit hooks
 
 .PHONY: bootstrap
 bootstrap: ## install build deps
-	go generate -tags tools tools/tools.go
+	cd tools && go generate -tags tools ./tools.go
 	# N.B. each line runs in a different subshell, so we don't need to undo the 'cd' here
 	cd tools && go mod tidy && go install \
 		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
