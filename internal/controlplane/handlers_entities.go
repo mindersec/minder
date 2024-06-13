@@ -1,4 +1,4 @@
-// Copyright 2023 Stacklok, Inc
+// Copyright 2024 Stacklok, Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,6 +69,11 @@ func (s *Server) ReconcileEntityRegistration(
 
 		repos, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
 		if err != nil {
+			l.Error().
+				Str("providerName", providerName).
+				Str("projectID", projectID.String()).
+				Err(err).
+				Msg("error fetching repositories for provider")
 			errorProvs = append(errorProvs, providerName)
 			continue
 		}
@@ -88,7 +93,7 @@ func (s *Server) ReconcileEntityRegistration(
 				continue
 			}
 
-			if s.publishEntityMessage(&l, msg) != nil {
+			if err := s.publishEntityMessage(&l, msg); err != nil {
 				l.Error().Err(err).Str("messageID", msg.UUID).Msg("error publishing register entities message")
 			}
 		}

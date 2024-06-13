@@ -1,4 +1,4 @@
-// Copyright 2023 Stacklok, Inc
+// Copyright 2024 Stacklok, Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -381,6 +381,10 @@ func (s *Server) fetchRepositoriesForProvider(
 		providerName,
 	)
 	if err != nil {
+		zerolog.Ctx(ctx).Error().
+			Str("projectID", projectID.String()).
+			Str("providerName", providerName).
+			Err(err).Msg("cannot list registered repositories")
 		return nil, util.UserVisibleError(
 			codes.Internal,
 			"cannot list registered repositories",
