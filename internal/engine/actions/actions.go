@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/rs/zerolog"
 	"github.com/sqlc-dev/pqtype"
@@ -141,7 +142,15 @@ func (rae *RuleActionsEngine) processAction(
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
-) (json.RawMessage, error) {
+) (jmsg json.RawMessage, finalErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			zerolog.Ctx(ctx).Error().Interface("recovered", r).
+				Bytes("stack", debug.Stack()).
+				Msg("panic in action execution")
+			finalErr = enginerr.ErrInternal
+		}
+	}()
 	zerolog.Ctx(ctx).Debug().Str("action", string(actionType)).Str("cmd", string(cmd)).Msg("invoking action")
 	// Get action engine
 	action := rae.actions[actionType]

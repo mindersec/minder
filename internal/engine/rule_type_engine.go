@@ -18,6 +18,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -146,7 +147,20 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *profiles.RuleValidator {
 }
 
 // Eval runs the rule type engine against the given entity
-func (r *RuleTypeEngine) Eval(ctx context.Context, inf *entities.EntityInfoWrapper, params engif.EvalParamsReadWriter) error {
+func (r *RuleTypeEngine) Eval(
+	ctx context.Context,
+	inf *entities.EntityInfoWrapper,
+	params engif.EvalParamsReadWriter,
+) (finalErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			zerolog.Ctx(ctx).Error().Interface("recovered", r).
+				Bytes("stack", debug.Stack()).
+				Msg("panic in rule type engine")
+			finalErr = enginerr.ErrInternal
+		}
+	}()
+
 	logger := zerolog.Ctx(ctx).With().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).Logger()
