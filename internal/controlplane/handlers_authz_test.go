@@ -422,7 +422,7 @@ func TestRoleManagement(t *testing.T) {
 				Email:          "george@happyplace.dev",
 				Project:        project.String(),
 				Sponsor:        user1.String(),
-				SponsorDisplay: "TODO",
+				SponsorDisplay: "user1",
 				CreatedAt:      timestamppb.New(time.Time{}),
 				ExpiresAt:      timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
 			}},

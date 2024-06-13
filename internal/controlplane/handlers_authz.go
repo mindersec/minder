@@ -250,14 +250,18 @@ func (s *Server) ListRoleAssignments(
 		}
 	}
 	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		mapIdToDisplay := make(map[string]string, len(as))
 		for i := range as {
-			user, err := s.idClient.Resolve(ctx, as[i].Subject)
-			if err != nil {
-				// if we can't resolve the subject, report the raw ID value
-				zerolog.Ctx(ctx).Error().Err(err).Str("user", as[i].Subject).Msg("error resolving user")
-				continue
+			if mapIdToDisplay[as[i].Subject] == "" {
+				user, err := s.idClient.Resolve(ctx, as[i].Subject)
+				if err != nil {
+					// if we can't resolve the subject, report the raw ID value
+					zerolog.Ctx(ctx).Error().Err(err).Str("user", as[i].Subject).Msg("error resolving user")
+					continue
+				}
+				mapIdToDisplay[as[i].Subject] = user.Human()
 			}
-			as[i].DisplayName = user.Human()
+			as[i].DisplayName = mapIdToDisplay[as[i].Subject]
 		}
 		// Add invitations, which are only stored in the Minder DB
 		invites, err := s.store.ListInvitationsForProject(ctx, projectID)
@@ -273,7 +277,7 @@ func (s *Server) ListRoleAssignments(
 				CreatedAt:      timestamppb.New(invite.CreatedAt),
 				ExpiresAt:      timestamppb.New(invite.UpdatedAt.Add(7 * 24 * time.Hour)),
 				Sponsor:        invite.IdentitySubject,
-				SponsorDisplay: "TODO", // This should re-use the resolve from line 253.
+				SponsorDisplay: mapIdToDisplay[invite.IdentitySubject],
 			})
 		}
 	}
