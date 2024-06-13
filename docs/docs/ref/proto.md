@@ -125,6 +125,7 @@ replies with OK
 | DeleteProviderByID | [DeleteProviderByIDRequest](#minder-v1-DeleteProviderByIDRequest) | [DeleteProviderByIDResponse](#minder-v1-DeleteProviderByIDResponse) |  |
 | GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
 | ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
+| ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -135,7 +136,6 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | RegisterRepository | [RegisterRepositoryRequest](#minder-v1-RegisterRepositoryRequest) | [RegisterRepositoryResponse](#minder-v1-RegisterRepositoryResponse) |  |
-| ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 | ListRemoteRepositoriesFromProvider | [ListRemoteRepositoriesFromProviderRequest](#minder-v1-ListRemoteRepositoriesFromProviderRequest) | [ListRemoteRepositoriesFromProviderResponse](#minder-v1-ListRemoteRepositoriesFromProviderResponse) |  |
 | ListRepositories | [ListRepositoriesRequest](#minder-v1-ListRepositoriesRequest) | [ListRepositoriesResponse](#minder-v1-ListRepositoriesResponse) |  |
 | GetRepositoryById | [GetRepositoryByIdRequest](#minder-v1-GetRepositoryByIdRequest) | [GetRepositoryByIdResponse](#minder-v1-GetRepositoryByIdResponse) |  |

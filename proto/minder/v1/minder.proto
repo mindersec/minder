@@ -342,17 +342,6 @@ service RepositoryService {
             relation: RELATION_REPO_CREATE
         };
     }
-    rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
-        option (google.api.http) = {
-            post: "/api/v1/provider/register_all"
-            body: "*"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_REPO_CREATE
-        };
-    }
     rpc ListRemoteRepositoriesFromProvider(ListRemoteRepositoriesFromProviderRequest) returns (ListRemoteRepositoriesFromProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/repositories/provider/{provider}/remote"
@@ -880,6 +869,18 @@ service ProvidersService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROVIDER_GET
+        };
+    }
+
+    rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/provider/register_all"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_REPO_CREATE
         };
     }
 }

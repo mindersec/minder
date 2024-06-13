@@ -1278,7 +1278,7 @@
     },
     "/api/v1/provider/register_all": {
       "post": {
-        "operationId": "RepositoryService_ReconcileEntityRegistration",
+        "operationId": "ProvidersService_ReconcileEntityRegistration",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -1298,7 +1298,7 @@
           }
         ],
         "tags": [
-          "RepositoryService"
+          "ProvidersService"
         ]
       }
     },
