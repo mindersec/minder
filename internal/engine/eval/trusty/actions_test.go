@@ -18,6 +18,7 @@ package trusty
 import (
 	"testing"
 
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"github.com/stretchr/testify/require"
 
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -36,23 +37,23 @@ func TestBuildProvenanceStruct(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name     string
-		sut      *Reply
+		sut      *trustytypes.Reply
 		mustNil  bool
 		expected *templateProvenance
 	}{
 		{
 			name: "full-response",
-			sut: &Reply{
-				Provenance: &Provenance{
+			sut: &trustytypes.Reply{
+				Provenance: &trustytypes.Provenance{
 					Score: 8.0,
-					Description: ProvenanceDescription{
-						Historical: HistoricalProvenance{
+					Description: trustytypes.ProvenanceDescription{
+						Historical: trustytypes.HistoricalProvenance{
 							Tags:     10,
 							Common:   8,
 							Overlap:  80,
 							Versions: 10,
 						},
-						Sigstore: SigstoreProvenance{
+						Sigstore: trustytypes.SigstoreProvenance{
 							Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
 							Workflow:         ".github/workflows/build_and_deploy.yml",
 							SourceRepository: "https://github.com/vercel/next.js",
@@ -78,11 +79,11 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name: "only-historical",
-			sut: &Reply{
-				Provenance: &Provenance{
+			sut: &trustytypes.Reply{
+				Provenance: &trustytypes.Provenance{
 					Score: 8.0,
-					Description: ProvenanceDescription{
-						Historical: HistoricalProvenance{
+					Description: trustytypes.ProvenanceDescription{
+						Historical: trustytypes.HistoricalProvenance{
 							Tags:     10,
 							Common:   8,
 							Overlap:  80,
@@ -102,11 +103,11 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name: "only-sigstore",
-			sut: &Reply{
-				Provenance: &Provenance{
+			sut: &trustytypes.Reply{
+				Provenance: &trustytypes.Provenance{
 					Score: 8.0,
-					Description: ProvenanceDescription{
-						Sigstore: SigstoreProvenance{
+					Description: trustytypes.ProvenanceDescription{
+						Sigstore: trustytypes.SigstoreProvenance{
 							Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
 							Workflow:         ".github/workflows/build_and_deploy.yml",
 							SourceRepository: "https://github.com/vercel/next.js",
@@ -132,7 +133,7 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name:    "no-provenance",
-			sut:     &Reply{},
+			sut:     &trustytypes.Reply{},
 			mustNil: true,
 		},
 	} {

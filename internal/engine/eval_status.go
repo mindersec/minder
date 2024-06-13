@@ -98,6 +98,16 @@ func (e *Executor) createEvalStatusParams(
 	return params, nil
 }
 
+// createOrUpdateEvalStatus takes care of recording the rule evaluation results.
+// This function inserts into the database:
+//
+//   - The rule evaluation parameters (profile, repo, artifact, entity, etc).
+//   - The rule evaluation status and details.
+//   - The remediation status and details.
+//   - The alert status and details.
+//
+// If the error in the evaluation status resolves to an errors.ErrEvaluationSkipSilently,
+// no details are stored or logged.
 func (e *Executor) createOrUpdateEvalStatus(
 	ctx context.Context,
 	params *engif.EvalStatusParams,
