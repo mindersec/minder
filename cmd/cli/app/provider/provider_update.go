@@ -26,9 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	// "google.golang.org/protobuf/types/dynamicpb"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
@@ -150,11 +148,17 @@ func UpdateProviderCommand(
 	for _, attr := range setAttrs {
 		// Parameters received from the command line must be
 		// of the form <path>=<value>.
-		attrName, attrValue := parseConfigAttribute(attr)
-
-		if err := configAttribute(config, attrName, &attrValue); err != nil {
+		attrName, attrValue, err := parseConfigAttribute(attr)
+		if err != nil {
 			return cli.MessageAndError(
-				"invalid configuration",
+				"invalid attribute",
+				err,
+			)
+		}
+
+		if err := configAttribute(config.ProtoReflect(), attrName, &attrValue); err != nil {
+			return cli.MessageAndError(
+				"invalid attribute",
 				err,
 			)
 		}
@@ -166,9 +170,9 @@ func UpdateProviderCommand(
 	}
 
 	for _, attr := range unsetAttrs {
-		if err := configAttribute(config, attr, nil); err != nil {
+		if err := configAttribute(config.ProtoReflect(), attr, nil); err != nil {
 			return cli.MessageAndError(
-				"invalid configuration",
+				"invalid attribute",
 				err,
 			)
 		}
@@ -219,13 +223,16 @@ func UpdateProviderCommand(
 	return nil
 }
 
-func parseConfigAttribute(attr string) (string, string) {
+func parseConfigAttribute(attr string) (string, string, error) {
 	parts := strings.SplitN(attr, "=", 2)
-	return parts[0], parts[1]
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("can't set attribute %s with no value", attr)
+	}
+	return parts[0], parts[1], nil
 }
 
 func configAttribute(
-	config proto.Message,
+	config protoreflect.Message,
 	attrName string,
 	attrValue *string,
 ) error {
@@ -233,49 +240,55 @@ func configAttribute(
 	// fields of the form <root>.<field1>.<field2>...
 	attrPath := strings.Split(attrName, ".")
 
-	var fd protoreflect.FieldDescriptor
-
-	// This loop ranges over the path steps to reach the field
-	// meant to be initialized.
-	for _, fieldName := range attrPath {
-		// We retrieve the field by name. ByTextName
-		// and the other functions used to lookup
-		// fields return nil in case it does not exist.
-		fd = config.ProtoReflect().
-			Descriptor().
-			Fields().
-			ByTextName(fieldName)
-		// We treat non-existing field lookups as a
-		// user errors.
-		if fd == nil {
-			return fmt.Errorf("config does not have %s field", fieldName)
-		}
-
-		// Check here this link for the relation
-		// between Go types and Protobuf types
-		// https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect#Value
-		if fd.Kind() == protoreflect.MessageKind {
-			config = config.ProtoReflect().Mutable(fd).Message().Interface()
-			continue
-		}
-
-		if attrValue != nil {
-			parserFunc, found := parserMap[fd.Kind()]
-			if !found {
-				return fmt.Errorf("field has unexpected kind: %s", fd.Kind())
-			}
-			v, err := parserFunc(*attrValue)
-			if err != nil {
-				return fmt.Errorf("expected bool, got %s", *attrValue)
-			}
-			config.ProtoReflect().Set(fd, *v)
-		}
+	if err := recurConfigAttribute(config, attrPath, attrValue); err != nil {
+		return fmt.Errorf("%s is not a valid attribute: %w", attrName, err)
 	}
 
-	// This check ensures that all provided attributes represent a
-	// path down to a scalar value and not some half-way struct.
-	if fd != nil && fd.Kind() == protoreflect.MessageKind {
-		return fmt.Errorf("%s is not configurable", attrName)
+	return nil
+}
+
+func recurConfigAttribute(
+	config protoreflect.Message,
+	path []string,
+	attrValue *string,
+) error {
+	if len(path) == 0 {
+		return errors.New("too short")
+	}
+
+	fieldName := path[0]
+	// We retrieve the field by name. ByTextName and the other
+	// functions used to lookup fields return nil in case it does
+	// not exist.
+	fd := config.Descriptor().
+		Fields().
+		ByTextName(fieldName)
+	// We treat non-existing field lookups as a user errors.
+	if fd == nil {
+		return fmt.Errorf("config does not have %s field", fieldName)
+	}
+
+	// Check here this link for the relation between Go types and
+	// Protobuf types
+	// https://pkg.go.dev/google.golang.org/protobuf/reflect/protoreflect#Value
+	if fd.Kind() == protoreflect.MessageKind {
+		return recurConfigAttribute(
+			config.Mutable(fd).Message(),
+			path[1:],
+			attrValue,
+		)
+	}
+
+	if attrValue != nil {
+		parserFunc, found := parserMap[fd.Kind()]
+		if !found {
+			return fmt.Errorf("field has unexpected kind: %s", fd.Kind())
+		}
+		v, err := parserFunc(*attrValue)
+		if err != nil {
+			return fmt.Errorf("expected bool, got %s", *attrValue)
+		}
+		config.Set(fd, *v)
 	}
 
 	return nil

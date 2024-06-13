@@ -251,7 +251,12 @@ func (p *providerManager) PatchProviderConfig(
 
 	updateMask := configPatch.(*minderv1.ProviderConfig).UpdateMask.GetPaths()
 
-	if err := overwrite(originalProto, configPatch, updateMask); err != nil {
+	err = overwrite(
+		originalProto.ProtoReflect(),
+		configPatch.ProtoReflect(),
+		updateMask,
+	)
+	if err != nil {
 		return fmt.Errorf("error merging provider config: %w", err)
 	}
 
@@ -277,44 +282,59 @@ func (p *providerManager) PatchProviderConfig(
 // For each path it takes the value from `patch` and sets the same
 // path in `original` to the same value. Extra care is needed when
 // dealing with null references.
-func overwrite(original, patch proto.Message, paths []string) error {
+func overwrite(original, patch protoreflect.Message, paths []string) error {
 	for _, attrName := range paths {
 		// Their path part must be of the form
 		// <root>.<field1>.<field2>...
 		attrPath := strings.Split(attrName, ".")
-		original := original
-		patch := patch
-
-		// Here we loop over the path steps to reach the field
-		// we want to initialize.
-		for _, fieldName := range attrPath {
-			// We retrieve the field by name. ByTextName
-			// and the other functions used to lookup
-			// fields return nil in case it does not exist.
-			fd := original.ProtoReflect().
-				Descriptor().
-				Fields().
-				ByTextName(fieldName)
-			// We treat non-existing field lookups as a
-			// user errors.
-			if fd == nil {
-				return fmt.Errorf("config does not have %s field", fieldName)
-			}
-
-			if fd.Kind() == protoreflect.MessageKind {
-				if !patch.ProtoReflect().Has(fd) || !patch.ProtoReflect().Get(fd).Message().IsValid() {
-					original.ProtoReflect().Clear(fd)
-					break
-				}
-				original = original.ProtoReflect().Mutable(fd).Message().Interface()
-				patch = patch.ProtoReflect().Get(fd).Message().Interface()
-			} else {
-				original.ProtoReflect().Set(fd, patch.ProtoReflect().Get(fd))
-			}
+		if err := recurOverwrite(original, patch, attrPath); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func recurOverwrite(original, patch protoreflect.Message, path []string) error {
+	if len(path) == 0 {
+		return errors.New("no path provided")
+	}
+
+	fieldName := path[0]
+	// We retrieve the field by name. ByTextName and the other
+	// functions used to lookup fields return nil in case it does
+	// not exist.
+	fd := original.Descriptor().Fields().ByTextName(fieldName)
+	// We treat non-existing field lookups as a user errors.
+	if fd == nil {
+		return fmt.Errorf("config does not have %s field", fieldName)
+	}
+
+	// If the field is a protobuf Message and it is both valid and
+	// set, we clear it from the original configuration.
+	if fd.Kind() == protoreflect.MessageKind && isValidAndSet(patch, fd) {
+		original.Clear(fd)
+		return nil
+	}
+
+	// If the field is a protobuf Message and it is neither valid
+	// nor set, we go on with recursion.
+	if fd.Kind() == protoreflect.MessageKind {
+		return recurOverwrite(
+			original.Mutable(fd).Message(),
+			patch.Get(fd).Message(),
+			path[1:],
+		)
+	}
+
+	// In all other cases, we set the value in the original
+	// configuration using value from the patch.
+	original.Set(fd, patch.Get(fd))
+	return nil
+}
+
+func isValidAndSet(patch protoreflect.Message, fd protoreflect.FieldDescriptor) bool {
+	return !patch.Has(fd) || !patch.Get(fd).Message().IsValid()
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {
