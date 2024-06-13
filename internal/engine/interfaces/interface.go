@@ -169,13 +169,6 @@ func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]ActionOpt
 	e.actionsOnOff = actionsOnOff
 }
 
-/*func (e *EvalStatusParams) SetActionsOnOff(profile *pb.Profile) {
-	e.actionsOnOff = map[ActionType]ActionOpt{
-		alert.ActionType: profile.Alert,
-		remediate.ActionType: profile.Remediate,
-	}
-}*/
-
 // SetActionsErr sets the actions' error
 func (e *EvalStatusParams) SetActionsErr(ctx context.Context, actionErr evalerrors.ActionsError) {
 	// Get logger
