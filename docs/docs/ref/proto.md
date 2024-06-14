@@ -125,6 +125,7 @@ replies with OK
 | DeleteProviderByID | [DeleteProviderByIDRequest](#minder-v1-DeleteProviderByIDRequest) | [DeleteProviderByIDResponse](#minder-v1-DeleteProviderByIDResponse) |  |
 | GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
 | ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
+| ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 
 
 <a name="minder-v1-RepositoryService"></a>
@@ -1676,6 +1677,24 @@ RESTProviderConfig contains the configuration for the REST provider.
 | base_url | [string](#string) |  | base_url is the base URL for the REST provider. |
 
 
+<a name="minder-v1-ReconcileEntityRegistrationRequest"></a>
+
+#### ReconcileEntityRegistrationRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| entity | [string](#string) |  |  |
+
+
+<a name="minder-v1-ReconcileEntityRegistrationResponse"></a>
+
+#### ReconcileEntityRegistrationResponse
+
+
+
 <a name="minder-v1-RegisterRepoResult"></a>
 
 #### RegisterRepoResult
@@ -2456,6 +2475,7 @@ ProviderTrait is the type of the provider.
 | RELATION_PROFILE_STATUS_GET | 33 |  |
 | RELATION_REMOTE_REPO_GET | 34 |  |
 | RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
+| RELATION_ENTITY_RECONCILE | 36 |  |
 
 
 <a name="minder-v1-Severity-Value"></a>

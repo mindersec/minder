@@ -67,6 +67,7 @@ enum Relation {
     RELATION_PROFILE_STATUS_GET = 33 [(name) = "profile_status_get"];
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
     RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
+    RELATION_ENTITY_RECONCILE = 36 [(name) = "entity_reconcile"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -871,6 +872,18 @@ service ProvidersService {
             relation: RELATION_PROVIDER_GET
         };
     }
+
+    rpc ReconcileEntityRegistration(ReconcileEntityRegistrationRequest) returns (ReconcileEntityRegistrationResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/provider/register_all"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_RECONCILE
+        };
+    }
 }
 
 message CheckHealthRequest {
@@ -1052,6 +1065,14 @@ message ListRepositoriesResponse {
 
     // cursor is the cursor to use for the next page of results, empty if at the end
     string cursor = 2;
+}
+
+message ReconcileEntityRegistrationRequest {
+    Context context = 1;
+    string entity = 2;
+}
+
+message ReconcileEntityRegistrationResponse {
 }
 
 message VerifyProviderTokenFromRequest {

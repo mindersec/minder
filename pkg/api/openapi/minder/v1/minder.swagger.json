@@ -1276,6 +1276,32 @@
         ]
       }
     },
+    "/api/v1/provider/register_all": {
+      "post": {
+        "operationId": "ProvidersService_ReconcileEntityRegistration",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ReconcileEntityRegistrationResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ReconcileEntityRegistrationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ProvidersService"
+        ]
+      }
+    },
     "/api/v1/provider_classes": {
       "get": {
         "operationId": "ProvidersService_ListProviderClasses",
@@ -3842,6 +3868,20 @@
       ],
       "default": "PROVIDER_TYPE_UNSPECIFIED",
       "description": "ProviderTrait is the type of the provider."
+    },
+    "v1ReconcileEntityRegistrationRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "entity": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ReconcileEntityRegistrationResponse": {
+      "type": "object"
     },
     "v1RegisterRepoResult": {
       "type": "object",

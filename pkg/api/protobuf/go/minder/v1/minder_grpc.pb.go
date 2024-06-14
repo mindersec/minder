@@ -2272,13 +2272,14 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ProvidersService_GetProvider_FullMethodName           = "/minder.v1.ProvidersService/GetProvider"
-	ProvidersService_ListProviders_FullMethodName         = "/minder.v1.ProvidersService/ListProviders"
-	ProvidersService_CreateProvider_FullMethodName        = "/minder.v1.ProvidersService/CreateProvider"
-	ProvidersService_DeleteProvider_FullMethodName        = "/minder.v1.ProvidersService/DeleteProvider"
-	ProvidersService_DeleteProviderByID_FullMethodName    = "/minder.v1.ProvidersService/DeleteProviderByID"
-	ProvidersService_GetUnclaimedProviders_FullMethodName = "/minder.v1.ProvidersService/GetUnclaimedProviders"
-	ProvidersService_ListProviderClasses_FullMethodName   = "/minder.v1.ProvidersService/ListProviderClasses"
+	ProvidersService_GetProvider_FullMethodName                 = "/minder.v1.ProvidersService/GetProvider"
+	ProvidersService_ListProviders_FullMethodName               = "/minder.v1.ProvidersService/ListProviders"
+	ProvidersService_CreateProvider_FullMethodName              = "/minder.v1.ProvidersService/CreateProvider"
+	ProvidersService_DeleteProvider_FullMethodName              = "/minder.v1.ProvidersService/DeleteProvider"
+	ProvidersService_DeleteProviderByID_FullMethodName          = "/minder.v1.ProvidersService/DeleteProviderByID"
+	ProvidersService_GetUnclaimedProviders_FullMethodName       = "/minder.v1.ProvidersService/GetUnclaimedProviders"
+	ProvidersService_ListProviderClasses_FullMethodName         = "/minder.v1.ProvidersService/ListProviderClasses"
+	ProvidersService_ReconcileEntityRegistration_FullMethodName = "/minder.v1.ProvidersService/ReconcileEntityRegistration"
 )
 
 // ProvidersServiceClient is the client API for ProvidersService service.
@@ -2295,6 +2296,7 @@ type ProvidersServiceClient interface {
 	// operation for use by clients which wish to present a menu of options.
 	GetUnclaimedProviders(ctx context.Context, in *GetUnclaimedProvidersRequest, opts ...grpc.CallOption) (*GetUnclaimedProvidersResponse, error)
 	ListProviderClasses(ctx context.Context, in *ListProviderClassesRequest, opts ...grpc.CallOption) (*ListProviderClassesResponse, error)
+	ReconcileEntityRegistration(ctx context.Context, in *ReconcileEntityRegistrationRequest, opts ...grpc.CallOption) (*ReconcileEntityRegistrationResponse, error)
 }
 
 type providersServiceClient struct {
@@ -2375,6 +2377,16 @@ func (c *providersServiceClient) ListProviderClasses(ctx context.Context, in *Li
 	return out, nil
 }
 
+func (c *providersServiceClient) ReconcileEntityRegistration(ctx context.Context, in *ReconcileEntityRegistrationRequest, opts ...grpc.CallOption) (*ReconcileEntityRegistrationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReconcileEntityRegistrationResponse)
+	err := c.cc.Invoke(ctx, ProvidersService_ReconcileEntityRegistration_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProvidersServiceServer is the server API for ProvidersService service.
 // All implementations must embed UnimplementedProvidersServiceServer
 // for forward compatibility
@@ -2389,6 +2401,7 @@ type ProvidersServiceServer interface {
 	// operation for use by clients which wish to present a menu of options.
 	GetUnclaimedProviders(context.Context, *GetUnclaimedProvidersRequest) (*GetUnclaimedProvidersResponse, error)
 	ListProviderClasses(context.Context, *ListProviderClassesRequest) (*ListProviderClassesResponse, error)
+	ReconcileEntityRegistration(context.Context, *ReconcileEntityRegistrationRequest) (*ReconcileEntityRegistrationResponse, error)
 	mustEmbedUnimplementedProvidersServiceServer()
 }
 
@@ -2416,6 +2429,9 @@ func (UnimplementedProvidersServiceServer) GetUnclaimedProviders(context.Context
 }
 func (UnimplementedProvidersServiceServer) ListProviderClasses(context.Context, *ListProviderClassesRequest) (*ListProviderClassesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListProviderClasses not implemented")
+}
+func (UnimplementedProvidersServiceServer) ReconcileEntityRegistration(context.Context, *ReconcileEntityRegistrationRequest) (*ReconcileEntityRegistrationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReconcileEntityRegistration not implemented")
 }
 func (UnimplementedProvidersServiceServer) mustEmbedUnimplementedProvidersServiceServer() {}
 
@@ -2556,6 +2572,24 @@ func _ProvidersService_ListProviderClasses_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProvidersService_ReconcileEntityRegistration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReconcileEntityRegistrationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProvidersServiceServer).ReconcileEntityRegistration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProvidersService_ReconcileEntityRegistration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProvidersServiceServer).ReconcileEntityRegistration(ctx, req.(*ReconcileEntityRegistrationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProvidersService_ServiceDesc is the grpc.ServiceDesc for ProvidersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2590,6 +2624,10 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListProviderClasses",
 			Handler:    _ProvidersService_ListProviderClasses_Handler,
+		},
+		{
+			MethodName: "ReconcileEntityRegistration",
+			Handler:    _ProvidersService_ReconcileEntityRegistration_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
