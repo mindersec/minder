@@ -180,6 +180,10 @@ func withArtifactRules(rules ...*minderv1.Profile_Rule) func(*minderv1.Profile) 
 
 func dbReturnsError(store *mockdb.MockStore) {
 	store.EXPECT().
+		GetParentProjects(gomock.Any(), gomock.Any()).
+		Return([]uuid.UUID{uuid.New()}, nil).
+		AnyTimes()
+	store.EXPECT().
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
 		Return(db.RuleType{}, sql.ErrNoRows).
 		AnyTimes()
@@ -193,6 +197,10 @@ func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStor
 			Definition: rawRuleDefinition,
 		}
 
+		store.EXPECT().
+			GetParentProjects(gomock.Any(), gomock.Any()).
+			Return([]uuid.UUID{uuid.New()}, nil).
+			AnyTimes()
 		store.EXPECT().
 			GetRuleTypeByName(gomock.Any(), gomock.Any()).
 			Return(ruleType, nil).

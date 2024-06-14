@@ -95,33 +95,33 @@ func TestRuleTypeService(t *testing.T) {
 			Name:          "CreateRuleType rejects attempt to overwrite an existing rule",
 			RuleType:      newRuleType(withBasicStructure),
 			ExpectedError: ruletypes.ErrRuleAlreadyExists.Error(),
-			DBSetup:       dbf.NewDBMock(withSuccessfulGet),
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet),
 			TestMethod:    create,
 		},
 		{
 			Name:          "CreateRuleType returns error on rule type lookup failure",
 			RuleType:      newRuleType(withBasicStructure),
 			ExpectedError: "failed to get rule type",
-			DBSetup:       dbf.NewDBMock(withFailedGet),
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withFailedGet),
 			TestMethod:    create,
 		},
 		{
 			Name:          "CreateRuleType returns error when unable to create rule type in database",
 			RuleType:      newRuleType(withBasicStructure),
 			ExpectedError: "failed to create rule type",
-			DBSetup:       dbf.NewDBMock(withNotFoundGet, withFailedCreate),
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withFailedCreate),
 			TestMethod:    create,
 		},
 		{
 			Name:       "CreateRuleType successfully creates a new rule type",
 			RuleType:   newRuleType(withBasicStructure),
-			DBSetup:    dbf.NewDBMock(withNotFoundGet, withSuccessfulCreate),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate),
 			TestMethod: create,
 		},
 		{
 			Name:           "CreateRuleType successfully creates a new namespaced rule type",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withNotFoundGet, withSuccessfulNamespaceCreate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate),
 			SubscriptionID: subscriptionID,
 			TestMethod:     create,
 		},
@@ -205,14 +205,14 @@ func TestRuleTypeService(t *testing.T) {
 		{
 			Name:           "UpsertRuleType successfully creates a new namespaced rule type",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withNotFoundGet, withSuccessfulNamespaceCreate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate),
 			SubscriptionID: subscriptionID,
 			TestMethod:     upsert,
 		},
 		{
 			Name:           "UpsertRuleType successfully updates an existing rule",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet, withSuccessfulUpdate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withSuccessfulNamespaceGet, withSuccessfulUpdate),
 			TestMethod:     upsert,
 			SubscriptionID: subscriptionID,
 		},
@@ -345,6 +345,12 @@ func withIncompatibleDef(ruleType *pb.RuleType) {
 
 func withIncompatibleParams(ruleType *pb.RuleType) {
 	ruleType.Def.ParamSchema = incompatibleSchema
+}
+
+func withHierarchyGet(mock dbf.DBMock) {
+	mock.EXPECT().
+		GetParentProjects(gomock.Any(), gomock.Any()).
+		Return([]uuid.UUID{uuid.New()}, nil)
 }
 
 func withSuccessfulGet(mock dbf.DBMock) {

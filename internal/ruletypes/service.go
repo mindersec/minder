@@ -113,9 +113,14 @@ func (_ *ruleTypeService) CreateRuleType(
 	ruleTypeName := ruleType.GetName()
 	ruleTypeDef := ruleType.GetDef()
 
-	_, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		ProjectID: projectID,
-		Name:      ruleTypeName,
+	projects, err := qtx.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parent projects: %w", err)
+	}
+
+	_, err = qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+		Projects: projects,
+		Name:     ruleTypeName,
 	})
 	if err == nil {
 		return nil, ErrRuleAlreadyExists
@@ -177,8 +182,9 @@ func (_ *ruleTypeService) UpdateRuleType(
 	ruleTypeDef := ruleType.GetDef()
 
 	oldRuleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		ProjectID: projectID,
-		Name:      ruleTypeName,
+		// we only need to check the project that the rule type is in
+		Projects: []uuid.UUID{projectID},
+		Name:     ruleTypeName,
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

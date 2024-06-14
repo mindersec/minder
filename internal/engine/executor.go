@@ -276,17 +276,12 @@ func (e *Executor) getEvaluator(
 		return nil, nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
-	// NOTE: We're only using the first project in the hierarchy for now.
-	// This means that a rule type must exist in the same project as the profile.
-	// This will be revisited in the future.
-	projID := hierarchy[0]
-
 	// Load Rule Class from database
 	// TODO(jaosorior): Rule types should be cached in memory so
 	// we don't have to query the database for each rule.
 	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		ProjectID: projID,
-		Name:      rule.Type,
+		Projects: hierarchy,
+		Name:     rule.Type,
 	})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)

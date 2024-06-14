@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createRuleType = `-- name: CreateRuleType :one
@@ -110,16 +111,16 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name FROM rule_type WHERE  project_id = $1 AND lower(name) = lower($2)
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name FROM rule_type WHERE  project_id = ANY($1::uuid[]) AND lower(name) = lower($2)
 `
 
 type GetRuleTypeByNameParams struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
+	Projects []uuid.UUID `json:"projects"`
+	Name     string      `json:"name"`
 }
 
 func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error) {
-	row := q.db.QueryRowContext(ctx, getRuleTypeByName, arg.ProjectID, arg.Name)
+	row := q.db.QueryRowContext(ctx, getRuleTypeByName, pq.Array(arg.Projects), arg.Name)
 	var i RuleType
 	err := row.Scan(
 		&i.ID,
