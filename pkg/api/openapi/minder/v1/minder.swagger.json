@@ -4061,6 +4061,10 @@
           "type": "string",
           "description": "name is the name of the role."
         },
+        "displayName": {
+          "type": "string",
+          "title": "display name of the role"
+        },
         "description": {
           "type": "string",
           "description": "description is the description of the role."

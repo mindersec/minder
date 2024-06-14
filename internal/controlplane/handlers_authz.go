@@ -216,6 +216,7 @@ func (*Server) ListRoles(_ context.Context, _ *minder.ListRolesRequest) (*minder
 	for role, desc := range authz.AllRoles {
 		resp.Roles = append(resp.Roles, &minder.Role{
 			Name:        role.String(),
+			DisplayName: authz.AllRolesDisplayName[role],
 			Description: desc,
 		})
 	}

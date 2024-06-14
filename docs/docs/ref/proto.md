@@ -1857,6 +1857,7 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | name is the name of the role. |
+| display_name | [string](#string) |  | display name of the role |
 | description | [string](#string) |  | description is the description of the role. |
 
 
