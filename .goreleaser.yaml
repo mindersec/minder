@@ -10,7 +10,7 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - (cd ./tools && go generate -tags tools ./tools.go)
+    - make generate-tools
     - go generate ./...
 # This section defines the build matrix.
 builds:
