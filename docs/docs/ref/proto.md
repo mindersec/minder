@@ -2275,7 +2275,8 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments to be updated. |
+| subject | [string](#string) |  | subject is the account to change permissions for. The account must already have permissions on the project |
+| role | [string](#string) | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
 
 
 <a name="minder-v1-UpdateRoleResponse"></a>

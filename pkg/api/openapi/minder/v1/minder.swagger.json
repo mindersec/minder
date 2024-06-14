@@ -4410,13 +4410,16 @@
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the role assignment is evaluated."
         },
-        "roleAssignments": {
+        "subject": {
+          "type": "string",
+          "title": "subject is the account to change permissions for.\nThe account must already have permissions on the project"
+        },
+        "role": {
           "type": "array",
           "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1RoleAssignment"
+            "type": "string"
           },
-          "description": "role_assignments are the role assignments to be updated."
+          "description": "All subject roles are _replaced_ with the following role assignments.  Must be non-empty,\nuse RemoveRole to remove permissions entirely from the project."
         }
       }
     },
