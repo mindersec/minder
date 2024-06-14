@@ -2074,6 +2074,8 @@ message RemoveRoleResponse {
 message Role {
     // name is the name of the role.
     string name = 1;
+    // display name of the role
+    string display_name = 3;
     // description is the description of the role.
     string description = 2;
 }
