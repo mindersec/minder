@@ -886,6 +886,35 @@ service ProvidersService {
     }
 }
 
+service InviteService {
+    rpc GetInviteDetails(GetInviteDetailsRequest) returns (GetInviteDetailsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/invite/{code}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+        };
+    }
+}
+
+message GetInviteDetailsRequest {
+    Context context = 1;
+    // Invite nonce/code to retrieve details for
+    string code = 2;
+}
+
+message GetInviteDetailsResponse {
+    // Project associated with the invite
+    string project_display = 1;
+    // Sponsor of the invite
+    string sponsor_display = 2;
+    // expires_at is the time at which the invitation expires.
+    google.protobuf.Timestamp expires_at = 3;
+    // expired is true if the invitation has expired
+    bool expired = 4;
+}
+
 message CheckHealthRequest {
 }
 

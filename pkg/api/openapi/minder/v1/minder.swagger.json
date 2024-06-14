@@ -34,6 +34,9 @@
     },
     {
       "name": "ProvidersService"
+    },
+    {
+      "name": "InviteService"
     }
   ],
   "consumes": [
@@ -529,6 +532,51 @@
         },
         "tags": [
           "HealthService"
+        ]
+      }
+    },
+    "/api/v1/invite/{code}": {
+      "get": {
+        "operationId": "InviteService_GetInviteDetails",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetInviteDetailsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "description": "Invite nonce/code to retrieve details for",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "InviteService"
         ]
       }
     },
@@ -3291,6 +3339,28 @@
         },
         "state": {
           "type": "string"
+        }
+      }
+    },
+    "v1GetInviteDetailsResponse": {
+      "type": "object",
+      "properties": {
+        "projectDisplay": {
+          "type": "string",
+          "title": "Project associated with the invite"
+        },
+        "sponsorDisplay": {
+          "type": "string",
+          "title": "Sponsor of the invite"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "expires_at is the time at which the invitation expires."
+        },
+        "expired": {
+          "type": "boolean",
+          "title": "expired is true if the invitation has expired"
         }
       }
     },
