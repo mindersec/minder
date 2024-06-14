@@ -52,7 +52,7 @@ func (s *Server) ReconcileEntityRegistration(
 	// Todo: We don't support other entities yet. This should be updated when we do.
 	entityType := in.GetEntity()
 	if pb.EntityFromString(entityType) != pb.Entity_ENTITY_REPOSITORIES {
-		return nil, util.UserVisibleError(codes.Internal, "entity type %s not supported", entityType)
+		return nil, util.UserVisibleError(codes.InvalidArgument, "entity type %s not supported", entityType)
 	}
 
 	providerName := in.GetContext().GetProvider()
