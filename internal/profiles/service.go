@@ -563,12 +563,16 @@ func (_ *profileService) getRulesFromProfile(
 	// track them in the db later.
 	rulesInProf := make(RuleMapping)
 
-	err := TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
-		// TODO: This will need to be updated to support
-		// the hierarchy tree once that's settled in.
+	// Allows a profile to use rules from parent projects
+	projects, err := qtx.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting parent projects: %w", err)
+	}
+
+	err = TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
 		rtdb, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			ProjectID: projectID,
-			Name:      r.GetType(),
+			Projects: projects,
+			Name:     r.GetType(),
 		})
 		if err != nil {
 			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
