@@ -27,9 +27,9 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	"github.com/zitadel/oidc/v2/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/v2/pkg/http"
-	"github.com/zitadel/oidc/v2/pkg/oidc"
+	"github.com/zitadel/oidc/v3/pkg/client/rp"
+	httphelper "github.com/zitadel/oidc/v3/pkg/http"
+	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -215,7 +215,7 @@ func Login(
 	}
 	redirectURI := parsedURL.JoinPath(callbackPath)
 
-	provider, err := rp.NewRelyingPartyOIDC(issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(ctx, issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
 	if err != nil {
 		return nil, cli.MessageAndError("Error creating relying party", err)
 	}
