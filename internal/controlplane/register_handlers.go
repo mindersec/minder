@@ -76,6 +76,11 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterEvalResultsServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
+
+	// Register the InviteService service
+	if err := pb.RegisterInviteServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatal().Err(err).Msg("failed to register gateway")
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -109,4 +114,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the EvalResultsService service
 	pb.RegisterEvalResultsServiceServer(s.grpcServer, s)
+
+	// Register the InviteService service
+	pb.RegisterInviteServiceServer(s.grpcServer, s)
 }

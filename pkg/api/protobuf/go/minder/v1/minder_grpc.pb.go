@@ -2633,3 +2633,94 @@ var ProvidersService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "minder/v1/minder.proto",
 }
+
+const (
+	InviteService_GetInviteDetails_FullMethodName = "/minder.v1.InviteService/GetInviteDetails"
+)
+
+// InviteServiceClient is the client API for InviteService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type InviteServiceClient interface {
+	GetInviteDetails(ctx context.Context, in *GetInviteDetailsRequest, opts ...grpc.CallOption) (*GetInviteDetailsResponse, error)
+}
+
+type inviteServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewInviteServiceClient(cc grpc.ClientConnInterface) InviteServiceClient {
+	return &inviteServiceClient{cc}
+}
+
+func (c *inviteServiceClient) GetInviteDetails(ctx context.Context, in *GetInviteDetailsRequest, opts ...grpc.CallOption) (*GetInviteDetailsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInviteDetailsResponse)
+	err := c.cc.Invoke(ctx, InviteService_GetInviteDetails_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// InviteServiceServer is the server API for InviteService service.
+// All implementations must embed UnimplementedInviteServiceServer
+// for forward compatibility
+type InviteServiceServer interface {
+	GetInviteDetails(context.Context, *GetInviteDetailsRequest) (*GetInviteDetailsResponse, error)
+	mustEmbedUnimplementedInviteServiceServer()
+}
+
+// UnimplementedInviteServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedInviteServiceServer struct {
+}
+
+func (UnimplementedInviteServiceServer) GetInviteDetails(context.Context, *GetInviteDetailsRequest) (*GetInviteDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInviteDetails not implemented")
+}
+func (UnimplementedInviteServiceServer) mustEmbedUnimplementedInviteServiceServer() {}
+
+// UnsafeInviteServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to InviteServiceServer will
+// result in compilation errors.
+type UnsafeInviteServiceServer interface {
+	mustEmbedUnimplementedInviteServiceServer()
+}
+
+func RegisterInviteServiceServer(s grpc.ServiceRegistrar, srv InviteServiceServer) {
+	s.RegisterService(&InviteService_ServiceDesc, srv)
+}
+
+func _InviteService_GetInviteDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInviteDetailsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InviteServiceServer).GetInviteDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: InviteService_GetInviteDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InviteServiceServer).GetInviteDetails(ctx, req.(*GetInviteDetailsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// InviteService_ServiceDesc is the grpc.ServiceDesc for InviteService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var InviteService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.InviteService",
+	HandlerType: (*InviteServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetInviteDetails",
+			Handler:    _InviteService_GetInviteDetails_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}

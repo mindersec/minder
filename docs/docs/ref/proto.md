@@ -47,6 +47,16 @@ replies with OK
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
 
 
+<a name="minder-v1-InviteService"></a>
+
+#### InviteService
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetInviteDetails | [GetInviteDetailsRequest](#minder-v1-GetInviteDetailsRequest) | [GetInviteDetailsResponse](#minder-v1-GetInviteDetailsResponse) |  |
+
+
 <a name="minder-v1-OAuthService"></a>
 
 #### OAuthService
@@ -799,6 +809,32 @@ Namespace: is the namespace for the GHCR provider.
 | ----- | ---- | ----- | ----------- |
 | url | [string](#string) |  |  |
 | state | [string](#string) |  |  |
+
+
+<a name="minder-v1-GetInviteDetailsRequest"></a>
+
+#### GetInviteDetailsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| code | [string](#string) |  | Invite nonce/code to retrieve details for |
+
+
+<a name="minder-v1-GetInviteDetailsResponse"></a>
+
+#### GetInviteDetailsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_display | [string](#string) |  | Project associated with the invite |
+| sponsor_display | [string](#string) |  | Sponsor of the invite |
+| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
+| expired | [bool](#bool) |  | expired is true if the invitation has expired |
 
 
 <a name="minder-v1-GetProfileByIdRequest"></a>

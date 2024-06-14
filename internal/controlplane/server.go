@@ -118,6 +118,7 @@ type Server struct {
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
 	pb.UnimplementedEvalResultsServiceServer
+	pb.UnimplementedInviteServiceServer
 }
 
 // NewServer creates a new server instance
