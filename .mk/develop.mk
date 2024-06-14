@@ -93,3 +93,6 @@ generate-encryption-key:	## Generates an encryption key that's useful for encryp
 lint-fix: ## fix all linting issues which can be automatically fixed
 	golangci-lint run --fix
 
+.PHONY: generate-tools
+generate-tools: ## go generate tools
+	(cd ./tools && go generate -tags tools ./tools.go)
