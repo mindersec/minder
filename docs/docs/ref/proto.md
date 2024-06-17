@@ -80,6 +80,7 @@ replies with OK
 | ListRoles | [ListRolesRequest](#minder-v1-ListRolesRequest) | [ListRolesResponse](#minder-v1-ListRolesResponse) |  |
 | ListRoleAssignments | [ListRoleAssignmentsRequest](#minder-v1-ListRoleAssignmentsRequest) | [ListRoleAssignmentsResponse](#minder-v1-ListRoleAssignmentsResponse) |  |
 | AssignRole | [AssignRoleRequest](#minder-v1-AssignRoleRequest) | [AssignRoleResponse](#minder-v1-AssignRoleResponse) |  |
+| UpdateRole | [UpdateRoleRequest](#minder-v1-UpdateRoleRequest) | [UpdateRoleResponse](#minder-v1-UpdateRoleResponse) |  |
 | RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
 
 
@@ -1135,6 +1136,7 @@ GitType defines the git data ingester.
 | code | [string](#string) |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
 | created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | created_at is the time at which the invitation was created. |
 | expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
+| expired | [bool](#bool) |  | expired is true if the invitation has expired. |
 | sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
 | sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
 
@@ -2264,6 +2266,30 @@ Severity defines the severity of the rule.
 | project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
 
 
+<a name="minder-v1-UpdateRoleRequest"></a>
+
+#### UpdateRoleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
+| subject | [string](#string) |  | subject is the account to change permissions for. The account must already have permissions on the project |
+| role | [string](#string) | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
+
+
+<a name="minder-v1-UpdateRoleResponse"></a>
+
+#### UpdateRoleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments that were updated. |
+
+
 <a name="minder-v1-UpdateRuleTypeRequest"></a>
 
 #### UpdateRuleTypeRequest
@@ -2513,6 +2539,7 @@ ProviderTrait is the type of the provider.
 | RELATION_REMOTE_REPO_GET | 34 |  |
 | RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 | RELATION_ENTITY_RECONCILE | 36 |  |
+| RELATION_ROLE_ASSIGNMENT_UPDATE | 37 |  |
 
 
 <a name="minder-v1-Severity-Value"></a>

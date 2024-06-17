@@ -68,6 +68,7 @@ enum Relation {
     RELATION_REMOTE_REPO_GET = 34 [(name) = "remote_repo_get"];
     RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
     RELATION_ENTITY_RECONCILE = 36 [(name) = "entity_reconcile"];
+    RELATION_ROLE_ASSIGNMENT_UPDATE = 37 [(name) = "role_assignment_update"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -700,6 +701,18 @@ service PermissionsService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_ROLE_ASSIGNMENT_CREATE
+        };
+    }
+
+    rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/permissions/update"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ROLE_ASSIGNMENT_UPDATE
         };
     }
 
@@ -2088,6 +2101,23 @@ message AssignRoleResponse {
     Invitation invitation = 2;
 }
 
+message UpdateRoleRequest {
+    // context is the context in which the role assignment is evaluated.
+    Context context = 1;
+    // subject is the account to change permissions for.
+    // The account must already have permissions on the project
+    string subject = 2;
+    // All subject roles are _replaced_ with the following role assignments.  Must be non-empty,
+    // use RemoveRole to remove permissions entirely from the project.
+    repeated string role = 3;
+}
+
+message UpdateRoleResponse {
+    // role_assignments are the role assignments that were updated.
+    repeated RoleAssignment role_assignments = 1;
+}
+
+
 message RemoveRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
@@ -2168,6 +2198,9 @@ message Invitation {
     google.protobuf.Timestamp created_at = 5;
     // expires_at is the time at which the invitation expires.
     google.protobuf.Timestamp expires_at = 6;
+    // expired is true if the invitation has expired.
+    bool expired = 9;
+
     // sponsor is the account (ID) of the user who created the invitation.
     string sponsor = 7;
     // sponsor_display is the display name of the user who created the

@@ -56,6 +56,7 @@ type project
     define role_list: admin or permissions_manager
     define role_assignment_list: admin or permissions_manager
     define role_assignment_create: admin or permissions_manager
+    define role_assignment_update: admin or permissions_manager
     define role_assignment_remove: admin or permissions_manager
 
     define repo_get: viewer
