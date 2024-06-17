@@ -202,12 +202,12 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 				// Evaluate the rule
 				evalErr := ruleEngine.Eval(ctx, inf, evalParams)
+				evalParams.SetEvalErr(evalErr)
 
 				// Perform actions, if any
 				actionsErr := actions.DoActions(ctx, inf.Entity, evalParams)
 
 				// Log the evaluation
-				evalParams.SetEvalErr(evalErr)
 				evalParams.SetActionsErr(ctx, actionsErr)
 				logEval(ctx, inf, evalParams)
 
