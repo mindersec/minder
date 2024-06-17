@@ -83,8 +83,9 @@ func (s *Server) GetRuleTypeByName(
 	resp := &minderv1.GetRuleTypeByNameResponse{}
 
 	rtdb, err := s.store.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.GetName(),
+		// TODO: Add option to fetch rule types from parent projects too
+		Projects: []uuid.UUID{entityCtx.Project.ID},
+		Name:     in.GetName(),
 	})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetName())

@@ -97,12 +97,16 @@ func (_ *Validator) validateRuleParams(
 	// track them in the db later.
 	rulesInProfile := make(RuleMapping)
 
-	err := TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
-		// TODO: This will need to be updated to support
-		// the hierarchy tree once that's settled in.
+	// Allows a profile to use rules from parent projects
+	projects, err := qtx.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting parent projects: %w", err)
+	}
+
+	err = TraverseAllRulesForPipeline(prof, func(profileRule *minderv1.Profile_Rule) error {
 		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			ProjectID: projectID,
-			Name:      profileRule.GetType(),
+			Projects: projects,
+			Name:     profileRule.GetType(),
 		})
 
 		if err != nil {
@@ -272,13 +276,16 @@ func validateEntities(
 	profile *minderv1.Profile,
 	projectID uuid.UUID,
 ) error {
+	projects, err := qtx.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("error getting parent projects: %w", err)
+	}
+
 	// validate that the entities in the profile match the entities in the project
-	err := TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
-		// TODO: This will need to be updated to support
-		// the hierarchy tree once that's settled in.
+	err = TraverseRuleTypesForEntities(profile, func(entity minderv1.Entity, rule *minderv1.Profile_Rule) error {
 		ruleType, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			ProjectID: projectID,
-			Name:      rule.GetType(),
+			Projects: projects,
+			Name:     rule.GetType(),
 		})
 
 		if err != nil {
