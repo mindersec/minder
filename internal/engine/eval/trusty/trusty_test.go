@@ -348,6 +348,24 @@ func TestClassifyDependency(t *testing.T) {
 			},
 			mustFilter: true,
 		},
+		{
+			name: "nil-activity",
+			score: &trustytypes.Reply{
+				PackageName: "test",
+				PackageType: "npm",
+				Summary: trustytypes.ScoreSummary{
+					Score: mkfloat(8.0),
+					Description: map[string]any{
+						"provenance": nil,
+					},
+				},
+			},
+			config: defaultConfig(),
+			expected: &dependencyAlternatives{
+				Reasons: []RuleViolationReason{},
+			},
+			mustFilter: false,
+		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

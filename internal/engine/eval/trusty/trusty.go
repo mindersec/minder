@@ -338,7 +338,7 @@ func readPackageDescription(resp *trustytypes.Reply) map[string]any {
 
 	// Ensure don't panic checking all fields are there
 	for _, fld := range []string{"activity", "provenance"} {
-		if _, ok := descr[fld]; !ok {
+		if _, ok := descr[fld]; !ok || descr[fld] == nil {
 			descr[fld] = float64(0)
 		}
 	}
