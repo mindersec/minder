@@ -522,6 +522,22 @@ paths:
           type: string
       tags:
         - PermissionsService
+  /api/v1/permissions/update:
+    post:
+      operationId: PermissionsService_UpdateRole
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1UpdateRoleResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1UpdateRoleRequest'
+      tags:
+        - PermissionsService
   /api/v1/profile:
     post:
       operationId: ProfileService_CreateProfile
@@ -2558,6 +2574,9 @@ definitions:
         type: string
         format: date-time
         description: expires_at is the time at which the invitation expires.
+      expired:
+        type: boolean
+        description: expired is true if the invitation has expired.
       sponsor:
         type: string
         description: sponsor is the account (ID) of the user who created the invitation.
@@ -3242,6 +3261,35 @@ definitions:
       project:
         $ref: '#/definitions/v1Project'
         description: project is the project that was updated.
+  v1UpdateRoleRequest:
+    type: object
+    properties:
+      context:
+        $ref: '#/definitions/v1Context'
+        description: context is the context in which the role assignment is evaluated.
+      subject:
+        type: string
+        title: |-
+          subject is the account to change permissions for.
+          The account must already have permissions on the project
+      role:
+        type: array
+        items:
+          type: string
+        description: >-
+          All subject roles are _replaced_ with the following role assignments. 
+          Must be non-empty,
+
+          use RemoveRole to remove permissions entirely from the project.
+  v1UpdateRoleResponse:
+    type: object
+    properties:
+      roleAssignments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1RoleAssignment'
+        description: role_assignments are the role assignments that were updated.
   v1UpdateRuleTypeRequest:
     type: object
     properties:
