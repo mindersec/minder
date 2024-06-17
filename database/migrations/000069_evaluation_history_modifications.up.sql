@@ -23,7 +23,7 @@ ALTER TABLE rule_entity_evaluations RENAME TO evaluation_rule_entities;
 ALTER TABLE evaluation_history      RENAME TO evaluation_statuses;
 ALTER TABLE latest_evaluation_state RENAME to latest_evaluation_statuses;
 
--- ensure FK cascades are set for entities, and for the alerts/remedations
+-- ensure FK cascades are set for entities, and for the alerts/remediations
 ALTER TABLE evaluation_rule_entities DROP CONSTRAINT rule_entity_evaluations_artifact_id_fkey;
 ALTER TABLE evaluation_rule_entities DROP CONSTRAINT rule_entity_evaluations_repository_id_fkey;
 ALTER TABLE evaluation_rule_entities DROP CONSTRAINT rule_entity_evaluations_pull_request_id_fkey;
