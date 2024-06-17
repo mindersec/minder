@@ -32,7 +32,6 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/engine/actions"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
@@ -171,15 +170,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	// TODO: use cobra context here
-	ctx := context.Background()
-	eng, err := engine.NewRuleTypeEngine(ctx, ruletype, prov)
-	if err != nil {
-		return fmt.Errorf("cannot create rule type engine: %w", err)
-	}
-	actionEngine, err := actions.NewRuleActions(ctx, profile, ruletype, prov)
-	if err != nil {
-		return fmt.Errorf("cannot create rule actions engine: %w", err)
-	}
+	eng, err := engine.NewRuleTypeEngine(context.Background(), profile, ruletype, prov)
 
 	inf := &entities.EntityInfoWrapper{
 		Entity:      ent,
@@ -193,7 +184,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("no rules found with type %s", ruletype.Name)
 	}
 
-	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules, actionEngine)
+	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules)
 }
 
 func runEvaluationForRules(
@@ -203,7 +194,6 @@ func runEvaluationForRules(
 	remediateStatus db.NullRemediationStatusTypes,
 	remMetadata pqtype.NullRawMessage,
 	frags []*minderv1.Profile_Rule,
-	actionEngine *actions.RuleActionsEngine,
 ) error {
 	for idx := range frags {
 		frag := frags[idx]
@@ -237,7 +227,7 @@ func runEvaluationForRules(
 		evalStatus.SetEvalErr(eng.Eval(ctx, inf, evalStatus))
 
 		// Perform the actions, if any
-		evalStatus.SetActionsErr(ctx, actionEngine.DoActions(ctx, inf.Entity, evalStatus))
+		evalStatus.SetActionsErr(ctx, eng.Actions(ctx, inf, evalStatus))
 
 		if errors.IsActionFatalError(evalStatus.GetActionsErr().RemediateErr) {
 			cmd.Printf("Remediation failed with fatal error: %s", evalStatus.GetActionsErr().RemediateErr)

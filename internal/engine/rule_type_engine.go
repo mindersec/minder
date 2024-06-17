@@ -23,6 +23,7 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/engine/actions"
 	"github.com/stacklok/minder/internal/engine/entities"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval"
@@ -65,9 +66,14 @@ type RuleTypeEngine struct {
 	// ruleEvaluator is the rule evaluator
 	ruleEvaluator engif.Evaluator
 
+	// actionsEngine is the rule actions engine
+	actionsEngine *actions.RuleActionsEngine
+
 	ruleValidator *profiles.RuleValidator
 
 	ruletype *minderv1.RuleType
+
+	//provider provinfv1.Provider
 
 	ingestCache ingestcache.Cache
 }
@@ -75,6 +81,7 @@ type RuleTypeEngine struct {
 // NewRuleTypeEngine creates a new rule type engine
 func NewRuleTypeEngine(
 	ctx context.Context,
+	profile *minderv1.Profile,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
 ) (*RuleTypeEngine, error) {
@@ -93,6 +100,11 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
+	ae, err := actions.NewRuleActions(ctx, profile, ruletype, provider)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create rule actions engine: %w", err)
+	}
+
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
 			Name: ruletype.Name,
@@ -100,8 +112,10 @@ func NewRuleTypeEngine(
 		ruleValidator: rval,
 		ingester:      rdi,
 		ruleEvaluator: reval,
+		actionsEngine: ae,
 		ruletype:      ruletype,
-		ingestCache:   ingestcache.NewNoopCache(),
+		//cli:           cli,
+		ingestCache: ingestcache.NewNoopCache(),
 	}
 
 	if ruletype.Context.Project != nil && *ruletype.Context.Project != "" {
@@ -175,6 +189,21 @@ func (r *RuleTypeEngine) Eval(
 	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def.AsMap(), result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
+}
+
+// Actions runs all actions for the rule type engine against the given entity
+func (r *RuleTypeEngine) Actions(
+	ctx context.Context,
+	inf *entities.EntityInfoWrapper,
+	params engif.ActionsParams,
+) enginerr.ActionsError {
+	// Process actions
+	return r.actionsEngine.DoActions(ctx, inf.Entity, params)
+}
+
+// GetActionsOnOff returns the on/off state of the actions
+func (r *RuleTypeEngine) GetActionsOnOff() map[engif.ActionType]engif.ActionOpt {
+	return r.actionsEngine.GetOnOffState()
 }
 
 // GetRulesFromProfileOfType returns the rules from the profile of the given type

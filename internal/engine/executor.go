@@ -25,7 +25,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/actions"
 	"github.com/stacklok/minder/internal/engine/actions/alert"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -191,7 +190,7 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 			// Let's evaluate all the rules for this profile
 			err = profiles.TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 				// Get the engine evaluator for this rule type
-				evalParams, ruleEngine, actions, err := e.getEvaluator(
+				evalParams, rte, err := e.getEvaluator(
 					ctx, inf, provider, profile, rule, hierarchy, ingestCache)
 				if err != nil {
 					return err
@@ -201,14 +200,12 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 				defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
 				// Evaluate the rule
-				evalErr := ruleEngine.Eval(ctx, inf, evalParams)
+				evalParams.SetEvalErr(rte.Eval(ctx, inf, evalParams))
 
 				// Perform actions, if any
-				actionsErr := actions.DoActions(ctx, inf.Entity, evalParams)
+				evalParams.SetActionsErr(ctx, rte.Actions(ctx, inf, evalParams))
 
 				// Log the evaluation
-				evalParams.SetEvalErr(evalErr)
-				evalParams.SetActionsErr(ctx, actionsErr)
 				logEval(ctx, inf, evalParams)
 
 				// Create or update the evaluation status
@@ -269,11 +266,11 @@ func (e *Executor) getEvaluator(
 	rule *pb.Profile_Rule,
 	hierarchy []uuid.UUID,
 	ingestCache ingestcache.Cache,
-) (*engif.EvalStatusParams, *RuleTypeEngine, *actions.RuleActionsEngine, error) {
+) (*engif.EvalStatusParams, *RuleTypeEngine, error) {
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error creating eval status params: %w", err)
+		return nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
 	// Load Rule Class from database
@@ -284,39 +281,34 @@ func (e *Executor) getEvaluator(
 		Name:     rule.Type,
 	})
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)
+		return nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
 	// Parse the rule type
-	ruleType, err := ruletypes.RuleTypePBFromDB(&dbrt)
+	rt, err := ruletypes.RuleTypePBFromDB(&dbrt)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
+		return nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
 	}
 
 	// Save the rule type uuid
-	ruleTypeID, err := uuid.Parse(*ruleType.Id)
+	ruleTypeID, err := uuid.Parse(*rt.Id)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
+		return nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
 	}
 	params.RuleTypeID = ruleTypeID
-	params.RuleType = ruleType
+	params.RuleType = rt
 
 	// Create the rule type engine
-	rte, err := NewRuleTypeEngine(ctx, ruleType, provider)
+	rte, err := NewRuleTypeEngine(ctx, profile, rt, provider)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
+		return nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
 	rte = rte.WithIngesterCache(ingestCache)
 
-	actionEngine, err := actions.NewRuleActions(ctx, profile, ruleType, provider)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot create rule actions engine: %w", err)
-	}
-
 	// All okay
-	params.SetActionsOnOff(actionEngine.GetOnOffState())
-	return params, rte, actionEngine, nil
+	params.SetActionsOnOff(rte.GetActionsOnOff())
+	return params, rte, nil
 }
 
 func (e *Executor) updateLockLease(
