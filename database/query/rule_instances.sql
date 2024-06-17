@@ -52,3 +52,9 @@ DELETE FROM rule_instances
 WHERE profile_id = $1
 AND entity_type = $2
 AND NOT id = ANY(sqlc.arg(updated_ids)::UUID[]);
+
+-- name: GetIDByProfileEntityName :one
+SELECT id FROM rule_instances
+WHERE profile_id = $1
+AND entity_type = $2
+AND name = $3;

@@ -31,6 +31,26 @@ func (q *Queries) DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdate
 	return err
 }
 
+const getIDByProfileEntityName = `-- name: GetIDByProfileEntityName :one
+SELECT id FROM rule_instances
+WHERE profile_id = $1
+AND entity_type = $2
+AND name = $3
+`
+
+type GetIDByProfileEntityNameParams struct {
+	ProfileID  uuid.UUID `json:"profile_id"`
+	EntityType Entities  `json:"entity_type"`
+	Name       string    `json:"name"`
+}
+
+func (q *Queries) GetIDByProfileEntityName(ctx context.Context, arg GetIDByProfileEntityNameParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getIDByProfileEntityName, arg.ProfileID, arg.EntityType, arg.Name)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getRuleInstancesForProfile = `-- name: GetRuleInstancesForProfile :many
 SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1
 `
