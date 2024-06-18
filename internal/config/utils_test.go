@@ -16,9 +16,13 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
@@ -145,6 +149,108 @@ key3: [value1, null, value2]
 
 			got := GetKeysWithNullValueFromYAML(data, "")
 			assert.ElementsMatchf(t, got, test.want, "GetKeysWithNullValueFromYAML() = %v, want %v", got, test.want)
+		})
+	}
+}
+
+func TestGetRelevantCfgPath(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		paths []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "Test with empty paths",
+			args: args{
+				paths: []string{},
+			},
+			want: "",
+		},
+		{
+			name: "Test with one empty path",
+			args: args{
+				paths: []string{""},
+			},
+			want: "",
+		},
+		{
+			name: "Test with one non-empty path",
+			args: args{
+				paths: []string{"config.yaml"},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with multiple paths",
+			args: args{
+				paths: []string{"", "config.yaml", "config.yml", "config.json"},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with multiple paths with empty path in the middle",
+			args: args{
+				paths: []string{"config.yaml", "", "config.yml", "config.json"},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with multiple paths with empty path at the end",
+			args: args{
+				paths: []string{"config.yaml", "config.yml", "config.json", ""},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with multiple paths with empty path at the beginning",
+			args: args{
+				paths: []string{"", "config.yaml", "config.yml", "config.json"},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with multiple paths with all empty paths",
+			args: args{
+				paths: []string{"", "", "", ""},
+			},
+			want: "",
+		},
+		{
+			name: "Test with multiple paths with all non-empty paths",
+			args: args{
+				paths: []string{"config.yaml", "config.yml", "config.json"},
+			},
+			want: "config.yaml",
+		},
+		{
+			name: "Test with one non-empty path and all empty paths",
+			args: args{
+				paths: []string{"", "", "", "config.yaml"},
+			},
+			want: "config.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			baseDir := t.TempDir()
+			createdpaths := []string{}
+			for _, path := range tt.args.paths {
+				if path != "" {
+					f, err := os.Create(filepath.Clean(filepath.Join(baseDir, path)))
+					require.NoError(t, err)
+					createdpaths = append(createdpaths, f.Name())
+				}
+			}
+
+			got := GetRelevantCfgPath(createdpaths)
+			assert.Regexp(t, regexp.MustCompile("^.*"+tt.want+"$"), got)
 		})
 	}
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/constants"
+	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -73,7 +74,7 @@ Configuration options include:
 - identity.cli.issuer_url
 - identity.cli.client_id
 
-By default, we look for the file as $PWD/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.`,
+By default, we look for the file as $PWD/config.yaml and $XDG_CONFIG_PATH/minder/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.`,
 	}
 )
 
@@ -116,33 +117,48 @@ func initConfig() {
 	viper.SetEnvPrefix("minder")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
+	//nolint:errcheck // ignore error as we are just checking if the file exists
+	cfgDirPath, _ := util.GetConfigDirPath()
+
+	var xdgConfigPath string
+	if cfgDirPath != "" {
+		xdgConfigPath = filepath.Join(cfgDirPath, "config.yaml")
+	}
+
 	cfgFile := viper.GetString("config")
-	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "config.yaml"))
-	if err != nil {
-		RootCmd.PrintErrln(err)
-		os.Exit(1)
-	}
-
-	keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
-	if len(keysWithNullValue) > 0 {
-		RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
-		for _, key := range keysWithNullValue {
-			RootCmd.PrintErrln("Null Value at: " + key)
+	cfgFilePath := config.GetRelevantCfgPath(append([]string{cfgFile},
+		filepath.Join(".", "config.yaml"),
+		xdgConfigPath,
+	))
+	if cfgFilePath != "" {
+		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
+		if err != nil {
+			RootCmd.PrintErrln(err)
+			os.Exit(1)
 		}
-		os.Exit(1)
-	}
 
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
+		keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
+		if len(keysWithNullValue) > 0 {
+			RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
+			for _, key := range keysWithNullValue {
+				RootCmd.PrintErrln("Null Value at: " + key)
+			}
+			os.Exit(1)
+		}
+
+		viper.SetConfigFile(cfgFilePath)
 	} else {
 		// use defaults
 		viper.SetConfigName("config")
 		viper.AddConfigPath(".")
+		if cfgDirPath != "" {
+			viper.AddConfigPath(cfgDirPath)
+		}
 	}
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
-	if err = viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found; use default values
 			RootCmd.PrintErrln("No config file present, using default values.")

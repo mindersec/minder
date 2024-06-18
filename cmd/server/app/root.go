@@ -67,23 +67,26 @@ func initConfig() {
 	serverconfig.SetViperDefaults(viper.GetViper())
 
 	cfgFile := viper.GetString("config")
-	cfgFileData, err := config.GetConfigFileData(cfgFile, filepath.Join(".", "server-config.yaml"))
-	if err != nil {
-		RootCmd.PrintErrln(err)
-		os.Exit(1)
-	}
-
-	keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
-	if len(keysWithNullValue) > 0 {
-		RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
-		for _, key := range keysWithNullValue {
-			RootCmd.PrintErrln("Null Value at: " + key)
+	cfgFilePath := config.GetRelevantCfgPath(append([]string{cfgFile},
+		filepath.Join(".", "server-config.yaml"),
+	))
+	if cfgFilePath != "" {
+		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
+		if err != nil {
+			RootCmd.PrintErrln(err)
+			os.Exit(1)
 		}
-		os.Exit(1)
-	}
 
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
+		keysWithNullValue := config.GetKeysWithNullValueFromYAML(cfgFileData, "")
+		if len(keysWithNullValue) > 0 {
+			RootCmd.PrintErrln("Error: The following configuration keys are missing values:")
+			for _, key := range keysWithNullValue {
+				RootCmd.PrintErrln("Null Value at: " + key)
+			}
+			os.Exit(1)
+		}
+
+		viper.SetConfigFile(cfgFilePath)
 	} else {
 		// use defaults
 		viper.SetConfigName("server-config")
@@ -92,7 +95,7 @@ func initConfig() {
 	viper.SetConfigType("yaml")
 	viper.AutomaticEnv()
 
-	if err = viper.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("Error reading config file:", err)
 	}
 }
