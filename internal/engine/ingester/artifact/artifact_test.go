@@ -46,7 +46,7 @@ func testGithubProvider() (provinfv1.GitHub, error) {
 
 	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
-			Endpoint: baseURL,
+			Endpoint: &baseURL,
 		},
 		nil,
 		&ratecache.NoopRestClientCache{},

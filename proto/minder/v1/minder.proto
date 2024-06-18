@@ -803,6 +803,18 @@ service ProjectsService {
 }
 
 service ProvidersService {
+    rpc PatchProvider(PatchProviderRequest) returns (PatchProviderResponse) {
+        option (google.api.http) = {
+            patch: "/api/v1/providers"
+            body: "patch"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROVIDER_UPDATE
+        };
+    }
+
     rpc GetProvider(GetProviderRequest) returns (GetProviderResponse) {
         option (google.api.http) = {
             get: "/api/v1/providers/{name}"
@@ -1390,7 +1402,7 @@ enum Entity {
 }
 
 message EntityAutoRegistrationConfig {
-   bool enabled = 1;
+   optional bool enabled = 1;
 }
 
 // AutoRegistration is the configuration for auto-registering entities.
@@ -1404,13 +1416,13 @@ message AutoRegistration {
 // ProviderConfig contains the generic configuration for a provider.
 message ProviderConfig {
     // auto_registration is the configuration for auto-registering entities.
-    AutoRegistration auto_registration = 1;
+    optional AutoRegistration auto_registration = 1;
 }
 
 // RESTProviderConfig contains the configuration for the REST provider.
 message RESTProviderConfig {
     // base_url is the base URL for the REST provider.
-	string base_url = 1;
+	optional string base_url = 1;
 }
 
 // GitHubProviderConfig contains the configuration for the GitHub client
@@ -1422,13 +1434,13 @@ message RESTProviderConfig {
 // naming convention
 message GitHubProviderConfig {
     // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
-	string endpoint = 1;
+	optional string endpoint = 1;
 }
 
 // GitHubAppProviderConfig contains the configuration for the GitHub App provider
 message GitHubAppProviderConfig {
   // Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.
-  string endpoint = 1;
+  optional string endpoint = 1;
   reserved 2, 3, 4;
   reserved "app_name", "app_id", "user_id";
 }
@@ -1439,7 +1451,7 @@ message GitHubAppProviderConfig {
 //
 message DockerHubProviderConfig {
     // namespace is the namespace for the DockerHub provider.
-    string namespace = 1;
+    optional string namespace = 1;
 }
 
 // GHCRProviderConfig contains the configuration for the GHCR provider.
@@ -1448,7 +1460,7 @@ message DockerHubProviderConfig {
 //
 message GHCRProviderConfig {
     // namespace is the namespace for the GHCR provider.
-    string namespace = 1;
+    optional string namespace = 1;
 }
 
 // Context defines the context in which a rule is evaluated.
@@ -2297,6 +2309,17 @@ message ListProviderClassesRequest {
 message ListProviderClassesResponse {
     // provider_classes is the list of provider classes.
     repeated string provider_classes = 1;
+}
+
+message PatchProviderRequest {
+    Context context = 1;
+    Provider patch = 2;
+
+    google.protobuf.FieldMask update_mask = 3;
+}
+
+message PatchProviderResponse {
+    Provider provider = 1;
 }
 
 message AuthorizationParams {

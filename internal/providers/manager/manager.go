@@ -62,6 +62,9 @@ type ProviderManager interface {
 	// Deletion will only occur if the provider is in the specified project -
 	// it will not attempt to find a provider elsewhere in the hierarchy.
 	DeleteByName(ctx context.Context, name string, projectID uuid.UUID) error
+	// PatchProviderConfig updates the configuration of the specified provider with the specified patch.
+	// All keys in the configMap will overwrite the fields in the provider config.
+	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -70,7 +73,6 @@ type ProviderManager interface {
 type ProviderClassManager interface {
 	providerClassAuthManager
 
-	GetConfig(ctx context.Context, class db.ProviderClass, userConfig json.RawMessage) (json.RawMessage, error)
 	// MarshallConfig validates the config and marshalls it into a format that can be stored in the database
 	MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error)
 	// Build creates an instance of Provider based on the config in the DB
@@ -150,12 +152,7 @@ func (p *providerManager) CreateFromConfig(
 		return nil, fmt.Errorf("error getting class manager: %w", err)
 	}
 
-	provConfig, err := manager.GetConfig(ctx, providerClass, config)
-	if err != nil {
-		return nil, fmt.Errorf("error getting provider config: %w", err)
-	}
-
-	marshalledConfig, err := manager.MarshallConfig(ctx, providerClass, provConfig)
+	marshalledConfig, err := manager.MarshallConfig(ctx, providerClass, config)
 	if err != nil {
 		return nil, providers.NewErrProviderInvalidConfig(err.Error())
 	}
@@ -223,6 +220,32 @@ func (p *providerManager) DeleteByName(ctx context.Context, name string, project
 	}
 
 	return p.deleteByRecord(ctx, config)
+}
+
+func (p *providerManager) PatchProviderConfig(
+	ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any,
+) error {
+	dbProvider, err := p.store.GetByNameInSpecificProject(ctx, projectID, providerName)
+	if err != nil {
+		return fmt.Errorf("error retrieving db record: %w", err)
+	}
+
+	configPatchJson, err := json.Marshal(configPatch)
+	if err != nil {
+		return fmt.Errorf("error marshalling provider config: %w", err)
+	}
+
+	manager, err := p.getClassManager(dbProvider.Class)
+	if err != nil {
+		return err
+	}
+
+	marshalledConfig, err := manager.MarshallConfig(ctx, dbProvider.Class, configPatchJson)
+	if err != nil {
+		return fmt.Errorf("error validating provider config: %w", err)
+	}
+
+	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, marshalledConfig)
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

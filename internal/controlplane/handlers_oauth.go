@@ -139,6 +139,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "error marshalling config: %s", err)
 		}
+	} else {
+		confBytes = []byte("{}")
 	}
 
 	// Insert the new session state into the database along with the user's project ID

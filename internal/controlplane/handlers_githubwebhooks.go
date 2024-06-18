@@ -1032,7 +1032,7 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		return nil, fmt.Errorf("could not determine provider id: %v", err)
 	}
 
-	providerConfig, _, err := clients.ParseV1AppConfig(dbProv.Definition)
+	providerConfig, _, err := clients.ParseAndMergeV1AppConfig(dbProv.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse provider config: %v", err)
 	}

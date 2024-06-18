@@ -145,3 +145,17 @@ func (mr *MockProviderStoreMockRecorder) GetByTraitInHierarchy(ctx, projectID, n
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTraitInHierarchy", reflect.TypeOf((*MockProviderStore)(nil).GetByTraitInHierarchy), ctx, projectID, name, trait)
 }
+
+// Update mocks base method.
+func (m *MockProviderStore) Update(ctx context.Context, providerID, projectID uuid.UUID, config json.RawMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, providerID, projectID, config)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockProviderStoreMockRecorder) Update(ctx, providerID, projectID, config any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockProviderStore)(nil).Update), ctx, providerID, projectID, config)
+}

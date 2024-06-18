@@ -106,10 +106,17 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, e
 }
 
 // MarshalV1Config marshals the DockerHubProviderConfig struct into a raw config
-func MarshalV1Config(cfg *minderv1.DockerHubProviderConfig) (json.RawMessage, error) {
-	w := dhConfigWrapper{
-		DockerHub: cfg,
+func MarshalV1Config(rawCfg json.RawMessage) (json.RawMessage, error) {
+	var w dhConfigWrapper
+	if err := json.Unmarshal(rawCfg, &w); err != nil {
+		return nil, err
 	}
+
+	err := w.DockerHub.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("error validating provider config: %w", err)
+	}
+
 	return json.Marshal(w)
 }
 

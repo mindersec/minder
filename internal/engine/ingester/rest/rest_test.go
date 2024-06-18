@@ -26,6 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -85,7 +86,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 
 			rest, err := httpclient.NewREST(
 				&pb.RESTProviderConfig{
-					BaseUrl: "https://api.github.com/",
+					BaseUrl: proto.String("https://api.github.com/"),
 				},
 				telemetry.NewNoopMetrics(),
 				credentials.NewGitHubTokenCredential("token"),
@@ -112,7 +113,7 @@ func testGithubProviderBuilder(baseURL string) (provifv1.REST, error) {
 
 	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
-			Endpoint: baseURL,
+			Endpoint: &baseURL,
 		},
 		nil,
 		&ratecache.NoopRestClientCache{},

@@ -19,7 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"dario.cat/mergo"
+	"github.com/go-playground/validator/v10"
 	gogithub "github.com/google/go-github/v61/github"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
@@ -94,7 +97,7 @@ func NewGitHubAppProvider(
 	userId := appConfig.GitHubApp.UserID
 
 	ghClient, delegate, err := ghClientFactory.BuildAppClient(
-		cfg.Endpoint,
+		cfg.GetEndpoint(),
 		credential,
 		appName,
 		userId,
@@ -121,26 +124,29 @@ type appConfigWrapper struct {
 	GitHubApp       *minderv1.GitHubAppProviderConfig `json:"github_app" yaml:"github_app" mapstructure:"github_app"`
 }
 
-// ParseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
-func ParseV1AppConfig(rawCfg json.RawMessage) (
+func getDefaultAppConfig() appConfigWrapper {
+	return appConfigWrapper{
+		ProviderConfig: &minderv1.ProviderConfig{
+			AutoRegistration: &minderv1.AutoRegistration{
+				Entities: nil,
+			},
+		},
+		GitHubApp: &minderv1.GitHubAppProviderConfig{
+			Endpoint: proto.String("https://api.github.com/"),
+		},
+	}
+}
+
+// parseV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
+func parseV1AppConfig(rawCfg json.RawMessage) (
 	*minderv1.ProviderConfig,
 	*minderv1.GitHubAppProviderConfig,
 	error,
 ) {
 	var w appConfigWrapper
+
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
-		return nil, nil, err
-	}
-
-	// Validate the config according to the protobuf validation rules.
-	if err := w.GitHubApp.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("error validating GitHubApp v1 provider config: %w", err)
-	}
-
-	if w.ProviderConfig != nil {
-		if err := w.ProviderConfig.Validate(); err != nil {
-			return nil, nil, fmt.Errorf("error validating provider config: %w", err)
-		}
+		return nil, nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
 
 	// we used to have a required key on the gh app config, so we need to check both
@@ -149,24 +155,82 @@ func ParseV1AppConfig(rawCfg json.RawMessage) (
 	if ghAppConfig == nil {
 		ghAppConfig = w.GitHubAppOldKey
 	}
+
+	return w.ProviderConfig, ghAppConfig, nil
+}
+
+// ParseAndMergeV1AppConfig parses the raw config into a GitHubAppProviderConfig struct
+func ParseAndMergeV1AppConfig(rawCfg json.RawMessage) (
+	*minderv1.ProviderConfig,
+	*minderv1.GitHubAppProviderConfig,
+	error,
+) {
+	mergedConfig := getDefaultAppConfig()
+
+	overrideProviderConfig, overrideConfig, err := parseV1AppConfig(rawCfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	mw := appConfigWrapper{
+		ProviderConfig: overrideProviderConfig,
+		GitHubApp:      overrideConfig,
+	}
+
+	err = mergo.Map(&mergedConfig, &mw, mergo.WithOverride)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error merging provider config: %w", err)
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	if err := validate.Struct(mergedConfig); err != nil {
+		return nil, nil, fmt.Errorf("error validating v1 provider config: %w", err)
+	}
+
+	// Validate the config according to the protobuf validation rules.
+	if err := mergedConfig.GitHubApp.Validate(); err != nil {
+		return nil, nil, fmt.Errorf("error validating GitHubApp v1 provider config: %w", err)
+	}
+
+	if mergedConfig.ProviderConfig != nil {
+		if err := mergedConfig.ProviderConfig.Validate(); err != nil {
+			return nil, nil, fmt.Errorf("error validating provider config: %w", err)
+		}
+	}
+
+	// we used to have a required key on the gh app config, so we need to check both
+	// until we migrate and can remove the old key
+	ghAppConfig := mergedConfig.GitHubApp
+	if ghAppConfig == nil {
+		ghAppConfig = mergedConfig.GitHubAppOldKey
+	}
 	if ghAppConfig == nil {
 		return nil, nil, fmt.Errorf("no GitHub App config found")
 	}
 
-	return w.ProviderConfig, ghAppConfig, nil
+	return mergedConfig.ProviderConfig, ghAppConfig, nil
 }
 
 // embedding the struct to expose its JSON tags
 type appConfigWrapperWrite struct {
 	*minderv1.ProviderConfig
-	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github_app" yaml:"github_app" mapstructure:"github_app" validate:"required"`
+	//nolint:lll
+	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github_app,omitempty" yaml:"github_app" mapstructure:"github_app" validate:"required"`
 }
 
-// MarshalV1AppConfig marshals the GitHubAppProviderConfig struct into a raw config
-func MarshalV1AppConfig(
-	providerCfg *minderv1.ProviderConfig,
-	appCfg *minderv1.GitHubAppProviderConfig,
-) (json.RawMessage, error) {
+// MarshalV1AppConfig unmarshalls and then marshalls back to get rid of unknown keys before storing
+func MarshalV1AppConfig(rawCfg json.RawMessage) (json.RawMessage, error) {
+	// unmarsall the raw config to get the correct key and strip unknown keys
+	providerCfg, appCfg, err := parseV1AppConfig(rawCfg)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing provider config: %w", err)
+	}
+
+	err = providerCfg.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("error validating provider config: %w", err)
+	}
+
+	// marshall back because that's what we are storing
 	w := appConfigWrapperWrite{
 		ProviderConfig: providerCfg,
 		GitHubApp:      appCfg,

@@ -27,6 +27,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -47,23 +48,36 @@ func TestParseV1OAuthConfig(t *testing.T) {
 	}{
 		{
 			name:   "valid oauth config",
-			config: json.RawMessage(`{ "github": { "endpoint": "https://api.github.com" } }`),
+			config: json.RawMessage(`{ "github": { "endpoint": "https://custom.github.com" } }`),
 			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
-				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+				assert.Equal(t, "https://custom.github.com", ghConfig.GetEndpoint())
 			},
 		},
 		{
-			name:   "missing required github key",
+			name:   "missing required github key is merged with its default value",
 			config: json.RawMessage(`{ "auto_registration": { "enabled": ["repository"] } }`),
 			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
-				assert.Nil(t, ghConfig)
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
 			},
-			error: "Field validation for 'GitHub' failed on the 'required' tag",
+		},
+		{
+			name:   "valid empty provider config",
+			config: json.RawMessage(`{ "github": {}}`),
+			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
+			},
+		},
+		{
+			name:   "valid empty config",
+			config: json.RawMessage(`{ }`),
+			ghEvalFn: func(ghConfig *minderv1.GitHubProviderConfig) {
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
+			},
 		},
 	}
 
 	for _, scenario := range scenarios {
-		gitHubConfig, err := ParseV1OAuthConfig(scenario.config)
+		gitHubConfig, err := ParseAndMergeV1OAuthConfig(scenario.config)
 		if scenario.error != "" {
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), scenario.error)
@@ -79,7 +93,7 @@ func TestNewRestClient(t *testing.T) {
 
 	client, err := NewRestClient(
 		&minderv1.GitHubProviderConfig{
-			Endpoint: "https://api.github.com",
+			Endpoint: proto.String("https://api.github.com"),
 		},
 		nil,
 		nil,
@@ -135,7 +149,7 @@ func TestArtifactAPIEscapesOAuth(t *testing.T) {
 			defer testServer.Close()
 
 			client, err := NewRestClient(
-				&minderv1.GitHubProviderConfig{Endpoint: testServer.URL + "/"},
+				&minderv1.GitHubProviderConfig{Endpoint: proto.String(testServer.URL + "/")},
 				nil,
 				nil,
 				credentials.NewGitHubTokenCredential("token"),
@@ -170,7 +184,7 @@ func TestWaitForRateLimitResetOAuth(t *testing.T) {
 	defer server.Close()
 
 	client, err := NewRestClient(
-		&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"},
+		&minderv1.GitHubProviderConfig{Endpoint: proto.String(server.URL + "/")},
 		nil,
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
@@ -221,7 +235,7 @@ func TestConcurrentWaitForRateLimitResetOAuth(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		client, err := NewRestClient(
-			&minderv1.GitHubProviderConfig{Endpoint: server.URL + "/"},
+			&minderv1.GitHubProviderConfig{Endpoint: proto.String(server.URL + "/")},
 			nil,
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),

@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -54,7 +55,7 @@ func testGithubProvider(baseURL string) (provifv1.REST, error) {
 
 	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
-			Endpoint: baseURL,
+			Endpoint: &baseURL,
 		},
 		nil,
 		&ratecache.NoopRestClientCache{},
@@ -141,7 +142,7 @@ func TestNewRestRemediate(t *testing.T) {
 
 			restProvider, err := httpclient.NewREST(
 				&pb.RESTProviderConfig{
-					BaseUrl: "https://api.github.com/",
+					BaseUrl: proto.String("https://api.github.com/"),
 				},
 				telemetry.NewNoopMetrics(),
 				credentials.NewGitHubTokenCredential("token"),

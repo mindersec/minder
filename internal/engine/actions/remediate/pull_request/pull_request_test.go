@@ -35,6 +35,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -91,7 +92,7 @@ var TestActionTypeValid interfaces.ActionType = "remediate-test"
 func testGithubProvider() (provifv1.GitHub, error) {
 	return clients.NewRestClient(
 		&pb.GitHubProviderConfig{
-			Endpoint: ghApiUrl + "/",
+			Endpoint: proto.String(ghApiUrl + "/"),
 		},
 		nil,
 		&ratecache.NoopRestClientCache{},

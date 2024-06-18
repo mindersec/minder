@@ -269,7 +269,8 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	dbProv, err := provSvc.CreateGitHubAppProvider(
 		context.Background(), oauth2.Token{},
 		db.GetProjectIDBySessionStateRow{
-			ProjectID: dbproj.ID,
+			ProjectID:      dbproj.ID,
+			ProviderConfig: []byte(`{}`), // FIXME: should we store a default empty config on store, even on the DB layer?
 			RemoteUser: sql.NullString{
 				Valid:  true,
 				String: strconv.Itoa(accountID),

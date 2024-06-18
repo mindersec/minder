@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
@@ -51,26 +52,26 @@ func TestParseV1AppConfig(t *testing.T) {
 	}{
 		{
 			name:   "valid app config - new key",
-			config: json.RawMessage(`{ "github_app": { "endpoint": "https://api.github.com" } }`),
+			config: json.RawMessage(`{ "github_app": { "endpoint": "https://custom.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
-				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+				assert.Equal(t, "https://custom.github.com", ghConfig.GetEndpoint())
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
-				assert.Nil(t, providerConfig)
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
 			},
 		},
 		{
 			name:   "valid app config - old key",
-			config: json.RawMessage(`{ "github-app": { "endpoint": "https://api.github.com" } }`),
+			config: json.RawMessage(`{ "github-app": { "endpoint": "https://custom.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
-				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+				assert.Equal(t, "https://custom.github.com", ghConfig.GetEndpoint())
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
-				assert.Nil(t, providerConfig)
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
 			},
 		},
 		{
@@ -78,11 +79,47 @@ func TestParseV1AppConfig(t *testing.T) {
 			config: json.RawMessage(`{ "github_app": { "endpoint": "https://new.github.com" }, "github-app": { "endpoint": "https://old.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
-				assert.Equal(t, "https://new.github.com", ghConfig.Endpoint)
+				assert.Equal(t, "https://new.github.com", ghConfig.GetEndpoint())
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
-				assert.Nil(t, providerConfig)
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
+			},
+		},
+		{
+			name:   "valid empty config",
+			config: json.RawMessage(`{ }`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
+			},
+		},
+		{
+			name:   "valid empty provider config - old key",
+			config: json.RawMessage(`{ "github-app": {}}`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
+			},
+		},
+		{
+			name:   "valid empty provider config - new key",
+			config: json.RawMessage(`{ "github-app": {}}`),
+			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
+				t.Helper()
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
+			},
+			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
+				t.Helper()
+				assert.Nil(t, providerConfig.GetAutoRegistration().GetEntities())
 			},
 		},
 		{
@@ -90,14 +127,14 @@ func TestParseV1AppConfig(t *testing.T) {
 			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } }, "github-app": { "endpoint": "https://api.github.com" } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
-				assert.Equal(t, "https://api.github.com", ghConfig.Endpoint)
+				assert.Equal(t, "https://api.github.com", ghConfig.GetEndpoint())
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
-				entityConfig := providerConfig.AutoRegistration.GetEntities()
+				entityConfig := providerConfig.GetAutoRegistration().GetEntities()
 				assert.NotNil(t, entityConfig)
 				assert.Len(t, entityConfig, 1)
-				assert.True(t, entityConfig["repository"].Enabled)
+				assert.True(t, entityConfig["repository"].GetEnabled())
 			},
 		},
 		{
@@ -114,17 +151,19 @@ func TestParseV1AppConfig(t *testing.T) {
 			error: "error validating provider config: auto_registration: invalid entity type: blah",
 		},
 		{
-			name:   "missing required github key",
+			name:   "missing required github key merges in the defaults",
 			config: json.RawMessage(`{ "auto_registration": { "entities": { "repository": {"enabled": true} } } }`),
 			ghEvalFn: func(t *testing.T, ghConfig *minderv1.GitHubAppProviderConfig) {
 				t.Helper()
-				assert.Nil(t, ghConfig)
+				assert.Equal(t, "https://api.github.com/", ghConfig.GetEndpoint())
 			},
 			provEvalFn: func(t *testing.T, providerConfig *minderv1.ProviderConfig) {
 				t.Helper()
-				assert.Nil(t, providerConfig)
+				entityConfig := providerConfig.GetAutoRegistration().GetEntities()
+				assert.NotNil(t, entityConfig)
+				assert.Len(t, entityConfig, 1)
+				assert.True(t, entityConfig["repository"].GetEnabled())
 			},
-			error: "no GitHub App config found",
 		},
 	}
 
@@ -132,7 +171,7 @@ func TestParseV1AppConfig(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 
-			providerConfig, gitHubConfig, err := ParseV1AppConfig(scenario.config)
+			providerConfig, gitHubConfig, err := ParseAndMergeV1AppConfig(scenario.config)
 			if scenario.error != "" {
 				assert.Error(t, err)
 				assert.Nil(t, providerConfig)
@@ -150,7 +189,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 	t.Parallel()
 
 	client, err := NewGitHubAppProvider(
-		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
+		&minderv1.GitHubAppProviderConfig{Endpoint: proto.String("https://api.github.com")},
 		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 		nil,
 		credentials.NewGitHubTokenCredential("token"),
@@ -172,7 +211,7 @@ func TestUserInfo(t *testing.T) {
 	ctx := context.Background()
 
 	client, err := NewGitHubAppProvider(
-		&minderv1.GitHubAppProviderConfig{Endpoint: "https://api.github.com"},
+		&minderv1.GitHubAppProviderConfig{Endpoint: proto.String("https://api.github.com")},
 		&config.ProviderConfig{
 			GitHubApp: &config.GitHubAppConfig{
 				AppName: appName,
@@ -253,7 +292,7 @@ func TestArtifactAPIEscapesApp(t *testing.T) {
 			packageListingClient.BaseURL = testServerUrl
 
 			client, err := NewGitHubAppProvider(
-				&minderv1.GitHubAppProviderConfig{Endpoint: testServer.URL + "/"},
+				&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(testServer.URL + "/")},
 				&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential("token"),
@@ -392,7 +431,7 @@ func TestWaitForRateLimitResetApp(t *testing.T) {
 	packageListingClient.BaseURL = testServerUrl
 
 	client, err := NewGitHubAppProvider(
-		&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
+		&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(server.URL + "/")},
 		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
@@ -449,7 +488,7 @@ func TestConcurrentWaitForRateLimitResetApp(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		client, err := NewGitHubAppProvider(
-			&minderv1.GitHubAppProviderConfig{Endpoint: server.URL + "/"},
+			&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(server.URL + "/")},
 			&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),

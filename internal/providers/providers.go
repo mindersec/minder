@@ -171,7 +171,7 @@ func getInstallationTokenCredential(
 	} else if err != nil {
 		return nil, fmt.Errorf("error getting installation ID: %w", err)
 	}
-	_, cfg, err := clients.ParseV1AppConfig(prov.Definition)
+	_, cfg, err := clients.ParseAndMergeV1AppConfig(prov.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing github app config: %w", err)
 	}
@@ -181,6 +181,6 @@ func getInstallationTokenCredential(
 		return nil, fmt.Errorf("error reading private key: %w", err)
 	}
 
-	return credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.Endpoint,
+	return credentials.NewGitHubInstallationTokenCredential(ctx, provCfg.GitHubApp.AppID, privateKey, cfg.GetEndpoint(),
 		installation.AppInstallationID), nil
 }

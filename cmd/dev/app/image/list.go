@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
@@ -75,7 +76,7 @@ func runCmdList(cmd *cobra.Command, _ []string) error {
 		var err error
 		cred := credentials.NewOAuth2TokenCredential(viper.GetString("auth.token"))
 		prov, err = dockerhub.New(cred, &minderv1.DockerHubProviderConfig{
-			Namespace: ns.Value.String(),
+			Namespace: proto.String(ns.Value.String()),
 		})
 		if err != nil {
 			return err
@@ -83,7 +84,7 @@ func runCmdList(cmd *cobra.Command, _ []string) error {
 	case "ghcr":
 		cred := credentials.NewOAuth2TokenCredential(viper.GetString("auth.token"))
 		prov = ghcr.New(cred, &minderv1.GHCRProviderConfig{
-			Namespace: ns.Value.String(),
+			Namespace: proto.String(ns.Value.String()),
 		})
 	default:
 		return fmt.Errorf("unknown provider: %s", pclass.Value.String())
