@@ -724,6 +724,83 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | url | [string](#string) |  | url is the URL to the alert |
 
 
+<a name="minder-v1-EvaluationHistory"></a>
+
+#### EvaluationHistory
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EvaluationHistoryEntity](#minder-v1-EvaluationHistoryEntity) |  | entity contains details of the entity which was evaluated. |
+| rule | [EvaluationHistoryRule](#minder-v1-EvaluationHistoryRule) |  | rule contains details of the rule which the entity was evaluated against. |
+| status | [EvaluationHistoryStatus](#minder-v1-EvaluationHistoryStatus) |  | status contains the evaluation status. |
+| alert | [EvaluationHistoryAlert](#minder-v1-EvaluationHistoryAlert) |  | alert contains details of the alerts for this evaluation. |
+| remediation | [EvaluationHistoryRemediation](#minder-v1-EvaluationHistoryRemediation) |  | remediation contains details of the remediation for this evaluation. |
+
+
+<a name="minder-v1-EvaluationHistoryAlert"></a>
+
+#### EvaluationHistoryAlert
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (on, off, error, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the alert. the structure and contents are alert specific, and are subject to change. |
+
+
+<a name="minder-v1-EvaluationHistoryEntity"></a>
+
+#### EvaluationHistoryEntity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | id is the ID of the entity. |
+| type | [Entity](#minder-v1-Entity) |  | type is the entity type. |
+| name | [string](#string) |  | name is the entity name. |
+
+
+<a name="minder-v1-EvaluationHistoryRemediation"></a>
+
+#### EvaluationHistoryRemediation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (success, error, failure, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the remediation. the structure and contents are remediation specific, and are subject to change. |
+
+
+<a name="minder-v1-EvaluationHistoryRule"></a>
+
+#### EvaluationHistoryRule
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the rule instance. |
+| type | [string](#string) |  | type is the name of the rule type. |
+| profile | [string](#string) |  | profile is the name of the profile which contains the rule. |
+
+
+<a name="minder-v1-EvaluationHistoryStatus"></a>
+
+#### EvaluationHistoryStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+
+
 <a name="minder-v1-GHCRProviderConfig"></a>
 
 #### GHCRProviderConfig
