@@ -38,6 +38,6 @@ ALTER TABLE alert_events ADD FOREIGN KEY (evaluation_id) REFERENCES evaluation_s
 
 -- use an array of timestamps instead of a separate table when tracking evaluation instances
 DROP TABLE IF EXISTS evaluation_instance;
-ALTER TABLE evaluation_statuses ADD COLUMN evaluation_times TIMESTAMP[] NOT NULL DEFAULT ARRAY[]::TIMESTAMP[];
+ALTER TABLE evaluation_statuses ADD COLUMN evaluation_times TIMESTAMP[] NOT NULL DEFAULT ARRAY[NOW()]::TIMESTAMP[];
 
 COMMIT;
