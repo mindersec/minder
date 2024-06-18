@@ -64,7 +64,8 @@ type OpenIdCredentials struct {
 	AccessTokenExpiresAt time.Time `json:"expiry"`
 }
 
-func getCredentialsPath() (string, error) {
+// GetConfigDirPath returns the path to the config directory
+func GetConfigDirPath() (string, error) {
 	// Get the XDG_CONFIG_HOME environment variable
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
@@ -77,7 +78,17 @@ func getCredentialsPath() (string, error) {
 		xdgConfigHome = filepath.Join(homeDir, ".config")
 	}
 
-	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
+	filePath := filepath.Join(xdgConfigHome, "minder")
+	return filePath, nil
+}
+
+func getCredentialsPath() (string, error) {
+	cfgPath, err := GetConfigDirPath()
+	if err != nil {
+		return "", fmt.Errorf("error getting config path: %v", err)
+	}
+
+	filePath := filepath.Join(cfgPath, "credentials.json")
 	return filePath, nil
 }
 
