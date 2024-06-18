@@ -19,7 +19,7 @@ Configuration options include:
 - identity.cli.issuer_url
 - identity.cli.client_id
 
-By default, we look for the file as $PWD/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.
+By default, we look for the file as $PWD/config.yaml and $XDG_CONFIG_PATH/minder/config.yaml. You can specify a custom path via the --config flag, or by setting the MINDER_CONFIG environment variable.
 
 ### Options
 
