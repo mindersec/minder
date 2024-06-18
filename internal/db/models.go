@@ -481,16 +481,20 @@ type EntityProfileRule struct {
 	CreatedAt       time.Time `json:"created_at"`
 }
 
-type EvaluationHistory struct {
-	ID           uuid.UUID       `json:"id"`
-	RuleEntityID uuid.UUID       `json:"rule_entity_id"`
-	Status       EvalStatusTypes `json:"status"`
-	Details      string          `json:"details"`
+type EvaluationRuleEntity struct {
+	ID            uuid.UUID     `json:"id"`
+	RuleID        uuid.UUID     `json:"rule_id"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 }
 
-type EvaluationInstance struct {
-	EvaluationID   uuid.UUID `json:"evaluation_id"`
-	EvaluationTime time.Time `json:"evaluation_time"`
+type EvaluationStatus struct {
+	ID              uuid.UUID       `json:"id"`
+	RuleEntityID    uuid.UUID       `json:"rule_entity_id"`
+	Status          EvalStatusTypes `json:"status"`
+	Details         string          `json:"details"`
+	EvaluationTimes []time.Time     `json:"evaluation_times"`
 }
 
 type Feature struct {
@@ -510,7 +514,7 @@ type FlushCache struct {
 	ProjectID     uuid.NullUUID `json:"project_id"`
 }
 
-type LatestEvaluationState struct {
+type LatestEvaluationStatus struct {
 	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
 	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
 }
@@ -661,14 +665,6 @@ type RuleDetailsRemediate struct {
 	Details     string                 `json:"details"`
 	LastUpdated time.Time              `json:"last_updated"`
 	Metadata    json.RawMessage        `json:"metadata"`
-}
-
-type RuleEntityEvaluation struct {
-	ID            uuid.UUID     `json:"id"`
-	RuleID        uuid.UUID     `json:"rule_id"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 }
 
 type RuleEvaluation struct {
