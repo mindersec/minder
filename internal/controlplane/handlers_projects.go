@@ -193,6 +193,10 @@ func (s *Server) CreateProject(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot create subproject of a subproject")
 	}
 
+	if err := projects.ValidateName(req.Name); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project name: %v", err)
+	}
+
 	subProject, err := qtx.CreateProject(ctx, db.CreateProjectParams{
 		Name: req.Name,
 		ParentID: uuid.NullUUID{

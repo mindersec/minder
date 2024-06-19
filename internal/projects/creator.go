@@ -110,6 +110,10 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	projectName string,
 	userSub string,
 ) (outproj *db.Project, projerr error) {
+	if ValidateName(projectName) != nil {
+		return nil, fmt.Errorf("invalid project name: %w", ErrValidationFailed)
+	}
+
 	projectmeta := NewSelfEnrolledMetadata(projectName)
 
 	jsonmeta, err := json.Marshal(&projectmeta)

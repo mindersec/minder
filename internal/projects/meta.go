@@ -18,6 +18,9 @@ package projects
 
 import (
 	"encoding/json"
+	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/stacklok/minder/internal/db"
 )
@@ -25,6 +28,11 @@ import (
 const (
 	// MinderMetadataVersion is the version of the metadata format.
 	MinderMetadataVersion = "v1alpha1"
+)
+
+var (
+	// ErrValidationFailed is returned when a project fails validation
+	ErrValidationFailed = fmt.Errorf("validation failed")
 )
 
 // Metadata contains metadata relevant for a project.
@@ -75,6 +83,35 @@ func ParseMetadata(proj *db.Project) (*Metadata, error) {
 	}
 
 	return &meta, nil
+}
+
+// ValidateName validates the given project name.
+func ValidateName(name string) error {
+	if name == "" {
+		return fmt.Errorf("%w: name cannot be empty", ErrValidationFailed)
+	}
+
+	if strings.Contains(name, "/") {
+		return fmt.Errorf("%w: name cannot contain '/'", ErrValidationFailed)
+	}
+
+	// Check if the name is too long.
+	if len(name) > 63 {
+		return fmt.Errorf("%w: name is too long", ErrValidationFailed)
+	}
+
+	// Attempt to match against alphanumeric characters only
+	alphanumr := regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
+	if !alphanumr.MatchString(name) {
+		// Attempt to match against a valid DNS name
+		r := regexp.MustCompile(`^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])$`)
+
+		if !r.MatchString(name) {
+			return fmt.Errorf("%w: name must be a valid DNS name or an alphanumeric sequence", ErrValidationFailed)
+		}
+	}
+
+	return nil
 }
 
 // SerializeMetadata serializes the given Metadata object into JSON.
