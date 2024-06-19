@@ -738,7 +738,14 @@
           },
           {
             "name": "roleAssignment.project",
-            "description": "projectt is the projectt in which the role is assigned.",
+            "description": "project is the project in which the role is assigned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "roleAssignment.email",
+            "description": "email is the email address of the subject used for invitations.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -4231,6 +4238,10 @@
         "project": {
           "type": "string",
           "description": "project is the project to which the user is invited."
+        },
+        "isAccepted": {
+          "type": "boolean",
+          "description": "is_accepted is the status of the invitation."
         }
       }
     },
@@ -4305,7 +4316,11 @@
         },
         "project": {
           "type": "string",
-          "description": "projectt is the projectt in which the role is assigned."
+          "description": "project is the project in which the role is assigned."
+        },
+        "email": {
+          "type": "string",
+          "description": "email is the email address of the subject used for invitations."
         }
       }
     },
