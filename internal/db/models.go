@@ -490,11 +490,12 @@ type EvaluationRuleEntity struct {
 }
 
 type EvaluationStatus struct {
-	ID              uuid.UUID       `json:"id"`
-	RuleEntityID    uuid.UUID       `json:"rule_entity_id"`
-	Status          EvalStatusTypes `json:"status"`
-	Details         string          `json:"details"`
-	EvaluationTimes []time.Time     `json:"evaluation_times"`
+	ID                   uuid.UUID       `json:"id"`
+	RuleEntityID         uuid.UUID       `json:"rule_entity_id"`
+	Status               EvalStatusTypes `json:"status"`
+	Details              string          `json:"details"`
+	EvaluationTimes      []time.Time     `json:"evaluation_times"`
+	MostRecentEvaluation time.Time       `json:"most_recent_evaluation"`
 }
 
 type Feature struct {
