@@ -73,6 +73,7 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
+	GetIDByProfileEntityName(ctx context.Context, arg GetIDByProfileEntityNameParams) (uuid.UUID, error)
 	// GetImmediateChildrenProjects is a query that returns all the immediate children of a project.
 	GetImmediateChildrenProjects(ctx context.Context, parentID uuid.UUID) ([]Project, error)
 	GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error)
@@ -92,6 +93,20 @@ type Querier interface {
 	// Note that this requires that the destination email address matches the email
 	// address of the logged in user in the external identity service / auth token.
 	GetInvitationsByEmail(ctx context.Context, email string) ([]UserInvite, error)
+	// Copyright 2024 Stacklok, Inc
+	//
+	// Licensed under the Apache License, Version 2.0 (the "License");
+	// you may not use this file except in compliance with the License.
+	// You may obtain a copy of the License at
+	//
+	//      http://www.apache.org/licenses/LICENSE-2.0
+	//
+	// Unless required by applicable law or agreed to in writing, software
+	// distributed under the License is distributed on an "AS IS" BASIS,
+	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	// See the License for the specific language governing permissions and
+	// limitations under the License.
+	GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLatestEvalStateForRuleEntityParams) (EvaluationStatus, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error)
@@ -132,6 +147,8 @@ type Querier interface {
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
+	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
+	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
@@ -192,6 +209,7 @@ type Querier interface {
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
+	UpdateEvaluationTimes(ctx context.Context, arg UpdateEvaluationTimesParams) error
 	// UpdateInvitation updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to bump its
 	// expiration.
@@ -220,6 +238,7 @@ type Querier interface {
 	// Bundles --
 	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
+	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)

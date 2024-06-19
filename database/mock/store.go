@@ -733,6 +733,21 @@ func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
 }
 
+// GetIDByProfileEntityName mocks base method.
+func (m *MockStore) GetIDByProfileEntityName(arg0 context.Context, arg1 db.GetIDByProfileEntityNameParams) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIDByProfileEntityName", arg0, arg1)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetIDByProfileEntityName indicates an expected call of GetIDByProfileEntityName.
+func (mr *MockStoreMockRecorder) GetIDByProfileEntityName(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDByProfileEntityName", reflect.TypeOf((*MockStore)(nil).GetIDByProfileEntityName), arg0, arg1)
+}
+
 // GetImmediateChildrenProjects mocks base method.
 func (m *MockStore) GetImmediateChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -836,6 +851,21 @@ func (m *MockStore) GetInvitationsByEmail(arg0 context.Context, arg1 string) ([]
 func (mr *MockStoreMockRecorder) GetInvitationsByEmail(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationsByEmail", reflect.TypeOf((*MockStore)(nil).GetInvitationsByEmail), arg0, arg1)
+}
+
+// GetLatestEvalStateForRuleEntity mocks base method.
+func (m *MockStore) GetLatestEvalStateForRuleEntity(arg0 context.Context, arg1 db.GetLatestEvalStateForRuleEntityParams) (db.EvaluationStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLatestEvalStateForRuleEntity", arg0, arg1)
+	ret0, _ := ret[0].(db.EvaluationStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLatestEvalStateForRuleEntity indicates an expected call of GetLatestEvalStateForRuleEntity.
+func (mr *MockStoreMockRecorder) GetLatestEvalStateForRuleEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestEvalStateForRuleEntity", reflect.TypeOf((*MockStore)(nil).GetLatestEvalStateForRuleEntity), arg0, arg1)
 }
 
 // GetParentProjects mocks base method.
@@ -1362,6 +1392,36 @@ func (mr *MockStoreMockRecorder) GlobalListProvidersByClass(arg0, arg1 any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByClass", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByClass), arg0, arg1)
 }
 
+// InsertEvaluationRuleEntity mocks base method.
+func (m *MockStore) InsertEvaluationRuleEntity(arg0 context.Context, arg1 db.InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertEvaluationRuleEntity", arg0, arg1)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InsertEvaluationRuleEntity indicates an expected call of InsertEvaluationRuleEntity.
+func (mr *MockStoreMockRecorder) InsertEvaluationRuleEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvaluationRuleEntity", reflect.TypeOf((*MockStore)(nil).InsertEvaluationRuleEntity), arg0, arg1)
+}
+
+// InsertEvaluationStatus mocks base method.
+func (m *MockStore) InsertEvaluationStatus(arg0 context.Context, arg1 db.InsertEvaluationStatusParams) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertEvaluationStatus", arg0, arg1)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InsertEvaluationStatus indicates an expected call of InsertEvaluationStatus.
+func (mr *MockStoreMockRecorder) InsertEvaluationStatus(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvaluationStatus", reflect.TypeOf((*MockStore)(nil).InsertEvaluationStatus), arg0, arg1)
+}
+
 // ListArtifactsByRepoID mocks base method.
 func (m *MockStore) ListArtifactsByRepoID(arg0 context.Context, arg1 uuid.NullUUID) ([]db.Artifact, error) {
 	m.ctrl.T.Helper()
@@ -1733,6 +1793,20 @@ func (mr *MockStoreMockRecorder) UpdateEncryptedSecret(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEncryptedSecret", reflect.TypeOf((*MockStore)(nil).UpdateEncryptedSecret), arg0, arg1)
 }
 
+// UpdateEvaluationTimes mocks base method.
+func (m *MockStore) UpdateEvaluationTimes(arg0 context.Context, arg1 db.UpdateEvaluationTimesParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEvaluationTimes", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEvaluationTimes indicates an expected call of UpdateEvaluationTimes.
+func (mr *MockStoreMockRecorder) UpdateEvaluationTimes(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEvaluationTimes", reflect.TypeOf((*MockStore)(nil).UpdateEvaluationTimes), arg0, arg1)
+}
+
 // UpdateInvitation mocks base method.
 func (m *MockStore) UpdateInvitation(arg0 context.Context, arg1 string) (db.UserInvite, error) {
 	m.ctrl.T.Helper()
@@ -1892,6 +1966,20 @@ func (m *MockStore) UpsertInstallationID(arg0 context.Context, arg1 db.UpsertIns
 func (mr *MockStoreMockRecorder) UpsertInstallationID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertInstallationID", reflect.TypeOf((*MockStore)(nil).UpsertInstallationID), arg0, arg1)
+}
+
+// UpsertLatestEvaluationStatus mocks base method.
+func (m *MockStore) UpsertLatestEvaluationStatus(arg0 context.Context, arg1 db.UpsertLatestEvaluationStatusParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertLatestEvaluationStatus", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertLatestEvaluationStatus indicates an expected call of UpsertLatestEvaluationStatus.
+func (mr *MockStoreMockRecorder) UpsertLatestEvaluationStatus(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertLatestEvaluationStatus", reflect.TypeOf((*MockStore)(nil).UpsertLatestEvaluationStatus), arg0, arg1)
 }
 
 // UpsertProfileForEntity mocks base method.

@@ -191,7 +191,7 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 			// Let's evaluate all the rules for this profile
 			err = profiles.TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 				// Get the engine evaluator for this rule type
-				evalParams, ruleEngine, actions, err := e.getEvaluator(
+				evalParams, ruleEngine, actionEngine, err := e.getEvaluator(
 					ctx, inf, provider, profile, rule, hierarchy, ingestCache)
 				if err != nil {
 					return err
@@ -204,11 +204,11 @@ func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 				evalErr := ruleEngine.Eval(ctx, inf, evalParams)
 				evalParams.SetEvalErr(evalErr)
 
-				// Perform actions, if any
-				actionsErr := actions.DoActions(ctx, inf.Entity, evalParams)
+				// Perform actionEngine, if any
+				actionsErr := actionEngine.DoActions(ctx, inf.Entity, evalParams)
+				evalParams.SetActionsErr(ctx, actionsErr)
 
 				// Log the evaluation
-				evalParams.SetActionsErr(ctx, actionsErr)
 				logEval(ctx, inf, evalParams)
 
 				// Create or update the evaluation status
