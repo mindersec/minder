@@ -16,10 +16,13 @@ package controlplane
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"testing"
 	"time"
 
+	gojwt "github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
@@ -28,6 +31,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -35,6 +39,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/noop"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
@@ -425,6 +430,7 @@ func TestRoleManagement(t *testing.T) {
 				SponsorDisplay: "user1",
 				CreatedAt:      timestamppb.New(time.Time{}),
 				ExpiresAt:      timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
+				Expired:        true,
 			}},
 		},
 		stored: []*minder.RoleAssignment{{
@@ -452,6 +458,7 @@ func TestRoleManagement(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
+
 			for _, add := range tc.adds {
 				match := gomock.Eq(add.GetSubject())
 				if tc.idpFlag {
@@ -459,6 +466,8 @@ func TestRoleManagement(t *testing.T) {
 					match = gomock.Any()
 				}
 				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+				mockStore.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{ID: project}, nil)
+
 			}
 			for _, remove := range tc.removes {
 				match := gomock.Eq(remove.GetSubject())
@@ -491,6 +500,7 @@ func TestRoleManagement(t *testing.T) {
 						HumanName: "user2",
 					}},
 				},
+				jwt: noop.NewJwtValidator("test"),
 			}
 
 			ctx := context.Background()
@@ -500,6 +510,14 @@ func TestRoleManagement(t *testing.T) {
 					ID: project,
 				},
 			})
+			// Create a signed JWT token with subject and email fields
+			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+			assert.NoError(t, err)
+			tokenString, err := createSignedJWTToken("testuser", "testuser@example.com", privateKey)
+			assert.NoError(t, err)
+			// Set the auth token in the incoming metadata
+			md := metadata.Pairs("authorization", "bearer "+tokenString)
+			ctx = metadata.NewIncomingContext(ctx, md)
 
 			for _, add := range tc.adds {
 				_, err := server.AssignRole(ctx, &minder.AssignRoleRequest{RoleAssignment: add})
@@ -574,4 +592,48 @@ func (s *SimpleResolver) Resolve(_ context.Context, id string) (*auth.Identity, 
 // Validate implements auth.Resolver.
 func (_ *SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity, error) {
 	panic("unimplemented")
+}
+
+func TestIsSubjectEmail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		subject  string
+		expected bool
+	}{
+		{"Valid email", "test@example.com", true},
+		{"Invalid email missing @", "testexample.com", false},
+		{"Invalid email missing domain", "test@", false},
+		{"Invalid email missing tld", "test@example", false},
+		{"Valid email with subdomain", "user.name+tag+sorting@example.com", true},
+		{"Valid email with multiple dots", "another.test@sub.domain.co.uk", true},
+		{"Invalid email missing domain and tld", "example@com", false},
+		{"Invalid email with spaces", "user @example.com", false},
+		{"Invalid email with special characters", "user@exa!mple.com", false},
+		{"Invalid email", "91abede98a29dbfec05daa22e2bf80850ba4ca3d209bd78d0f84adc402638446", false},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := isEmail(tt.subject)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+// createSignedJWTToken creates a signed JWT token with the specified subject and email.
+func createSignedJWTToken(subject, email string, privateKey *rsa.PrivateKey) (string, error) {
+	token := gojwt.NewWithClaims(gojwt.SigningMethodRS256, gojwt.MapClaims{
+		"sub":   subject,
+		"email": email,
+		"exp":   time.Now().Add(time.Hour * 1).Unix(),
+	})
+	tokenString, err := token.SignedString(privateKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
