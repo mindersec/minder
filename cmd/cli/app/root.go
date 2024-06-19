@@ -19,7 +19,6 @@ package app
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,7 +27,6 @@ import (
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/constants"
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 )
 
@@ -117,19 +115,7 @@ func initConfig() {
 	viper.SetEnvPrefix("minder")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
-	//nolint:errcheck // ignore error as we are just checking if the file exists
-	cfgDirPath, _ := util.GetConfigDirPath()
-
-	var xdgConfigPath string
-	if cfgDirPath != "" {
-		xdgConfigPath = filepath.Join(cfgDirPath, "config.yaml")
-	}
-
-	cfgFile := viper.GetString("config")
-	cfgFilePath := config.GetRelevantCfgPath(append([]string{cfgFile},
-		filepath.Join(".", "config.yaml"),
-		xdgConfigPath,
-	))
+	cfgFilePath := cli.GetRelevantCLIConfigPath(viper.GetViper())
 	if cfgFilePath != "" {
 		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
 		if err != nil {
@@ -151,7 +137,7 @@ func initConfig() {
 		// use defaults
 		viper.SetConfigName("config")
 		viper.AddConfigPath(".")
-		if cfgDirPath != "" {
+		if cfgDirPath := cli.GetDefaultCLIConfigPath(); cfgDirPath != "" {
 			viper.AddConfigPath(cfgDirPath)
 		}
 	}
