@@ -491,7 +491,12 @@ paths:
           required: false
           type: string
         - name: roleAssignment.project
-          description: projectt is the projectt in which the role is assigned.
+          description: project is the project in which the role is assigned.
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.email
+          description: email is the email address of the subject used for invitations.
           in: query
           required: false
           type: string
@@ -3095,6 +3100,9 @@ definitions:
       project:
         type: string
         description: project is the project to which the user is invited.
+      isAccepted:
+        type: boolean
+        description: is_accepted is the status of the invitation.
   v1RestType:
     type: object
     properties:
@@ -3157,7 +3165,10 @@ definitions:
         description: display_name is the display name of the subject.
       project:
         type: string
-        description: projectt is the projectt in which the role is assigned.
+        description: project is the project in which the role is assigned.
+      email:
+        type: string
+        description: email is the email address of the subject used for invitations.
   v1RuleEvaluationStatus:
     type: object
     properties:
