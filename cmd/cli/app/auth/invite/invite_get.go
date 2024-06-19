@@ -34,27 +34,30 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// inviteListCmd represents the list command
-var inviteListCmd = &cobra.Command{
+// inviteGetCmd represents the list command
+var inviteGetCmd = &cobra.Command{
 	Hidden: true, // TODO: This hides the command, remove it once it's implemented
-	Use:    "list",
-	Short:  "List pending invitations",
-	Long:   `List shows all pending invitations for the current minder user`,
-	RunE:   cli.GRPCClientWrapRunE(inviteListCommand),
+	Use:    "get",
+	Short:  "Get info about pending invitations",
+	Long:   `Get shows additional information about a pending invitation`,
+	RunE:   cli.GRPCClientWrapRunE(inviteGetCommand),
+	Args:   cobra.ExactArgs(1),
 }
 
-// inviteListCommand is the whoami subcommand
-func inviteListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewUserServiceClient(conn)
+// inviteGetCommand is the invite get subcommand
+func inviteGetCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
+	client := minderv1.NewInviteServiceClient(conn)
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 	format := viper.GetString("output")
 
-	res, err := client.ListInvitations(ctx, &minderv1.ListInvitationsRequest{})
+	res, err := client.GetInviteDetails(ctx, &minderv1.GetInviteDetailsRequest{
+		Code: args[0],
+	})
 	if err != nil {
-		return cli.MessageAndError("Error listing invitations", err)
+		return cli.MessageAndError("Error getting info for invitation", err)
 	}
 
 	switch format {
@@ -71,14 +74,8 @@ func inviteListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn
 		}
 		cmd.Println(out)
 	case app.Table:
-		if len(res.Invitations) == 0 {
-			cmd.Println("No pending invitations")
-			return nil
-		}
-		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Role", "Expires", "Code"})
-		for _, v := range res.Invitations {
-			t.AddRow(v.SponsorDisplay, v.Project, v.Role, v.ExpiresAt.AsTime().Format(time.RFC3339), v.Code)
-		}
+		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Expires"})
+		t.AddRow(res.SponsorDisplay, res.ProjectDisplay, res.ExpiresAt.AsTime().Format(time.RFC3339))
 		t.Render()
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)
@@ -87,7 +84,7 @@ func inviteListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn
 }
 
 func init() {
-	inviteCmd.AddCommand(inviteListCmd)
-	inviteListCmd.Flags().StringP("output", "o", app.Table,
+	inviteCmd.AddCommand(inviteGetCmd)
+	inviteGetCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 }
