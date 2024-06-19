@@ -34,5 +34,6 @@ https://docs.stacklok.com/minder
 * [minder quickstart](minder_quickstart.md)	 - Quickstart minder
 * [minder repo](minder_repo.md)	 - Manage repositories
 * [minder ruletype](minder_ruletype.md)	 - Manage rule types
+* [minder set-project](minder_set-project.md)	 - Move the current context to another project
 * [minder version](minder_version.md)	 - Print minder CLI version
 
