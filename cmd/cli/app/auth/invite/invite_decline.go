@@ -36,7 +36,7 @@ var inviteDeclineCmd = &cobra.Command{
 	Args:   cobra.ExactArgs(1),
 }
 
-// inviteAcceptCommand is the whoami subcommand
+// inviteDeclineCommand is the "invite decline" subcommand
 func inviteDeclineCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewUserServiceClient(conn)
 	code := args[0]
