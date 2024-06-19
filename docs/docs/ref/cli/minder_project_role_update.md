@@ -1,26 +1,25 @@
 ---
-title: minder project role grant
+title: minder project role update
 ---
-## minder project role grant
+## minder project role update
 
-Grant a role to a subject on a project within the minder control plane
+update a role to a subject on a project
 
 ### Synopsis
 
-The minder project role grant command allows one to grant a role
+The minder project role update command allows one to update a role
 to a user (subject) on a particular project.
 
 ```
-minder project role grant [flags]
+minder project role update [flags]
 ```
 
 ### Options
 
 ```
-  -e, --email string   email to send invitation to
-  -h, --help           help for grant
-  -r, --role string    the role to grant
-  -s, --sub string     subject to grant access to
+  -h, --help          help for update
+  -r, --role string   the role to update it to
+  -s, --sub string    subject to update role access for
 ```
 
 ### Options inherited from parent commands
@@ -38,5 +37,4 @@ minder project role grant [flags]
 ### SEE ALSO
 
 * [minder project role](minder_project_role.md)	 - Manage roles within a minder control plane
-* [minder project role grant list](minder_project_role_grant_list.md)	 - List role grants within a given project
 

@@ -17,9 +17,10 @@ minder project role deny [flags]
 ### Options
 
 ```
-  -h, --help          help for deny
-  -r, --role string   the role to grant
-  -s, --sub string    subject to grant access to
+  -e, --email string   email to send invitation to
+  -h, --help           help for deny
+  -r, --role string    the role to grant
+  -s, --sub string     subject to grant access to
 ```
 
 ### Options inherited from parent commands
