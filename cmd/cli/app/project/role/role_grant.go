@@ -42,25 +42,43 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 	sub := viper.GetString("sub")
 	r := viper.GetString("role")
 	project := viper.GetString("project")
+	email := viper.GetString("email")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	_, err := client.AssignRole(ctx, &minderv1.AssignRoleRequest{
+	roleAssignment := &minderv1.RoleAssignment{
+		Role:    r,
+		Subject: sub,
+	}
+	failMsg := "Error granting role"
+	successMsg := "Granted role successfully."
+	// Only send an email if one is provided
+	if email != "" {
+		roleAssignment = &minderv1.RoleAssignment{
+			Role:  r,
+			Email: email,
+		}
+		failMsg = "Error creating/updating an invite"
+		successMsg = "Invite created/updated successfully."
+	}
+
+	ret, err := client.AssignRole(ctx, &minderv1.AssignRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
-		RoleAssignment: &minderv1.RoleAssignment{
-			Role:    r,
-			Subject: sub,
-		},
+		RoleAssignment: roleAssignment,
 	})
 	if err != nil {
-		return cli.MessageAndError("Error granting role", err)
+		return cli.MessageAndError(failMsg, err)
 	}
 
-	cmd.Println("Granted role successfully.")
+	cmd.Println(successMsg)
+
+	if ret.Invitation != nil && ret.Invitation.Code != "" {
+		cmd.Printf("\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n", ret.Invitation.Code)
+	}
 	return nil
 }
 
@@ -69,10 +87,9 @@ func init() {
 
 	grantCmd.Flags().StringP("sub", "s", "", "subject to grant access to")
 	grantCmd.Flags().StringP("role", "r", "", "the role to grant")
-	if err := grantCmd.MarkFlagRequired("sub"); err != nil {
-		grantCmd.Print("Error marking `sub` flag as required.")
-		os.Exit(1)
-	}
+	grantCmd.Flags().StringP("email", "e", "", "email to send invitation to")
+	grantCmd.MarkFlagsOneRequired("sub", "email")
+	grantCmd.MarkFlagsMutuallyExclusive("sub", "email")
 	if err := grantCmd.MarkFlagRequired("role"); err != nil {
 		grantCmd.Print("Error marking `role` flag as required.")
 		os.Exit(1)
