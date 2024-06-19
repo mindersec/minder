@@ -754,6 +754,17 @@ service ProjectsService {
         };
     }
 
+    rpc ListChildProjects(ListChildProjectsRequest) returns (ListChildProjectsResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/projects/{context.project_id}/children"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_GET
+        };
+    }
+
     rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse) {
         option (google.api.http) = {
             delete: "/api/v1/projects"
@@ -2059,6 +2070,18 @@ message PatchProjectRequest {
 message PatchProjectResponse {
     // project is the project that was updated.
     Project project = 1;
+}
+
+message ListChildProjectsRequest {
+    // context is the context in which the child projects are listed.
+    ContextV2 context = 1;
+
+    // recursive is true if child projects should be listed recursively.
+    bool recursive = 2;
+}
+
+message ListChildProjectsResponse {
+    repeated Project projects = 1;
 }
 
 message CreateEntityReconciliationTaskRequest {
