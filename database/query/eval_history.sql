@@ -52,7 +52,9 @@ RETURNING id;
 
 -- name: UpdateEvaluationTimes :exec
 UPDATE evaluation_statuses
-SET evaluation_times = $1
+SET
+    evaluation_times = $1,
+    most_recent_evaluation = NOW()
 WHERE id = $2;
 
 -- name: UpsertLatestEvaluationStatus :exec
