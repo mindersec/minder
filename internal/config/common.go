@@ -119,13 +119,13 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 // GRPCClientConfig is the configuration for a service to connect to minder gRPC server
 type GRPCClientConfig struct {
 	// Host is the host to connect to
-	Host string `mapstructure:"host" default:"api.stacklok.com"`
+	Host string `mapstructure:"host" yaml:"host" json:"host" default:"api.stacklok.com"`
 
 	// Port is the port to connect to
-	Port int `mapstructure:"port" default:"443"`
+	Port int `mapstructure:"port" yaml:"port" json:"port" default:"443"`
 
 	// Insecure is whether to allow establishing insecure connections
-	Insecure bool `mapstructure:"insecure" default:"false"`
+	Insecure bool `mapstructure:"insecure" yaml:"insecure" json:"insecure" default:"false"`
 }
 
 // RegisterGRPCClientConfigFlags registers the flags for the gRPC client

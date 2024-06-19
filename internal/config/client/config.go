@@ -26,8 +26,10 @@ import (
 
 // Config is the configuration for the minder cli
 type Config struct {
-	GRPCClientConfig config.GRPCClientConfig `mapstructure:"grpc_server"`
-	Identity         IdentityConfigWrapper   `mapstructure:"identity"`
+	GRPCClientConfig config.GRPCClientConfig `mapstructure:"grpc_server" yaml:"grpc_server" json:"grpc_server"`
+	Identity         IdentityConfigWrapper   `mapstructure:"identity" yaml:"identity" json:"identity"`
+	// Project is the current project
+	Project string `mapstructure:"project" yaml:"project" json:"project"`
 }
 
 // RegisterMinderClientFlags registers the flags for the minder cli
