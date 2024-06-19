@@ -304,6 +304,12 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	entityCtx := engine.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
+	// Ensure user is not updating their own role
+	err := s.isUserSelfUpdating(ctx, sub, email)
+	if err != nil {
+		return nil, err
+	}
+
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
@@ -389,8 +395,21 @@ func (s *Server) inviteUser(
 	}
 	// If we are here, this means we either created a new invite or updated an existing one
 
+	// Resolve the sponsor's identity and display name
+	identity := &auth.Identity{
+		Provider:  nil,
+		UserID:    currentUser.IdentitySubject,
+		HumanName: currentUser.IdentitySubject,
+	}
+	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
+		identity, err = s.idClient.Resolve(ctx, currentUser.IdentitySubject)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
+		}
+	}
+
 	// TODO: Publish the event for sending the invitation email
-	// TODO: Resolve the sponsor display name
 
 	// Send the invitation response
 	return &minder.AssignRoleResponse{
@@ -400,8 +419,8 @@ func (s *Server) inviteUser(
 			Email:          userInvite.Email,
 			Project:        userInvite.Project.String(),
 			Code:           userInvite.Code,
-			Sponsor:        currentUser.IdentitySubject,
-			SponsorDisplay: currentUser.IdentitySubject,
+			Sponsor:        identity.UserID,
+			SponsorDisplay: identity.Human(),
 			CreatedAt:      timestamppb.New(userInvite.CreatedAt),
 			ExpiresAt:      timestamppb.New(userInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
 			Expired:        time.Now().After(userInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
@@ -444,6 +463,19 @@ func (s *Server) assignRole(
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
+	// Check in case there's an existing role assignment for the user
+	as, err := s.authzClient.AssignmentsToProject(ctx, targetPrj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	for _, a := range as {
+		if a.Subject == identity.String() {
+			return nil, util.UserVisibleError(codes.AlreadyExists, "role assignment for this user already exists, use update instead")
+		}
+	}
+
+	// Assign the role to the user
 	if err := s.authzClient.Write(ctx, identity.String(), role, targetPrj); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
@@ -467,6 +499,12 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	// Determine the target project.
 	entityCtx := engine.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
+
+	// Ensure user is not updating their own role
+	err := s.isUserSelfUpdating(ctx, sub, email)
+	if err != nil {
+		return nil, err
+	}
 
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
@@ -591,6 +629,12 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
 	}
 
+	// Ensure user is not updating their own role
+	err := s.isUserSelfUpdating(ctx, sub, "")
+	if err != nil {
+		return nil, err
+	}
+
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
@@ -620,6 +664,24 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
+	// Remove the existing role assignment for the user
+	as, err := s.authzClient.AssignmentsToProject(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	for _, a := range as {
+		if a.Subject == identity.String() {
+			roleToDelete, err := authz.ParseRole(a.Role)
+			if err != nil {
+				return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+			}
+			if err := s.authzClient.Delete(ctx, identity.String(), roleToDelete, targetProject); err != nil {
+				return nil, status.Errorf(codes.Internal, "error deleting previous role assignment: %v", err)
+			}
+		}
+	}
+
 	// Update the role assignment for the user
 	if err := s.authzClient.Write(ctx, identity.String(), authzRole, targetProject); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
@@ -635,4 +697,28 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 			},
 		},
 	}, nil
+}
+
+// isUserSelfUpdating is used to prevent if the user is trying to update their own role
+func (s *Server) isUserSelfUpdating(ctx context.Context, subject, email string) error {
+	// Ensure user is not updating their own role
+	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
+	}
+	token, err := s.jwt.ParseAndValidate(tokenString)
+	if err != nil {
+		return status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
+	}
+	if subject != "" {
+		if token.Subject() == subject {
+			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
+		}
+	}
+	if email != "" {
+		if token.Email() == email {
+			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
+		}
+	}
+	return nil
 }
