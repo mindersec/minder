@@ -17,6 +17,12 @@ type Querier interface {
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// CreateInvitation creates a new invitation. The code is a secret that is sent
+	// to the invitee, and the email is the address to which the invitation will be
+	// sent. The role is the role that the invitee will have when they accept the
+	// invitation. The project is the project to which the invitee will be invited.
+	// The sponsor is the user who is inviting the invitee.
+	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (UserInvite, error)
 	CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error)
 	CreateProfileForEntity(ctx context.Context, arg CreateProfileForEntityParams) (EntityProfile, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
@@ -32,6 +38,10 @@ type Querier interface {
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
+	// DeleteInvitation deletes an invitation by its code. This is intended to be
+	// called by a user who has issued an invitation and then accepted it, declined
+	// it or the sponsor has decided to revoke it.
+	DeleteInvitation(ctx context.Context, code string) (UserInvite, error)
 	DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdatedRulesParams) error
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
@@ -68,12 +78,20 @@ type Querier interface {
 	GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByEnrollmentNonce(ctx context.Context, arg GetInstallationIDByEnrollmentNonceParams) (ProviderGithubAppInstallation, error)
 	GetInstallationIDByProviderID(ctx context.Context, providerID uuid.NullUUID) (ProviderGithubAppInstallation, error)
-	// GetInvitationByEmail retrieves all invitations for a given email address.
+	// GetInvitationByCode retrieves an invitation by its code. This is intended to
+	// be called by a user who has received an invitation email and is following the
+	// link to accept the invitation or when querying for additional info about the
+	// invitation.
+	GetInvitationByCode(ctx context.Context, code string) (UserInvite, error)
+	// GetInvitationByEmailAndProjectAndRole retrieves an invitation by email, project,
+	// and role.
+	GetInvitationByEmailAndProjectAndRole(ctx context.Context, arg GetInvitationByEmailAndProjectAndRoleParams) (UserInvite, error)
+	// GetInvitationsByEmail retrieves all invitations for a given email address.
 	// This is intended to be called by a logged in user with their own email address,
 	// to allow them to accept invitations even if email delivery was not working.
 	// Note that this requires that the destination email address matches the email
 	// address of the logged in user in the external identity service / auth token.
-	GetInvitationByEmail(ctx context.Context, email string) ([]GetInvitationByEmailRow, error)
+	GetInvitationsByEmail(ctx context.Context, email string) ([]UserInvite, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
 	GetProfileByID(ctx context.Context, arg GetProfileByIDParams) (Profile, error)
@@ -174,6 +192,10 @@ type Querier interface {
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
+	// UpdateInvitation updates an invitation by its code. This is intended to be
+	// called by a user who has issued an invitation and then decided to bump its
+	// expiration.
+	UpdateInvitation(ctx context.Context, code string) (UserInvite, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)

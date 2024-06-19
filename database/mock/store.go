@@ -146,6 +146,21 @@ func (mr *MockStoreMockRecorder) CountUsers(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), arg0)
 }
 
+// CreateInvitation mocks base method.
+func (m *MockStore) CreateInvitation(arg0 context.Context, arg1 db.CreateInvitationParams) (db.UserInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInvitation", arg0, arg1)
+	ret0, _ := ret[0].(db.UserInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateInvitation indicates an expected call of CreateInvitation.
+func (mr *MockStoreMockRecorder) CreateInvitation(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvitation", reflect.TypeOf((*MockStore)(nil).CreateInvitation), arg0, arg1)
+}
+
 // CreateProfile mocks base method.
 func (m *MockStore) CreateProfile(arg0 context.Context, arg1 db.CreateProfileParams) (db.Profile, error) {
 	m.ctrl.T.Helper()
@@ -352,6 +367,21 @@ func (m *MockStore) DeleteInstallationIDByAppID(arg0 context.Context, arg1 int64
 func (mr *MockStoreMockRecorder) DeleteInstallationIDByAppID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInstallationIDByAppID", reflect.TypeOf((*MockStore)(nil).DeleteInstallationIDByAppID), arg0, arg1)
+}
+
+// DeleteInvitation mocks base method.
+func (m *MockStore) DeleteInvitation(arg0 context.Context, arg1 string) (db.UserInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteInvitation", arg0, arg1)
+	ret0, _ := ret[0].(db.UserInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteInvitation indicates an expected call of DeleteInvitation.
+func (mr *MockStoreMockRecorder) DeleteInvitation(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteInvitation", reflect.TypeOf((*MockStore)(nil).DeleteInvitation), arg0, arg1)
 }
 
 // DeleteNonUpdatedRules mocks base method.
@@ -763,19 +793,49 @@ func (mr *MockStoreMockRecorder) GetInstallationIDByProviderID(arg0, arg1 any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallationIDByProviderID", reflect.TypeOf((*MockStore)(nil).GetInstallationIDByProviderID), arg0, arg1)
 }
 
-// GetInvitationByEmail mocks base method.
-func (m *MockStore) GetInvitationByEmail(arg0 context.Context, arg1 string) ([]db.GetInvitationByEmailRow, error) {
+// GetInvitationByCode mocks base method.
+func (m *MockStore) GetInvitationByCode(arg0 context.Context, arg1 string) (db.UserInvite, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInvitationByEmail", arg0, arg1)
-	ret0, _ := ret[0].([]db.GetInvitationByEmailRow)
+	ret := m.ctrl.Call(m, "GetInvitationByCode", arg0, arg1)
+	ret0, _ := ret[0].(db.UserInvite)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetInvitationByEmail indicates an expected call of GetInvitationByEmail.
-func (mr *MockStoreMockRecorder) GetInvitationByEmail(arg0, arg1 any) *gomock.Call {
+// GetInvitationByCode indicates an expected call of GetInvitationByCode.
+func (mr *MockStoreMockRecorder) GetInvitationByCode(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByEmail", reflect.TypeOf((*MockStore)(nil).GetInvitationByEmail), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByCode", reflect.TypeOf((*MockStore)(nil).GetInvitationByCode), arg0, arg1)
+}
+
+// GetInvitationByEmailAndProjectAndRole mocks base method.
+func (m *MockStore) GetInvitationByEmailAndProjectAndRole(arg0 context.Context, arg1 db.GetInvitationByEmailAndProjectAndRoleParams) (db.UserInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationByEmailAndProjectAndRole", arg0, arg1)
+	ret0, _ := ret[0].(db.UserInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationByEmailAndProjectAndRole indicates an expected call of GetInvitationByEmailAndProjectAndRole.
+func (mr *MockStoreMockRecorder) GetInvitationByEmailAndProjectAndRole(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByEmailAndProjectAndRole", reflect.TypeOf((*MockStore)(nil).GetInvitationByEmailAndProjectAndRole), arg0, arg1)
+}
+
+// GetInvitationsByEmail mocks base method.
+func (m *MockStore) GetInvitationsByEmail(arg0 context.Context, arg1 string) ([]db.UserInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationsByEmail", arg0, arg1)
+	ret0, _ := ret[0].([]db.UserInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationsByEmail indicates an expected call of GetInvitationsByEmail.
+func (mr *MockStoreMockRecorder) GetInvitationsByEmail(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationsByEmail", reflect.TypeOf((*MockStore)(nil).GetInvitationsByEmail), arg0, arg1)
 }
 
 // GetParentProjects mocks base method.
@@ -1671,6 +1731,21 @@ func (m *MockStore) UpdateEncryptedSecret(arg0 context.Context, arg1 db.UpdateEn
 func (mr *MockStoreMockRecorder) UpdateEncryptedSecret(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEncryptedSecret", reflect.TypeOf((*MockStore)(nil).UpdateEncryptedSecret), arg0, arg1)
+}
+
+// UpdateInvitation mocks base method.
+func (m *MockStore) UpdateInvitation(arg0 context.Context, arg1 string) (db.UserInvite, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateInvitation", arg0, arg1)
+	ret0, _ := ret[0].(db.UserInvite)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateInvitation indicates an expected call of UpdateInvitation.
+func (mr *MockStoreMockRecorder) UpdateInvitation(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvitation", reflect.TypeOf((*MockStore)(nil).UpdateInvitation), arg0, arg1)
 }
 
 // UpdateLease mocks base method.

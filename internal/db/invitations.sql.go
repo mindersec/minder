@@ -12,36 +12,146 @@ import (
 	"github.com/google/uuid"
 )
 
-const getInvitationByEmail = `-- name: GetInvitationByEmail :many
+const createInvitation = `-- name: CreateInvitation :one
 
-SELECT code, role, project, updated_at FROM user_invites WHERE email = $1
+INSERT INTO user_invites (code, email, role, project, sponsor) VALUES ($1, $2, $3, $4, $5) RETURNING code, email, role, project, sponsor, created_at, updated_at
 `
 
-type GetInvitationByEmailRow struct {
-	Code      string    `json:"code"`
-	Role      string    `json:"role"`
-	Project   uuid.UUID `json:"project"`
-	UpdatedAt time.Time `json:"updated_at"`
+type CreateInvitationParams struct {
+	Code    string    `json:"code"`
+	Email   string    `json:"email"`
+	Role    string    `json:"role"`
+	Project uuid.UUID `json:"project"`
+	Sponsor int32     `json:"sponsor"`
 }
 
-// GetInvitationByEmail retrieves all invitations for a given email address.
+// CreateInvitation creates a new invitation. The code is a secret that is sent
+// to the invitee, and the email is the address to which the invitation will be
+// sent. The role is the role that the invitee will have when they accept the
+// invitation. The project is the project to which the invitee will be invited.
+// The sponsor is the user who is inviting the invitee.
+func (q *Queries) CreateInvitation(ctx context.Context, arg CreateInvitationParams) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, createInvitation,
+		arg.Code,
+		arg.Email,
+		arg.Role,
+		arg.Project,
+		arg.Sponsor,
+	)
+	var i UserInvite
+	err := row.Scan(
+		&i.Code,
+		&i.Email,
+		&i.Role,
+		&i.Project,
+		&i.Sponsor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteInvitation = `-- name: DeleteInvitation :one
+
+DELETE FROM user_invites WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+`
+
+// DeleteInvitation deletes an invitation by its code. This is intended to be
+// called by a user who has issued an invitation and then accepted it, declined
+// it or the sponsor has decided to revoke it.
+func (q *Queries) DeleteInvitation(ctx context.Context, code string) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, deleteInvitation, code)
+	var i UserInvite
+	err := row.Scan(
+		&i.Code,
+		&i.Email,
+		&i.Role,
+		&i.Project,
+		&i.Sponsor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getInvitationByCode = `-- name: GetInvitationByCode :one
+
+SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE code = $1
+`
+
+// GetInvitationByCode retrieves an invitation by its code. This is intended to
+// be called by a user who has received an invitation email and is following the
+// link to accept the invitation or when querying for additional info about the
+// invitation.
+func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, getInvitationByCode, code)
+	var i UserInvite
+	err := row.Scan(
+		&i.Code,
+		&i.Email,
+		&i.Role,
+		&i.Project,
+		&i.Sponsor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getInvitationByEmailAndProjectAndRole = `-- name: GetInvitationByEmailAndProjectAndRole :one
+
+SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE email = $1 AND project = $2 AND role = $3
+`
+
+type GetInvitationByEmailAndProjectAndRoleParams struct {
+	Email   string    `json:"email"`
+	Project uuid.UUID `json:"project"`
+	Role    string    `json:"role"`
+}
+
+// GetInvitationByEmailAndProjectAndRole retrieves an invitation by email, project,
+// and role.
+func (q *Queries) GetInvitationByEmailAndProjectAndRole(ctx context.Context, arg GetInvitationByEmailAndProjectAndRoleParams) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, getInvitationByEmailAndProjectAndRole, arg.Email, arg.Project, arg.Role)
+	var i UserInvite
+	err := row.Scan(
+		&i.Code,
+		&i.Email,
+		&i.Role,
+		&i.Project,
+		&i.Sponsor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getInvitationsByEmail = `-- name: GetInvitationsByEmail :many
+
+SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE email = $1
+`
+
+// GetInvitationsByEmail retrieves all invitations for a given email address.
 // This is intended to be called by a logged in user with their own email address,
 // to allow them to accept invitations even if email delivery was not working.
 // Note that this requires that the destination email address matches the email
 // address of the logged in user in the external identity service / auth token.
-func (q *Queries) GetInvitationByEmail(ctx context.Context, email string) ([]GetInvitationByEmailRow, error) {
-	rows, err := q.db.QueryContext(ctx, getInvitationByEmail, email)
+func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]UserInvite, error) {
+	rows, err := q.db.QueryContext(ctx, getInvitationsByEmail, email)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetInvitationByEmailRow{}
+	items := []UserInvite{}
 	for rows.Next() {
-		var i GetInvitationByEmailRow
+		var i UserInvite
 		if err := rows.Scan(
 			&i.Code,
+			&i.Email,
 			&i.Role,
 			&i.Project,
+			&i.Sponsor,
+			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -104,4 +214,27 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateInvitation = `-- name: UpdateInvitation :one
+
+UPDATE user_invites SET updated_at = NOW() WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+`
+
+// UpdateInvitation updates an invitation by its code. This is intended to be
+// called by a user who has issued an invitation and then decided to bump its
+// expiration.
+func (q *Queries) UpdateInvitation(ctx context.Context, code string) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, updateInvitation, code)
+	var i UserInvite
+	err := row.Scan(
+		&i.Code,
+		&i.Email,
+		&i.Role,
+		&i.Project,
+		&i.Sponsor,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
