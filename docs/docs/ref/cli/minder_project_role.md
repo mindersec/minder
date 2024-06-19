@@ -37,4 +37,5 @@ minder project role [flags]
 * [minder project role deny](minder_project_role_deny.md)	 - Deny a role to a subject on a project within the minder control plane
 * [minder project role grant](minder_project_role_grant.md)	 - Grant a role to a subject on a project within the minder control plane
 * [minder project role list](minder_project_role_list.md)	 - List roles on a project within the minder control plane
+* [minder project role update](minder_project_role_update.md)	 - update a role to a subject on a project
 
