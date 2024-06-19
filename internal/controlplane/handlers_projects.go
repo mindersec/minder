@@ -86,6 +86,79 @@ func (s *Server) ListProjects(
 	return &resp, nil
 }
 
+// ListChildProjects returns the list of subprojects for the current project
+func (s *Server) ListChildProjects(
+	ctx context.Context,
+	req *minderv1.ListChildProjectsRequest,
+) (*minderv1.ListChildProjectsResponse, error) {
+	entityCtx := engine.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+
+	var projs []*minderv1.Project
+	var err error
+
+	if req.Recursive {
+		projs, err = s.getChildProjects(ctx, projectID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting subprojects: %v", err)
+		}
+	} else {
+		projs, err = s.getImmediateChildrenProjects(ctx, projectID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting subprojects: %v", err)
+		}
+	}
+
+	resp := minderv1.ListChildProjectsResponse{
+		Projects: projs,
+	}
+	return &resp, nil
+}
+
+func (s *Server) getChildProjects(ctx context.Context, projectID uuid.UUID) ([]*minderv1.Project, error) {
+	projs, err := s.store.GetChildrenProjects(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting subprojects: %v", err)
+	}
+
+	out := make([]*minderv1.Project, 0, len(projs))
+	for _, project := range projs {
+		out = append(out, &minderv1.Project{
+			ProjectId:   project.ID.String(),
+			Name:        project.Name,
+			Description: "",
+			// TODO: We need to agree on how to handle metadata for subprojects
+			DisplayName: project.Name,
+			CreatedAt:   timestamppb.New(project.CreatedAt),
+			UpdatedAt:   timestamppb.New(project.UpdatedAt),
+		})
+	}
+
+	return out, nil
+}
+
+func (s *Server) getImmediateChildrenProjects(ctx context.Context, projectID uuid.UUID) ([]*minderv1.Project, error) {
+	projs, err := s.store.GetImmediateChildrenProjects(ctx, projectID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting subprojects: %v", err)
+	}
+
+	out := make([]*minderv1.Project, 0, len(projs))
+	for _, project := range projs {
+		out = append(out, &minderv1.Project{
+			ProjectId:   project.ID.String(),
+			Name:        project.Name,
+			Description: "",
+			// TODO: We need to agree on how to handle metadata for subprojects
+			DisplayName: project.Name,
+			CreatedAt:   timestamppb.New(project.CreatedAt),
+			UpdatedAt:   timestamppb.New(project.UpdatedAt),
+		})
+	}
+
+	return out, nil
+}
+
 // CreateProject creates a new subproject
 func (s *Server) CreateProject(
 	ctx context.Context,

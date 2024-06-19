@@ -184,6 +184,45 @@ func (q *Queries) GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetC
 	return items, nil
 }
 
+const getImmediateChildrenProjects = `-- name: GetImmediateChildrenProjects :many
+
+
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE parent_id = $1::UUID
+`
+
+// GetImmediateChildrenProjects is a query that returns all the immediate children of a project.
+func (q *Queries) GetImmediateChildrenProjects(ctx context.Context, parentID uuid.UUID) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, getImmediateChildrenProjects, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsOrganization,
+			&i.Metadata,
+			&i.ParentID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getParentProjects = `-- name: GetParentProjects :many
 WITH RECURSIVE get_parents AS (
     SELECT id, parent_id, created_at FROM projects 

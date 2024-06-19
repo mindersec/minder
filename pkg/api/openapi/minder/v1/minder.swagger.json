@@ -1350,6 +1350,45 @@
         ]
       }
     },
+    "/api/v1/projects/{context.projectId}/children": {
+      "get": {
+        "operationId": "ProjectsService_ListChildProjects",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListChildProjectsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "recursive",
+            "description": "recursive is true if child projects should be listed recursively.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "ProjectsService"
+        ]
+      }
+    },
     "/api/v1/provider/register_all": {
       "post": {
         "operationId": "ProvidersService_ReconcileEntityRegistration",
@@ -3115,6 +3154,20 @@
       },
       "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
     },
+    "v1ContextV2": {
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "title": "project is the project ID"
+        },
+        "provider": {
+          "type": "string",
+          "description": "name of the provider. Set to empty string when not applicable."
+        }
+      },
+      "description": "ContextV2 defines the context in which a rule is evaluated."
+    },
     "v1CreateEntityReconciliationTaskRequest": {
       "type": "object",
       "properties": {
@@ -3630,6 +3683,18 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1Artifact"
+          }
+        }
+      }
+    },
+    "v1ListChildProjectsResponse": {
+      "type": "object",
+      "properties": {
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Project"
           }
         }
       }

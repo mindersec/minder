@@ -116,6 +116,7 @@ replies with OK
 | ----------- | ------------ | ------------- | ------------|
 | ListProjects | [ListProjectsRequest](#minder-v1-ListProjectsRequest) | [ListProjectsResponse](#minder-v1-ListProjectsResponse) |  |
 | CreateProject | [CreateProjectRequest](#minder-v1-CreateProjectRequest) | [CreateProjectResponse](#minder-v1-CreateProjectResponse) |  |
+| ListChildProjects | [ListChildProjectsRequest](#minder-v1-ListChildProjectsRequest) | [ListChildProjectsResponse](#minder-v1-ListChildProjectsResponse) |  |
 | DeleteProject | [DeleteProjectRequest](#minder-v1-DeleteProjectRequest) | [DeleteProjectResponse](#minder-v1-DeleteProjectResponse) |  |
 | UpdateProject | [UpdateProjectRequest](#minder-v1-UpdateProjectRequest) | [UpdateProjectResponse](#minder-v1-UpdateProjectResponse) |  |
 | PatchProject | [PatchProjectRequest](#minder-v1-PatchProjectRequest) | [PatchProjectResponse](#minder-v1-PatchProjectResponse) |  |
@@ -1164,6 +1165,29 @@ GitType defines the git data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | results | [Artifact](#minder-v1-Artifact) | repeated |  |
+
+
+<a name="minder-v1-ListChildProjectsRequest"></a>
+
+#### ListChildProjectsRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [ContextV2](#minder-v1-ContextV2) |  | context is the context in which the child projects are listed. |
+| recursive | [bool](#bool) |  | recursive is true if child projects should be listed recursively. |
+
+
+<a name="minder-v1-ListChildProjectsResponse"></a>
+
+#### ListChildProjectsResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| projects | [Project](#minder-v1-Project) | repeated |  |
 
 
 <a name="minder-v1-ListEvaluationResultsRequest"></a>

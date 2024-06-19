@@ -70,6 +70,12 @@ WITH RECURSIVE get_children AS (
 )
 SELECT * FROM get_children;
 
+-- name: GetImmediateChildrenProjects :many
+
+-- GetImmediateChildrenProjects is a query that returns all the immediate children of a project.
+
+SELECT * FROM projects
+WHERE parent_id = sqlc.arg(parent_id)::UUID;
 
 -- name: DeleteProject :many
 WITH RECURSIVE get_children AS (

@@ -2031,6 +2031,7 @@ var PermissionsService_ServiceDesc = grpc.ServiceDesc{
 const (
 	ProjectsService_ListProjects_FullMethodName                   = "/minder.v1.ProjectsService/ListProjects"
 	ProjectsService_CreateProject_FullMethodName                  = "/minder.v1.ProjectsService/CreateProject"
+	ProjectsService_ListChildProjects_FullMethodName              = "/minder.v1.ProjectsService/ListChildProjects"
 	ProjectsService_DeleteProject_FullMethodName                  = "/minder.v1.ProjectsService/DeleteProject"
 	ProjectsService_UpdateProject_FullMethodName                  = "/minder.v1.ProjectsService/UpdateProject"
 	ProjectsService_PatchProject_FullMethodName                   = "/minder.v1.ProjectsService/PatchProject"
@@ -2043,6 +2044,7 @@ const (
 type ProjectsServiceClient interface {
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 	CreateProject(ctx context.Context, in *CreateProjectRequest, opts ...grpc.CallOption) (*CreateProjectResponse, error)
+	ListChildProjects(ctx context.Context, in *ListChildProjectsRequest, opts ...grpc.CallOption) (*ListChildProjectsResponse, error)
 	DeleteProject(ctx context.Context, in *DeleteProjectRequest, opts ...grpc.CallOption) (*DeleteProjectResponse, error)
 	UpdateProject(ctx context.Context, in *UpdateProjectRequest, opts ...grpc.CallOption) (*UpdateProjectResponse, error)
 	PatchProject(ctx context.Context, in *PatchProjectRequest, opts ...grpc.CallOption) (*PatchProjectResponse, error)
@@ -2071,6 +2073,16 @@ func (c *projectsServiceClient) CreateProject(ctx context.Context, in *CreatePro
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateProjectResponse)
 	err := c.cc.Invoke(ctx, ProjectsService_CreateProject_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *projectsServiceClient) ListChildProjects(ctx context.Context, in *ListChildProjectsRequest, opts ...grpc.CallOption) (*ListChildProjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListChildProjectsResponse)
+	err := c.cc.Invoke(ctx, ProjectsService_ListChildProjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2123,6 +2135,7 @@ func (c *projectsServiceClient) CreateEntityReconciliationTask(ctx context.Conte
 type ProjectsServiceServer interface {
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
 	CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error)
+	ListChildProjects(context.Context, *ListChildProjectsRequest) (*ListChildProjectsResponse, error)
 	DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error)
 	UpdateProject(context.Context, *UpdateProjectRequest) (*UpdateProjectResponse, error)
 	PatchProject(context.Context, *PatchProjectRequest) (*PatchProjectResponse, error)
@@ -2139,6 +2152,9 @@ func (UnimplementedProjectsServiceServer) ListProjects(context.Context, *ListPro
 }
 func (UnimplementedProjectsServiceServer) CreateProject(context.Context, *CreateProjectRequest) (*CreateProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateProject not implemented")
+}
+func (UnimplementedProjectsServiceServer) ListChildProjects(context.Context, *ListChildProjectsRequest) (*ListChildProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListChildProjects not implemented")
 }
 func (UnimplementedProjectsServiceServer) DeleteProject(context.Context, *DeleteProjectRequest) (*DeleteProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteProject not implemented")
@@ -2197,6 +2213,24 @@ func _ProjectsService_CreateProject_Handler(srv interface{}, ctx context.Context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ProjectsServiceServer).CreateProject(ctx, req.(*CreateProjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProjectsService_ListChildProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListChildProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectsServiceServer).ListChildProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectsService_ListChildProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectsServiceServer).ListChildProjects(ctx, req.(*ListChildProjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2287,6 +2321,10 @@ var ProjectsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateProject",
 			Handler:    _ProjectsService_CreateProject_Handler,
+		},
+		{
+			MethodName: "ListChildProjects",
+			Handler:    _ProjectsService_ListChildProjects_Handler,
 		},
 		{
 			MethodName: "DeleteProject",
