@@ -1904,6 +1904,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
 | email | [string](#string) |  | email is the email address of the invited user. |
 | project | [string](#string) |  | project is the project to which the user is invited. |
+| is_accepted | [bool](#bool) |  | is_accepted is the status of the invitation. |
 
 
 <a name="minder-v1-RestType"></a>
@@ -1959,7 +1960,8 @@ This is used to fetch data from a REST endpoint.
 | role | [string](#string) |  | role is the role that is assigned. |
 | subject | [string](#string) |  | subject is the subject to which the role is assigned. |
 | display_name | [string](#string) |  | display_name is the display name of the subject. |
-| project | [string](#string) | optional | projectt is the projectt in which the role is assigned. |
+| project | [string](#string) | optional | project is the project in which the role is assigned. |
+| email | [string](#string) |  | email is the email address of the subject used for invitations. |
 
 
 <a name="minder-v1-RpcOptions"></a>
