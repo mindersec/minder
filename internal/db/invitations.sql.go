@@ -76,16 +76,30 @@ func (q *Queries) DeleteInvitation(ctx context.Context, code string) (UserInvite
 
 const getInvitationByCode = `-- name: GetInvitationByCode :one
 
-SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE code = $1
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE code = $1
 `
+
+type GetInvitationByCodeRow struct {
+	Code            string    `json:"code"`
+	Email           string    `json:"email"`
+	Role            string    `json:"role"`
+	Project         uuid.UUID `json:"project"`
+	Sponsor         int32     `json:"sponsor"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	IdentitySubject string    `json:"identity_subject"`
+}
 
 // GetInvitationByCode retrieves an invitation by its code. This is intended to
 // be called by a user who has received an invitation email and is following the
 // link to accept the invitation or when querying for additional info about the
 // invitation.
-func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (UserInvite, error) {
+func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (GetInvitationByCodeRow, error) {
 	row := q.db.QueryRowContext(ctx, getInvitationByCode, code)
-	var i UserInvite
+	var i GetInvitationByCodeRow
 	err := row.Scan(
 		&i.Code,
 		&i.Email,
@@ -94,57 +108,46 @@ func (q *Queries) GetInvitationByCode(ctx context.Context, code string) (UserInv
 		&i.Sponsor,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getInvitationByEmailAndProjectAndRole = `-- name: GetInvitationByEmailAndProjectAndRole :one
-
-SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE email = $1 AND project = $2 AND role = $3
-`
-
-type GetInvitationByEmailAndProjectAndRoleParams struct {
-	Email   string    `json:"email"`
-	Project uuid.UUID `json:"project"`
-	Role    string    `json:"role"`
-}
-
-// GetInvitationByEmailAndProjectAndRole retrieves an invitation by email, project,
-// and role.
-func (q *Queries) GetInvitationByEmailAndProjectAndRole(ctx context.Context, arg GetInvitationByEmailAndProjectAndRoleParams) (UserInvite, error) {
-	row := q.db.QueryRowContext(ctx, getInvitationByEmailAndProjectAndRole, arg.Email, arg.Project, arg.Role)
-	var i UserInvite
-	err := row.Scan(
-		&i.Code,
-		&i.Email,
-		&i.Role,
-		&i.Project,
-		&i.Sponsor,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.IdentitySubject,
 	)
 	return i, err
 }
 
 const getInvitationsByEmail = `-- name: GetInvitationsByEmail :many
 
-SELECT code, email, role, project, sponsor, created_at, updated_at FROM user_invites WHERE email = $1
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE email = $1
 `
+
+type GetInvitationsByEmailRow struct {
+	Code            string    `json:"code"`
+	Email           string    `json:"email"`
+	Role            string    `json:"role"`
+	Project         uuid.UUID `json:"project"`
+	Sponsor         int32     `json:"sponsor"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	IdentitySubject string    `json:"identity_subject"`
+}
 
 // GetInvitationsByEmail retrieves all invitations for a given email address.
 // This is intended to be called by a logged in user with their own email address,
 // to allow them to accept invitations even if email delivery was not working.
 // Note that this requires that the destination email address matches the email
 // address of the logged in user in the external identity service / auth token.
-func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]UserInvite, error) {
+// This clarification is related solely for user's ListInvitations calls and does
+// not affect to resolving invitations intended for other mail addresses.
+func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]GetInvitationsByEmailRow, error) {
 	rows, err := q.db.QueryContext(ctx, getInvitationsByEmail, email)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []UserInvite{}
+	items := []GetInvitationsByEmailRow{}
 	for rows.Next() {
-		var i UserInvite
+		var i GetInvitationsByEmailRow
 		if err := rows.Scan(
 			&i.Code,
 			&i.Email,
@@ -153,6 +156,64 @@ func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]Us
 			&i.Sponsor,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.IdentitySubject,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getInvitationsByEmailAndProject = `-- name: GetInvitationsByEmailAndProject :many
+
+SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE email = $1 AND project = $2
+`
+
+type GetInvitationsByEmailAndProjectParams struct {
+	Email   string    `json:"email"`
+	Project uuid.UUID `json:"project"`
+}
+
+type GetInvitationsByEmailAndProjectRow struct {
+	Code            string    `json:"code"`
+	Email           string    `json:"email"`
+	Role            string    `json:"role"`
+	Project         uuid.UUID `json:"project"`
+	Sponsor         int32     `json:"sponsor"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+	IdentitySubject string    `json:"identity_subject"`
+}
+
+// GetInvitationsByEmailAndProject retrieves all invitations by email and project.
+func (q *Queries) GetInvitationsByEmailAndProject(ctx context.Context, arg GetInvitationsByEmailAndProjectParams) ([]GetInvitationsByEmailAndProjectRow, error) {
+	rows, err := q.db.QueryContext(ctx, getInvitationsByEmailAndProject, arg.Email, arg.Project)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetInvitationsByEmailAndProjectRow{}
+	for rows.Next() {
+		var i GetInvitationsByEmailAndProjectRow
+		if err := rows.Scan(
+			&i.Code,
+			&i.Email,
+			&i.Role,
+			&i.Project,
+			&i.Sponsor,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IdentitySubject,
 		); err != nil {
 			return nil, err
 		}
@@ -169,7 +230,7 @@ func (q *Queries) GetInvitationsByEmail(ctx context.Context, email string) ([]Us
 
 const listInvitationsForProject = `-- name: ListInvitationsForProject :many
 
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.code
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1
@@ -181,6 +242,7 @@ type ListInvitationsForProjectRow struct {
 	IdentitySubject string    `json:"identity_subject"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+	Code            string    `json:"code"`
 }
 
 // ListInvitationsForProject collects the information visible to project
@@ -202,6 +264,7 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 			&i.IdentitySubject,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Code,
 		); err != nil {
 			return nil, err
 		}

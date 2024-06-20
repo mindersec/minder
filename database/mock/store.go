@@ -809,10 +809,10 @@ func (mr *MockStoreMockRecorder) GetInstallationIDByProviderID(arg0, arg1 any) *
 }
 
 // GetInvitationByCode mocks base method.
-func (m *MockStore) GetInvitationByCode(arg0 context.Context, arg1 string) (db.UserInvite, error) {
+func (m *MockStore) GetInvitationByCode(arg0 context.Context, arg1 string) (db.GetInvitationByCodeRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInvitationByCode", arg0, arg1)
-	ret0, _ := ret[0].(db.UserInvite)
+	ret0, _ := ret[0].(db.GetInvitationByCodeRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -823,26 +823,11 @@ func (mr *MockStoreMockRecorder) GetInvitationByCode(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByCode", reflect.TypeOf((*MockStore)(nil).GetInvitationByCode), arg0, arg1)
 }
 
-// GetInvitationByEmailAndProjectAndRole mocks base method.
-func (m *MockStore) GetInvitationByEmailAndProjectAndRole(arg0 context.Context, arg1 db.GetInvitationByEmailAndProjectAndRoleParams) (db.UserInvite, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInvitationByEmailAndProjectAndRole", arg0, arg1)
-	ret0, _ := ret[0].(db.UserInvite)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetInvitationByEmailAndProjectAndRole indicates an expected call of GetInvitationByEmailAndProjectAndRole.
-func (mr *MockStoreMockRecorder) GetInvitationByEmailAndProjectAndRole(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationByEmailAndProjectAndRole", reflect.TypeOf((*MockStore)(nil).GetInvitationByEmailAndProjectAndRole), arg0, arg1)
-}
-
 // GetInvitationsByEmail mocks base method.
-func (m *MockStore) GetInvitationsByEmail(arg0 context.Context, arg1 string) ([]db.UserInvite, error) {
+func (m *MockStore) GetInvitationsByEmail(arg0 context.Context, arg1 string) ([]db.GetInvitationsByEmailRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetInvitationsByEmail", arg0, arg1)
-	ret0, _ := ret[0].([]db.UserInvite)
+	ret0, _ := ret[0].([]db.GetInvitationsByEmailRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -851,6 +836,21 @@ func (m *MockStore) GetInvitationsByEmail(arg0 context.Context, arg1 string) ([]
 func (mr *MockStoreMockRecorder) GetInvitationsByEmail(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationsByEmail", reflect.TypeOf((*MockStore)(nil).GetInvitationsByEmail), arg0, arg1)
+}
+
+// GetInvitationsByEmailAndProject mocks base method.
+func (m *MockStore) GetInvitationsByEmailAndProject(arg0 context.Context, arg1 db.GetInvitationsByEmailAndProjectParams) ([]db.GetInvitationsByEmailAndProjectRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInvitationsByEmailAndProject", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetInvitationsByEmailAndProjectRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInvitationsByEmailAndProject indicates an expected call of GetInvitationsByEmailAndProject.
+func (mr *MockStoreMockRecorder) GetInvitationsByEmailAndProject(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInvitationsByEmailAndProject", reflect.TypeOf((*MockStore)(nil).GetInvitationsByEmailAndProject), arg0, arg1)
 }
 
 // GetLatestEvalStateForRuleEntity mocks base method.

@@ -18,7 +18,9 @@ package role
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,17 +80,30 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := initializeTableForGrantList()
+		t := initializeTableForGrantListRoleAssignments()
 		for _, r := range resp.RoleAssignments {
-			t.AddRow(r.Subject, r.Role)
+			t.AddRow(r.Subject, r.Role, *r.Project)
 		}
 		t.Render()
+		if len(resp.Invitations) > 0 {
+			t := initializeTableForGrantListInvitations()
+			for _, r := range resp.Invitations {
+				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339), strconv.FormatBool(r.Expired), r.Code)
+			}
+			t.Render()
+		} else {
+			cmd.Println("No pending invitations found.")
+		}
 	}
 	return nil
 }
 
-func initializeTableForGrantList() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role"})
+func initializeTableForGrantListRoleAssignments() table.Table {
+	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role", "Project"})
+}
+
+func initializeTableForGrantListInvitations() table.Table {
+	return table.New(table.Simple, layouts.Default, []string{"Invitee", "Role", "Sponsor", "Expires At", "Expired", "Code"})
 }
 
 func init() {

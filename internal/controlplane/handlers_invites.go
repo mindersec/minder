@@ -18,13 +18,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/stacklok/minder/internal/invite"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -45,28 +44,22 @@ func (s *Server) GetInviteDetails(ctx context.Context, req *pb.GetInviteDetailsR
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
 
-	// Get the sponsor's user information
-	sponsorUser, err := s.store.GetUserByID(ctx, retInvite.Sponsor)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
 	targetProject, err := s.store.GetProjectByID(ctx, retInvite.Project)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
 
 	// Resolve the sponsor's identity and display name
-	identity, err := s.idClient.Resolve(ctx, sponsorUser.IdentitySubject)
+	identity, err := s.idClient.Resolve(ctx, retInvite.IdentitySubject)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sponsorUser.IdentitySubject)
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", retInvite.IdentitySubject)
 	}
 
 	return &pb.GetInviteDetailsResponse{
 		ProjectDisplay: targetProject.Name,
 		SponsorDisplay: identity.Human(),
-		ExpiresAt:      timestamppb.New(retInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
-		Expired:        time.Now().After(retInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
+		ExpiresAt:      invite.GetExpireIn7Days(retInvite.UpdatedAt),
+		Expired:        invite.IsExpired(retInvite.UpdatedAt),
 	}, nil
 }

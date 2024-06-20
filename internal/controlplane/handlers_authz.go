@@ -18,10 +18,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
-	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -241,17 +239,16 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
-	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-		for i := range as {
-			identity, err := s.idClient.Resolve(ctx, as[i].Subject)
-			if err != nil {
-				// if we can't resolve the subject, report the raw ID value
-				zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-				continue
-			}
-			as[i].Subject = identity.Human()
+	for i := range as {
+		identity, err := s.idClient.Resolve(ctx, as[i].Subject)
+		if err != nil {
+			// if we can't resolve the subject, report the raw ID value
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+			continue
 		}
+		as[i].Subject = identity.String()
 	}
+
 	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 		mapIdToDisplay := make(map[string]string, len(as))
 		for i := range as {
@@ -278,10 +275,11 @@ func (s *Server) ListRoleAssignments(
 				Email:          i.Email,
 				Project:        targetProject.String(),
 				CreatedAt:      timestamppb.New(i.CreatedAt),
-				ExpiresAt:      timestamppb.New(i.UpdatedAt.Add(7 * 24 * time.Hour)),
-				Expired:        time.Now().After(i.UpdatedAt.Add(7 * 24 * time.Hour)),
+				ExpiresAt:      invite.GetExpireIn7Days(i.UpdatedAt),
+				Expired:        invite.IsExpired(i.UpdatedAt),
 				Sponsor:        i.IdentitySubject,
 				SponsorDisplay: mapIdToDisplay[i.IdentitySubject],
+				Code:           i.Code,
 			})
 		}
 	}
@@ -304,7 +302,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
-	err := s.isUserSelfUpdating(ctx, sub, email)
+	err := isUserSelfUpdating(ctx, sub, email)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +323,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 	}
 
-	// Validate the subject and email - decide if it's an invitation or a role assignment
+	// Decide if it's an invitation or a role assignment
 	if sub == "" && email != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			return s.inviteUser(ctx, targetProject, authzRole, email)
@@ -344,71 +342,55 @@ func (s *Server) inviteUser(
 	email string,
 ) (*minder.AssignRoleResponse, error) {
 	var userInvite db.UserInvite
-	// Current user is always authorized to get themselves
-	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
-	}
-
-	openIdToken, err := s.jwt.ParseAndValidate(tokenString)
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
-	}
-
 	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, openIdToken.Subject())
+	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
 
 	// Check if the user is already invited
-	existingInvite, err := s.store.GetInvitationByEmailAndProjectAndRole(ctx, db.GetInvitationByEmailAndProjectAndRoleParams{
+	existingInvites, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
 		Email:   email,
 		Project: targetProject,
-		Role:    role.String(),
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// If there are no invitations for this email, great, we should create one
-			userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
-				Code:    invite.GenerateCode(),
-				Email:   email,
-				Role:    role.String(),
-				Project: targetProject,
-				Sponsor: currentUser.ID,
-			})
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
-			}
-		} else {
-			// Some other error happened, return it
-			return nil, status.Errorf(codes.Internal, "error getting invitations: %v", err)
-		}
-	} else {
-		// If we didn't get an error, this means there's an existing invite.
-		// We should update its expiration and send the response.
-		userInvite, err = s.store.UpdateInvitation(ctx, existingInvite.Code)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
-		}
+		return nil, status.Errorf(codes.Internal, "error getting invitations: %v", err)
 	}
-	// If we are here, this means we either created a new invite or updated an existing one
+
+	// Check if there are any existing invitations for this email
+	if len(existingInvites) != 0 {
+		return nil, util.UserVisibleError(
+			codes.AlreadyExists,
+			"invitation for this email and project already exists, use update instead",
+		)
+	}
+
+	// If there are no invitations for this email, great, we should create one
+	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
+		Code:    invite.GenerateCode(),
+		Email:   email,
+		Role:    role.String(),
+		Project: targetProject,
+		Sponsor: currentUser.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
+	}
 
 	// Resolve the sponsor's identity and display name
-	identity := &auth.Identity{
-		Provider:  nil,
-		UserID:    currentUser.IdentitySubject,
-		HumanName: currentUser.IdentitySubject,
-	}
-	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-		identity, err = s.idClient.Resolve(ctx, currentUser.IdentitySubject)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
-		}
+	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
 	}
 
 	// TODO: Publish the event for sending the invitation email
+
+	// Resolve the project's display name
+	prj, err := s.store.GetProjectByID(ctx, userInvite.Project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
 
 	// Send the invitation response
 	return &minder.AssignRoleResponse{
@@ -417,12 +399,13 @@ func (s *Server) inviteUser(
 			Role:           userInvite.Role,
 			Email:          userInvite.Email,
 			Project:        userInvite.Project.String(),
+			ProjectDisplay: prj.Name,
 			Code:           userInvite.Code,
 			Sponsor:        identity.UserID,
 			SponsorDisplay: identity.Human(),
 			CreatedAt:      timestamppb.New(userInvite.CreatedAt),
-			ExpiresAt:      timestamppb.New(userInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
-			Expired:        time.Now().After(userInvite.UpdatedAt.Add(7 * 24 * time.Hour)),
+			ExpiresAt:      invite.GetExpireIn7Days(userInvite.UpdatedAt),
+			Expired:        invite.IsExpired(userInvite.UpdatedAt),
 		},
 	}, nil
 }
@@ -434,28 +417,18 @@ func (s *Server) assignRole(
 	subject string,
 ) (*minder.AssignRoleResponse, error) {
 	var err error
-	// We may be given a human-readable identifier which can vary over time. Resolve
-	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity := &auth.Identity{
-		Provider:  nil,
-		UserID:    subject,
-		HumanName: subject,
-	}
-	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-		identity, err = s.idClient.Resolve(ctx, subject)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
-		}
+	// Resolve the subject to an identity
+	identity, err := s.idClient.Resolve(ctx, subject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
 	}
 
 	// Verify if user exists.
 	// TODO: this assumes that we store all users in the database, and that we don't
 	// need to namespace identify providers.  We should revisit these assumptions.
 	//
-	// Note: We could use `identity.String()` here, relying on Keycloak being registered
-	// as the default with Provider.String() == "".
-	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {
+	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -500,7 +473,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
-	err := s.isUserSelfUpdating(ctx, sub, email)
+	err := isUserSelfUpdating(ctx, sub, email)
 	if err != nil {
 		return nil, err
 	}
@@ -530,32 +503,70 @@ func (s *Server) removeInvite(
 	role authz.Role,
 	email string,
 ) (*minder.RemoveRoleResponse, error) {
-	prj := targetPrj.String()
-	// Get all invitations for this email, project and role
-	inviteToRemove, err := s.store.GetInvitationByEmailAndProjectAndRole(ctx, db.GetInvitationByEmailAndProjectAndRoleParams{
+	// Get all invitations for this email and project
+	invitesToRemove, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
 		Email:   email,
 		Project: targetPrj,
-		Role:    role.String(),
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "no invitation found for this email, project and role")
-		}
 		return nil, status.Errorf(codes.Internal, "error getting invitation: %v", err)
 	}
 
+	// If there are no invitations for this email, return an error
+	if len(invitesToRemove) == 0 {
+		return nil, util.UserVisibleError(codes.NotFound, "no invitations found for this email and project")
+	}
+
+	// Find the invitation to remove. There should be only one invitation for the given role and email in the project.
+	var inviteToRemove *db.GetInvitationsByEmailAndProjectRow
+	for _, i := range invitesToRemove {
+		if i.Role == role.String() {
+			inviteToRemove = &i
+			break
+		}
+	}
+	// If there's no invitation to remove, return an error
+	if inviteToRemove == nil {
+		return nil, util.UserVisibleError(codes.NotFound, "no invitation found for this role and email in the project")
+	}
 	// Delete the invitation
-	_, err = s.store.DeleteInvitation(ctx, inviteToRemove.Code)
+	ret, err := s.store.DeleteInvitation(ctx, inviteToRemove.Code)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting invitation: %v", err)
 	}
 
+	// Resolve the project's display name
+	prj, err := s.store.GetProjectByID(ctx, ret.Project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
+
+	// Get the sponsor's user information (current user)
+	sponsorUser, err := s.store.GetUserByID(ctx, ret.Sponsor)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// Resolve the sponsor's identity and display name
+	identity, err := s.idClient.Resolve(ctx, sponsorUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sponsorUser.IdentitySubject)
+	}
+
 	// Return the response
 	return &minder.RemoveRoleResponse{
-		RoleAssignment: &minder.RoleAssignment{
-			Role:    role.String(),
-			Email:   email,
-			Project: &prj,
+		Invitation: &minder.Invitation{
+			Role:           ret.Role,
+			Email:          ret.Email,
+			Project:        ret.Project.String(),
+			Code:           ret.Code,
+			CreatedAt:      timestamppb.New(ret.CreatedAt),
+			ExpiresAt:      invite.GetExpireIn7Days(ret.UpdatedAt),
+			Expired:        invite.IsExpired(ret.UpdatedAt),
+			Sponsor:        sponsorUser.IdentitySubject,
+			SponsorDisplay: identity.Human(),
+			ProjectDisplay: prj.Name,
 		},
 	}, nil
 }
@@ -567,29 +578,22 @@ func (s *Server) removeRole(
 	subject string,
 ) (*minder.RemoveRoleResponse, error) {
 	var err error
-	// We may be given a human-readable identifier which can vary over time. Resolve
-	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity := &auth.Identity{
-		Provider:  nil,
-		UserID:    subject,
-		HumanName: subject,
-	}
-	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-		identity, err = s.idClient.Resolve(ctx, subject)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
-		}
+	// Resolve the subject to an identity
+	identity, err := s.idClient.Resolve(ctx, subject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
 	}
 
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {
+	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
+	// Delete the role assignment
 	if err := s.authzClient.Delete(ctx, identity.String(), role, targetProject); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
@@ -611,17 +615,14 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	}
 	role := req.GetRoles()[0]
 	sub := req.GetSubject()
+	email := req.GetEmail()
 
 	// Determine the target project.
 	entityCtx := engine.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
-	if sub == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "role and subject must be specified")
-	}
-
 	// Ensure user is not updating their own role
-	err := s.isUserSelfUpdating(ctx, sub, "")
+	err := isUserSelfUpdating(ctx, sub, email)
 	if err != nil {
 		return nil, err
 	}
@@ -632,23 +633,120 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
 	}
 
-	// We may be given a human-readable identifier which can vary over time. Resolve
-	// it to an IDP-specific stable identifier so that we can support subject renames.
-	identity := &auth.Identity{
-		Provider:  nil,
-		UserID:    sub,
-		HumanName: sub,
-	}
-	if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-		identity, err = s.idClient.Resolve(ctx, sub)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
+	// Validate the subject and email - decide if it's about updating an invitation or a role assignment
+	if sub == "" && email != "" {
+		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+			return s.updateInvite(ctx, targetProject, authzRole, email)
 		}
+		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
+	} else if sub != "" && email == "" {
+		// If there's a subject, we assume it's a role assignment update
+		return s.updateRole(ctx, targetProject, authzRole, sub)
+	}
+	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
+}
+
+func (s *Server) updateInvite(
+	ctx context.Context,
+	targetProject uuid.UUID,
+	authzRole authz.Role,
+	email string,
+) (*minder.UpdateRoleResponse, error) {
+	var userInvite db.UserInvite
+	// Get the sponsor's user information (current user)
+	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// Get all invitations for this email and project
+	existingInvites, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
+		Email:   email,
+		Project: targetProject,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting invitations: %v", err)
+	}
+
+	// Exit early if there are no or multiple existing invitations for this email and project
+	if len(existingInvites) == 0 {
+		return nil, util.UserVisibleError(codes.NotFound, "no invitations found for this email and project")
+	} else if len(existingInvites) > 1 {
+		return nil, status.Errorf(codes.Internal, "multiple invitations found for this email and project")
+	}
+
+	// At this point, there should be exactly 1 invitation. We should either update its expiration or
+	// discard it and create a new one
+	if existingInvites[0].Role != authzRole.String() {
+		// If there's an existing invite with a different role, we should delete it and create a new one
+		// Delete the existing invitation
+		_, err = s.store.DeleteInvitation(ctx, existingInvites[0].Code)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error deleting previous invitation: %v", err)
+		}
+		// Create a new invitation
+		userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
+			Code:    invite.GenerateCode(),
+			Email:   email,
+			Role:    authzRole.String(),
+			Project: targetProject,
+			Sponsor: currentUser.ID,
+		})
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
+		}
+	} else {
+		// If the role is the same, we should update the expiration
+		userInvite, err = s.store.UpdateInvitation(ctx, existingInvites[0].Code)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
+		}
+	}
+	// Resolve the project's display name
+	prj, err := s.store.GetProjectByID(ctx, userInvite.Project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
+	// Resolve the sponsor's identity and display name
+	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
+	}
+	return &minder.UpdateRoleResponse{
+		// Leaving the role assignment empty as it's an invitation
+		Invitations: []*minder.Invitation{
+			{
+				Role:           userInvite.Role,
+				Email:          userInvite.Email,
+				Project:        userInvite.Project.String(),
+				ProjectDisplay: prj.Name,
+				Code:           userInvite.Code,
+				Sponsor:        identity.String(),
+				SponsorDisplay: identity.Human(),
+				CreatedAt:      timestamppb.New(userInvite.CreatedAt),
+				ExpiresAt:      invite.GetExpireIn7Days(userInvite.UpdatedAt),
+				Expired:        invite.IsExpired(userInvite.UpdatedAt),
+			},
+		},
+	}, nil
+}
+
+func (s *Server) updateRole(
+	ctx context.Context,
+	targetProject uuid.UUID,
+	authzRole authz.Role,
+	sub string,
+) (*minder.UpdateRoleResponse, error) {
+	// Resolve the subject to an identity
+	identity, err := s.idClient.Resolve(ctx, sub)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
 	}
 
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, identity.UserID); err != nil {
+	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -682,7 +780,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	return &minder.UpdateRoleResponse{
 		RoleAssignments: []*minder.RoleAssignment{
 			{
-				Role:    role,
+				Role:    authzRole.String(),
 				Subject: identity.Human(),
 				Project: &respProj,
 			},
@@ -691,23 +789,18 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 }
 
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
-func (s *Server) isUserSelfUpdating(ctx context.Context, subject, email string) error {
-	// Ensure user is not updating their own role
-	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
-	}
-	token, err := s.jwt.ParseAndValidate(tokenString)
-	if err != nil {
-		return status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
-	}
+func isUserSelfUpdating(ctx context.Context, subject, email string) error {
 	if subject != "" {
-		if token.Subject() == subject {
+		if auth.GetUserSubjectFromContext(ctx) == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
 	if email != "" {
-		if token.Email() == email {
+		tokenEmail, err := auth.GetUserEmailFromContext(ctx)
+		if err != nil {
+			return util.UserVisibleError(codes.Internal, "error getting user email from token: %v", err)
+		}
+		if tokenEmail == email {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
