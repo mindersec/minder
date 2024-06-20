@@ -25,3 +25,5 @@ or an Admin on the repositories you will be registering.
 Once a provider is enrolled, public repositories from that provider can be registered with Minder. Security profiles
 can then be applied to the registered repositories, giving you an overview of your security posture and providing
 remediations to improve your security posture.
+
+For more information about providers and their configuration, see the [Provider Integrations](../integrations/provider_integrations/github) documentation.
