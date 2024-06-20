@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -129,14 +130,14 @@ func UpdateProviderCommand(
 	providerName := viper.GetString("name")
 	if providerName == "" {
 		return cli.MessageAndError(
-			"missing mandatory flag",
+			"invalid option",
 			errMissingProviderName,
 		)
 	}
 	project := viper.GetString("project")
 	if project == "" {
 		return cli.MessageAndError(
-			"missing mandatory flag",
+			"invalid option",
 			errMissingProject,
 		)
 	}
@@ -155,6 +156,12 @@ func UpdateProviderCommand(
 	})
 	if err != nil {
 		return cli.MessageAndError("Failed to get provider", err)
+	}
+	if resp.GetProvider() == nil {
+		return cli.MessageAndError(
+			"could not retrieve provider",
+			errors.New("provider was empty"),
+		)
 	}
 
 	provider := resp.GetProvider()
@@ -353,7 +360,7 @@ func recurConfigAttribute(
 			}
 			v, err := parserFunc(*attrValue)
 			if err != nil {
-				return fmt.Errorf("expected bool, got %s", *attrValue)
+				return fmt.Errorf("expected %s, got %s", config.Kind(), *attrValue)
 			}
 			config.Set(*v)
 		} else {
@@ -504,6 +511,10 @@ func init() {
 	)
 	updateCmd.Flags().StringSliceP(
 		"unset-attribute", "u", []string{},
-		"List of attributes to unset in the config in <name>=<value> format",
+		"List of attributes to unset in the config in <name> format",
 	)
+	if err := updateCmd.MarkFlagRequired("name"); err != nil {
+		updateCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
 }
