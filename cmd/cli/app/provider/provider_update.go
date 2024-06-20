@@ -36,7 +36,6 @@ import (
 
 var (
 	errMissingProviderName = errors.New("provider name flag is missing")
-	errMissingProject      = errors.New("project flag is missing")
 )
 
 var updateCmd = &cobra.Command{
@@ -135,12 +134,6 @@ func UpdateProviderCommand(
 		)
 	}
 	project := viper.GetString("project")
-	if project == "" {
-		return cli.MessageAndError(
-			"invalid option",
-			errMissingProject,
-		)
-	}
 
 	fields := make(map[string]any)
 
