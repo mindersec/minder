@@ -18,7 +18,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -323,11 +322,11 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "target project with ID %s not found", targetProject)
 		}
-		return nil, status.Errorf(codes.InvalidArgument, "error getting project: %v", err)
+		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 	}
 
 	// Validate the subject and email - decide if it's an invitation or a role assignment
-	if sub == "" && email != "" && isEmail(email) {
+	if sub == "" && email != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			return s.inviteUser(ctx, targetProject, authzRole, email)
 		}
@@ -513,7 +512,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	}
 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
-	if sub == "" && email != "" && isEmail(email) {
+	if sub == "" && email != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			return s.removeInvite(ctx, targetProject, authzRole, email)
 		}
@@ -602,14 +601,6 @@ func (s *Server) removeRole(
 			Project: &prj,
 		},
 	}, nil
-}
-
-// isEmail checks if the subject is an email address or not
-func isEmail(subject string) bool {
-	// Define the regular expression for validating an email address
-	const emailRegexPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	emailRegex := regexp.MustCompile(emailRegexPattern)
-	return emailRegex.MatchString(subject)
 }
 
 // UpdateRole updates a role for a user on a project
