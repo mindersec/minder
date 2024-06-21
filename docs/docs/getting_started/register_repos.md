@@ -30,6 +30,29 @@ After registration, Minder will go through your existing profiles and apply them
 
 Any events that now occur in your registered repositories will be sent to Minder and processed accordingly.
 
+## Automatically Registering Repositories
+
+The GitHub provider can also be configured to automatically register repositories. This is done by setting the `auto_registration.entities.repository.enablede` field to `true` in the provider configuration:
+
+```bash
+minder provider update --set-attribute=auto_registration.entities.repository.enabled=true --name=github-app-myorg
+```
+
+You can list your enrolled providers with:
+```bash
+minder provider list
+```
+
+Note that enabling the auto-registration will merely register repositories as
+they are created, not register already existing repositories.
+
+To disable automatic registration, set the `auto_registration.entities.repository.enabled` field to `false`:
+```bash
+minder provider update --set-attribute=auto_registration.entities.repository.enabled=false --name=github-app-myorg
+```
+
+Note that disabling the automatic registration will not remove the repositories that have already been registered.
+
 ## List and Get Repositories
 
 You can list all repositories registered in Minder:
