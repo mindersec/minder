@@ -60,6 +60,7 @@ type Executor struct {
 	// when the server is shutting down.
 	terminationcontext context.Context
 	providerManager    manager.ProviderManager
+	metrics            *ExecutorMetrics
 }
 
 // NewExecutor creates a new executor
@@ -69,6 +70,7 @@ func NewExecutor(
 	evt events.Publisher,
 	providerManager manager.ProviderManager,
 	handlerMiddleware []message.HandlerMiddleware,
+	metrics *ExecutorMetrics,
 ) *Executor {
 	return &Executor{
 		querier:                querier,
@@ -77,6 +79,7 @@ func NewExecutor(
 		terminationcontext:     ctx,
 		handlerMiddleware:      handlerMiddleware,
 		providerManager:        providerManager,
+		metrics:                metrics,
 	}
 }
 

@@ -136,6 +136,7 @@ type EvalStatusParams struct {
 	RepoID           uuid.NullUUID
 	ArtifactID       uuid.NullUUID
 	PullRequestID    uuid.NullUUID
+	ProjectID        uuid.UUID
 	EntityType       db.Entities
 	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow

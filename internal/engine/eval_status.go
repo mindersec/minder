@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	ent "github.com/stacklok/minder/internal/entities"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -52,6 +53,7 @@ func (e *Executor) createEvalStatusParams(
 		RepoID:        repoID,
 		ArtifactID:    artID,
 		PullRequestID: prID,
+		ProjectID:     inf.ProjectID,
 	}
 
 	// Prepare params for fetching the current rule evaluation from the database
@@ -141,6 +143,12 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	// Upsert evaluation details
+	entityID, entityType, err := ent.EntityFromIDs(params.RepoID.UUID, params.ArtifactID.UUID, params.PullRequestID.UUID)
+	if err != nil {
+		return err
+	}
+	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
+	e.metrics.CountEvalStatus(ctx, status, params.ProfileID, params.ProjectID, entityID, entityType)
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: id,
 		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
@@ -151,6 +159,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		logger.Err(err).Msg("error upserting rule evaluation details")
 		return err
 	}
+
 	// Upsert remediation details
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
 		RuleEvalID: id,
@@ -161,6 +170,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule remediation details")
 	}
+
 	// Upsert alert details
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
 		RuleEvalID: id,
@@ -171,6 +181,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule alert details")
 	}
+
 	return err
 }
 
