@@ -33,5 +33,5 @@ func GenerateCode() string {
 	if _, err := rand.Read(bytes); err != nil {
 		return ""
 	}
-	return base64.StdEncoding.EncodeToString(bytes)
+	return base64.URLEncoding.EncodeToString(bytes)
 }
