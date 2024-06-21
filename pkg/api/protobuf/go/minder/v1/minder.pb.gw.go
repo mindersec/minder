@@ -2414,39 +2414,12 @@ func local_request_PermissionsService_UpdateRole_0(ctx context.Context, marshale
 }
 
 var (
-	filter_PermissionsService_RemoveRole_0 = &utilities.DoubleArray{Encoding: map[string]int{"role_assignment": 0, "role": 1, "subject": 2}, Base: []int{1, 1, 1, 2, 0, 0}, Check: []int{0, 1, 2, 2, 3, 4}}
+	filter_PermissionsService_RemoveRole_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_PermissionsService_RemoveRole_0(ctx context.Context, marshaler runtime.Marshaler, client PermissionsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq RemoveRoleRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["role_assignment.role"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "role_assignment.role")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "role_assignment.role", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "role_assignment.role", err)
-	}
-
-	val, ok = pathParams["role_assignment.subject"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "role_assignment.subject")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "role_assignment.subject", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "role_assignment.subject", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -2463,33 +2436,6 @@ func request_PermissionsService_RemoveRole_0(ctx context.Context, marshaler runt
 func local_request_PermissionsService_RemoveRole_0(ctx context.Context, marshaler runtime.Marshaler, server PermissionsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq RemoveRoleRequest
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["role_assignment.role"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "role_assignment.role")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "role_assignment.role", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "role_assignment.role", err)
-	}
-
-	val, ok = pathParams["role_assignment.subject"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "role_assignment.subject")
-	}
-
-	err = runtime.PopulateFieldFromPath(&protoReq, "role_assignment.subject", val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "role_assignment.subject", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -4495,7 +4441,7 @@ func RegisterPermissionsServiceHandlerServer(ctx context.Context, mux *runtime.S
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.PermissionsService/RemoveRole", runtime.WithHTTPPathPattern("/api/v1/permissions/remove/{role_assignment.role}/subject/{role_assignment.subject}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.PermissionsService/RemoveRole", runtime.WithHTTPPathPattern("/api/v1/permissions/remove"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6532,7 +6478,7 @@ func RegisterPermissionsServiceHandlerClient(ctx context.Context, mux *runtime.S
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.PermissionsService/RemoveRole", runtime.WithHTTPPathPattern("/api/v1/permissions/remove/{role_assignment.role}/subject/{role_assignment.subject}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/minder.v1.PermissionsService/RemoveRole", runtime.WithHTTPPathPattern("/api/v1/permissions/remove"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6560,7 +6506,7 @@ var (
 
 	pattern_PermissionsService_UpdateRole_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "permissions", "update"}, ""))
 
-	pattern_PermissionsService_RemoveRole_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"api", "v1", "permissions", "remove", "role_assignment.role", "subject", "role_assignment.subject"}, ""))
+	pattern_PermissionsService_RemoveRole_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "permissions", "remove"}, ""))
 )
 
 var (
