@@ -16,6 +16,7 @@ minder repo register [flags]
 ### Options
 
 ```
+  -a, --all            Register all unregistered repositories
   -h, --help           help for register
   -n, --name strings   List of repository names to register, i.e owner/repo,owner/repo
 ```
