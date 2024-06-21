@@ -452,7 +452,7 @@ paths:
           type: string
       tags:
         - PermissionsService
-  /api/v1/permissions/remove/{roleAssignment.role}/subject/{roleAssignment.subject}:
+  /api/v1/permissions/remove:
     delete:
       operationId: PermissionsService_RemoveRole
       responses:
@@ -461,16 +461,6 @@ paths:
           schema:
             $ref: '#/definitions/v1RemoveRoleResponse'
       parameters:
-        - name: roleAssignment.role
-          description: role is the role that is assigned.
-          in: path
-          required: true
-          type: string
-        - name: roleAssignment.subject
-          description: subject is the subject to which the role is assigned.
-          in: path
-          required: true
-          type: string
         - name: context.provider
           description: name of the provider
           in: query
@@ -482,6 +472,16 @@ paths:
           required: false
           type: string
         - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.role
+          description: role is the role that is assigned.
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.subject
+          description: subject is the subject to which the role is assigned.
           in: query
           required: false
           type: string
