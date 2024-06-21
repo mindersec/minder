@@ -683,7 +683,7 @@
         ]
       }
     },
-    "/api/v1/permissions/remove/{roleAssignment.role}/subject/{roleAssignment.subject}": {
+    "/api/v1/permissions/remove": {
       "delete": {
         "operationId": "PermissionsService_RemoveRole",
         "responses": {
@@ -695,20 +695,6 @@
           }
         },
         "parameters": [
-          {
-            "name": "roleAssignment.role",
-            "description": "role is the role that is assigned.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "roleAssignment.subject",
-            "description": "subject is the subject to which the role is assigned.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "context.provider",
             "description": "name of the provider",
@@ -730,6 +716,20 @@
             "type": "string"
           },
           {
+            "name": "roleAssignment.role",
+            "description": "role is the role that is assigned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "roleAssignment.subject",
+            "description": "subject is the subject to which the role is assigned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "roleAssignment.displayName",
             "description": "display_name is the display name of the subject.",
             "in": "query",
@@ -738,7 +738,14 @@
           },
           {
             "name": "roleAssignment.project",
-            "description": "projectt is the projectt in which the role is assigned.",
+            "description": "project is the project in which the role is assigned.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "roleAssignment.email",
+            "description": "email is the email address of the subject used for invitations.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -4231,6 +4238,10 @@
         "project": {
           "type": "string",
           "description": "project is the project to which the user is invited."
+        },
+        "isAccepted": {
+          "type": "boolean",
+          "description": "is_accepted is the status of the invitation."
         }
       }
     },
@@ -4305,7 +4316,11 @@
         },
         "project": {
           "type": "string",
-          "description": "projectt is the projectt in which the role is assigned."
+          "description": "project is the project in which the role is assigned."
+        },
+        "email": {
+          "type": "string",
+          "description": "email is the email address of the subject used for invitations."
         }
       }
     },

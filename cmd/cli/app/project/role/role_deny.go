@@ -42,37 +42,50 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	sub := viper.GetString("sub")
 	r := viper.GetString("role")
 	project := viper.GetString("project")
+	email := viper.GetString("email")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	roleAssignment := &minderv1.RoleAssignment{
+		Role:    r,
+		Subject: sub,
+	}
+	failMsg := "Error denying role"
+	successMsg := "Denied role successfully."
+	// Only send an email if one is provided
+	if email != "" {
+		roleAssignment = &minderv1.RoleAssignment{
+			Role:  r,
+			Email: email,
+		}
+		failMsg = "Error deleting an invite"
+		successMsg = "Invite deleted successfully."
+	}
+
 	_, err := client.RemoveRole(ctx, &minderv1.RemoveRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
-		RoleAssignment: &minderv1.RoleAssignment{
-			Role:    r,
-			Subject: sub,
-		},
+		RoleAssignment: roleAssignment,
 	})
 	if err != nil {
-		return cli.MessageAndError("Error denying role", err)
+		return cli.MessageAndError(failMsg, err)
 	}
 
-	cmd.Println("Denied role successfully.")
+	cmd.Println(successMsg)
 	return nil
 }
 
 func init() {
 	RoleCmd.AddCommand(denyCmd)
 
-	denyCmd.Flags().StringP("sub", "s", "", "subject to grant access to")
 	denyCmd.Flags().StringP("role", "r", "", "the role to grant")
-	if err := denyCmd.MarkFlagRequired("sub"); err != nil {
-		denyCmd.Print("Error marking `sub` flag as required.")
-		os.Exit(1)
-	}
+	denyCmd.Flags().StringP("sub", "s", "", "subject to grant access to")
+	denyCmd.Flags().StringP("email", "e", "", "email to send invitation to")
+	denyCmd.MarkFlagsOneRequired("sub", "email")
+	denyCmd.MarkFlagsMutuallyExclusive("sub", "email")
 	if err := denyCmd.MarkFlagRequired("role"); err != nil {
 		denyCmd.Print("Error marking `role` flag as required.")
 		os.Exit(1)

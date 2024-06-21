@@ -1,24 +1,26 @@
 ---
-title: minder repo register
+title: minder provider update
 ---
-## minder repo register
+## minder provider update
 
-Register a repository
+Updates a provider's configuration
 
 ### Synopsis
 
-The repo register subcommand is used to register a repo within Minder.
+The minder provider update command allows a user to update a provider's
+configuration after enrollement.
 
 ```
-minder repo register [flags]
+minder provider update [flags]
 ```
 
 ### Options
 
 ```
-  -a, --all            Register all unregistered repositories
-  -h, --help           help for register
-  -n, --name strings   List of repository names to register, i.e owner/repo,owner/repo
+  -h, --help                      help for update
+  -n, --name string               Name of the provider.
+  -s, --set-attribute strings     List of attributes to set in the config in <name>=<value> format
+  -u, --unset-attribute strings   List of attributes to unset in the config in <name> format
 ```
 
 ### Options inherited from parent commands
@@ -31,10 +33,9 @@ minder repo register [flags]
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -j, --project string           ID of the project
-  -p, --provider string          Name of the provider, i.e. github
 ```
 
 ### SEE ALSO
 
-* [minder repo](minder_repo.md)	 - Manage repositories
+* [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
 

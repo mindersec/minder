@@ -719,7 +719,7 @@ service PermissionsService {
     rpc RemoveRole (RemoveRoleRequest) returns (RemoveRoleResponse) {
         // The role name comes from the name field in the role object
         option (google.api.http) = {
-            delete: "/api/v1/permissions/remove/{role_assignment.role}/subject/{role_assignment.subject}"
+            delete: "/api/v1/permissions/remove"
         };
 
         option (rpc_options) = {
@@ -929,7 +929,7 @@ service InviteService {
         };
 
         option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
+            target_resource: TARGET_RESOURCE_NONE
         };
     }
 }
@@ -2181,8 +2181,10 @@ message RoleAssignment {
     string subject = 2;
     // display_name is the display name of the subject.
     string display_name = 5;
-    // projectt is the projectt in which the role is assigned.
+    // project is the project in which the role is assigned.
     optional string project = 4;
+    // email is the email address of the subject used for invitations.
+    string email = 6;
 
     reserved 3; // deprecated context
 }
@@ -2209,6 +2211,8 @@ message ResolveInvitationResponse {
     string email = 2;
     // project is the project to which the user is invited.
     string project = 3;
+    // is_accepted is the status of the invitation.
+    bool is_accepted = 4;
 }
 
 message Invitation {

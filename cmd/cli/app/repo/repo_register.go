@@ -41,15 +41,38 @@ var repoRegisterCmd = &cobra.Command{
 //
 //nolint:gocyclo
 func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
+	repoClient := minderv1.NewRepositoryServiceClient(conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	inputRepoList := viper.GetStringSlice("name")
+	registerAll := viper.GetBool("all")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	if registerAll {
+		if len(inputRepoList) > 0 {
+			return cli.MessageAndError("Cannot use --all with --name", nil)
+		}
+
+		providerClient := minderv1.NewProvidersServiceClient(conn)
+		_, err := providerClient.ReconcileEntityRegistration(ctx, &minderv1.ReconcileEntityRegistrationRequest{
+			Context: &minderv1.Context{
+				Provider: &provider,
+				Project:  &project,
+			},
+			Entity: minderv1.Entity_ENTITY_REPOSITORIES.ToString(),
+		})
+		if err != nil {
+			return cli.MessageAndError("Error reconciling provider registration", err)
+		}
+
+		cmd.Println("Issued task to register all available repositories")
+		cmd.Println("Use `minder repo list` to check the list registered repositories")
+		return nil
+	}
 
 	for _, repo := range inputRepoList {
 		if err := cli.ValidateRepositoryName(repo); err != nil {
@@ -58,7 +81,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	// Fetch remote repos, both registered and unregistered.
-	repos, err := fetchRepos(ctx, provider, project, client)
+	repos, err := fetchRepos(ctx, provider, project, repoClient)
 	if err != nil {
 		return cli.MessageAndError("Error getting registered repos", err)
 	}
@@ -115,7 +138,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 	}
 
-	results, warnings := registerRepos(project, client, selectedRepos)
+	results, warnings := registerRepos(project, repoClient, selectedRepos)
 	printWarnings(cmd, warnings)
 
 	printRepoRegistrationStatus(cmd, results)
@@ -245,4 +268,5 @@ func init() {
 	RepoCmd.AddCommand(repoRegisterCmd)
 	// Flags
 	repoRegisterCmd.Flags().StringSliceP("name", "n", []string{}, "List of repository names to register, i.e owner/repo,owner/repo")
+	repoRegisterCmd.Flags().BoolP("all", "a", false, "Register all unregistered repositories")
 }
