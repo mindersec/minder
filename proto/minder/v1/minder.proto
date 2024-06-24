@@ -935,9 +935,11 @@ service InviteService {
 }
 
 message GetInviteDetailsRequest {
-    Context context = 1;
     // Invite nonce/code to retrieve details for
     string code = 2;
+
+    reserved 1; // deprecated Context context = 1;
+    reserved "context";
 }
 
 message GetInviteDetailsResponse {
@@ -2144,12 +2146,19 @@ message UpdateRoleRequest {
     string subject = 2;
     // All subject roles are _replaced_ with the following role assignments.  Must be non-empty,
     // use RemoveRole to remove permissions entirely from the project.
-    repeated string role = 3;
+    repeated string roles = 4;
+    // email is the email address of the subject used for updating invitations
+    string email = 5;
+
+    reserved 3; // deprecated repeated string role = 3;
+    reserved "role";
 }
 
 message UpdateRoleResponse {
     // role_assignments are the role assignments that were updated.
     repeated RoleAssignment role_assignments = 1;
+    // invitations contains the details of the invitations that were updated.
+    repeated Invitation invitations = 2;
 }
 
 
@@ -2163,6 +2172,8 @@ message RemoveRoleRequest {
 message RemoveRoleResponse {
     // role_assignment is the role assignment that was removed.
     RoleAssignment role_assignment = 1;
+    // invitation contains the details of the invitation that was removed.
+    Invitation invitation = 2;
 }
 
 message Role {
@@ -2213,6 +2224,9 @@ message ResolveInvitationResponse {
     string project = 3;
     // is_accepted is the status of the invitation.
     bool is_accepted = 4;
+    // project_display is the display name of the project to which the user
+    // is invited.
+    string project_display = 5;
 }
 
 message Invitation {
@@ -2245,6 +2259,9 @@ message Invitation {
     // sponsor_display is the display name of the user who created the
     // invitation.
     string sponsor_display = 8;
+    // project_display is the display name of the project to which the user
+    // is invited.
+    string project_display = 10;
 }
 
 message GetProviderRequest {

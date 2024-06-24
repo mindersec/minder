@@ -606,10 +606,10 @@ func (s *Server) removeRole(
 // UpdateRole updates a role for a user on a project
 func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) (*minder.UpdateRoleResponse, error) {
 	// For the time being, ensure only one role is updated at a time
-	if len(req.GetRole()) != 1 {
+	if len(req.GetRoles()) != 1 {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "only one role can be updated at a time")
 	}
-	role := req.GetRole()[0]
+	role := req.GetRoles()[0]
 	sub := req.GetSubject()
 
 	// Determine the target project.

@@ -822,7 +822,6 @@ Namespace: is the namespace for the GHCR provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
 | code | [string](#string) |  | Invite nonce/code to retrieve details for |
 
 
@@ -1141,6 +1140,7 @@ GitType defines the git data ingester.
 | expired | [bool](#bool) |  | expired is true if the invitation has expired. |
 | sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
 | sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
+| project_display | [string](#string) |  | project_display is the display name of the project to which the user is invited. |
 
 
 <a name="minder-v1-ListArtifactsRequest"></a>
@@ -1851,6 +1851,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was removed. |
+| invitation | [Invitation](#minder-v1-Invitation) |  | invitation contains the details of the invitation that was removed. |
 
 
 <a name="minder-v1-Repository"></a>
@@ -1905,6 +1906,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | email | [string](#string) |  | email is the email address of the invited user. |
 | project | [string](#string) |  | project is the project to which the user is invited. |
 | is_accepted | [bool](#bool) |  | is_accepted is the status of the invitation. |
+| project_display | [string](#string) |  | project_display is the display name of the project to which the user is invited. |
 
 
 <a name="minder-v1-RestType"></a>
@@ -2327,7 +2329,8 @@ Severity defines the severity of the rule.
 | ----- | ---- | ----- | ----------- |
 | context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
 | subject | [string](#string) |  | subject is the account to change permissions for. The account must already have permissions on the project |
-| role | [string](#string) | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
+| roles | [string](#string) | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
+| email | [string](#string) |  | email is the email address of the subject used for updating invitations |
 
 
 <a name="minder-v1-UpdateRoleResponse"></a>
@@ -2339,6 +2342,7 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments that were updated. |
+| invitations | [Invitation](#minder-v1-Invitation) | repeated | invitations contains the details of the invitations that were updated. |
 
 
 <a name="minder-v1-UpdateRuleTypeRequest"></a>
