@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
@@ -104,7 +104,7 @@ func (s *Server) RegisterRepository(
 // repositories that are registered present in the minder database
 func (s *Server) ListRepositories(ctx context.Context,
 	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
@@ -222,7 +222,7 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	// TODO: move this lookup logic out of the controlplane
@@ -312,7 +312,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	ctx context.Context,
 	in *pb.ListRemoteRepositoriesFromProviderRequest,
 ) (*pb.ListRemoteRepositoriesFromProviderResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	// Telemetry logging
@@ -480,11 +480,11 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 }
 
 func getProjectID(ctx context.Context) uuid.UUID {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	return entityCtx.Project.ID
 }
 
 func getProviderName(ctx context.Context) string {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	return entityCtx.Provider.Name
 }

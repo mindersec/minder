@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
@@ -48,7 +48,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid profile: %v", err)
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	// validate that project is valid and exist in the db
 	err := entityCtx.ValidateProject(ctx, s.store)
@@ -74,7 +74,7 @@ func (s *Server) CreateProfile(ctx context.Context,
 // DeleteProfile is a method to delete a profile
 func (s *Server) DeleteProfile(ctx context.Context,
 	in *minderv1.DeleteProfileRequest) (*minderv1.DeleteProfileResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *Server) DeleteProfile(ctx context.Context,
 // ListProfiles is a method to get all profiles for a project
 func (s *Server) ListProfiles(ctx context.Context,
 	req *minderv1.ListProfilesRequest) (*minderv1.ListProfilesResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -167,7 +167,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 func (s *Server) GetProfileById(ctx context.Context,
 	in *minderv1.GetProfileByIdRequest) (*minderv1.GetProfileByIdResponse, error) {
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -200,7 +200,7 @@ func (s *Server) GetProfileById(ctx context.Context,
 func getProfilePBFromDB(
 	ctx context.Context,
 	id uuid.UUID,
-	entityCtx engine.EntityContext,
+	entityCtx engcontext.EntityContext,
 	querier db.ExtendQuerier,
 ) (*minderv1.Profile, error) {
 	profiles, err := querier.GetProfileByProjectAndID(ctx, db.GetProfileByProjectAndIDParams{
@@ -272,7 +272,7 @@ func getRuleEvalEntityInfo(
 func (s *Server) GetProfileStatusByName(ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	err := entityCtx.ValidateProject(ctx, s.store)
@@ -489,7 +489,7 @@ func getRuleEvalStatus(
 func (s *Server) GetProfileStatusByProject(ctx context.Context,
 	_ *minderv1.GetProfileStatusByProjectRequest) (*minderv1.GetProfileStatusByProjectResponse, error) {
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -526,7 +526,7 @@ func (s *Server) GetProfileStatusByProject(ctx context.Context,
 // PatchProfile updates a profile for a project with a partial request
 func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileRequest) (*minderv1.PatchProfileResponse, error) {
 	patch := ppr.GetPatch()
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -560,7 +560,7 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	cpr *minderv1.UpdateProfileRequest) (*minderv1.UpdateProfileResponse, error) {
 	in := cpr.GetProfile()
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {

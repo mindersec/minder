@@ -29,7 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 )
 
 // nolint: tparallel
@@ -94,9 +94,9 @@ test_flag:
 				t.Fatalf("failed to set sub claim: %v", err)
 			}
 			ctx = auth.WithAuthTokenContext(ctx, userJWT)
-			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-				Project:  engine.Project{ID: uuid.New()},
-				Provider: engine.Provider{Name: "testing"},
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: uuid.New()},
+				Provider: engcontext.Provider{Name: "testing"},
 			})
 
 			flagResult := Bool(ctx, client, testFlag)

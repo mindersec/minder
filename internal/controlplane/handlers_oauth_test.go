@@ -48,7 +48,7 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
@@ -349,7 +349,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 		TargetResource: pb.TargetResource_TARGET_RESOURCE_USER,
 	}
 
-	baseCtx := withRpcOptions(context.Background(), rpcOptions)
+	basengcontext := withRpcOptions(context.Background(), rpcOptions)
 
 	userJWT := openid.New()
 	if err := userJWT.Set("sub", "testuser"); err != nil {
@@ -357,8 +357,8 @@ func TestGetAuthorizationURL(t *testing.T) {
 	}
 
 	// Set the entity context
-	baseCtx = engine.WithEntityContext(baseCtx, &engine.EntityContext{
-		Project: engine.Project{
+	basengcontext = engcontext.WithEntityContext(basengcontext, &engcontext.EntityContext{
+		Project: engcontext.Project{
 			ID: projectID,
 		},
 	})
@@ -375,7 +375,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			if tc.getToken != nil {
 				token = tc.getToken(token)
 			}
-			ctx := auth.WithAuthTokenContext(baseCtx, token)
+			ctx := auth.WithAuthTokenContext(basengcontext, token)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -993,8 +993,8 @@ func TestVerifyProviderCredential(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project: engine.Project{ID: projectID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
 			})
 
 			ctrl := gomock.NewController(t)

@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -36,7 +36,7 @@ func (s *Server) ListEvaluationResults(
 	ctx context.Context,
 	in *minderv1.ListEvaluationResultsRequest,
 ) (*minderv1.ListEvaluationResultsResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	if _, err := uuid.Parse(in.GetProfile()); err != nil && in.GetProfile() != "" {

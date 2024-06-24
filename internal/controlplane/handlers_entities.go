@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
@@ -44,7 +44,7 @@ func (s *Server) ReconcileEntityRegistration(
 ) (*pb.ReconcileEntityRegistrationResponse, error) {
 	l := zerolog.Ctx(ctx).With().Logger()
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	logger.BusinessRecord(ctx).Project = projectID

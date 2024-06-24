@@ -27,7 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 )
 
 // Experiment is a type alias for a feature flag experiment, to ensure that all feature flags
@@ -37,7 +37,7 @@ type Experiment string
 // fromContext extracts the targeting flags from the current context.
 func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	// Note: engine.EntityFromContext is best-effort, so these values may be zero.
-	ec := engine.EntityFromContext(ctx)
+	ec := engcontext.EntityFromContext(ctx)
 	return openfeature.NewEvaluationContext(
 		auth.GetUserSubjectFromContext(ctx),
 		map[string]interface{}{

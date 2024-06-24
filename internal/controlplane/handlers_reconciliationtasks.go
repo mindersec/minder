@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
@@ -39,7 +39,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	*pb.CreateEntityReconciliationTaskResponse, error,
 ) {
 	// Populated by EntityContextProjectInterceptor using incoming request
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.Validate(ctx, s.store, s.providerStore)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
@@ -74,7 +74,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 }
 
 func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
-	repoIdString string, entityCtx engine.EntityContext) (*message.Message, error) {
+	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
 	repoUUID, err := uuid.Parse(repoIdString)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)

@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
@@ -38,7 +38,7 @@ func (s *Server) ListRuleTypes(
 	ctx context.Context,
 	_ *minderv1.ListRuleTypesRequest,
 ) (*minderv1.ListRuleTypesResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *Server) GetRuleTypeByName(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByNameRequest,
 ) (*minderv1.GetRuleTypeByNameResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *Server) GetRuleTypeById(
 	ctx context.Context,
 	in *minderv1.GetRuleTypeByIdRequest,
 ) (*minderv1.GetRuleTypeByIdResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *Server) CreateRuleType(
 	ctx context.Context,
 	crt *minderv1.CreateRuleTypeRequest,
 ) (*minderv1.CreateRuleTypeResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
@@ -182,7 +182,7 @@ func (s *Server) UpdateRuleType(
 	ctx context.Context,
 	urt *minderv1.UpdateRuleTypeRequest,
 ) (*minderv1.UpdateRuleTypeResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
@@ -233,7 +233,7 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 
 	err = entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
