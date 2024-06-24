@@ -16,8 +16,7 @@
 package entities
 
 import (
-	"fmt"
-
+	"errors"
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
@@ -31,14 +30,16 @@ func EntityFromIDs(
 	artifactID uuid.UUID,
 	pullRequestID uuid.UUID,
 ) (uuid.UUID, db.Entities, error) {
-	if repositoryID != uuid.Nil && artifactID == uuid.Nil && pullRequestID == uuid.Nil {
-		return repositoryID, db.EntitiesRepository, nil
-	}
-	if repositoryID == uuid.Nil && artifactID != uuid.Nil && pullRequestID == uuid.Nil {
-		return artifactID, db.EntitiesArtifact, nil
-	}
-	if repositoryID == uuid.Nil && artifactID == uuid.Nil && pullRequestID != uuid.Nil {
+	// Note that the repo ID is often passed around with PRs.
+	// As a result, we test PRs and artifacts first, then repos.
+	if pullRequestID != uuid.Nil {
 		return pullRequestID, db.EntitiesPullRequest, nil
 	}
-	return uuid.Nil, "", fmt.Errorf("unexpected combination of IDs: %s %s %s", repositoryID, artifactID, pullRequestID)
+	if artifactID != uuid.Nil {
+		return artifactID, db.EntitiesArtifact, nil
+	}
+	if repositoryID != uuid.Nil {
+		return repositoryID, db.EntitiesRepository, nil
+	}
+	return uuid.Nil, "", errors.New("all entity IDs are nil")
 }
