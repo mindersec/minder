@@ -4950,10 +4950,10 @@ dns-packet@^5.2.2:
   dependencies:
     "@leichtgewicht/ip-codec" "^2.0.1"
 
-docusaurus-plugin-redoc@2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/docusaurus-plugin-redoc/-/docusaurus-plugin-redoc-2.0.2.tgz#d8feddf0626939363549d06145fc585e7f2583b5"
-  integrity sha512-J4pfu+dvwm1D4qWA6O8FT6EYSw9R1mv9fIXCqKh7aHYD+OU19hj/vQQUdjIbAwTcOkBg+eUYVXvdopwTvUXNcQ==
+docusaurus-plugin-redoc@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/docusaurus-plugin-redoc/-/docusaurus-plugin-redoc-2.1.0.tgz#c7db945609ad9f15dde2062dd4ca0f824808ab6a"
+  integrity sha512-uz1rjUTuUpTxg0Y3xX3GkBc0DYdTO6/Au6MMXxoTwzlJiHSq0+pAG/i729mDs1TOpEu/psSyJxhM0hv85Li75w==
   dependencies:
     "@redocly/openapi-core" "1.10.3"
     redoc "2.1.3"
@@ -8964,12 +8964,12 @@ redoc@2.1.3:
     swagger2openapi "^7.0.6"
     url-template "^2.0.8"
 
-redocusaurus@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/redocusaurus/-/redocusaurus-2.0.2.tgz#8e4d7b3a1e4d32f3be6cbc6d218d11957eb0474d"
-  integrity sha512-o71XY24IkqCWVUF39UpVbklvKilbI5LfqPPeD5yhuaME87agsIHpRNdvifdPIK0oAQog4RMjDM+qMRqKUB414A==
+redocusaurus@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/redocusaurus/-/redocusaurus-2.1.0.tgz#11d465a16668938ab8951003def8a00379e87946"
+  integrity sha512-PJ7Tlx9CVHjXdWDvUZzyZ2ymwF4uais5MTXZI0iTI13T7ADa6Zdcd5MhcnhBdDBWL8/jrSHl9+X1af1BsnP9Qg==
   dependencies:
-    docusaurus-plugin-redoc "2.0.2"
+    docusaurus-plugin-redoc "2.1.0"
     docusaurus-theme-redoc "2.0.2"
 
 reftools@^1.1.9:
