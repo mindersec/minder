@@ -35,7 +35,7 @@ import (
 // nolint: tparallel
 func TestOpenFeatureProviderFromFlags(t *testing.T) {
 	t.Parallel()
-
+	const testFlag = Experiment("test_flag")
 	testFile := filepath.Clean(filepath.Join(t.TempDir(), "testfile.yaml"))
 	tempFile, err := os.Create(testFile)
 	if err != nil {
@@ -43,7 +43,7 @@ func TestOpenFeatureProviderFromFlags(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = tempFile.Close() })
 	configFile := `
-idp_resolver:
+test_flag:
   variations:
     FlagOn: true
     FlagOff: false
@@ -99,7 +99,7 @@ idp_resolver:
 				Provider: engine.Provider{Name: "testing"},
 			})
 
-			flagResult := Bool(ctx, client, IDPResolver)
+			flagResult := Bool(ctx, client, testFlag)
 			if flagResult != tt.expectedFlag {
 				t.Errorf("expected %v, got %v", tt.expectedFlag, flagResult)
 			}

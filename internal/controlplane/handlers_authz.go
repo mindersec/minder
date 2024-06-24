@@ -239,6 +239,8 @@ func (s *Server) ListRoleAssignments(
 		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 
+	// Resolve the display names for the subjects
+	mapIdToDisplay := make(map[string]string, len(as))
 	for i := range as {
 		identity, err := s.idClient.Resolve(ctx, as[i].Subject)
 		if err != nil {
@@ -246,23 +248,13 @@ func (s *Server) ListRoleAssignments(
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
 			continue
 		}
-		as[i].Subject = identity.String()
+		as[i].DisplayName = identity.Human()
+		if mapIdToDisplay[as[i].Subject] == "" {
+			mapIdToDisplay[as[i].Subject] = identity.Human()
+		}
 	}
 
 	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-		mapIdToDisplay := make(map[string]string, len(as))
-		for i := range as {
-			if mapIdToDisplay[as[i].Subject] == "" {
-				user, err := s.idClient.Resolve(ctx, as[i].Subject)
-				if err != nil {
-					// if we can't resolve the subject, report the raw ID value
-					zerolog.Ctx(ctx).Error().Err(err).Str("user", as[i].Subject).Msg("error resolving user")
-					continue
-				}
-				mapIdToDisplay[as[i].Subject] = user.Human()
-			}
-			as[i].DisplayName = mapIdToDisplay[as[i].Subject]
-		}
 		// Add invitations, which are only stored in the Minder DB
 		invites, err := s.store.ListInvitationsForProject(ctx, targetProject)
 		if err != nil {
