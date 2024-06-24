@@ -669,6 +669,13 @@ func (s *Server) updateInvite(
 		return nil, status.Errorf(codes.Internal, "multiple invitations found for this email and project")
 	}
 
+	// Begin a transaction to ensure that the invitation is updated atomically
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
 	// At this point, there should be exactly 1 invitation. We should either update its expiration or
 	// discard it and create a new one
 	if existingInvites[0].Role != authzRole.String() {
@@ -696,6 +703,7 @@ func (s *Server) updateInvite(
 			return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
 		}
 	}
+
 	// Resolve the project's display name
 	prj, err := s.store.GetProjectByID(ctx, userInvite.Project)
 	if err != nil {
@@ -707,6 +715,12 @@ func (s *Server) updateInvite(
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
 		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
 	}
+
+	// Commit the transaction to persist the changes
+	if err := s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	}
+
 	return &minder.UpdateRoleResponse{
 		// Leaving the role assignment empty as it's an invitation
 		Invitations: []*minder.Invitation{
