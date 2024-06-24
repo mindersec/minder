@@ -85,27 +85,27 @@ func (e *ExecutorMetrics) CountEvalStatus(
 // CountRemediationStatus counts remediation events by status.
 func (e *ExecutorMetrics) CountRemediationStatus(
 	ctx context.Context,
-	status string,
+	status db.RemediationStatusTypes,
 	evalID uuid.UUID,
 	projectID uuid.UUID,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("profile_id", evalID.String()),
 		attribute.String("project_id", projectID.String()),
-		attribute.String("status", status),
+		attribute.String("status", string(status)),
 	))
 }
 
 // CountAlertStatus counts alert events by status.
 func (e *ExecutorMetrics) CountAlertStatus(
 	ctx context.Context,
-	status string,
+	status db.AlertStatusTypes,
 	evalID uuid.UUID,
 	projectID uuid.UUID,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("profile_id", evalID.String()),
 		attribute.String("project_id", projectID.String()),
-		attribute.String("status", status),
+		attribute.String("status", string(status)),
 	))
 }
