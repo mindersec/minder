@@ -120,7 +120,7 @@ var _ Resolver = (*IdentityClient)(nil)
 // NewIdentityClient creates a new IdentityClient with the supplied providers.
 func NewIdentityClient(providers ...IdentityProvider) (*IdentityClient, error) {
 	c := &IdentityClient{
-		providers: xsync.NewMapOfPresized[string, IdentityProvider](len(providers) * 2),
+		providers: xsync.NewMapOf[string, IdentityProvider](xsync.WithPresize(len(providers) * 2)),
 	}
 	for _, p := range providers {
 		u := p.URL() // URL's String has a pointer receiver
