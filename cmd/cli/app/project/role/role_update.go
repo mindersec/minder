@@ -50,7 +50,7 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		Context: &minderv1.Context{
 			Project: &project,
 		},
-		Role:    []string{r},
+		Roles:   []string{r},
 		Subject: sub,
 	})
 	if err != nil {

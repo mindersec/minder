@@ -553,26 +553,6 @@
             "in": "path",
             "required": true,
             "type": "string"
-          },
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -3679,6 +3659,10 @@
         "sponsorDisplay": {
           "type": "string",
           "description": "sponsor_display is the display name of the user who created the\ninvitation."
+        },
+        "projectDisplay": {
+          "type": "string",
+          "description": "project_display is the display name of the project to which the user\nis invited."
         }
       }
     },
@@ -4157,6 +4141,10 @@
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment that was removed."
+        },
+        "invitation": {
+          "$ref": "#/definitions/v1Invitation",
+          "description": "invitation contains the details of the invitation that was removed."
         }
       }
     },
@@ -4242,6 +4230,10 @@
         "isAccepted": {
           "type": "boolean",
           "description": "is_accepted is the status of the invitation."
+        },
+        "projectDisplay": {
+          "type": "string",
+          "description": "project_display is the display name of the project to which the user\nis invited."
         }
       }
     },
@@ -4546,12 +4538,16 @@
           "type": "string",
           "title": "subject is the account to change permissions for.\nThe account must already have permissions on the project"
         },
-        "role": {
+        "roles": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "All subject roles are _replaced_ with the following role assignments.  Must be non-empty,\nuse RemoveRole to remove permissions entirely from the project."
+        },
+        "email": {
+          "type": "string",
+          "title": "email is the email address of the subject used for updating invitations"
         }
       }
     },
@@ -4565,6 +4561,14 @@
             "$ref": "#/definitions/v1RoleAssignment"
           },
           "description": "role_assignments are the role assignments that were updated."
+        },
+        "invitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Invitation"
+          },
+          "description": "invitations contains the details of the invitations that were updated."
         }
       }
     },
