@@ -144,3 +144,21 @@ func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool)
 func WithAuthTokenContext(ctx context.Context, token openid.Token) context.Context {
 	return context.WithValue(ctx, userTokenContextKey, token)
 }
+
+// GetUserEmailFromContext returns the user email from the context, or an empty string
+func GetUserEmailFromContext(ctx context.Context) (string, error) {
+	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
+	if !ok {
+		return "", fmt.Errorf("no user token in context")
+	}
+	return token.Email(), nil
+}
+
+// GetUserTokenFromContext returns the user token from the context
+func GetUserTokenFromContext(ctx context.Context) (openid.Token, error) {
+	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
+	if !ok {
+		return nil, fmt.Errorf("no user token in context")
+	}
+	return token, nil
+}
