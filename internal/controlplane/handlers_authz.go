@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/invite"
 	"github.com/stacklok/minder/internal/util"
@@ -102,7 +102,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 		return nil, status.Errorf(codes.Internal, "error getting name for requested relation %v", relation)
 	}
 
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	server := info.Server.(*Server)
 
 	if err := server.authzClient.Check(ctx, relationName, entityCtx.Project.ID); err != nil {
@@ -135,16 +135,16 @@ func populateEntityContext(
 		}
 	}
 
-	entityCtx := &engine.EntityContext{
-		Project: engine.Project{
+	entityCtx := &engcontext.EntityContext{
+		Project: engcontext.Project{
 			ID: projectID,
 		},
-		Provider: engine.Provider{
+		Provider: engcontext.Provider{
 			Name: getProviderFromContext(req),
 		},
 	}
 
-	return engine.WithEntityContext(ctx, entityCtx), nil
+	return engcontext.WithEntityContext(ctx, entityCtx), nil
 }
 
 func getProjectIDFromContext(req any) (uuid.UUID, error) {
@@ -233,7 +233,7 @@ func (s *Server) ListRoleAssignments(
 ) (*minder.ListRoleAssignmentsResponse, error) {
 	invitations := make([]*minder.Invitation, 0)
 	// Determine the target project.
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	as, err := s.authzClient.AssignmentsToProject(ctx, targetProject)
@@ -300,7 +300,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	email := req.GetRoleAssignment().GetEmail()
 
 	// Determine the target project.
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
@@ -496,7 +496,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	sub := req.GetRoleAssignment().GetSubject()
 	email := req.GetRoleAssignment().GetEmail()
 	// Determine the target project.
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
@@ -613,7 +613,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	sub := req.GetSubject()
 
 	// Determine the target project.
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	if sub == "" {

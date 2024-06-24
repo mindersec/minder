@@ -43,7 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -60,7 +60,7 @@ func (m request) GetContext() *minder.Context {
 
 // Reply type containing the detected entityContext.
 type replyType struct {
-	Context engine.EntityContext
+	Context engcontext.EntityContext
 }
 
 func TestEntityContextProjectInterceptor(t *testing.T) {
@@ -83,7 +83,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		buildStubs      func(t *testing.T, store *mockdb.MockStore)
 		rpcErr          error
 		defaultProject  bool
-		expectedContext engine.EntityContext // Only if non-error
+		expectedContext engcontext.EntityContext // Only if non-error
 	}{
 		{
 			name: "not implementing proto context throws error",
@@ -102,7 +102,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			name:            "non project owner bypasses interceptor",
 			req:             &request{},
 			resource:        minder.TargetResource_TARGET_RESOURCE_USER,
-			expectedContext: engine.EntityContext{},
+			expectedContext: engcontext.EntityContext{},
 		},
 		{
 			name:     "invalid request with nil context",
@@ -137,9 +137,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 						ID: 1,
 					}, nil)
 			},
-			expectedContext: engine.EntityContext{
+			expectedContext: engcontext.EntityContext{
 				// Uses the default project id
-				Project: engine.Project{ID: defaultProjectID},
+				Project: engcontext.Project{ID: defaultProjectID},
 			},
 		}, {
 			name: "no provider",
@@ -149,8 +149,8 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				},
 			},
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			expectedContext: engine.EntityContext{
-				Project: engine.Project{ID: projectID},
+			expectedContext: engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
 			},
 		}, {
 			name: "sets entity context",
@@ -161,9 +161,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				},
 			},
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			expectedContext: engine.EntityContext{
-				Project:  engine.Project{ID: projectID},
-				Provider: engine.Provider{Name: provider},
+			expectedContext: engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: provider},
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			}
 
 			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
-				return replyType{engine.EntityFromContext(ctx)}, nil
+				return replyType{engcontext.EntityFromContext(ctx)}, nil
 			}
 
 			ctrl := gomock.NewController(t)
@@ -226,25 +226,25 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 
 	testCases := []struct {
 		name      string
-		entityCtx *engine.EntityContext
+		entityCtx *engcontext.EntityContext
 		resource  minder.TargetResource
 		rpcErr    error
 	}{
 		{
 			name:      "anonymous bypasses interceptor",
-			entityCtx: &engine.EntityContext{},
+			entityCtx: &engcontext.EntityContext{},
 			resource:  minder.TargetResource_TARGET_RESOURCE_NONE,
 		},
 		{
 			name:      "non project owner bypasses interceptor",
 			resource:  minder.TargetResource_TARGET_RESOURCE_USER,
-			entityCtx: &engine.EntityContext{},
+			entityCtx: &engcontext.EntityContext{},
 		},
 		{
 			name:     "not authorized on project error",
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			entityCtx: &engine.EntityContext{
-				Project: engine.Project{
+			entityCtx: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: projectID,
 				},
 			},
@@ -255,8 +255,8 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 		{
 			name:     "authorized on project",
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			entityCtx: &engine.EntityContext{
-				Project: engine.Project{
+			entityCtx: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: defaultProjectID,
 				},
 			},
@@ -272,7 +272,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			}
 
 			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
-				return replyType{engine.EntityFromContext(ctx)}, nil
+				return replyType{engcontext.EntityFromContext(ctx)}, nil
 			}
 			server := Server{
 				authzClient: &mock.SimpleClient{
@@ -280,7 +280,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 				},
 			}
 			ctx := withRpcOptions(context.Background(), rpcOptions)
-			ctx = engine.WithEntityContext(ctx, tc.entityCtx)
+			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
 			ctx = auth.WithAuthTokenContext(ctx, userJWT)
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
@@ -505,8 +505,8 @@ func TestRoleManagement(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = auth.WithAuthTokenContext(ctx, user)
-			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-				Project: engine.Project{
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: project,
 				},
 			})

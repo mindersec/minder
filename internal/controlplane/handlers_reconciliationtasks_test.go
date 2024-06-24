@@ -25,7 +25,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/providers"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -39,8 +39,8 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 	tests := []struct {
 		name          string
 		input         *pb.CreateEntityReconciliationTaskRequest
-		entityContext *engine.EntityContext
-		setup         func(store *mockdb.MockStore, entityContext *engine.EntityContext)
+		entityContext *engcontext.EntityContext
+		setup         func(store *mockdb.MockStore, entityContext *engcontext.EntityContext)
 		err           string
 	}{
 		{
@@ -51,15 +51,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   repoUuid.String(),
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -84,13 +84,13 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   repoUuid.String(),
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{},
+				Provider: engcontext.Provider{},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				store.EXPECT().
 					GetProjectByID(gomock.Any(), projId).
@@ -125,15 +125,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   repoUuid.String(),
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				store.EXPECT().
 					GetProjectByID(gomock.Any(), projId).
@@ -149,15 +149,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   repoUuid.String(),
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -178,15 +178,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   repoUuid.String(),
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -207,15 +207,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Id:   "foo",
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -229,15 +229,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 					Type: pb.Entity_ENTITY_UNSPECIFIED,
 				},
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -249,15 +249,15 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			input: &pb.CreateEntityReconciliationTaskRequest{
 				Entity: nil,
 			},
-			entityContext: &engine.EntityContext{
-				Project: engine.Project{
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
 					ID: uuid.New(),
 				},
-				Provider: engine.Provider{
+				Provider: engcontext.Provider{
 					Name: ghProvider,
 				},
 			},
-			setup: func(store *mockdb.MockStore, entityContext *engine.EntityContext) {
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
 				setupTestingEntityContextValidation(store, projId, prov)
@@ -285,7 +285,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 				providerStore: providers.NewProviderStore(mockStore),
 			}
 
-			ctx := engine.WithEntityContext(context.Background(), tt.entityContext)
+			ctx := engcontext.WithEntityContext(context.Background(), tt.entityContext)
 			_, err := s.CreateEntityReconciliationTask(ctx, tt.input)
 			if tt.err != "" {
 				require.Error(t, err)

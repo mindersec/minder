@@ -22,7 +22,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
@@ -97,8 +97,8 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project: engine.Project{ID: projectID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
 			})
 
 			manager := mockmanager.NewMockProviderManager(ctrl)

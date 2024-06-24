@@ -43,7 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto/algorithms"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
@@ -243,9 +243,9 @@ func TestCreateProvider(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = auth.WithAuthTokenContext(ctx, user)
-			ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-				Project:  engine.Project{ID: projectID},
-				Provider: engine.Provider{Name: scenario.name},
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: scenario.name},
 			})
 
 			jsonConfig, err := scenario.expected.Config.MarshalJSON()
@@ -355,9 +355,9 @@ func TestCreateProviderFailures(t *testing.T) {
 
 		ctx := context.Background()
 		ctx = auth.WithAuthTokenContext(ctx, user)
-		ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-			Project:  engine.Project{ID: projectID},
-			Provider: engine.Provider{Name: providerName},
+		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+			Project:  engcontext.Project{ID: projectID},
+			Provider: engcontext.Provider{Name: providerName},
 		})
 
 		fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
@@ -592,9 +592,9 @@ func TestDeleteProvider(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = auth.WithAuthTokenContext(ctx, user)
-	ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-		Project:  engine.Project{ID: projectID},
-		Provider: engine.Provider{Name: providerName},
+	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+		Project:  engcontext.Project{ID: projectID},
+		Provider: engcontext.Provider{Name: providerName},
 	})
 
 	resp, err := server.DeleteProvider(ctx, &minder.DeleteProviderRequest{
@@ -705,8 +705,8 @@ func TestDeleteProviderByID(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = auth.WithAuthTokenContext(ctx, user)
-	ctx = engine.WithEntityContext(ctx, &engine.EntityContext{
-		Project: engine.Project{ID: projectID},
+	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
 	})
 
 	resp, err := server.DeleteProviderByID(ctx, &minder.DeleteProviderByIDRequest{

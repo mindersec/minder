@@ -39,7 +39,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -55,7 +55,7 @@ import (
 // nolint:gocyclo
 func (s *Server) GetAuthorizationURL(ctx context.Context,
 	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	var providerName string
@@ -469,7 +469,7 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 // StoreProviderToken stores the provider token for a project
 func (s *Server) StoreProviderToken(ctx context.Context,
 	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
@@ -541,7 +541,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 // Deprecated: Use VerifyProviderCredential instead
 func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
@@ -605,7 +605,7 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 // VerifyProviderCredential verifies the provider credential has been created for the matching enrollment nonce
 func (s *Server) VerifyProviderCredential(ctx context.Context,
 	in *pb.VerifyProviderCredentialRequest) (*pb.VerifyProviderCredentialResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	enrollmentNonce := in.EnrollmentNonce
