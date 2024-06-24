@@ -41,7 +41,7 @@ func GenerateCode() string {
 	return base64.URLEncoding.EncodeToString(bytes)
 }
 
-// GetExpireIn7Days sets the expiration date of the invitation to 7 days from t.Now()
+// GetExpireIn7Days returns the expiration date of the invitation 7 days from t.Now()
 func GetExpireIn7Days(t time.Time) *timestamppb.Timestamp {
 	return timestamppb.New(t.Add(expireIn7Days))
 }
