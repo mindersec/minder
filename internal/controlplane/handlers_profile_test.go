@@ -31,7 +31,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
@@ -371,8 +371,8 @@ func TestCreateProfile(t *testing.T) {
 				}
 			}
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project: engine.Project{ID: dbproj.ID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
 			})
 			evts := &stubeventer.StubEventer{}
 			s := &Server{
@@ -926,8 +926,8 @@ func TestPatchProfile(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project: engine.Project{ID: dbproj.ID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
 			})
 			evts := &stubeventer.StubEventer{}
 			s := &Server{
@@ -1034,8 +1034,8 @@ func TestPatchManagedProfile(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ctx = engine.WithEntityContext(context.Background(), &engine.EntityContext{
-		Project: engine.Project{ID: dbproj.ID},
+	ctx = engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+		Project: engcontext.Project{ID: dbproj.ID},
 	})
 	evts := &stubeventer.StubEventer{}
 	s := &Server{

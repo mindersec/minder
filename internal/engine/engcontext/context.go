@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+// Package engcontext defines the EngineContext type.
+package engcontext
 
 import (
 	"context"

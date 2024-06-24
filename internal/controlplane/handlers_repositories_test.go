@@ -29,7 +29,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github/clients"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
@@ -135,9 +135,9 @@ func TestServer_RegisterRepository(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Provider: engine.Provider{Name: ghprovider.Github},
-				Project:  engine.Project{ID: projectID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: ghprovider.Github},
+				Project:  engcontext.Project{ID: projectID},
 			})
 
 			server := createServer(
@@ -218,8 +218,8 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Project: engine.Project{ID: projectID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
 			})
 
 			prov := scenario.GitHubSetup(ctrl)
@@ -322,9 +322,9 @@ func TestServer_DeleteRepository(t *testing.T) {
 			t.Parallel()
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			ctx := engine.WithEntityContext(context.Background(), &engine.EntityContext{
-				Provider: engine.Provider{Name: ghprovider.Github},
-				Project:  engine.Project{ID: projectID},
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: ghprovider.Github},
+				Project:  engcontext.Project{ID: projectID},
 			})
 
 			server := createServer(

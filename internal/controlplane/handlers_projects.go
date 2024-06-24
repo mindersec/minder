@@ -28,7 +28,7 @@ import (
 
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/util"
@@ -91,7 +91,7 @@ func (s *Server) ListChildProjects(
 	ctx context.Context,
 	req *minderv1.ListChildProjectsRequest,
 ) (*minderv1.ListChildProjectsResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	var projs []*minderv1.Project
@@ -164,7 +164,7 @@ func (s *Server) CreateProject(
 	ctx context.Context,
 	req *minderv1.CreateProjectRequest,
 ) (*minderv1.CreateProjectResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, projectID) {
@@ -236,7 +236,7 @@ func (s *Server) DeleteProject(
 	ctx context.Context,
 	_ *minderv1.DeleteProjectRequest,
 ) (*minderv1.DeleteProjectResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	tx, err := s.store.BeginTransaction()
@@ -285,7 +285,7 @@ func (s *Server) UpdateProject(
 	ctx context.Context,
 	req *minderv1.UpdateProjectRequest,
 ) (*minderv1.UpdateProjectResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	tx, err := s.store.BeginTransaction()
@@ -355,7 +355,7 @@ func (s *Server) PatchProject(
 	ctx context.Context,
 	req *minderv1.PatchProjectRequest,
 ) (*minderv1.PatchProjectResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	tx, err := s.store.BeginTransaction()

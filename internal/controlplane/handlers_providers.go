@@ -31,7 +31,7 @@ import (
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/util"
 	cursorutil "github.com/stacklok/minder/internal/util/cursor"
@@ -42,7 +42,7 @@ import (
 func (s *Server) CreateProvider(
 	ctx context.Context, req *minderv1.CreateProviderRequest,
 ) (*minderv1.CreateProviderResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	provider := req.GetProvider()
 
@@ -88,7 +88,7 @@ func (s *Server) CreateProvider(
 
 // GetProvider gets a given provider available in a specific project.
 func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderRequest) (*minderv1.GetProviderResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	dbProv, err := s.providerStore.GetByNameInSpecificProject(ctx, projectID, req.GetName())
@@ -111,7 +111,7 @@ func (s *Server) GetProvider(ctx context.Context, req *minderv1.GetProviderReque
 
 // ListProviders lists the providers available in a specific project.
 func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersRequest) (*minderv1.ListProvidersResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	params := db.ListProvidersByProjectIDPaginatedParams{
@@ -188,7 +188,7 @@ func (s *Server) DeleteProvider(
 	ctx context.Context,
 	_ *minderv1.DeleteProviderRequest,
 ) (*minderv1.DeleteProviderResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
@@ -214,7 +214,7 @@ func (s *Server) DeleteProviderByID(
 	ctx context.Context,
 	in *minderv1.DeleteProviderByIDRequest,
 ) (*minderv1.DeleteProviderByIDResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
 	parsedProviderID, err := uuid.Parse(in.Id)
@@ -240,7 +240,7 @@ func (s *Server) PatchProvider(
 	ctx context.Context,
 	req *minderv1.PatchProviderRequest,
 ) (*minderv1.PatchProviderResponse, error) {
-	entityCtx := engine.EntityFromContext(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
 
