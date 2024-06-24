@@ -36,12 +36,11 @@ import (
 
 // inviteGetCmd represents the list command
 var inviteGetCmd = &cobra.Command{
-	Hidden: true, // TODO: This hides the command, remove it once it's implemented
-	Use:    "get",
-	Short:  "Get info about pending invitations",
-	Long:   `Get shows additional information about a pending invitation`,
-	RunE:   cli.GRPCClientWrapRunE(inviteGetCommand),
-	Args:   cobra.ExactArgs(1),
+	Use:   "get",
+	Short: "Get info about pending invitations",
+	Long:  `Get shows additional information about a pending invitation`,
+	RunE:  cli.GRPCClientWrapRunE(inviteGetCommand),
+	Args:  cobra.ExactArgs(1),
 }
 
 // inviteGetCommand is the invite get subcommand

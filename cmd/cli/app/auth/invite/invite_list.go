@@ -36,11 +36,10 @@ import (
 
 // inviteListCmd represents the list command
 var inviteListCmd = &cobra.Command{
-	Hidden: true, // TODO: This hides the command, remove it once it's implemented
-	Use:    "list",
-	Short:  "List pending invitations",
-	Long:   `List shows all pending invitations for the current minder user`,
-	RunE:   cli.GRPCClientWrapRunE(inviteListCommand),
+	Use:   "list",
+	Short: "List pending invitations",
+	Long:  `List shows all pending invitations for the current minder user`,
+	RunE:  cli.GRPCClientWrapRunE(inviteListCommand),
 }
 
 // inviteListCommand is the whoami subcommand
