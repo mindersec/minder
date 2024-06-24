@@ -43,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
@@ -347,12 +348,16 @@ default allow = true`,
 	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
 	require.NoError(t, err)
 
+	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
+	require.NoError(t, err)
+
 	e := engine.NewExecutor(
 		ctx,
 		mockStore,
 		evt,
 		providerManager,
 		[]message.HandlerMiddleware{},
+		execMetrics,
 	)
 	require.NoError(t, err, "expected no error")
 

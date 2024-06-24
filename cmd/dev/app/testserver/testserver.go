@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/service"
@@ -102,5 +103,6 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 		metrics.NewNoopMetrics(),
 		provtelemetry.NewNoopMetrics(),
 		[]message.HandlerMiddleware{},
+		&meters.NoopMeterFactory{},
 	)
 }

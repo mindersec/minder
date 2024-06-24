@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/marketplaces"
+	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
@@ -67,6 +68,7 @@ func AllInOneServerService(
 	serverMetrics metrics.Metrics,
 	providerMetrics provtelemetry.ProviderMetrics,
 	executorMiddleware []message.HandlerMiddleware,
+	meterFactory meters.MeterFactory,
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
 
@@ -167,6 +169,10 @@ func AllInOneServerService(
 
 	// prepend the aggregator to the executor options
 	executorMiddleware = append([]message.HandlerMiddleware{aggr.AggregateMiddleware}, executorMiddleware...)
+	executorMetrics, err := engine.NewExecutorMetrics(meterFactory)
+	if err != nil {
+		return fmt.Errorf("unable to create metrics for executor: %w", err)
+	}
 
 	exec := engine.NewExecutor(
 		ctx,
@@ -174,6 +180,7 @@ func AllInOneServerService(
 		evt,
 		providerManager,
 		executorMiddleware,
+		executorMetrics,
 	)
 
 	evt.ConsumeEvents(exec)

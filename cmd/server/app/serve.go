@@ -35,6 +35,7 @@ import (
 	cpmetrics "github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/service"
@@ -138,6 +139,7 @@ var serveCmd = &cobra.Command{
 			cpmetrics.NewMetrics(),
 			providerMetrics,
 			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},
+			&meters.ExportingMeterFactory{},
 		)
 	},
 }
