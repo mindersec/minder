@@ -358,6 +358,21 @@ func (s *Server) inviteUser(
 	}
 
 	// If there are no invitations for this email, great, we should create one
+
+	// Resolve the sponsor's identity and display name
+	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
+	}
+
+	// Resolve the target project's display name
+	prj, err := s.store.GetProjectByID(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get target project: %s", err)
+	}
+
+	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
 		Email:   email,
@@ -369,20 +384,7 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
 	}
 
-	// Resolve the sponsor's identity and display name
-	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
-	}
-
 	// TODO: Publish the event for sending the invitation email
-
-	// Resolve the project's display name
-	prj, err := s.store.GetProjectByID(ctx, userInvite.Project)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
-	}
 
 	// Send the invitation response
 	return &minder.AssignRoleResponse{
