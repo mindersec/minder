@@ -244,7 +244,11 @@ func (s *Server) ListRoleAssignments(
 	for i := range as {
 		identity, err := s.idClient.Resolve(ctx, as[i].Subject)
 		if err != nil {
-			// if we can't resolve the subject, report the raw ID value
+			// If we can't resolve the subject, report the raw ID value
+			as[i].DisplayName = as[i].Subject
+			if mapIdToDisplay[as[i].Subject] == "" {
+				mapIdToDisplay[as[i].Subject] = as[i].Subject
+			}
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
 			continue
 		}
