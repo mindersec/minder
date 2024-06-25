@@ -17,7 +17,6 @@ package role
 
 import (
 	"context"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -72,15 +71,11 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// If it was an invitation, print the invite details
 	if len(ret.Invitations) != 0 {
-		t := initializeTableForGrantListInvitations()
 		for _, r := range ret.Invitations {
-			expired := "No"
-			if r.Expired {
-				expired = "Yes"
-			}
-			t.AddRow(r.Email, r.Role, r.Sponsor, r.ExpiresAt.AsTime().Format(time.RFC3339), expired, r.Code)
+			// TODO: Add a url to the invite
+			cmd.Printf("Updated an invite for %s to %s on %s\n\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n",
+				r.Email, r.Role, r.Project, r.Code)
 		}
-		t.Render()
 		return nil
 	}
 	// Otherwise, print the role assignments if it was about updating a role
