@@ -17,9 +17,10 @@ minder project role update [flags]
 ### Options
 
 ```
-  -h, --help          help for update
-  -r, --role string   the role to update it to
-  -s, --sub string    subject to update role access for
+  -e, --email string   email to send invitation to
+  -h, --help           help for update
+  -r, --role string    the role to update it to
+  -s, --sub string     subject to update role access for
 ```
 
 ### Options inherited from parent commands
