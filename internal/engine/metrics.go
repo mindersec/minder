@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
@@ -68,15 +67,9 @@ func NewExecutorMetrics(meterFactory meters.MeterFactory) (*ExecutorMetrics, err
 func (e *ExecutorMetrics) CountEvalStatus(
 	ctx context.Context,
 	status db.EvalStatusTypes,
-	profileID uuid.UUID,
-	projectID uuid.UUID,
-	entityID uuid.UUID,
 	entityType db.Entities,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("profile_id", profileID.String()),
-		attribute.String("project_id", projectID.String()),
-		attribute.String("entity_id", entityID.String()),
 		attribute.String("entity_type", string(entityType)),
 		attribute.String("status", string(status)),
 	))
@@ -86,12 +79,8 @@ func (e *ExecutorMetrics) CountEvalStatus(
 func (e *ExecutorMetrics) CountRemediationStatus(
 	ctx context.Context,
 	status db.RemediationStatusTypes,
-	evalID uuid.UUID,
-	projectID uuid.UUID,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("profile_id", evalID.String()),
-		attribute.String("project_id", projectID.String()),
 		attribute.String("status", string(status)),
 	))
 }
@@ -100,12 +89,8 @@ func (e *ExecutorMetrics) CountRemediationStatus(
 func (e *ExecutorMetrics) CountAlertStatus(
 	ctx context.Context,
 	status db.AlertStatusTypes,
-	evalID uuid.UUID,
-	projectID uuid.UUID,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("profile_id", evalID.String()),
-		attribute.String("project_id", projectID.String()),
 		attribute.String("status", string(status)),
 	))
 }

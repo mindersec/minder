@@ -161,7 +161,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return err
 	}
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
-	e.metrics.CountEvalStatus(ctx, status, params.ProfileID, params.ProjectID, entityID, entityType)
+	e.metrics.CountEvalStatus(ctx, status, entityType)
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: evalID,
 		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
@@ -175,7 +175,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Upsert remediation details
 	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
-	e.metrics.CountRemediationStatus(ctx, remediationStatus, evalID, params.ProjectID)
+	e.metrics.CountRemediationStatus(ctx, remediationStatus)
 
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
 		RuleEvalID: evalID,
@@ -189,7 +189,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 
 	// Upsert alert details
 	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
-	e.metrics.CountAlertStatus(ctx, alertStatus, evalID, params.ProjectID)
+	e.metrics.CountAlertStatus(ctx, alertStatus)
 
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
 		RuleEvalID: evalID,
