@@ -333,6 +333,11 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
 
+	// Check if the user is trying to resolve their own invitation
+	if err = isUserSelfResolving(ctx, s.store, userInvite); err != nil {
+		return nil, err
+	}
+
 	// Check if the invitation is expired
 	if invite.IsExpired(userInvite.UpdatedAt) {
 		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation expired")
@@ -403,5 +408,21 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 	if err := s.authzClient.Write(ctx, auth.GetUserSubjectFromContext(ctx), authzRole, userInvite.Project); err != nil {
 		return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
+	return nil
+}
+
+// isUserSelfResolving is used to prevent if the user is trying to resolve an invitation they created
+func isUserSelfResolving(ctx context.Context, store db.Store, i db.GetInvitationByCodeRow) error {
+	// Get current user data
+	currentUser, err := store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// Check if the user is trying to resolve their own invitation
+	if currentUser.ID == i.Sponsor {
+		return util.UserVisibleError(codes.InvalidArgument, "user cannot resolve their own invitation")
+	}
+
 	return nil
 }
