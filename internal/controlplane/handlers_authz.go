@@ -363,11 +363,13 @@ func (s *Server) inviteUser(
 
 	// If there are no invitations for this email, great, we should create one
 
+	sponsorDisplay := currentUser.IdentitySubject
 	// Resolve the sponsor's identity and display name
 	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
+	} else {
+		sponsorDisplay = identity.Human()
 	}
 
 	// Resolve the target project's display name
@@ -399,8 +401,8 @@ func (s *Server) inviteUser(
 			Project:        userInvite.Project.String(),
 			ProjectDisplay: prj.Name,
 			Code:           userInvite.Code,
-			Sponsor:        identity.UserID,
-			SponsorDisplay: identity.Human(),
+			Sponsor:        currentUser.IdentitySubject,
+			SponsorDisplay: sponsorDisplay,
 			CreatedAt:      timestamppb.New(userInvite.CreatedAt),
 			ExpiresAt:      invite.GetExpireIn7Days(userInvite.UpdatedAt),
 			Expired:        invite.IsExpired(userInvite.UpdatedAt),
@@ -546,10 +548,12 @@ func (s *Server) removeInvite(
 	}
 
 	// Resolve the sponsor's identity and display name
+	sponsorDisplay := sponsorUser.IdentitySubject
 	identity, err := s.idClient.Resolve(ctx, sponsorUser.IdentitySubject)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sponsorUser.IdentitySubject)
+	} else {
+		sponsorDisplay = identity.Human()
 	}
 
 	// Return the response
@@ -563,7 +567,7 @@ func (s *Server) removeInvite(
 			ExpiresAt:      invite.GetExpireIn7Days(ret.UpdatedAt),
 			Expired:        invite.IsExpired(ret.UpdatedAt),
 			Sponsor:        sponsorUser.IdentitySubject,
-			SponsorDisplay: identity.Human(),
+			SponsorDisplay: sponsorDisplay,
 			ProjectDisplay: prj.Name,
 		},
 	}, nil
