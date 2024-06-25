@@ -726,7 +726,6 @@ func (s *Server) updateInvite(
 	}
 
 	return &minder.UpdateRoleResponse{
-		// Leaving the role assignment empty as it's an invitation
 		Invitations: []*minder.Invitation{
 			{
 				Role:           userInvite.Role,
