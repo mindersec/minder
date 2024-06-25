@@ -18,7 +18,6 @@ package role
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -88,7 +87,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		if len(resp.Invitations) > 0 {
 			t := initializeTableForGrantListInvitations()
 			for _, r := range resp.Invitations {
-				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339), strconv.FormatBool(r.Expired), r.Code)
+				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339))
 			}
 			t.Render()
 		} else {
@@ -103,7 +102,7 @@ func initializeTableForGrantListRoleAssignments() table.Table {
 }
 
 func initializeTableForGrantListInvitations() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Invitee", "Role", "Sponsor", "Expires At", "Expired", "Code"})
+	return table.New(table.Simple, layouts.Default, []string{"Invitee", "Role", "Sponsor", "Expires At"})
 }
 
 func init() {

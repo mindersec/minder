@@ -271,7 +271,7 @@ func (s *Server) ListRoleAssignments(
 				Expired:        invite.IsExpired(i.UpdatedAt),
 				Sponsor:        i.IdentitySubject,
 				SponsorDisplay: mapIdToDisplay[i.IdentitySubject],
-				Code:           i.Code,
+				// Code is explicitly not returned here
 			})
 		}
 	}

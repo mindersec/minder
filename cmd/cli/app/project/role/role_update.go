@@ -70,7 +70,8 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	cmd.Println(successMsg)
 
-	if email != "" {
+	// If it was an invitation, print the invite details
+	if len(ret.Invitations) != 0 {
 		t := initializeTableForGrantListInvitations()
 		for _, r := range ret.Invitations {
 			expired := "No"
