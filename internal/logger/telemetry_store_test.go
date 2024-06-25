@@ -48,12 +48,10 @@ func TestTelemetryStore_Record(t *testing.T) {
 		name: "nil telemetry",
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-
 			ep.Profile = &minderv1.Profile{
 				Name: "artifact_profile",
 				Id:   &testUUIDString,
 			}
-			ep.RuleTypeName = "artifact_signature"
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
 				alert.ActionType:     engif.ActionOptOn,
@@ -68,19 +66,18 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = testUUID
 			logger.BusinessRecord(ctx).Repository = testUUID
-			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams, ruleTypeName)
 		},
 	}, {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-
+			ep.RuleTypeID = testUUID
 			ep.Profile = &minderv1.Profile{
 				Name: "artifact_profile",
 				Id:   &testUUIDString,
 			}
-			ep.RuleTypeName = "artifact_signature"
 			ep.RuleTypeID = testUUID
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
@@ -96,7 +93,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = testUUID
 			logger.BusinessRecord(ctx).Repository = testUUID
-			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams, ruleTypeName)
 		},
 		expected: `{
     "project": "00000000-0000-0000-0000-000000000001",
@@ -183,3 +180,5 @@ func TestTelemetryStore_Record(t *testing.T) {
 
 	}
 }
+
+const ruleTypeName = "artifact_signature"

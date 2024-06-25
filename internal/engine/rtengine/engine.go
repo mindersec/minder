@@ -132,6 +132,11 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *profiles.RuleValidator {
 	return r.ruleValidator
 }
 
+// GetRuleType returns the rule type PB structure.
+func (r *RuleTypeEngine) GetRuleType() *minderv1.RuleType {
+	return r.ruletype
+}
+
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(
 	ctx context.Context,

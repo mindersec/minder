@@ -36,3 +36,9 @@ UPDATE rule_type
     SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value), display_name = sqlc.arg(display_name)
     WHERE id = $1
     RETURNING *;
+
+-- name: GetRuleTypesByEntityInHierarchy :many
+SELECT rt.* FROM rule_type AS rt
+JOIN rule_instances AS ri ON ri.rule_type_id = rt.id
+WHERE ri.entity_type = $1
+AND ri.project_id = ANY(sqlc.arg(projects)::uuid[]);
