@@ -17,6 +17,7 @@ package role
 
 import (
 	"context"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,40 +39,64 @@ to a user (subject) on a particular project.`,
 func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewPermissionsServiceClient(conn)
 
-	sub := viper.GetString("sub")
 	r := viper.GetString("role")
 	project := viper.GetString("project")
+	sub := viper.GetString("sub")
+	email := viper.GetString("email")
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	ret, err := client.UpdateRole(ctx, &minderv1.UpdateRoleRequest{
+	req := &minderv1.UpdateRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
 		Roles:   []string{r},
 		Subject: sub,
-	})
-	if err != nil {
-		return cli.MessageAndError("Error updating role", err)
+	}
+	failMsg := "Error updating role"
+	successMsg := "Updated role successfully."
+	if email != "" {
+		req.Email = email
+		failMsg = "Error updating an invite"
+		successMsg = "Invite updated successfully."
 	}
 
-	cmd.Println("Update role successfully.")
-	cmd.Printf(
-		"Subject \"%s\" is now assigned to role \"%s\" on project \"%s\"\n",
-		ret.RoleAssignments[0].Subject,
-		ret.RoleAssignments[0].Role,
-		*ret.RoleAssignments[0].Project,
-	)
+	ret, err := client.UpdateRole(ctx, req)
+	if err != nil {
+		return cli.MessageAndError(failMsg, err)
+	}
 
+	cmd.Println(successMsg)
+
+	if email != "" {
+		t := initializeTableForGrantListInvitations()
+		for _, r := range ret.Invitations {
+			expired := "No"
+			if r.Expired {
+				expired = "Yes"
+			}
+			t.AddRow(r.Email, r.Role, r.Sponsor, r.ExpiresAt.AsTime().Format(time.RFC3339), expired, r.Code)
+		}
+		t.Render()
+		return nil
+	}
+	// Otherwise, print the role assignments if it was about updating a role
+	t := initializeTableForGrantListRoleAssignments()
+	for _, r := range ret.RoleAssignments {
+		t.AddRow(r.Subject, r.Role, *r.Project)
+	}
+	t.Render()
 	return nil
 }
 
 func init() {
 	RoleCmd.AddCommand(updateCmd)
 
-	updateCmd.Flags().StringP("sub", "s", "", "subject to update role access for")
 	updateCmd.Flags().StringP("role", "r", "", "the role to update it to")
-	updateCmd.MarkFlagsRequiredTogether("sub", "role")
+	updateCmd.Flags().StringP("sub", "s", "", "subject to update role access for")
+	updateCmd.Flags().StringP("email", "e", "", "email to send invitation to")
+	updateCmd.MarkFlagsOneRequired("sub", "email")
+	updateCmd.MarkFlagsMutuallyExclusive("sub", "email")
 }

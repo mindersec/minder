@@ -50,7 +50,7 @@ func inviteDeclineCommand(ctx context.Context, cmd *cobra.Command, args []string
 	if err != nil {
 		return cli.MessageAndError("Error resolving invitation", err)
 	}
-	cmd.Printf("Invitation %s for %s to become %s of project %s was declined!\n", code, res.Email, res.Role, res.Project)
+	cmd.Printf("Invitation %s for %s to become %s of project %s was declined!\n", code, res.Email, res.Role, res.ProjectDisplay)
 	return nil
 }
 

@@ -324,13 +324,15 @@ func TestRoleManagement(t *testing.T) {
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: user1.String(),
-				Project: proto.String(project.String()),
+				Role:        authz.AuthzRoleAdmin.String(),
+				Subject:     user1.String(),
+				DisplayName: "user1",
+				Project:     proto.String(project.String()),
 			}, {
-				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: user2.String(),
-				Project: proto.String(project.String()),
+				Role:        authz.AuthzRoleAdmin.String(),
+				DisplayName: "user2",
+				Subject:     user2.String(),
+				Project:     proto.String(project.String()),
 			}},
 		},
 		stored: []*minder.RoleAssignment{{
@@ -357,9 +359,10 @@ func TestRoleManagement(t *testing.T) {
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: user1.String(),
-				Project: proto.String(project.String()),
+				Role:        authz.AuthzRoleAdmin.String(),
+				DisplayName: "user1",
+				Subject:     user1.String(),
+				Project:     proto.String(project.String()),
 			}},
 		},
 	}, {
@@ -374,13 +377,15 @@ func TestRoleManagement(t *testing.T) {
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: "user1",
-				Project: proto.String(project.String()),
+				Role:        authz.AuthzRoleAdmin.String(),
+				Subject:     user1.String(),
+				DisplayName: "user1",
+				Project:     proto.String(project.String()),
 			}, {
-				Role:    authz.AuthzRoleAdmin.String(),
-				Subject: "user2",
-				Project: proto.String(project.String()),
+				Role:        authz.AuthzRoleAdmin.String(),
+				Subject:     user2.String(),
+				DisplayName: "user2",
+				Project:     proto.String(project.String()),
 			}},
 		},
 		stored: []*minder.RoleAssignment{{
@@ -483,7 +488,6 @@ func TestRoleManagement(t *testing.T) {
 
 			featureClient := &flags.FakeClient{}
 			featureClient.Data = map[string]any{
-				"idp_resolver":    tc.idpFlag,
 				"user_management": tc.userManagementFlag,
 			}
 

@@ -4,7 +4,7 @@
 -- the invitee.
 
 -- name: ListInvitationsForProject :many
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.code
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1;
@@ -14,15 +14,22 @@ WHERE project = $1;
 -- to allow them to accept invitations even if email delivery was not working.
 -- Note that this requires that the destination email address matches the email
 -- address of the logged in user in the external identity service / auth token.
+-- This clarification is related solely for user's ListInvitations calls and does
+-- not affect to resolving invitations intended for other mail addresses.
 
 -- name: GetInvitationsByEmail :many
-SELECT * FROM user_invites WHERE email = $1;
+SELECT user_invites.*, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE email = $1;
 
--- GetInvitationByEmailAndProjectAndRole retrieves an invitation by email, project,
--- and role.
+-- GetInvitationsByEmailAndProject retrieves all invitations by email and project.
 
--- name: GetInvitationByEmailAndProjectAndRole :one
-SELECT * FROM user_invites WHERE email = $1 AND project = $2 AND role = $3;
+-- name: GetInvitationsByEmailAndProject :many
+SELECT user_invites.*, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE email = $1 AND project = $2;
 
 -- GetInvitationByCode retrieves an invitation by its code. This is intended to
 -- be called by a user who has received an invitation email and is following the
@@ -30,7 +37,10 @@ SELECT * FROM user_invites WHERE email = $1 AND project = $2 AND role = $3;
 -- invitation.
 
 -- name: GetInvitationByCode :one
-SELECT * FROM user_invites WHERE code = $1;
+SELECT user_invites.*, users.identity_subject
+FROM user_invites
+  JOIN users ON user_invites.sponsor = users.id
+WHERE code = $1;
 
 -- CreateInvitation creates a new invitation. The code is a secret that is sent
 -- to the invitee, and the email is the address to which the invitation will be

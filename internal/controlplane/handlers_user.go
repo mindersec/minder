@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"time"
 
+	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/flags"
+	"github.com/stacklok/minder/internal/invite"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
@@ -272,53 +273,41 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 	invitations := make([]*pb.Invitation, 0)
 
 	// Extracts the user email from the token
-	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
+	tokenEmail, err := auth.GetUserEmailFromContext(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
-	}
-	token, err := s.jwt.ParseAndValidate(tokenString)
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to get user email: %s", err)
 	}
 
 	// Get the list of invitations for the user
-	invites, err := s.store.GetInvitationsByEmail(ctx, token.Email())
+	invites, err := s.store.GetInvitationsByEmail(ctx, tokenEmail)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return &pb.ListInvitationsResponse{}, nil
-		}
 		return nil, status.Errorf(codes.Internal, "failed to get invitations: %s", err)
 	}
 
 	// Build the response list of invitations
-	for _, invite := range invites {
-		// Get the sponsor's user information (current user)
-		sponsorUser, err := s.store.GetUserByID(ctx, invite.Sponsor)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-		}
+	for _, i := range invites {
 		// Resolve the sponsor's identity and display name
-		identity := &auth.Identity{
-			Provider:  nil,
-			UserID:    sponsorUser.IdentitySubject,
-			HumanName: sponsorUser.IdentitySubject,
+		identity, err := s.idClient.Resolve(ctx, i.IdentitySubject)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", i.IdentitySubject)
 		}
-		if flags.Bool(ctx, s.featureFlags, flags.IDPResolver) {
-			identity, err = s.idClient.Resolve(ctx, sponsorUser.IdentitySubject)
-			if err != nil {
-				zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-				return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sponsorUser.IdentitySubject)
-			}
+
+		// Resolve the project's display name
+		targetProject, err := s.store.GetProjectByID(ctx, i.Project)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 		}
 		invitations = append(invitations, &pb.Invitation{
-			Code:           invite.Code,
-			Role:           invite.Role,
-			Email:          invite.Email,
-			Project:        invite.Project.String(),
-			CreatedAt:      timestamppb.New(invite.CreatedAt),
-			ExpiresAt:      timestamppb.New(invite.UpdatedAt.Add(7 * 24 * time.Hour)),
-			Expired:        time.Now().After(invite.UpdatedAt.Add(7 * 24 * time.Hour)),
-			Sponsor:        identity.UserID,
+			Code:           i.Code,
+			Role:           i.Role,
+			Email:          i.Email,
+			Project:        i.Project.String(),
+			ProjectDisplay: targetProject.Name,
+			CreatedAt:      timestamppb.New(i.CreatedAt),
+			ExpiresAt:      invite.GetExpireIn7Days(i.UpdatedAt),
+			Expired:        invite.IsExpired(i.UpdatedAt),
+			Sponsor:        identity.String(),
 			SponsorDisplay: identity.Human(),
 		})
 	}
@@ -335,59 +324,84 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Error(codes.Unimplemented, "feature not enabled")
 	}
 
-	// Extracts the user email from the token
-	tokenString, err := gauth.AuthFromMD(ctx, "bearer")
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "no auth token: %v", err)
-	}
-	token, err := s.jwt.ParseAndValidate(tokenString)
-	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to parse bearer token: %v", err)
-	}
-
 	// Check if the invitation code is valid
-	ret, err := s.store.GetInvitationByCode(ctx, req.Code)
+	userInvite, err := s.store.GetInvitationByCode(ctx, req.Code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "invitation not found")
+			return nil, util.UserVisibleError(codes.NotFound, "invitation not found or already used")
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
 
-	// Check if the invitation matches the user email
-	if token.Email() != ret.Email {
-		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation does not match user")
-	}
-
 	// Check if the invitation is expired
-	if time.Now().After(ret.UpdatedAt.Add(7 * 24 * time.Hour)) {
+	if invite.IsExpired(userInvite.UpdatedAt) {
 		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation expired")
 	}
 
-	isAccepted := false
 	// Accept invitation
 	if req.Accept {
-		// Parse the role
-		authzRole, err := authz.ParseRole(ret.Role)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
+		if err := s.acceptInvitation(ctx, userInvite); err != nil {
+			return nil, err
 		}
-		// Add the user to the project
-		if err := s.authzClient.Write(ctx, token.Subject(), authzRole, ret.Project); err != nil {
-			return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
-		}
-		isAccepted = true
 	}
 
 	// Delete the invitation since its resolved
-	ret, err = s.store.DeleteInvitation(ctx, req.Code)
+	deletedInvite, err := s.store.DeleteInvitation(ctx, req.Code)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete invitation: %s", err)
 	}
+
+	// Resolve the project's display name
+	targetProject, err := s.store.GetProjectByID(ctx, deletedInvite.Project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
 	return &pb.ResolveInvitationResponse{
-		Role:       ret.Role,
-		Project:    ret.Project.String(),
-		Email:      ret.Email,
-		IsAccepted: isAccepted,
+		Role:           deletedInvite.Role,
+		Project:        deletedInvite.Project.String(),
+		ProjectDisplay: targetProject.Name,
+		Email:          deletedInvite.Email,
+		IsAccepted:     req.Accept,
 	}, nil
+}
+
+func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitationByCodeRow) error {
+	// Validate in case there's an existing role assignment for the user
+	as, err := s.authzClient.AssignmentsToProject(ctx, userInvite.Project)
+	if err != nil {
+		return status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+	// Loop through all role assignments for the project and check if this user already has a role
+	for _, existing := range as {
+		if existing.Subject == auth.GetUserSubjectFromContext(ctx) {
+			// User already has the same role in the project
+			if existing.Role == userInvite.Role {
+				return util.UserVisibleError(codes.AlreadyExists, "user already has the same role in the project")
+			}
+			// Revoke the existing role assignments for the user in the project
+			existingRole, err := authz.ParseRole(existing.Role)
+			if err != nil {
+				return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
+			}
+			// Delete the role assignment
+			if err := s.authzClient.Delete(
+				ctx,
+				auth.GetUserSubjectFromContext(ctx),
+				existingRole,
+				uuid.MustParse(*existing.Project),
+			); err != nil {
+				return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+			}
+		}
+	}
+	// Parse the role
+	authzRole, err := authz.ParseRole(userInvite.Role)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
+	}
+	// Add the user to the project
+	if err := s.authzClient.Write(ctx, auth.GetUserSubjectFromContext(ctx), authzRole, userInvite.Project); err != nil {
+		return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+	return nil
 }

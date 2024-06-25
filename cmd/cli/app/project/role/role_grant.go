@@ -60,8 +60,8 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 			Role:  r,
 			Email: email,
 		}
-		failMsg = "Error creating/updating an invite"
-		successMsg = "Invite created/updated successfully."
+		failMsg = "Error creating an invite"
+		successMsg = "Invite created successfully."
 	}
 
 	ret, err := client.AssignRole(ctx, &minderv1.AssignRoleRequest{

@@ -83,16 +83,17 @@ type Querier interface {
 	// be called by a user who has received an invitation email and is following the
 	// link to accept the invitation or when querying for additional info about the
 	// invitation.
-	GetInvitationByCode(ctx context.Context, code string) (UserInvite, error)
-	// GetInvitationByEmailAndProjectAndRole retrieves an invitation by email, project,
-	// and role.
-	GetInvitationByEmailAndProjectAndRole(ctx context.Context, arg GetInvitationByEmailAndProjectAndRoleParams) (UserInvite, error)
+	GetInvitationByCode(ctx context.Context, code string) (GetInvitationByCodeRow, error)
 	// GetInvitationsByEmail retrieves all invitations for a given email address.
 	// This is intended to be called by a logged in user with their own email address,
 	// to allow them to accept invitations even if email delivery was not working.
 	// Note that this requires that the destination email address matches the email
 	// address of the logged in user in the external identity service / auth token.
-	GetInvitationsByEmail(ctx context.Context, email string) ([]UserInvite, error)
+	// This clarification is related solely for user's ListInvitations calls and does
+	// not affect to resolving invitations intended for other mail addresses.
+	GetInvitationsByEmail(ctx context.Context, email string) ([]GetInvitationsByEmailRow, error)
+	// GetInvitationsByEmailAndProject retrieves all invitations by email and project.
+	GetInvitationsByEmailAndProject(ctx context.Context, arg GetInvitationsByEmailAndProjectParams) ([]GetInvitationsByEmailAndProjectRow, error)
 	// Copyright 2024 Stacklok, Inc
 	//
 	// Licensed under the Apache License, Version 2.0 (the "License");
