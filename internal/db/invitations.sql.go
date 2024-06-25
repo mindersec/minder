@@ -230,7 +230,7 @@ func (q *Queries) GetInvitationsByEmailAndProject(ctx context.Context, arg GetIn
 
 const listInvitationsForProject = `-- name: ListInvitationsForProject :many
 
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.code
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1
@@ -242,7 +242,6 @@ type ListInvitationsForProjectRow struct {
 	IdentitySubject string    `json:"identity_subject"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
-	Code            string    `json:"code"`
 }
 
 // ListInvitationsForProject collects the information visible to project
@@ -264,7 +263,6 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 			&i.IdentitySubject,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.Code,
 		); err != nil {
 			return nil, err
 		}

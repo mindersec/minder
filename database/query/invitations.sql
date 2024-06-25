@@ -4,7 +4,7 @@
 -- the invitee.
 
 -- name: ListInvitationsForProject :many
-SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at, user_invites.code
+SELECT user_invites.email, role, users.identity_subject, user_invites.created_at, user_invites.updated_at
 FROM user_invites
   JOIN users ON user_invites.sponsor = users.id
 WHERE project = $1;
