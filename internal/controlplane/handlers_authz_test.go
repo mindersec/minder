@@ -416,37 +416,18 @@ func TestRoleManagement(t *testing.T) {
 			UpdatedAt:       time.Time{},
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
-			RoleAssignments: []*minder.RoleAssignment{{
-				Role:        authz.AuthzRoleAdmin.String(),
-				Subject:     user1.String(),
-				DisplayName: "user1",
-				Project:     proto.String(project.String()),
-			}, {
-				Role:        authz.AuthzRoleAdmin.String(),
-				Subject:     user2.String(),
-				DisplayName: "user2",
-				Project:     proto.String(project.String()),
-			}},
+			RoleAssignments: []*minder.RoleAssignment{},
 			Invitations: []*minder.Invitation{{
-				Role:           authz.AuthzRoleEditor.String(),
-				Email:          "george@happyplace.dev",
-				Project:        project.String(),
-				Sponsor:        user1.String(),
-				SponsorDisplay: "user1",
-				CreatedAt:      timestamppb.New(time.Time{}),
-				ExpiresAt:      timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
-				Expired:        true,
+				Role:      authz.AuthzRoleEditor.String(),
+				Email:     "george@happyplace.dev",
+				Project:   project.String(),
+				Sponsor:   user1.String(),
+				CreatedAt: timestamppb.New(time.Time{}),
+				ExpiresAt: timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
+				Expired:   true,
 			}},
 		},
-		stored: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: user1.String(),
-			Project: proto.String(project.String()),
-		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
-			Subject: user2.String(),
-			Project: proto.String(project.String()),
-		}},
+		stored: []*minder.RoleAssignment{},
 	}}
 
 	user := openid.New()
@@ -470,7 +451,9 @@ func TestRoleManagement(t *testing.T) {
 					// note: in the flag case, subject may be translated to UUID.
 					match = gomock.Any()
 				}
-				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+				if !tc.userManagementFlag {
+					mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+				}
 				mockStore.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{ID: project}, nil)
 
 			}
@@ -525,7 +508,11 @@ func TestRoleManagement(t *testing.T) {
 
 			for _, add := range tc.adds {
 				_, err := server.AssignRole(ctx, &minder.AssignRoleRequest{RoleAssignment: add})
-				assert.NoError(t, err)
+				if tc.userManagementFlag {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
 			}
 			for _, remove := range tc.removes {
 				_, err := server.RemoveRole(ctx, &minder.RemoveRoleRequest{RoleAssignment: remove})
