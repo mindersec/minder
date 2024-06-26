@@ -152,7 +152,7 @@ INSERT INTO latest_evaluation_statuses(
     $1,
     $2
 )
-ON CONFLICT (rule_entity_id, evaluation_history_id) DO UPDATE
+ON CONFLICT (rule_entity_id) DO UPDATE
 SET evaluation_history_id = $2
 `
 

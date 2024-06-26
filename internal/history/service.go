@@ -28,8 +28,12 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 )
 
-// EvaluationHistoryService contains methods to access the eval history log
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+// EvaluationHistoryService contains methods to add/query data in the history table.
 type EvaluationHistoryService interface {
+	// StoreEvaluationStatus stores the result of this evaluation in the history table.
+	// Returns the UUID of the evaluation status.
 	StoreEvaluationStatus(
 		ctx context.Context,
 		qtx db.Querier,
@@ -37,7 +41,7 @@ type EvaluationHistoryService interface {
 		entityType db.Entities,
 		entityID uuid.UUID,
 		evalError error,
-	) error
+	) (uuid.UUID, error)
 }
 
 // NewEvaluationHistoryService creates a new instance of EvaluationHistoryService
@@ -54,14 +58,14 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityType db.Entities,
 	entityID uuid.UUID,
 	evalError error,
-) error {
+) (uuid.UUID, error) {
 	var ruleEntityID, evaluationID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
 	details := evalerrors.ErrorAsEvalDetails(evalError)
 
 	params, err := paramsFromEntity(ruleID, entityID, entityType)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	// find the latest record for this rule/entity pair
@@ -85,10 +89,10 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("error while creating new rule/entity in database: %w", err)
+				return uuid.Nil, fmt.Errorf("error while creating new rule/entity in database: %w", err)
 			}
 		} else {
-			return fmt.Errorf("error while querying DB: %w", err)
+			return uuid.Nil, fmt.Errorf("error while querying DB: %w", err)
 		}
 	} else {
 		ruleEntityID = latestRecord.RuleEntityID
@@ -101,16 +105,16 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	if evaluationID == uuid.Nil || previousDetails != details || previousStatus != status {
 		// if there is no prior state for this rule/entity, or the previous state
 		// differs from the current one, create a new status record.
-		if err = e.createNewStatus(ctx, qtx, ruleEntityID, status, details); err != nil {
-			return fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
+		if evaluationID, err = e.createNewStatus(ctx, qtx, ruleEntityID, status, details); err != nil {
+			return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 		}
 	} else {
 		if err = e.updateExistingStatus(ctx, qtx, entityID, latestRecord.EvaluationTimes); err != nil {
-			return fmt.Errorf("error while updating existing evaluation status for rule/entity %s: %w", ruleEntityID, err)
+			return uuid.Nil, fmt.Errorf("error while updating existing evaluation status for rule/entity %s: %w", ruleEntityID, err)
 		}
 	}
 
-	return nil
+	return evaluationID, nil
 }
 
 func (_ *evaluationHistoryService) createNewStatus(
@@ -119,7 +123,7 @@ func (_ *evaluationHistoryService) createNewStatus(
 	ruleEntityID uuid.UUID,
 	status db.EvalStatusTypes,
 	details string,
-) error {
+) (uuid.UUID, error) {
 	newEvaluationID, err := qtx.InsertEvaluationStatus(ctx,
 		db.InsertEvaluationStatusParams{
 			RuleEntityID: ruleEntityID,
@@ -128,16 +132,21 @@ func (_ *evaluationHistoryService) createNewStatus(
 		},
 	)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
 	// mark this as the latest status for this rule/entity
-	return qtx.UpsertLatestEvaluationStatus(ctx,
+	err = qtx.UpsertLatestEvaluationStatus(ctx,
 		db.UpsertLatestEvaluationStatusParams{
 			RuleEntityID:        ruleEntityID,
 			EvaluationHistoryID: newEvaluationID,
 		},
 	)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return newEvaluationID, err
 }
 
 func (_ *evaluationHistoryService) updateExistingStatus(

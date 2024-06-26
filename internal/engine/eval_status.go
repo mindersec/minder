@@ -28,6 +28,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	ent "github.com/stacklok/minder/internal/entities"
+	"github.com/stacklok/minder/internal/flags"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -126,8 +127,21 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
+	// Get rule instance ID
+	// TODO: we should use the rule instance table in the evaluation process
+	// it should not be necessary to query it here.
+	ruleID, err := e.querier.GetIDByProfileEntityName(ctx, db.GetIDByProfileEntityNameParams{
+		ProfileID:  params.ProfileID,
+		EntityType: params.EntityType,
+		Name:       params.Rule.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to retrieve rule instance ID from DB: %w", err)
+	}
+
 	// Upsert evaluation
-	id, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
+	// TODO: replace this table with the evaluation statuses table
+	evalID, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID:     params.ProfileID,
 		RepositoryID:  params.RepoID,
 		ArtifactID:    params.ArtifactID,
@@ -136,7 +150,6 @@ func (e *Executor) createOrUpdateEvalStatus(
 		PullRequestID: params.PullRequestID,
 		RuleName:      params.Rule.Name,
 	})
-
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule evaluation")
 		return err
@@ -148,9 +161,9 @@ func (e *Executor) createOrUpdateEvalStatus(
 		return err
 	}
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
-	e.metrics.CountEvalStatus(ctx, status, params.ProfileID, params.ProjectID, entityID, entityType)
+	e.metrics.CountEvalStatus(ctx, status, entityType)
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
-		RuleEvalID: id,
+		RuleEvalID: evalID,
 		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
 		Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
 	})
@@ -161,9 +174,12 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	// Upsert remediation details
+	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
+	e.metrics.CountRemediationStatus(ctx, remediationStatus)
+
 	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
-		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr),
+		RuleEvalID: evalID,
+		Status:     remediationStatus,
 		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
 		Metadata:   params.GetActionsErr().RemediateMeta,
 	})
@@ -172,14 +188,35 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 
 	// Upsert alert details
+	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
+	e.metrics.CountAlertStatus(ctx, alertStatus)
+
 	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
-		RuleEvalID: id,
-		Status:     evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr),
+		RuleEvalID: evalID,
+		Status:     alertStatus,
 		Details:    errorAsActionDetails(params.GetActionsErr().AlertErr),
 		Metadata:   params.GetActionsErr().AlertMeta,
 	})
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule alert details")
+	}
+
+	if flags.Bool(ctx, e.featureFlags, flags.EvalHistory) {
+		// Log in the evaluation history tables
+		_, err = db.WithTransaction(e.querier, func(qtx db.ExtendQuerier) (uuid.UUID, error) {
+			return e.historyService.StoreEvaluationStatus(
+				ctx,
+				qtx,
+				ruleID,
+				params.EntityType,
+				entityID,
+				params.GetEvalErr(),
+			)
+		})
+		if err != nil {
+			logger.Err(err).Msg("error logging evaluation status")
+			return err
+		}
 	}
 
 	return err

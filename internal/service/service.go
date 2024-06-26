@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/open-feature/go-sdk/openfeature"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
@@ -34,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
+	"github.com/stacklok/minder/internal/history"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/profiles"
@@ -134,6 +136,7 @@ func AllInOneServerService(
 	repos := github.NewRepositoryService(whManager, store, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
+	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	s := controlplane.NewServer(
 		store,
@@ -154,6 +157,7 @@ func AllInOneServerService(
 		sessionsService,
 		projectDeleter,
 		projectCreator,
+		featureFlagClient,
 	)
 
 	// Subscribe to events from the identity server
@@ -181,6 +185,8 @@ func AllInOneServerService(
 		providerManager,
 		executorMiddleware,
 		executorMetrics,
+		history.NewEvaluationHistoryService(),
+		featureFlagClient,
 	)
 
 	evt.ConsumeEvents(exec)

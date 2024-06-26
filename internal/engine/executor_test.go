@@ -42,6 +42,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/flags"
+	mock_history "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
@@ -255,6 +257,15 @@ default allow = true`,
 			Details:    "",
 		}).Return(ruleEvalDetailsId, nil)
 
+	ruleInstanceID := uuid.New()
+	mockStore.EXPECT().
+		GetIDByProfileEntityName(gomock.Any(), db.GetIDByProfileEntityNameParams{
+			ProfileID:  profileID,
+			EntityType: db.EntitiesRepository,
+			Name:       passthroughRuleType,
+		}).
+		Return(ruleInstanceID, nil)
+
 	// Mock upserting remediate status
 	ruleEvalRemediationId := uuid.New()
 	mockStore.EXPECT().
@@ -350,6 +361,7 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
+	historyService := mock_history.NewMockEvaluationHistoryService(ctrl)
 
 	e := engine.NewExecutor(
 		ctx,
@@ -358,6 +370,8 @@ default allow = true`,
 		providerManager,
 		[]message.HandlerMiddleware{},
 		execMetrics,
+		historyService,
+		&flags.FakeClient{},
 	)
 	require.NoError(t, err, "expected no error")
 
