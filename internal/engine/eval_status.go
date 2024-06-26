@@ -163,9 +163,10 @@ func (e *Executor) createOrUpdateEvalStatus(
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
 	e.metrics.CountEvalStatus(ctx, status, entityType)
 
+	evalStatus := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: evalID,
-		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
+		Status:     evalStatus,
 		Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
 	})
 	if err != nil {
@@ -220,24 +221,29 @@ func (e *Executor) createOrUpdateEvalStatus(
 			// is ongoing discussion about decoupling alerting and remediation
 			// from evaluation, I am leaving them here to make them easy to
 			// move elsewhere.
-			err = qtx.InsertRemediationEvent(ctx, db.InsertRemediationEventParams{
-				EvaluationID: evalID,
-				Status:       remediationStatus,
-				Details:      errorAsActionDetails(params.GetActionsErr().RemediateErr),
-				Metadata:     params.GetActionsErr().RemediateMeta,
-			})
-			if err != nil {
-				return uuid.Nil, err
-			}
 
-			err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
-				EvaluationID: evalID,
-				Status:       alertStatus,
-				Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
-				Metadata:     params.GetActionsErr().AlertMeta,
-			})
-			if err != nil {
-				return uuid.Nil, err
+			// Don't store remediation/alert history unless evaluation failed
+			// Otherwise, we log uninteresting "skipped" statuses
+			if evalStatus == db.EvalStatusTypesFailure {
+				err = qtx.InsertRemediationEvent(ctx, db.InsertRemediationEventParams{
+					EvaluationID: evalID,
+					Status:       remediationStatus,
+					Details:      errorAsActionDetails(params.GetActionsErr().RemediateErr),
+					Metadata:     params.GetActionsErr().RemediateMeta,
+				})
+				if err != nil {
+					return uuid.Nil, err
+				}
+
+				err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
+					EvaluationID: evalID,
+					Status:       alertStatus,
+					Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
+					Metadata:     params.GetActionsErr().AlertMeta,
+				})
+				if err != nil {
+					return uuid.Nil, err
+				}
 			}
 
 			return evalID, nil
