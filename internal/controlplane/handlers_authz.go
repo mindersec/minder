@@ -610,7 +610,7 @@ func (s *Server) removeRole(
 		}
 		// If there's only one admin role, return an error
 		if adminRolesCnt <= 1 {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "cannot remove the last admin from the project")
+			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
 		}
 	}
 
