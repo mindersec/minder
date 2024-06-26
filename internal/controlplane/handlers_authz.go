@@ -472,12 +472,6 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
-	// Ensure user is not updating their own role
-	err := isUserSelfUpdating(ctx, sub, email)
-	if err != nil {
-		return nil, err
-	}
-
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
