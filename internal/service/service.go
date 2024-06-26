@@ -179,17 +179,21 @@ func AllInOneServerService(
 	}
 
 	exec := engine.NewExecutor(
-		ctx,
 		store,
-		evt,
 		providerManager,
-		executorMiddleware,
 		executorMetrics,
 		history.NewEvaluationHistoryService(),
 		featureFlagClient,
 	)
 
-	evt.ConsumeEvents(exec)
+	handler := engine.NewExecutorEventHandler(
+		ctx,
+		evt,
+		executorMiddleware,
+		exec,
+	)
+
+	evt.ConsumeEvents(handler)
 
 	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos)
 	if err != nil {
@@ -224,7 +228,7 @@ func AllInOneServerService(
 	}
 
 	// Wait for all entity events to be executed
-	exec.Wait()
+	handler.Wait()
 
 	return errg.Wait()
 }

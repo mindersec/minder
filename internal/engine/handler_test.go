@@ -24,10 +24,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -36,9 +38,13 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
 	mock_history "github.com/stacklok/minder/internal/history/mock"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -47,11 +53,37 @@ import (
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/util/testqueue"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-func TestExecutor_handleEntityEvent(t *testing.T) {
+// NOTE: These tests predate the split of the Executor and the ExecutorEventHandler
+// They could be simplified to use a mock of the Executor instead of a real instance.
+
+func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) pqtype.NullRawMessage {
+	t.Helper()
+
+	ftoken := &oauth2.Token{
+		AccessToken:  "foo-bar",
+		TokenType:    "bar-baz",
+		RefreshToken: "",
+		// Expires in 10 mins
+		Expiry: time.Now().Add(10 * time.Minute),
+	}
+
+	// encrypt token
+	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
+	require.NoError(t, err)
+	serialized, err := encryptedToken.Serialize()
+	require.NoError(t, err)
+	return pqtype.NullRawMessage{
+		RawMessage: serialized,
+		Valid:      true,
+	}
+}
+
+func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -283,6 +315,28 @@ default allow = true`,
 
 	// -- end expectations
 
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver: "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{
+			BlockPublishUntilSubscriberAck: true,
+		},
+	})
+	require.NoError(t, err, "failed to setup eventer")
+
+	pq := testqueue.NewPassthroughQueue(t)
+	queued := pq.GetQueue()
+
+	go func() {
+		t.Log("Running eventer")
+		evt.Register(events.TopicQueueEntityFlush, pq.Pass)
+		err := evt.Run(context.Background())
+		require.NoError(t, err, "failed to run eventer")
+	}()
+
+	testTimeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+
 	ghProviderService := ghService.NewGithubProviderService(
 		mockStore,
 		cryptoEngine,
@@ -320,6 +374,13 @@ default allow = true`,
 		&flags.FakeClient{},
 	)
 
+	handler := engine.NewExecutorEventHandler(
+		ctx,
+		evt,
+		[]message.HandlerMiddleware{},
+		executor,
+	)
+
 	eiw := entities.NewEntityInfoWrapper().
 		WithProviderID(providerID).
 		WithProjectID(projectID).
@@ -330,10 +391,40 @@ default allow = true`,
 		}).WithRepositoryID(repositoryID).
 		WithExecutionID(executionID)
 
-	err = executor.EvalEntityEvent(context.Background(), eiw)
-	require.NoError(t, err)
+	t.Log("waiting for eventer to start")
+	<-evt.Running()
 
-	// Note: Assertions currently rely on the DB expectations
-	// TODO: Consider refactoring the code further to make it easier to
-	// test.
+	msg, err := eiw.BuildMessage()
+	require.NoError(t, err, "expected no error")
+
+	ts := &logger.TelemetryStore{
+		Project:    projectID,
+		ProviderID: providerID,
+		Repository: repositoryID,
+	}
+	ctx = ts.WithTelemetry(ctx)
+	msg.SetContext(ctx)
+
+	// Run in the background
+	go func() {
+		t.Log("Running entity event handler")
+		require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
+	}()
+
+	// expect flush
+	t.Log("waiting for flush")
+	require.NotNil(t, <-queued, "expected message")
+
+	require.NoError(t, evt.Close(), "expected no error")
+
+	t.Log("waiting for executor to finish")
+	handler.Wait()
+
+	require.Len(t, ts.Evals, 1, "expected one eval to be logged")
+	requredEval := ts.Evals[0]
+	require.Equal(t, "test-profile", requredEval.Profile.Name)
+	require.Equal(t, "success", requredEval.EvalResult)
+	require.Equal(t, "passthrough", requredEval.RuleType.Name)
+	require.Equal(t, "off", requredEval.Actions[alert.ActionType].State)
+	require.Equal(t, "off", requredEval.Actions[remediate.ActionType].State)
 }
