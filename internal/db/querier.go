@@ -211,10 +211,10 @@ type Querier interface {
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	UpdateEvaluationTimes(ctx context.Context, arg UpdateEvaluationTimesParams) error
-	// UpdateInvitation updates an invitation by its code. This is intended to be
-	// called by a user who has issued an invitation and then decided to bump its
-	// expiration.
-	UpdateInvitation(ctx context.Context, code string) (UserInvite, error)
+	// UpdateInvitationRole updates an invitation by its code. This is intended to be
+	// called by a user who has issued an invitation and then decided to change the
+	// role of the invitee.
+	UpdateInvitationRole(ctx context.Context, arg UpdateInvitationRoleParams) (UserInvite, error)
 	UpdateLease(ctx context.Context, arg UpdateLeaseParams) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
