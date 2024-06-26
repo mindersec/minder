@@ -362,9 +362,8 @@ func (s *Server) inviteUser(
 	}
 
 	// If there are no invitations for this email, great, we should create one
-
-	sponsorDisplay := currentUser.IdentitySubject
 	// Resolve the sponsor's identity and display name
+	sponsorDisplay := currentUser.IdentitySubject
 	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
@@ -576,7 +575,7 @@ func (s *Server) removeInvite(
 func (s *Server) removeRole(
 	ctx context.Context,
 	targetProject uuid.UUID,
-	role authz.Role,
+	roleToRemove authz.Role,
 	subject string,
 ) (*minder.RemoveRoleResponse, error) {
 	var err error
@@ -595,14 +594,34 @@ func (s *Server) removeRole(
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
+	// Validate in case there's only one admin for the project and the user is trying to remove themselves
+	if roleToRemove == authz.AuthzRoleAdmin {
+		// Get all role assignments for the project
+		as, err := s.authzClient.AssignmentsToProject(ctx, targetProject)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+		}
+		// Count the number of admin roles
+		adminRolesCnt := 0
+		for _, existing := range as {
+			if existing.Role == authz.AuthzRoleAdmin.String() {
+				adminRolesCnt++
+			}
+		}
+		// If there's only one admin role, return an error
+		if adminRolesCnt <= 1 {
+			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
+		}
+	}
+
 	// Delete the role assignment
-	if err := s.authzClient.Delete(ctx, identity.String(), role, targetProject); err != nil {
+	if err := s.authzClient.Delete(ctx, identity.String(), roleToRemove, targetProject); err != nil {
 		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 	prj := targetProject.String()
 	return &minder.RemoveRoleResponse{
 		RoleAssignment: &minder.RoleAssignment{
-			Role:    role.String(),
+			Role:    roleToRemove.String(),
 			Subject: identity.Human(),
 			Project: &prj,
 		},
