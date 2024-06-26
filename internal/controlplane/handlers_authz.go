@@ -326,7 +326,12 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && email == "" {
-		return s.assignRole(ctx, targetProject, authzRole, sub)
+		// Enable one or the other.
+		// This is temporary until we deprecate it completely in favor of email-based role assignments
+		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+			return s.assignRole(ctx, targetProject, authzRole, sub)
+		}
+		return nil, util.UserVisibleError(codes.Unimplemented, "user management is enabled, use invites instead")
 	}
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
 }
