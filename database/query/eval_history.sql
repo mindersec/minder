@@ -67,3 +67,29 @@ INSERT INTO latest_evaluation_statuses(
 )
 ON CONFLICT (rule_entity_id) DO UPDATE
 SET evaluation_history_id = $2;
+
+-- name: InsertRemediationEvent :exec
+INSERT INTO remediation_events(
+    evaluation_id,
+    status,
+    details,
+    metadata
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4
+);
+
+-- name: InsertAlertEvent :exec
+INSERT INTO alert_events(
+    evaluation_id,
+    status,
+    details,
+    metadata
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4
+);

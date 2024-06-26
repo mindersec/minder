@@ -1392,6 +1392,20 @@ func (mr *MockStoreMockRecorder) GlobalListProvidersByClass(arg0, arg1 any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalListProvidersByClass", reflect.TypeOf((*MockStore)(nil).GlobalListProvidersByClass), arg0, arg1)
 }
 
+// InsertAlertEvent mocks base method.
+func (m *MockStore) InsertAlertEvent(arg0 context.Context, arg1 db.InsertAlertEventParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertAlertEvent", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertAlertEvent indicates an expected call of InsertAlertEvent.
+func (mr *MockStoreMockRecorder) InsertAlertEvent(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertAlertEvent", reflect.TypeOf((*MockStore)(nil).InsertAlertEvent), arg0, arg1)
+}
+
 // InsertEvaluationRuleEntity mocks base method.
 func (m *MockStore) InsertEvaluationRuleEntity(arg0 context.Context, arg1 db.InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
@@ -1420,6 +1434,20 @@ func (m *MockStore) InsertEvaluationStatus(arg0 context.Context, arg1 db.InsertE
 func (mr *MockStoreMockRecorder) InsertEvaluationStatus(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertEvaluationStatus", reflect.TypeOf((*MockStore)(nil).InsertEvaluationStatus), arg0, arg1)
+}
+
+// InsertRemediationEvent mocks base method.
+func (m *MockStore) InsertRemediationEvent(arg0 context.Context, arg1 db.InsertRemediationEventParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertRemediationEvent", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertRemediationEvent indicates an expected call of InsertRemediationEvent.
+func (mr *MockStoreMockRecorder) InsertRemediationEvent(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRemediationEvent", reflect.TypeOf((*MockStore)(nil).InsertRemediationEvent), arg0, arg1)
 }
 
 // ListArtifactsByRepoID mocks base method.

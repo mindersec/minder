@@ -148,8 +148,10 @@ type Querier interface {
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
+	InsertAlertEvent(ctx context.Context, arg InsertAlertEventParams) error
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
+	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
