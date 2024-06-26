@@ -142,10 +142,12 @@ func TestStoreEvaluationStatus(t *testing.T) {
 			}
 
 			service := history.NewEvaluationHistoryService()
-			err := service.StoreEvaluationStatus(ctx, store, ruleID, scenario.EntityType, entityID, errTest)
+			id, err := service.StoreEvaluationStatus(ctx, store, ruleID, scenario.EntityType, entityID, errTest)
 			if scenario.ExpectedError == "" {
+				require.Equal(t, evaluationID, id)
 				require.NoError(t, err)
 			} else {
+				require.Equal(t, uuid.Nil, id)
 				require.ErrorContains(t, err, scenario.ExpectedError)
 			}
 		})

@@ -22,6 +22,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
@@ -33,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/manager"
@@ -61,6 +63,8 @@ type Executor struct {
 	terminationcontext context.Context
 	providerManager    manager.ProviderManager
 	metrics            *ExecutorMetrics
+	historyService     history.EvaluationHistoryService
+	featureFlags       openfeature.IClient
 }
 
 // NewExecutor creates a new executor
@@ -71,6 +75,8 @@ func NewExecutor(
 	providerManager manager.ProviderManager,
 	handlerMiddleware []message.HandlerMiddleware,
 	metrics *ExecutorMetrics,
+	historyService history.EvaluationHistoryService,
+	featureFlags openfeature.IClient,
 ) *Executor {
 	return &Executor{
 		querier:                querier,
@@ -80,6 +86,8 @@ func NewExecutor(
 		handlerMiddleware:      handlerMiddleware,
 		providerManager:        providerManager,
 		metrics:                metrics,
+		historyService:         historyService,
+		featureFlags:           featureFlags,
 	}
 }
 
@@ -390,7 +398,8 @@ func (e *Executor) releaseLockAndFlush(
 func logEval(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
-	params *engif.EvalStatusParams) {
+	params *engif.EvalStatusParams,
+) {
 	evalLog := params.DecorateLogger(
 		zerolog.Ctx(ctx).With().
 			Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).

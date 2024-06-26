@@ -141,6 +141,7 @@ func NewServer(
 	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
+	featureFlagClient *openfeature.Client,
 ) *Server {
 	return &Server{
 		store:               store,
@@ -152,7 +153,7 @@ func NewServer(
 		profiles:            profileService,
 		ruleTypes:           ruleService,
 		providerStore:       providerStore,
-		featureFlags:        openfeature.NewClient(cfg.Flags.AppName),
+		featureFlags:        featureFlagClient,
 		ghClient:            &ghprov.ClientServiceImplementation{},
 		providerManager:     providerManager,
 		providerAuthManager: providerAuthManager,
