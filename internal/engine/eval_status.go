@@ -162,12 +162,12 @@ func (e *Executor) createOrUpdateEvalStatus(
 	}
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
 	e.metrics.CountEvalStatus(ctx, status, entityType)
+
 	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
 		RuleEvalID: evalID,
 		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
 		Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
 	})
-
 	if err != nil {
 		logger.Err(err).Msg("error upserting rule evaluation details")
 		return err
@@ -204,7 +204,7 @@ func (e *Executor) createOrUpdateEvalStatus(
 	if flags.Bool(ctx, e.featureFlags, flags.EvalHistory) {
 		// Log in the evaluation history tables
 		_, err = db.WithTransaction(e.querier, func(qtx db.ExtendQuerier) (uuid.UUID, error) {
-			return e.historyService.StoreEvaluationStatus(
+			evalID, err := e.historyService.StoreEvaluationStatus(
 				ctx,
 				qtx,
 				ruleID,
@@ -212,6 +212,35 @@ func (e *Executor) createOrUpdateEvalStatus(
 				entityID,
 				params.GetEvalErr(),
 			)
+			if err != nil {
+				return uuid.Nil, err
+			}
+
+			// These could be added into the history service, but since there
+			// is ongoing discussion about decoupling alerting and remediation
+			// from evaluation, I am leaving them here to make them easy to
+			// move elsewhere.
+			err = qtx.InsertRemediationEvent(ctx, db.InsertRemediationEventParams{
+				EvaluationID: evalID,
+				Status:       remediationStatus,
+				Details:      errorAsActionDetails(params.GetActionsErr().RemediateErr),
+				Metadata:     params.GetActionsErr().RemediateMeta,
+			})
+			if err != nil {
+				return uuid.Nil, err
+			}
+
+			err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
+				EvaluationID: evalID,
+				Status:       alertStatus,
+				Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
+				Metadata:     params.GetActionsErr().AlertMeta,
+			})
+			if err != nil {
+				return uuid.Nil, err
+			}
+
+			return evalID, nil
 		})
 		if err != nil {
 			logger.Err(err).Msg("error logging evaluation status")

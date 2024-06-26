@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,6 +65,37 @@ func (q *Queries) GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLa
 		&i.MostRecentEvaluation,
 	)
 	return i, err
+}
+
+const insertAlertEvent = `-- name: InsertAlertEvent :exec
+INSERT INTO alert_events(
+    evaluation_id,
+    status,
+    details,
+    metadata
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4
+)
+`
+
+type InsertAlertEventParams struct {
+	EvaluationID uuid.UUID        `json:"evaluation_id"`
+	Status       AlertStatusTypes `json:"status"`
+	Details      string           `json:"details"`
+	Metadata     json.RawMessage  `json:"metadata"`
+}
+
+func (q *Queries) InsertAlertEvent(ctx context.Context, arg InsertAlertEventParams) error {
+	_, err := q.db.ExecContext(ctx, insertAlertEvent,
+		arg.EvaluationID,
+		arg.Status,
+		arg.Details,
+		arg.Metadata,
+	)
+	return err
 }
 
 const insertEvaluationRuleEntity = `-- name: InsertEvaluationRuleEntity :one
@@ -124,6 +156,37 @@ func (q *Queries) InsertEvaluationStatus(ctx context.Context, arg InsertEvaluati
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const insertRemediationEvent = `-- name: InsertRemediationEvent :exec
+INSERT INTO remediation_events(
+    evaluation_id,
+    status,
+    details,
+    metadata
+) VALUES (
+    $1,
+    $2,
+    $3,
+    $4
+)
+`
+
+type InsertRemediationEventParams struct {
+	EvaluationID uuid.UUID              `json:"evaluation_id"`
+	Status       RemediationStatusTypes `json:"status"`
+	Details      string                 `json:"details"`
+	Metadata     json.RawMessage        `json:"metadata"`
+}
+
+func (q *Queries) InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error {
+	_, err := q.db.ExecContext(ctx, insertRemediationEvent,
+		arg.EvaluationID,
+		arg.Status,
+		arg.Details,
+		arg.Metadata,
+	)
+	return err
 }
 
 const updateEvaluationTimes = `-- name: UpdateEvaluationTimes :exec
