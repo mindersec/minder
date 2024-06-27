@@ -14,8 +14,8 @@ jobs:
         with:
           node-version: 18
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
         working-directory: ./docs
       - name: Test build website
-        run: yarn build
+        run: npm run build
         working-directory: ./docs
