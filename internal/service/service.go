@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
+	"github.com/stacklok/minder/internal/email"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
@@ -178,6 +179,7 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to create metrics for executor: %w", err)
 	}
 
+	// Register the executor to handle entity evaluations
 	exec := engine.NewExecutor(
 		store,
 		providerManager,
@@ -195,15 +197,25 @@ func AllInOneServerService(
 
 	evt.ConsumeEvents(handler)
 
+	// Register the reconciler to handle entity events
 	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}
-
 	evt.ConsumeEvents(rec)
 
+	// Register the installation manager to handle provider installation events
 	im := installations.NewInstallationManager(ghProviders)
 	evt.ConsumeEvents(im)
+
+	// Register the email manager to handle email invitations
+	// TODO: This should be read from the config
+	mailClient, err := email.NewAWSSES("noreply@stacklok.com")
+	if err != nil {
+		return fmt.Errorf("unable to create email client: %w", err)
+	}
+	mm := email.NewMailManager(mailClient)
+	evt.ConsumeEvents(mm)
 
 	// Start the gRPC and HTTP server in separate goroutines
 	errg.Go(func() error {
