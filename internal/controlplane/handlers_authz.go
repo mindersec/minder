@@ -702,32 +702,16 @@ func (s *Server) updateInvite(
 	}
 	defer s.store.Rollback(tx)
 
-	// At this point, there should be exactly 1 invitation. We should either update its expiration or
-	// discard it and create a new one
-	if existingInvites[0].Role != authzRole.String() {
-		// If there's an existing invite with a different role, we should delete it and create a new one
-		// Delete the existing invitation
-		_, err = s.store.DeleteInvitation(ctx, existingInvites[0].Code)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error deleting previous invitation: %v", err)
-		}
-		// Create a new invitation
-		userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
-			Code:    invite.GenerateCode(),
-			Email:   email,
-			Role:    authzRole.String(),
-			Project: targetProject,
-			Sponsor: currentUser.ID,
-		})
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
-		}
-	} else {
-		// If the role is the same, we should update the expiration
-		userInvite, err = s.store.UpdateInvitation(ctx, existingInvites[0].Code)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
-		}
+	// At this point, there should be exactly 1 invitation.
+	// Depending on the role from the request, we can either update the role and its expiration
+	// or just bump the expiration date.
+	// In both cases, we can use the same query.
+	userInvite, err = s.store.UpdateInvitationRole(ctx, db.UpdateInvitationRoleParams{
+		Code: existingInvites[0].Code,
+		Role: authzRole.String(),
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error updating invitation: %v", err)
 	}
 
 	// Resolve the project's display name
@@ -746,6 +730,10 @@ func (s *Server) updateInvite(
 	if err := s.store.Commit(tx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
+
+	// TODO: Publish the event for sending the invitation email
+	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
+	// or the role stayed the same but the invite was created at least a day ago.
 
 	return &minder.UpdateRoleResponse{
 		Invitations: []*minder.Invitation{

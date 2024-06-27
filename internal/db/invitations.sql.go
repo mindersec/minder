@@ -277,16 +277,21 @@ func (q *Queries) ListInvitationsForProject(ctx context.Context, project uuid.UU
 	return items, nil
 }
 
-const updateInvitation = `-- name: UpdateInvitation :one
+const updateInvitationRole = `-- name: UpdateInvitationRole :one
 
-UPDATE user_invites SET updated_at = NOW() WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+UPDATE user_invites SET role = $2, updated_at = NOW() WHERE code = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
 `
 
-// UpdateInvitation updates an invitation by its code. This is intended to be
-// called by a user who has issued an invitation and then decided to bump its
-// expiration.
-func (q *Queries) UpdateInvitation(ctx context.Context, code string) (UserInvite, error) {
-	row := q.db.QueryRowContext(ctx, updateInvitation, code)
+type UpdateInvitationRoleParams struct {
+	Code string `json:"code"`
+	Role string `json:"role"`
+}
+
+// UpdateInvitationRole updates an invitation by its code. This is intended to be
+// called by a user who has issued an invitation and then decided to change the
+// role of the invitee.
+func (q *Queries) UpdateInvitationRole(ctx context.Context, arg UpdateInvitationRoleParams) (UserInvite, error) {
+	row := q.db.QueryRowContext(ctx, updateInvitationRole, arg.Code, arg.Role)
 	var i UserInvite
 	err := row.Scan(
 		&i.Code,

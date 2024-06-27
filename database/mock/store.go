@@ -1835,19 +1835,19 @@ func (mr *MockStoreMockRecorder) UpdateEvaluationTimes(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEvaluationTimes", reflect.TypeOf((*MockStore)(nil).UpdateEvaluationTimes), arg0, arg1)
 }
 
-// UpdateInvitation mocks base method.
-func (m *MockStore) UpdateInvitation(arg0 context.Context, arg1 string) (db.UserInvite, error) {
+// UpdateInvitationRole mocks base method.
+func (m *MockStore) UpdateInvitationRole(arg0 context.Context, arg1 db.UpdateInvitationRoleParams) (db.UserInvite, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateInvitation", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateInvitationRole", arg0, arg1)
 	ret0, _ := ret[0].(db.UserInvite)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateInvitation indicates an expected call of UpdateInvitation.
-func (mr *MockStoreMockRecorder) UpdateInvitation(arg0, arg1 any) *gomock.Call {
+// UpdateInvitationRole indicates an expected call of UpdateInvitationRole.
+func (mr *MockStoreMockRecorder) UpdateInvitationRole(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvitation", reflect.TypeOf((*MockStore)(nil).UpdateInvitation), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvitationRole", reflect.TypeOf((*MockStore)(nil).UpdateInvitationRole), arg0, arg1)
 }
 
 // UpdateLease mocks base method.
