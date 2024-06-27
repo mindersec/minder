@@ -1,20 +1,23 @@
 ---
-title: Enrolling a Provider
+title: Enrolling the GitHub Provider
 sidebar_position: 40
 ---
 
-# Enrolling a Provider
+# Enrolling the GitHub Provider
 
-Once you have authenticated to Minder, you'll want to enroll your GitHub credentials to allow Minder to manage your GitHub repositories.  In the future, Minder will support other source control and artifact repositories, and you will be able to enroll credentials for those providers in the same manner.
+Once you have authenticated to Minder, you'll need to enroll your GitHub credentials to allow Minder to manage your GitHub repositories. This allows Minder to inspect and manage your repository configuration. You will be prompted to grant Minder access.
+
+In the future, Minder will support other source control and artifact repositories, and you will be able to enroll credentials for those providers in the same manner.
+
+:::note
+If you used the [minder `quickstart` command](quickstart), the GitHub Provider was enrolled as part of the quickstart, and you do not need to enroll a second time.
+:::
 
 ## Prerequisites
 
-* A running Minder server, including a running KeyCloak installation
-* A GitHub account
-* [The `minder` CLI application](./install_cli.md)
-* [Logged in to Minder server](./login.md)
+Before you can enroll the GitHub Provider, you must [log in to Minder using the CLI](login).
 
-## Enrolling the GitHub Provider
+## Enrolling and granting access
 
 To enroll your GitHub credentials in your Minder account, run:
 

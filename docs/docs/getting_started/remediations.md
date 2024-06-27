@@ -15,12 +15,7 @@ it will remediate (fix) the setting if it is changed to violate the profile.
 
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* [A Minder account](./login.md)
-* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
-* [A registered repository in Minder](./first_profile.md#register-repositories)
-* [The `secret_scanning` rule type](./first_profile.md#creating-and-applying-profiles)
-* [A policy to open security advisories when secret scanning is off](./first_profile.md#creating-and-applying-profiles)
+Before you can enable automatic remediations, you need to [create a security profile](first_profile).
 
 ## Creating a profile with `remediate: on`
 

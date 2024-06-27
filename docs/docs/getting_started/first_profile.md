@@ -13,10 +13,7 @@ registered repositories.
 
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* [A Minder account](./login.md)
-* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
-* [One or more repositories registered with Minder](./register_repos.md)
+Before you can create a profile, you should [register repositories](register_repos).
 
 ## Creating and applying profiles
 
