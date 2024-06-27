@@ -1,6 +1,6 @@
 ---
 title: Automatic Remediations
-sidebar_position: 70
+sidebar_position: 80
 ---
 
 # Automatic Remediation with Minder

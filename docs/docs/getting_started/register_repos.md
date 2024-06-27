@@ -1,5 +1,5 @@
 ---
-title: Registering Repositories
+title: Registering repositories
 sidebar_position: 50
 ---
 
