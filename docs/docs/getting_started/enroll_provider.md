@@ -25,9 +25,14 @@ To enroll your GitHub credentials in your Minder account, run:
 minder provider enroll
 ```
 
-A browser session will open, and you will be prompted to login to your authorize the Minder application to access your GitHub account and select the organizations you want to install the application for.
+A browser session will open. If you are a member of multiple GitHub organizations, then you will be prompted which organization you want to enroll. You can select your personal account, or a GitHub organization that contains the repositories that you want to manage with Minder.
 
-![Enrollment screenshot](./minder-authorize.png)
-![Enrollment screenshot](./minder-enroll.png)
+![Selecting a GitHub organization](images/select-github-organization.png)
 
-Once you have granted Minder access, you will be redirected back, and the user will be enrolled. The `minder` CLI application will report the session is complete.
+Then you will need to select which repositories you want to allow Minder to manage. You can select all repositories within your GitHub organization, or you can choose individual repositories. If you select individual repositories, they will not be visible within Minder, and you will not be able to [register them](register_repos).
+
+![Selecting GitHub repositories](images/select-repositories.png)
+
+You can change your repository selection within GitHub at any time.
+
+Once you authorize Minder within GitHub, the browser window will close, and you will have enrolled the GitHub Provider. The `minder` CLI application will report the session is complete.
