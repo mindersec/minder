@@ -20,6 +20,6 @@ npm run build
 
 Serve the docs
 ```
-npm run serve -p 3001
+npm run serve -- --port 3001
 ```
 Visit http://localhost:3001/ to view the docs.
