@@ -15,11 +15,11 @@ cd docs
 ```
 
 ```
-yarn build
+npm run build
 ```
 
 Serve the docs
 ```
-yarn serve -p 3001
+npm run serve -p 3001
 ```
 Visit http://localhost:3001/ to view the docs.
