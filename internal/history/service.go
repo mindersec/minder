@@ -26,6 +26,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -42,6 +43,15 @@ type EvaluationHistoryService interface {
 		entityID uuid.UUID,
 		evalError error,
 	) (uuid.UUID, error)
+	// ListEvaluationHistory returns a list of evaluations stored
+	// in the history table.
+	ListEvaluationHistory(
+		ctx context.Context,
+		qtx db.Querier,
+		cursor ListEvaluationCursor,
+		size uint64,
+		filter ListEvaluationFilter,
+	) ([]*minderv1.EvaluationHistory, error)
 }
 
 // NewEvaluationHistoryService creates a new instance of EvaluationHistoryService
@@ -194,4 +204,15 @@ type ruleEntityParams struct {
 	RepositoryID  uuid.NullUUID
 	ArtifactID    uuid.NullUUID
 	PullRequestID uuid.NullUUID
+}
+
+//nolint:revive
+func (e *evaluationHistoryService) ListEvaluationHistory(
+	ctx context.Context,
+	qtx db.Querier,
+	cursor ListEvaluationCursor,
+	size uint64,
+	filter ListEvaluationFilter,
+) ([]*minderv1.EvaluationHistory, error) {
+	return []*minderv1.EvaluationHistory{}, nil
 }

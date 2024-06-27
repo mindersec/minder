@@ -18,6 +18,7 @@ package controlplane
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -28,7 +29,12 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
+	"github.com/stacklok/minder/internal/history"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+const (
+	defaultPageSize uint64 = 25
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
@@ -37,24 +43,69 @@ func (s *Server) ListEvaluationHistory(
 	ctx context.Context,
 	in *minderv1.ListEvaluationHistoryRequest,
 ) (*minderv1.ListEvaluationHistoryResponse, error) {
-	if flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
-		cursor := in.GetCursor()
-		zerolog.Ctx(ctx).Debug().
-			Strs("entity_type", in.GetEntityType()).
-			Strs("entity_name", in.GetEntityName()).
-			Strs("profile_name", in.GetProfileName()).
-			Strs("status", in.GetStatus()).
-			Strs("remediation", in.GetRemediation()).
-			Strs("alert", in.GetAlert()).
-			Str("from", in.GetFrom().String()).
-			Str("to", in.GetTo().String()).
-			Str("cursor.cursor", cursor.Cursor).
-			Uint64("cursor.size", cursor.Size).
-			Msg("ListEvaluationHistory request")
-		return &minderv1.ListEvaluationHistoryResponse{}, nil
+	if !flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
+		return nil, status.Error(codes.Unimplemented, "Not implemented")
 	}
 
-	return nil, status.Error(codes.Unimplemented, "Not implemented")
+	cursor := &history.DefaultCursor
+	size := defaultPageSize
+	if in.GetCursor() != nil {
+		parsedCursor, err := history.ParseListEvaluationCursor(
+			in.GetCursor().GetCursor(),
+		)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "error parsing cursor")
+		}
+		cursor = parsedCursor
+		size = in.GetCursor().GetSize()
+	}
+
+	opts := []history.FilterOpt{}
+	opts = append(opts, optsFromStringList(in.GetEntityType(), history.WithEntityType)...)
+	opts = append(opts, optsFromStringList(in.GetEntityName(), history.WithEntityName)...)
+	opts = append(opts, optsFromStringList(in.GetProfileName(), history.WithProfileName)...)
+	opts = append(opts, optsFromStringList(in.GetStatus(), history.WithStatus)...)
+	opts = append(opts, optsFromStringList(in.GetRemediation(), history.WithRemediation)...)
+	opts = append(opts, optsFromStringList(in.GetAlert(), history.WithAlert)...)
+
+	if in.GetFrom() != nil {
+		opts = append(opts, history.WithFrom(in.GetFrom().AsTime()))
+	}
+	if in.GetTo() != nil {
+		opts = append(opts, history.WithTo(in.GetTo().AsTime()))
+	}
+
+	filter, err := history.NewListEvaluationFilter(opts...)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid filter")
+	}
+
+	zerolog.Ctx(ctx).Debug().
+		Str("cursor", fmt.Sprintf("%+v", cursor)).
+		Uint64("size", size).
+		Str("filter", fmt.Sprintf("%+v", filter)).
+		Msg("ListEvaluationHistory request")
+
+	return &minderv1.ListEvaluationHistoryResponse{}, nil
+}
+
+// optsFromStringList calls the given function `f` on each element of
+// values. Such elements are either "complex", i.e. they represent a
+// comma-separated list of sub-elements, or "simple", they do not
+// contain comma characters. If element contains one or more comma
+// characters, it is further split into sub-elements before calling
+// `f` in them.
+func optsFromStringList(
+	values []string,
+	f func(string) history.FilterOpt,
+) []history.FilterOpt {
+	opts := []history.FilterOpt{}
+	for _, val := range values {
+		for _, part := range strings.Split(val, ",") {
+			opts = append(opts, f(part))
+		}
+	}
+	return opts
 }
 
 // ListEvaluationResults lists the latest evaluation results for
