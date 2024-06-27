@@ -539,6 +539,14 @@ type Profile struct {
 	Labels         []string       `json:"labels"`
 }
 
+type ProfileSelector struct {
+	ID        uuid.UUID    `json:"id"`
+	ProfileID uuid.UUID    `json:"profile_id"`
+	Entity    NullEntities `json:"entity"`
+	Selector  string       `json:"selector"`
+	Comment   string       `json:"comment"`
+}
+
 type ProfileStatus struct {
 	ID            uuid.UUID       `json:"id"`
 	ProfileID     uuid.UUID       `json:"profile_id"`
