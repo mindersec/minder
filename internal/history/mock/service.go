@@ -15,6 +15,8 @@ import (
 
 	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
+	history "github.com/stacklok/minder/internal/history"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,6 +41,21 @@ func NewMockEvaluationHistoryService(ctrl *gomock.Controller) *MockEvaluationHis
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockEvaluationHistoryService) EXPECT() *MockEvaluationHistoryServiceMockRecorder {
 	return m.recorder
+}
+
+// ListEvaluationHistory mocks base method.
+func (m *MockEvaluationHistoryService) ListEvaluationHistory(ctx context.Context, qtx db.Querier, cursor history.ListEvaluationCursor, size uint64, filter history.ListEvaluationFilter) ([]*v1.EvaluationHistory, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEvaluationHistory", ctx, qtx, cursor, size, filter)
+	ret0, _ := ret[0].([]*v1.EvaluationHistory)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEvaluationHistory indicates an expected call of ListEvaluationHistory.
+func (mr *MockEvaluationHistoryServiceMockRecorder) ListEvaluationHistory(ctx, qtx, cursor, size, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistory", reflect.TypeOf((*MockEvaluationHistoryService)(nil).ListEvaluationHistory), ctx, qtx, cursor, size, filter)
 }
 
 // StoreEvaluationStatus mocks base method.
