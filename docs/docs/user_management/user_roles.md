@@ -1,4 +1,4 @@
-# User Roles in Minder
+# User roles in Minder
 
 When incorporating a user into your project, it's crucial to assign them the appropriate role based on their responsibilities and required access levels.
 Minder currently offers the following roles:

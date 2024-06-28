@@ -1,5 +1,5 @@
 ---
-title: Get Hacking
+title: Get hacking
 sidebar_position: 1
 ---
 

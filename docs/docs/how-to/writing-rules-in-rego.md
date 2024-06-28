@@ -1,4 +1,8 @@
-# Writing Rules Using Rego 
+---
+sidebar_position: 110
+---
+
+# Writing rules using Rego 
 
 Minder's policy engine is able to use pluggable drivers for evaluating rules. Rego is a language specifically designed for expressing policies in a clear and concise manner. Its declarative syntax makes it an excellent choice for defining policy logic. In the context of Minder, Rego plays a central role in crafting Rule Types, which are used to enforce security policies.
 

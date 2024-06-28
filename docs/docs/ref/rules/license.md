@@ -1,5 +1,5 @@
 ---
-title: Presence of a License File
+title: Presence of a license file
 sidebar_position: 80
 ---
 
