@@ -352,6 +352,105 @@ paths:
             $ref: '#/definitions/v1CheckHealthResponse'
       tags:
         - HealthService
+  /api/v1/history:
+    get:
+      operationId: EvalResultsService_ListEvaluationHistory
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListEvaluationHistoryResponse'
+      parameters:
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: ID of the project
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: entityType
+          description: List of entity types to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: entityName
+          description: List of entity names to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: profileName
+          description: List of profile names to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: status
+          description: List of evaluation statuses to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: remediation
+          description: List of remediation statuses to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: alert
+          description: List of alert statuses to retrieve.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: from
+          description: Timestamp representing the start time of the selection window.
+          in: query
+          required: false
+          type: string
+          format: date-time
+        - name: to
+          description: Timestamp representing the end time of the selection window.
+          in: query
+          required: false
+          type: string
+          format: date-time
+        - name: cursor.cursor
+          description: |-
+            cursor is the index to start from within the collection being
+            retrieved. It's an opaque payload specified and interpreted on
+            an per-rpc basis.
+          in: query
+          required: false
+          type: string
+        - name: cursor.size
+          description: size is the number of items to retrieve from the collection.
+          in: query
+          required: false
+          type: string
+          format: uint64
+      tags:
+        - EvalResultsService
   /api/v1/invite/{code}:
     get:
       operationId: InviteService_GetInviteDetails
@@ -2339,6 +2438,45 @@ definitions:
         format: date-time
       context:
         $ref: '#/definitions/v1Context'
+  v1Cursor:
+    type: object
+    properties:
+      cursor:
+        type: string
+        description: |-
+          cursor is the index to start from within the collection being
+          retrieved. It's an opaque payload specified and interpreted on
+          an per-rpc basis.
+      size:
+        type: string
+        format: uint64
+        description: size is the number of items to retrieve from the collection.
+    description: |-
+      Cursor message to be used in request messages. Its purpose is to
+      allow clients to specify the subset of records to retrieve by means
+      of index within a collection, along with the number of items to
+      retrieve.
+  v1CursorPage:
+    type: object
+    properties:
+      totalRecords:
+        type: string
+        format: uint64
+        description: Total number of records matching the request. This is optional.
+      next:
+        $ref: '#/definitions/v1Cursor'
+        description: |-
+          Cursor pointing to retrieve results logically placed after the
+          ones shipped with the message containing this struct.
+      prev:
+        $ref: '#/definitions/v1Cursor'
+        description: |-
+          Cursor pointing to retrieve results logically placed before the
+          ones shipped with the message containing this struct.
+    description: |-
+      CursorPage message used in response messages. Its purpose is to
+      send to clients links pointing to next and/or previous collection
+      subsets with respect to the one containing this struct.
   v1DeleteProfileResponse:
     type: object
   v1DeleteProjectResponse:
@@ -2433,6 +2571,95 @@ definitions:
         type: string
         title: url is the URL to the alert
     title: EvalResultAlert holds the alert details for a given rule evaluation
+  v1EvaluationHistory:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EvaluationHistoryEntity'
+        description: entity contains details of the entity which was evaluated.
+      rule:
+        $ref: '#/definitions/v1EvaluationHistoryRule'
+        description: >-
+          rule contains details of the rule which the entity was evaluated
+          against.
+      status:
+        $ref: '#/definitions/v1EvaluationHistoryStatus'
+        description: status contains the evaluation status.
+      alert:
+        $ref: '#/definitions/v1EvaluationHistoryAlert'
+        description: alert contains details of the alerts for this evaluation.
+      remediation:
+        $ref: '#/definitions/v1EvaluationHistoryRemediation'
+        description: remediation contains details of the remediation for this evaluation.
+  v1EvaluationHistoryAlert:
+    type: object
+    properties:
+      status:
+        type: string
+        description: |-
+          status is one of (on, off, error, skipped, not available)
+          not using enums to mirror the behaviour of the existing API contracts.
+      details:
+        type: string
+        description: >-
+          details contains optional details about the alert.
+
+          the structure and contents are alert specific, and are subject to
+          change.
+  v1EvaluationHistoryEntity:
+    type: object
+    properties:
+      id:
+        type: string
+        description: id is the ID of the entity.
+      type:
+        $ref: '#/definitions/v1Entity'
+        description: type is the entity type.
+      name:
+        type: string
+        description: name is the entity name.
+  v1EvaluationHistoryRemediation:
+    type: object
+    properties:
+      status:
+        type: string
+        description: |-
+          status is one of (success, error, failure, skipped, not available)
+          not using enums to mirror the behaviour of the existing API contracts.
+      details:
+        type: string
+        description: >-
+          details contains optional details about the remediation.
+
+          the structure and contents are remediation specific, and are subject
+          to change.
+  v1EvaluationHistoryRule:
+    type: object
+    properties:
+      name:
+        type: string
+        description: name is the name of the rule instance.
+      type:
+        type: string
+        description: type is the name of the rule type.
+      profile:
+        type: string
+        description: profile is the name of the profile which contains the rule.
+  v1EvaluationHistoryStatus:
+    type: object
+    properties:
+      status:
+        type: string
+        description: |-
+          status is one of (success, error, failure, skipped)
+          not using enums to mirror the behaviour of the existing API contracts.
+      details:
+        type: string
+        description: >-
+          details contains optional details about the evaluation.
+
+          the structure and contents are rule type specific, and are subject to
+          change.
   v1GetArtifactByIdResponse:
     type: object
     properties:
@@ -2662,6 +2889,26 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Project'
+  v1ListEvaluationHistoryResponse:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1EvaluationHistory'
+        description: List of records retrieved.
+      page:
+        $ref: '#/definitions/v1CursorPage'
+        description: |-
+          Metadata of the current page and pointers to next and/or
+          previous pages.
+    description: |-
+      ListEvaluationHistoryResponse represents a response message for the
+      ListEvaluationHistory RPC.
+
+      It ships a collection of records retrieved and pointers to get to
+      the next and/or previous pages of data.
   v1ListEvaluationResultsResponse:
     type: object
     properties:
