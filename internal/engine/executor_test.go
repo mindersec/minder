@@ -28,6 +28,7 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
@@ -36,9 +37,12 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/actions/alert"
+	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/flags"
 	mock_history "github.com/stacklok/minder/internal/history/mock"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -330,10 +334,43 @@ default allow = true`,
 		}).WithRepositoryID(repositoryID).
 		WithExecutionID(executionID)
 
-	err = executor.EvalEntityEvent(context.Background(), eiw)
+	ts := &logger.TelemetryStore{
+		Project:    projectID,
+		ProviderID: providerID,
+		Repository: repositoryID,
+	}
+	ctx := ts.WithTelemetry(context.Background())
+
+	err = executor.EvalEntityEvent(ctx, eiw)
 	require.NoError(t, err)
 
-	// Note: Assertions currently rely on the DB expectations
-	// TODO: Consider refactoring the code further to make it easier to
-	// test.
+	require.Len(t, ts.Evals, 1, "expected one eval to be logged")
+	requredEval := ts.Evals[0]
+	require.Equal(t, "test-profile", requredEval.Profile.Name)
+	require.Equal(t, "success", requredEval.EvalResult)
+	require.Equal(t, "passthrough", requredEval.RuleType.Name)
+	require.Equal(t, "off", requredEval.Actions[alert.ActionType].State)
+	require.Equal(t, "off", requredEval.Actions[remediate.ActionType].State)
+}
+
+func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) pqtype.NullRawMessage {
+	t.Helper()
+
+	ftoken := &oauth2.Token{
+		AccessToken:  "foo-bar",
+		TokenType:    "bar-baz",
+		RefreshToken: "",
+		// Expires in 10 mins
+		Expiry: time.Now().Add(10 * time.Minute),
+	}
+
+	// encrypt token
+	encryptedToken, err := cryptoEngine.EncryptOAuthToken(ftoken)
+	require.NoError(t, err)
+	serialized, err := encryptedToken.Serialize()
+	require.NoError(t, err)
+	return pqtype.NullRawMessage{
+		RawMessage: serialized,
+		Valid:      true,
+	}
 }
