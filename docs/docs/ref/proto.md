@@ -1814,6 +1814,7 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | build_environment | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | artifact | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | pull_request | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| selection | <TypeLink type="minder-v1-Profile-Selector">Profile.Selector</TypeLink> | repeated |  |
 | remediate | <TypeLink type="string">string</TypeLink> | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
 | alert | <TypeLink type="string">string</TypeLink> | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
 | type | <TypeLink type="string">string</TypeLink> |  | type is a placeholder for the object type. It should always be set to "profile". |
@@ -1833,6 +1834,20 @@ Rule defines the individual call of a certain rule type.
 | params | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
 | def | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | def is the definition of the rule. This depends on the rule type. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the descriptive name of the rule, not to be confused with type |
+
+
+
+<Message id="minder-v1-Profile-Selector">Profile.Selector</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is optional and use for updates to match upserts as well as read operations. It is ignored for creates. |
+| entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity to select. |
+| selector | <TypeLink type="string">string</TypeLink> |  | expr is the expression to select the entity. |
+| comment | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
 
 
 
