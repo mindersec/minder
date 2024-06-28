@@ -12,16 +12,19 @@ This roadmap should serve as a reference point for Minder users and community me
 
 Have any questions or comments about items on the Minder roadmap? Share your feedback via [Minder GitHub Discussions](https://github.com/stacklok/minder/discussions). 
 
-_Last updated: April 2024_
+_Last updated: June 2024_
 
 ## In progress
 
-* **Project hierarchies:** Enable users to create nested projects and group repositories within those projects. Projects will inherit profile rules in order to simplify profile and policy management.
+* **Register an entire GitHub organization:** instead of individually selecting repositories, you can register a GitHub organization to manage all the repositories within it.
+* **Individual repository selection:** instead of profiles always applying to all repositories, you can select which repositories a profile applies to.
 * **Enforce license information for dependencies:** Ensure that dependencies in your repositories use licenses that you approve.
-* **Register an entire org to automatically add new repos:** Register an entire GitHub organization instead of a single repo; any newly created repos will automatically be added to Minder to simplify policy management.
+* **Improved user management:** easier ways to invite users to your Minder organization.
+* **Historical evaluation:** provide information about how your security posture has changed over time.
 
 ## Next
 
+* **Project hierarchies:** Enable users to create nested projects and group repositories within those projects. Projects will inherit profile rules in order to simplify profile and policy management.
 * **Report CVEs, Trusty scores, and license info for ingested SBOMs:** Ingest SBOMS and identify dependencies; show CVEs, Trusty scores, and license information including any changes over time.
 * **Block PRs based on Trusty scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
 * **Create policy to manage licenses in PRs:** Add a rule type to block and/or add comments to pull requests based on the licenses of the dependencies they import.

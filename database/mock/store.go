@@ -281,6 +281,21 @@ func (mr *MockStoreMockRecorder) CreateRuleType(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRuleType", reflect.TypeOf((*MockStore)(nil).CreateRuleType), arg0, arg1)
 }
 
+// CreateSelector mocks base method.
+func (m *MockStore) CreateSelector(arg0 context.Context, arg1 db.CreateSelectorParams) (db.ProfileSelector, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateSelector", arg0, arg1)
+	ret0, _ := ret[0].(db.ProfileSelector)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateSelector indicates an expected call of CreateSelector.
+func (mr *MockStoreMockRecorder) CreateSelector(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSelector", reflect.TypeOf((*MockStore)(nil).CreateSelector), arg0, arg1)
+}
+
 // CreateSessionState mocks base method.
 func (m *MockStore) CreateSessionState(arg0 context.Context, arg1 db.CreateSessionStateParams) (db.SessionStore, error) {
 	m.ctrl.T.Helper()
@@ -523,6 +538,20 @@ func (m *MockStore) DeleteRuleType(arg0 context.Context, arg1 uuid.UUID) error {
 func (mr *MockStoreMockRecorder) DeleteRuleType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), arg0, arg1)
+}
+
+// DeleteSelector mocks base method.
+func (m *MockStore) DeleteSelector(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSelector", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSelector indicates an expected call of DeleteSelector.
+func (mr *MockStoreMockRecorder) DeleteSelector(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSelector", reflect.TypeOf((*MockStore)(nil).DeleteSelector), arg0, arg1)
 }
 
 // DeleteSessionStateByProjectID mocks base method.
@@ -1302,6 +1331,36 @@ func (mr *MockStoreMockRecorder) GetRuleTypeByName(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeByName", reflect.TypeOf((*MockStore)(nil).GetRuleTypeByName), arg0, arg1)
 }
 
+// GetSelectorByID mocks base method.
+func (m *MockStore) GetSelectorByID(arg0 context.Context, arg1 uuid.UUID) (db.ProfileSelector, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSelectorByID", arg0, arg1)
+	ret0, _ := ret[0].(db.ProfileSelector)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSelectorByID indicates an expected call of GetSelectorByID.
+func (mr *MockStoreMockRecorder) GetSelectorByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSelectorByID", reflect.TypeOf((*MockStore)(nil).GetSelectorByID), arg0, arg1)
+}
+
+// GetSelectorsByProfileID mocks base method.
+func (m *MockStore) GetSelectorsByProfileID(arg0 context.Context, arg1 uuid.UUID) ([]db.ProfileSelector, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSelectorsByProfileID", arg0, arg1)
+	ret0, _ := ret[0].([]db.ProfileSelector)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSelectorsByProfileID indicates an expected call of GetSelectorsByProfileID.
+func (mr *MockStoreMockRecorder) GetSelectorsByProfileID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSelectorsByProfileID", reflect.TypeOf((*MockStore)(nil).GetSelectorsByProfileID), arg0, arg1)
+}
+
 // GetSubscriptionByProjectBundle mocks base method.
 func (m *MockStore) GetSubscriptionByProjectBundle(arg0 context.Context, arg1 db.GetSubscriptionByProjectBundleParams) (db.Subscription, error) {
 	m.ctrl.T.Helper()
@@ -1935,6 +1994,21 @@ func (m *MockStore) UpdateRuleType(arg0 context.Context, arg1 db.UpdateRuleTypeP
 func (mr *MockStoreMockRecorder) UpdateRuleType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRuleType", reflect.TypeOf((*MockStore)(nil).UpdateRuleType), arg0, arg1)
+}
+
+// UpdateSelector mocks base method.
+func (m *MockStore) UpdateSelector(arg0 context.Context, arg1 db.UpdateSelectorParams) (db.ProfileSelector, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSelector", arg0, arg1)
+	ret0, _ := ret[0].(db.ProfileSelector)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateSelector indicates an expected call of UpdateSelector.
+func (mr *MockStoreMockRecorder) UpdateSelector(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSelector", reflect.TypeOf((*MockStore)(nil).UpdateSelector), arg0, arg1)
 }
 
 // UpsertAccessToken mocks base method.

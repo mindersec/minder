@@ -34,6 +34,7 @@ toc_max_heading_level: 4
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ListEvaluationResults | [ListEvaluationResultsRequest](#minder-v1-ListEvaluationResultsRequest) | [ListEvaluationResultsResponse](#minder-v1-ListEvaluationResultsResponse) |  |
+| ListEvaluationHistory | [ListEvaluationHistoryRequest](#minder-v1-ListEvaluationHistoryRequest) | [ListEvaluationHistoryResponse](#minder-v1-ListEvaluationHistoryResponse) |  |
 
 
 <a name="minder-v1-HealthService"></a>
@@ -474,6 +475,36 @@ User service
 | context | [Context](#minder-v1-Context) |  |  |
 
 
+<a name="minder-v1-Cursor"></a>
+
+#### Cursor
+Cursor message to be used in request messages. Its purpose is to
+allow clients to specify the subset of records to retrieve by means
+of index within a collection, along with the number of items to
+retrieve.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cursor | [string](#string) |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
+| size | [uint64](#uint64) |  | size is the number of items to retrieve from the collection. |
+
+
+<a name="minder-v1-CursorPage"></a>
+
+#### CursorPage
+CursorPage message used in response messages. Its purpose is to
+send to clients links pointing to next and/or previous collection
+subsets with respect to the one containing this struct.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| total_records | [uint64](#uint64) |  | Total number of records matching the request. This is optional. |
+| next | [Cursor](#minder-v1-Cursor) |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. |
+| prev | [Cursor](#minder-v1-Cursor) |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. |
+
+
 <a name="minder-v1-DeleteProfileRequest"></a>
 
 #### DeleteProfileRequest
@@ -722,6 +753,83 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
 | details | [string](#string) |  | details is the description of the alert attempt if any |
 | url | [string](#string) |  | url is the URL to the alert |
+
+
+<a name="minder-v1-EvaluationHistory"></a>
+
+#### EvaluationHistory
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | [EvaluationHistoryEntity](#minder-v1-EvaluationHistoryEntity) |  | entity contains details of the entity which was evaluated. |
+| rule | [EvaluationHistoryRule](#minder-v1-EvaluationHistoryRule) |  | rule contains details of the rule which the entity was evaluated against. |
+| status | [EvaluationHistoryStatus](#minder-v1-EvaluationHistoryStatus) |  | status contains the evaluation status. |
+| alert | [EvaluationHistoryAlert](#minder-v1-EvaluationHistoryAlert) |  | alert contains details of the alerts for this evaluation. |
+| remediation | [EvaluationHistoryRemediation](#minder-v1-EvaluationHistoryRemediation) |  | remediation contains details of the remediation for this evaluation. |
+
+
+<a name="minder-v1-EvaluationHistoryAlert"></a>
+
+#### EvaluationHistoryAlert
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (on, off, error, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the alert. the structure and contents are alert specific, and are subject to change. |
+
+
+<a name="minder-v1-EvaluationHistoryEntity"></a>
+
+#### EvaluationHistoryEntity
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  | id is the ID of the entity. |
+| type | [Entity](#minder-v1-Entity) |  | type is the entity type. |
+| name | [string](#string) |  | name is the entity name. |
+
+
+<a name="minder-v1-EvaluationHistoryRemediation"></a>
+
+#### EvaluationHistoryRemediation
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (success, error, failure, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the remediation. the structure and contents are remediation specific, and are subject to change. |
+
+
+<a name="minder-v1-EvaluationHistoryRule"></a>
+
+#### EvaluationHistoryRule
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | name is the name of the rule instance. |
+| type | [string](#string) |  | type is the name of the rule type. |
+| profile | [string](#string) |  | profile is the name of the profile which contains the rule. |
+
+
+<a name="minder-v1-EvaluationHistoryStatus"></a>
+
+#### EvaluationHistoryStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [string](#string) |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
+| details | [string](#string) |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
 
 
 <a name="minder-v1-GHCRProviderConfig"></a>
@@ -1188,6 +1296,46 @@ GitType defines the git data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | projects | [Project](#minder-v1-Project) | repeated |  |
+
+
+<a name="minder-v1-ListEvaluationHistoryRequest"></a>
+
+#### ListEvaluationHistoryRequest
+ListEvaluationHistoryRequest represents a request message for the
+ListEvaluationHistory RPC.
+
+Most of its fields are used for filtering, except for `cursor`
+which is used for pagination.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | [Context](#minder-v1-Context) |  |  |
+| entity_type | [string](#string) | repeated | List of entity types to retrieve. |
+| entity_name | [string](#string) | repeated | List of entity names to retrieve. |
+| profile_name | [string](#string) | repeated | List of profile names to retrieve. |
+| status | [string](#string) | repeated | List of evaluation statuses to retrieve. |
+| remediation | [string](#string) | repeated | List of remediation statuses to retrieve. |
+| alert | [string](#string) | repeated | List of alert statuses to retrieve. |
+| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp representing the start time of the selection window. |
+| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp representing the end time of the selection window. |
+| cursor | [Cursor](#minder-v1-Cursor) |  | Cursor object to select the "page" of data to retrieve. |
+
+
+<a name="minder-v1-ListEvaluationHistoryResponse"></a>
+
+#### ListEvaluationHistoryResponse
+ListEvaluationHistoryResponse represents a response message for the
+ListEvaluationHistory RPC.
+
+It ships a collection of records retrieved and pointers to get to
+the next and/or previous pages of data.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [EvaluationHistory](#minder-v1-EvaluationHistory) | repeated | List of records retrieved. |
+| page | [CursorPage](#minder-v1-CursorPage) |  | Metadata of the current page and pointers to next and/or previous pages. |
 
 
 <a name="minder-v1-ListEvaluationResultsRequest"></a>

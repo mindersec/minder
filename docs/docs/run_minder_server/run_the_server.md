@@ -5,7 +5,7 @@ sidebar_position: 10
 
 # Run a minder server
 
-Minder is platform, comprising of a controlplane, a CLI, a database and an identity provider.
+Minder is platform, comprising of a control plane, a CLI, a database and an identity provider.
 
 The control plane runs two endpoints, a gRPC endpoint and a HTTP endpoint.
 
