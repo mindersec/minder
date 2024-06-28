@@ -1,4 +1,4 @@
-# Adding Users to a Project
+# Adding users to a project
 
 ## Prerequisites
 
@@ -6,6 +6,7 @@
 * A Stacklok account
 
 ## Roles Overview
+
 When incorporating a user into your project, it's crucial to assign them the appropriate role based on their responsibilities and required access levels. 
 Minder currently offers the following roles:
 

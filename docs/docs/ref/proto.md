@@ -2,7 +2,7 @@
 sidebar_position: 60
 toc_max_heading_level: 4
 ---
-# Protocol Documentation
+# Protocol documentation
 <a name="top"></a>
 
 

@@ -1,5 +1,5 @@
 ---
-title: Branch Protections
+title: Branch protections
 sidebar_position: 10
 ---
 

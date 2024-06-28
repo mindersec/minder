@@ -1,9 +1,9 @@
 ---
-title: Setting up a Profile for Alerts
+title: Setting up a profile for GitHub Security Advisories
 sidebar_position: 70
 ---
 
-# Setting up a Profile for Alerts
+# Setting up a profile for GitHub Security Advisories
 
 ## Prerequisites
 
@@ -15,12 +15,10 @@ sidebar_position: 70
 
 The `alert` feature is available for all rule types that have the `alert` section defined in their `<alert-type>.yaml`
 file. Alerts are a core feature of Minder providing you with notifications about the status of your registered
-repositories. These alerts automatically open and close based on the evaluation of the rules defined in your profiles.
+repositories using GitHub Security Advisories. These Security Advisories automatically open and close based on the evaluation of the rules defined in your profiles.
 
 When a rule fails, Minder opens an alert to bring your attention to the non-compliance issue. Conversely, when the
 rule evaluation passes, Minder will automatically close any previously opened alerts related to that rule.
-
-At the time of writing, Minder supports alerts of type GitHub Security Advisory.
 
 In this example, we will use a rule type that checks if a repository has a LICENSE file present. If there's no file
 present, Minder will create an alert notifying the owner of the repository. The rule type is called `license.yaml` and

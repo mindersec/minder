@@ -1,5 +1,5 @@
 ---
-title: Check Artifact Provenance
+title: Check artifact provenance
 sidebar_position: 55
 ---
 

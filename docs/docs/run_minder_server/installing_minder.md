@@ -1,5 +1,5 @@
 ---
-sidebar_label: Helm Install
+sidebar_label: Installing with Helm
 sidebar_position: 80
 ---
 
