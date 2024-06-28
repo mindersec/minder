@@ -53,3 +53,17 @@ repository:
 ```
 In this profile, all repositories that do not meet the conditions specified in the `sample_rule` will automatically
 receive a PATCH request to the specified endpoint. This action will make the repository compliant.
+
+## Limitations
+
+Some rule types do not support automatic remediations, due to platform limitations. For example, it may be possible to query the status of a repository configuration, but there may not be an API to _change_ the configuration. In such case, a rule type could detect problems but would not be able to remediate.
+
+To identify which rule types support remediation, you can run:
+
+```bash
+minder ruletype list -oyaml
+```
+
+This will show all the rule types; a rule type with a `remediate` attribute supports automatic remediation.
+
+Furthermore, remediations that open a pull request such as the `dependabot` rule type only attempt to replace the target file, overwriting its contents. This means that if you want to keep the current changes, you need to merge the contents manually.
