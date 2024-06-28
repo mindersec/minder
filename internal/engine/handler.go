@@ -47,15 +47,15 @@ type ExecutorEventHandler struct {
 	// terminationcontext is used to terminate the executor
 	// when the server is shutting down.
 	terminationcontext context.Context
-	executor           *Executor
+	executor           Executor
 }
 
-// NewExecutorEventHandler creates the event handler for the Executor
+// NewExecutorEventHandler creates the event handler for the executor
 func NewExecutorEventHandler(
 	ctx context.Context,
 	evt events.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
-	executor *Executor,
+	executor Executor,
 ) *ExecutorEventHandler {
 	return &ExecutorEventHandler{
 		evt:                    evt,
@@ -140,6 +140,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 		// Publish the result of the entity evaluation
 		if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
+			fmt.Printf("Hello5 %v", err)
 			logger.Err(err).Msg("error publishing flush event")
 		}
 	}()
