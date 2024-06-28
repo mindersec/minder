@@ -17,10 +17,7 @@ package engine
 import (
 	"context"
 	"fmt"
-	"sync"
-	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
@@ -33,7 +30,6 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
@@ -43,127 +39,35 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-const (
-	// DefaultExecutionTimeout is the timeout for execution of a set
-	// of profiles on an entity.
-	DefaultExecutionTimeout = 5 * time.Minute
-	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
-	// before proceeding with evaluation.
-	ArtifactSignatureWaitPeriod = 10 * time.Second
-)
-
 // Executor is the engine that executes the rules for a given event
 type Executor struct {
-	querier                db.Store
-	evt                    events.Publisher
-	handlerMiddleware      []message.HandlerMiddleware
-	wgEntityEventExecution *sync.WaitGroup
-	// terminationcontext is used to terminate the executor
-	// when the server is shutting down.
-	terminationcontext context.Context
-	providerManager    manager.ProviderManager
-	metrics            *ExecutorMetrics
-	historyService     history.EvaluationHistoryService
-	featureFlags       openfeature.IClient
+	querier         db.Store
+	providerManager manager.ProviderManager
+	metrics         *ExecutorMetrics
+	historyService  history.EvaluationHistoryService
+	featureFlags    openfeature.IClient
 }
 
 // NewExecutor creates a new executor
 func NewExecutor(
-	ctx context.Context,
 	querier db.Store,
-	evt events.Publisher,
 	providerManager manager.ProviderManager,
-	handlerMiddleware []message.HandlerMiddleware,
 	metrics *ExecutorMetrics,
 	historyService history.EvaluationHistoryService,
 	featureFlags openfeature.IClient,
 ) *Executor {
 	return &Executor{
-		querier:                querier,
-		evt:                    evt,
-		wgEntityEventExecution: &sync.WaitGroup{},
-		terminationcontext:     ctx,
-		handlerMiddleware:      handlerMiddleware,
-		providerManager:        providerManager,
-		metrics:                metrics,
-		historyService:         historyService,
-		featureFlags:           featureFlags,
+		querier:         querier,
+		providerManager: providerManager,
+		metrics:         metrics,
+		historyService:  historyService,
+		featureFlags:    featureFlags,
 	}
 }
 
-// Register implements the Consumer interface.
-func (e *Executor) Register(r events.Registrar) {
-	r.Register(events.TopicQueueEntityEvaluate, e.HandleEntityEvent, e.handlerMiddleware...)
-}
-
-// Wait waits for all the entity executions to finish.
-func (e *Executor) Wait() {
-	e.wgEntityEventExecution.Wait()
-}
-
-// TODO: We should consider decoupling the event processing from the business
-// logic - if there is a failure in the business logic, it can cause the tests
-// to hang instead of failing.
-
-// HandleEntityEvent handles events coming from webhooks/signals
-// as well as the init event.
-func (e *Executor) HandleEntityEvent(msg *message.Message) error {
-	// Grab the context before making a copy of the message
-	msgCtx := msg.Context()
-	// Let's not share memory with the caller
-	msg = msg.Copy()
-
-	inf, err := entities.ParseEntityEvent(msg)
-	if err != nil {
-		return fmt.Errorf("error unmarshalling payload: %w", err)
-	}
-
-	e.wgEntityEventExecution.Add(1)
-	go func() {
-		defer e.wgEntityEventExecution.Done()
-		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
-			time.Sleep(ArtifactSignatureWaitPeriod)
-		}
-		// TODO: Make this timeout configurable
-		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
-		defer cancel()
-
-		ts := minderlogger.BusinessRecord(msgCtx)
-		ctx = ts.WithTelemetry(ctx)
-
-		if err := inf.WithExecutionIDFromMessage(msg); err != nil {
-			logger := zerolog.Ctx(ctx)
-			logger.Info().
-				Str("message_id", msg.UUID).
-				Msg("message does not contain execution ID, skipping")
-			return
-		}
-
-		err := e.evalEntityEvent(ctx, inf)
-
-		// record telemetry regardless of error. We explicitly record telemetry
-		// here even though we also record it in the middleware because the evaluation
-		// is done in a separate goroutine which usually still runs after the middleware
-		// had already recorded the telemetry.
-		logMsg := zerolog.Ctx(ctx).Info()
-		if err != nil {
-			logMsg = zerolog.Ctx(ctx).Error()
-		}
-		ts.Record(logMsg).Send()
-
-		if err != nil {
-			zerolog.Ctx(ctx).Info().
-				Str("project", inf.ProjectID.String()).
-				Str("provider_id", inf.ProviderID.String()).
-				Str("entity", inf.Type.String()).
-				Err(err).Msg("got error while evaluating entity event")
-		}
-	}()
-
-	return nil
-}
-
-func (e *Executor) evalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
+// EvalEntityEvent evaluates the entity specified in the EntityInfoWrapper
+// against all relevant rules in the project hierarchy.
+func (e *Executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
@@ -380,18 +284,6 @@ func (e *Executor) releaseLockAndFlush(
 		LockedBy:      *inf.ExecutionID,
 	}); err != nil {
 		logger.Err(err).Msg("error updating lock lease")
-	}
-
-	// We don't need to unset the execution ID because the event is going to be
-	// deleted from the database anyway. The aggregator will take care of that.
-	msg, err := inf.BuildMessage()
-	if err != nil {
-		logger.Err(err).Msg("error building message")
-		return
-	}
-
-	if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
-		logger.Err(err).Msg("error publishing flush event")
 	}
 }
 
