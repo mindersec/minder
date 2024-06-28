@@ -1696,6 +1696,7 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	EvalResultsService_ListEvaluationResults_FullMethodName = "/minder.v1.EvalResultsService/ListEvaluationResults"
+	EvalResultsService_ListEvaluationHistory_FullMethodName = "/minder.v1.EvalResultsService/ListEvaluationHistory"
 )
 
 // EvalResultsServiceClient is the client API for EvalResultsService service.
@@ -1703,6 +1704,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EvalResultsServiceClient interface {
 	ListEvaluationResults(ctx context.Context, in *ListEvaluationResultsRequest, opts ...grpc.CallOption) (*ListEvaluationResultsResponse, error)
+	ListEvaluationHistory(ctx context.Context, in *ListEvaluationHistoryRequest, opts ...grpc.CallOption) (*ListEvaluationHistoryResponse, error)
 }
 
 type evalResultsServiceClient struct {
@@ -1723,11 +1725,22 @@ func (c *evalResultsServiceClient) ListEvaluationResults(ctx context.Context, in
 	return out, nil
 }
 
+func (c *evalResultsServiceClient) ListEvaluationHistory(ctx context.Context, in *ListEvaluationHistoryRequest, opts ...grpc.CallOption) (*ListEvaluationHistoryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEvaluationHistoryResponse)
+	err := c.cc.Invoke(ctx, EvalResultsService_ListEvaluationHistory_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EvalResultsServiceServer is the server API for EvalResultsService service.
 // All implementations must embed UnimplementedEvalResultsServiceServer
 // for forward compatibility
 type EvalResultsServiceServer interface {
 	ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error)
+	ListEvaluationHistory(context.Context, *ListEvaluationHistoryRequest) (*ListEvaluationHistoryResponse, error)
 	mustEmbedUnimplementedEvalResultsServiceServer()
 }
 
@@ -1737,6 +1750,9 @@ type UnimplementedEvalResultsServiceServer struct {
 
 func (UnimplementedEvalResultsServiceServer) ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEvaluationResults not implemented")
+}
+func (UnimplementedEvalResultsServiceServer) ListEvaluationHistory(context.Context, *ListEvaluationHistoryRequest) (*ListEvaluationHistoryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEvaluationHistory not implemented")
 }
 func (UnimplementedEvalResultsServiceServer) mustEmbedUnimplementedEvalResultsServiceServer() {}
 
@@ -1769,6 +1785,24 @@ func _EvalResultsService_ListEvaluationResults_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EvalResultsService_ListEvaluationHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEvaluationHistoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EvalResultsServiceServer).ListEvaluationHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EvalResultsService_ListEvaluationHistory_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EvalResultsServiceServer).ListEvaluationHistory(ctx, req.(*ListEvaluationHistoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EvalResultsService_ServiceDesc is the grpc.ServiceDesc for EvalResultsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1779,6 +1813,10 @@ var EvalResultsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListEvaluationResults",
 			Handler:    _EvalResultsService_ListEvaluationResults_Handler,
+		},
+		{
+			MethodName: "ListEvaluationHistory",
+			Handler:    _EvalResultsService_ListEvaluationHistory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -27,11 +27,38 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/flags"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// ListEvaluationResults lists the evaluation results for entities filtered b
-// entity type, labels, profiles, and rule types.
+// ListEvaluationHistory lists current and past evaluation results for
+// entities.
+func (s *Server) ListEvaluationHistory(
+	ctx context.Context,
+	in *minderv1.ListEvaluationHistoryRequest,
+) (*minderv1.ListEvaluationHistoryResponse, error) {
+	if flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
+		cursor := in.GetCursor()
+		zerolog.Ctx(ctx).Debug().
+			Strs("entity_type", in.GetEntityType()).
+			Strs("entity_name", in.GetEntityName()).
+			Strs("profile_name", in.GetProfileName()).
+			Strs("status", in.GetStatus()).
+			Strs("remediation", in.GetRemediation()).
+			Strs("alert", in.GetAlert()).
+			Str("from", in.GetFrom().String()).
+			Str("to", in.GetTo().String()).
+			Str("cursor.cursor", cursor.Cursor).
+			Uint64("cursor.size", cursor.Size).
+			Msg("ListEvaluationHistory request")
+		return &minderv1.ListEvaluationHistoryResponse{}, nil
+	}
+
+	return nil, status.Error(codes.Unimplemented, "Not implemented")
+}
+
+// ListEvaluationResults lists the latest evaluation results for
+// entities filtered by entity type, labels, profiles, and rule types.
 func (s *Server) ListEvaluationResults(
 	ctx context.Context,
 	in *minderv1.ListEvaluationResultsRequest,
