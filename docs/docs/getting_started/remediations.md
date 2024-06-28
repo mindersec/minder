@@ -1,5 +1,5 @@
 ---
-title: Automatic Remediations
+title: Automatic remediations
 sidebar_position: 80
 ---
 
