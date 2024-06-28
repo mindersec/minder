@@ -1,5 +1,5 @@
 ---
-title: Secret Scanning
+title: Secret scanning
 sidebar_position: 50
 ---
 

@@ -1,12 +1,12 @@
 ---
-title: Auto-remediation via Pull Request
+title: Automatic remediation via Pull Request
 sidebar_position: 65
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Creating a Pull Request for Autoremediation
+# Creating a pull request for automatic remediation
 
 ## Prerequisites
 
@@ -14,9 +14,9 @@ import TabItem from '@theme/TabItem';
 * A Minder account
 * An enrolled Provider (e.g., GitHub) and registered repositories
 
-## Create a rule type that has support for pull request auto remediation
+## Create a rule type that has support for pull request automatic remediation
 
-The pull request auto remediation feature provides the functionality to fix a failed rule type by creating a pull request. 
+The pull request automatic remediation feature provides the functionality to fix a failed rule type by creating a pull request. 
 
 This feature is only available for rule types that support it. To find out if a rule type supports it, check the
 `remediate` section in their `<alert-type>.yaml` file. It should have the `pull_request` section defined like below:
@@ -120,6 +120,6 @@ succeeds, Minder will close any previously opened alerts related to that rule.
 
 ## Limitations
 
-* The pull request auto remediation feature is only available for rule types that support it.
+* The pull request automatic remediation feature is only available for rule types that support it.
 * There's no support for creating pull requests that modify the content of existing files yet.
 * The created pull request should be closed manually if the issue is resolved through other means. The profile status and any related alerts will be updated/closed automatically.

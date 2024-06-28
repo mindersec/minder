@@ -1,5 +1,5 @@
 ---
-title: Architecture
+title: Architecture overview
 sidebar_position: 60
 ---
 
