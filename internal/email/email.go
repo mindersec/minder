@@ -19,8 +19,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/docker/cli/templates"
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/events"
@@ -64,24 +66,18 @@ func (m *MailEventHandler) Register(reg events.Registrar) {
 
 // handlerInviteEmail handles the invite email event
 func (m *MailEventHandler) handlerInviteEmail(msg *message.Message) error {
-	var event MailEventPayload
+	var e MailEventPayload
 
 	// Get the message context
 	msgCtx := msg.Context()
 
 	// Unmarshal the message payload
-	if err := json.Unmarshal(msg.Payload, &event); err != nil {
+	if err := json.Unmarshal(msg.Payload, &e); err != nil {
 		return fmt.Errorf("error unmarshalling invite email event: %w", err)
 	}
-	// Create the email subject and body
-	// TODO: Use templates here
-	subject := fmt.Sprintf("You have been invited to join %s", event.ProjectDisplay)
-	bodyText := fmt.Sprintf("You have been invited to join %s as a %s by %s. Use code %s to accept the invitation.",
-		event.ProjectDisplay, event.Role, event.SponsorDisplay, event.Code)
-	bodyHtml := fmt.Sprintf("<p>%s</p>", bodyText)
 
 	// Send the email
-	return m.client.SendEmail(msgCtx, event.Email, subject, bodyHtml, bodyText)
+	return m.client.SendEmail(msgCtx, e.Email, e.getEmailSubject(), e.getEmailBodyHTML(), e.getEmailBodyText())
 }
 
 // NewMessage creates a new message for sending an invitation email
@@ -104,4 +100,57 @@ func NewMessage(inviteeEmail, code, role, projectDisplay, sponsorDisplay string)
 	}
 	// Create the message
 	return message.NewMessage(id.String(), payload), nil
+}
+
+// getBodyHTML returns the HTML body for the email based on the message payload
+func (e *MailEventPayload) getEmailBodyHTML() string {
+	data := struct {
+		AdminName        string
+		OrganizationName string
+		InvitationURL    string
+		RecipientEmail   string
+		MinderURL        string
+		TermsURL         string
+		PrivacyURL       string
+		SignInURL        string
+		RoleName         string
+	}{
+		AdminName:        e.SponsorDisplay,
+		OrganizationName: e.ProjectDisplay,
+		// TODO: Determine the correct environment for the invite URL and the rest of the URLs
+		InvitationURL:  fmt.Sprintf("https://cloud.minder.com/join/%s", e.Code),
+		RecipientEmail: e.Email,
+		MinderURL:      "https://cloud.minder.com",
+		TermsURL:       "https://cloud.minder.com/terms",
+		PrivacyURL:     "https://cloud.minder.com/privacy",
+		SignInURL:      "https://cloud.minder.com",
+		RoleName:       e.Role,
+	}
+
+	// TODO: Load the email template from elsewhere
+
+	// Parse the template
+	tmpl, err := templates.Parse(bodyHTML)
+	if err != nil {
+		// TODO: Log the error
+		// Default to the text body
+		return e.getEmailBodyText()
+	}
+	// Execute the template
+	var b strings.Builder
+	if err := tmpl.Execute(&b, data); err != nil {
+		return ""
+	}
+	return b.String()
+}
+
+// getEmailBodyText returns the text body for the email based on the message payload
+func (e *MailEventPayload) getEmailBodyText() string {
+	return fmt.Sprintf("You have been invited to join %s as a %s by %s. Use code %s to accept the invitation.",
+		e.ProjectDisplay, e.Role, e.SponsorDisplay, e.Code)
+}
+
+// getEmailSubject returns the subject for the email based on the message payload
+func (e *MailEventPayload) getEmailSubject() string {
+	return fmt.Sprintf("You have been invited to join the %s organisation in Minder", e.ProjectDisplay)
 }
