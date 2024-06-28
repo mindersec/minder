@@ -140,7 +140,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 		// Publish the result of the entity evaluation
 		if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
-			fmt.Printf("Hello5 %v", err)
 			logger.Err(err).Msg("error publishing flush event")
 		}
 	}()
