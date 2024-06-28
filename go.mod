@@ -37,7 +37,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.12.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
-	github.com/open-policy-agent/opa v0.65.0
+	github.com/open-policy-agent/opa v0.66.0
 	github.com/openfga/go-sdk v0.5.0
 	github.com/openfga/openfga v1.5.5
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
