@@ -25,10 +25,12 @@ import (
 )
 
 const (
-	// awsUSEast1 is the AWS region
-	awsUSEast1 = "us-east-1"
 	// CharSet is the character set for the email
 	CharSet = "UTF-8"
+	// DefaultAWSRegion is the default AWS region
+	DefaultAWSRegion = "us-east-1"
+	// DefaultSender is the default sender email address
+	DefaultSender = "noreply@stacklok.com"
 )
 
 // AWSSES is the AWS SES client
@@ -38,10 +40,18 @@ type AWSSES struct {
 }
 
 // NewAWSSES creates a new AWS SES client
-func NewAWSSES(sender string) (*AWSSES, error) {
+func NewAWSSES(sender, region string) (*AWSSES, error) {
+	// Set the sender and region in case they are not provided.
+	if sender == "" {
+		sender = DefaultSender
+	}
+	if region == "" {
+		region = DefaultAWSRegion
+	}
+
 	// Create a new session.
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(awsUSEast1)},
+		Region: aws.String(region)},
 	)
 	if err != nil {
 		return nil, err

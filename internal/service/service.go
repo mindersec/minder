@@ -209,8 +209,7 @@ func AllInOneServerService(
 	evt.ConsumeEvents(im)
 
 	// Register the email manager to handle email invitations
-	// TODO: This should be read from the config
-	mailClient, err := email.NewAWSSES("noreply@stacklok.com")
+	mailClient, err := email.NewAWSSES(cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)
 	if err != nil {
 		return fmt.Errorf("unable to create email client: %w", err)
 	}
