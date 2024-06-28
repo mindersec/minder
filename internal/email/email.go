@@ -45,25 +45,25 @@ type MailEventPayload struct {
 	Email          string `json:"email"`
 }
 
-// MailManager is the email manager
-type MailManager struct {
+// MailEventHandler is the email event handler
+type MailEventHandler struct {
 	client Service
 }
 
-// NewMailManager creates a new mail manager
-func NewMailManager(client Service) *MailManager {
-	return &MailManager{
+// NewMailEventHandler creates a new mail event handler
+func NewMailEventHandler(client Service) *MailEventHandler {
+	return &MailEventHandler{
 		client: client,
 	}
 }
 
 // Register implements the Consumer interface.
-func (m *MailManager) Register(reg events.Registrar) {
+func (m *MailEventHandler) Register(reg events.Registrar) {
 	reg.Register(TopicQueueInviteEmail, m.handlerInviteEmail)
 }
 
 // handlerInviteEmail handles the invite email event
-func (m *MailManager) handlerInviteEmail(msg *message.Message) error {
+func (m *MailEventHandler) handlerInviteEmail(msg *message.Message) error {
 	var event MailEventPayload
 
 	// Get the message context

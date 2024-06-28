@@ -214,7 +214,7 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("unable to create email client: %w", err)
 	}
-	mm := email.NewMailManager(mailClient)
+	mm := email.NewMailEventHandler(mailClient)
 	evt.ConsumeEvents(mm)
 
 	// Start the gRPC and HTTP server in separate goroutines
