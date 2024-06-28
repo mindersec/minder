@@ -32,7 +32,7 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-func (e *Executor) createEvalStatusParams(
+func (e *executor) createEvalStatusParams(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	profile *pb.Profile,
@@ -111,7 +111,7 @@ func (e *Executor) createEvalStatusParams(
 //
 // If the error in the evaluation status resolves to an errors.ErrEvaluationSkipSilently,
 // no details are stored or logged.
-func (e *Executor) createOrUpdateEvalStatus(
+func (e *executor) createOrUpdateEvalStatus(
 	ctx context.Context,
 	params *engif.EvalStatusParams,
 ) error {
