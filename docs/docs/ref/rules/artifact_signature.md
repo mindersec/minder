@@ -1,5 +1,5 @@
 ---
-title: Artifact Signature
+title: Artifact signature
 sidebar_position: 90
 ---
 

@@ -1,5 +1,5 @@
 ---
-title: Minder DB schema
+title: Minder database schema
 sidebar_position: 95
 ---
 

@@ -1,18 +1,17 @@
 ---
 title: Logging in to Minder
-sidebar_position: 30
+sidebar_position: 20
 ---
 
 # Logging in to Minder
 
-Minder consists of a client-side CLI tool and a server-side component.  The server-side component runs as a multi-user service.  In order to use Minder to manage repositories and artifacts, you need to log in, which will automatically create an account.
+To start using Minder, you must first log in. Logging in to a Minder server for the first time will create your account.
+
+By default, the Minder CLI will log in to [Minder Cloud](https://cloud.minder.com/), Stacklok's hosted instance of Minder. If you have a separate instance of Minder, you can log in to that server instead.
 
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* A running Minder server, including a running KeyCloak installation
-
-If you don't want to run your own Minder server, Stacklok hosts a public instance.  See [Logging in to the Stacklok-hosted Instance](#logging-in-to-the-stacklok-hosted-instance) below.
+Before you can log in, you must have [installed the `minder` CLI application](install_cli).
 
 ## Logging in to the Stacklok-hosted instance
 

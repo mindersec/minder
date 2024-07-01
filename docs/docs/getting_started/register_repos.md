@@ -1,78 +1,34 @@
 ---
-title: Register Repositories
+title: Registering repositories
 sidebar_position: 50
 ---
 
+Once you have enrolled the GitHub Provider, you can register your GitHub repositories with your Minder organization. This will define the repositories that your security profile will apply to.
+
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* [A Minder account](./login.md)
-* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
+Before you can register a repository, you must [enroll the GitHub Provider](enroll_provider).
 
 ## Register repositories
 
-Now that you have enrolled with GitHub as a provider, you can now register repositories. We will use the `repo` command.
+Once you have enrolled the GitHub Provider, you can register repositories that you granted Minder access to within GitHub.
+
+To get a list of repositories, and select them using a menu in Minder's text user interface, run:
 
 ```bash
 minder repo register
 ```
 
-You can also register a repository (or set of repositories) by name:
+You can also register an individual repository by name, or a set of repositories, comma-separated. For example:
 
 ```bash
 minder repo register --name "owner/repo1,owner/repo2"
 ```
 
-A webhook will now be created in each repository that you've selected for registering with Minder.
-You should see a list of the repositories that have been registered.
+After registering repositories, Minder will begin applying your existing profiles to those repositories and will identify repositories that are out of compliance with your security profiles.
 
-After registration, Minder will go through your existing profiles and apply them against these repositories.
+In addition, Minder will set up a webhook in each repository that was registered. This allows Minder to identify when configuration changes are made to your repositories and re-scan them for compliance with your profiles.
 
-Any events that now occur in your registered repositories will be sent to Minder and processed accordingly.
+## More information
 
-## Automatically Registering Repositories
-
-The GitHub provider can also be configured to automatically register repositories. This is done by setting the `auto_registration.entities.repository.enablede` field to `true` in the provider configuration:
-
-```bash
-minder provider update --set-attribute=auto_registration.entities.repository.enabled=true --name=github-app-myorg
-```
-
-You can list your enrolled providers with:
-```bash
-minder provider list
-```
-
-Note that enabling the auto-registration will merely register repositories as
-they are created, not register already existing repositories.
-
-To disable automatic registration, set the `auto_registration.entities.repository.enabled` field to `false`:
-```bash
-minder provider update --set-attribute=auto_registration.entities.repository.enabled=false --name=github-app-myorg
-```
-
-Note that disabling the automatic registration will not remove the repositories that have already been registered.
-
-## List and Get Repositories
-
-You can list all repositories registered in Minder:
-
-```bash
-minder repo list
-```
-
-You can also get a specific repository:
-
-```bash
-minder repo get --id {ID}
-```
-
-## Deleting a registered repository
-
-If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
-
-```bash
-minder repo delete --name "owner/repo1"
-```
-
-This will delete the repository from Minder and remove the webhook from the repository. 
+For more information about repository registration, see the [additional documentaiton in "How Minder works"](../understand/repository_registration).

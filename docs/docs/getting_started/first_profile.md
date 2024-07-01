@@ -5,51 +5,51 @@ sidebar_position: 60
 
 # Creating your first profile
 
-Minder uses [profiles](../how-to/create_profile.md) to specify common,
-consistent configuration which should be enforced on all registered
-repositories.  In this tutorial, you will register a GitHub repository and
-create a profile that indicates whether secret scanning is enabled on the
-registered repositories.
+Once you have registered repositories, you can create a profile that specifies the common, consistent configuration that you expect your your repositories to comply with. 
 
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* [A Minder account](./login.md)
-* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
-* [One or more repositories registered with Minder](./register_repos.md)
+Before you can create a profile, you should [register repositories](register_repos).
 
-## Creating and applying profiles
+## Creating a profile
 
-A profile is a set of rules that you apply to your registered repositories.
-Before creating a profile, you need to ensure that all desired rule_types have been created in Minder.
+A profile is composed of a set of one or more rule types, each of which scan for an individual piece of configuration within a repository.
 
-Start by creating a rule that checks if secret scanning is enabled and creates
-a security advisory alert if secret scanning is not enabled.  
-This is a reference rule provided by the Minder team in the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+For example, you may have a profile that describes your organization's security best practices, and this profile may have two rule types: GitHub secret scanning should be enabled, and secret push protection should be enabled.
 
-For this exercise, we're going to download just the `secret_scanning.yaml`
-rule, and then use `minder ruletype create` to define the secret scanning rule.
+In this example, Minder will scan the repositories that you've registered and identify any repositories that do not have secret scanning enabled, and those that do not have secret push protection enabled.
+
+### Adding rule types
+
+In Minder, the rule type configuration is completely flexible, and you can author them yourself. Because of this, your Minder organization does not have any rule types configured when you create it. You need to configure some, and you can upload some of Minder's already created rules from the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+
+For example, to add a rule type that ensures that secret scanning is enabled, and one that ensures that secret push protection is enabled, you can download the [secret_scanning.yaml](https://github.com/stacklok/minder-rules-and-profiles/blob/main/rule-types/github/secret_scanning.yaml) and [secret_push_protection.yaml](https://github.com/stacklok/minder-rules-and-profiles/blob/main/rule-types/github/secret_push_protection.yaml) rule types.
 
 ```bash
 curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_scanning.yaml
+curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_push_protection.yaml
 ```
 
-Once you've downloaded the rule definition, you can create it in your Minder account:
+Once you've downloaded the rule type configuration from GitHub, you can upload them to your Minder organization.
 
 ```bash
 minder ruletype create -f secret_scanning.yaml
+minder ruletype create -f secret_push_protection.yaml
 ```
 
-Next, create a profile that applies the secret scanning rule.
+### Creating a profile
 
-Create a new file called `profile.yaml`.
-Paste the following profile definition into the newly created file.
+Once you have added the rule type definitions to Minder, you can create a profile that uses them to scan your repositories.
+
+Like rules, profiles are defined in YAML. They specify the rules that apply to your organization, whether you want to be alerted with GitHub Security Advisories, and whether you want Minder to try to automatically remediate problems when they're found.
+
+To create a profile that checks for secret scanning and secret push protection in your repositories, create a file called `my_profile.yaml`:
 
 ```yaml
 ---
 version: v1
 type: profile
-name: github-profile
+name: my_profile
 context:
   provider: github
 alert: "on"
@@ -58,26 +58,32 @@ repository:
   - type: secret_scanning
     def:
       enabled: true
+  - type: secret_push_protection
+    def:
+      enabled: true
 ```
 
-Create the profile in Minder:
+Then upload the profile configuration to Minder:
+
 ```
-minder profile create -f profile.yaml
+minder profile create -f my_profile.yaml
 ```
+
+
 
 Check the status of the profile:
 ```
-minder profile status list --name github-profile
+minder profile status list --name my_profile
 ```
 If all registered repositories have secret scanning enabled, you will see the `OVERALL STATUS` is `Success`, otherwise the 
 overall status is `Failure`.
 
 ```
-+--------------------------------------+----------------+----------------+----------------------+
-|                  ID                  |      NAME      | OVERALL STATUS |     LAST UPDATED     |
-+--------------------------------------+----------------+----------------+----------------------+
-| 1abcae55-5eb8-4d9e-847c-18e605fbc1cc | github-profile |    Success     | 2023-11-06T17:42:04Z |
-+--------------------------------------+----------------+----------------+----------------------+
++--------------------------------------+------------+----------------+----------------------+
+|                  ID                  |    NAME    | OVERALL STATUS |     LAST UPDATED     |
++--------------------------------------+------------+----------------+----------------------+
+| 1abcae55-5eb8-4d9e-847c-18e605fbc1cc | my_profile |    Success     | 2023-11-06T17:42:04Z |
++--------------------------------------+------------+----------------+----------------------+
 ```
 
 If secret scanning is not enabled, you will see `Failure` instead of `Success`.
@@ -85,29 +91,5 @@ If secret scanning is not enabled, you will see `Failure` instead of `Success`.
 
 See a detailed view of which repositories satisfy the secret scanning rule:
 ```
-minder profile status list --name github-profile --detailed
+minder profile status list --name my_profile --detailed
 ```
-
-## Viewing alerts
-
-Disable secret scanning in one of the registered repositories, by following 
-[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories).
-
-Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.  
-Notice that there is a new advisory titled `minder: profile github-profile failed with rule secret_scanning`.
-
-Enable secret scanning in the same registered repository, by following
-[these instructions provided by GitHub](https://docs.github.com/en/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories).
-
-Navigate to the repository on GitHub, click on the Security tab and view the Security Advisories.
-Notice that the advisory titled `minder: profile github-profile failed with rule secret_scanning` is now closed.
-
-## Delete registered repositories
-
-If you want to stop monitoring a repository, you can delete it from Minder by using the `repo delete` command:
-```bash
-minder repo delete --name ${REPO_NAME}
-```
-where `$REPO_NAME` is the fully-qualified name (`owner/name`) of the repository you wish to delete, for example `testorg/testrepo`.
-
-This will delete the repository from Minder and remove the webhook from the repository. 

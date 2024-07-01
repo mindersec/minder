@@ -39,8 +39,14 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // Executor is the engine that executes the rules for a given event
-type Executor struct {
+type Executor interface {
+	EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error
+}
+
+type executor struct {
 	querier         db.Store
 	providerManager manager.ProviderManager
 	metrics         *ExecutorMetrics
@@ -55,8 +61,8 @@ func NewExecutor(
 	metrics *ExecutorMetrics,
 	historyService history.EvaluationHistoryService,
 	featureFlags openfeature.IClient,
-) *Executor {
-	return &Executor{
+) Executor {
+	return &executor{
 		querier:         querier,
 		providerManager: providerManager,
 		metrics:         metrics,
@@ -67,7 +73,7 @@ func NewExecutor(
 
 // EvalEntityEvent evaluates the entity specified in the EntityInfoWrapper
 // against all relevant rules in the project hierarchy.
-func (e *Executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
+func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
@@ -148,7 +154,7 @@ func (e *Executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 	return nil
 }
 
-func (e *Executor) forProjectsInHierarchy(
+func (e *executor) forProjectsInHierarchy(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	f func(context.Context, *pb.Profile, []uuid.UUID) error,
@@ -176,7 +182,7 @@ func (e *Executor) forProjectsInHierarchy(
 	return nil
 }
 
-func (e *Executor) getEvaluator(
+func (e *executor) getEvaluator(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	provider provinfv1.Provider,
@@ -234,7 +240,7 @@ func (e *Executor) getEvaluator(
 	return params, rte, actionEngine, nil
 }
 
-func (e *Executor) updateLockLease(
+func (e *executor) updateLockLease(
 	ctx context.Context,
 	executionID uuid.UUID,
 	params *engif.EvalStatusParams,
@@ -256,7 +262,7 @@ func (e *Executor) updateLockLease(
 	logger.Info().Msg("lock lease updated")
 }
 
-func (e *Executor) releaseLockAndFlush(
+func (e *executor) releaseLockAndFlush(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 ) {

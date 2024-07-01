@@ -1,9 +1,9 @@
 ---
-title: Setting up a Profile for Auto-remediation
+title: Setting up a profile for automatic remediation
 sidebar_position: 60
 ---
 
-# Setting up a Profile for Autoremediation
+# Setting up a Profile for automatic remediation
 
 ## Prerequisites
 
@@ -46,7 +46,7 @@ minder ruletype create -f rule-types/github/branch_protection_allow_force_pushes
 ## Create a profile
 Next, create a profile that applies the rule to all registered repositories.
 
-Create a new file called `profile.yaml` using the following profile definition and enable auto remediation by setting
+Create a new file called `profile.yaml` using the following profile definition and enable automatic remediation by setting
 `remediate` to `on`. The other available values are `off`(default) and `dry_run`.
 
 ```yaml
@@ -81,4 +81,4 @@ succeeds, Minder will close any previously opened alerts related to that rule.
 
 ## Limitations
 
-* The auto remediation feature is only available for rule types that support it, i.e., have the `remediate` section defined in their `<alert-type>.yaml` file.
+* The automatic remediation feature is only available for rule types that support it, i.e., have the `remediate` section defined in their `<alert-type>.yaml` file.

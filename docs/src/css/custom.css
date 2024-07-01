@@ -23,6 +23,31 @@
 /* You can override the default Infima variables here. */
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
+a {
+  text-decoration: underline;
+}
+
+.navbar a {
+  text-decoration: none;
+}
+.menu a {
+  font-weight: 500;
+  text-decoration: none;
+}
+.footer a {
+  text-decoration: none;
+}
+.pagination-nav__link {
+  text-decoration: none;
+}
+
+.table-of-contents__link {
+  text-transform: uppercase;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 :root {
   --ifm-font-family-base: 'Roboto';  
   --ifm-font-size-base: 15px;

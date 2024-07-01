@@ -12,7 +12,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
 	github.com/mikefarah/yq/v4 v4.44.2
 	github.com/norwoodj/helm-docs v1.13.1
-	github.com/openfga/cli v0.5.0
+	github.com/openfga/cli v0.5.1
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.26.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616

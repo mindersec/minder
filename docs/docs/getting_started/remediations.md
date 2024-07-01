@@ -1,38 +1,29 @@
 ---
-title: Automatic Remediations
-sidebar_position: 70
+title: Automatic remediations
+sidebar_position: 80
 ---
 
-# Automatic Remediation with Minder
+# Automatic remediation with Minder
 
-In [Creating your first profile](./first_profile.md), we wrote a rule to open a
-security advisory when repo configuration drifted from the configured profile
-in Minder.  In this tutorial, we will show how Minder can automatically
-resolve the misconfiguration and ensure that enrolled repos have secret
-scanning enabled.  Secret scanning is one of several settings which can be
-managed by Minder.  When you apply a Minder profile to enrolled repositories,
-it will remediate (fix) the setting if it is changed to violate the profile.
+After you've [created a profile](first_profile), you can [view the status](viewing_status) of your security profile, and you can optionally enable alerts through GitHub Security Advisories. But Minder can also automatically remediate your profile, which means that when it detects a repository that is not in compliance with your profile, Minder can attempt to remediate it, bringing it back into compliance.
 
 ## Prerequisites
 
-* [The `minder` CLI application](./install_cli.md)
-* [A Minder account](./login.md)
-* [An enrolled GitHub token](./login.md#enrolling-the-github-provider) that is either an Owner in the organization or an Admin on the repositories
-* [A registered repository in Minder](./first_profile.md#register-repositories)
-* [The `secret_scanning` rule type](./first_profile.md#creating-and-applying-profiles)
-* [A policy to open security advisories when secret scanning is off](./first_profile.md#creating-and-applying-profiles)
+Before you can enable automatic remediations, you need to [add rule types](first_profile#adding-rule-types).
+
+## Enabling automatic remediation
+
+If you added the `secret_scanning` and `secret_push_protection` rules when you [created your first profile](first_profile), then you can update your profile to turn automatic remediation on. When you do this, Minder will identify and repository that doesn't have secret scanning or secret push protection turned on, and will turn it on for you.
 
 ## Creating a profile with `remediate: on`
 
-Minder doesn't currently support editing profiles, so we will create a new profile with `remediate: on`.
+To create a profile that has automatic remediation turned on for `secret_scanning` and `secret_push_protection`, update your `my_profile.yaml`: 
 
-Create a new file called `profile-remediate.yaml`.
-Paste the following profile definition into the newly created file, setting the `remediate` attribute to `on`:
 ```yaml
 ---
 version: v1
 type: profile
-name: github-profile-remediate
+name: my_profile
 context:
   provider: github
 alert: "on"
@@ -41,33 +32,35 @@ repository:
   - type: secret_scanning
     def:
       enabled: true
+  - type: secret_push_protection
+    def:
+      enabled: true
 ```
 
-Create the profile in Minder:
-```
-minder profile create -f profile-remediate.yaml
+Then update your profile configuration in Minder:
+
+```bash
+minder profile apply -f my_profile.yaml
 ```
 
-Check the status of the profile:
+## Automatic remediation in action
+
+If you go to the GitHub repository settings for one of your registered repositories, then disable secret scanning, Minder will detect this change and automatically remediate it.
+
+If you reload the page on GitHub, you should see that secret scanning has automatically been re-enabled.
+
+Similarly, when Minder performs an automatic remediation, the profile status should move quickly through two states.
+
+When remediation is on, the profile status should move quickly through three different states. After disabling secret scanning on a repository, check the status of the profile:
+
 ```
-minder profile status list --profile github-profile-remediate
+minder profile status list --name my_profile 
 ```
 
-With remediation on, the profile status should be "Success" when the repository has been updated to match the profile.
-If you navigate to your repository settings with your browser, you should see that the secret scanning
-feature is enabled. Toggling the feature off should trigger a new profile status check and the
-secret scanning feature should be enabled again in GitHub.
+1. Immediately, you should see that the profile `STATUS` is set to `Failure`, and the `REMEDIATION` state is set to `Pending`. At this point, Minder will start the automatic remediation.
+2. Once Minder has performed the remediation, the profile `STATUS` will remain at `Failure`, but the `REMEDIATION` state will change to `Success`.
+3. After Minder has remediated the problem, it will evaluate the rule again. Once this completes, Minder will set the profile `STATUS` to `Success`.
 
-## Current limitations
-At the time of writing, not all `rule-type` objects support remediation. To find out which
-rule types support remediation, you can run:
-```shell
-minder ruletype get -i ${ID} -oyaml
-```
-and look for the `remediate` attribute. If it's not present, the rule type doesn't support
-remediation. Alternatively, browse the [rule types directory](https://github.com/stacklok/minder-rules-and-profiles/tree/main/rule-types/github)
-of the minder-rules-and-profiles repository.
+# More information
 
-Furthermore, remediations that open a pull request such as the `dependabot` rule type only attempt
-to replace the target file, overwriting its contents. This means that if you want to keep the current
-changes, you need to merge the contents manually.
+For more information about automatic remediations, see the [additional documentation in "How Minder works"](../understand/remediations).

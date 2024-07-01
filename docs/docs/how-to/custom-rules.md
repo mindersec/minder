@@ -1,4 +1,8 @@
-# Writing Custom Rule Types
+---
+sidebar_position: 100
+---
+
+# Writing custom rule types
 
 Minder's policy engine is flexible enough that you can write your own rule types to check for specific settings in your supply chain. This guide will walk you through the process of writing a custom rule type.
 

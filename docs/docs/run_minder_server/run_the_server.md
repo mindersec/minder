@@ -1,5 +1,5 @@
 ---
-title: Run the Server
+title: Run the server
 sidebar_position: 10
 ---
 

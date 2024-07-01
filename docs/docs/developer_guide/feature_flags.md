@@ -1,5 +1,5 @@
 ---
-title: Feature Flags
+title: Feature flags
 sidebar_position: 20
 ---
 

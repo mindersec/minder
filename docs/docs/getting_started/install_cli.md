@@ -5,15 +5,15 @@ sidebar_position: 10
 
 # Installing the Minder CLI
 
-Minder consists of two components: a server-side application, and the `minder`
-CLI application for interacting with the server.  Minder is built for `amd64`
-and `arm64` architectures on Windows, MacOS, and Linux.
+The open source Minder CLI can communicate with either [Minder Cloud](https://cloud.stacklok.com/), Stacklok's free-to-use, cloud-hosted version of Minder, or with an on-premises version of Minder that has been [set up independently](../run_minder_server/run_the_server).
+
+The `minder` CLI is built for `amd64` and `arm64` architectures on Windows, MacOS, and Linux.
 
 You can install `minder` using one of the following methods:
 
-## MacOS (Homebrew)
+## macOS
 
-The easiest way to install `minder` is through [Homebrew](https://brew.sh/):
+The easiest way to install `minder` for macOS systems is through [Homebrew](https://brew.sh/):
 
 ```bash
 brew install stacklok/tap/minder
@@ -26,9 +26,9 @@ tar -xzf minder_${RELEASE}_darwin_${ARCH}.tar.gz minder
 xattr -d com.apple.quarantine minder
 ```
 
-## Windows (Winget)
+## Windows
 
-For Windows, the built-in `winget` tool is the simplest way to install `minder`:
+For Windows, the built-in `winget` tool is the easiest way to install `minder`:
 
 ```bash
 winget install stacklok.minder

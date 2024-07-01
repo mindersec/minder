@@ -1,3 +1,7 @@
+---
+sidebar_position: 120
+---
+
 # Using Mindev to develop and debug rule types
 
 [Mindev](https://github.com/stacklok/minder/tree/main/cmd/dev) is a tool that helps you develop and debug rule types for Minder. It provides a way to run rule types locally and test them against your codebase.

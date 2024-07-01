@@ -1,5 +1,5 @@
 ---
-title: Code Scanning
+title: Code scanning
 sidebar_position: 40
 ---
 

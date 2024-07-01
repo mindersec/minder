@@ -1,5 +1,5 @@
 ---
-title: OSS Tooling Integrations
+title: OSS tooling integrations
 sidebar_position: 30
 ---
 
