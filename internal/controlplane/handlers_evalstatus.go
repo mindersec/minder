@@ -63,12 +63,12 @@ func (s *Server) ListEvaluationHistory(
 
 	// process filter
 	opts := []history.FilterOpt{}
-	opts = append(opts, optsFromStringList(in.GetEntityType(), history.WithEntityType)...)
-	opts = append(opts, optsFromStringList(in.GetEntityName(), history.WithEntityName)...)
-	opts = append(opts, optsFromStringList(in.GetProfileName(), history.WithProfileName)...)
-	opts = append(opts, optsFromStringList(in.GetStatus(), history.WithStatus)...)
-	opts = append(opts, optsFromStringList(in.GetRemediation(), history.WithRemediation)...)
-	opts = append(opts, optsFromStringList(in.GetAlert(), history.WithAlert)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetEntityType(), history.WithEntityType)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetEntityName(), history.WithEntityName)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetProfileName(), history.WithProfileName)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetStatus(), history.WithStatus)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetRemediation(), history.WithRemediation)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetAlert(), history.WithAlert)...)
 
 	if in.GetFrom() != nil {
 		opts = append(opts, history.WithFrom(in.GetFrom().AsTime()))
@@ -105,13 +105,13 @@ func (s *Server) ListEvaluationHistory(
 	}, nil
 }
 
-// optsFromStringList calls the given function `f` on each element of
-// values. Such elements are either "complex", i.e. they represent a
-// comma-separated list of sub-elements, or "simple", they do not
+// FilterOptsFromStrings calls the given function `f` on each element
+// of values. Such elements are either "complex", i.e. they represent
+// a comma-separated list of sub-elements, or "simple", they do not
 // contain comma characters. If element contains one or more comma
 // characters, it is further split into sub-elements before calling
 // `f` in them.
-func optsFromStringList(
+func FilterOptsFromStrings(
 	values []string,
 	f func(string) history.FilterOpt,
 ) []history.FilterOpt {

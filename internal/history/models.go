@@ -1,3 +1,17 @@
+// Copyright 2024 Stacklok, Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package history
 
 import (
@@ -13,9 +27,6 @@ import (
 var (
 	// ErrMalformedCursor represents errors in the cursor payload.
 	ErrMalformedCursor = errors.New("malformed cursor")
-	// ErrAlreadySet is returned when a field is set multiple
-	// times.
-	ErrAlreadySet = errors.New("field already set")
 	// ErrInvalidTimeRange is returned the time range from-to is
 	// either missing one end or from is greater than to.
 	ErrInvalidTimeRange = errors.New("invalid time range")
@@ -29,9 +40,9 @@ type Direction string
 
 const (
 	// Next represents the next page.
-	Next = "next"
+	Next = Direction("next")
 	// Prev represents the prev page.
-	Prev = "prev"
+	Prev = Direction("prev")
 )
 
 // ListEvaluationCursor is a struct representing a cursor in the
@@ -165,10 +176,10 @@ type StatusFilter interface {
 	// AddStatus adds a status for inclusion/exclusion in the
 	// filter.
 	AddStatus(string) error
-	// IncludedStatus returns the list of included statuses.
-	IncludedStatus() []string
-	// ExcludedStatus returns the list of excluded statuses.
-	ExcludedStatus() []string
+	// IncludedStatuses returns the list of included statuses.
+	IncludedStatuses() []string
+	// ExcludedStatuses returns the list of excluded statuses.
+	ExcludedStatuses() []string
 }
 
 // RemediationFilter interface should be implemented by types
@@ -177,12 +188,12 @@ type RemediationFilter interface {
 	// AddRemediation adds a remediation for inclusion/exclusion
 	// in the filter.
 	AddRemediation(string) error
-	// IncludedRemediation returns the list of included
+	// IncludedRemediations returns the list of included
 	// remediations.
-	IncludedRemediation() []string
-	// ExcludedRemediation returns the list of excluded
+	IncludedRemediations() []string
+	// ExcludedRemediations returns the list of excluded
 	// remediations.
-	ExcludedRemediation() []string
+	ExcludedRemediations() []string
 }
 
 // AlertFilter interface should be implemented by types implementing a
@@ -191,10 +202,10 @@ type AlertFilter interface {
 	// AddAlert adds an alert setting for inclusion/exclusion in
 	// the filter.
 	AddAlert(string) error
-	// IncludedAlert returns the list of included alert settings.
-	IncludedAlert() []string
-	// IncludedAlert returns the list of excluded alert settings.
-	ExcludedAlert() []string
+	// IncludedAlerts returns the list of included alert settings.
+	IncludedAlerts() []string
+	// IncludedAlerts returns the list of excluded alert settings.
+	ExcludedAlerts() []string
 }
 
 // TimeRangeFilter interface should be implemented by types
@@ -310,10 +321,10 @@ func (filter *listEvaluationFilter) AddStatus(status string) error {
 	}
 	return nil
 }
-func (filter *listEvaluationFilter) IncludedStatus() []string {
+func (filter *listEvaluationFilter) IncludedStatuses() []string {
 	return filter.includedStatuses
 }
-func (filter *listEvaluationFilter) ExcludedStatus() []string {
+func (filter *listEvaluationFilter) ExcludedStatuses() []string {
 	return filter.excludedStatuses
 }
 
@@ -326,10 +337,10 @@ func (filter *listEvaluationFilter) AddRemediation(remediation string) error {
 	}
 	return nil
 }
-func (filter *listEvaluationFilter) IncludedRemediation() []string {
+func (filter *listEvaluationFilter) IncludedRemediations() []string {
 	return filter.includedRemediation
 }
-func (filter *listEvaluationFilter) ExcludedRemediation() []string {
+func (filter *listEvaluationFilter) ExcludedRemediations() []string {
 	return filter.excludedRemediation
 }
 
@@ -342,24 +353,18 @@ func (filter *listEvaluationFilter) AddAlert(alert string) error {
 	}
 	return nil
 }
-func (filter *listEvaluationFilter) IncludedAlert() []string {
+func (filter *listEvaluationFilter) IncludedAlerts() []string {
 	return filter.includedAlerts
 }
-func (filter *listEvaluationFilter) ExcludedAlert() []string {
+func (filter *listEvaluationFilter) ExcludedAlerts() []string {
 	return filter.excludedAlerts
 }
 
 func (filter *listEvaluationFilter) SetFrom(from time.Time) error {
-	if filter.from != nil {
-		return fmt.Errorf("%w: from", ErrAlreadySet)
-	}
 	filter.from = &from
 	return nil
 }
 func (filter *listEvaluationFilter) SetTo(to time.Time) error {
-	if filter.to != nil {
-		return fmt.Errorf("%w: to", ErrAlreadySet)
-	}
 	filter.to = &to
 	return nil
 }
