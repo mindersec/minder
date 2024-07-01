@@ -2,21 +2,55 @@
 sidebar_position: 60
 toc_max_heading_level: 4
 ---
+
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
+
+export const File = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h2 id={id} name={id}>{children}</h2>;
+}
+export const Service = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h4 id={id} name={id}>{children}</h4>;
+}
+export const Message = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h4 id={id} name={id}>{children}</h4>;
+}
+export const Extension = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h3 id={id} name={id}>{children}</h3>;
+}
+export const Enum = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h3 id={id} name={id}>{children}</h3>;
+}
+export const ProtoType = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <a id={id} name={id}>{children}</a>;
+}
+export const TypeLink = ({ children, type }) => {
+  let link = type.startsWith('google-protobuf-') ?
+    `https://protobuf.dev/reference/protobuf/google.protobuf/#${type.replace('google-protobuf-', '')}` :
+    `#${type}`;
+  return <a href={link}>{children}</a>;
+}
+
+
 # Protocol documentation
-<a name="top"></a>
+<a id="top"></a>
 
 
 
-<a name="minder_v1_minder-proto"></a>
-<p align="right"><a href="#top">Top</a></p>
 
-## minder/v1/minder.proto
+<File id="minder_v1_minder-proto">minder/v1/minder.proto</File>
+
 
 ### Services
 
-<a name="minder-v1-ArtifactService"></a>
 
-#### ArtifactService
+<Service id="minder-v1-ArtifactService">ArtifactService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -26,9 +60,9 @@ toc_max_heading_level: 4
 | GetArtifactByName | [GetArtifactByNameRequest](#minder-v1-GetArtifactByNameRequest) | [GetArtifactByNameResponse](#minder-v1-GetArtifactByNameResponse) |  |
 
 
-<a name="minder-v1-EvalResultsService"></a>
 
-#### EvalResultsService
+<Service id="minder-v1-EvalResultsService">EvalResultsService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -37,9 +71,9 @@ toc_max_heading_level: 4
 | ListEvaluationHistory | [ListEvaluationHistoryRequest](#minder-v1-ListEvaluationHistoryRequest) | [ListEvaluationHistoryResponse](#minder-v1-ListEvaluationHistoryResponse) |  |
 
 
-<a name="minder-v1-HealthService"></a>
 
-#### HealthService
+<Service id="minder-v1-HealthService">HealthService</Service>
+
 Simple Health Check Service
 replies with OK
 
@@ -48,9 +82,9 @@ replies with OK
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
 
 
-<a name="minder-v1-InviteService"></a>
 
-#### InviteService
+<Service id="minder-v1-InviteService">InviteService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -58,9 +92,9 @@ replies with OK
 | GetInviteDetails | [GetInviteDetailsRequest](#minder-v1-GetInviteDetailsRequest) | [GetInviteDetailsResponse](#minder-v1-GetInviteDetailsResponse) |  |
 
 
-<a name="minder-v1-OAuthService"></a>
 
-#### OAuthService
+<Service id="minder-v1-OAuthService">OAuthService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -71,9 +105,9 @@ replies with OK
 | VerifyProviderCredential | [VerifyProviderCredentialRequest](#minder-v1-VerifyProviderCredentialRequest) | [VerifyProviderCredentialResponse](#minder-v1-VerifyProviderCredentialResponse) | VerifyProviderCredential verifies that a credential has been created matching the enrollment nonce |
 
 
-<a name="minder-v1-PermissionsService"></a>
 
-#### PermissionsService
+<Service id="minder-v1-PermissionsService">PermissionsService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -85,9 +119,9 @@ replies with OK
 | RemoveRole | [RemoveRoleRequest](#minder-v1-RemoveRoleRequest) | [RemoveRoleResponse](#minder-v1-RemoveRoleResponse) |  |
 
 
-<a name="minder-v1-ProfileService"></a>
 
-#### ProfileService
+<Service id="minder-v1-ProfileService">ProfileService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -108,9 +142,9 @@ replies with OK
 | DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
-<a name="minder-v1-ProjectsService"></a>
 
-#### ProjectsService
+<Service id="minder-v1-ProjectsService">ProjectsService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -124,9 +158,9 @@ replies with OK
 | CreateEntityReconciliationTask | [CreateEntityReconciliationTaskRequest](#minder-v1-CreateEntityReconciliationTaskRequest) | [CreateEntityReconciliationTaskResponse](#minder-v1-CreateEntityReconciliationTaskResponse) |  |
 
 
-<a name="minder-v1-ProvidersService"></a>
 
-#### ProvidersService
+<Service id="minder-v1-ProvidersService">ProvidersService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -142,9 +176,9 @@ replies with OK
 | ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 
 
-<a name="minder-v1-RepositoryService"></a>
 
-#### RepositoryService
+<Service id="minder-v1-RepositoryService">RepositoryService</Service>
+
 
 
 | Method Name | Request Type | Response Type | Description |
@@ -158,9 +192,9 @@ replies with OK
 | DeleteRepositoryByName | [DeleteRepositoryByNameRequest](#minder-v1-DeleteRepositoryByNameRequest) | [DeleteRepositoryByNameResponse](#minder-v1-DeleteRepositoryByNameResponse) |  |
 
 
-<a name="minder-v1-UserService"></a>
 
-#### UserService
+<Service id="minder-v1-UserService">UserService</Service>
+
 manage Users CRUD
 
 | Method Name | Request Type | Response Type | Description |
@@ -174,83 +208,83 @@ manage Users CRUD
 
 ### Messages
 
-<a name="minder-v1-Artifact"></a>
 
-#### Artifact
+<Message id="minder-v1-Artifact">Artifact</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact_pk | [string](#string) |  |  |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| type | [string](#string) |  |  |
-| visibility | [string](#string) |  |  |
-| repository | [string](#string) |  |  |
-| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+| artifact_pk | <TypeLink type="string">string</TypeLink> |  |  |
+| owner | <TypeLink type="string">string</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  |  |
+| visibility | <TypeLink type="string">string</TypeLink> |  |  |
+| repository | <TypeLink type="string">string</TypeLink> |  |  |
+| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
-<a name="minder-v1-ArtifactType"></a>
 
-#### ArtifactType
+<Message id="minder-v1-ArtifactType">ArtifactType</Message>
+
 ArtifactType defines the artifact data evaluation.
 
 
-<a name="minder-v1-ArtifactVersion"></a>
 
-#### ArtifactVersion
+<Message id="minder-v1-ArtifactVersion">ArtifactVersion</Message>
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| version_id | [int64](#int64) |  |  |
-| tags | [string](#string) | repeated |  |
-| sha | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-
-
-<a name="minder-v1-AssignRoleRequest"></a>
-
-#### AssignRoleRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be created. |
-
-
-<a name="minder-v1-AssignRoleResponse"></a>
-
-#### AssignRoleResponse
+| version_id | <TypeLink type="int64">int64</TypeLink> |  |  |
+| tags | <TypeLink type="string">string</TypeLink> | repeated |  |
+| sha | <TypeLink type="string">string</TypeLink> |  |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was created. |
-| invitation | [Invitation](#minder-v1-Invitation) |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
+<Message id="minder-v1-AssignRoleRequest">AssignRoleRequest</Message>
 
-
-<a name="minder-v1-AuthorizationParams"></a>
-
-#### AuthorizationParams
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| authorization_url | [string](#string) |  | authorization_url is an external URL to use to authorize the provider. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the role assignment is evaluated. |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment to be created. |
 
 
-<a name="minder-v1-AutoRegistration"></a>
 
-#### AutoRegistration
+<Message id="minder-v1-AssignRoleResponse">AssignRoleResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was created. |
+| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
+
+
+
+<Message id="minder-v1-AuthorizationParams">AuthorizationParams</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| authorization_url | <TypeLink type="string">string</TypeLink> |  | authorization_url is an external URL to use to authorize the provider. |
+
+
+
+<Message id="minder-v1-AutoRegistration">AutoRegistration</Message>
+
 AutoRegistration is the configuration for auto-registering entities.
 When nothing is set, it means that auto-registration is disabled. There is no difference between disabled
 and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
@@ -258,64 +292,64 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| entities | [AutoRegistration.EntitiesEntry](#minder-v1-AutoRegistration-EntitiesEntry) | repeated | enabled is the list of entities that are enabled for auto-registration. |
-
-
-<a name="minder-v1-AutoRegistration-EntitiesEntry"></a>
-
-#### AutoRegistration.EntitiesEntry
+| entities | <TypeLink type="minder-v1-AutoRegistration-EntitiesEntry">AutoRegistration.EntitiesEntry</TypeLink> | repeated | enabled is the list of entities that are enabled for auto-registration. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [EntityAutoRegistrationConfig](#minder-v1-EntityAutoRegistrationConfig) |  |  |
+<Message id="minder-v1-AutoRegistration-EntitiesEntry">AutoRegistration.EntitiesEntry</Message>
 
-
-<a name="minder-v1-BranchProtection"></a>
-
-#### BranchProtection
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| branch | [string](#string) |  |  |
-| is_protected | [bool](#bool) |  | Add other relevant fields |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-EntityAutoRegistrationConfig">EntityAutoRegistrationConfig</TypeLink> |  |  |
 
 
-<a name="minder-v1-BuiltinType"></a>
 
-#### BuiltinType
+<Message id="minder-v1-BranchProtection">BranchProtection</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| branch | <TypeLink type="string">string</TypeLink> |  |  |
+| is_protected | <TypeLink type="bool">bool</TypeLink> |  | Add other relevant fields |
+
+
+
+<Message id="minder-v1-BuiltinType">BuiltinType</Message>
+
 BuiltinType defines the builtin data evaluation.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| method | [string](#string) |  |  |
-
-
-<a name="minder-v1-CheckHealthRequest"></a>
-
-#### CheckHealthRequest
+| method | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
-<a name="minder-v1-CheckHealthResponse"></a>
+<Message id="minder-v1-CheckHealthRequest">CheckHealthRequest</Message>
 
-#### CheckHealthResponse
+
+
+
+
+<Message id="minder-v1-CheckHealthResponse">CheckHealthResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
+| status | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-Context"></a>
 
-#### Context
+<Message id="minder-v1-Context">Context</Message>
+
 Context defines the context in which a rule is evaluated.
 this normally refers to a combination of the provider, organization and project.
 
@@ -325,159 +359,159 @@ buf compatibility checks.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) | optional | name of the provider |
-| project | [string](#string) | optional | ID of the project |
-| retired_organization | [string](#string) | optional |  |
+| provider | <TypeLink type="string">string</TypeLink> | optional | name of the provider |
+| project | <TypeLink type="string">string</TypeLink> | optional | ID of the project |
+| retired_organization | <TypeLink type="string">string</TypeLink> | optional |  |
 
 
-<a name="minder-v1-ContextV2"></a>
 
-#### ContextV2
+<Message id="minder-v1-ContextV2">ContextV2</Message>
+
 ContextV2 defines the context in which a rule is evaluated.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  | project is the project ID |
-| provider | [string](#string) |  | name of the provider. Set to empty string when not applicable. |
+| project_id | <TypeLink type="string">string</TypeLink> |  | project is the project ID |
+| provider | <TypeLink type="string">string</TypeLink> |  | name of the provider. Set to empty string when not applicable. |
 
 
-<a name="minder-v1-CreateEntityReconciliationTaskRequest"></a>
 
-#### CreateEntityReconciliationTaskRequest
+<Message id="minder-v1-CreateEntityReconciliationTaskRequest">CreateEntityReconciliationTaskRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  | entity is the entity to be reconciled. |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the entity reconciliation task is created. |
-
-
-<a name="minder-v1-CreateEntityReconciliationTaskResponse"></a>
-
-#### CreateEntityReconciliationTaskResponse
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  | entity is the entity to be reconciled. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity reconciliation task is created. |
 
 
 
-<a name="minder-v1-CreateProfileRequest"></a>
+<Message id="minder-v1-CreateEntityReconciliationTaskResponse">CreateEntityReconciliationTaskResponse</Message>
 
-#### CreateProfileRequest
+
+
+
+
+<Message id="minder-v1-CreateProfileRequest">CreateProfileRequest</Message>
+
 Profile service
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
-
-
-<a name="minder-v1-CreateProfileResponse"></a>
-
-#### CreateProfileResponse
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
+<Message id="minder-v1-CreateProfileResponse">CreateProfileResponse</Message>
 
-
-<a name="minder-v1-CreateProjectRequest"></a>
-
-#### CreateProjectRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the project is created. |
-| name | [string](#string) |  | name is the name of the project to create. |
-
-
-<a name="minder-v1-CreateProjectResponse"></a>
-
-#### CreateProjectResponse
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project | [Project](#minder-v1-Project) |  | project is the project that was created. |
+<Message id="minder-v1-CreateProjectRequest">CreateProjectRequest</Message>
 
-
-<a name="minder-v1-CreateProviderRequest"></a>
-
-#### CreateProviderRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is created. |
-| provider | [Provider](#minder-v1-Provider) |  | provider is the provider to be created. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is created. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the project to create. |
 
 
-<a name="minder-v1-CreateProviderResponse"></a>
 
-#### CreateProviderResponse
+<Message id="minder-v1-CreateProjectResponse">CreateProjectResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was created. |
-| authorization | [AuthorizationParams](#minder-v1-AuthorizationParams) |  | authorization provides additional authorization information needed to complete the initialization of the provider. |
+| project | <TypeLink type="minder-v1-Project">Project</TypeLink> |  | project is the project that was created. |
 
 
-<a name="minder-v1-CreateRuleTypeRequest"></a>
 
-#### CreateRuleTypeRequest
+<Message id="minder-v1-CreateProviderRequest">CreateProviderRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is created. |
+| provider | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  | provider is the provider to be created. |
+
+
+
+<Message id="minder-v1-CreateProviderResponse">CreateProviderResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  | provider is the provider that was created. |
+| authorization | <TypeLink type="minder-v1-AuthorizationParams">AuthorizationParams</TypeLink> |  | authorization provides additional authorization information needed to complete the initialization of the provider. |
+
+
+
+<Message id="minder-v1-CreateRuleTypeRequest">CreateRuleTypeRequest</Message>
+
 CreateRuleTypeRequest is the request to create a rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be created. |
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type to be created. |
 
 
-<a name="minder-v1-CreateRuleTypeResponse"></a>
 
-#### CreateRuleTypeResponse
+<Message id="minder-v1-CreateRuleTypeResponse">CreateRuleTypeResponse</Message>
+
 CreateRuleTypeResponse is the response to create a rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was created. |
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type that was created. |
 
 
-<a name="minder-v1-CreateUserRequest"></a>
 
-#### CreateUserRequest
+<Message id="minder-v1-CreateUserRequest">CreateUserRequest</Message>
+
 User service
 
 
-<a name="minder-v1-CreateUserResponse"></a>
 
-#### CreateUserResponse
+<Message id="minder-v1-CreateUserResponse">CreateUserResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| organization_id | [string](#string) |  | **Deprecated.**  |
-| organizatio_name | [string](#string) |  | **Deprecated.**  |
-| project_id | [string](#string) |  |  |
-| project_name | [string](#string) |  |  |
-| identity_subject | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+| id | <TypeLink type="int32">int32</TypeLink> |  |  |
+| organization_id | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| organizatio_name | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| project_id | <TypeLink type="string">string</TypeLink> |  |  |
+| project_name | <TypeLink type="string">string</TypeLink> |  |  |
+| identity_subject | <TypeLink type="string">string</TypeLink> |  |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
-<a name="minder-v1-Cursor"></a>
 
-#### Cursor
+<Message id="minder-v1-Cursor">Cursor</Message>
+
 Cursor message to be used in request messages. Its purpose is to
 allow clients to specify the subset of records to retrieve by means
 of index within a collection, along with the number of items to
@@ -486,13 +520,13 @@ retrieve.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cursor | [string](#string) |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
-| size | [uint64](#uint64) |  | size is the number of items to retrieve from the collection. |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
+| size | <TypeLink type="uint64">uint64</TypeLink> |  | size is the number of items to retrieve from the collection. |
 
 
-<a name="minder-v1-CursorPage"></a>
 
-#### CursorPage
+<Message id="minder-v1-CursorPage">CursorPage</Message>
+
 CursorPage message used in response messages. Its purpose is to
 send to clients links pointing to next and/or previous collection
 subsets with respect to the one containing this struct.
@@ -500,213 +534,213 @@ subsets with respect to the one containing this struct.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| total_records | [uint64](#uint64) |  | Total number of records matching the request. This is optional. |
-| next | [Cursor](#minder-v1-Cursor) |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. |
-| prev | [Cursor](#minder-v1-Cursor) |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. |
-
-
-<a name="minder-v1-DeleteProfileRequest"></a>
-
-#### DeleteProfileRequest
+| total_records | <TypeLink type="uint64">uint64</TypeLink> |  | Total number of records matching the request. This is optional. |
+| next | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. |
+| prev | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the profile to delete |
+<Message id="minder-v1-DeleteProfileRequest">DeleteProfileRequest</Message>
 
-
-<a name="minder-v1-DeleteProfileResponse"></a>
-
-#### DeleteProfileResponse
-
-
-
-<a name="minder-v1-DeleteProjectRequest"></a>
-
-#### DeleteProjectRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the project is deleted. |
-
-
-<a name="minder-v1-DeleteProjectResponse"></a>
-
-#### DeleteProjectResponse
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the profile to delete |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  | project_id is the id of the project that was deleted. |
+<Message id="minder-v1-DeleteProfileResponse">DeleteProfileResponse</Message>
 
 
-<a name="minder-v1-DeleteProviderByIDRequest"></a>
 
-#### DeleteProviderByIDRequest
+
+
+<Message id="minder-v1-DeleteProjectRequest">DeleteProjectRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is deleted. Only the project is required in this context. |
-| id | [string](#string) |  | id is the id of the provider to delete |
-
-
-<a name="minder-v1-DeleteProviderByIDResponse"></a>
-
-#### DeleteProviderByIDResponse
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is deleted. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | id is the id of the provider that was deleted |
+<Message id="minder-v1-DeleteProjectResponse">DeleteProjectResponse</Message>
 
-
-<a name="minder-v1-DeleteProviderRequest"></a>
-
-#### DeleteProviderRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is deleted. Both project and provider are required in this context. |
-
-
-<a name="minder-v1-DeleteProviderResponse"></a>
-
-#### DeleteProviderResponse
+| project_id | <TypeLink type="string">string</TypeLink> |  | project_id is the id of the project that was deleted. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | name is the name of the provider that was deleted |
+<Message id="minder-v1-DeleteProviderByIDRequest">DeleteProviderByIDRequest</Message>
 
-
-<a name="minder-v1-DeleteRepositoryByIdRequest"></a>
-
-#### DeleteRepositoryByIdRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository_id | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
-<a name="minder-v1-DeleteRepositoryByIdResponse"></a>
-
-#### DeleteRepositoryByIdResponse
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is deleted. Only the project is required in this context. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the provider to delete |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository_id | [string](#string) |  |  |
+<Message id="minder-v1-DeleteProviderByIDResponse">DeleteProviderByIDResponse</Message>
 
-
-<a name="minder-v1-DeleteRepositoryByNameRequest"></a>
-
-#### DeleteRepositoryByNameRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| name | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the provider that was deleted |
 
 
-<a name="minder-v1-DeleteRepositoryByNameResponse"></a>
 
-#### DeleteRepositoryByNameResponse
+<Message id="minder-v1-DeleteProviderRequest">DeleteProviderRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is deleted. Both project and provider are required in this context. |
 
 
-<a name="minder-v1-DeleteRuleTypeRequest"></a>
 
-#### DeleteRuleTypeRequest
+<Message id="minder-v1-DeleteProviderResponse">DeleteProviderResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider that was deleted |
+
+
+
+<Message id="minder-v1-DeleteRepositoryByIdRequest">DeleteRepositoryByIdRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteRepositoryByIdResponse">DeleteRepositoryByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteRepositoryByNameRequest">DeleteRepositoryByNameRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteRepositoryByNameResponse">DeleteRepositoryByNameResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteRuleTypeRequest">DeleteRuleTypeRequest</Message>
+
 DeleteRuleTypeRequest is the request to delete a rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type to be deleted. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the rule type to be deleted. |
 
 
-<a name="minder-v1-DeleteRuleTypeResponse"></a>
 
-#### DeleteRuleTypeResponse
+<Message id="minder-v1-DeleteRuleTypeResponse">DeleteRuleTypeResponse</Message>
+
 DeleteRuleTypeResponse is the response to delete a rule type.
 
 
-<a name="minder-v1-DeleteUserRequest"></a>
 
-#### DeleteUserRequest
-
-
-
-<a name="minder-v1-DeleteUserResponse"></a>
-
-#### DeleteUserResponse
+<Message id="minder-v1-DeleteUserRequest">DeleteUserRequest</Message>
 
 
 
-<a name="minder-v1-Dependency"></a>
 
-#### Dependency
+
+<Message id="minder-v1-DeleteUserResponse">DeleteUserResponse</Message>
+
+
+
+
+
+<Message id="minder-v1-Dependency">Dependency</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystem | [DepEcosystem](#minder-v1-DepEcosystem) |  |  |
-| name | [string](#string) |  |  |
-| version | [string](#string) |  |  |
+| ecosystem | <TypeLink type="minder-v1-DepEcosystem">DepEcosystem</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| version | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-DiffType"></a>
 
-#### DiffType
+<Message id="minder-v1-DiffType">DiffType</Message>
+
 DiffType defines the diff data ingester.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ecosystems | [DiffType.Ecosystem](#minder-v1-DiffType-Ecosystem) | repeated | ecosystems is the list of ecosystems to be used for the "dep" diff type. |
-| type | [string](#string) |  | type is the type of diff ingestor to use. The default is "dep" which will leverage the ecosystems array. |
+| ecosystems | <TypeLink type="minder-v1-DiffType-Ecosystem">DiffType.Ecosystem</TypeLink> | repeated | ecosystems is the list of ecosystems to be used for the "dep" diff type. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of diff ingestor to use. The default is "dep" which will leverage the ecosystems array. |
 
 
-<a name="minder-v1-DiffType-Ecosystem"></a>
 
-#### DiffType.Ecosystem
+<Message id="minder-v1-DiffType-Ecosystem">DiffType.Ecosystem</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | name is the name of the ecosystem. |
-| depfile | [string](#string) |  | depfile is the file that contains the dependencies for this ecosystem |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the ecosystem. |
+| depfile | <TypeLink type="string">string</TypeLink> |  | depfile is the file that contains the dependencies for this ecosystem |
 
 
-<a name="minder-v1-DockerHubProviderConfig"></a>
 
-#### DockerHubProviderConfig
+<Message id="minder-v1-DockerHubProviderConfig">DockerHubProviderConfig</Message>
+
 DockerHubProviderConfig contains the configuration for the DockerHub provider.
 
 Namespace: is the namespace for the DockerHub provider.
@@ -714,127 +748,127 @@ Namespace: is the namespace for the DockerHub provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| namespace | [string](#string) | optional | namespace is the namespace for the DockerHub provider. |
+| namespace | <TypeLink type="string">string</TypeLink> | optional | namespace is the namespace for the DockerHub provider. |
 
 
-<a name="minder-v1-EntityAutoRegistrationConfig"></a>
 
-#### EntityAutoRegistrationConfig
+<Message id="minder-v1-EntityAutoRegistrationConfig">EntityAutoRegistrationConfig</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| enabled | [bool](#bool) | optional |  |
+| enabled | <TypeLink type="bool">bool</TypeLink> | optional |  |
 
 
-<a name="minder-v1-EntityTypedId"></a>
 
-#### EntityTypedId
+<Message id="minder-v1-EntityTypedId">EntityTypedId</Message>
+
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [Entity](#minder-v1-Entity) |  | entity is the entity to get status for. Incompatible with `all` |
-| id | [string](#string) |  | id is the ID of the entity to get status for. Incompatible with `all` |
+| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity is the entity to get status for. Incompatible with `all` |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to get status for. Incompatible with `all` |
 
 
-<a name="minder-v1-EvalResultAlert"></a>
 
-#### EvalResultAlert
+<Message id="minder-v1-EvalResultAlert">EvalResultAlert</Message>
+
 EvalResultAlert holds the alert details for a given rule evaluation
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  | status is the status of the alert |
-| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the alert was performed or attempted |
-| details | [string](#string) |  | details is the description of the alert attempt if any |
-| url | [string](#string) |  | url is the URL to the alert |
-
-
-<a name="minder-v1-EvaluationHistory"></a>
-
-#### EvaluationHistory
+| status | <TypeLink type="string">string</TypeLink> |  | status is the status of the alert |
+| last_updated | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | last_updated is the last time the alert was performed or attempted |
+| details | <TypeLink type="string">string</TypeLink> |  | details is the description of the alert attempt if any |
+| url | <TypeLink type="string">string</TypeLink> |  | url is the URL to the alert |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| entity | [EvaluationHistoryEntity](#minder-v1-EvaluationHistoryEntity) |  | entity contains details of the entity which was evaluated. |
-| rule | [EvaluationHistoryRule](#minder-v1-EvaluationHistoryRule) |  | rule contains details of the rule which the entity was evaluated against. |
-| status | [EvaluationHistoryStatus](#minder-v1-EvaluationHistoryStatus) |  | status contains the evaluation status. |
-| alert | [EvaluationHistoryAlert](#minder-v1-EvaluationHistoryAlert) |  | alert contains details of the alerts for this evaluation. |
-| remediation | [EvaluationHistoryRemediation](#minder-v1-EvaluationHistoryRemediation) |  | remediation contains details of the remediation for this evaluation. |
+<Message id="minder-v1-EvaluationHistory">EvaluationHistory</Message>
 
-
-<a name="minder-v1-EvaluationHistoryAlert"></a>
-
-#### EvaluationHistoryAlert
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  | status is one of (on, off, error, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
-| details | [string](#string) |  | details contains optional details about the alert. the structure and contents are alert specific, and are subject to change. |
-
-
-<a name="minder-v1-EvaluationHistoryEntity"></a>
-
-#### EvaluationHistoryEntity
+| entity | <TypeLink type="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</TypeLink> |  | entity contains details of the entity which was evaluated. |
+| rule | <TypeLink type="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</TypeLink> |  | rule contains details of the rule which the entity was evaluated against. |
+| status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
+| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
+| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  | id is the ID of the entity. |
-| type | [Entity](#minder-v1-Entity) |  | type is the entity type. |
-| name | [string](#string) |  | name is the entity name. |
+<Message id="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</Message>
 
-
-<a name="minder-v1-EvaluationHistoryRemediation"></a>
-
-#### EvaluationHistoryRemediation
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  | status is one of (success, error, failure, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
-| details | [string](#string) |  | details contains optional details about the remediation. the structure and contents are remediation specific, and are subject to change. |
-
-
-<a name="minder-v1-EvaluationHistoryRule"></a>
-
-#### EvaluationHistoryRule
+| status | <TypeLink type="string">string</TypeLink> |  | status is one of (on, off, error, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the alert. the structure and contents are alert specific, and are subject to change. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | name is the name of the rule instance. |
-| type | [string](#string) |  | type is the name of the rule type. |
-| profile | [string](#string) |  | profile is the name of the profile which contains the rule. |
+<Message id="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</Message>
 
-
-<a name="minder-v1-EvaluationHistoryStatus"></a>
-
-#### EvaluationHistoryStatus
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
-| details | [string](#string) |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity. |
+| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the entity type. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the entity name. |
 
 
-<a name="minder-v1-GHCRProviderConfig"></a>
 
-#### GHCRProviderConfig
+<Message id="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped, not available) not using enums to mirror the behaviour of the existing API contracts. |
+| details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the remediation. the structure and contents are remediation specific, and are subject to change. |
+
+
+
+<Message id="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule instance. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
+| profile | <TypeLink type="string">string</TypeLink> |  | profile is the name of the profile which contains the rule. |
+
+
+
+<Message id="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
+| details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+
+
+
+<Message id="minder-v1-GHCRProviderConfig">GHCRProviderConfig</Message>
+
 GHCRProviderConfig contains the configuration for the GHCR provider.
 
 Namespace: is the namespace for the GHCR provider.
@@ -842,369 +876,369 @@ Namespace: is the namespace for the GHCR provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| namespace | [string](#string) | optional | namespace is the namespace for the GHCR provider. |
-
-
-<a name="minder-v1-GetArtifactByIdRequest"></a>
-
-#### GetArtifactByIdRequest
+| namespace | <TypeLink type="string">string</TypeLink> | optional | namespace is the namespace for the GHCR provider. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| id | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-GetArtifactByIdRequest">GetArtifactByIdRequest</Message>
 
-
-<a name="minder-v1-GetArtifactByIdResponse"></a>
-
-#### GetArtifactByIdResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact | [Artifact](#minder-v1-Artifact) |  |  |
-| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
-
-
-<a name="minder-v1-GetArtifactByNameRequest"></a>
-
-#### GetArtifactByNameRequest
+| id | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-GetArtifactByIdResponse">GetArtifactByIdResponse</Message>
 
-
-<a name="minder-v1-GetArtifactByNameResponse"></a>
-
-#### GetArtifactByNameResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| artifact | [Artifact](#minder-v1-Artifact) |  |  |
-| versions | [ArtifactVersion](#minder-v1-ArtifactVersion) | repeated |  |
-
-
-<a name="minder-v1-GetAuthorizationURLRequest"></a>
-
-#### GetAuthorizationURLRequest
+| artifact | <TypeLink type="minder-v1-Artifact">Artifact</TypeLink> |  |  |
+| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| cli | [bool](#bool) |  |  |
-| port | [int32](#int32) |  |  |
-| owner | [string](#string) | optional |  |
-| context | [Context](#minder-v1-Context) |  |  |
-| redirect_url | [string](#string) | optional |  |
-| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is a JSON object that can be used to pass additional configuration |
-| provider_class | [string](#string) |  |  |
+<Message id="minder-v1-GetArtifactByNameRequest">GetArtifactByNameRequest</Message>
 
-
-<a name="minder-v1-GetAuthorizationURLResponse"></a>
-
-#### GetAuthorizationURLResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| url | [string](#string) |  |  |
-| state | [string](#string) |  |  |
-
-
-<a name="minder-v1-GetInviteDetailsRequest"></a>
-
-#### GetInviteDetailsRequest
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| code | [string](#string) |  | Invite nonce/code to retrieve details for |
+<Message id="minder-v1-GetArtifactByNameResponse">GetArtifactByNameResponse</Message>
 
-
-<a name="minder-v1-GetInviteDetailsResponse"></a>
-
-#### GetInviteDetailsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project_display | [string](#string) |  | Project associated with the invite |
-| sponsor_display | [string](#string) |  | Sponsor of the invite |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
-| expired | [bool](#bool) |  | expired is true if the invitation has expired |
+| artifact | <TypeLink type="minder-v1-Artifact">Artifact</TypeLink> |  |  |
+| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
 
 
-<a name="minder-v1-GetProfileByIdRequest"></a>
 
-#### GetProfileByIdRequest
+<Message id="minder-v1-GetAuthorizationURLRequest">GetAuthorizationURLRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cli | <TypeLink type="bool">bool</TypeLink> |  |  |
+| port | <TypeLink type="int32">int32</TypeLink> |  |  |
+| owner | <TypeLink type="string">string</TypeLink> | optional |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| redirect_url | <TypeLink type="string">string</TypeLink> | optional |  |
+| config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is a JSON object that can be used to pass additional configuration |
+| provider_class | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetAuthorizationURLResponse">GetAuthorizationURLResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | <TypeLink type="string">string</TypeLink> |  |  |
+| state | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetInviteDetailsRequest">GetInviteDetailsRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | <TypeLink type="string">string</TypeLink> |  | Invite nonce/code to retrieve details for |
+
+
+
+<Message id="minder-v1-GetInviteDetailsResponse">GetInviteDetailsResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project_display | <TypeLink type="string">string</TypeLink> |  | Project associated with the invite |
+| sponsor_display | <TypeLink type="string">string</TypeLink> |  | Sponsor of the invite |
+| expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is the time at which the invitation expires. |
+| expired | <TypeLink type="bool">bool</TypeLink> |  | expired is true if the invitation has expired |
+
+
+
+<Message id="minder-v1-GetProfileByIdRequest">GetProfileByIdRequest</Message>
+
 get profile by id
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
-| id | [string](#string) |  | id is the id of the profile to get |
-
-
-<a name="minder-v1-GetProfileByIdResponse"></a>
-
-#### GetProfileByIdResponse
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context which contains the profiles |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the profile to get |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
+<Message id="minder-v1-GetProfileByIdResponse">GetProfileByIdResponse</Message>
 
-
-<a name="minder-v1-GetProfileStatusByNameRequest"></a>
-
-#### GetProfileStatusByNameRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| name | [string](#string) |  | name is the name of the profile to get |
-| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
-| all | [bool](#bool) |  |  |
-| rule | [string](#string) |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
-| rule_type | [string](#string) |  |  |
-| rule_name | [string](#string) |  |  |
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
-<a name="minder-v1-GetProfileStatusByNameResponse"></a>
 
-#### GetProfileStatusByNameResponse
+<Message id="minder-v1-GetProfileStatusByNameRequest">GetProfileStatusByNameRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile |
-| rule_evaluation_status | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | rule_evaluation_status is the status of the rules |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the profile to get |
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
+| all | <TypeLink type="bool">bool</TypeLink> |  |  |
+| rule | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
+| rule_type | <TypeLink type="string">string</TypeLink> |  |  |
+| rule_name | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-GetProfileStatusByProjectRequest"></a>
 
-#### GetProfileStatusByProjectRequest
+<Message id="minder-v1-GetProfileStatusByNameResponse">GetProfileStatusByNameResponse</Message>
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-
-
-<a name="minder-v1-GetProfileStatusByProjectResponse"></a>
-
-#### GetProfileStatusByProjectResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) | repeated | profile_status is the status of the profile |
-
-
-<a name="minder-v1-GetProviderRequest"></a>
-
-#### GetProviderRequest
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile |
+| rule_evaluation_status | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | rule_evaluation_status is the status of the rules |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the provider is evaluated. |
-| name | [string](#string) |  | name is the name of the provider to get. |
+<Message id="minder-v1-GetProfileStatusByProjectRequest">GetProfileStatusByProjectRequest</Message>
 
-
-<a name="minder-v1-GetProviderResponse"></a>
-
-#### GetProviderResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [Provider](#minder-v1-Provider) |  | provider is the provider that was retrieved. |
-
-
-<a name="minder-v1-GetRepositoryByIdRequest"></a>
-
-#### GetRepositoryByIdRequest
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| repository_id | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-GetProfileStatusByProjectResponse">GetProfileStatusByProjectResponse</Message>
 
-
-<a name="minder-v1-GetRepositoryByIdResponse"></a>
-
-#### GetRepositoryByIdResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#minder-v1-Repository) |  |  |
-
-
-<a name="minder-v1-GetRepositoryByNameRequest"></a>
-
-#### GetRepositoryByNameRequest
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> | repeated | profile_status is the status of the profile |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| name | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-GetProviderRequest">GetProviderRequest</Message>
 
-
-<a name="minder-v1-GetRepositoryByNameResponse"></a>
-
-#### GetRepositoryByNameResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#minder-v1-Repository) |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is evaluated. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider to get. |
 
 
-<a name="minder-v1-GetRuleTypeByIdRequest"></a>
 
-#### GetRuleTypeByIdRequest
+<Message id="minder-v1-GetProviderResponse">GetProviderResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  | provider is the provider that was retrieved. |
+
+
+
+<Message id="minder-v1-GetRepositoryByIdRequest">GetRepositoryByIdRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository_id | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetRepositoryByIdResponse">GetRepositoryByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | <TypeLink type="minder-v1-Repository">Repository</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetRepositoryByNameRequest">GetRepositoryByNameRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetRepositoryByNameResponse">GetRepositoryByNameResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repository | <TypeLink type="minder-v1-Repository">Repository</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetRuleTypeByIdRequest">GetRuleTypeByIdRequest</Message>
+
 GetRuleTypeByIdRequest is the request to get a rule type by id.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| id | [string](#string) |  | id is the id of the rule type. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the rule type. |
 
 
-<a name="minder-v1-GetRuleTypeByIdResponse"></a>
 
-#### GetRuleTypeByIdResponse
+<Message id="minder-v1-GetRuleTypeByIdResponse">GetRuleTypeByIdResponse</Message>
+
 GetRuleTypeByIdResponse is the response to get a rule type by id.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type. |
 
 
-<a name="minder-v1-GetRuleTypeByNameRequest"></a>
 
-#### GetRuleTypeByNameRequest
+<Message id="minder-v1-GetRuleTypeByNameRequest">GetRuleTypeByNameRequest</Message>
+
 GetRuleTypeByNameRequest is the request to get a rule type by name.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule type is evaluated. |
-| name | [string](#string) |  | name is the name of the rule type. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule type. |
 
 
-<a name="minder-v1-GetRuleTypeByNameResponse"></a>
 
-#### GetRuleTypeByNameResponse
+<Message id="minder-v1-GetRuleTypeByNameResponse">GetRuleTypeByNameResponse</Message>
+
 GetRuleTypeByNameResponse is the response to get a rule type by name.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type. |
-
-
-<a name="minder-v1-GetUnclaimedProvidersRequest"></a>
-
-#### GetUnclaimedProvidersRequest
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the set of providers are evaluated. |
+<Message id="minder-v1-GetUnclaimedProvidersRequest">GetUnclaimedProvidersRequest</Message>
 
-
-<a name="minder-v1-GetUnclaimedProvidersResponse"></a>
-
-#### GetUnclaimedProvidersResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| providers | [ProviderParameter](#minder-v1-ProviderParameter) | repeated | providers is a set of parameters which can be supplied to allow the user to assign existing unclaimed credentials to a new provider in the project via CreateProvider(). |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the set of providers are evaluated. |
 
 
-<a name="minder-v1-GetUserRequest"></a>
 
-#### GetUserRequest
+<Message id="minder-v1-GetUnclaimedProvidersResponse">GetUnclaimedProvidersResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| providers | <TypeLink type="minder-v1-ProviderParameter">ProviderParameter</TypeLink> | repeated | providers is a set of parameters which can be supplied to allow the user to assign existing unclaimed credentials to a new provider in the project via CreateProvider(). |
+
+
+
+<Message id="minder-v1-GetUserRequest">GetUserRequest</Message>
+
 get user
 
 
-<a name="minder-v1-GetUserResponse"></a>
 
-#### GetUserResponse
+<Message id="minder-v1-GetUserResponse">GetUserResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| user | [UserRecord](#minder-v1-UserRecord) | optional |  |
-| projects | [Project](#minder-v1-Project) | repeated | **Deprecated.** This will be deprecated in favor of the project_roles field |
-| project_roles | [ProjectRole](#minder-v1-ProjectRole) | repeated |  |
+| user | <TypeLink type="minder-v1-UserRecord">UserRecord</TypeLink> | optional |  |
+| projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated | **Deprecated.** This will be deprecated in favor of the project_roles field |
+| project_roles | <TypeLink type="minder-v1-ProjectRole">ProjectRole</TypeLink> | repeated |  |
 
 
-<a name="minder-v1-GitHubAppParams"></a>
 
-#### GitHubAppParams
+<Message id="minder-v1-GitHubAppParams">GitHubAppParams</Message>
+
 GitHubAppParams is the parameters for a GitHub App provider.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| installation_id | [int64](#int64) |  | The GitHub installation ID for the app. On create, this is the only parameter used; the organization parameters are ignored. |
-| organization | [string](#string) |  | The GitHub organization slug where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
-| organization_id | [int64](#int64) |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
+| installation_id | <TypeLink type="int64">int64</TypeLink> |  | The GitHub installation ID for the app. On create, this is the only parameter used; the organization parameters are ignored. |
+| organization | <TypeLink type="string">string</TypeLink> |  | The GitHub organization slug where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
+| organization_id | <TypeLink type="int64">int64</TypeLink> |  | The GitHub organization ID where the app is installed. This is an output-only parameter, and is validated on input if set (i.e. the value must be either empty or match the org of the installation_id). |
 
 
-<a name="minder-v1-GitHubAppProviderConfig"></a>
 
-#### GitHubAppProviderConfig
+<Message id="minder-v1-GitHubAppProviderConfig">GitHubAppProviderConfig</Message>
+
 GitHubAppProviderConfig contains the configuration for the GitHub App provider
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+| endpoint | <TypeLink type="string">string</TypeLink> | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
-<a name="minder-v1-GitHubProviderConfig"></a>
 
-#### GitHubProviderConfig
+<Message id="minder-v1-GitHubProviderConfig">GitHubProviderConfig</Message>
+
 GitHubProviderConfig contains the configuration for the GitHub client
 
 Endpoint: is the GitHub API endpoint
@@ -1216,91 +1250,91 @@ naming convention
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
+| endpoint | <TypeLink type="string">string</TypeLink> | optional | Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank. |
 
 
-<a name="minder-v1-GitType"></a>
 
-#### GitType
+<Message id="minder-v1-GitType">GitType</Message>
+
 GitType defines the git data ingester.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| clone_url | [string](#string) |  | clone_url is the url of the git repository. |
-| branch | [string](#string) |  | branch is the branch of the git repository. |
-
-
-<a name="minder-v1-Invitation"></a>
-
-#### Invitation
+| clone_url | <TypeLink type="string">string</TypeLink> |  | clone_url is the url of the git repository. |
+| branch | <TypeLink type="string">string</TypeLink> |  | branch is the branch of the git repository. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
-| email | [string](#string) |  | email is the email address of the invited user. This is presented as a convenience for display purposes, and does not affect who can accept the invitation using the code. |
-| project | [string](#string) |  | project is the project to which the user is invited. |
-| code | [string](#string) |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | created_at is the time at which the invitation was created. |
-| expires_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | expires_at is the time at which the invitation expires. |
-| expired | [bool](#bool) |  | expired is true if the invitation has expired. |
-| sponsor | [string](#string) |  | sponsor is the account (ID) of the user who created the invitation. |
-| sponsor_display | [string](#string) |  | sponsor_display is the display name of the user who created the invitation. |
-| project_display | [string](#string) |  | project_display is the display name of the project to which the user is invited. |
+<Message id="minder-v1-Invitation">Invitation</Message>
 
-
-<a name="minder-v1-ListArtifactsRequest"></a>
-
-#### ListArtifactsRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-| from | [string](#string) |  |  |
+| role | <TypeLink type="string">string</TypeLink> |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | <TypeLink type="string">string</TypeLink> |  | email is the email address of the invited user. This is presented as a convenience for display purposes, and does not affect who can accept the invitation using the code. |
+| project | <TypeLink type="string">string</TypeLink> |  | project is the project to which the user is invited. |
+| code | <TypeLink type="string">string</TypeLink> |  | code is a unique identifier for the invitation, which can be used by the recipient to accept or reject the invitation. The code is only transmitted in response to AssignRole or ListInvitations RPCs, and not transmitted in ListRoleAssignments or other calls. |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the time at which the invitation was created. |
+| expires_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | expires_at is the time at which the invitation expires. |
+| expired | <TypeLink type="bool">bool</TypeLink> |  | expired is true if the invitation has expired. |
+| sponsor | <TypeLink type="string">string</TypeLink> |  | sponsor is the account (ID) of the user who created the invitation. |
+| sponsor_display | <TypeLink type="string">string</TypeLink> |  | sponsor_display is the display name of the user who created the invitation. |
+| project_display | <TypeLink type="string">string</TypeLink> |  | project_display is the display name of the project to which the user is invited. |
 
 
-<a name="minder-v1-ListArtifactsResponse"></a>
 
-#### ListArtifactsResponse
+<Message id="minder-v1-ListArtifactsRequest">ListArtifactsRequest</Message>
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| results | [Artifact](#minder-v1-Artifact) | repeated |  |
-
-
-<a name="minder-v1-ListChildProjectsRequest"></a>
-
-#### ListChildProjectsRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [ContextV2](#minder-v1-ContextV2) |  | context is the context in which the child projects are listed. |
-| recursive | [bool](#bool) |  | recursive is true if child projects should be listed recursively. |
+| provider | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| from | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-ListChildProjectsResponse"></a>
 
-#### ListChildProjectsResponse
+<Message id="minder-v1-ListArtifactsResponse">ListArtifactsResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| projects | [Project](#minder-v1-Project) | repeated |  |
+| results | <TypeLink type="minder-v1-Artifact">Artifact</TypeLink> | repeated |  |
 
 
-<a name="minder-v1-ListEvaluationHistoryRequest"></a>
 
-#### ListEvaluationHistoryRequest
+<Message id="minder-v1-ListChildProjectsRequest">ListChildProjectsRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the child projects are listed. |
+| recursive | <TypeLink type="bool">bool</TypeLink> |  | recursive is true if child projects should be listed recursively. |
+
+
+
+<Message id="minder-v1-ListChildProjectsResponse">ListChildProjectsResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListEvaluationHistoryRequest">ListEvaluationHistoryRequest</Message>
+
 ListEvaluationHistoryRequest represents a request message for the
 ListEvaluationHistory RPC.
 
@@ -1310,21 +1344,21 @@ which is used for pagination.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
-| entity_type | [string](#string) | repeated | List of entity types to retrieve. |
-| entity_name | [string](#string) | repeated | List of entity names to retrieve. |
-| profile_name | [string](#string) | repeated | List of profile names to retrieve. |
-| status | [string](#string) | repeated | List of evaluation statuses to retrieve. |
-| remediation | [string](#string) | repeated | List of remediation statuses to retrieve. |
-| alert | [string](#string) | repeated | List of alert statuses to retrieve. |
-| from | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp representing the start time of the selection window. |
-| to | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | Timestamp representing the end time of the selection window. |
-| cursor | [Cursor](#minder-v1-Cursor) |  | Cursor object to select the "page" of data to retrieve. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| entity_type | <TypeLink type="string">string</TypeLink> | repeated | List of entity types to retrieve. |
+| entity_name | <TypeLink type="string">string</TypeLink> | repeated | List of entity names to retrieve. |
+| profile_name | <TypeLink type="string">string</TypeLink> | repeated | List of profile names to retrieve. |
+| status | <TypeLink type="string">string</TypeLink> | repeated | List of evaluation statuses to retrieve. |
+| remediation | <TypeLink type="string">string</TypeLink> | repeated | List of remediation statuses to retrieve. |
+| alert | <TypeLink type="string">string</TypeLink> | repeated | List of alert statuses to retrieve. |
+| from | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | Timestamp representing the start time of the selection window. |
+| to | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | Timestamp representing the end time of the selection window. |
+| cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. |
 
 
-<a name="minder-v1-ListEvaluationHistoryResponse"></a>
 
-#### ListEvaluationHistoryResponse
+<Message id="minder-v1-ListEvaluationHistoryResponse">ListEvaluationHistoryResponse</Message>
+
 ListEvaluationHistoryResponse represents a response message for the
 ListEvaluationHistory RPC.
 
@@ -1334,914 +1368,914 @@ the next and/or previous pages of data.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| data | [EvaluationHistory](#minder-v1-EvaluationHistory) | repeated | List of records retrieved. |
-| page | [CursorPage](#minder-v1-CursorPage) |  | Metadata of the current page and pointers to next and/or previous pages. |
+| data | <TypeLink type="minder-v1-EvaluationHistory">EvaluationHistory</TypeLink> | repeated | List of records retrieved. |
+| page | <TypeLink type="minder-v1-CursorPage">CursorPage</TypeLink> |  | Metadata of the current page and pointers to next and/or previous pages. |
 
 
-<a name="minder-v1-ListEvaluationResultsRequest"></a>
 
-#### ListEvaluationResultsRequest
+<Message id="minder-v1-ListEvaluationResultsRequest">ListEvaluationResultsRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the evaluation results are evaluated. |
-| profile | [string](#string) |  | ID can contain either a profile name or an ID |
-| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the evaluation results are evaluated. |
+| profile | <TypeLink type="string">string</TypeLink> |  | ID can contain either a profile name or an ID |
+| label_filter | <TypeLink type="string">string</TypeLink> |  | Filter profiles to only those matching the specified labels.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
-| entity | [EntityTypedId](#minder-v1-EntityTypedId) | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
-| rule_name | [string](#string) | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
-
-
-<a name="minder-v1-ListEvaluationResultsResponse"></a>
-
-#### ListEvaluationResultsResponse
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
+| rule_name | <TypeLink type="string">string</TypeLink> | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| entities | [ListEvaluationResultsResponse.EntityEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults) | repeated | Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile. |
+<Message id="minder-v1-ListEvaluationResultsResponse">ListEvaluationResultsResponse</Message>
 
-
-<a name="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults"></a>
-
-#### ListEvaluationResultsResponse.EntityEvaluationResults
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| entity | [EntityTypedId](#minder-v1-EntityTypedId) |  |  |
-| profiles | [ListEvaluationResultsResponse.EntityProfileEvaluationResults](#minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults) | repeated |  |
-
-
-<a name="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults"></a>
-
-#### ListEvaluationResultsResponse.EntityProfileEvaluationResults
+| entities | <TypeLink type="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults">ListEvaluationResultsResponse.EntityEvaluationResults</TypeLink> | repeated | Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profile_status | [ProfileStatus](#minder-v1-ProfileStatus) |  | profile_status is the status of the profile - id, name, status, last_updated |
-| results | [RuleEvaluationStatus](#minder-v1-RuleEvaluationStatus) | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
+<Message id="minder-v1-ListEvaluationResultsResponse-EntityEvaluationResults">ListEvaluationResultsResponse.EntityEvaluationResults</Message>
 
-
-<a name="minder-v1-ListInvitationsRequest"></a>
-
-#### ListInvitationsRequest
-
-
-
-<a name="minder-v1-ListInvitationsResponse"></a>
-
-#### ListInvitationsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| invitations | [Invitation](#minder-v1-Invitation) | repeated |  |
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
+| profiles | <TypeLink type="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults">ListEvaluationResultsResponse.EntityProfileEvaluationResults</TypeLink> | repeated |  |
 
 
-<a name="minder-v1-ListProfilesRequest"></a>
 
-#### ListProfilesRequest
+<Message id="minder-v1-ListEvaluationResultsResponse-EntityProfileEvaluationResults">ListEvaluationResultsResponse.EntityProfileEvaluationResults</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile - id, name, status, last_updated |
+| results | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | Note that some fields like profile_id and entity might be empty Eventually we might replace this type with another one that fits the API better |
+
+
+
+<Message id="minder-v1-ListInvitationsRequest">ListInvitationsRequest</Message>
+
+
+
+
+
+<Message id="minder-v1-ListInvitationsResponse">ListInvitationsResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| invitations | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListProfilesRequest">ListProfilesRequest</Message>
+
 list profiles
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context which contains the profiles |
-| label_filter | [string](#string) |  | Filter profiles to only those matching the specified labels.
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context which contains the profiles |
+| label_filter | <TypeLink type="string">string</TypeLink> |  | Filter profiles to only those matching the specified labels.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 
 
-<a name="minder-v1-ListProfilesResponse"></a>
 
-#### ListProfilesResponse
+<Message id="minder-v1-ListProfilesResponse">ListProfilesResponse</Message>
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profiles | [Profile](#minder-v1-Profile) | repeated |  |
-
-
-<a name="minder-v1-ListProjectsRequest"></a>
-
-#### ListProjectsRequest
-
-
-
-<a name="minder-v1-ListProjectsResponse"></a>
-
-#### ListProjectsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| projects | [Project](#minder-v1-Project) | repeated |  |
-
-
-<a name="minder-v1-ListProviderClassesRequest"></a>
-
-#### ListProviderClassesRequest
+| profiles | <TypeLink type="minder-v1-Profile">Profile</TypeLink> | repeated |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the provider classes are evaluated. |
+<Message id="minder-v1-ListProjectsRequest">ListProjectsRequest</Message>
 
 
-<a name="minder-v1-ListProviderClassesResponse"></a>
 
-#### ListProviderClassesResponse
+
+
+<Message id="minder-v1-ListProjectsResponse">ListProjectsResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider_classes | [string](#string) | repeated | provider_classes is the list of provider classes. |
-
-
-<a name="minder-v1-ListProvidersRequest"></a>
-
-#### ListProvidersRequest
+| projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the providers are evaluated. |
-| limit | [int32](#int32) |  | limit is the maximum number of providers to return. |
-| cursor | [string](#string) |  | cursor is the cursor to use for the page of results, empty if at the beginning |
+<Message id="minder-v1-ListProviderClassesRequest">ListProviderClassesRequest</Message>
 
-
-<a name="minder-v1-ListProvidersResponse"></a>
-
-#### ListProvidersResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| providers | [Provider](#minder-v1-Provider) | repeated |  |
-| cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
-
-
-<a name="minder-v1-ListRemoteRepositoriesFromProviderRequest"></a>
-
-#### ListRemoteRepositoriesFromProviderRequest
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider classes are evaluated. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-ListProviderClassesResponse">ListProviderClassesResponse</Message>
 
-
-<a name="minder-v1-ListRemoteRepositoriesFromProviderResponse"></a>
-
-#### ListRemoteRepositoriesFromProviderResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) | repeated |  |
-
-
-<a name="minder-v1-ListRepositoriesRequest"></a>
-
-#### ListRepositoriesRequest
+| provider_classes | <TypeLink type="string">string</TypeLink> | repeated | provider_classes is the list of provider classes. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| limit | [int64](#int64) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-| cursor | [string](#string) |  |  |
+<Message id="minder-v1-ListProvidersRequest">ListProvidersRequest</Message>
 
-
-<a name="minder-v1-ListRepositoriesResponse"></a>
-
-#### ListRepositoriesResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| results | [Repository](#minder-v1-Repository) | repeated |  |
-| cursor | [string](#string) |  | cursor is the cursor to use for the next page of results, empty if at the end |
-
-
-<a name="minder-v1-ListRoleAssignmentsRequest"></a>
-
-#### ListRoleAssignmentsRequest
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the providers are evaluated. |
+| limit | <TypeLink type="int32">int32</TypeLink> |  | limit is the maximum number of providers to return. |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the cursor to use for the page of results, empty if at the beginning |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignments are evaluated. |
+<Message id="minder-v1-ListProvidersResponse">ListProvidersResponse</Message>
 
-
-<a name="minder-v1-ListRoleAssignmentsResponse"></a>
-
-#### ListRoleAssignmentsResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments contains permission grants which have been accepted by a user. |
-| invitations | [Invitation](#minder-v1-Invitation) | repeated | invitations contains outstanding role invitations which have not yet been accepted by a user. |
-
-
-<a name="minder-v1-ListRolesRequest"></a>
-
-#### ListRolesRequest
+| providers | <TypeLink type="minder-v1-Provider">Provider</TypeLink> | repeated |  |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the cursor to use for the next page of results, empty if at the end |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the roles are evaluated. |
+<Message id="minder-v1-ListRemoteRepositoriesFromProviderRequest">ListRemoteRepositoriesFromProviderRequest</Message>
 
-
-<a name="minder-v1-ListRolesResponse"></a>
-
-#### ListRolesResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| roles | [Role](#minder-v1-Role) | repeated |  |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
-<a name="minder-v1-ListRuleTypesRequest"></a>
 
-#### ListRuleTypesRequest
+<Message id="minder-v1-ListRemoteRepositoriesFromProviderResponse">ListRemoteRepositoriesFromProviderResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListRepositoriesRequest">ListRepositoriesRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| limit | <TypeLink type="int64">int64</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| cursor | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-ListRepositoriesResponse">ListRepositoriesResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | <TypeLink type="minder-v1-Repository">Repository</TypeLink> | repeated |  |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the cursor to use for the next page of results, empty if at the end |
+
+
+
+<Message id="minder-v1-ListRoleAssignmentsRequest">ListRoleAssignmentsRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the role assignments are evaluated. |
+
+
+
+<Message id="minder-v1-ListRoleAssignmentsResponse">ListRoleAssignmentsResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignments | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> | repeated | role_assignments contains permission grants which have been accepted by a user. |
+| invitations | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> | repeated | invitations contains outstanding role invitations which have not yet been accepted by a user. |
+
+
+
+<Message id="minder-v1-ListRolesRequest">ListRolesRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the roles are evaluated. |
+
+
+
+<Message id="minder-v1-ListRolesResponse">ListRolesResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| roles | <TypeLink type="minder-v1-Role">Role</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListRuleTypesRequest">ListRuleTypesRequest</Message>
+
 ListRuleTypesRequest is the request to list rule types.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule types are evaluated. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule types are evaluated. |
 
 
-<a name="minder-v1-ListRuleTypesResponse"></a>
 
-#### ListRuleTypesResponse
+<Message id="minder-v1-ListRuleTypesResponse">ListRuleTypesResponse</Message>
+
 ListRuleTypesResponse is the response to list rule types.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_types | [RuleType](#minder-v1-RuleType) | repeated | rule_types is the list of rule types. |
-
-
-<a name="minder-v1-PatchProfileRequest"></a>
-
-#### PatchProfileRequest
+| rule_types | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> | repeated | rule_types is the list of rule types. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | The context in which the patch is applied. Provided explicitly so that the patch itself can be minimal and contain only the attribute to set, e.g. remediate=true |
-| id | [string](#string) |  | The id of the profile to patch. Same explanation about explicitness as for the context |
-| patch | [Profile](#minder-v1-Profile) |  | The patch to apply to the profile |
-| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+<Message id="minder-v1-PatchProfileRequest">PatchProfileRequest</Message>
 
-
-<a name="minder-v1-PatchProfileResponse"></a>
-
-#### PatchProfileResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
-
-
-<a name="minder-v1-PatchProjectRequest"></a>
-
-#### PatchProjectRequest
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | The context in which the patch is applied. Provided explicitly so that the patch itself can be minimal and contain only the attribute to set, e.g. remediate=true |
+| id | <TypeLink type="string">string</TypeLink> |  | The id of the profile to patch. Same explanation about explicitness as for the context |
+| patch | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  | The patch to apply to the profile |
+| update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
-| patch | [ProjectPatch](#minder-v1-ProjectPatch) |  | patch is the patch to apply to the project |
-| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
+<Message id="minder-v1-PatchProfileResponse">PatchProfileResponse</Message>
 
-
-<a name="minder-v1-PatchProjectResponse"></a>
-
-#### PatchProjectResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
-
-
-<a name="minder-v1-PatchProviderRequest"></a>
-
-#### PatchProviderRequest
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
-| patch | [Provider](#minder-v1-Provider) |  |  |
-| update_mask | [google.protobuf.FieldMask](#google-protobuf-FieldMask) |  |  |
+<Message id="minder-v1-PatchProjectRequest">PatchProjectRequest</Message>
 
-
-<a name="minder-v1-PatchProviderResponse"></a>
-
-#### PatchProviderResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [Provider](#minder-v1-Provider) |  |  |
-
-
-<a name="minder-v1-PrContents"></a>
-
-#### PrContents
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is updated. |
+| patch | <TypeLink type="minder-v1-ProjectPatch">ProjectPatch</TypeLink> |  | patch is the patch to apply to the project |
+| update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
-| files | [PrContents.File](#minder-v1-PrContents-File) | repeated |  |
+<Message id="minder-v1-PatchProjectResponse">PatchProjectResponse</Message>
 
-
-<a name="minder-v1-PrContents-File"></a>
-
-#### PrContents.File
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| file_patch_url | [string](#string) |  |  |
-| patch_lines | [PrContents.File.Line](#minder-v1-PrContents-File-Line) | repeated |  |
+| project | <TypeLink type="minder-v1-Project">Project</TypeLink> |  | project is the project that was updated. |
 
 
-<a name="minder-v1-PrContents-File-Line"></a>
 
-#### PrContents.File.Line
+<Message id="minder-v1-PatchProviderRequest">PatchProviderRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| line_number | [int32](#int32) |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
-| content | [string](#string) |  |  |
-
-
-<a name="minder-v1-PrDependencies"></a>
-
-#### PrDependencies
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| patch | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  |  |
+| update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | [PullRequest](#minder-v1-PullRequest) |  |  |
-| deps | [PrDependencies.ContextualDependency](#minder-v1-PrDependencies-ContextualDependency) | repeated |  |
+<Message id="minder-v1-PatchProviderResponse">PatchProviderResponse</Message>
 
-
-<a name="minder-v1-PrDependencies-ContextualDependency"></a>
-
-#### PrDependencies.ContextualDependency
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| dep | [Dependency](#minder-v1-Dependency) |  |  |
-| file | [PrDependencies.ContextualDependency.FilePatch](#minder-v1-PrDependencies-ContextualDependency-FilePatch) |  |  |
+| provider | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  |  |
 
 
-<a name="minder-v1-PrDependencies-ContextualDependency-FilePatch"></a>
 
-#### PrDependencies.ContextualDependency.FilePatch
+<Message id="minder-v1-PrContents">PrContents</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | file changed, e.g. package-lock.json |
-| patch_url | [string](#string) |  | points to the the raw patchfile |
+| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
+| files | <TypeLink type="minder-v1-PrContents-File">PrContents.File</TypeLink> | repeated |  |
 
 
-<a name="minder-v1-Profile"></a>
 
-#### Profile
+<Message id="minder-v1-PrContents-File">PrContents.File</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| file_patch_url | <TypeLink type="string">string</TypeLink> |  |  |
+| patch_lines | <TypeLink type="minder-v1-PrContents-File-Line">PrContents.File.Line</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-PrContents-File-Line">PrContents.File.Line</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| line_number | <TypeLink type="int32">int32</TypeLink> |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
+| content | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-PrDependencies">PrDependencies</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
+| deps | <TypeLink type="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dep | <TypeLink type="minder-v1-Dependency">Dependency</TypeLink> |  |  |
+| file | <TypeLink type="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  | file changed, e.g. package-lock.json |
+| patch_url | <TypeLink type="string">string</TypeLink> |  | points to the the raw patchfile |
+
+
+
+<Message id="minder-v1-Profile">Profile</Message>
+
 Profile defines a profile that is user defined.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the profile is evaluated. |
-| id | [string](#string) | optional | id is the id of the profile. This is optional and is set by the system. |
-| name | [string](#string) |  | name is the name of the profile instance. |
-| labels | [string](#string) | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles.
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the profile is evaluated. |
+| id | <TypeLink type="string">string</TypeLink> | optional | id is the id of the profile. This is optional and is set by the system. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the profile instance. |
+| labels | <TypeLink type="string">string</TypeLink> | repeated | labels are a set of system-provided attributes which can be used to filter profiles and status results. Labels cannot be set by the user, but are returned in ListProfiles.
 
 Labels use DNS label constraints, with a possible namespace prefix separated by a colon (:). They are intended to allow filtering, but not to store arbitrary metadata. DNS labels are 1-63 character alphanumeric strings with internal hyphens. An RE2-style validation regex would be:
 
 DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
-| repository | [Profile.Rule](#minder-v1-Profile-Rule) | repeated | These are the entities that one could set in the profile. |
-| build_environment | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
-| artifact | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
-| pull_request | [Profile.Rule](#minder-v1-Profile-Rule) | repeated |  |
-| remediate | [string](#string) | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
-| alert | [string](#string) | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
-| type | [string](#string) |  | type is a placeholder for the object type. It should always be set to "profile". |
-| version | [string](#string) |  | version is the version of the profile type. In this case, it is "v1" |
-| display_name | [string](#string) |  | display_name is the display name of the profile. |
+| repository | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated | These are the entities that one could set in the profile. |
+| build_environment | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| artifact | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| pull_request | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| remediate | <TypeLink type="string">string</TypeLink> | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
+| alert | <TypeLink type="string">string</TypeLink> | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
+| type | <TypeLink type="string">string</TypeLink> |  | type is a placeholder for the object type. It should always be set to "profile". |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the profile type. In this case, it is "v1" |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the profile. |
 
 
-<a name="minder-v1-Profile-Rule"></a>
 
-#### Profile.Rule
+<Message id="minder-v1-Profile-Rule">Profile.Rule</Message>
+
 Rule defines the individual call of a certain rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the rule to be instantiated. |
-| params | [google.protobuf.Struct](#google-protobuf-Struct) |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
-| def | [google.protobuf.Struct](#google-protobuf-Struct) |  | def is the definition of the rule. This depends on the rule type. |
-| name | [string](#string) |  | name is the descriptive name of the rule, not to be confused with type |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the rule to be instantiated. |
+| params | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | params are the parameters that are passed to the rule. This is optional and depends on the rule type. |
+| def | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | def is the definition of the rule. This depends on the rule type. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the descriptive name of the rule, not to be confused with type |
 
 
-<a name="minder-v1-ProfileStatus"></a>
 
-#### ProfileStatus
+<Message id="minder-v1-ProfileStatus">ProfileStatus</Message>
+
 get the overall profile status
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_id | [string](#string) |  | profile_id is the id of the profile |
-| profile_name | [string](#string) |  | profile_name is the name of the profile |
-| profile_status | [string](#string) |  | profile_status is the status of the profile |
-| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
-| profile_display_name | [string](#string) |  | profile_display_name is the display name of the profile |
+| profile_id | <TypeLink type="string">string</TypeLink> |  | profile_id is the id of the profile |
+| profile_name | <TypeLink type="string">string</TypeLink> |  | profile_name is the name of the profile |
+| profile_status | <TypeLink type="string">string</TypeLink> |  | profile_status is the status of the profile |
+| last_updated | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | last_updated is the last time the profile was updated |
+| profile_display_name | <TypeLink type="string">string</TypeLink> |  | profile_display_name is the display name of the profile |
 
 
-<a name="minder-v1-Project"></a>
 
-#### Project
+<Message id="minder-v1-Project">Project</Message>
+
 Project API Objects
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project_id | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| description | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| display_name | [string](#string) |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
+| project_id | <TypeLink type="string">string</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| description | <TypeLink type="string">string</TypeLink> |  |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
 
 
-<a name="minder-v1-ProjectPatch"></a>
 
-#### ProjectPatch
+<Message id="minder-v1-ProjectPatch">ProjectPatch</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| display_name | [string](#string) | optional | display_name is the display name of the project to update. |
-| description | [string](#string) | optional | description is the description of the project to update. |
+| display_name | <TypeLink type="string">string</TypeLink> | optional | display_name is the display name of the project to update. |
+| description | <TypeLink type="string">string</TypeLink> | optional | description is the description of the project to update. |
 
 
-<a name="minder-v1-ProjectRole"></a>
 
-#### ProjectRole
+<Message id="minder-v1-ProjectRole">ProjectRole</Message>
+
 ProjectRole has the project along with the role the user has in the project
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role | [Role](#minder-v1-Role) |  |  |
-| project | [Project](#minder-v1-Project) |  |  |
+| role | <TypeLink type="minder-v1-Role">Role</TypeLink> |  |  |
+| project | <TypeLink type="minder-v1-Project">Project</TypeLink> |  |  |
 
 
-<a name="minder-v1-Provider"></a>
 
-#### Provider
+<Message id="minder-v1-Provider">Provider</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | name is the name of the provider. |
-| class | [string](#string) |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
-| project | [string](#string) |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
-| version | [string](#string) |  | version is the version of the provider. |
-| implements | [ProviderType](#minder-v1-ProviderType) | repeated | implements is the list of interfaces that the provider implements. |
-| config | [google.protobuf.Struct](#google-protobuf-Struct) |  | config is the configuration of the provider. |
-| auth_flows | [AuthorizationFlow](#minder-v1-AuthorizationFlow) | repeated | auth_flows is the list of authorization flows that the provider supports. |
-| parameters | [ProviderParameter](#minder-v1-ProviderParameter) |  | parameters is the list of parameters that the provider requires. |
-| credentials_state | [string](#string) |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider. |
+| class | <TypeLink type="string">string</TypeLink> |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
+| project | <TypeLink type="string">string</TypeLink> |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. |
+| implements | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | implements is the list of interfaces that the provider implements. |
+| config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is the configuration of the provider. |
+| auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | auth_flows is the list of authorization flows that the provider supports. |
+| parameters | <TypeLink type="minder-v1-ProviderParameter">ProviderParameter</TypeLink> |  | parameters is the list of parameters that the provider requires. |
+| credentials_state | <TypeLink type="string">string</TypeLink> |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 
 
-<a name="minder-v1-ProviderConfig"></a>
 
-#### ProviderConfig
+<Message id="minder-v1-ProviderConfig">ProviderConfig</Message>
+
 ProviderConfig contains the generic configuration for a provider.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| auto_registration | [AutoRegistration](#minder-v1-AutoRegistration) | optional | auto_registration is the configuration for auto-registering entities. |
-
-
-<a name="minder-v1-ProviderParameter"></a>
-
-#### ProviderParameter
+| auto_registration | <TypeLink type="minder-v1-AutoRegistration">AutoRegistration</TypeLink> | optional | auto_registration is the configuration for auto-registering entities. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| github_app | [GitHubAppParams](#minder-v1-GitHubAppParams) |  |  |
+<Message id="minder-v1-ProviderParameter">ProviderParameter</Message>
 
-
-<a name="minder-v1-PullRequest"></a>
-
-#### PullRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| url | [string](#string) |  | The full URL to the PR |
-| commit_sha | [string](#string) |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
-| number | [int64](#int64) |  | The sequential PR number (not the DB PK!) |
-| repo_owner | [string](#string) |  | The owner of the repo, will be used to submit a review |
-| repo_name | [string](#string) |  | The name of the repo, will be used to submit a review |
-| author_id | [int64](#int64) |  | The author of the PR, will be used to check if we can request changes |
-| action | [string](#string) |  | The action that triggered the webhook |
-| context | [Context](#minder-v1-Context) |  |  |
+| github_app | <TypeLink type="minder-v1-GitHubAppParams">GitHubAppParams</TypeLink> |  |  |
 
 
-<a name="minder-v1-RESTProviderConfig"></a>
 
-#### RESTProviderConfig
+<Message id="minder-v1-PullRequest">PullRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | <TypeLink type="string">string</TypeLink> |  | The full URL to the PR |
+| commit_sha | <TypeLink type="string">string</TypeLink> |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
+| number | <TypeLink type="int64">int64</TypeLink> |  | The sequential PR number (not the DB PK!) |
+| repo_owner | <TypeLink type="string">string</TypeLink> |  | The owner of the repo, will be used to submit a review |
+| repo_name | <TypeLink type="string">string</TypeLink> |  | The name of the repo, will be used to submit a review |
+| author_id | <TypeLink type="int64">int64</TypeLink> |  | The author of the PR, will be used to check if we can request changes |
+| action | <TypeLink type="string">string</TypeLink> |  | The action that triggered the webhook |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RESTProviderConfig">RESTProviderConfig</Message>
+
 RESTProviderConfig contains the configuration for the REST provider.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| base_url | [string](#string) | optional | base_url is the base URL for the REST provider. |
-
-
-<a name="minder-v1-ReconcileEntityRegistrationRequest"></a>
-
-#### ReconcileEntityRegistrationRequest
+| base_url | <TypeLink type="string">string</TypeLink> | optional | base_url is the base URL for the REST provider. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
-| entity | [string](#string) |  |  |
+<Message id="minder-v1-ReconcileEntityRegistrationRequest">ReconcileEntityRegistrationRequest</Message>
 
-
-<a name="minder-v1-ReconcileEntityRegistrationResponse"></a>
-
-#### ReconcileEntityRegistrationResponse
-
-
-
-<a name="minder-v1-RegisterRepoResult"></a>
-
-#### RegisterRepoResult
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| repository | [Repository](#minder-v1-Repository) |  |  |
-| status | [RegisterRepoResult.Status](#minder-v1-RegisterRepoResult-Status) |  |  |
-
-
-<a name="minder-v1-RegisterRepoResult-Status"></a>
-
-#### RegisterRepoResult.Status
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| entity | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| success | [bool](#bool) |  |  |
-| error | [string](#string) | optional |  |
+<Message id="minder-v1-ReconcileEntityRegistrationResponse">ReconcileEntityRegistrationResponse</Message>
 
 
-<a name="minder-v1-RegisterRepositoryRequest"></a>
 
-#### RegisterRepositoryRequest
+
+
+<Message id="minder-v1-RegisterRepoResult">RegisterRepoResult</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| repository | [UpstreamRepositoryRef](#minder-v1-UpstreamRepositoryRef) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
-
-
-<a name="minder-v1-RegisterRepositoryResponse"></a>
-
-#### RegisterRepositoryResponse
+| repository | <TypeLink type="minder-v1-Repository">Repository</TypeLink> |  |  |
+| status | <TypeLink type="minder-v1-RegisterRepoResult-Status">RegisterRepoResult.Status</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| result | [RegisterRepoResult](#minder-v1-RegisterRepoResult) |  |  |
+<Message id="minder-v1-RegisterRepoResult-Status">RegisterRepoResult.Status</Message>
 
-
-<a name="minder-v1-RemoveRoleRequest"></a>
-
-#### RemoveRoleRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment to be removed. |
-
-
-<a name="minder-v1-RemoveRoleResponse"></a>
-
-#### RemoveRoleResponse
+| success | <TypeLink type="bool">bool</TypeLink> |  |  |
+| error | <TypeLink type="string">string</TypeLink> | optional |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| role_assignment | [RoleAssignment](#minder-v1-RoleAssignment) |  | role_assignment is the role assignment that was removed. |
-| invitation | [Invitation](#minder-v1-Invitation) |  | invitation contains the details of the invitation that was removed. |
+<Message id="minder-v1-RegisterRepositoryRequest">RegisterRepositoryRequest</Message>
 
-
-<a name="minder-v1-Repository"></a>
-
-#### Repository
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [string](#string) | optional | This is optional when returning remote repositories |
-| context | [Context](#minder-v1-Context) | optional |  |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| repo_id | [int64](#int64) |  |  |
-| hook_id | [int64](#int64) |  |  |
-| hook_url | [string](#string) |  |  |
-| deploy_url | [string](#string) |  |  |
-| clone_url | [string](#string) |  |  |
-| hook_name | [string](#string) |  |  |
-| hook_type | [string](#string) |  |  |
-| hook_uuid | [string](#string) |  |  |
-| is_private | [bool](#bool) |  |  |
-| is_fork | [bool](#bool) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| default_branch | [string](#string) |  |  |
-| license | [string](#string) |  |  |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| repository | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
-<a name="minder-v1-ResolveInvitationRequest"></a>
 
-#### ResolveInvitationRequest
+<Message id="minder-v1-RegisterRepositoryResponse">RegisterRepositoryResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| code | [string](#string) |  | code is the code of the invitation to resolve. |
-| accept | [bool](#bool) |  | accept is true if the invitation is accepted, false if it is rejected. |
+| result | <TypeLink type="minder-v1-RegisterRepoResult">RegisterRepoResult</TypeLink> |  |  |
 
 
-<a name="minder-v1-ResolveInvitationResponse"></a>
 
-#### ResolveInvitationResponse
+<Message id="minder-v1-RemoveRoleRequest">RemoveRoleRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role | [string](#string) |  | role is the role that would be assigned if the user accepts the invitation. |
-| email | [string](#string) |  | email is the email address of the invited user. |
-| project | [string](#string) |  | project is the project to which the user is invited. |
-| is_accepted | [bool](#bool) |  | is_accepted is the status of the invitation. |
-| project_display | [string](#string) |  | project_display is the display name of the project to which the user is invited. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the role assignment is evaluated. |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment to be removed. |
 
 
-<a name="minder-v1-RestType"></a>
 
-#### RestType
+<Message id="minder-v1-RemoveRoleResponse">RemoveRoleResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was removed. |
+| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation that was removed. |
+
+
+
+<Message id="minder-v1-Repository">Repository</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> | optional | This is optional when returning remote repositories |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> | optional |  |
+| owner | <TypeLink type="string">string</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| repo_id | <TypeLink type="int64">int64</TypeLink> |  |  |
+| hook_id | <TypeLink type="int64">int64</TypeLink> |  |  |
+| hook_url | <TypeLink type="string">string</TypeLink> |  |  |
+| deploy_url | <TypeLink type="string">string</TypeLink> |  |  |
+| clone_url | <TypeLink type="string">string</TypeLink> |  |  |
+| hook_name | <TypeLink type="string">string</TypeLink> |  |  |
+| hook_type | <TypeLink type="string">string</TypeLink> |  |  |
+| hook_uuid | <TypeLink type="string">string</TypeLink> |  |  |
+| is_private | <TypeLink type="bool">bool</TypeLink> |  |  |
+| is_fork | <TypeLink type="bool">bool</TypeLink> |  |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| default_branch | <TypeLink type="string">string</TypeLink> |  |  |
+| license | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-ResolveInvitationRequest">ResolveInvitationRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| code | <TypeLink type="string">string</TypeLink> |  | code is the code of the invitation to resolve. |
+| accept | <TypeLink type="bool">bool</TypeLink> |  | accept is true if the invitation is accepted, false if it is rejected. |
+
+
+
+<Message id="minder-v1-ResolveInvitationResponse">ResolveInvitationResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | <TypeLink type="string">string</TypeLink> |  | role is the role that would be assigned if the user accepts the invitation. |
+| email | <TypeLink type="string">string</TypeLink> |  | email is the email address of the invited user. |
+| project | <TypeLink type="string">string</TypeLink> |  | project is the project to which the user is invited. |
+| is_accepted | <TypeLink type="bool">bool</TypeLink> |  | is_accepted is the status of the invitation. |
+| project_display | <TypeLink type="string">string</TypeLink> |  | project_display is the display name of the project to which the user is invited. |
+
+
+
+<Message id="minder-v1-RestType">RestType</Message>
+
 RestType defines the rest data evaluation.
 This is used to fetch data from a REST endpoint.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
-| method | [string](#string) |  | method is the method to use to fetch data. |
-| headers | [string](#string) | repeated | headers are the headers to be sent to the endpoint. |
-| body | [string](#string) | optional | body is the body to be sent to the endpoint. |
-| parse | [string](#string) |  | parse is the parsing mechanism to be used to parse the data. |
-| fallback | [RestType.Fallback](#minder-v1-RestType-Fallback) | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
-
-
-<a name="minder-v1-RestType-Fallback"></a>
-
-#### RestType.Fallback
+| endpoint | <TypeLink type="string">string</TypeLink> |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
+| method | <TypeLink type="string">string</TypeLink> |  | method is the method to use to fetch data. |
+| headers | <TypeLink type="string">string</TypeLink> | repeated | headers are the headers to be sent to the endpoint. |
+| body | <TypeLink type="string">string</TypeLink> | optional | body is the body to be sent to the endpoint. |
+| parse | <TypeLink type="string">string</TypeLink> |  | parse is the parsing mechanism to be used to parse the data. |
+| fallback | <TypeLink type="minder-v1-RestType-Fallback">RestType.Fallback</TypeLink> | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| http_code | [int32](#int32) |  |  |
-| body | [string](#string) |  |  |
+<Message id="minder-v1-RestType-Fallback">RestType.Fallback</Message>
 
-
-<a name="minder-v1-Role"></a>
-
-#### Role
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | name is the name of the role. |
-| display_name | [string](#string) |  | display name of the role |
-| description | [string](#string) |  | description is the description of the role. |
-
-
-<a name="minder-v1-RoleAssignment"></a>
-
-#### RoleAssignment
+| http_code | <TypeLink type="int32">int32</TypeLink> |  |  |
+| body | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| role | [string](#string) |  | role is the role that is assigned. |
-| subject | [string](#string) |  | subject is the subject to which the role is assigned. |
-| display_name | [string](#string) |  | display_name is the display name of the subject. |
-| project | [string](#string) | optional | project is the project in which the role is assigned. |
-| email | [string](#string) |  | email is the email address of the subject used for invitations. |
+<Message id="minder-v1-Role">Role</Message>
 
-
-<a name="minder-v1-RpcOptions"></a>
-
-#### RpcOptions
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| no_log | [bool](#bool) |  |  |
-| target_resource | [TargetResource](#minder-v1-TargetResource) |  |  |
-| relation | [Relation](#minder-v1-Relation) |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the role. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display name of the role |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the role. |
 
 
-<a name="minder-v1-RuleEvaluationStatus"></a>
 
-#### RuleEvaluationStatus
+<Message id="minder-v1-RoleAssignment">RoleAssignment</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | <TypeLink type="string">string</TypeLink> |  | role is the role that is assigned. |
+| subject | <TypeLink type="string">string</TypeLink> |  | subject is the subject to which the role is assigned. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the subject. |
+| project | <TypeLink type="string">string</TypeLink> | optional | project is the project in which the role is assigned. |
+| email | <TypeLink type="string">string</TypeLink> |  | email is the email address of the subject used for invitations. |
+
+
+
+<Message id="minder-v1-RpcOptions">RpcOptions</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| no_log | <TypeLink type="bool">bool</TypeLink> |  |  |
+| target_resource | <TypeLink type="minder-v1-TargetResource">TargetResource</TypeLink> |  |  |
+| relation | <TypeLink type="minder-v1-Relation">Relation</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</Message>
+
 get the status of the rules for a given profile
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_id | [string](#string) |  | profile_id is the id of the profile |
-| rule_id | [string](#string) |  | rule_id is the id of the rule |
-| rule_name | [string](#string) |  | **Deprecated.** rule_name is the type of the rule. Deprecated in favor of rule_type_name |
-| entity | [string](#string) |  | entity is the entity that was evaluated |
-| status | [string](#string) |  | status is the status of the evaluation |
-| last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  | last_updated is the last time the profile was updated |
-| entity_info | [RuleEvaluationStatus.EntityInfoEntry](#minder-v1-RuleEvaluationStatus-EntityInfoEntry) | repeated | entity_info is the information about the entity |
-| details | [string](#string) |  | details is the description of the evaluation if any |
-| guidance | [string](#string) |  | guidance is the guidance for the evaluation if any |
-| remediation_status | [string](#string) |  | remediation_status is the status of the remediation |
-| remediation_last_updated | [google.protobuf.Timestamp](#google-protobuf-Timestamp) | optional | remediation_last_updated is the last time the remediation was performed or attempted |
-| remediation_details | [string](#string) |  | remediation_details is the description of the remediation attempt if any |
-| rule_type_name | [string](#string) |  | rule_type_name is the name of the rule |
-| rule_description_name | [string](#string) |  | rule_description_name is the name to describe the rule |
-| alert | [EvalResultAlert](#minder-v1-EvalResultAlert) |  | alert holds the alert details if the rule generated an alert in an external system |
-| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule |
-| rule_evaluation_id | [string](#string) |  | rule_evaluation_id is the id of the rule evaluation |
-| remediation_url | [string](#string) |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
-| rule_display_name | [string](#string) |  | rule_display_name captures the display name of the rule |
+| profile_id | <TypeLink type="string">string</TypeLink> |  | profile_id is the id of the profile |
+| rule_id | <TypeLink type="string">string</TypeLink> |  | rule_id is the id of the rule |
+| rule_name | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule_name is the type of the rule. Deprecated in favor of rule_type_name |
+| entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity that was evaluated |
+| status | <TypeLink type="string">string</TypeLink> |  | status is the status of the evaluation |
+| last_updated | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | last_updated is the last time the profile was updated |
+| entity_info | <TypeLink type="minder-v1-RuleEvaluationStatus-EntityInfoEntry">RuleEvaluationStatus.EntityInfoEntry</TypeLink> | repeated | entity_info is the information about the entity |
+| details | <TypeLink type="string">string</TypeLink> |  | details is the description of the evaluation if any |
+| guidance | <TypeLink type="string">string</TypeLink> |  | guidance is the guidance for the evaluation if any |
+| remediation_status | <TypeLink type="string">string</TypeLink> |  | remediation_status is the status of the remediation |
+| remediation_last_updated | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> | optional | remediation_last_updated is the last time the remediation was performed or attempted |
+| remediation_details | <TypeLink type="string">string</TypeLink> |  | remediation_details is the description of the remediation attempt if any |
+| rule_type_name | <TypeLink type="string">string</TypeLink> |  | rule_type_name is the name of the rule |
+| rule_description_name | <TypeLink type="string">string</TypeLink> |  | rule_description_name is the name to describe the rule |
+| alert | <TypeLink type="minder-v1-EvalResultAlert">EvalResultAlert</TypeLink> |  | alert holds the alert details if the rule generated an alert in an external system |
+| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule |
+| rule_evaluation_id | <TypeLink type="string">string</TypeLink> |  | rule_evaluation_id is the id of the rule evaluation |
+| remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
+| rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 
 
-<a name="minder-v1-RuleEvaluationStatus-EntityInfoEntry"></a>
 
-#### RuleEvaluationStatus.EntityInfoEntry
+<Message id="minder-v1-RuleEvaluationStatus-EntityInfoEntry">RuleEvaluationStatus.EntityInfoEntry</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-RuleType"></a>
 
-#### RuleType
+<Message id="minder-v1-RuleType">RuleType</Message>
+
 RuleType defines rules that may or may not be user defined.
 The version is assumed from the folder's version.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [string](#string) | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
-| name | [string](#string) |  | name is the name of the rule type. |
-| display_name | [string](#string) |  | display_name is the display name of the rule type. |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the rule is evaluated. |
-| def | [RuleType.Definition](#minder-v1-RuleType-Definition) |  | def is the definition of the rule type. |
-| description | [string](#string) |  | description is the description of the rule type. |
-| guidance | [string](#string) |  | guidance are instructions we give the user in case a rule fails. |
-| severity | [Severity](#minder-v1-Severity) |  | severity is the severity of the rule type. |
+| id | <TypeLink type="string">string</TypeLink> | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule type. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the rule type. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule is evaluated. |
+| def | <TypeLink type="minder-v1-RuleType-Definition">RuleType.Definition</TypeLink> |  | def is the definition of the rule type. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |
+| guidance | <TypeLink type="string">string</TypeLink> |  | guidance are instructions we give the user in case a rule fails. |
+| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule type. |
 
 
-<a name="minder-v1-RuleType-Definition"></a>
 
-#### RuleType.Definition
+<Message id="minder-v1-RuleType-Definition">RuleType.Definition</Message>
+
 Definition defines the rule type. It encompases the schema and the data evaluation.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| in_entity | [string](#string) |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
-| rule_schema | [google.protobuf.Struct](#google-protobuf-Struct) |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
-| param_schema | [google.protobuf.Struct](#google-protobuf-Struct) | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
-| ingest | [RuleType.Definition.Ingest](#minder-v1-RuleType-Definition-Ingest) |  |  |
-| eval | [RuleType.Definition.Eval](#minder-v1-RuleType-Definition-Eval) |  |  |
-| remediate | [RuleType.Definition.Remediate](#minder-v1-RuleType-Definition-Remediate) |  |  |
-| alert | [RuleType.Definition.Alert](#minder-v1-RuleType-Definition-Alert) |  |  |
-
-
-<a name="minder-v1-RuleType-Definition-Alert"></a>
-
-#### RuleType.Definition.Alert
+| in_entity | <TypeLink type="string">string</TypeLink> |  | in_entity is the entity in which the rule is evaluated. This can be repository, build_environment or artifact. |
+| rule_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | rule_schema is the schema of the rule. This is expressed in JSON Schema. |
+| param_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> | optional | param_schema is the schema of the parameters that are passed to the rule. This is expressed in JSON Schema. |
+| ingest | <TypeLink type="minder-v1-RuleType-Definition-Ingest">RuleType.Definition.Ingest</TypeLink> |  |  |
+| eval | <TypeLink type="minder-v1-RuleType-Definition-Eval">RuleType.Definition.Eval</TypeLink> |  |  |
+| remediate | <TypeLink type="minder-v1-RuleType-Definition-Remediate">RuleType.Definition.Remediate</TypeLink> |  |  |
+| alert | <TypeLink type="minder-v1-RuleType-Definition-Alert">RuleType.Definition.Alert</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  |  |
-| security_advisory | [RuleType.Definition.Alert.AlertTypeSA](#minder-v1-RuleType-Definition-Alert-AlertTypeSA) | optional |  |
+<Message id="minder-v1-RuleType-Definition-Alert">RuleType.Definition.Alert</Message>
 
-
-<a name="minder-v1-RuleType-Definition-Alert-AlertTypeSA"></a>
-
-#### RuleType.Definition.Alert.AlertTypeSA
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| severity | [string](#string) |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  |  |
+| security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
 
 
-<a name="minder-v1-RuleType-Definition-Eval"></a>
 
-#### RuleType.Definition.Eval
+<Message id="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| severity | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Eval">RuleType.Definition.Eval</Message>
+
 Eval defines the data evaluation definition.
 This pertains to the way we traverse data from the upstream
 endpoint and how we compare it to the rule.
@@ -2249,360 +2283,360 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
-| jq | [RuleType.Definition.Eval.JQComparison](#minder-v1-RuleType-Definition-Eval-JQComparison) | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
-| rego | [RuleType.Definition.Eval.Rego](#minder-v1-RuleType-Definition-Eval-Rego) | optional | rego is only used if the `rego` type is selected. |
-| vulncheck | [RuleType.Definition.Eval.Vulncheck](#minder-v1-RuleType-Definition-Eval-Vulncheck) | optional | vulncheck is only used if the `vulncheck` type is selected. |
-| trusty | [RuleType.Definition.Eval.Trusty](#minder-v1-RuleType-Definition-Eval-Trusty) | optional | The trusty type is no longer used, but is still here for backwards compatibility with existing stored rules |
-| homoglyphs | [RuleType.Definition.Eval.Homoglyphs](#minder-v1-RuleType-Definition-Eval-Homoglyphs) | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
-
-
-<a name="minder-v1-RuleType-Definition-Eval-Homoglyphs"></a>
-
-#### RuleType.Definition.Eval.Homoglyphs
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
+| jq | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison">RuleType.Definition.Eval.JQComparison</TypeLink> | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
+| rego | <TypeLink type="minder-v1-RuleType-Definition-Eval-Rego">RuleType.Definition.Eval.Rego</TypeLink> | optional | rego is only used if the `rego` type is selected. |
+| vulncheck | <TypeLink type="minder-v1-RuleType-Definition-Eval-Vulncheck">RuleType.Definition.Eval.Vulncheck</TypeLink> | optional | vulncheck is only used if the `vulncheck` type is selected. |
+| trusty | <TypeLink type="minder-v1-RuleType-Definition-Eval-Trusty">RuleType.Definition.Eval.Trusty</TypeLink> | optional | The trusty type is no longer used, but is still here for backwards compatibility with existing stored rules |
+| homoglyphs | <TypeLink type="minder-v1-RuleType-Definition-Eval-Homoglyphs">RuleType.Definition.Eval.Homoglyphs</TypeLink> | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  |  |
+<Message id="minder-v1-RuleType-Definition-Eval-Homoglyphs">RuleType.Definition.Eval.Homoglyphs</Message>
 
-
-<a name="minder-v1-RuleType-Definition-Eval-JQComparison"></a>
-
-#### RuleType.Definition.Eval.JQComparison
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ingested | [RuleType.Definition.Eval.JQComparison.Operator](#minder-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Ingested points to the data retrieved in the `ingest` section |
-| profile | [RuleType.Definition.Eval.JQComparison.Operator](#minder-v1-RuleType-Definition-Eval-JQComparison-Operator) |  | Profile points to the profile itself. |
-
-
-<a name="minder-v1-RuleType-Definition-Eval-JQComparison-Operator"></a>
-
-#### RuleType.Definition.Eval.JQComparison.Operator
+| type | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| def | [string](#string) |  |  |
+<Message id="minder-v1-RuleType-Definition-Eval-JQComparison">RuleType.Definition.Eval.JQComparison</Message>
 
-
-<a name="minder-v1-RuleType-Definition-Eval-Rego"></a>
-
-#### RuleType.Definition.Eval.Rego
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
-| def | [string](#string) |  | def is the definition of the rego profile. |
-| violation_format | [string](#string) | optional | how are violations reported. This is only used if the `constraints` type is selected. The default is `text` which returns human-readable text. The other option is `json` which returns a JSON array containing the violations. |
+| ingested | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Ingested points to the data retrieved in the `ingest` section |
+| profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. |
 
 
-<a name="minder-v1-RuleType-Definition-Eval-Trusty"></a>
 
-#### RuleType.Definition.Eval.Trusty
+<Message id="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  | This is no longer used, but is still here for backwards compatibility with existing stored rules |
+| def | <TypeLink type="string">string</TypeLink> |  |  |
 
 
-<a name="minder-v1-RuleType-Definition-Eval-Vulncheck"></a>
 
-#### RuleType.Definition.Eval.Vulncheck
+<Message id="minder-v1-RuleType-Definition-Eval-Rego">RuleType.Definition.Eval.Rego</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of evaluation engine to use for rego. We currently have two modes of operation: - deny-by-default: this is the default mode of operation where we deny access by default and allow access only if the profile explicitly allows it. It expects the profile to set an `allow` variable to true or false. - constraints: this is the mode of operation where we allow access by default and deny access only if a violation is found. It expects the profile to set a `violations` variable with a "msg" field. |
+| def | <TypeLink type="string">string</TypeLink> |  | def is the definition of the rego profile. |
+| violation_format | <TypeLink type="string">string</TypeLink> | optional | how are violations reported. This is only used if the `constraints` type is selected. The default is `text` which returns human-readable text. The other option is `json` which returns a JSON array containing the violations. |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Eval-Trusty">RuleType.Definition.Eval.Trusty</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | <TypeLink type="string">string</TypeLink> |  | This is no longer used, but is still here for backwards compatibility with existing stored rules |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Eval-Vulncheck">RuleType.Definition.Eval.Vulncheck</Message>
+
 no configuration for now
 
 
-<a name="minder-v1-RuleType-Definition-Ingest"></a>
 
-#### RuleType.Definition.Ingest
+<Message id="minder-v1-RuleType-Definition-Ingest">RuleType.Definition.Ingest</Message>
+
 Ingest defines how the data is ingested.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  | type is the type of the data ingestion. we currently support rest, artifact and builtin. |
-| rest | [RestType](#minder-v1-RestType) | optional | rest is the rest data ingestion. this is only used if the type is rest. |
-| builtin | [BuiltinType](#minder-v1-BuiltinType) | optional | builtin is the builtin data ingestion. |
-| artifact | [ArtifactType](#minder-v1-ArtifactType) | optional | artifact is the artifact data ingestion. |
-| git | [GitType](#minder-v1-GitType) | optional | git is the git data ingestion. |
-| diff | [DiffType](#minder-v1-DiffType) | optional | diff is the diff data ingestion. |
-
-
-<a name="minder-v1-RuleType-Definition-Remediate"></a>
-
-#### RuleType.Definition.Remediate
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the data ingestion. we currently support rest, artifact and builtin. |
+| rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional | rest is the rest data ingestion. this is only used if the type is rest. |
+| builtin | <TypeLink type="minder-v1-BuiltinType">BuiltinType</TypeLink> | optional | builtin is the builtin data ingestion. |
+| artifact | <TypeLink type="minder-v1-ArtifactType">ArtifactType</TypeLink> | optional | artifact is the artifact data ingestion. |
+| git | <TypeLink type="minder-v1-GitType">GitType</TypeLink> | optional | git is the git data ingestion. |
+| diff | <TypeLink type="minder-v1-DiffType">DiffType</TypeLink> | optional | diff is the diff data ingestion. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| type | [string](#string) |  |  |
-| rest | [RestType](#minder-v1-RestType) | optional |  |
-| gh_branch_protection | [RuleType.Definition.Remediate.GhBranchProtectionType](#minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType) | optional |  |
-| pull_request | [RuleType.Definition.Remediate.PullRequestRemediation](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation) | optional |  |
+<Message id="minder-v1-RuleType-Definition-Remediate">RuleType.Definition.Remediate</Message>
 
-
-<a name="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType"></a>
-
-#### RuleType.Definition.Remediate.GhBranchProtectionType
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| patch | [string](#string) |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  |  |
+| rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
+| gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
+| pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |
 
 
-<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation"></a>
 
-#### RuleType.Definition.Remediate.PullRequestRemediation
+<Message id="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| patch | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</Message>
+
 the name stutters a bit but we already use a PullRequest message for handling PR entities
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| title | [string](#string) |  | the title of the PR |
-| body | [string](#string) |  | the body of the PR |
-| contents | [RuleType.Definition.Remediate.PullRequestRemediation.Content](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content) | repeated |  |
-| method | [string](#string) |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA |
-| actions_replace_tags_with_sha | [RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha](#minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha) | optional | If the method is minder.actions.replace_tags_with_sha, this is the configuration for that method |
-
-
-<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha"></a>
-
-#### RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha
+| title | <TypeLink type="string">string</TypeLink> |  | the title of the PR |
+| body | <TypeLink type="string">string</TypeLink> |  | the body of the PR |
+| contents | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content">RuleType.Definition.Remediate.PullRequestRemediation.Content</TypeLink> | repeated |  |
+| method | <TypeLink type="string">string</TypeLink> |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA |
+| actions_replace_tags_with_sha | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha">RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha</TypeLink> | optional | If the method is minder.actions.replace_tags_with_sha, this is the configuration for that method |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| exclude | [string](#string) | repeated | List of actions to exclude from the replacement |
+<Message id="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha">RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha</Message>
 
-
-<a name="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content"></a>
-
-#### RuleType.Definition.Remediate.PullRequestRemediation.Content
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| path | [string](#string) |  | the file to patch |
-| action | [string](#string) |  | how to patch the file. For now, only replace is supported |
-| content | [string](#string) |  | the content of the file |
-| mode | [string](#string) | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
+| exclude | <TypeLink type="string">string</TypeLink> | repeated | List of actions to exclude from the replacement |
 
 
-<a name="minder-v1-Severity"></a>
 
-#### Severity
+<Message id="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content">RuleType.Definition.Remediate.PullRequestRemediation.Content</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | <TypeLink type="string">string</TypeLink> |  | the file to patch |
+| action | <TypeLink type="string">string</TypeLink> |  | how to patch the file. For now, only replace is supported |
+| content | <TypeLink type="string">string</TypeLink> |  | the content of the file |
+| mode | <TypeLink type="string">string</TypeLink> | optional | the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings the usual modes are: 100644 for regular files, 100755 for executable files and 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644) see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16 |
+
+
+
+<Message id="minder-v1-Severity">Severity</Message>
+
 Severity defines the severity of the rule.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| value | [Severity.Value](#minder-v1-Severity-Value) |  | value is the severity value. |
-
-
-<a name="minder-v1-StoreProviderTokenRequest"></a>
-
-#### StoreProviderTokenRequest
+| value | <TypeLink type="minder-v1-Severity-Value">Severity.Value</TypeLink> |  | value is the severity value. |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| access_token | [string](#string) |  |  |
-| owner | [string](#string) | optional |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-StoreProviderTokenRequest">StoreProviderTokenRequest</Message>
 
-
-<a name="minder-v1-StoreProviderTokenResponse"></a>
-
-#### StoreProviderTokenResponse
-
-
-
-<a name="minder-v1-UpdateProfileRequest"></a>
-
-#### UpdateProfileRequest
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
-
-
-<a name="minder-v1-UpdateProfileResponse"></a>
-
-#### UpdateProfileResponse
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| access_token | <TypeLink type="string">string</TypeLink> |  |  |
+| owner | <TypeLink type="string">string</TypeLink> | optional |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profile | [Profile](#minder-v1-Profile) |  |  |
+<Message id="minder-v1-StoreProviderTokenResponse">StoreProviderTokenResponse</Message>
 
 
-<a name="minder-v1-UpdateProjectRequest"></a>
 
-#### UpdateProjectRequest
+
+
+<Message id="minder-v1-UpdateProfileRequest">UpdateProfileRequest</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the project is updated. |
-| display_name | [string](#string) |  | display_name is the display name of the project to update. |
-| description | [string](#string) |  | description is the description of the project to update. |
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
-<a name="minder-v1-UpdateProjectResponse"></a>
 
-#### UpdateProjectResponse
+<Message id="minder-v1-UpdateProfileResponse">UpdateProfileResponse</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project | [Project](#minder-v1-Project) |  | project is the project that was updated. |
-
-
-<a name="minder-v1-UpdateRoleRequest"></a>
-
-#### UpdateRoleRequest
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  | context is the context in which the role assignment is evaluated. |
-| subject | [string](#string) |  | subject is the account to change permissions for. The account must already have permissions on the project |
-| roles | [string](#string) | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
-| email | [string](#string) |  | email is the email address of the subject used for updating invitations |
+<Message id="minder-v1-UpdateProjectRequest">UpdateProjectRequest</Message>
 
-
-<a name="minder-v1-UpdateRoleResponse"></a>
-
-#### UpdateRoleResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignments | [RoleAssignment](#minder-v1-RoleAssignment) | repeated | role_assignments are the role assignments that were updated. |
-| invitations | [Invitation](#minder-v1-Invitation) | repeated | invitations contains the details of the invitations that were updated. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is updated. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the project to update. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the project to update. |
 
 
-<a name="minder-v1-UpdateRuleTypeRequest"></a>
 
-#### UpdateRuleTypeRequest
+<Message id="minder-v1-UpdateProjectResponse">UpdateProjectResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| project | <TypeLink type="minder-v1-Project">Project</TypeLink> |  | project is the project that was updated. |
+
+
+
+<Message id="minder-v1-UpdateRoleRequest">UpdateRoleRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the role assignment is evaluated. |
+| subject | <TypeLink type="string">string</TypeLink> |  | subject is the account to change permissions for. The account must already have permissions on the project |
+| roles | <TypeLink type="string">string</TypeLink> | repeated | All subject roles are _replaced_ with the following role assignments. Must be non-empty, use RemoveRole to remove permissions entirely from the project. |
+| email | <TypeLink type="string">string</TypeLink> |  | email is the email address of the subject used for updating invitations |
+
+
+
+<Message id="minder-v1-UpdateRoleResponse">UpdateRoleResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role_assignments | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> | repeated | role_assignments are the role assignments that were updated. |
+| invitations | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> | repeated | invitations contains the details of the invitations that were updated. |
+
+
+
+<Message id="minder-v1-UpdateRuleTypeRequest">UpdateRuleTypeRequest</Message>
+
 UpdateRuleTypeRequest is the request to update a rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type to be updated. |
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type to be updated. |
 
 
-<a name="minder-v1-UpdateRuleTypeResponse"></a>
 
-#### UpdateRuleTypeResponse
+<Message id="minder-v1-UpdateRuleTypeResponse">UpdateRuleTypeResponse</Message>
+
 UpdateRuleTypeResponse is the response to update a rule type.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rule_type | [RuleType](#minder-v1-RuleType) |  | rule_type is the rule type that was updated. |
+| rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type that was updated. |
 
 
-<a name="minder-v1-UpstreamRepositoryRef"></a>
 
-#### UpstreamRepositoryRef
+<Message id="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</Message>
+
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| owner | [string](#string) |  |  |
-| name | [string](#string) |  |  |
-| repo_id | [int64](#int64) |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
-| context | [Context](#minder-v1-Context) |  |  |
-| registered | [bool](#bool) |  | True if the repository is already registered in Minder. This is only set on output, and is ignored on input. |
+| owner | <TypeLink type="string">string</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+| repo_id | <TypeLink type="int64">int64</TypeLink> |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| registered | <TypeLink type="bool">bool</TypeLink> |  | True if the repository is already registered in Minder. This is only set on output, and is ignored on input. |
 
 
-<a name="minder-v1-UserRecord"></a>
 
-#### UserRecord
+<Message id="minder-v1-UserRecord">UserRecord</Message>
+
 user record to be returned
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | [int32](#int32) |  |  |
-| identity_subject | [string](#string) |  |  |
-| created_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| updated_at | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+| id | <TypeLink type="int32">int32</TypeLink> |  |  |
+| identity_subject | <TypeLink type="string">string</TypeLink> |  |  |
+| created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 
 
-<a name="minder-v1-VerifyProviderCredentialRequest"></a>
 
-#### VerifyProviderCredentialRequest
+<Message id="minder-v1-VerifyProviderCredentialRequest">VerifyProviderCredentialRequest</Message>
+
 VerifyProviderCredentialRequest contains the enrollment nonce (aka state) that was used when enrolling the provider
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | [Context](#minder-v1-Context) |  |  |
-| enrollment_nonce | [string](#string) |  | enrollment_nonce is the state parameter returned when enrolling the provider |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| enrollment_nonce | <TypeLink type="string">string</TypeLink> |  | enrollment_nonce is the state parameter returned when enrolling the provider |
 
 
-<a name="minder-v1-VerifyProviderCredentialResponse"></a>
 
-#### VerifyProviderCredentialResponse
+<Message id="minder-v1-VerifyProviderCredentialResponse">VerifyProviderCredentialResponse</Message>
+
 VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
 name, if it has been created
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| created | [bool](#bool) |  |  |
-| provider_name | [string](#string) |  |  |
-
-
-<a name="minder-v1-VerifyProviderTokenFromRequest"></a>
-
-#### VerifyProviderTokenFromRequest
+| created | <TypeLink type="bool">bool</TypeLink> |  |  |
+| provider_name | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| provider | [string](#string) |  | **Deprecated.**  |
-| timestamp | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
-| context | [Context](#minder-v1-Context) |  |  |
+<Message id="minder-v1-VerifyProviderTokenFromRequest">VerifyProviderTokenFromRequest</Message>
 
-
-<a name="minder-v1-VerifyProviderTokenFromResponse"></a>
-
-#### VerifyProviderTokenFromResponse
 
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| status | [string](#string) |  |  |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
+| timestamp | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-VerifyProviderTokenFromResponse">VerifyProviderTokenFromResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 | Extension | Type | Base | Number | Description |
@@ -2614,9 +2648,9 @@ name, if it has been created
 
 
 
-<a name="minder-v1-AuthorizationFlow"></a>
 
-### AuthorizationFlow
+<Enum id="minder-v1-AuthorizationFlow">AuthorizationFlow</Enum>
+
 
 
 | Name | Number | Description |
@@ -2628,9 +2662,9 @@ name, if it has been created
 | AUTHORIZATION_FLOW_GITHUB_APP_FLOW | 4 |  |
 
 
-<a name="minder-v1-CredentialsState"></a>
 
-### CredentialsState
+<Enum id="minder-v1-CredentialsState">CredentialsState</Enum>
+
 
 
 | Name | Number | Description |
@@ -2641,9 +2675,9 @@ name, if it has been created
 | CREDENTIALS_STATE_NOT_APPLICABLE | 3 |  |
 
 
-<a name="minder-v1-DepEcosystem"></a>
 
-### DepEcosystem
+<Enum id="minder-v1-DepEcosystem">DepEcosystem</Enum>
+
 
 
 | Name | Number | Description |
@@ -2654,9 +2688,9 @@ name, if it has been created
 | DEP_ECOSYSTEM_PYPI | 3 |  |
 
 
-<a name="minder-v1-Entity"></a>
 
-### Entity
+<Enum id="minder-v1-Entity">Entity</Enum>
+
 Entity defines the entity that is supported by the provider.
 
 | Name | Number | Description |
@@ -2668,9 +2702,9 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_PULL_REQUESTS | 4 |  |
 
 
-<a name="minder-v1-ObjectOwner"></a>
 
-### ObjectOwner
+<Enum id="minder-v1-ObjectOwner">ObjectOwner</Enum>
+
 
 
 | Name | Number | Description |
@@ -2680,9 +2714,9 @@ Entity defines the entity that is supported by the provider.
 | OBJECT_OWNER_USER | 3 |  |
 
 
-<a name="minder-v1-ProviderClass"></a>
 
-### ProviderClass
+<Enum id="minder-v1-ProviderClass">ProviderClass</Enum>
+
 
 
 | Name | Number | Description |
@@ -2694,9 +2728,9 @@ Entity defines the entity that is supported by the provider.
 | PROVIDER_CLASS_DOCKERHUB | 4 |  |
 
 
-<a name="minder-v1-ProviderType"></a>
 
-### ProviderType
+<Enum id="minder-v1-ProviderType">ProviderType</Enum>
+
 ProviderTrait is the type of the provider.
 
 | Name | Number | Description |
@@ -2710,9 +2744,9 @@ ProviderTrait is the type of the provider.
 | PROVIDER_TYPE_IMAGE_LISTER | 6 |  |
 
 
-<a name="minder-v1-Relation"></a>
 
-### Relation
+<Enum id="minder-v1-Relation">Relation</Enum>
+
 
 
 | Name | Number | Description |
@@ -2757,9 +2791,9 @@ ProviderTrait is the type of the provider.
 | RELATION_ROLE_ASSIGNMENT_UPDATE | 37 |  |
 
 
-<a name="minder-v1-Severity-Value"></a>
 
-### Severity.Value
+<Enum id="minder-v1-Severity-Value">Severity.Value</Enum>
+
 Value enumerates the severity values.
 
 | Name | Number | Description |
@@ -2773,9 +2807,9 @@ Value enumerates the severity values.
 | VALUE_CRITICAL | 6 | critical severity means that the severity is critical and requires immediate attention. |
 
 
-<a name="minder-v1-TargetResource"></a>
 
-### TargetResource
+<Enum id="minder-v1-TargetResource">TargetResource</Enum>
+
 
 
 | Name | Number | Description |
@@ -2788,9 +2822,9 @@ Value enumerates the severity values.
 
 
 
-<a name="minder_v1_minder-proto-extensions"></a>
 
-### File-level Extensions
+<Extension id="minder_v1_minder-proto-extensions">File-level Extensions</Extension>
+
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
 | name | string | .google.protobuf.EnumValueOptions | 42445 |  |
@@ -2804,19 +2838,19 @@ Value enumerates the severity values.
 
 | .proto Type | Notes | C++ | Java | Python | Go | C# | PHP | Ruby |
 | ----------- | ----- | --- | ---- | ------ | -- | -- | --- | ---- |
-| <a name="double" /> double |  | double | double | float | float64 | double | float | Float |
-| <a name="float" /> float |  | float | float | float | float32 | float | float | Float |
-| <a name="int32" /> int32 | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
-| <a name="int64" /> int64 | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead. | int64 | long | int/long | int64 | long | integer/string | Bignum |
-| <a name="uint32" /> uint32 | Uses variable-length encoding. | uint32 | int | int/long | uint32 | uint | integer | Bignum or Fixnum (as required) |
-| <a name="uint64" /> uint64 | Uses variable-length encoding. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum or Fixnum (as required) |
-| <a name="sint32" /> sint32 | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
-| <a name="sint64" /> sint64 | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s. | int64 | long | int/long | int64 | long | integer/string | Bignum |
-| <a name="fixed32" /> fixed32 | Always four bytes. More efficient than uint32 if values are often greater than 2^28. | uint32 | int | int | uint32 | uint | integer | Bignum or Fixnum (as required) |
-| <a name="fixed64" /> fixed64 | Always eight bytes. More efficient than uint64 if values are often greater than 2^56. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum |
-| <a name="sfixed32" /> sfixed32 | Always four bytes. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
-| <a name="sfixed64" /> sfixed64 | Always eight bytes. | int64 | long | int/long | int64 | long | integer/string | Bignum |
-| <a name="bool" /> bool |  | bool | boolean | boolean | bool | bool | boolean | TrueClass/FalseClass |
-| <a name="string" /> string | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
-| <a name="bytes" /> bytes | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
+| <ProtoType id="double">double</ProtoType> |  | double | double | float | float64 | double | float | Float |
+| <ProtoType id="float">float</ProtoType> |  | float | float | float | float32 | float | float | Float |
+| <ProtoType id="int32">int32</ProtoType> | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint32 instead. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <ProtoType id="int64">int64</ProtoType> | Uses variable-length encoding. Inefficient for encoding negative numbers – if your field is likely to have negative values, use sint64 instead. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <ProtoType id="uint32">uint32</ProtoType> | Uses variable-length encoding. | uint32 | int | int/long | uint32 | uint | integer | Bignum or Fixnum (as required) |
+| <ProtoType id="uint64">uint64</ProtoType> | Uses variable-length encoding. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum or Fixnum (as required) |
+| <ProtoType id="sint32">sint32</ProtoType> | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int32s. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <ProtoType id="sint64">sint64</ProtoType> | Uses variable-length encoding. Signed int value. These more efficiently encode negative numbers than regular int64s. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <ProtoType id="fixed32">fixed32</ProtoType> | Always four bytes. More efficient than uint32 if values are often greater than 2^28. | uint32 | int | int | uint32 | uint | integer | Bignum or Fixnum (as required) |
+| <ProtoType id="fixed64">fixed64</ProtoType> | Always eight bytes. More efficient than uint64 if values are often greater than 2^56. | uint64 | long | int/long | uint64 | ulong | integer/string | Bignum |
+| <ProtoType id="sfixed32">sfixed32</ProtoType> | Always four bytes. | int32 | int | int | int32 | int | integer | Bignum or Fixnum (as required) |
+| <ProtoType id="sfixed64">sfixed64</ProtoType> | Always eight bytes. | int64 | long | int/long | int64 | long | integer/string | Bignum |
+| <ProtoType id="bool">bool</ProtoType> |  | bool | boolean | boolean | bool | bool | boolean | TrueClass/FalseClass |
+| <ProtoType id="string">string</ProtoType> | A string must always contain UTF-8 encoded or 7-bit ASCII text. | string | String | str/unicode | string | string | string | String (UTF-8) |
+| <ProtoType id="bytes">bytes</ProtoType> | May contain any arbitrary sequence of bytes. | string | ByteString | str | []byte | ByteString | string | String (ASCII-8BIT) |
 
