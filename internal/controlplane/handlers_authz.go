@@ -18,6 +18,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -30,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/email"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/invite"
@@ -291,14 +294,14 @@ func (s *Server) ListRoleAssignments(
 func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) (*minder.AssignRoleResponse, error) {
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
-	email := req.GetRoleAssignment().GetEmail()
+	inviteeEmail := req.GetRoleAssignment().GetEmail()
 
 	// Determine the target project.
 	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
-	err := isUserSelfUpdating(ctx, sub, email)
+	err := isUserSelfUpdating(ctx, sub, inviteeEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -320,12 +323,12 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	}
 
 	// Decide if it's an invitation or a role assignment
-	if sub == "" && email != "" {
+	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.inviteUser(ctx, targetProject, authzRole, email)
+			return s.inviteUser(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
-	} else if sub != "" && email == "" {
+	} else if sub != "" && inviteeEmail == "" {
 		// Enable one or the other.
 		// This is temporary until we deprecate it completely in favor of email-based role assignments
 		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
@@ -340,7 +343,7 @@ func (s *Server) inviteUser(
 	ctx context.Context,
 	targetProject uuid.UUID,
 	role authz.Role,
-	email string,
+	inviteeEmail string,
 ) (*minder.AssignRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
@@ -351,7 +354,7 @@ func (s *Server) inviteUser(
 
 	// Check if the user is already invited
 	existingInvites, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
-		Email:   email,
+		Email:   inviteeEmail,
 		Project: targetProject,
 	})
 	if err != nil {
@@ -385,7 +388,7 @@ func (s *Server) inviteUser(
 	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
-		Email:   email,
+		Email:   inviteeEmail,
 		Role:    role.String(),
 		Project: targetProject,
 		Sponsor: currentUser.ID,
@@ -394,7 +397,15 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
 	}
 
-	// TODO: Publish the event for sending the invitation email
+	// Publish the event for sending the invitation email
+	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, sponsorDisplay)
+	if err != nil {
+		return nil, fmt.Errorf("error generating UUID: %w", err)
+	}
+	err = s.evt.Publish(email.TopicQueueInviteEmail, msg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
+	}
 
 	// Send the invitation response
 	return &minder.AssignRoleResponse{
@@ -471,7 +482,7 @@ func (s *Server) assignRole(
 func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) (*minder.RemoveRoleResponse, error) {
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
-	email := req.GetRoleAssignment().GetEmail()
+	inviteeEmail := req.GetRoleAssignment().GetEmail()
 	// Determine the target project.
 	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
@@ -483,12 +494,12 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	}
 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
-	if sub == "" && email != "" {
+	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.removeInvite(ctx, targetProject, authzRole, email)
+			return s.removeInvite(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
-	} else if sub != "" && email == "" {
+	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment
 		return s.removeRole(ctx, targetProject, authzRole, sub)
 	}
@@ -499,11 +510,11 @@ func (s *Server) removeInvite(
 	ctx context.Context,
 	targetPrj uuid.UUID,
 	role authz.Role,
-	email string,
+	inviteeEmail string,
 ) (*minder.RemoveRoleResponse, error) {
 	// Get all invitations for this email and project
 	invitesToRemove, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
-		Email:   email,
+		Email:   inviteeEmail,
 		Project: targetPrj,
 	})
 	if err != nil {
@@ -635,14 +646,14 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	}
 	role := req.GetRoles()[0]
 	sub := req.GetSubject()
-	email := req.GetEmail()
+	inviteeEmail := req.GetEmail()
 
 	// Determine the target project.
 	entityCtx := engcontext.EntityFromContext(ctx)
 	targetProject := entityCtx.Project.ID
 
 	// Ensure user is not updating their own role
-	err := isUserSelfUpdating(ctx, sub, email)
+	err := isUserSelfUpdating(ctx, sub, inviteeEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -654,12 +665,12 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	}
 
 	// Validate the subject and email - decide if it's about updating an invitation or a role assignment
-	if sub == "" && email != "" {
+	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.updateInvite(ctx, targetProject, authzRole, email)
+			return s.updateInvite(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
-	} else if sub != "" && email == "" {
+	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment update
 		return s.updateRole(ctx, targetProject, authzRole, sub)
 	}
@@ -670,7 +681,7 @@ func (s *Server) updateInvite(
 	ctx context.Context,
 	targetProject uuid.UUID,
 	authzRole authz.Role,
-	email string,
+	inviteeEmail string,
 ) (*minder.UpdateRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
@@ -681,7 +692,7 @@ func (s *Server) updateInvite(
 
 	// Get all invitations for this email and project
 	existingInvites, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
-		Email:   email,
+		Email:   inviteeEmail,
 		Project: targetProject,
 	})
 	if err != nil {
@@ -727,13 +738,23 @@ func (s *Server) updateInvite(
 	}
 
 	// Commit the transaction to persist the changes
-	if err := s.store.Commit(tx); err != nil {
+	if err = s.store.Commit(tx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
 
-	// TODO: Publish the event for sending the invitation email
+	// Publish the event for sending the invitation email
 	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
-	// or the role stayed the same but the invite was created at least a day ago.
+	// or the role stayed the same, but the last invite update was more than a day ago
+	if existingInvites[0].Role != authzRole.String() || userInvite.UpdatedAt.Sub(existingInvites[0].UpdatedAt) > 24*time.Hour {
+		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, identity.Human())
+		if err != nil {
+			return nil, fmt.Errorf("error generating UUID: %w", err)
+		}
+		err = s.evt.Publish(email.TopicQueueInviteEmail, msg)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
+		}
+	}
 
 	return &minder.UpdateRoleResponse{
 		Invitations: []*minder.Invitation{
@@ -810,18 +831,18 @@ func (s *Server) updateRole(
 }
 
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
-func isUserSelfUpdating(ctx context.Context, subject, email string) error {
+func isUserSelfUpdating(ctx context.Context, subject, inviteeEmail string) error {
 	if subject != "" {
 		if auth.GetUserSubjectFromContext(ctx) == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
-	if email != "" {
+	if inviteeEmail != "" {
 		tokenEmail, err := auth.GetUserEmailFromContext(ctx)
 		if err != nil {
 			return util.UserVisibleError(codes.Internal, "error getting user email from token: %v", err)
 		}
-		if tokenEmail == email {
+		if tokenEmail == inviteeEmail {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
