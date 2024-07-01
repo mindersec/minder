@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
@@ -48,7 +49,7 @@ type EvaluationHistoryService interface {
 	ListEvaluationHistory(
 		ctx context.Context,
 		qtx db.Querier,
-		cursor ListEvaluationCursor,
+		cursor *ListEvaluationCursor,
 		size uint64,
 		filter ListEvaluationFilter,
 	) ([]*minderv1.EvaluationHistory, error)
@@ -210,9 +211,15 @@ type ruleEntityParams struct {
 func (e *evaluationHistoryService) ListEvaluationHistory(
 	ctx context.Context,
 	qtx db.Querier,
-	cursor ListEvaluationCursor,
+	cursor *ListEvaluationCursor,
 	size uint64,
 	filter ListEvaluationFilter,
 ) ([]*minderv1.EvaluationHistory, error) {
+	zerolog.Ctx(ctx).Debug().
+		Str("cursor", fmt.Sprintf("%+v", cursor)).
+		Uint64("size", size).
+		Str("filter", fmt.Sprintf("%+v", filter)).
+		Msg("ListEvaluationHistory request")
+
 	return []*minderv1.EvaluationHistory{}, nil
 }

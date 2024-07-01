@@ -91,6 +91,7 @@ func AllInOneServerService(
 	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
 	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
 
+	historySvc := history.NewEvaluationHistoryService()
 	profileSvc := profiles.NewProfileService(evt)
 	ruleSvc := ruletypes.NewRuleTypeService()
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
@@ -152,6 +153,7 @@ func AllInOneServerService(
 		idClient,
 		repos,
 		profileSvc,
+		historySvc,
 		ruleSvc,
 		ghProviders,
 		providerManager,

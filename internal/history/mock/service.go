@@ -44,7 +44,7 @@ func (m *MockEvaluationHistoryService) EXPECT() *MockEvaluationHistoryServiceMoc
 }
 
 // ListEvaluationHistory mocks base method.
-func (m *MockEvaluationHistoryService) ListEvaluationHistory(ctx context.Context, qtx db.Querier, cursor history.ListEvaluationCursor, size uint64, filter history.ListEvaluationFilter) ([]*v1.EvaluationHistory, error) {
+func (m *MockEvaluationHistoryService) ListEvaluationHistory(ctx context.Context, qtx db.Querier, cursor *history.ListEvaluationCursor, size uint64, filter history.ListEvaluationFilter) ([]*v1.EvaluationHistory, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListEvaluationHistory", ctx, qtx, cursor, size, filter)
 	ret0, _ := ret[0].([]*v1.EvaluationHistory)

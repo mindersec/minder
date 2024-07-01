@@ -47,6 +47,7 @@ func (s *Server) ListEvaluationHistory(
 		return nil, status.Error(codes.Unimplemented, "Not implemented")
 	}
 
+	// process cursor
 	cursor := &history.DefaultCursor
 	size := defaultPageSize
 	if in.GetCursor() != nil {
@@ -54,12 +55,13 @@ func (s *Server) ListEvaluationHistory(
 			in.GetCursor().GetCursor(),
 		)
 		if err != nil {
-			return nil, status.Error(codes.Internal, "error parsing cursor")
+			return nil, status.Error(codes.InvalidArgument, "invalid cursor")
 		}
 		cursor = parsedCursor
 		size = in.GetCursor().GetSize()
 	}
 
+	// process filter
 	opts := []history.FilterOpt{}
 	opts = append(opts, optsFromStringList(in.GetEntityType(), history.WithEntityType)...)
 	opts = append(opts, optsFromStringList(in.GetEntityName(), history.WithEntityName)...)
@@ -80,13 +82,27 @@ func (s *Server) ListEvaluationHistory(
 		return nil, status.Error(codes.InvalidArgument, "invalid filter")
 	}
 
-	zerolog.Ctx(ctx).Debug().
-		Str("cursor", fmt.Sprintf("%+v", cursor)).
-		Uint64("size", size).
-		Str("filter", fmt.Sprintf("%+v", filter)).
-		Msg("ListEvaluationHistory request")
+	// retrieve data set
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
 
-	return &minderv1.ListEvaluationHistoryResponse{}, nil
+	data, err := s.history.ListEvaluationHistory(
+		ctx,
+		s.store.GetQuerierWithTransaction(tx),
+		cursor,
+		size,
+		filter,
+	)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "error retrieving evaluations")
+	}
+
+	return &minderv1.ListEvaluationHistoryResponse{
+		Data: data,
+	}, nil
 }
 
 // optsFromStringList calls the given function `f` on each element of

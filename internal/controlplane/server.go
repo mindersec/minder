@@ -57,6 +57,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/history"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/projects"
@@ -99,6 +100,7 @@ type Server struct {
 	ruleTypes           ruletypes.RuleTypeService
 	repos               github.RepositoryService
 	profiles            profiles.ProfileService
+	history             history.EvaluationHistoryService
 	ghProviders         service.GitHubProviderService
 	providerStore       providers.ProviderStore
 	ghClient            ghprov.ClientService
@@ -134,6 +136,7 @@ func NewServer(
 	idClient auth.Resolver,
 	repoService github.RepositoryService,
 	profileService profiles.ProfileService,
+	historyService history.EvaluationHistoryService,
 	ruleService ruletypes.RuleTypeService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
@@ -152,6 +155,7 @@ func NewServer(
 		jwt:                 jwtValidator,
 		mt:                  serverMetrics,
 		profiles:            profileService,
+		history:             historyService,
 		ruleTypes:           ruleService,
 		providerStore:       providerStore,
 		featureFlags:        featureFlagClient,
