@@ -1174,7 +1174,7 @@ get user
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#minder-v1-UserRecord) | optional |  |
-| projects | [Project](#minder-v1-Project) | repeated | This will be deprecated in favor of the project_roles field |
+| projects | [Project](#minder-v1-Project) | repeated | **Deprecated.** This will be deprecated in favor of the project_roles field |
 | project_roles | [ProjectRole](#minder-v1-ProjectRole) | repeated |  |
 
 
@@ -1845,7 +1845,7 @@ Project API Objects
 <a name="minder-v1-ProjectRole"></a>
 
 #### ProjectRole
-
+ProjectRole has the project along with the role the user has in the project
 
 
 | Field | Type | Label | Description |

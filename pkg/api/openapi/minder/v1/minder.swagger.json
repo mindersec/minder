@@ -4310,7 +4310,8 @@
         "project": {
           "$ref": "#/definitions/v1Project"
         }
-      }
+      },
+      "title": "ProjectRole has the project along with the role the user has in the project"
     },
     "v1Provider": {
       "type": "object",
