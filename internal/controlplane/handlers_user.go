@@ -219,20 +219,6 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			return nil, nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 		}
 
-		// Find the role for the user
-		var roleString string
-		for _, a := range as {
-			if a.Subject == user.IdentitySubject {
-				roleString = a.Role
-			}
-		}
-
-		// Parse role
-		authzRole, err := authz.ParseRole(roleString)
-		if err != nil {
-			return nil, nil, status.Errorf(codes.Internal, "failed to parse role: %v", err)
-		}
-
 		// TODO: Delete once all use ProjectRoles
 		deprecatedPrjs = append(deprecatedPrjs, &pb.Project{
 			ProjectId:   proj.String(),
@@ -243,13 +229,30 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			Description: pDescr,
 		})
 
-		// Append the project role to the response
-		projectRoles = append(projectRoles, &pb.ProjectRole{
-			Role: &pb.Role{
+		var projectRole *pb.Role
+		if len(as) != 0 {
+			// Find the role for the user
+			var roleString string
+			for _, a := range as {
+				if a.Subject == user.IdentitySubject {
+					roleString = a.Role
+				}
+			}
+			// Parse role
+			authzRole, err := authz.ParseRole(roleString)
+			if err != nil {
+				return nil, nil, status.Errorf(codes.Internal, "failed to parse role: %v", err)
+			}
+			projectRole = &pb.Role{
 				Name:        authzRole.String(),
 				DisplayName: authz.AllRolesDisplayName[authzRole],
 				Description: authz.AllRoles[authzRole],
-			},
+			}
+		}
+
+		// Append the project role to the response
+		projectRoles = append(projectRoles, &pb.ProjectRole{
+			Role: projectRole,
 			Project: &pb.Project{
 				ProjectId:   proj.String(),
 				Name:        pinfo.Name,
