@@ -1,5 +1,6 @@
 ---
 sidebar_position: 60
+title: Protocol documentation
 toc_max_heading_level: 4
 ---
 
