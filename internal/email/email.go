@@ -120,8 +120,8 @@ func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string 
 		InvitationURL:  fmt.Sprintf("https://cloud.minder.com/join/%s", code),
 		RecipientEmail: inviteeEmail,
 		MinderURL:      "https://cloud.minder.com",
-		TermsURL:       "https://cloud.minder.com/terms",
-		PrivacyURL:     "https://cloud.minder.com/privacy",
+		TermsURL:       "https://stacklok.com/stacklok-terms-of-service",
+		PrivacyURL:     "https://stacklok.com/privacy-policy/",
 		SignInURL:      "https://cloud.minder.com",
 		RoleName:       role,
 	}
