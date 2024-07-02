@@ -70,7 +70,7 @@ func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
 	t := table.New(table.Simple, layouts.KeyValue, nil)
 	t.AddRow("Minder Server", conn)
 	t.AddRow("Subject", user.GetUser().GetIdentitySubject())
-	for _, project := range getProjectTableRows(user.Projects) {
+	for _, project := range getProjectTableRows(user.GetProjectRoles()) {
 		t.AddRow(project...)
 	}
 	t.Render()
@@ -85,7 +85,7 @@ func renderUserInfoWhoami(conn string, outWriter io.Writer, format string, user 
 		t.AddRow("Created At", user.GetUser().GetCreatedAt().AsTime().String())
 		t.AddRow("Updated At", user.GetUser().GetUpdatedAt().AsTime().String())
 		t.AddRow("Minder Server", conn)
-		for _, project := range getProjectTableRows(user.Projects) {
+		for _, project := range getProjectTableRows(user.GetProjectRoles()) {
 			t.AddRow(project...)
 		}
 		t.Render()
@@ -104,15 +104,15 @@ func renderUserInfoWhoami(conn string, outWriter io.Writer, format string, user 
 	}
 }
 
-func getProjectTableRows(projects []*minderv1.Project) [][]string {
+func getProjectTableRows(projects []*minderv1.ProjectRole) [][]string {
 	var rows [][]string
 	projectKey := "Project"
 	for idx, project := range projects {
 		if len(projects) > 1 {
 			projectKey = fmt.Sprintf("Project #%d", idx+1)
 		}
-		projectVal := fmt.Sprintf("%s / %s", project.GetName(), project.GetProjectId())
-		rows = append(rows, []string{projectKey, projectVal})
+		projectVal := fmt.Sprintf("%s / %s", project.GetProject().GetName(), project.GetProject().GetProjectId())
+		rows = append(rows, []string{fmt.Sprintf("%s (role: %s)", projectKey, project.GetRole().GetName()), projectVal})
 	}
 	return rows
 }

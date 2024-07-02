@@ -1245,7 +1245,12 @@ message UserRecord {
     reserved "organization_id";
 }
 
-// list users
+// ProjectRole has the project along with the role the user has in the project
+message ProjectRole {
+    Role role = 1;
+    Project project = 2;
+}
+
 // get user
 message GetUserRequest {
     reserved 1; // deprecated context
@@ -1253,7 +1258,9 @@ message GetUserRequest {
 
 message GetUserResponse {
     optional UserRecord user = 1;
-    repeated Project projects = 2;
+    // This will be deprecated in favor of the project_roles field
+    repeated Project projects = 2 [deprecated=true];
+    repeated ProjectRole project_roles = 3;
 }
 
 // Profile service
