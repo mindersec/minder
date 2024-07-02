@@ -40,11 +40,10 @@ type Service interface {
 
 // MailEventPayload is the event payload for sending an invitation email
 type MailEventPayload struct {
-	Code           string `json:"code"`
-	ProjectDisplay string `json:"project"`
-	SponsorDisplay string `json:"sponsor"`
-	Role           string `json:"role"`
-	Email          string `json:"email"`
+	Address  string `json:"email"`
+	Subject  string `json:"subject"`
+	BodyHTML string `json:"body_html"`
+	BodyText string `json:"body_text"`
 }
 
 // MailEventHandler is the email event handler
@@ -77,7 +76,7 @@ func (m *MailEventHandler) handlerInviteEmail(msg *message.Message) error {
 	}
 
 	// Send the email
-	return m.client.SendEmail(msgCtx, e.Email, e.getEmailSubject(), e.getEmailBodyHTML(), e.getEmailBodyText())
+	return m.client.SendEmail(msgCtx, e.Address, e.Subject, e.BodyHTML, e.BodyText)
 }
 
 // NewMessage creates a new message for sending an invitation email
@@ -87,13 +86,13 @@ func NewMessage(inviteeEmail, code, role, projectDisplay, sponsorDisplay string)
 	if err != nil {
 		return nil, fmt.Errorf("error generating UUID: %w", err)
 	}
+
 	// Create the payload
 	payload, err := json.Marshal(MailEventPayload{
-		Code:           code,
-		ProjectDisplay: projectDisplay,
-		SponsorDisplay: sponsorDisplay,
-		Role:           role,
-		Email:          inviteeEmail,
+		Address:  inviteeEmail,
+		Subject:  getEmailSubject(projectDisplay),
+		BodyHTML: getEmailBodyHTML(code, sponsorDisplay, projectDisplay, role, inviteeEmail),
+		BodyText: getEmailBodyText(code, sponsorDisplay, projectDisplay, role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payload for email event: %w", err)
@@ -103,7 +102,7 @@ func NewMessage(inviteeEmail, code, role, projectDisplay, sponsorDisplay string)
 }
 
 // getBodyHTML returns the HTML body for the email based on the message payload
-func (e *MailEventPayload) getEmailBodyHTML() string {
+func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string {
 	data := struct {
 		AdminName        string
 		OrganizationName string
@@ -115,16 +114,16 @@ func (e *MailEventPayload) getEmailBodyHTML() string {
 		SignInURL        string
 		RoleName         string
 	}{
-		AdminName:        e.SponsorDisplay,
-		OrganizationName: e.ProjectDisplay,
+		AdminName:        sponsor,
+		OrganizationName: project,
 		// TODO: Determine the correct environment for the invite URL and the rest of the URLs
-		InvitationURL:  fmt.Sprintf("https://cloud.minder.com/join/%s", e.Code),
-		RecipientEmail: e.Email,
+		InvitationURL:  fmt.Sprintf("https://cloud.minder.com/join/%s", code),
+		RecipientEmail: inviteeEmail,
 		MinderURL:      "https://cloud.minder.com",
 		TermsURL:       "https://cloud.minder.com/terms",
 		PrivacyURL:     "https://cloud.minder.com/privacy",
 		SignInURL:      "https://cloud.minder.com",
-		RoleName:       e.Role,
+		RoleName:       role,
 	}
 
 	// TODO: Load the email template from elsewhere
@@ -134,7 +133,7 @@ func (e *MailEventPayload) getEmailBodyHTML() string {
 	if err != nil {
 		// TODO: Log the error
 		// Default to the text body
-		return e.getEmailBodyText()
+		return getEmailBodyText(code, sponsor, project, role)
 	}
 	// Execute the template
 	var b strings.Builder
@@ -145,12 +144,12 @@ func (e *MailEventPayload) getEmailBodyHTML() string {
 }
 
 // getEmailBodyText returns the text body for the email based on the message payload
-func (e *MailEventPayload) getEmailBodyText() string {
+func getEmailBodyText(code, sponsor, project, role string) string {
 	return fmt.Sprintf("You have been invited to join %s as a %s by %s. Use code %s to accept the invitation.",
-		e.ProjectDisplay, e.Role, e.SponsorDisplay, e.Code)
+		project, role, sponsor, code)
 }
 
 // getEmailSubject returns the subject for the email based on the message payload
-func (e *MailEventPayload) getEmailSubject() string {
-	return fmt.Sprintf("You have been invited to join the %s organisation in Minder", e.ProjectDisplay)
+func getEmailSubject(project string) string {
+	return fmt.Sprintf("You have been invited to join the %s organisation in Minder", project)
 }
