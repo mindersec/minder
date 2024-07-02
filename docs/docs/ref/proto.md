@@ -1162,7 +1162,6 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 <a name="minder-v1-GetUserRequest"></a>
 
 #### GetUserRequest
-list users
 get user
 
 
@@ -1175,7 +1174,8 @@ get user
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | user | [UserRecord](#minder-v1-UserRecord) | optional |  |
-| projects | [Project](#minder-v1-Project) | repeated |  |
+| projects | [Project](#minder-v1-Project) | repeated | This will be deprecated in favor of the project_roles field |
+| project_roles | [ProjectRole](#minder-v1-ProjectRole) | repeated |  |
 
 
 <a name="minder-v1-GitHubAppParams"></a>
@@ -1840,6 +1840,18 @@ Project API Objects
 | ----- | ---- | ----- | ----------- |
 | display_name | [string](#string) | optional | display_name is the display name of the project to update. |
 | description | [string](#string) | optional | description is the description of the project to update. |
+
+
+<a name="minder-v1-ProjectRole"></a>
+
+#### ProjectRole
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| role | [Role](#minder-v1-Role) |  |  |
+| project | [Project](#minder-v1-Project) |  |  |
 
 
 <a name="minder-v1-Provider"></a>

@@ -3848,6 +3848,14 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1Project"
+          },
+          "title": "This will be deprecated in favor of the project_roles field"
+        },
+        "projectRoles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProjectRole"
           }
         }
       }
@@ -4290,6 +4298,17 @@
         "description": {
           "type": "string",
           "description": "description is the description of the project to update."
+        }
+      }
+    },
+    "v1ProjectRole": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/v1Role"
+        },
+        "project": {
+          "$ref": "#/definitions/v1Project"
         }
       }
     },

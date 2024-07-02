@@ -185,14 +185,15 @@ func (s *Server) DeleteUser(ctx context.Context,
 	return &pb.DeleteUserResponse{}, nil
 }
 
-func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.Project, error) {
+func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.ProjectRole, []*pb.Project, error) {
 	// get all the projects associated with that user
 	projs, err := s.authzClient.ProjectsForUser(ctx, user.IdentitySubject)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	var projectsPB []*pb.Project
+	var projectRoles []*pb.ProjectRole
+	var deprecatedPrjs []*pb.Project
 	for _, proj := range projs {
 		pinfo, err := s.store.GetProjectByID(ctx, proj)
 		if err != nil {
@@ -200,7 +201,7 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			if errors.Is(err, sql.ErrNoRows) {
 				continue
 			}
-			return nil, err
+			return nil, nil, err
 		}
 
 		// Try to parse the project metadata to complete the response fields
@@ -212,7 +213,28 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			pDescr = meta.Public.Description
 		}
 
-		projectsPB = append(projectsPB, &pb.Project{
+		// Get all role assignments for this project
+		as, err := s.authzClient.AssignmentsToProject(ctx, proj)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+		}
+
+		// Find the role for the user
+		var roleString string
+		for _, a := range as {
+			if a.Subject == user.IdentitySubject {
+				roleString = a.Role
+			}
+		}
+
+		// Parse role
+		authzRole, err := authz.ParseRole(roleString)
+		if err != nil {
+			return nil, nil, status.Errorf(codes.Internal, "failed to parse role: %v", err)
+		}
+
+		// TODO: Delete once all use ProjectRoles
+		deprecatedPrjs = append(deprecatedPrjs, &pb.Project{
 			ProjectId:   proj.String(),
 			Name:        pinfo.Name,
 			CreatedAt:   timestamppb.New(pinfo.CreatedAt),
@@ -220,9 +242,26 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			DisplayName: pDisplay,
 			Description: pDescr,
 		})
+
+		// Append the project role to the response
+		projectRoles = append(projectRoles, &pb.ProjectRole{
+			Role: &pb.Role{
+				Name:        authzRole.String(),
+				DisplayName: authz.AllRolesDisplayName[authzRole],
+				Description: authz.AllRoles[authzRole],
+			},
+			Project: &pb.Project{
+				ProjectId:   proj.String(),
+				Name:        pinfo.Name,
+				CreatedAt:   timestamppb.New(pinfo.CreatedAt),
+				UpdatedAt:   timestamppb.New(pinfo.UpdatedAt),
+				DisplayName: pDisplay,
+				Description: pDescr,
+			},
+		})
 	}
 
-	return projectsPB, nil
+	return projectRoles, deprecatedPrjs, nil
 }
 
 // GetUser is a service for getting personal user details
@@ -255,12 +294,12 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		UpdatedAt:       timestamppb.New(user.UpdatedAt),
 	}
 
-	projs, err := s.getUserDependencies(ctx, user)
+	projectRoles, deprecatedPrjs, err := s.getUserDependencies(ctx, user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
-	resp.Projects = projs
-
+	resp.ProjectRoles = projectRoles
+	resp.Projects = deprecatedPrjs
 	return &resp, nil
 }
 
