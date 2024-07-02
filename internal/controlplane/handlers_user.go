@@ -299,6 +299,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 		return nil, status.Errorf(codes.Unknown, "failed to get user dependencies: %s", err)
 	}
 	resp.ProjectRoles = projectRoles
+	// nolint: staticcheck
 	resp.Projects = deprecatedPrjs
 	return &resp, nil
 }
