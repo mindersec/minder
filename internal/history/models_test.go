@@ -19,12 +19,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
+var foo = "foo"
+
 func TestListEvaluationCursor(t *testing.T) {
 	t.Parallel()
+
+	epoch := time.UnixMicro(0)
 
 	tests := []struct {
 		name   string
@@ -36,13 +39,12 @@ func TestListEvaluationCursor(t *testing.T) {
 			name: "implicit next",
 			cursor: func(t *testing.T) string {
 				t.Helper()
-				payload := []byte("00000000-0000-0000-0000-000000000000")
+				payload := []byte("0")
 				return base64.StdEncoding.EncodeToString(payload)
 			},
 			check: func(t *testing.T, cursor *ListEvaluationCursor) {
 				t.Helper()
-				require.Equal(t, uuid.Nil, cursor.ID)
-				require.Equal(t, time.UnixMilli(0), cursor.Timestamp)
+				require.Equal(t, epoch, cursor.Time)
 				require.Equal(t, Next, cursor.Direction)
 			},
 		},
@@ -50,13 +52,12 @@ func TestListEvaluationCursor(t *testing.T) {
 			name: "explicit next",
 			cursor: func(t *testing.T) string {
 				t.Helper()
-				payload := []byte("+00000000-0000-0000-0000-000000000000")
+				payload := []byte("+0")
 				return base64.StdEncoding.EncodeToString(payload)
 			},
 			check: func(t *testing.T, cursor *ListEvaluationCursor) {
 				t.Helper()
-				require.Equal(t, uuid.Nil, cursor.ID)
-				require.Equal(t, time.UnixMilli(0), cursor.Timestamp)
+				require.Equal(t, epoch, cursor.Time)
 				require.Equal(t, Next, cursor.Direction)
 			},
 		},
@@ -64,13 +65,12 @@ func TestListEvaluationCursor(t *testing.T) {
 			name: "explicit prev",
 			cursor: func(t *testing.T) string {
 				t.Helper()
-				payload := []byte("-00000000-0000-0000-0000-000000000000")
+				payload := []byte("-0")
 				return base64.StdEncoding.EncodeToString(payload)
 			},
 			check: func(t *testing.T, cursor *ListEvaluationCursor) {
 				t.Helper()
-				require.Equal(t, uuid.Nil, cursor.ID)
-				require.Equal(t, time.UnixMilli(0), cursor.Timestamp)
+				require.Equal(t, epoch, cursor.Time)
 				require.Equal(t, Prev, cursor.Direction)
 			},
 		},
@@ -109,8 +109,7 @@ func TestListEvaluationCursor(t *testing.T) {
 			},
 			check: func(t *testing.T, cursor *ListEvaluationCursor) {
 				t.Helper()
-				require.Equal(t, uuid.Nil, cursor.ID)
-				require.Equal(t, time.UnixMilli(0), cursor.Timestamp)
+				require.Equal(t, epoch, cursor.Time)
 				require.Equal(t, Next, cursor.Direction)
 			},
 		},
@@ -270,7 +269,10 @@ func TestFilterOptions(t *testing.T) {
 				t.Helper()
 				return WithEntityType("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(EntityTypeFilter)
@@ -282,9 +284,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "entity type not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityType("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(EntityTypeFilter)
@@ -296,35 +302,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty entity type",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityType("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus entity type",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityType("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong entity type filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityType("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// entity name
 		{
 			name: "entity name in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityName("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(EntityNameFilter)
@@ -336,9 +358,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "entity name not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityName("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(EntityNameFilter)
@@ -350,35 +376,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty entity name",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityName("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus entity name",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityName("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong entity name filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithEntityName("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// profile name
 		{
 			name: "profile name in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithProfileName("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(ProfileNameFilter)
@@ -390,9 +432,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "profile name not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithProfileName("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(ProfileNameFilter)
@@ -404,35 +450,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty profile name",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithProfileName("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus profile name",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithProfileName("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong profile name filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithProfileName("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// status
 		{
 			name: "status in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithStatus("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(StatusFilter)
@@ -444,9 +506,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "status not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithStatus("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(StatusFilter)
@@ -458,35 +524,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty status",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithStatus("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus status",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithStatus("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong status filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithStatus("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// remediation
 		{
 			name: "remediation in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithRemediation("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(RemediationFilter)
@@ -498,9 +580,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "remediation not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithRemediation("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(RemediationFilter)
@@ -512,35 +598,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty remediation",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithRemediation("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus remediation",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithRemediation("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong remediation filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithRemediation("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// alert
 		{
 			name: "alert in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithAlert("repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(AlertFilter)
@@ -552,9 +654,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "alert not in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithAlert("!repository")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(AlertFilter)
@@ -566,35 +672,51 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "empty alert",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithAlert("")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "bogus alert",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithAlert("!")
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
 		},
 		{
 			name: "wrong alert filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithAlert("repository")
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 
 		// from-to
 		{
 			name: "from in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithFrom(now)
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(TimeRangeFilter)
@@ -606,9 +728,13 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "to in filter",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithTo(now)
 			},
-			filter: func(t *testing.T) Filter { return &listEvaluationFilter{} },
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
 			check: func(t *testing.T, filter Filter) {
 				t.Helper()
 				f := filter.(TimeRangeFilter)
@@ -620,18 +746,26 @@ func TestFilterOptions(t *testing.T) {
 		{
 			name: "wrong timerange filter from",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithFrom(now)
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 		{
 			name: "wrong timerange filter to",
 			option: func(t *testing.T) FilterOpt {
+				t.Helper()
 				return WithTo(now)
 			},
-			filter: func(t *testing.T) Filter { return "foo" },
-			err:    true,
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
 		},
 	}
 

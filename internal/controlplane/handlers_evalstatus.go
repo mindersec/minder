@@ -17,6 +17,8 @@ package controlplane
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -89,7 +91,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 	defer s.store.Rollback(tx)
 
-	data, err := s.history.ListEvaluationHistory(
+	result, err := s.history.ListEvaluationHistory(
 		ctx,
 		s.store.GetQuerierWithTransaction(tx),
 		cursor,
@@ -100,9 +102,92 @@ func (s *Server) ListEvaluationHistory(
 		return nil, status.Error(codes.Internal, "error retrieving evaluations")
 	}
 
-	return &minderv1.ListEvaluationHistoryResponse{
-		Data: data,
-	}, nil
+	// convert data set to proto
+	data, err := fromEvaluationHistoryRow(result.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// return data set to client
+	resp := &minderv1.ListEvaluationHistoryResponse{}
+	if len(data) == 0 {
+		return resp, nil
+	}
+
+	resp.Data = data
+	resp.Page = &minderv1.CursorPage{}
+
+	if result.Next != nil {
+		resp.Page.Next = makeCursor(result.Next, size)
+	}
+	if result.Prev != nil {
+		resp.Page.Prev = makeCursor(result.Prev, size)
+	}
+
+	return resp, nil
+}
+
+func fromEvaluationHistoryRow(
+	rows []db.ListEvaluationHistoryRow,
+) ([]*minderv1.EvaluationHistory, error) {
+	res := []*minderv1.EvaluationHistory{}
+
+	for _, row := range rows {
+		var dbEntityType db.Entities
+		if err := dbEntityType.Scan(row.EntityType); err != nil {
+			return nil, errors.New("internal error")
+		}
+		entityType := dbEntityToEntity(dbEntityType)
+
+		entityName, ok := row.EntityName.(string)
+		if !ok {
+			return nil, errors.New("internal error")
+		}
+
+		var alert *minderv1.EvaluationHistoryAlert
+		if row.AlertStatus.Valid {
+			alert = &minderv1.EvaluationHistoryAlert{
+				Status:  string(row.AlertStatus.AlertStatusTypes),
+				Details: row.AlertDetails.String,
+			}
+		}
+		var remediation *minderv1.EvaluationHistoryRemediation
+		if row.RemediationStatus.Valid {
+			remediation = &minderv1.EvaluationHistoryRemediation{
+				Status:  string(row.RemediationStatus.RemediationStatusTypes),
+				Details: row.RemediationDetails.String,
+			}
+		}
+
+		res = append(res, &minderv1.EvaluationHistory{
+			Entity: &minderv1.EvaluationHistoryEntity{
+				Id:   row.EvaluationID.String(),
+				Type: entityType,
+				Name: entityName,
+			},
+			Rule: &minderv1.EvaluationHistoryRule{
+				Name:    row.RuleName,
+				Type:    row.RuleType,
+				Profile: row.ProfileName,
+			},
+			Status: &minderv1.EvaluationHistoryStatus{
+				Status:      string(row.EvaluationStatus),
+				Details:     row.EvaluationDetails,
+				EvaluatedAt: timestamppb.New(row.EvaluatedAt),
+			},
+			Alert:       alert,
+			Remediation: remediation,
+		})
+	}
+
+	return res, nil
+}
+
+func makeCursor(cursor []byte, size uint64) *minderv1.Cursor {
+	return &minderv1.Cursor{
+		Cursor: base64.StdEncoding.EncodeToString(cursor),
+		Size:   size,
+	}
 }
 
 // FilterOptsFromStrings calls the given function `f` on each element

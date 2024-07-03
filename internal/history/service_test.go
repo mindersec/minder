@@ -154,6 +154,29 @@ func TestStoreEvaluationStatus(t *testing.T) {
 	}
 }
 
+func TestListEvaluationHistory(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		entityType db.Entities
+		dbSetup    dbf.DBMockBuilder
+		err        bool
+	}{
+		{
+			name:       "StoreEvaluationStatus rejects invalid entity type",
+			entityType: "I'm a little teapot",
+			err:        true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+		})
+	}
+}
+
 var (
 	ruleID       = uuid.New()
 	entityID     = uuid.New()
