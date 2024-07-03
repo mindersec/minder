@@ -57,7 +57,7 @@ var (
 	// DefaultCursor is a cursor starting from the beginning of
 	// the data set.
 	DefaultCursor = ListEvaluationCursor{
-		Time:      time.UnixMicro(999999999999999999),
+		Time:      time.UnixMicro(999999999999999999).UTC(),
 		Direction: Next,
 	}
 )
@@ -247,9 +247,9 @@ type listEvaluationFilter struct {
 	// List of statuses to exclude from the selection
 	excludedStatuses []string
 	// List of remediations to include in the selection
-	includedRemediation []string
+	includedRemediations []string
 	// List of remediations to exclude from the selection
-	excludedRemediation []string
+	excludedRemediations []string
 	// List of alerts to include in the selection
 	includedAlerts []string
 	// List of alerts to exclude from the selection
@@ -327,17 +327,17 @@ func (filter *listEvaluationFilter) ExcludedStatuses() []string {
 func (filter *listEvaluationFilter) AddRemediation(remediation string) error {
 	if strings.HasPrefix(remediation, "!") {
 		remediation = strings.Split(remediation, "!")[1] // guaranteed to exist
-		filter.excludedRemediation = append(filter.excludedRemediation, remediation)
+		filter.excludedRemediations = append(filter.excludedRemediations, remediation)
 	} else {
-		filter.includedRemediation = append(filter.includedRemediation, remediation)
+		filter.includedRemediations = append(filter.includedRemediations, remediation)
 	}
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedRemediations() []string {
-	return filter.includedRemediation
+	return filter.includedRemediations
 }
 func (filter *listEvaluationFilter) ExcludedRemediations() []string {
-	return filter.excludedRemediation
+	return filter.excludedRemediations
 }
 
 func (filter *listEvaluationFilter) AddAlert(alert string) error {

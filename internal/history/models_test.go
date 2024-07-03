@@ -27,7 +27,8 @@ var foo = "foo"
 func TestListEvaluationCursor(t *testing.T) {
 	t.Parallel()
 
-	epoch := time.UnixMicro(0)
+	epoch := time.UnixMicro(0).UTC()
+	future := time.UnixMicro(999999999999999999).UTC()
 
 	tests := []struct {
 		name   string
@@ -109,7 +110,7 @@ func TestListEvaluationCursor(t *testing.T) {
 			},
 			check: func(t *testing.T, cursor *ListEvaluationCursor) {
 				t.Helper()
-				require.Equal(t, epoch, cursor.Time)
+				require.Equal(t, future, cursor.Time)
 				require.Equal(t, Next, cursor.Direction)
 			},
 		},

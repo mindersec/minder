@@ -233,26 +233,33 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
  WHERE ($1::timestamp without time zone IS NULL OR $1 > s.most_recent_evaluation)
    AND ($2::timestamp without time zone IS NULL OR $2 < s.most_recent_evaluation)
-   AND ($3::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name = ANY($3::text[]))
-   AND ($3::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY($3::text[]))
-   AND ($3::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY($3::text[]))
-   AND ($4::text[] IS NULL OR p.name = ANY($4::text[]))
-   AND ($5::action_type[] IS NULL OR p.remediate = ANY($5::action_type[]))
-   AND ($6::action_type[] IS NULL OR p.alert = ANY($6::action_type[]))
-   AND ($7::eval_status_types[] IS NULL OR s.status = ANY($7::eval_status_types[]))
+   AND ($3::entities[] IS NULL OR entity_type::entities = ANY($3::entities[]))
+   AND ($4::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name = ANY($4::text[]))
+   AND ($4::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY($4::text[]))
+   AND ($4::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY($4::text[]))
+   AND ($5::text[] IS NULL OR p.name = ANY($5::text[]))
+   AND ($6::remediation_status_types[] IS NULL OR re.status = ANY($6::remediation_status_types[]))
+   AND ($7::alert_status_types[] IS NULL OR ae.status = ANY($7::alert_status_types[]))
+   AND ($8::eval_status_types[] IS NULL OR s.status = ANY($8::eval_status_types[]))
+   AND ($9::timestamp without time zone IS NULL
+        OR $10::timestamp without time zone IS NULL
+        OR s.most_recent_evaluation BETWEEN $9 AND $10)
  ORDER BY s.most_recent_evaluation DESC
- LIMIT $8::integer
+ LIMIT $11::integer
 `
 
 type ListEvaluationHistoryParams struct {
-	Next         sql.NullTime      `json:"next"`
-	Prev         sql.NullTime      `json:"prev"`
-	Entitynames  []string          `json:"entitynames"`
-	Profilenames []string          `json:"profilenames"`
-	Remediations []ActionType      `json:"remediations"`
-	Alerts       []ActionType      `json:"alerts"`
-	Statuses     []EvalStatusTypes `json:"statuses"`
-	Size         int32             `json:"size"`
+	Next         sql.NullTime             `json:"next"`
+	Prev         sql.NullTime             `json:"prev"`
+	Entitytypes  []Entities               `json:"entitytypes"`
+	Entitynames  []string                 `json:"entitynames"`
+	Profilenames []string                 `json:"profilenames"`
+	Remediations []RemediationStatusTypes `json:"remediations"`
+	Alerts       []AlertStatusTypes       `json:"alerts"`
+	Statuses     []EvalStatusTypes        `json:"statuses"`
+	Fromts       sql.NullTime             `json:"fromts"`
+	Tots         sql.NullTime             `json:"tots"`
+	Size         int32                    `json:"size"`
 }
 
 type ListEvaluationHistoryRow struct {
@@ -276,11 +283,14 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 	rows, err := q.db.QueryContext(ctx, listEvaluationHistory,
 		arg.Next,
 		arg.Prev,
+		pq.Array(arg.Entitytypes),
 		pq.Array(arg.Entitynames),
 		pq.Array(arg.Profilenames),
 		pq.Array(arg.Remediations),
 		pq.Array(arg.Alerts),
 		pq.Array(arg.Statuses),
+		arg.Fromts,
+		arg.Tots,
 		arg.Size,
 	)
 	if err != nil {

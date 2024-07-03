@@ -137,12 +137,16 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.most_recent_evaluation)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.most_recent_evaluation)
+   AND (sqlc.slice(entityTypes)::entities[] IS NULL OR entity_type::entities = ANY(sqlc.slice(entityTypes)::entities[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(profileNames)::text[] IS NULL OR p.name = ANY(sqlc.slice(profileNames)::text[]))
-   AND (sqlc.slice(remediations)::action_type[] IS NULL OR p.remediate = ANY(sqlc.slice(remediations)::action_type[]))
-   AND (sqlc.slice(alerts)::action_type[] IS NULL OR p.alert = ANY(sqlc.slice(alerts)::action_type[]))
+   AND (sqlc.slice(remediations)::remediation_status_types[] IS NULL OR re.status = ANY(sqlc.slice(remediations)::remediation_status_types[]))
+   AND (sqlc.slice(alerts)::alert_status_types[] IS NULL OR ae.status = ANY(sqlc.slice(alerts)::alert_status_types[]))
    AND (sqlc.slice(statuses)::eval_status_types[] IS NULL OR s.status = ANY(sqlc.slice(statuses)::eval_status_types[]))
+   AND (sqlc.narg(fromts)::timestamp without time zone IS NULL
+        OR sqlc.narg(tots)::timestamp without time zone IS NULL
+        OR s.most_recent_evaluation BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
  ORDER BY s.most_recent_evaluation DESC
  LIMIT sqlc.arg(size)::integer;

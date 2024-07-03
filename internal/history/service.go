@@ -215,23 +215,12 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	params := db.ListEvaluationHistoryParams{
 		Size: int32(size),
 	}
-	if string(cursor.Direction) == "next" {
-		params.Next = sql.NullTime{
-			Time:  cursor.Time,
-			Valid: true,
-		}
+
+	if err := toSQLCursor(cursor, &params); err != nil {
+		return nil, err
 	}
-	if string(cursor.Direction) == "prev" {
-		params.Prev = sql.NullTime{
-			Time:  cursor.Time,
-			Valid: true,
-		}
-	}
-	if len(filter.IncludedEntityNames()) != 0 {
-		params.Entitynames = filter.IncludedEntityNames()
-	}
-	if len(filter.IncludedProfileNames()) != 0 {
-		params.Profilenames = filter.IncludedProfileNames()
+	if err := toSQLFilter(filter, &params); err != nil {
+		return nil, err
 	}
 
 	rows, err := qtx.ListEvaluationHistory(ctx, params)
@@ -251,4 +240,239 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	}
 
 	return result, nil
+}
+
+func toSQLCursor(
+	cursor *ListEvaluationCursor,
+	params *db.ListEvaluationHistoryParams,
+) error {
+	if cursor == nil {
+		return nil
+	}
+
+	switch cursor.Direction {
+	case Next:
+		params.Next = sql.NullTime{
+			Time:  cursor.Time,
+			Valid: true,
+		}
+	case Prev:
+		params.Prev = sql.NullTime{
+			Time:  cursor.Time,
+			Valid: true,
+		}
+	default:
+		return fmt.Errorf(
+			"invalid cursor direction: %s",
+			string(cursor.Direction),
+		)
+	}
+
+	return nil
+}
+
+func toSQLFilter(
+	filter ListEvaluationFilter,
+	params *db.ListEvaluationHistoryParams,
+) error {
+	if filter == nil {
+		return nil
+	}
+
+	if len(filter.IncludedEntityNames()) != 0 {
+		params.Entitynames = filter.IncludedEntityNames()
+	}
+	if len(filter.IncludedProfileNames()) != 0 {
+		params.Profilenames = filter.IncludedProfileNames()
+	}
+
+	if len(filter.IncludedEntityTypes()) != 0 {
+		entityTypes, err := convertEntities(
+			filter.IncludedEntityTypes(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Entitytypes = entityTypes
+	}
+
+	if len(filter.IncludedRemediations()) != 0 {
+		remediations, err := convertRemediationStatusTypes(
+			filter.IncludedRemediations(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Remediations = remediations
+	}
+
+	if len(filter.IncludedAlerts()) != 0 {
+		alerts, err := convertAlertStatusTypes(
+			filter.IncludedAlerts(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Alerts = alerts
+	}
+
+	if len(filter.IncludedStatuses()) != 0 {
+		statuses, err := convertEvalStatusTypes(
+			filter.IncludedStatuses(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Statuses = statuses
+	}
+
+	if filter.GetFrom() != nil {
+		params.Fromts = sql.NullTime{
+			Time:  *filter.GetFrom(),
+			Valid: true,
+		}
+	}
+	if filter.GetTo() != nil {
+		params.Tots = sql.NullTime{
+			Time:  *filter.GetTo(),
+			Valid: true,
+		}
+	}
+
+	return nil
+}
+
+func convertEntities(values []string) ([]db.Entities, error) {
+	converted := []db.Entities{}
+	for _, v := range values {
+		dbObj, err := mapEntities(v)
+		if err != nil {
+			return nil, err
+		}
+		converted = append(converted, dbObj)
+	}
+	return converted, nil
+}
+
+func mapEntities(value string) (db.Entities, error) {
+	switch value {
+	case "repository":
+		return db.EntitiesRepository, nil
+	case "build_environment":
+		return db.EntitiesBuildEnvironment, nil
+	case "artifact":
+		return db.EntitiesArtifact, nil
+	case "pull_request":
+		return db.EntitiesPullRequest, nil
+	default:
+		return db.Entities("invalid"),
+			fmt.Errorf("invalid entity: %s", value)
+	}
+}
+
+func convertRemediationStatusTypes(
+	values []string,
+) ([]db.RemediationStatusTypes, error) {
+	converted := []db.RemediationStatusTypes{}
+	for _, v := range values {
+		dbObj, err := mapRemediationStatusTypes(v)
+		if err != nil {
+			return nil, err
+		}
+		converted = append(converted, dbObj)
+	}
+	return converted, nil
+}
+
+//nolint:goconst
+func mapRemediationStatusTypes(
+	value string,
+) (db.RemediationStatusTypes, error) {
+	switch value {
+	case "success":
+		return db.RemediationStatusTypesSuccess, nil
+	case "failure":
+		return db.RemediationStatusTypesFailure, nil
+	case "error":
+		return db.RemediationStatusTypesError, nil
+	case "skipped":
+		return db.RemediationStatusTypesSkipped, nil
+	case "not_available":
+		return db.RemediationStatusTypesNotAvailable, nil
+	case "pending":
+		return db.RemediationStatusTypesPending, nil
+	default:
+		return db.RemediationStatusTypes("invalid"),
+			fmt.Errorf("invalid remediation status: %s", value)
+	}
+}
+
+func convertAlertStatusTypes(
+	values []string,
+) ([]db.AlertStatusTypes, error) {
+	converted := []db.AlertStatusTypes{}
+	for _, v := range values {
+		dbObj, err := mapAlertStatusTypes(v)
+		if err != nil {
+			return nil, err
+		}
+		converted = append(converted, dbObj)
+	}
+	return converted, nil
+}
+
+//nolint:goconst
+func mapAlertStatusTypes(
+	value string,
+) (db.AlertStatusTypes, error) {
+	switch value {
+	case "on":
+		return db.AlertStatusTypesOn, nil
+	case "off":
+		return db.AlertStatusTypesOff, nil
+	case "error":
+		return db.AlertStatusTypesError, nil
+	case "skipped":
+		return db.AlertStatusTypesSkipped, nil
+	case "not_available":
+		return db.AlertStatusTypesNotAvailable, nil
+	default:
+		return db.AlertStatusTypes("invalid"),
+			fmt.Errorf("invalid alert status: %s", value)
+	}
+}
+
+func convertEvalStatusTypes(
+	values []string,
+) ([]db.EvalStatusTypes, error) {
+	converted := []db.EvalStatusTypes{}
+	for _, v := range values {
+		dbObj, err := mapEvalStatusTypes(v)
+		if err != nil {
+			return nil, err
+		}
+		converted = append(converted, dbObj)
+	}
+	return converted, nil
+}
+
+//nolint:goconst
+func mapEvalStatusTypes(
+	value string,
+) (db.EvalStatusTypes, error) {
+	switch value {
+	case "success":
+		return db.EvalStatusTypesSuccess, nil
+	case "failure":
+		return db.EvalStatusTypesFailure, nil
+	case "error":
+		return db.EvalStatusTypesError, nil
+	case "skipped":
+		return db.EvalStatusTypesSkipped, nil
+	case "pending":
+		return db.EvalStatusTypesPending, nil
+	default:
+		return db.EvalStatusTypes("invalid"),
+			fmt.Errorf("invalid evaluation status: %s", value)
+	}
 }
