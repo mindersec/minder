@@ -32,7 +32,7 @@ import (
 	"github.com/rs/zerolog"
 	"k8s.io/client-go/transport"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	srvconfig "github.com/stacklok/minder/internal/config/server"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -249,7 +249,7 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 	// TODO: set ClientCheckOptions like in
 	// https://openfga.dev/docs/getting-started/perform-check#02-calling-check-api
 	options := fgaclient.ClientCheckOptions{}
-	userString := getUserForTuple(auth.GetUserSubjectFromContext(ctx))
+	userString := getUserForTuple(jwt.GetUserSubjectFromContext(ctx))
 	body := fgaclient.ClientCheckRequest{
 		User:     userString,
 		Relation: action,

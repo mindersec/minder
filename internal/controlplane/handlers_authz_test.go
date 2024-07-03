@@ -39,7 +39,8 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/noop"
+	authjwt "github.com/stacklok/minder/internal/auth/jwt"
+	"github.com/stacklok/minder/internal/auth/jwt/noop"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
@@ -187,7 +188,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			if tc.buildStubs != nil {
 				tc.buildStubs(t, mockStore)
 			}
-			ctx := auth.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
+			ctx := authjwt.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
 
 			authzClient := &mock.SimpleClient{}
 
@@ -281,7 +282,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			}
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
-			ctx = auth.WithAuthTokenContext(ctx, userJWT)
+			ctx = authjwt.WithAuthTokenContext(ctx, userJWT)
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
 			}, unaryHandler)
@@ -491,7 +492,7 @@ func TestRoleManagement(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			ctx = auth.WithAuthTokenContext(ctx, user)
+			ctx = authjwt.WithAuthTokenContext(ctx, user)
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 				Project: engcontext.Project{
 					ID: project,

@@ -50,6 +50,7 @@ import (
 
 	"github.com/stacklok/minder/internal/assets"
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -87,7 +88,7 @@ type Server struct {
 	evt          events.Publisher
 	mt           metrics.Metrics
 	grpcServer   *grpc.Server
-	jwt          auth.JwtValidator
+	jwt          jwt.Validator
 	authzClient  authz.Client
 	idClient     auth.Resolver
 	cryptoEngine crypto.Engine
@@ -127,7 +128,7 @@ func NewServer(
 	evt events.Publisher,
 	cfg *serverconfig.Config,
 	serverMetrics metrics.Metrics,
-	jwt auth.JwtValidator,
+	jwtValidator jwt.Validator,
 	cryptoEngine crypto.Engine,
 	authzClient authz.Client,
 	idClient auth.Resolver,
@@ -148,7 +149,7 @@ func NewServer(
 		cfg:                 cfg,
 		evt:                 evt,
 		cryptoEngine:        cryptoEngine,
-		jwt:                 jwt,
+		jwt:                 jwtValidator,
 		mt:                  serverMetrics,
 		profiles:            profileService,
 		ruleTypes:           ruleService,

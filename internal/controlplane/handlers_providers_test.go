@@ -36,7 +36,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -242,7 +242,7 @@ func TestCreateProvider(t *testing.T) {
 			assert.NoError(t, user.Set("sub", "testuser"))
 
 			ctx := context.Background()
-			ctx = auth.WithAuthTokenContext(ctx, user)
+			ctx = jwt.WithAuthTokenContext(ctx, user)
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 				Project:  engcontext.Project{ID: projectID},
 				Provider: engcontext.Provider{Name: scenario.name},
@@ -354,7 +354,7 @@ func TestCreateProviderFailures(t *testing.T) {
 		assert.NoError(t, user.Set("sub", "testuser"))
 
 		ctx := context.Background()
-		ctx = auth.WithAuthTokenContext(ctx, user)
+		ctx = jwt.WithAuthTokenContext(ctx, user)
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project:  engcontext.Project{ID: projectID},
 			Provider: engcontext.Provider{Name: providerName},
@@ -591,7 +591,7 @@ func TestDeleteProvider(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = auth.WithAuthTokenContext(ctx, user)
+	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project:  engcontext.Project{ID: projectID},
 		Provider: engcontext.Provider{Name: providerName},
@@ -704,7 +704,7 @@ func TestDeleteProviderByID(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = auth.WithAuthTokenContext(ctx, user)
+	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project: engcontext.Project{ID: projectID},
 	})

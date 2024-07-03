@@ -42,8 +42,8 @@ import (
 	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
-	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	"github.com/stacklok/minder/internal/auth/jwt"
+	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
@@ -375,7 +375,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			if tc.getToken != nil {
 				token = tc.getToken(token)
 			}
-			ctx := auth.WithAuthTokenContext(basengcontext, token)
+			ctx := jwt.WithAuthTokenContext(basengcontext, token)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -412,7 +412,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					},
 				},
 			}
-			mockJwt := mockjwt.NewMockJwtValidator(ctrl)
+			mockJwt := mockjwt.NewMockValidator(ctrl)
 			mockAuthManager := mockmanager.NewMockAuthManager(ctrl)
 			mockAuthManager.EXPECT().NewOAuthConfig(gomock.Any(), gomock.Any()).Return(&oauth2.Config{}, nil).AnyTimes()
 

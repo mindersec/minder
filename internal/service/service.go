@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane"
@@ -64,7 +65,7 @@ func AllInOneServerService(
 	ctx context.Context,
 	cfg *serverconfig.Config,
 	store db.Store,
-	jwt auth.JwtValidator,
+	jwtValidator jwt.Validator,
 	restClientCache ratecache.RestClientCache,
 	authzClient authz.Client,
 	idClient auth.Resolver,
@@ -144,7 +145,7 @@ func AllInOneServerService(
 		evt,
 		cfg,
 		serverMetrics,
-		jwt,
+		jwtValidator,
 		cryptoEngine,
 		authzClient,
 		idClient,
