@@ -33,8 +33,8 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
-	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	"github.com/stacklok/minder/internal/auth/jwt"
+	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
@@ -62,7 +62,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 	testCases := []struct {
 		name       string
 		req        *pb.CreateUserRequest
-		buildStubs func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
+		buildStubs func(ctx context.Context, store *mockdb.MockStore, validator *mockjwt.MockValidator,
 			prov *mockprov.MockGitHubProviderService) context.Context
 		checkResponse      func(t *testing.T, res *pb.CreateUserResponse, err error)
 		expectedStatusCode codes.Code
@@ -70,7 +70,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 		{
 			name: "Success",
 			req:  &pb.CreateUserRequest{},
-			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
+			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockValidator,
 				_ *mockprov.MockGitHubProviderService) context.Context {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -114,9 +114,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 		{
 			name: "Success with pending App",
 			req:  &pb.CreateUserRequest{},
-			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
+			buildStubs: func(ctx context.Context, store *mockdb.MockStore, validator *mockjwt.MockValidator,
 				prov *mockprov.MockGitHubProviderService) context.Context {
-				ctx = auth.WithAuthTokenContext(ctx, keyCloakUserToken)
+				ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -152,7 +152,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
-				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+				validator.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 
 				return ctx
 			},
@@ -171,9 +171,9 @@ func TestCreateUser_gRPC(t *testing.T) {
 		{
 			name: "Success with two pending Apps",
 			req:  &pb.CreateUserRequest{},
-			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator,
+			buildStubs: func(ctx context.Context, store *mockdb.MockStore, validator *mockjwt.MockValidator,
 				prov *mockprov.MockGitHubProviderService) context.Context {
-				ctx = auth.WithAuthTokenContext(ctx, keyCloakUserToken)
+				ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -220,7 +220,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
-				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
+				validator.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 
 				return ctx
 			},
@@ -254,7 +254,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
-			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+			mockJwtValidator := mockjwt.NewMockValidator(ctrl)
 			mockProviders := mockprov.NewMockGitHubProviderService(ctrl)
 			reqCtx := tc.buildStubs(ctx, mockStore, mockJwtValidator, mockProviders)
 			crypeng := mockcrypto.NewMockEngine(ctrl)
@@ -294,7 +294,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+	mockJwtValidator := mockjwt.NewMockValidator(ctrl)
 
 	request := &pb.DeleteUserRequest{}
 
@@ -372,14 +372,14 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
-		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator)
+		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockValidator)
 		checkResponse      func(t *testing.T, res *pb.DeleteUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
 			req:  &pb.DeleteUserRequest{},
-			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockJwtValidator) {
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockValidator) {
 				tokenResult, _ := openid.NewBuilder().Subject("subject1").Build()
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 
@@ -425,7 +425,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
-			mockJwtValidator := mockjwt.NewMockJwtValidator(ctrl)
+			mockJwtValidator := mockjwt.NewMockValidator(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator)
 
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -29,7 +29,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/email"
@@ -111,7 +111,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 		zerolog.Ctx(ctx).Error().Err(err).Msg("authorization check failed")
 		return nil, util.UserVisibleError(
 			codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
-			auth.GetUserSubjectFromContext(ctx), entityCtx.Project.ID)
+			jwt.GetUserSubjectFromContext(ctx), entityCtx.Project.ID)
 	}
 
 	return handler(ctx, req)
@@ -183,7 +183,7 @@ func getDefaultProjectID(
 	store db.Store,
 	authzClient authz.Client,
 ) (uuid.UUID, error) {
-	subject := auth.GetUserSubjectFromContext(ctx)
+	subject := jwt.GetUserSubjectFromContext(ctx)
 
 	userInfo, err := store.GetUserBySubject(ctx, subject)
 	if err != nil {
@@ -348,7 +348,7 @@ func (s *Server) inviteUser(
 ) (*minder.AssignRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	currentUser, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
@@ -692,7 +692,7 @@ func (s *Server) updateInvite(
 ) (*minder.UpdateRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	currentUser, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
@@ -847,12 +847,12 @@ func (s *Server) updateRole(
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
 func isUserSelfUpdating(ctx context.Context, subject, inviteeEmail string) error {
 	if subject != "" {
-		if auth.GetUserSubjectFromContext(ctx) == subject {
+		if jwt.GetUserSubjectFromContext(ctx) == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
 	if inviteeEmail != "" {
-		tokenEmail, err := auth.GetUserEmailFromContext(ctx)
+		tokenEmail, err := jwt.GetUserEmailFromContext(ctx)
 		if err != nil {
 			return util.UserVisibleError(codes.Internal, "error getting user email from token: %v", err)
 		}

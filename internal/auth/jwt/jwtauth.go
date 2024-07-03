@@ -13,7 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+// Package jwt provides the logic for reading and validating JWT tokens
+package jwt
 
 import (
 	"context"
@@ -26,8 +27,8 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
-// JwtValidator provides the functions to validate a JWT
-type JwtValidator interface {
+// Validator provides the functions to validate a JWT
+type Validator interface {
 	ParseAndValidate(tokenString string) (openid.Token, error)
 }
 
@@ -86,7 +87,7 @@ func (j *JwkSetJwtValidator) ParseAndValidate(tokenString string) (openid.Token,
 }
 
 // NewJwtValidator creates a new JWT validator that uses a JWK set URL to validate the tokens
-func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud string) (JwtValidator, error) {
+func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud string) (Validator, error) {
 	// Cache the JWK set
 	// The cache will refresh every 15 minutes by default
 	jwks := jwk.NewCache(ctx)

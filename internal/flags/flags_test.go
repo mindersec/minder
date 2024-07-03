@@ -27,7 +27,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/open-feature/go-sdk/openfeature"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 )
@@ -93,7 +93,7 @@ test_flag:
 			if err := userJWT.Set("sub", "user-1"); err != nil {
 				t.Fatalf("failed to set sub claim: %v", err)
 			}
-			ctx = auth.WithAuthTokenContext(ctx, userJWT)
+			ctx = jwt.WithAuthTokenContext(ctx, userJWT)
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 				Project:  engcontext.Project{ID: uuid.New()},
 				Provider: engcontext.Provider{Name: "testing"},

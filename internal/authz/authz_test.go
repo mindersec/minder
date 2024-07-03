@@ -32,7 +32,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	srvconfig "github.com/stacklok/minder/internal/config/server"
 )
@@ -105,7 +105,7 @@ func TestVerifyOneProject(t *testing.T) {
 
 	userJWT := openid.New()
 	assert.NoError(t, userJWT.Set("sub", "user-1"))
-	userctx := auth.WithAuthTokenContext(ctx, userJWT)
+	userctx := jwt.WithAuthTokenContext(ctx, userJWT)
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj), "failed to check project")
@@ -159,7 +159,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 
 	user1JWT := openid.New()
 	assert.NoError(t, user1JWT.Set("sub", "user-1"))
-	userctx := auth.WithAuthTokenContext(ctx, user1JWT)
+	userctx := jwt.WithAuthTokenContext(ctx, user1JWT)
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj1), "failed to check project")
@@ -178,7 +178,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	// verify the project
 	user2JWT := openid.New()
 	assert.NoError(t, user2JWT.Set("sub", "user-2"))
-	assert.NoError(t, c.Check(auth.WithAuthTokenContext(ctx, user2JWT), "get", prj3), "failed to check project")
+	assert.NoError(t, c.Check(jwt.WithAuthTokenContext(ctx, user2JWT), "get", prj3), "failed to check project")
 
 	// verify user-1 cannot operate on project 3
 	assert.Error(t, c.Check(userctx, "get", prj3), "expected user-1 to not be able to operate on project 3")

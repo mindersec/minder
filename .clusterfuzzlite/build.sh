@@ -29,4 +29,4 @@ compile_native_go_fuzzer github.com/stacklok/minder/internal/engine/eval/rego Fu
 compile_native_go_fuzzer github.com/stacklok/minder/internal/controlplane FuzzGitHubEventParsers FuzzGitHubEventParsers
 compile_native_go_fuzzer github.com/stacklok/minder/internal/engine/ingester/diff FuzzDiffParse FuzzDiffParse
 compile_native_go_fuzzer github.com/stacklok/minder/internal/crypto FuzzEncryptDecrypt FuzzEncryptDecrypt
-compile_native_go_fuzzer github.com/stacklok/minder/internal/auth FuzzParseAndValidate FuzzParseAndValidate
+compile_native_go_fuzzer github.com/stacklok/minder/internal/auth/jwt FuzzParseAndValidate FuzzParseAndValidate

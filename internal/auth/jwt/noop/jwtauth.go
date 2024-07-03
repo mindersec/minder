@@ -13,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package noop provides a no-op implementation of the JwtValidator interface
+// Package noop provides a no-op implementation of the Validator interface
 package noop
 
 import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 )
 
 type noopJwtValidator struct {
@@ -28,7 +28,7 @@ type noopJwtValidator struct {
 }
 
 // NewJwtValidator returns a new instance of the no-op JWT validator
-func NewJwtValidator(subject string) auth.JwtValidator {
+func NewJwtValidator(subject string) jwt.Validator {
 	return &noopJwtValidator{
 		Subject: subject,
 	}

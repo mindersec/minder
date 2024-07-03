@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/projects"
@@ -40,7 +40,7 @@ func (s *Server) ListProjects(
 	ctx context.Context,
 	_ *minderv1.ListProjectsRequest,
 ) (*minderv1.ListProjectsResponse, error) {
-	userInfo, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	userInfo, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}

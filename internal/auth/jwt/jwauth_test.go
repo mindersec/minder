@@ -13,8 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// package auth contains the authentication logic for the control plane
-package auth
+package jwt
 
 import (
 	crand "crypto/rand"
@@ -29,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
 )
 
 func TestParseAndValidate(t *testing.T) {

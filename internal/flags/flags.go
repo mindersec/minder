@@ -25,7 +25,7 @@ import (
 	gofeature "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever/fileretriever"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 )
@@ -39,7 +39,7 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	// Note: engine.EntityFromContext is best-effort, so these values may be zero.
 	ec := engcontext.EntityFromContext(ctx)
 	return openfeature.NewEvaluationContext(
-		auth.GetUserSubjectFromContext(ctx),
+		jwt.GetUserSubjectFromContext(ctx),
 		map[string]interface{}{
 			"project":  ec.Project.ID.String(),
 			"provider": ec.Provider.Name,

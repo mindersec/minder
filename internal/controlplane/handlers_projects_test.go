@@ -25,7 +25,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -55,7 +55,7 @@ func TestListProjects(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = auth.WithAuthTokenContext(ctx, user)
+	ctx = jwt.WithAuthTokenContext(ctx, user)
 
 	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
 	assert.NoError(t, err)
@@ -92,7 +92,7 @@ func TestListProjectsWithOneDeletedWhileIterating(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = auth.WithAuthTokenContext(ctx, user)
+	ctx = jwt.WithAuthTokenContext(ctx, user)
 
 	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
 	assert.NoError(t, err)
