@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/invite"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -191,20 +192,20 @@ func getDefaultProjectID(
 		// Therefore, we assume it's safe output that the user is not found.
 		return uuid.UUID{}, util.UserVisibleError(codes.NotFound, "user not found")
 	}
-	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
+	prjs, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user: %v", err)
 	}
 
-	if len(projects) == 0 {
+	if len(prjs) == 0 {
 		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "User has no role grants in projects")
 	}
 
-	if len(projects) != 1 {
+	if len(prjs) != 1 {
 		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Cannot determine default project. Please specify one.")
 	}
 
-	return projects[0], nil
+	return prjs[0], nil
 }
 
 // Permissions API
@@ -385,6 +386,12 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "failed to get target project: %s", err)
 	}
 
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&prj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
@@ -398,7 +405,7 @@ func (s *Server) inviteUser(
 	}
 
 	// Publish the event for sending the invitation email
-	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, sponsorDisplay)
+	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, sponsorDisplay)
 	if err != nil {
 		return nil, fmt.Errorf("error generating UUID: %w", err)
 	}
@@ -730,6 +737,13 @@ func (s *Server) updateInvite(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
+
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&prj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	// Resolve the sponsor's identity and display name
 	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
 	if err != nil {
@@ -746,7 +760,7 @@ func (s *Server) updateInvite(
 	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
 	// or the role stayed the same, but the last invite update was more than a day ago
 	if existingInvites[0].Role != authzRole.String() || userInvite.UpdatedAt.Sub(existingInvites[0].UpdatedAt) > 24*time.Hour {
-		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, identity.Human())
+		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, identity.Human())
 		if err != nil {
 			return nil, fmt.Errorf("error generating UUID: %w", err)
 		}
