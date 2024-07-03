@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/invite"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -49,6 +50,12 @@ func (s *Server) GetInviteDetails(ctx context.Context, req *pb.GetInviteDetailsR
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
 
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	// Resolve the sponsor's identity and display name
 	identity, err := s.idClient.Resolve(ctx, retInvite.IdentitySubject)
 	if err != nil {
@@ -57,7 +64,7 @@ func (s *Server) GetInviteDetails(ctx context.Context, req *pb.GetInviteDetailsR
 	}
 
 	return &pb.GetInviteDetailsResponse{
-		ProjectDisplay: targetProject.Name,
+		ProjectDisplay: meta.Public.DisplayName,
 		SponsorDisplay: identity.Human(),
 		ExpiresAt:      invite.GetExpireIn7Days(retInvite.UpdatedAt),
 		Expired:        invite.IsExpired(retInvite.UpdatedAt),
