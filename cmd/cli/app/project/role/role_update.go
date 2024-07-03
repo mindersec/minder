@@ -17,6 +17,7 @@ package role
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -81,7 +82,7 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// Otherwise, print the role assignments if it was about updating a role
 	t := initializeTableForGrantListRoleAssignments()
 	for _, r := range ret.RoleAssignments {
-		t.AddRow(r.Subject, r.Role, *r.Project)
+		t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
 	}
 	t.Render()
 	return nil
