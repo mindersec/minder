@@ -98,7 +98,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 }
 
 func initializeTableForGrantListRoleAssignments() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role", "Project"})
+	return table.New(table.Simple, layouts.Default, []string{"User", "Role", "Project"})
 }
 
 func initializeTableForGrantListInvitations() table.Table {
