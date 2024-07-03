@@ -64,3 +64,10 @@ DELETE FROM user_invites WHERE code = $1 RETURNING *;
 
 -- name: UpdateInvitationRole :one
 UPDATE user_invites SET role = $2, updated_at = NOW() WHERE code = $1 RETURNING *;
+
+
+-- DeleteInvitationsBySponsor deletes all invitations by a sponsor. This is intended
+-- to be called by a user who has decided to revoke all invitations they have issued.
+
+-- name: DeleteInvitationsBySponsor :many
+DELETE FROM user_invites WHERE sponsor = $1 RETURNING *;

@@ -43,6 +43,9 @@ type Querier interface {
 	// called by a user who has issued an invitation and then accepted it, declined
 	// it or the sponsor has decided to revoke it.
 	DeleteInvitation(ctx context.Context, code string) (UserInvite, error)
+	// DeleteInvitationsBySponsor deletes all invitations by a sponsor. This is intended
+	// to be called by a user who has decided to revoke all invitations they have issued.
+	DeleteInvitationsBySponsor(ctx context.Context, sponsor int32) ([]UserInvite, error)
 	DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdatedRulesParams) error
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error

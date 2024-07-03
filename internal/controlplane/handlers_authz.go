@@ -604,7 +604,8 @@ func (s *Server) removeRole(
 	}
 
 	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
+	userToRemove, err := s.store.GetUserBySubject(ctx, identity.String())
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "User not found")
 		}
@@ -629,6 +630,20 @@ func (s *Server) removeRole(
 		if adminRolesCnt <= 1 {
 			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
 		}
+	}
+
+	// In case this user is a sponsor of an invitation, we need to remove the invitation
+	deletedInvites, err := s.store.DeleteInvitationsBySponsor(ctx, userToRemove.ID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error deleting invitations: %v", err)
+	}
+
+	if len(deletedInvites) > 0 {
+		zerolog.Ctx(ctx).Info().
+			Int("invites_deleted", len(deletedInvites)).
+			Str("sponsor_subject", userToRemove.IdentitySubject).
+			Int32("sponsor", userToRemove.ID).
+			Msg("deleted pending invitations from sponsor")
 	}
 
 	// Delete the role assignment

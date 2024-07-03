@@ -74,6 +74,44 @@ func (q *Queries) DeleteInvitation(ctx context.Context, code string) (UserInvite
 	return i, err
 }
 
+const deleteInvitationsBySponsor = `-- name: DeleteInvitationsBySponsor :many
+
+DELETE FROM user_invites WHERE sponsor = $1 RETURNING code, email, role, project, sponsor, created_at, updated_at
+`
+
+// DeleteInvitationsBySponsor deletes all invitations by a sponsor. This is intended
+// to be called by a user who has decided to revoke all invitations they have issued.
+func (q *Queries) DeleteInvitationsBySponsor(ctx context.Context, sponsor int32) ([]UserInvite, error) {
+	rows, err := q.db.QueryContext(ctx, deleteInvitationsBySponsor, sponsor)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []UserInvite{}
+	for rows.Next() {
+		var i UserInvite
+		if err := rows.Scan(
+			&i.Code,
+			&i.Email,
+			&i.Role,
+			&i.Project,
+			&i.Sponsor,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getInvitationByCode = `-- name: GetInvitationByCode :one
 
 SELECT user_invites.code, user_invites.email, user_invites.role, user_invites.project, user_invites.sponsor, user_invites.created_at, user_invites.updated_at, users.identity_subject
