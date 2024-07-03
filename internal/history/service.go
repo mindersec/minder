@@ -23,11 +23,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -52,7 +50,7 @@ type EvaluationHistoryService interface {
 		cursor *ListEvaluationCursor,
 		size uint64,
 		filter ListEvaluationFilter,
-	) ([]*minderv1.EvaluationHistory, error)
+	) (*ListEvaluationHistoryResult, error)
 }
 
 // NewEvaluationHistoryService creates a new instance of EvaluationHistoryService
@@ -207,19 +205,50 @@ type ruleEntityParams struct {
 	PullRequestID uuid.NullUUID
 }
 
-//nolint:revive
-func (e *evaluationHistoryService) ListEvaluationHistory(
+func (_ *evaluationHistoryService) ListEvaluationHistory(
 	ctx context.Context,
 	qtx db.Querier,
 	cursor *ListEvaluationCursor,
 	size uint64,
 	filter ListEvaluationFilter,
-) ([]*minderv1.EvaluationHistory, error) {
-	zerolog.Ctx(ctx).Debug().
-		Str("cursor", fmt.Sprintf("%+v", cursor)).
-		Uint64("size", size).
-		Str("filter", fmt.Sprintf("%+v", filter)).
-		Msg("ListEvaluationHistory request")
+) (*ListEvaluationHistoryResult, error) {
+	params := db.ListEvaluationHistoryParams{
+		Size: int32(size),
+	}
+	if string(cursor.Direction) == "next" {
+		params.Next = sql.NullTime{
+			Time:  cursor.Time,
+			Valid: true,
+		}
+	}
+	if string(cursor.Direction) == "prev" {
+		params.Prev = sql.NullTime{
+			Time:  cursor.Time,
+			Valid: true,
+		}
+	}
+	if len(filter.IncludedEntityNames()) != 0 {
+		params.Entitynames = filter.IncludedEntityNames()
+	}
+	if len(filter.IncludedProfileNames()) != 0 {
+		params.Profilenames = filter.IncludedProfileNames()
+	}
 
-	return []*minderv1.EvaluationHistory{}, nil
+	rows, err := qtx.ListEvaluationHistory(ctx, params)
+	if err != nil {
+		return nil, errors.New("internal error")
+	}
+
+	result := &ListEvaluationHistoryResult{
+		Data: rows,
+	}
+	if len(rows) > 0 {
+		newest := rows[0]
+		oldest := rows[len(rows)-1]
+
+		result.Next = []byte(fmt.Sprintf("+%d", oldest.EvaluatedAt.UnixMicro()))
+		result.Prev = []byte(fmt.Sprintf("-%d", newest.EvaluatedAt.UnixMicro()))
+	}
+
+	return result, nil
 }

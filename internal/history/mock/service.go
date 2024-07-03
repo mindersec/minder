@@ -16,7 +16,6 @@ import (
 	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
 	history "github.com/stacklok/minder/internal/history"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -44,10 +43,10 @@ func (m *MockEvaluationHistoryService) EXPECT() *MockEvaluationHistoryServiceMoc
 }
 
 // ListEvaluationHistory mocks base method.
-func (m *MockEvaluationHistoryService) ListEvaluationHistory(ctx context.Context, qtx db.Querier, cursor *history.ListEvaluationCursor, size uint64, filter history.ListEvaluationFilter) ([]*v1.EvaluationHistory, error) {
+func (m *MockEvaluationHistoryService) ListEvaluationHistory(ctx context.Context, qtx db.Querier, cursor *history.ListEvaluationCursor, size uint64, filter history.ListEvaluationFilter) (*history.ListEvaluationHistoryResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListEvaluationHistory", ctx, qtx, cursor, size, filter)
-	ret0, _ := ret[0].([]*v1.EvaluationHistory)
+	ret0, _ := ret[0].(*history.ListEvaluationHistoryResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

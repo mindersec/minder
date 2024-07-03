@@ -2605,6 +2605,9 @@ message EvaluationHistoryStatus {
     // details contains optional details about the evaluation.
     // the structure and contents are rule type specific, and are subject to change.
     string details = 2;
+
+    // created_at is the timestamp of creation of this evaluation
+    google.protobuf.Timestamp evaluated_at = 3;
 }
 
 message EvaluationHistoryRemediation {

@@ -18,10 +18,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/stacklok/minder/internal/db"
 )
 
 var (
@@ -48,8 +49,7 @@ const (
 // ListEvaluationCursor is a struct representing a cursor in the
 // dataset of historical evaluations.
 type ListEvaluationCursor struct {
-	ID        uuid.UUID
-	Timestamp time.Time
+	Time      time.Time
 	Direction Direction
 }
 
@@ -57,8 +57,7 @@ var (
 	// DefaultCursor is a cursor starting from the beginning of
 	// the data set.
 	DefaultCursor = ListEvaluationCursor{
-		ID:        uuid.Nil,
-		Timestamp: time.UnixMilli(0),
+		Time:      time.UnixMicro(999999999999999999),
 		Direction: Next,
 	}
 )
@@ -67,13 +66,13 @@ var (
 // a ListEvaluationCursor. The opaque paylaod is expected to be of one
 // of the following forms
 //
-//   - `"+00000000-0000-0000-0000-000000000000"` meaning the next page
+//   - `"+1257894000000000"` meaning the next page
 //     of data starting from the given UUID excluded
 //
-//   - `"-00000000-0000-0000-0000-000000000000"` meaning the previous
+//   - `"-1257894000000000"` meaning the previous
 //     page of data starting from the given UUID excluded
 //
-//   - `"00000000-0000-0000-0000-000000000000"` meaning the next page
+//   - `"1257894000000000"` meaning the next page
 //     of data (default) starting from the given UUID excluded
 func ParseListEvaluationCursor(payload string) (*ListEvaluationCursor, error) {
 	decoded, err := base64.StdEncoding.DecodeString(payload)
@@ -85,36 +84,33 @@ func ParseListEvaluationCursor(payload string) (*ListEvaluationCursor, error) {
 	case string(decoded) == "":
 		return &DefaultCursor, nil
 	case strings.HasPrefix(string(decoded), "+"):
-		// +00000000-0000-0000-0000-000000000000
-		id, err := uuid.ParseBytes(decoded[1:])
+		// +1257894000000000
+		usecs, err := strconv.ParseInt(string(decoded[1:]), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
 		}
 		return &ListEvaluationCursor{
-			ID:        id,
-			Timestamp: time.UnixMilli(0),
+			Time:      time.UnixMicro(usecs).UTC(),
 			Direction: Next,
 		}, nil
 	case strings.HasPrefix(string(decoded), "-"):
-		// -00000000-0000-0000-0000-000000000000
-		id, err := uuid.ParseBytes(decoded[1:])
+		// -1257894000000000
+		usecs, err := strconv.ParseInt(string(decoded[1:]), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
 		}
 		return &ListEvaluationCursor{
-			ID:        id,
-			Timestamp: time.UnixMilli(0),
+			Time:      time.UnixMicro(usecs).UTC(),
 			Direction: Prev,
 		}, nil
 	default:
-		// 00000000-0000-0000-0000-000000000000
-		id, err := uuid.ParseBytes(decoded)
+		// 1257894000000000
+		usecs, err := strconv.ParseInt(string(decoded), 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
 		}
 		return &ListEvaluationCursor{
-			ID:        id,
-			Timestamp: time.UnixMilli(0),
+			Time:      time.UnixMicro(usecs).UTC(),
 			Direction: Next,
 		}, nil
 	}
@@ -524,4 +520,17 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 	}
 
 	return filter, nil
+}
+
+// ListEvaluationHistoryResult is the return value of
+// ListEvaluationHistory function.
+type ListEvaluationHistoryResult struct {
+	// Data is an ordered collection of evaluation events.
+	Data []db.ListEvaluationHistoryRow
+	// Next is an object usable as cursor to fetch the next
+	// page. The page is absent if Next is nil.
+	Next []byte
+	// Prev is an object usable as cursor to fetch the previous
+	// page. The page is absent if Prev is nil.
+	Prev []byte
 }

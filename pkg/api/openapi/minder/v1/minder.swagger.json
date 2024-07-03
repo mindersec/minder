@@ -3696,6 +3696,11 @@
         "details": {
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "created_at is the timestamp of creation of this evaluation"
         }
       }
     },

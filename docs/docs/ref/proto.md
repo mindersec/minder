@@ -865,6 +865,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+| evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
 
 
 
