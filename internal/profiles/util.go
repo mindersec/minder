@@ -212,6 +212,8 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 			} else {
 				profiles[p.GetProfile().Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
+
+			selectorsToProfile(profiles[p.GetProfile().Name], p.GetSelectors())
 		}
 		if pm := rowInfoToProfileMap(
 			profiles[p.GetProfile().Name], p.GetEntityProfile(),
@@ -324,4 +326,19 @@ func rowInfoToProfileMap(
 	}
 
 	return profile
+}
+
+func selectorsToProfile(
+	profile *pb.Profile,
+	selectors []db.ProfileSelector,
+) {
+	profile.Selection = make([]*pb.Profile_Selector, 0, len(selectors))
+	for _, s := range selectors {
+		profile.Selection = append(profile.Selection, &pb.Profile_Selector{
+			Id:       s.ID.String(),
+			Entity:   string(s.Entity.Entities),
+			Selector: s.Selector,
+			Comment:  s.Comment,
+		})
+	}
 }
