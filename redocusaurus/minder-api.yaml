@@ -2088,6 +2088,23 @@ definitions:
         type: string
         title: name is the descriptive name of the rule, not to be confused with type
     description: Rule defines the individual call of a certain rule type.
+  ProfileSelector:
+    type: object
+    properties:
+      id:
+        type: string
+        description: >-
+          id is optional and use for updates to match upserts as well as read
+          operations. It is ignored for creates.
+      entity:
+        type: string
+        description: entity is the entity to select.
+      selector:
+        type: string
+        description: expr is the expression to select the entity.
+      comment:
+        type: string
+        description: description is the human-readable description of the selector.
   PullRequestRemediationActionsReplaceTagsWithSha:
     type: object
     properties:
@@ -3110,6 +3127,11 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/ProfileRule'
+      selection:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ProfileSelector'
       remediate:
         type: string
         title: |-
