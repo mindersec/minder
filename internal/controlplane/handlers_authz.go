@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
@@ -343,6 +344,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
 }
 
+//nolint:gocyclo
 func (s *Server) inviteUser(
 	ctx context.Context,
 	targetProject uuid.UUID,
@@ -395,6 +397,13 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
 	}
 
+	// Begin a transaction to ensure that the invitation is created atomically
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
 	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
@@ -413,10 +422,17 @@ func (s *Server) inviteUser(
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}
 
+	// Create the invite URL
 	inviteURL := ""
 	if cfg.Email.MinderURLBase != "" {
-		// Create the invite URL
-		inviteURL = fmt.Sprintf("%s/join/%s", cfg.Email.MinderURLBase, userInvite.Code)
+		baseUrl, err := url.Parse(cfg.Email.MinderURLBase)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing base URL: %w", err)
+		}
+		inviteURL, err = url.JoinPath(baseUrl.String(), "join", userInvite.Code)
+		if err != nil {
+			return nil, fmt.Errorf("error joining URL path: %w", err)
+		}
 	}
 
 	// Publish the event for sending the invitation email
@@ -436,6 +452,11 @@ func (s *Server) inviteUser(
 	err = s.evt.Publish(email.TopicQueueInviteEmail, msg)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
+	}
+
+	// Commit the transaction to persist the changes
+	if err = s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
 
 	// Send the invitation response
@@ -777,11 +798,6 @@ func (s *Server) updateInvite(
 		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
 	}
 
-	// Commit the transaction to persist the changes
-	if err = s.store.Commit(tx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-	}
-
 	// Read the server config, so we can get the Minder base URL
 	cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 	if err != nil {
@@ -791,7 +807,14 @@ func (s *Server) updateInvite(
 	// Create the invite URL
 	inviteURL := ""
 	if cfg.Email.MinderURLBase != "" {
-		inviteURL = fmt.Sprintf("%s/join/%s", cfg.Email.MinderURLBase, userInvite.Code)
+		baseUrl, err := url.Parse(cfg.Email.MinderURLBase)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing base URL: %w", err)
+		}
+		inviteURL, err = url.JoinPath(baseUrl.String(), "join", userInvite.Code)
+		if err != nil {
+			return nil, fmt.Errorf("error joining URL path: %w", err)
+		}
 	}
 
 	// Publish the event for sending the invitation email
@@ -814,6 +837,11 @@ func (s *Server) updateInvite(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
 		}
+	}
+
+	// Commit the transaction to persist the changes
+	if err = s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
 
 	return &minder.UpdateRoleResponse{
