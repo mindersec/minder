@@ -2029,6 +2029,19 @@ message Profile {
     repeated Rule artifact = 6;
     repeated Rule pull_request = 7;
 
+    message Selector {
+        // id is optional and use for updates to match upserts as well as read operations. It is ignored for creates.
+        string id = 1;
+        // entity is the entity to select.
+        string entity = 2;
+        // expr is the expression to select the entity.
+        string selector = 4;
+        // description is the human-readable description of the selector.
+        string comment = 5;
+    }
+
+    repeated Selector selection = 14;
+
     // whether and how to remediate (on,off,dry_run)
     // this is optional and defaults to "off"
     optional string remediate = 8;
