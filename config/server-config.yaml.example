@@ -114,3 +114,6 @@ crypto:
             key_dir: "./.ssh"
     default:
         key_id:    token_key_passphrase
+
+email:
+  minder_url_base: "http://localhost:6463" # Change to the URL of the frontend server

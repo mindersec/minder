@@ -78,6 +78,9 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 
 	if ret.Invitation != nil && ret.Invitation.Code != "" {
 		cmd.Printf("\nThe invitee can accept it by running: \n\nminder auth invite accept %s\n", ret.Invitation.Code)
+		if ret.Invitation.InviteUrl != "" {
+			cmd.Printf("\nOr by visiting: %s\n", ret.Invitation.InviteUrl)
+		}
 	}
 	return nil
 }

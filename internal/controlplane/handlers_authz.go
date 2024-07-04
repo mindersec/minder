@@ -19,10 +19,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,6 +33,8 @@ import (
 
 	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
+	"github.com/stacklok/minder/internal/config"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/email"
 	"github.com/stacklok/minder/internal/engine/engcontext"
@@ -340,6 +344,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
 }
 
+//nolint:gocyclo
 func (s *Server) inviteUser(
 	ctx context.Context,
 	targetProject uuid.UUID,
@@ -392,6 +397,13 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
 	}
 
+	// Begin a transaction to ensure that the invitation is created atomically
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
 	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
@@ -404,14 +416,47 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
 	}
 
+	// Read the server config, so we can get the Minder base URL
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config: %w", err)
+	}
+
+	// Create the invite URL
+	inviteURL := ""
+	if cfg.Email.MinderURLBase != "" {
+		baseUrl, err := url.Parse(cfg.Email.MinderURLBase)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing base URL: %w", err)
+		}
+		inviteURL, err = url.JoinPath(baseUrl.String(), "join", userInvite.Code)
+		if err != nil {
+			return nil, fmt.Errorf("error joining URL path: %w", err)
+		}
+	}
+
 	// Publish the event for sending the invitation email
-	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, sponsorDisplay)
+	msg, err := email.NewMessage(
+		ctx,
+		userInvite.Email,
+		inviteURL,
+		cfg.Email.MinderURLBase,
+		userInvite.Role,
+		meta.Public.DisplayName,
+		sponsorDisplay,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error generating UUID: %w", err)
 	}
+
 	err = s.evt.Publish(email.TopicQueueInviteEmail, msg)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
+	}
+
+	// Commit the transaction to persist the changes
+	if err = s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
 
 	// Send the invitation response
@@ -423,6 +468,7 @@ func (s *Server) inviteUser(
 			Project:        userInvite.Project.String(),
 			ProjectDisplay: prj.Name,
 			Code:           userInvite.Code,
+			InviteUrl:      inviteURL,
 			Sponsor:        currentUser.IdentitySubject,
 			SponsorDisplay: sponsorDisplay,
 			CreatedAt:      timestamppb.New(userInvite.CreatedAt),
@@ -684,6 +730,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
 }
 
+// nolint:gocyclo
 func (s *Server) updateInvite(
 	ctx context.Context,
 	targetProject uuid.UUID,
@@ -751,16 +798,38 @@ func (s *Server) updateInvite(
 		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
 	}
 
-	// Commit the transaction to persist the changes
-	if err = s.store.Commit(tx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	// Read the server config, so we can get the Minder base URL
+	cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
+	if err != nil {
+		return nil, fmt.Errorf("unable to read config: %w", err)
+	}
+
+	// Create the invite URL
+	inviteURL := ""
+	if cfg.Email.MinderURLBase != "" {
+		baseUrl, err := url.Parse(cfg.Email.MinderURLBase)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing base URL: %w", err)
+		}
+		inviteURL, err = url.JoinPath(baseUrl.String(), "join", userInvite.Code)
+		if err != nil {
+			return nil, fmt.Errorf("error joining URL path: %w", err)
+		}
 	}
 
 	// Publish the event for sending the invitation email
 	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
 	// or the role stayed the same, but the last invite update was more than a day ago
 	if existingInvites[0].Role != authzRole.String() || userInvite.UpdatedAt.Sub(existingInvites[0].UpdatedAt) > 24*time.Hour {
-		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, identity.Human())
+		msg, err := email.NewMessage(
+			ctx,
+			userInvite.Email,
+			inviteURL,
+			cfg.Email.MinderURLBase,
+			userInvite.Role,
+			meta.Public.DisplayName,
+			identity.Human(),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("error generating UUID: %w", err)
 		}
@@ -768,6 +837,11 @@ func (s *Server) updateInvite(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
 		}
+	}
+
+	// Commit the transaction to persist the changes
+	if err = s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
 
 	return &minder.UpdateRoleResponse{
@@ -778,6 +852,7 @@ func (s *Server) updateInvite(
 				Project:        userInvite.Project.String(),
 				ProjectDisplay: prj.Name,
 				Code:           userInvite.Code,
+				InviteUrl:      inviteURL,
 				Sponsor:        identity.String(),
 				SponsorDisplay: identity.Human(),
 				CreatedAt:      timestamppb.New(userInvite.CreatedAt),

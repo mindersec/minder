@@ -17,6 +17,8 @@ package server
 
 // EmailConfig is the configuration for the email sending service
 type EmailConfig struct {
+	// MinderURLBase is the base URL to use for minder invite URLs, e.g. https://cloud.stacklok.com
+	MinderURLBase string `mapstructure:"minder_url_base"`
 	// AWSSES is the AWS SES configuration
 	AWSSES AWSSES `mapstructure:"aws_ses"`
 }
