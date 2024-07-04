@@ -2307,6 +2307,8 @@ message Invitation {
     // project_display is the display name of the project to which the user
     // is invited.
     string project_display = 10;
+    // inviteURL is the URL that can be used to accept the invitation.
+    string invite_url = 11;
 }
 
 message GetProviderRequest {

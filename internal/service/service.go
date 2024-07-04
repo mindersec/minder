@@ -33,7 +33,8 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/eea"
-	"github.com/stacklok/minder/internal/email"
+	"github.com/stacklok/minder/internal/email/awsses"
+	"github.com/stacklok/minder/internal/email/noop"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
@@ -210,12 +211,18 @@ func AllInOneServerService(
 	evt.ConsumeEvents(im)
 
 	// Register the email manager to handle email invitations
-	mailClient, err := email.NewAWSSES(cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)
-	if err != nil {
-		return fmt.Errorf("unable to create email client: %w", err)
+	var mailClient events.Consumer
+	if cfg.Email.AWSSES.Region != "" && cfg.Email.AWSSES.Sender != "" {
+		// If AWS SES is configured, use it to send emails
+		mailClient, err = awsses.New(cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)
+		if err != nil {
+			return fmt.Errorf("unable to create aws ses email client: %w", err)
+		}
+	} else {
+		// Otherwise, use a no-op email client
+		mailClient = noop.New()
 	}
-	mm := email.NewMailEventHandler(mailClient)
-	evt.ConsumeEvents(mm)
+	evt.ConsumeEvents(mailClient)
 
 	// Start the gRPC and HTTP server in separate goroutines
 	errg.Go(func() error {

@@ -24,13 +24,16 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/docker/cli/templates"
 	"github.com/google/uuid"
-
-	"github.com/stacklok/minder/internal/events"
+	"github.com/rs/zerolog"
 )
 
 const (
 	// TopicQueueInviteEmail is the topic for sending invite emails
 	TopicQueueInviteEmail = "invite.email.event"
+	// DefaultMinderTermsURL is the default terms URL for minder
+	DefaultMinderTermsURL = "https://stacklok.com/stacklok-terms-of-service"
+	// DefaultMinderPrivacyURL is the default privacy URL for minder
+	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 )
 
 // Service is the email service interface
@@ -46,41 +49,11 @@ type MailEventPayload struct {
 	BodyText string `json:"body_text"`
 }
 
-// MailEventHandler is the email event handler
-type MailEventHandler struct {
-	client Service
-}
-
-// NewMailEventHandler creates a new mail event handler
-func NewMailEventHandler(client Service) *MailEventHandler {
-	return &MailEventHandler{
-		client: client,
-	}
-}
-
-// Register implements the Consumer interface.
-func (m *MailEventHandler) Register(reg events.Registrar) {
-	reg.Register(TopicQueueInviteEmail, m.handlerInviteEmail)
-}
-
-// handlerInviteEmail handles the invite email event
-func (m *MailEventHandler) handlerInviteEmail(msg *message.Message) error {
-	var e MailEventPayload
-
-	// Get the message context
-	msgCtx := msg.Context()
-
-	// Unmarshal the message payload
-	if err := json.Unmarshal(msg.Payload, &e); err != nil {
-		return fmt.Errorf("error unmarshalling invite email event: %w", err)
-	}
-
-	// Send the email
-	return m.client.SendEmail(msgCtx, e.Address, e.Subject, e.BodyHTML, e.BodyText)
-}
-
 // NewMessage creates a new message for sending an invitation email
-func NewMessage(inviteeEmail, code, role, projectDisplay, sponsorDisplay string) (*message.Message, error) {
+func NewMessage(
+	ctx context.Context,
+	inviteeEmail, inviteURL, minderURLBase, role, projectDisplay, sponsorDisplay string,
+) (*message.Message, error) {
 	// Generate a new message UUID
 	id, err := uuid.NewUUID()
 	if err != nil {
@@ -91,18 +64,19 @@ func NewMessage(inviteeEmail, code, role, projectDisplay, sponsorDisplay string)
 	payload, err := json.Marshal(MailEventPayload{
 		Address:  inviteeEmail,
 		Subject:  getEmailSubject(projectDisplay),
-		BodyHTML: getEmailBodyHTML(code, sponsorDisplay, projectDisplay, role, inviteeEmail),
-		BodyText: getEmailBodyText(code, sponsorDisplay, projectDisplay, role),
+		BodyHTML: getEmailBodyHTML(ctx, inviteURL, minderURLBase, sponsorDisplay, projectDisplay, role, inviteeEmail),
+		BodyText: getEmailBodyText(inviteURL, sponsorDisplay, projectDisplay, role),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payload for email event: %w", err)
 	}
+
 	// Create the message
 	return message.NewMessage(id.String(), payload), nil
 }
 
 // getBodyHTML returns the HTML body for the email based on the message payload
-func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string {
+func getEmailBodyHTML(ctx context.Context, inviteURL, minderURL, sponsor, project, role, inviteeEmail string) string {
 	data := struct {
 		AdminName        string
 		OrganizationName string
@@ -116,14 +90,13 @@ func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string 
 	}{
 		AdminName:        sponsor,
 		OrganizationName: project,
-		// TODO: Determine the correct environment for the invite URL and the rest of the URLs
-		InvitationURL:  fmt.Sprintf("https://cloud.stacklok.com/join/%s", code),
-		RecipientEmail: inviteeEmail,
-		MinderURL:      "https://cloud.stacklok.com",
-		TermsURL:       "https://stacklok.com/stacklok-terms-of-service",
-		PrivacyURL:     "https://stacklok.com/privacy-policy/",
-		SignInURL:      "https://cloud.stacklok.com",
-		RoleName:       role,
+		InvitationURL:    inviteURL,
+		RecipientEmail:   inviteeEmail,
+		MinderURL:        minderURL,
+		TermsURL:         DefaultMinderTermsURL,
+		PrivacyURL:       DefaultMinderPrivacyURL,
+		SignInURL:        minderURL,
+		RoleName:         role,
 	}
 
 	// TODO: Load the email template from elsewhere
@@ -131,9 +104,9 @@ func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string 
 	// Parse the template
 	tmpl, err := templates.Parse(bodyHTML)
 	if err != nil {
-		// TODO: Log the error
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error parsing the HTML template for email invitations")
 		// Default to the text body
-		return getEmailBodyText(code, sponsor, project, role)
+		return getEmailBodyText(inviteURL, sponsor, project, role)
 	}
 	// Execute the template
 	var b strings.Builder
@@ -144,9 +117,9 @@ func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string 
 }
 
 // getEmailBodyText returns the text body for the email based on the message payload
-func getEmailBodyText(code, sponsor, project, role string) string {
-	return fmt.Sprintf("You have been invited to join %s as a %s by %s. Use code %s to accept the invitation.",
-		project, role, sponsor, code)
+func getEmailBodyText(inviteURL, sponsor, project, role string) string {
+	return fmt.Sprintf("You have been invited to join %s as a %s by %s. Visit %s to accept the invitation.",
+		project, role, sponsor, inviteURL)
 }
 
 // getEmailSubject returns the subject for the email based on the message payload

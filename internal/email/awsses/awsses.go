@@ -12,43 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package email provides the email utilities for minder
-package email
+// Package awsses provides the email utilities for minder
+package awsses
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/rs/zerolog"
+
+	"github.com/stacklok/minder/internal/email"
+	"github.com/stacklok/minder/internal/events"
 )
 
 const (
 	// CharSet is the character set for the email
 	CharSet = "UTF-8"
-	// DefaultAWSRegion is the default AWS region
-	DefaultAWSRegion = "us-east-1"
-	// DefaultSender is the default sender email address
-	DefaultSender = "noreply@stacklok.com"
 )
 
-// AWSSES is the AWS SES client
-type AWSSES struct {
+// awsSES is the AWS SES client
+type awsSES struct {
 	sender string
 	svc    *ses.SES
 }
 
-// NewAWSSES creates a new AWS SES client
-func NewAWSSES(sender, region string) (*AWSSES, error) {
-	// Set the sender and region in case they are not provided.
-	if sender == "" {
-		sender = DefaultSender
-	}
-	if region == "" {
-		region = DefaultAWSRegion
-	}
-
+// New creates a new AWS SES client
+func New(sender, region string) (*awsSES, error) {
 	// Create a new session.
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(region)},
@@ -58,14 +52,32 @@ func NewAWSSES(sender, region string) (*AWSSES, error) {
 	}
 
 	// Create an SES service client.
-	return &AWSSES{
+	return &awsSES{
 		sender: sender,
 		svc:    ses.New(sess),
 	}, nil
 }
 
+// Register implements the Consumer interface.
+func (a *awsSES) Register(reg events.Registrar) {
+	reg.Register(email.TopicQueueInviteEmail, func(msg *message.Message) error {
+		var e email.MailEventPayload
+
+		// Get the message context
+		msgCtx := msg.Context()
+
+		// Unmarshal the message payload
+		if err := json.Unmarshal(msg.Payload, &e); err != nil {
+			return fmt.Errorf("error unmarshalling invite email event: %w", err)
+		}
+
+		// Send the email
+		return a.sendEmail(msgCtx, e.Address, e.Subject, e.BodyHTML, e.BodyText)
+	})
+}
+
 // SendEmail sends an email using AWS SES
-func (a *AWSSES) SendEmail(ctx context.Context, to, subject, bodyHTML, bodyText string) error {
+func (a *awsSES) sendEmail(ctx context.Context, to, subject, bodyHTML, bodyText string) error {
 	zerolog.Ctx(ctx).Info().
 		Str("invitee", to).
 		Str("subject", subject).

@@ -3938,6 +3938,10 @@
         "projectDisplay": {
           "type": "string",
           "description": "project_display is the display name of the project to which the user\nis invited."
+        },
+        "inviteUrl": {
+          "type": "string",
+          "description": "inviteURL is the URL that can be used to accept the invitation."
         }
       }
     },
