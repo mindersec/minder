@@ -1,24 +1,59 @@
 ---
 sidebar_position: 60
+title: Protocol documentation
 toc_max_heading_level: 4
 ---
+
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
+
+export const File = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h2 id={id} name={id}>{children}</h2>;
+}
+export const Service = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h4 id={id} name={id}>{children}</h4>;
+}
+export const Message = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h4 id={id} name={id}>{children}</h4>;
+}
+export const Extension = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h3 id={id} name={id}>{children}</h3>;
+}
+export const Enum = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <h3 id={id} name={id}>{children}</h3>;
+}
+export const ProtoType = ({ children, id }) => {
+  useBrokenLinks().collectAnchor(id);
+  return <a id={id} name={id}>{children}</a>;
+}
+export const TypeLink = ({ children, type }) => {
+  let link = type.startsWith('google-protobuf-') ?
+    `https://protobuf.dev/reference/protobuf/google.protobuf/#${type.replace('google-protobuf-', '')}` :
+    `#${type}`;
+  return <a href={link}>{children}</a>;
+}
+
+
 # Protocol documentation
-<a name="top"></a>
+<a id="top"></a>
 
 {{range .Files}}
 {{$file_name := .Name}}
-<a name="{{.Name | anchor}}"></a>
-<p align="right"><a href="#top">Top</a></p>
 
-## {{.Name}}
+<File id="{{.Name | anchor}}">{{.Name}}</File>
+
 {{.Description}}
 
 {{- if .Services}}
 ### Services
 {{range .Services}}
-<a name="{{.FullName | anchor}}"></a>
 
-#### {{.Name}}
+<Service id="{{.FullName | anchor}}">{{.Name}}</Service>
+
 {{.Description}}
 
 | Method Name | Request Type | Response Type | Description |
@@ -32,16 +67,16 @@ toc_max_heading_level: 4
 {{- if .Messages}}
 ### Messages
 {{range .Messages}}
-<a name="{{.FullName | anchor}}"></a>
 
-#### {{.LongName}}
+<Message id="{{.FullName | anchor}}">{{.LongName}}</Message>
+
 {{.Description}}
 
 {{if .HasFields}}
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 {{range .Fields -}}
-  | {{.Name}} | [{{.LongType}}](#{{.FullType | anchor}}) | {{.Label}} | {{if (index .Options "deprecated"|default false)}}**Deprecated.** {{end}}{{nobr .Description}}{{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
+  | {{.Name}} | <TypeLink type="{{.FullType | anchor}}">{{.LongType}}</TypeLink> | {{.Label}} | {{if (index .Options "deprecated"|default false)}}**Deprecated.** {{end}}{{nobr .Description}}{{if .DefaultValue}} Default: {{.DefaultValue}}{{end}} |
 {{end}}
 {{end}}
 {{- end -}}
@@ -56,9 +91,9 @@ toc_max_heading_level: 4
 {{end}}
 
 {{range .Enums}}
-<a name="{{.FullName | anchor}}"></a>
 
-### {{.LongName}}
+<Enum id="{{.FullName | anchor}}">{{.LongName}}</Enum>
+
 {{.Description}}
 
 | Name | Number | Description |
@@ -69,9 +104,9 @@ toc_max_heading_level: 4
 {{end}}
 
 {{if .HasExtensions}}
-<a name="{{$file_name | anchor}}-extensions"></a>
 
-### File-level Extensions
+<Extension id="{{$file_name | anchor}}-extensions">File-level Extensions</Extension>
+
 | Extension | Type | Base | Number | Description |
 | --------- | ---- | ---- | ------ | ----------- |
 {{range .Extensions -}}
@@ -86,5 +121,5 @@ toc_max_heading_level: 4
 | .proto Type | Notes | C++ | Java | Python | Go | C# | PHP | Ruby |
 | ----------- | ----- | --- | ---- | ------ | -- | -- | --- | ---- |
 {{range .Scalars -}}
-  | <a name="{{.ProtoType | anchor}}" /> {{.ProtoType}} | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} | {{.GoType}} | {{.CSharp}} | {{.PhpType}} | {{.RubyType}} |
+  | <ProtoType id="{{.ProtoType | anchor}}">{{.ProtoType}}</ProtoType> | {{.Notes}} | {{.CppType}} | {{.JavaType}} | {{.PythonType}} | {{.GoType}} | {{.CSharp}} | {{.PhpType}} | {{.RubyType}} |
 {{end}}

@@ -29,13 +29,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/email"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/invite"
+	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -110,7 +111,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 		zerolog.Ctx(ctx).Error().Err(err).Msg("authorization check failed")
 		return nil, util.UserVisibleError(
 			codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
-			auth.GetUserSubjectFromContext(ctx), entityCtx.Project.ID)
+			jwt.GetUserSubjectFromContext(ctx), entityCtx.Project.ID)
 	}
 
 	return handler(ctx, req)
@@ -182,7 +183,7 @@ func getDefaultProjectID(
 	store db.Store,
 	authzClient authz.Client,
 ) (uuid.UUID, error) {
-	subject := auth.GetUserSubjectFromContext(ctx)
+	subject := jwt.GetUserSubjectFromContext(ctx)
 
 	userInfo, err := store.GetUserBySubject(ctx, subject)
 	if err != nil {
@@ -191,20 +192,20 @@ func getDefaultProjectID(
 		// Therefore, we assume it's safe output that the user is not found.
 		return uuid.UUID{}, util.UserVisibleError(codes.NotFound, "user not found")
 	}
-	projects, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
+	prjs, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user: %v", err)
 	}
 
-	if len(projects) == 0 {
+	if len(prjs) == 0 {
 		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "User has no role grants in projects")
 	}
 
-	if len(projects) != 1 {
+	if len(prjs) != 1 {
 		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Cannot determine default project. Please specify one.")
 	}
 
-	return projects[0], nil
+	return prjs[0], nil
 }
 
 // Permissions API
@@ -347,7 +348,7 @@ func (s *Server) inviteUser(
 ) (*minder.AssignRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	currentUser, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
@@ -385,6 +386,12 @@ func (s *Server) inviteUser(
 		return nil, status.Errorf(codes.Internal, "failed to get target project: %s", err)
 	}
 
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&prj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	// Create the invitation
 	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
 		Code:    invite.GenerateCode(),
@@ -398,7 +405,7 @@ func (s *Server) inviteUser(
 	}
 
 	// Publish the event for sending the invitation email
-	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, sponsorDisplay)
+	msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, sponsorDisplay)
 	if err != nil {
 		return nil, fmt.Errorf("error generating UUID: %w", err)
 	}
@@ -685,7 +692,7 @@ func (s *Server) updateInvite(
 ) (*minder.UpdateRoleResponse, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	currentUser, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
@@ -730,6 +737,13 @@ func (s *Server) updateInvite(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
+
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&prj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	// Resolve the sponsor's identity and display name
 	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
 	if err != nil {
@@ -746,7 +760,7 @@ func (s *Server) updateInvite(
 	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
 	// or the role stayed the same, but the last invite update was more than a day ago
 	if existingInvites[0].Role != authzRole.String() || userInvite.UpdatedAt.Sub(existingInvites[0].UpdatedAt) > 24*time.Hour {
-		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, prj.Name, identity.Human())
+		msg, err := email.NewMessage(userInvite.Email, userInvite.Code, userInvite.Role, meta.Public.DisplayName, identity.Human())
 		if err != nil {
 			return nil, fmt.Errorf("error generating UUID: %w", err)
 		}
@@ -833,12 +847,12 @@ func (s *Server) updateRole(
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
 func isUserSelfUpdating(ctx context.Context, subject, inviteeEmail string) error {
 	if subject != "" {
-		if auth.GetUserSubjectFromContext(ctx) == subject {
+		if jwt.GetUserSubjectFromContext(ctx) == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
 	if inviteeEmail != "" {
-		tokenEmail, err := auth.GetUserEmailFromContext(ctx)
+		tokenEmail, err := jwt.GetUserEmailFromContext(ctx)
 		if err != nil {
 			return util.UserVisibleError(codes.Internal, "error getting user email from token: %v", err)
 		}

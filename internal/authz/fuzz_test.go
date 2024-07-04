@@ -22,7 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 )
 
@@ -52,7 +52,7 @@ func FuzzAllAuthzApis(f *testing.F) {
 			return
 		}
 
-		userctx := auth.WithAuthTokenContext(ctx, userJWT)
+		userctx := jwt.WithAuthTokenContext(ctx, userJWT)
 
 		c.Check(userctx, str3, prj)
 

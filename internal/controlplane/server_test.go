@@ -35,7 +35,7 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/auth"
-	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
 	mockauthz "github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -95,7 +95,7 @@ func newDefaultServer(
 	}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockJwt := mockjwt.NewMockJwtValidator(ctrl)
+	mockJwt := mockjwt.NewMockValidator(ctrl)
 
 	// Needed to keep these tests working as-is.
 	// In future, beef up unit test coverage in the dependencies

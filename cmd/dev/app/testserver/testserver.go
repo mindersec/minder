@@ -30,7 +30,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
-	noopauth "github.com/stacklok/minder/internal/auth/noop"
+	noopauth "github.com/stacklok/minder/internal/auth/jwt/noop"
 	mockauthz "github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"

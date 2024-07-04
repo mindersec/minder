@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package auth
+package jwt
 
 import (
 	"crypto/rand"
@@ -24,7 +24,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"go.uber.org/mock/gomock"
 
-	mockjwt "github.com/stacklok/minder/internal/auth/mock"
+	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
 )
 
 var (

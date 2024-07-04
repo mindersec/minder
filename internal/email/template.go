@@ -20,7 +20,7 @@ const (
 	bodyHTML = `
 <div
   style="
-    background-color: #f2f4f7;
+    background-color: #f5fbff;
     color: #262626;
     font-family: 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial,
       sans-serif;
@@ -48,7 +48,7 @@ const (
           <div
             style="
               padding: 20px 24px 20px 24px;
-              background-color: #f2f4f7;
+              background-color: #f5fbff;
               text-align: center;
             "
           >
@@ -80,7 +80,7 @@ const (
                 color: #475467;
                 font-size: 14px;
                 font-weight: normal;
-                padding: 24px 0px 24px 0px;
+                padding: 6px 0px 0px 0px;
               "
             >
               <p>
@@ -88,7 +88,7 @@ const (
                 the <strong>{{.OrganizationName}}</strong> organization in Minder.
               </p>
             </div>
-            <div style="text-align: center; padding: 16px 24px 16px 24px">
+            <div style="text-align: center; padding: 4px 24px 8px 24px">
               <table align="center">
                 <tr>
                   <td align="center">
@@ -132,7 +132,7 @@ const (
                 color: #475467;
                 font-size: 14px;
                 font-weight: normal;
-                padding: 24px 0px 24px 0px;
+                padding: 18px 0px 6px 0px;
               "
             >
               Once you accept, you’ll be able to view the {{.OrganizationName}}
@@ -143,7 +143,7 @@ const (
                 color: #475467;
                 font-size: 12px;
                 font-weight: normal;
-                padding: 24px 0px 24px 0px;
+                padding: 6px 0px 6px 0px;
               "
             >
               <p>
@@ -152,7 +152,7 @@ const (
                 expecting it, you can ignore this email.
               </p>
             </div>
-            <div style="padding: 12px 0px 12px 0px">
+            <div style="padding: 6px 0px 6px 0px">
               <hr
                 style="
                   width: 100%;
@@ -167,7 +167,7 @@ const (
                 color: #475467;
                 font-size: 12px;
                 font-weight: normal;
-                padding: 16px 0px 16px 0px;
+                padding: 6px 0px 6px 0px;
               "
             >
               <p>
@@ -177,7 +177,7 @@ const (
                 and prove to others that what they’ve built is secure.
               </p>
             </div>
-            <div style="padding: 16px 24px 16px 24px">
+            <div style="padding: 8px 24px 8px 24px">
               <table
                 align="center"
                 width="100%"
@@ -264,7 +264,7 @@ const (
           <div
             style="
               padding: 28px 24px 40px 24px;
-              background-color: #f2f4f7;
+              background-color: #f5fbff;
               text-align: center;
             "
           >

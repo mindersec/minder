@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/flags"
@@ -118,7 +118,7 @@ func (s *Server) CreateUser(ctx context.Context,
 }
 
 func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.Querier) []*db.Project {
-	ghId, ok := auth.GetUserClaimFromContext[string](ctx, "gh_id")
+	ghId, ok := jwt.GetUserClaimFromContext[string](ctx, "gh_id")
 	if !ok || ghId == "" {
 		return nil
 	}
@@ -316,7 +316,7 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 	invitations := make([]*pb.Invitation, 0)
 
 	// Extracts the user email from the token
-	tokenEmail, err := auth.GetUserEmailFromContext(ctx)
+	tokenEmail, err := jwt.GetUserEmailFromContext(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user email: %s", err)
 	}
@@ -421,7 +421,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 	}
 	// Loop through all role assignments for the project and check if this user already has a role
 	for _, existing := range as {
-		if existing.Subject == auth.GetUserSubjectFromContext(ctx) {
+		if existing.Subject == jwt.GetUserSubjectFromContext(ctx) {
 			// User already has the same role in the project
 			if existing.Role == userInvite.Role {
 				return util.UserVisibleError(codes.AlreadyExists, "user already has the same role in the project")
@@ -434,7 +434,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 			// Delete the role assignment
 			if err := s.authzClient.Delete(
 				ctx,
-				auth.GetUserSubjectFromContext(ctx),
+				jwt.GetUserSubjectFromContext(ctx),
 				existingRole,
 				uuid.MustParse(*existing.Project),
 			); err != nil {
@@ -448,7 +448,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 		return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
 	}
 	// Add the user to the project
-	if err := s.authzClient.Write(ctx, auth.GetUserSubjectFromContext(ctx), authzRole, userInvite.Project); err != nil {
+	if err := s.authzClient.Write(ctx, jwt.GetUserSubjectFromContext(ctx), authzRole, userInvite.Project); err != nil {
 		return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 	return nil
@@ -457,7 +457,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 // isUserSelfResolving is used to prevent if the user is trying to resolve an invitation they created
 func isUserSelfResolving(ctx context.Context, store db.Store, i db.GetInvitationByCodeRow) error {
 	// Get current user data
-	currentUser, err := store.GetUserBySubject(ctx, auth.GetUserSubjectFromContext(ctx))
+	currentUser, err := store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}

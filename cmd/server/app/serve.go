@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/auth/keycloak"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
@@ -100,7 +101,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create issuer URL: %w\n", err)
 		}
-		jwt, err := auth.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
+		jwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}

@@ -117,12 +117,12 @@ func getEmailBodyHTML(code, sponsor, project, role, inviteeEmail string) string 
 		AdminName:        sponsor,
 		OrganizationName: project,
 		// TODO: Determine the correct environment for the invite URL and the rest of the URLs
-		InvitationURL:  fmt.Sprintf("https://cloud.minder.com/join/%s", code),
+		InvitationURL:  fmt.Sprintf("https://cloud.stacklok.com/join/%s", code),
 		RecipientEmail: inviteeEmail,
-		MinderURL:      "https://cloud.minder.com",
+		MinderURL:      "https://cloud.stacklok.com",
 		TermsURL:       "https://stacklok.com/stacklok-terms-of-service",
 		PrivacyURL:     "https://stacklok.com/privacy-policy/",
-		SignInURL:      "https://cloud.minder.com",
+		SignInURL:      "https://cloud.stacklok.com",
 		RoleName:       role,
 	}
 

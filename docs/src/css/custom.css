@@ -48,6 +48,10 @@ a {
   font-weight: 700;
 }
 
+h4 {
+  font-size: 18px;
+}
+
 :root {
   --ifm-font-family-base: 'Roboto';  
   --ifm-font-size-base: 15px;

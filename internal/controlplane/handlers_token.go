@@ -30,7 +30,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -77,7 +77,7 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
-	ctx = auth.WithAuthTokenContext(ctx, parsedToken)
+	ctx = jwt.WithAuthTokenContext(ctx, parsedToken)
 
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)
 	loginSHA := sha256.Sum256([]byte(parsedToken.Subject()))

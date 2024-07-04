@@ -37,6 +37,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/jwt"
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
@@ -93,7 +94,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	span.SetAttributes(attribute.Key("provider").String(providerName))
 	defer span.End()
 
-	user, _ := auth.GetUserClaimFromContext[string](ctx, "gh_id")
+	user, _ := jwt.GetUserClaimFromContext[string](ctx, "gh_id")
 	// If the user's token doesn't have gh_id set yet, we'll pass it through for now.
 	s.mt.AddTokenOpCount(ctx, "issued", user != "")
 

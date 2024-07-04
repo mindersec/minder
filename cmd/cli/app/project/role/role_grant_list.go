@@ -81,7 +81,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 	case app.Table:
 		t := initializeTableForGrantListRoleAssignments()
 		for _, r := range resp.RoleAssignments {
-			t.AddRow(r.Subject, r.Role, *r.Project)
+			t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
 		}
 		t.Render()
 		if len(resp.Invitations) > 0 {
@@ -98,7 +98,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 }
 
 func initializeTableForGrantListRoleAssignments() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Subject", "Role", "Project"})
+	return table.New(table.Simple, layouts.Default, []string{"User", "Role", "Project"})
 }
 
 func initializeTableForGrantListInvitations() table.Table {
