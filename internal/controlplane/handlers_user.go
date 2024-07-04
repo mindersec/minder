@@ -341,12 +341,19 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 		}
+
+		// Parse the project metadata, so we can get the display name set by project owner
+		meta, err := projects.ParseMetadata(&targetProject)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+		}
+
 		invitations = append(invitations, &pb.Invitation{
 			Code:           i.Code,
 			Role:           i.Role,
 			Email:          i.Email,
 			Project:        i.Project.String(),
-			ProjectDisplay: targetProject.Name,
+			ProjectDisplay: meta.Public.DisplayName,
 			CreatedAt:      timestamppb.New(i.CreatedAt),
 			ExpiresAt:      invite.GetExpireIn7Days(i.UpdatedAt),
 			Expired:        invite.IsExpired(i.UpdatedAt),
