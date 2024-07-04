@@ -2879,6 +2879,9 @@ definitions:
         description: |-
           project_display is the display name of the project to which the user
           is invited.
+      inviteUrl:
+        type: string
+        description: inviteURL is the URL that can be used to accept the invitation.
   v1ListArtifactsResponse:
     type: object
     properties:
