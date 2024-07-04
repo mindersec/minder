@@ -25,3 +25,7 @@ packages:
     emit_interface: true
     emit_exact_table_names: false
     emit_empty_slices: true
+    overrides:
+      - db_type: profile_selector
+        go_type:
+          type: "ProfileSelector"
