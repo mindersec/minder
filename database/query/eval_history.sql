@@ -137,6 +137,7 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.most_recent_evaluation)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.most_recent_evaluation)
+   -- inclusion filters
    AND (sqlc.slice(entityTypes)::entities[] IS NULL OR entity_type::entities = ANY(sqlc.slice(entityTypes)::entities[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY(sqlc.slice(entityNames)::text[]))
@@ -145,6 +146,16 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.slice(remediations)::remediation_status_types[] IS NULL OR re.status = ANY(sqlc.slice(remediations)::remediation_status_types[]))
    AND (sqlc.slice(alerts)::alert_status_types[] IS NULL OR ae.status = ANY(sqlc.slice(alerts)::alert_status_types[]))
    AND (sqlc.slice(statuses)::eval_status_types[] IS NULL OR s.status = ANY(sqlc.slice(statuses)::eval_status_types[]))
+   -- exclusion filters
+   AND (sqlc.slice(notEntityTypes)::entities[] IS NULL OR entity_type::entities != ANY(sqlc.slice(notEntityTypes)::entities[]))
+   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name != ANY(sqlc.slice(notEntityNames)::text[]))
+   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY(sqlc.slice(notEntityNames)::text[]))
+   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY(sqlc.slice(notEntityNames)::text[]))
+   AND (sqlc.slice(notProfileNames)::text[] IS NULL OR p.name != ANY(sqlc.slice(notProfileNames)::text[]))
+   AND (sqlc.slice(notRemediations)::remediation_status_types[] IS NULL OR re.status != ANY(sqlc.slice(notRemediations)::remediation_status_types[]))
+   AND (sqlc.slice(notAlerts)::alert_status_types[] IS NULL OR ae.status != ANY(sqlc.slice(notAlerts)::alert_status_types[]))
+   AND (sqlc.slice(notStatuses)::eval_status_types[] IS NULL OR s.status != ANY(sqlc.slice(notStatuses)::eval_status_types[]))
+   -- time range filter
    AND (sqlc.narg(fromts)::timestamp without time zone IS NULL
         OR sqlc.narg(tots)::timestamp without time zone IS NULL
         OR s.most_recent_evaluation BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))

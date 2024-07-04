@@ -322,11 +322,25 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded entity types",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Notentitytypes: []db.Entities{
+							db.EntitiesRepository,
+						},
+					},
+					nil,
+				),
 			),
+			filter: &listEvaluationFilter{
+				excludedEntityTypes: []string{"repository"},
+			},
+		},
+		{
+			name: "excluded entity types bad string",
 			filter: &listEvaluationFilter{
 				excludedEntityTypes: []string{"foo"},
 			},
+			err: true,
 		},
 
 		// filter entity names
@@ -348,7 +362,13 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded entity names",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size:           0,
+						Notentitynames: []string{"foo"},
+					},
+					nil,
+				),
 			),
 			filter: &listEvaluationFilter{
 				excludedEntityNames: []string{"foo"},
@@ -374,7 +394,13 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded profile names",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size:            0,
+						Notprofilenames: []string{"foo"},
+					},
+					nil,
+				),
 			),
 			filter: &listEvaluationFilter{
 				excludedProfileNames: []string{"foo"},
@@ -421,11 +447,26 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded remediations",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size: 0,
+						Notremediations: []db.RemediationStatusTypes{
+							db.RemediationStatusTypesSuccess,
+						},
+					},
+					nil,
+				),
 			),
 			filter: &listEvaluationFilter{
-				excludedRemediations: []string{"on"},
+				excludedRemediations: []string{"success"},
 			},
+		},
+		{
+			name: "excluded remediations bad string",
+			filter: &listEvaluationFilter{
+				excludedRemediations: []string{"foo"},
+			},
+			err: true,
 		},
 
 		// filter alerts
@@ -466,11 +507,26 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded alerts",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size: 0,
+						Notalerts: []db.AlertStatusTypes{
+							db.AlertStatusTypesOn,
+						},
+					},
+					nil,
+				),
 			),
 			filter: &listEvaluationFilter{
 				excludedAlerts: []string{"on"},
 			},
+		},
+		{
+			name: "excluded alerts bad string",
+			filter: &listEvaluationFilter{
+				excludedAlerts: []string{"foo"},
+			},
+			err: true,
 		},
 
 		// filter statuses
@@ -511,11 +567,26 @@ func TestListEvaluationHistory(t *testing.T) {
 		{
 			name: "excluded statuses",
 			dbSetup: dbf.NewDBMock(
-				withListEvaluationHistory(nil, nil), // currently not implemented
+				withListEvaluationHistory(
+					&db.ListEvaluationHistoryParams{
+						Size: 0,
+						Notstatuses: []db.EvalStatusTypes{
+							db.EvalStatusTypesSuccess,
+						},
+					},
+					nil,
+				),
 			),
 			filter: &listEvaluationFilter{
 				excludedStatuses: []string{"success"},
 			},
+		},
+		{
+			name: "excluded statuses bad string",
+			filter: &listEvaluationFilter{
+				excludedStatuses: []string{"foo"},
+			},
+			err: true,
 		},
 
 		// filter on time range
