@@ -36,11 +36,6 @@ const (
 	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 )
 
-// Service is the email service interface
-type Service interface {
-	SendEmail(ctx context.Context, to, subject, bodyHTML, bodyText string) error
-}
-
 // MailEventPayload is the event payload for sending an invitation email
 type MailEventPayload struct {
 	Address  string `json:"email"`
