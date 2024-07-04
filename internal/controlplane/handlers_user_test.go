@@ -33,13 +33,16 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	mockdb "github.com/stacklok/minder/database/mock"
+	"github.com/stacklok/minder/internal/auth"
 	"github.com/stacklok/minder/internal/auth/jwt"
 	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
+	mockidentity "github.com/stacklok/minder/internal/auth/mock"
 	"github.com/stacklok/minder/internal/authz/mock"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/providers"
@@ -476,6 +479,265 @@ func TestDeleteUser_gRPC(t *testing.T) {
 
 			resp, err := server.DeleteUser(ctx, tc.req)
 			tc.checkResponse(t, resp, err)
+		})
+	}
+}
+
+func TestListInvitations(t *testing.T) {
+	t.Parallel()
+
+	userEmail := "user@example.com"
+	project := uuid.New()
+	code := "code"
+	identitySubject := "subject1"
+	role := "viewer"
+	projectDisplayName := "Project"
+	projectMetadata, err := json.Marshal(
+		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
+	)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name           string
+		setup          func(store *mockdb.MockStore, idClient *mockidentity.MockResolver)
+		expectedError  string
+		expectedResult *pb.ListInvitationsResponse
+	}{
+		{
+			name: "Success",
+			setup: func(store *mockdb.MockStore, idClient *mockidentity.MockResolver) {
+				store.EXPECT().GetInvitationsByEmail(gomock.Any(), userEmail).Return([]db.GetInvitationsByEmailRow{
+					{
+						Project:         project,
+						Code:            code,
+						IdentitySubject: identitySubject,
+						Email:           userEmail,
+						Role:            role,
+					},
+				}, nil)
+				idClient.EXPECT().Resolve(gomock.Any(), identitySubject).Return(&auth.Identity{
+					UserID:    identitySubject,
+					HumanName: "User",
+				}, nil)
+				store.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
+				}, nil)
+			},
+			expectedResult: &pb.ListInvitationsResponse{
+				Invitations: []*pb.Invitation{
+					{
+						Project:        project.String(),
+						ProjectDisplay: projectDisplayName,
+						Code:           code,
+						Role:           role,
+						Email:          userEmail,
+						Sponsor:        identitySubject,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("email", userEmail))
+
+			ctx := context.Background()
+			ctx = jwt.WithAuthTokenContext(ctx, user)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockIdClient := mockidentity.NewMockResolver(ctrl)
+			if tc.setup != nil {
+				tc.setup(mockStore, mockIdClient)
+			}
+
+			featureClient := &flags.FakeClient{}
+			featureClient.Data = map[string]any{
+				"user_management": true,
+			}
+
+			server := &Server{
+				store:        mockStore,
+				idClient:     mockIdClient,
+				featureFlags: featureClient,
+			}
+
+			response, err := server.ListInvitations(ctx, &pb.ListInvitationsRequest{})
+
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, len(tc.expectedResult.Invitations), len(response.Invitations))
+			require.Equal(t, tc.expectedResult.Invitations[0].Email, response.Invitations[0].Email)
+			require.Equal(t, tc.expectedResult.Invitations[0].Project, response.Invitations[0].Project)
+			require.Equal(t, tc.expectedResult.Invitations[0].ProjectDisplay, response.Invitations[0].ProjectDisplay)
+			require.Equal(t, tc.expectedResult.Invitations[0].Code, response.Invitations[0].Code)
+			require.Equal(t, tc.expectedResult.Invitations[0].Role, response.Invitations[0].Role)
+			require.Equal(t, tc.expectedResult.Invitations[0].Sponsor, response.Invitations[0].Sponsor)
+		})
+	}
+}
+
+func TestResolveInvitation(t *testing.T) {
+	t.Parallel()
+
+	userEmail := "user@example.com"
+	userSubject := "subject1"
+	projectDisplayName := "Project"
+	projectMetadata, err := json.Marshal(
+		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
+	)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name          string
+		accept        bool
+		setup         func(store *mockdb.MockStore)
+		expectedError string
+	}{
+		{
+			name: "code not found",
+			setup: func(store *mockdb.MockStore) {
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{}, sql.ErrNoRows)
+			},
+			expectedError: "invitation not found or already used",
+		},
+		{
+			name: "user self resolving",
+			setup: func(store *mockdb.MockStore) {
+				userId := int32(1)
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
+					Project:         projectID,
+					IdentitySubject: userSubject,
+					Sponsor:         userId,
+				}, nil)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: userId,
+				}, nil)
+			},
+			expectedError: "user cannot resolve their own invitation",
+		},
+		{
+			name: "expired invitation",
+			setup: func(store *mockdb.MockStore) {
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
+					Project:         projectID,
+					IdentitySubject: userSubject,
+					Sponsor:         1,
+					UpdatedAt:       time.Now().Add(-time.Hour * 24 * 8), // updated 8 days ago
+				}, nil)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
+				}, nil)
+			},
+			expectedError: "invitation expired",
+		},
+		{
+			name:   "Success accept",
+			accept: true,
+			setup: func(store *mockdb.MockStore) {
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
+					Project:         projectID,
+					IdentitySubject: userSubject,
+					Sponsor:         1,
+					Role:            "viewer",
+					UpdatedAt:       time.Now(),
+				}, nil)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
+				}, nil)
+				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
+					Project: projectID,
+					Email:   userEmail,
+				}, nil)
+				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
+				}, nil)
+			},
+		},
+		{
+			name:   "Success decline",
+			accept: false,
+			setup: func(store *mockdb.MockStore) {
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
+					Project:         projectID,
+					IdentitySubject: userSubject,
+					Sponsor:         1,
+					Role:            "viewer",
+					UpdatedAt:       time.Now(),
+				}, nil)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
+				}, nil)
+				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
+					Project: projectID,
+					Email:   userEmail,
+				}, nil)
+				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
+				}, nil)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("email", userEmail))
+			assert.NoError(t, user.Set("sub", userSubject))
+
+			ctx := context.Background()
+			ctx = jwt.WithAuthTokenContext(ctx, user)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			if tc.setup != nil {
+				tc.setup(mockStore)
+			}
+
+			featureClient := &flags.FakeClient{}
+			featureClient.Data = map[string]any{
+				"user_management": true,
+			}
+
+			authzClient := &mock.SimpleClient{}
+
+			server := &Server{
+				store:        mockStore,
+				featureFlags: featureClient,
+				authzClient:  authzClient,
+			}
+
+			response, err := server.ResolveInvitation(ctx, &pb.ResolveInvitationRequest{
+				Code:   "code",
+				Accept: tc.accept,
+			})
+
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.accept, response.IsAccepted)
 		})
 	}
 }
