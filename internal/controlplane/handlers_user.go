@@ -411,10 +411,17 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
+
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
 	return &pb.ResolveInvitationResponse{
 		Role:           deletedInvite.Role,
 		Project:        deletedInvite.Project.String(),
-		ProjectDisplay: targetProject.Name,
+		ProjectDisplay: meta.Public.DisplayName,
 		Email:          deletedInvite.Email,
 		IsAccepted:     req.Accept,
 	}, nil
