@@ -31,6 +31,9 @@ var (
 	// ErrInvalidTimeRange is returned the time range from-to is
 	// either missing one end or from is greater than to.
 	ErrInvalidTimeRange = errors.New("invalid time range")
+	// ErrInclusionExclusion is returned when both inclusion and
+	// exclusion filters are specified on the same field.
+	ErrInclusionExclusion = errors.New("inclusion and exclusion filter specified")
 	// ErrInvalidIdentifier is returned when an identifier
 	// (e.g. entity name) is empty or malformed.
 	ErrInvalidIdentifier = errors.New("invalid identifier")
@@ -267,6 +270,13 @@ func (filter *listEvaluationFilter) AddEntityType(entityType string) error {
 	} else {
 		filter.includedEntityTypes = append(filter.includedEntityTypes, entityType)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedEntityTypes) > 0 &&
+		len(filter.excludedEntityTypes) > 0 {
+		return fmt.Errorf("%w: entity type", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedEntityTypes() []string {
@@ -283,6 +293,13 @@ func (filter *listEvaluationFilter) AddEntityName(entityName string) error {
 	} else {
 		filter.includedEntityNames = append(filter.includedEntityNames, entityName)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedEntityNames) > 0 &&
+		len(filter.excludedEntityNames) > 0 {
+		return fmt.Errorf("%w: entity name", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedEntityNames() []string {
@@ -299,6 +316,13 @@ func (filter *listEvaluationFilter) AddProfileName(profileName string) error {
 	} else {
 		filter.includedProfileNames = append(filter.includedProfileNames, profileName)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedProfileNames) > 0 &&
+		len(filter.excludedProfileNames) > 0 {
+		return fmt.Errorf("%w: profile name", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedProfileNames() []string {
@@ -315,6 +339,13 @@ func (filter *listEvaluationFilter) AddStatus(status string) error {
 	} else {
 		filter.includedStatuses = append(filter.includedStatuses, status)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedStatuses) > 0 &&
+		len(filter.excludedStatuses) > 0 {
+		return fmt.Errorf("%w: status", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedStatuses() []string {
@@ -331,6 +362,13 @@ func (filter *listEvaluationFilter) AddRemediation(remediation string) error {
 	} else {
 		filter.includedRemediations = append(filter.includedRemediations, remediation)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedRemediations) > 0 &&
+		len(filter.excludedRemediations) > 0 {
+		return fmt.Errorf("%w: remediation", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedRemediations() []string {
@@ -347,6 +385,13 @@ func (filter *listEvaluationFilter) AddAlert(alert string) error {
 	} else {
 		filter.includedAlerts = append(filter.includedAlerts, alert)
 	}
+
+	// Prevent filtering for both inclusion and exclusion
+	if len(filter.includedAlerts) > 0 &&
+		len(filter.excludedAlerts) > 0 {
+		return fmt.Errorf("%w: alert", ErrInclusionExclusion)
+	}
+
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedAlerts() []string {
@@ -509,6 +554,8 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 		}
 	}
 
+	// Following we check that time range based filtering is
+	// sound.
 	if filter.to != nil && filter.from == nil {
 		return nil, fmt.Errorf("%w: from is missing", ErrInvalidTimeRange)
 	}

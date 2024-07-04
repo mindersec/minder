@@ -279,13 +279,23 @@ func toSQLFilter(
 		return nil
 	}
 
+	// filters on entity names
 	if len(filter.IncludedEntityNames()) != 0 {
 		params.Entitynames = filter.IncludedEntityNames()
 	}
+	if len(filter.ExcludedEntityNames()) != 0 {
+		params.Notentitynames = filter.ExcludedEntityNames()
+	}
+
+	// filters on profile names
 	if len(filter.IncludedProfileNames()) != 0 {
 		params.Profilenames = filter.IncludedProfileNames()
 	}
+	if len(filter.ExcludedProfileNames()) != 0 {
+		params.Notprofilenames = filter.ExcludedProfileNames()
+	}
 
+	// filters on entity types
 	if len(filter.IncludedEntityTypes()) != 0 {
 		entityTypes, err := convertEntities(
 			filter.IncludedEntityTypes(),
@@ -295,7 +305,17 @@ func toSQLFilter(
 		}
 		params.Entitytypes = entityTypes
 	}
+	if len(filter.ExcludedEntityTypes()) != 0 {
+		entityTypes, err := convertEntities(
+			filter.ExcludedEntityTypes(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Notentitytypes = entityTypes
+	}
 
+	// filters on remediation status
 	if len(filter.IncludedRemediations()) != 0 {
 		remediations, err := convertRemediationStatusTypes(
 			filter.IncludedRemediations(),
@@ -305,7 +325,17 @@ func toSQLFilter(
 		}
 		params.Remediations = remediations
 	}
+	if len(filter.ExcludedRemediations()) != 0 {
+		remediations, err := convertRemediationStatusTypes(
+			filter.ExcludedRemediations(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Notremediations = remediations
+	}
 
+	// filters on alert status
 	if len(filter.IncludedAlerts()) != 0 {
 		alerts, err := convertAlertStatusTypes(
 			filter.IncludedAlerts(),
@@ -315,7 +345,17 @@ func toSQLFilter(
 		}
 		params.Alerts = alerts
 	}
+	if len(filter.ExcludedAlerts()) != 0 {
+		alerts, err := convertAlertStatusTypes(
+			filter.ExcludedAlerts(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Notalerts = alerts
+	}
 
+	// filters on evaluation status
 	if len(filter.IncludedStatuses()) != 0 {
 		statuses, err := convertEvalStatusTypes(
 			filter.IncludedStatuses(),
@@ -325,7 +365,17 @@ func toSQLFilter(
 		}
 		params.Statuses = statuses
 	}
+	if len(filter.ExcludedStatuses()) != 0 {
+		statuses, err := convertEvalStatusTypes(
+			filter.ExcludedStatuses(),
+		)
+		if err != nil {
+			return errors.New("internal error")
+		}
+		params.Notstatuses = statuses
+	}
 
+	// filters on time range
 	if filter.GetFrom() != nil {
 		params.Fromts = sql.NullTime{
 			Time:  *filter.GetFrom(),

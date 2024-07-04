@@ -230,6 +230,74 @@ func TestListEvaluationFilter(t *testing.T) {
 			},
 			err: true,
 		},
+
+		// inclusion-exclusion errors
+		{
+			name: "inclusion exclusion entity type",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithEntityType("repository"),
+					WithEntityType("!artifact"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "inclusion exclusion entity name",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithEntityName("foo"),
+					WithEntityName("!bar"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "inclusion exclusion profile name",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithProfileName("foo"),
+					WithProfileName("!bar"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "inclusion exclusion evaluation status",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithStatus("success"),
+					WithStatus("!failure"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "inclusion exclusion remediation status",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithRemediation("success"),
+					WithRemediation("!failure"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "inclusion exclusion alert status",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithAlert("success"),
+					WithAlert("!failure"),
+				)
+			},
+			err: true,
+		},
 	}
 
 	for _, tt := range tests {
