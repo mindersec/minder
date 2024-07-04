@@ -26,6 +26,8 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // Identity represents a particular user's identity in a particular trust domain
 // (represented by an IdentityProvider).
 type Identity struct {
