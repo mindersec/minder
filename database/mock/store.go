@@ -1524,21 +1524,6 @@ func (mr *MockStoreMockRecorder) ListArtifactsByRepoID(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListArtifactsByRepoID", reflect.TypeOf((*MockStore)(nil).ListArtifactsByRepoID), arg0, arg1)
 }
 
-// ListEvaluationHistory mocks base method.
-func (m *MockStore) ListEvaluationHistory(arg0 context.Context, arg1 db.ListEvaluationHistoryParams) ([]db.ListEvaluationHistoryRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEvaluationHistory", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListEvaluationHistoryRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListEvaluationHistory indicates an expected call of ListEvaluationHistory.
-func (mr *MockStoreMockRecorder) ListEvaluationHistory(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistory", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistory), arg0, arg1)
-}
-
 // ListFlushCache mocks base method.
 func (m *MockStore) ListFlushCache(arg0 context.Context) ([]db.FlushCache, error) {
 	m.ctrl.T.Helper()

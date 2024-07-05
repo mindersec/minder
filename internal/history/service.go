@@ -213,7 +213,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	filter ListEvaluationFilter,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{
-		Size: int32(size),
+		Size: uint(size),
 	}
 
 	if err := toSQLCursor(cursor, &params); err != nil {
@@ -223,7 +223,8 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 		return nil, err
 	}
 
-	rows, err := qtx.ListEvaluationHistory(ctx, params)
+	queries := qtx.(*db.Queries)
+	rows, err := queries.ListEvaluationHistory(ctx, params)
 	if err != nil {
 		return nil, errors.New("internal error")
 	}
@@ -252,15 +253,9 @@ func toSQLCursor(
 
 	switch cursor.Direction {
 	case Next:
-		params.Next = sql.NullTime{
-			Time:  cursor.Time,
-			Valid: true,
-		}
+		params.Next = &cursor.Time
 	case Prev:
-		params.Prev = sql.NullTime{
-			Time:  cursor.Time,
-			Valid: true,
-		}
+		params.Prev = &cursor.Time
 	default:
 		return fmt.Errorf(
 			"invalid cursor direction: %s",
@@ -439,16 +434,10 @@ func paramsFromTimeRangeFilter(
 	params *db.ListEvaluationHistoryParams,
 ) error {
 	if filter.GetFrom() != nil {
-		params.Fromts = sql.NullTime{
-			Time:  *filter.GetFrom(),
-			Valid: true,
-		}
+		params.Fromts = filter.GetFrom()
 	}
 	if filter.GetTo() != nil {
-		params.Tots = sql.NullTime{
-			Time:  *filter.GetTo(),
-			Valid: true,
-		}
+		params.Tots = filter.GetTo()
 	}
 	return nil
 }
