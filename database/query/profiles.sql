@@ -65,9 +65,9 @@ SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id 
 -- name: ListProfilesByProjectID :many
 WITH helper AS(
      SELECT pr.id as profid,
-            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) FILTER (WHERE ps.id IS NOT NULL) AS selectors
+            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
        FROM profiles pr
-       LEFT JOIN profile_selectors ps
+       JOIN profile_selectors ps
          ON pr.id = ps.profile_id
       WHERE pr.project_id = $1
       GROUP BY pr.id
@@ -78,15 +78,15 @@ SELECT
     helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-JOIN helper ON profiles.id = helper.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1;
 
 -- name: ListProfilesByProjectIDAndLabel :many
 WITH helper AS(
      SELECT pr.id as profid,
-     ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) FILTER (WHERE ps.id IS NOT NULL) AS selectors
+     ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
        FROM profiles pr
-       LEFT JOIN profile_selectors ps
+       JOIN profile_selectors ps
          ON pr.id = ps.profile_id
       WHERE pr.project_id = $1
       GROUP BY pr.id
@@ -96,7 +96,7 @@ SELECT sqlc.embed(profiles),
        helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-JOIN helper ON profiles.id = helper.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1
 AND (
     -- the most common case first, if the include_labels is empty, we list profiles with no labels
