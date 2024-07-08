@@ -2563,73 +2563,73 @@ message ListEvaluationHistoryResponse {
 }
 
 message EvaluationHistory {
+    message Entity {
+        // id is the ID of the entity.
+        string id = 1;
+
+        // type is the entity type.
+        minder.v1.Entity type = 2;
+
+        // name is the entity name.
+        string name = 3;
+    }
+
+    message Rule {
+        // name is the name of the rule instance.
+        string name = 1;
+
+        // type is the name of the rule type.
+        string type = 2;
+
+        // profile is the name of the profile which contains the rule.
+        string profile = 3;
+    }
+
+    message Status {
+        // status is one of (success, error, failure, skipped)
+        // not using enums to mirror the behaviour of the existing API contracts.
+        string status = 1;
+
+        // details contains optional details about the evaluation.
+        // the structure and contents are rule type specific, and are subject to change.
+        string details = 2;
+
+        // created_at is the timestamp of creation of this evaluation
+        google.protobuf.Timestamp evaluated_at = 3;
+    }
+
+    message Remediation {
+        // status is one of (success, error, failure, skipped, not available)
+        // not using enums to mirror the behaviour of the existing API contracts.
+        string status = 1;
+
+        // details contains optional details about the remediation.
+        // the structure and contents are remediation specific, and are subject to change.
+        string details = 2;
+    }
+
+    message Alert {
+        // status is one of (on, off, error, skipped, not available)
+        // not using enums to mirror the behaviour of the existing API contracts.
+        string status = 1;
+
+        // details contains optional details about the alert.
+        // the structure and contents are alert specific, and are subject to change.
+        string details = 2;
+    }
+
     // entity contains details of the entity which was evaluated.
-    EvaluationHistoryEntity entity = 1;
+    EvaluationHistory.Entity entity = 1;
 
     // rule contains details of the rule which the entity was evaluated against.
-    EvaluationHistoryRule rule = 2;
+    EvaluationHistory.Rule rule = 2;
 
     // status contains the evaluation status.
-    EvaluationHistoryStatus status = 3;
+    EvaluationHistory.Status status = 3;
 
     // alert contains details of the alerts for this evaluation.
-    EvaluationHistoryAlert alert = 4;
+    EvaluationHistory.Alert alert = 4;
 
     // remediation contains details of the remediation for this evaluation.
-    EvaluationHistoryRemediation remediation = 5;
-}
-
-message EvaluationHistoryEntity {
-    // id is the ID of the entity.
-    string id = 1;
-
-    // type is the entity type.
-    Entity type = 2;
-
-    // name is the entity name.
-    string name = 3;
-}
-
-message EvaluationHistoryRule {
-    // name is the name of the rule instance.
-    string name = 1;
-
-    // type is the name of the rule type.
-    string type = 2;
-
-    // profile is the name of the profile which contains the rule.
-    string profile = 3;
-}
-
-message EvaluationHistoryStatus {
-    // status is one of (success, error, failure, skipped)
-    // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
-
-    // details contains optional details about the evaluation.
-    // the structure and contents are rule type specific, and are subject to change.
-    string details = 2;
-
-    // created_at is the timestamp of creation of this evaluation
-    google.protobuf.Timestamp evaluated_at = 3;
-}
-
-message EvaluationHistoryRemediation {
-    // status is one of (success, error, failure, skipped, not available)
-    // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
-
-    // details contains optional details about the remediation.
-    // the structure and contents are remediation specific, and are subject to change.
-    string details = 2;
-}
-
-message EvaluationHistoryAlert {
-    // status is one of (on, off, error, skipped, not available)
-    // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
-
-    // details contains optional details about the alert.
-    // the structure and contents are alert specific, and are subject to change.
-    string details = 2;
+    EvaluationHistory.Remediation remediation = 5;
 }

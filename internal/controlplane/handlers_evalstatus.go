@@ -144,33 +144,33 @@ func fromEvaluationHistoryRow(
 			return nil, errors.New("internal error")
 		}
 
-		var alert *minderv1.EvaluationHistoryAlert
+		var alert *minderv1.EvaluationHistory_Alert
 		if row.AlertStatus.Valid {
-			alert = &minderv1.EvaluationHistoryAlert{
+			alert = &minderv1.EvaluationHistory_Alert{
 				Status:  string(row.AlertStatus.AlertStatusTypes),
 				Details: row.AlertDetails.String,
 			}
 		}
-		var remediation *minderv1.EvaluationHistoryRemediation
+		var remediation *minderv1.EvaluationHistory_Remediation
 		if row.RemediationStatus.Valid {
-			remediation = &minderv1.EvaluationHistoryRemediation{
+			remediation = &minderv1.EvaluationHistory_Remediation{
 				Status:  string(row.RemediationStatus.RemediationStatusTypes),
 				Details: row.RemediationDetails.String,
 			}
 		}
 
 		res = append(res, &minderv1.EvaluationHistory{
-			Entity: &minderv1.EvaluationHistoryEntity{
+			Entity: &minderv1.EvaluationHistory_Entity{
 				Id:   row.EvaluationID.String(),
 				Type: entityType,
 				Name: entityName,
 			},
-			Rule: &minderv1.EvaluationHistoryRule{
+			Rule: &minderv1.EvaluationHistory_Rule{
 				Name:    row.RuleName,
 				Type:    row.RuleType,
 				Profile: row.ProfileName,
 			},
-			Status: &minderv1.EvaluationHistoryStatus{
+			Status: &minderv1.EvaluationHistory_Status{
 				Status:      string(row.EvaluationStatus),
 				Details:     row.EvaluationDetails,
 				EvaluatedAt: timestamppb.New(row.EvaluatedAt),

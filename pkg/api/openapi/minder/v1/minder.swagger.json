@@ -2784,17 +2784,6 @@
         }
       }
     },
-    "DefinitionAlert": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string"
-        },
-        "securityAdvisory": {
-          "$ref": "#/definitions/AlertAlertTypeSA"
-        }
-      }
-    },
     "DefinitionEval": {
       "type": "object",
       "properties": {
@@ -2940,6 +2929,19 @@
       "type": "object",
       "title": "no configuration for now"
     },
+    "EvaluationHistoryRemediation": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "status is one of (success, error, failure, skipped, not available)\nnot using enums to mirror the behaviour of the existing API contracts."
+        },
+        "details": {
+          "type": "string",
+          "description": "details contains optional details about the remediation.\nthe structure and contents are remediation specific, and are subject to change."
+        }
+      }
+    },
     "JQComparisonOperator": {
       "type": "object",
       "properties": {
@@ -2993,28 +2995,6 @@
           "$ref": "#/definitions/v1Context"
         }
       }
-    },
-    "ProfileRule": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "type is the type of the rule to be instantiated."
-        },
-        "params": {
-          "type": "object",
-          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
-        },
-        "def": {
-          "type": "object",
-          "description": "def is the definition of the rule.\nThis depends on the rule type."
-        },
-        "name": {
-          "type": "string",
-          "title": "name is the descriptive name of the rule, not to be confused with type"
-        }
-      },
-      "description": "Rule defines the individual call of a certain rule type."
     },
     "ProfileSelector": {
       "type": "object",
@@ -3155,10 +3135,33 @@
           "$ref": "#/definitions/DefinitionRemediate"
         },
         "alert": {
-          "$ref": "#/definitions/DefinitionAlert"
+          "$ref": "#/definitions/RuleTypeDefinitionAlert"
         }
       },
       "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+    },
+    "RuleTypeDefinitionAlert": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "securityAdvisory": {
+          "$ref": "#/definitions/AlertAlertTypeSA"
+        }
+      }
+    },
+    "minderv1Entity": {
+      "type": "string",
+      "enum": [
+        "ENTITY_UNSPECIFIED",
+        "ENTITY_REPOSITORIES",
+        "ENTITY_BUILD_ENVIRONMENTS",
+        "ENTITY_ARTIFACTS",
+        "ENTITY_PULL_REQUESTS"
+      ],
+      "default": "ENTITY_UNSPECIFIED",
+      "description": "Entity defines the entity that is supported by the provider."
     },
     "protobufNullValue": {
       "type": "string",
@@ -3566,23 +3569,11 @@
       },
       "description": "DiffType defines the diff data ingester."
     },
-    "v1Entity": {
-      "type": "string",
-      "enum": [
-        "ENTITY_UNSPECIFIED",
-        "ENTITY_REPOSITORIES",
-        "ENTITY_BUILD_ENVIRONMENTS",
-        "ENTITY_ARTIFACTS",
-        "ENTITY_PULL_REQUESTS"
-      ],
-      "default": "ENTITY_UNSPECIFIED",
-      "description": "Entity defines the entity that is supported by the provider."
-    },
     "v1EntityTypedId": {
       "type": "object",
       "properties": {
         "type": {
-          "$ref": "#/definitions/v1Entity",
+          "$ref": "#/definitions/minderv1Entity",
           "title": "entity is the entity to get status for. Incompatible with `all`"
         },
         "id": {
@@ -3635,7 +3626,7 @@
           "description": "alert contains details of the alerts for this evaluation."
         },
         "remediation": {
-          "$ref": "#/definitions/v1EvaluationHistoryRemediation",
+          "$ref": "#/definitions/EvaluationHistoryRemediation",
           "description": "remediation contains details of the remediation for this evaluation."
         }
       }
@@ -3661,25 +3652,12 @@
           "description": "id is the ID of the entity."
         },
         "type": {
-          "$ref": "#/definitions/v1Entity",
+          "$ref": "#/definitions/minderv1Entity",
           "description": "type is the entity type."
         },
         "name": {
           "type": "string",
           "description": "name is the entity name."
-        }
-      }
-    },
-    "v1EvaluationHistoryRemediation": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "type": "string",
-          "description": "status is one of (success, error, failure, skipped, not available)\nnot using enums to mirror the behaviour of the existing API contracts."
-        },
-        "details": {
-          "type": "string",
-          "description": "details contains optional details about the remediation.\nthe structure and contents are remediation specific, and are subject to change."
         }
       }
     },
@@ -4230,7 +4208,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           },
           "description": "These are the entities that one could set in the profile."
         },
@@ -4238,21 +4216,21 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "artifact": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "pullRequest": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "selection": {
@@ -4284,6 +4262,28 @@
         }
       },
       "description": "Profile defines a profile that is user defined."
+    },
+    "v1ProfileRule": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of the rule to be instantiated."
+        },
+        "params": {
+          "type": "object",
+          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
+        },
+        "def": {
+          "type": "object",
+          "description": "def is the definition of the rule.\nThis depends on the rule type."
+        },
+        "name": {
+          "type": "string",
+          "title": "name is the descriptive name of the rule, not to be confused with type"
+        }
+      },
+      "description": "Rule defines the individual call of a certain rule type."
     },
     "v1ProfileStatus": {
       "type": "object",
