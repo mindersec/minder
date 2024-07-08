@@ -50,6 +50,25 @@ func createRandomProfile(t *testing.T, projectID uuid.UUID, labels []string) Pro
 	return prof
 }
 
+func createRepoSelector(t *testing.T, profileId uuid.UUID, sel string, comment string) ProfileSelector {
+	t.Helper()
+	return createEntitySelector(t, profileId, NullEntities{Entities: EntitiesRepository, Valid: true}, sel, comment)
+}
+
+func createEntitySelector(t *testing.T, profileId uuid.UUID, ent NullEntities, sel string, comment string) ProfileSelector {
+	t.Helper()
+	dbSel, err := testQueries.CreateSelector(context.Background(), CreateSelectorParams{
+		ProfileID: profileId,
+		Entity:    ent,
+		Selector:  sel,
+		Comment:   comment,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, dbSel)
+
+	return dbSel
+}
+
 func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 	t.Helper()
 
@@ -190,6 +209,111 @@ func createTestRandomEntities(t *testing.T) *testRandomEntities {
 		ruleType1: ruleType1,
 		ruleType2: ruleType2,
 	}
+}
+
+func matchIdWithListLabelRow(t *testing.T, id uuid.UUID) func(r ListProfilesByProjectIDAndLabelRow) bool {
+	t.Helper()
+
+	return func(r ListProfilesByProjectIDAndLabelRow) bool {
+		return r.Profile.ID == id
+	}
+}
+
+func matchIdWithListRow(t *testing.T, id uuid.UUID) func(r ListProfilesByProjectIDRow) bool {
+	t.Helper()
+
+	return func(r ListProfilesByProjectIDRow) bool {
+		return r.Profile.ID == id
+	}
+}
+
+func findRowWithLabels(t *testing.T, rows []ListProfilesByProjectIDAndLabelRow, id uuid.UUID) int {
+	t.Helper()
+
+	return slices.IndexFunc(rows, matchIdWithListLabelRow(t, id))
+}
+
+func findRow(t *testing.T, rows []ListProfilesByProjectIDRow, id uuid.UUID) int {
+	t.Helper()
+
+	return slices.IndexFunc(rows, matchIdWithListRow(t, id))
+}
+
+func TestProfileListWithSelectors(t *testing.T) {
+	t.Parallel()
+
+	randomEntities := createTestRandomEntities(t)
+
+	noSelectors := createRandomProfile(t, randomEntities.proj.ID, []string{})
+	oneSelectorProfile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+	oneSel := createRepoSelector(t, oneSelectorProfile.ID, "one_selector1", "one_comment1")
+
+	multiSelectorProfile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+	mulitSel1 := createRepoSelector(t, multiSelectorProfile.ID, "multi_selector1", "multi_comment1")
+	mulitSel2 := createRepoSelector(t, multiSelectorProfile.ID, "multi_selector2", "multi_comment2")
+	mulitSel3 := createRepoSelector(t, multiSelectorProfile.ID, "multi_selector3", "multi_comment3")
+
+	genericSelectorProfile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+	genericSel := createEntitySelector(t, genericSelectorProfile.ID, NullEntities{}, "gen_selector1", "gen_comment1")
+
+	t.Run("list profiles with selectors using the label list", func(t *testing.T) {
+		t.Parallel()
+
+		rows, err := testQueries.ListProfilesByProjectIDAndLabel(
+			context.Background(), ListProfilesByProjectIDAndLabelParams{
+				ProjectID: randomEntities.proj.ID,
+			})
+		require.NoError(t, err)
+
+		require.Len(t, rows, 4)
+
+		noSelIdx := findRowWithLabels(t, rows, noSelectors.ID)
+		require.True(t, noSelIdx >= 0, "noSelectors not found in rows")
+		require.Empty(t, rows[noSelIdx].ProfilesWithSelectors)
+
+		oneSelIdx := findRowWithLabels(t, rows, oneSelectorProfile.ID)
+		require.True(t, oneSelIdx >= 0, "oneSelector not found in rows")
+		require.Len(t, rows[oneSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[oneSelIdx].ProfilesWithSelectors, oneSel)
+
+		multiSelIdx := findRowWithLabels(t, rows, multiSelectorProfile.ID)
+		require.True(t, multiSelIdx >= 0, "multiSelectorProfile not found in rows")
+		require.Len(t, rows[multiSelIdx].ProfilesWithSelectors, 3)
+		require.Subset(t, rows[multiSelIdx].ProfilesWithSelectors, []ProfileSelector{mulitSel1, mulitSel2, mulitSel3})
+
+		genSelIdx := findRowWithLabels(t, rows, genericSelectorProfile.ID)
+		require.Len(t, rows[genSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[genSelIdx].ProfilesWithSelectors, genericSel)
+	})
+
+	t.Run("list profiles with selectors using the non-label list", func(t *testing.T) {
+		t.Parallel()
+
+		rows, err := testQueries.ListProfilesByProjectID(
+			context.Background(), randomEntities.proj.ID)
+		require.NoError(t, err)
+
+		require.Len(t, rows, 4)
+
+		noSelIdx := findRow(t, rows, noSelectors.ID)
+		require.True(t, noSelIdx >= 0, "noSelectors not found in rows")
+		require.Empty(t, rows[noSelIdx].ProfilesWithSelectors)
+
+		oneSelIdx := findRow(t, rows, oneSelectorProfile.ID)
+		require.True(t, oneSelIdx >= 0, "oneSelector not found in rows")
+		require.Len(t, rows[oneSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[oneSelIdx].ProfilesWithSelectors, oneSel)
+
+		multiSelIdx := findRow(t, rows, multiSelectorProfile.ID)
+		require.True(t, multiSelIdx >= 0, "multiSelectorProfile not found in rows")
+		require.Len(t, rows[multiSelIdx].ProfilesWithSelectors, 3)
+		require.Subset(t, rows[multiSelIdx].ProfilesWithSelectors, []ProfileSelector{mulitSel1, mulitSel2, mulitSel3})
+
+		genSelIdx := findRow(t, rows, genericSelectorProfile.ID)
+		require.Len(t, rows[genSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[genSelIdx].ProfilesWithSelectors, genericSel)
+	})
+
 }
 
 func TestProfileLabels(t *testing.T) {

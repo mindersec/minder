@@ -358,13 +358,29 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 }
 
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
-SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+WITH helper AS(
+     SELECT pr.id as profid,
+            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+       FROM profiles pr
+       JOIN profile_selectors ps
+         ON pr.id = ps.profile_id
+      WHERE pr.project_id = $1
+      GROUP BY pr.id
+)
+SELECT
+    profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
+    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+    helper.selectors::profile_selector[] AS profiles_with_selectors
+FROM profiles
+JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1
 `
 
 type ListProfilesByProjectIDRow struct {
 	Profile                   Profile                   `json:"profile"`
 	ProfilesWithEntityProfile ProfilesWithEntityProfile `json:"profiles_with_entity_profile"`
+	ProfilesWithSelectors     []ProfileSelector         `json:"profiles_with_selectors"`
 }
 
 func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error) {
@@ -396,6 +412,7 @@ func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UU
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
 			&i.ProfilesWithEntityProfile.Profid,
+			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
 			return nil, err
 		}
@@ -411,7 +428,21 @@ func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UU
 }
 
 const listProfilesByProjectIDAndLabel = `-- name: ListProfilesByProjectIDAndLabel :many
-SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+WITH helper AS(
+     SELECT pr.id as profid,
+     ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+       FROM profiles pr
+       JOIN profile_selectors ps
+         ON pr.id = ps.profile_id
+      WHERE pr.project_id = $1
+      GROUP BY pr.id
+)
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
+       profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+       helper.selectors::profile_selector[] AS profiles_with_selectors
+FROM profiles
+JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1
 AND (
     -- the most common case first, if the include_labels is empty, we list profiles with no labels
@@ -438,6 +469,7 @@ type ListProfilesByProjectIDAndLabelParams struct {
 type ListProfilesByProjectIDAndLabelRow struct {
 	Profile                   Profile                   `json:"profile"`
 	ProfilesWithEntityProfile ProfilesWithEntityProfile `json:"profiles_with_entity_profile"`
+	ProfilesWithSelectors     []ProfileSelector         `json:"profiles_with_selectors"`
 }
 
 func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error) {
@@ -469,6 +501,7 @@ func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListP
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
 			&i.ProfilesWithEntityProfile.Profid,
+			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
 			return nil, err
 		}
