@@ -1,6 +1,6 @@
 module github.com/stacklok/minder
 
-go 1.22.4
+go 1.22.5
 
 require (
 	github.com/ThreeDotsLabs/watermill v1.3.5
