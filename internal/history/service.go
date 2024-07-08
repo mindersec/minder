@@ -462,7 +462,7 @@ func convert[
 	values []string,
 	mapf func(string) (T, error),
 ) ([]T, error) {
-	converted := []T{}
+	converted := make([]T, 0, len(values))
 	for _, v := range values {
 		dbObj, err := mapf(v)
 		if err != nil {

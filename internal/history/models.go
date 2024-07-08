@@ -69,54 +69,50 @@ var (
 // a ListEvaluationCursor. The opaque paylaod is expected to be of one
 // of the following forms
 //
-//   - `"+1257894000000000"` meaning the next page
-//     of data starting from the given UUID excluded
+//   - `"+1257894000000000"` meaning the next page of data starting
+//     from the given timestamp excluded
 //
-//   - `"-1257894000000000"` meaning the previous
-//     page of data starting from the given UUID excluded
+//   - `"-1257894000000000"` meaning the previous page of data
+//     starting from the given timestamp excluded
 //
-//   - `"1257894000000000"` meaning the next page
-//     of data (default) starting from the given UUID excluded
+//   - `"1257894000000000"` meaning the next page of data (default)
+//     starting from the given timestamp excluded
 func ParseListEvaluationCursor(payload string) (*ListEvaluationCursor, error) {
 	decoded, err := base64.StdEncoding.DecodeString(payload)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
 	}
 
-	switch {
-	case string(decoded) == "":
+	if len(decoded) == 0 {
 		return &DefaultCursor, nil
+	}
+
+	var usecsStr string
+	var direction Direction
+	switch {
 	case strings.HasPrefix(string(decoded), "+"):
 		// +1257894000000000
-		usecs, err := strconv.ParseInt(string(decoded[1:]), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
-		}
-		return &ListEvaluationCursor{
-			Time:      time.UnixMicro(usecs).UTC(),
-			Direction: Next,
-		}, nil
+		usecsStr = string(decoded[1:])
+		direction = Next
 	case strings.HasPrefix(string(decoded), "-"):
 		// -1257894000000000
-		usecs, err := strconv.ParseInt(string(decoded[1:]), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
-		}
-		return &ListEvaluationCursor{
-			Time:      time.UnixMicro(usecs).UTC(),
-			Direction: Prev,
-		}, nil
+		usecsStr = string(decoded[1:])
+		direction = Prev
 	default:
 		// 1257894000000000
-		usecs, err := strconv.ParseInt(string(decoded), 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
-		}
-		return &ListEvaluationCursor{
-			Time:      time.UnixMicro(usecs).UTC(),
-			Direction: Next,
-		}, nil
+		usecsStr = string(decoded)
+		direction = Next
 	}
+
+	usecs, err := strconv.ParseInt(usecsStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrMalformedCursor, err)
+	}
+
+	return &ListEvaluationCursor{
+		Time:      time.UnixMicro(usecs).UTC(),
+		Direction: direction,
+	}, nil
 }
 
 // Filter is an empty interface to be implemented by structs
