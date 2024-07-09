@@ -66,7 +66,7 @@ type project
 
     define remote_repo_get: admin
 
-    define entity_reconcile: editor
+    define entity_reconcile: admin
 
     define artifact_get: viewer
     define artifact_create: editor
