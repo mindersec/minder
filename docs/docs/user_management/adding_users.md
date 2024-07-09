@@ -18,7 +18,7 @@ To add a new user to your project, you need to:
 4. Add the user to your project
 
 ## Identify your project ID
-Identify the project that you want to add a new user to. To see all the projects that are available to you, use the [`minder project list`](../ref/cli/minder_project_list) command.
+Identify the project that you want to add a new user to. To see all the projects that are available to you, use the [`minder project list`](../ref/cli/minder_project_list.md) command.
 
 ```
 +--------------------------------------+-------------------+
@@ -33,7 +33,7 @@ In this example, the `my_minder_project` project has Project ID `086df3e2-f1bb-4
 ## Have the new user create a Minder account
 To add a user to your project, that user must first [create their Minder account](https://docs.stacklok.com/minder/getting_started/login#logging-in-to-the-stacklok-hosted-instance), and provide you with their user ID.
 
-The new user must create an account and log in using [`minder auth login`](../ref/cli/minder_auth_login). After login, the user ID will be displayed as the `Subject`. For example:
+The new user must create an account and log in using [`minder auth login`](../ref/cli/minder_auth_login.md). After login, the user ID will be displayed as the `Subject`. For example:
 
 ```
 Here are your details:
@@ -54,7 +54,7 @@ In this example, the new user's User ID is `ef5588e2-802b-47cb-b64a-52167acfea41
 ## Identify their role
 When adding a user into your project, it's crucial to assign them the appropriate role based on their responsibilities and required access levels.
 
-Roles are [documented here](user_roles). To view the available roles in your project, and their descriptions, run:
+Roles are [documented here](user_roles.md). To view the available roles in your project, and their descriptions, run:
 
 ```
 minder project role list
