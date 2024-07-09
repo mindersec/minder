@@ -107,11 +107,12 @@ SELECT s.id::uuid AS evaluation_id,
             WHEN ere.pull_request_id IS NOT NULL THEN pr.id
             WHEN ere.artifact_id IS NOT NULL THEN a.id
        END AS entity_id,
-       -- entity name
-       CASE WHEN ere.repository_id IS NOT NULL THEN r.repo_name
-            WHEN ere.pull_request_id IS NOT NULL THEN pr.pr_number::text
-            WHEN ere.artifact_id IS NOT NULL THEN a.artifact_name
-       END AS entity_name,
+       -- raw fields for entity names
+       r.repo_owner,
+       r.repo_name,
+       pr.pr_number,
+       a.artifact_name,
+       j.id as project_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
@@ -135,6 +136,7 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN artifacts a ON ere.artifact_id = a.id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
+  LEFT JOIN projects j ON r.project_id = j.id
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.most_recent_evaluation)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.most_recent_evaluation)
    -- inclusion filters
@@ -159,5 +161,7 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.narg(fromts)::timestamp without time zone IS NULL
         OR sqlc.narg(tots)::timestamp without time zone IS NULL
         OR s.most_recent_evaluation BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
+   -- implicit filter by project id
+   AND j.id = sqlc.arg(projectId)
  ORDER BY s.most_recent_evaluation DESC
  LIMIT sqlc.arg(size)::integer;

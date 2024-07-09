@@ -120,3 +120,200 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 		})
 	}
 }
+
+func TestDBEntityToEntity(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		input  db.Entities
+		output minderv1.Entity
+	}{
+		{
+			name:   "pull request",
+			input:  db.EntitiesPullRequest,
+			output: minderv1.Entity_ENTITY_PULL_REQUESTS,
+		},
+		{
+			name:   "artifact",
+			input:  db.EntitiesArtifact,
+			output: minderv1.Entity_ENTITY_ARTIFACTS,
+		},
+		{
+			name:   "repository",
+			input:  db.EntitiesRepository,
+			output: minderv1.Entity_ENTITY_REPOSITORIES,
+		},
+		{
+			name:   "build environments",
+			input:  db.EntitiesBuildEnvironment,
+			output: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		},
+		{
+			name:   "default",
+			input:  db.Entities("whatever"),
+			output: minderv1.Entity_ENTITY_UNSPECIFIED,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			res := dbEntityToEntity(tt.input)
+			require.Equal(t, tt.output, res)
+		})
+	}
+}
+
+func TestGetEntityName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		dbEnt  db.Entities
+		row    db.ListEvaluationHistoryRow
+		output string
+		err    bool
+	}{
+		{
+			name:  "pull request",
+			dbEnt: db.EntitiesPullRequest,
+			row: db.ListEvaluationHistoryRow{
+				RepoOwner: sql.NullString{
+					Valid:  true,
+					String: "stacklok",
+				},
+				RepoName: sql.NullString{
+					Valid:  true,
+					String: "minder",
+				},
+				PrNumber: sql.NullInt64{
+					Valid: true,
+					Int64: 12345,
+				},
+			},
+			output: "stacklok/minder#12345",
+		},
+		{
+			name:  "pull request no repo owner",
+			dbEnt: db.EntitiesPullRequest,
+			row: db.ListEvaluationHistoryRow{
+				RepoName: sql.NullString{
+					Valid:  true,
+					String: "minder",
+				},
+				PrNumber: sql.NullInt64{
+					Valid: true,
+					Int64: 12345,
+				},
+			},
+			err: true,
+		},
+		{
+			name:  "pull request no repo name",
+			dbEnt: db.EntitiesPullRequest,
+			row: db.ListEvaluationHistoryRow{
+				RepoOwner: sql.NullString{
+					Valid:  true,
+					String: "stacklok",
+				},
+				PrNumber: sql.NullInt64{
+					Valid: true,
+					Int64: 12345,
+				},
+			},
+			err: true,
+		},
+		{
+			name:  "pull request no pr number",
+			dbEnt: db.EntitiesPullRequest,
+			row: db.ListEvaluationHistoryRow{
+				RepoOwner: sql.NullString{
+					Valid:  true,
+					String: "stacklok",
+				},
+				RepoName: sql.NullString{
+					Valid:  true,
+					String: "minder",
+				},
+			},
+			err: true,
+		},
+		{
+			name:  "artifact",
+			dbEnt: db.EntitiesArtifact,
+			row: db.ListEvaluationHistoryRow{
+				ArtifactName: sql.NullString{
+					Valid:  true,
+					String: "artifact name",
+				},
+			},
+			output: "artifact name",
+		},
+		{
+			name:  "repository",
+			dbEnt: db.EntitiesRepository,
+			row: db.ListEvaluationHistoryRow{
+				RepoOwner: sql.NullString{
+					Valid:  true,
+					String: "stacklok",
+				},
+				RepoName: sql.NullString{
+					Valid:  true,
+					String: "minder",
+				},
+			},
+			output: "stacklok/minder",
+		},
+		{
+			name:  "repository no repo owner",
+			dbEnt: db.EntitiesRepository,
+			row: db.ListEvaluationHistoryRow{
+				RepoName: sql.NullString{
+					Valid:  true,
+					String: "minder",
+				},
+			},
+			err: true,
+		},
+		{
+			name:  "repository no repo name",
+			dbEnt: db.EntitiesRepository,
+			row: db.ListEvaluationHistoryRow{
+				RepoOwner: sql.NullString{
+					Valid:  true,
+					String: "stacklok",
+				},
+			},
+			err: true,
+		},
+		{
+			name:  "build environments",
+			dbEnt: db.EntitiesBuildEnvironment,
+			row:   db.ListEvaluationHistoryRow{},
+			err:   true,
+		},
+		{
+			name:  "default",
+			dbEnt: db.Entities("whatever"),
+			row:   db.ListEvaluationHistoryRow{},
+			err:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			res, err := getEntityName(tt.dbEnt, tt.row)
+
+			if tt.err {
+				require.Error(t, err)
+				require.Equal(t, "", res)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.output, res)
+		})
+	}
+}

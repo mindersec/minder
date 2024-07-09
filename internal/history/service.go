@@ -279,6 +279,9 @@ func toSQLFilter(
 		return nil
 	}
 
+	if err := paramsFromProjectFilter(filter, params); err != nil {
+		return err
+	}
 	if err := paramsFromEntityTypeFilter(filter, params); err != nil {
 		return err
 	}
@@ -298,6 +301,14 @@ func toSQLFilter(
 		return err
 	}
 	return paramsFromTimeRangeFilter(filter, params)
+}
+
+func paramsFromProjectFilter(
+	filter ProjectFilter,
+	params *db.ListEvaluationHistoryParams,
+) error {
+	params.Projectid = filter.GetProjectID()
+	return nil
 }
 
 func paramsFromEntityTypeFilter(

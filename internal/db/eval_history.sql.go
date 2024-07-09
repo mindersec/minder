@@ -203,11 +203,12 @@ SELECT s.id::uuid AS evaluation_id,
             WHEN ere.pull_request_id IS NOT NULL THEN pr.id
             WHEN ere.artifact_id IS NOT NULL THEN a.id
        END AS entity_id,
-       -- entity name
-       CASE WHEN ere.repository_id IS NOT NULL THEN r.repo_name
-            WHEN ere.pull_request_id IS NOT NULL THEN pr.pr_number::text
-            WHEN ere.artifact_id IS NOT NULL THEN a.artifact_name
-       END AS entity_name,
+       -- raw fields for entity names
+       r.repo_owner,
+       r.repo_name,
+       pr.pr_number,
+       a.artifact_name,
+       j.id as project_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
@@ -231,6 +232,7 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN artifacts a ON ere.artifact_id = a.id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
+  LEFT JOIN projects j ON r.project_id = j.id
  WHERE ($1::timestamp without time zone IS NULL OR $1 > s.most_recent_evaluation)
    AND ($2::timestamp without time zone IS NULL OR $2 < s.most_recent_evaluation)
    -- inclusion filters
@@ -255,8 +257,10 @@ SELECT s.id::uuid AS evaluation_id,
    AND ($15::timestamp without time zone IS NULL
         OR $16::timestamp without time zone IS NULL
         OR s.most_recent_evaluation BETWEEN $15 AND $16)
+   -- implicit filter by project id
+   AND j.id = $17
  ORDER BY s.most_recent_evaluation DESC
- LIMIT $17::integer
+ LIMIT $18::integer
 `
 
 type ListEvaluationHistoryParams struct {
@@ -276,6 +280,7 @@ type ListEvaluationHistoryParams struct {
 	Notstatuses     []EvalStatusTypes        `json:"notstatuses"`
 	Fromts          sql.NullTime             `json:"fromts"`
 	Tots            sql.NullTime             `json:"tots"`
+	Projectid       uuid.UUID                `json:"projectid"`
 	Size            int32                    `json:"size"`
 }
 
@@ -284,7 +289,11 @@ type ListEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         interface{}                `json:"entity_type"`
 	EntityID           interface{}                `json:"entity_id"`
-	EntityName         interface{}                `json:"entity_name"`
+	RepoOwner          sql.NullString             `json:"repo_owner"`
+	RepoName           sql.NullString             `json:"repo_name"`
+	PrNumber           sql.NullInt64              `json:"pr_number"`
+	ArtifactName       sql.NullString             `json:"artifact_name"`
+	ProjectID          uuid.NullUUID              `json:"project_id"`
 	RuleType           string                     `json:"rule_type"`
 	RuleName           string                     `json:"rule_name"`
 	ProfileName        string                     `json:"profile_name"`
@@ -314,6 +323,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 		pq.Array(arg.Notstatuses),
 		arg.Fromts,
 		arg.Tots,
+		arg.Projectid,
 		arg.Size,
 	)
 	if err != nil {
@@ -328,7 +338,11 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.EvaluatedAt,
 			&i.EntityType,
 			&i.EntityID,
-			&i.EntityName,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.PrNumber,
+			&i.ArtifactName,
+			&i.ProjectID,
 			&i.RuleType,
 			&i.RuleName,
 			&i.ProfileName,

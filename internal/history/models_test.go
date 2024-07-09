@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -161,6 +162,7 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
+					WithProjectIDStr("deadbeef-0000-0000-0000-000000000000"),
 					WithEntityType("repository"),
 				)
 			},
@@ -168,6 +170,26 @@ func TestListEvaluationFilter(t *testing.T) {
 				t.Helper()
 				require.Equal(t, []string{"repository"}, filter.IncludedEntityTypes())
 			},
+		},
+		{
+			name: "mandatory project id",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithEntityType("repository"),
+				)
+			},
+			err: true,
+		},
+		{
+			name: "non-empty project id",
+			filter: func(t *testing.T) (ListEvaluationFilter, error) {
+				t.Helper()
+				return NewListEvaluationFilter(
+					WithProjectID(uuid.Nil),
+				)
+			},
+			err: true,
 		},
 		{
 			name: "bogus",
@@ -184,14 +206,13 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
-					WithEntityType("repository"),
+					WithProjectIDStr("deadbeef-0000-0000-0000-000000000000"),
 					WithFrom(now),
 					WithTo(now),
 				)
 			},
 			check: func(t *testing.T, filter ListEvaluationFilter) {
 				t.Helper()
-				require.Equal(t, []string{"repository"}, filter.IncludedEntityTypes())
 				require.Equal(t, now, *filter.GetFrom())
 				require.Equal(t, now, *filter.GetTo())
 			},
@@ -201,7 +222,7 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
-					WithEntityType("repository"),
+					WithProjectIDStr("deadbeef-0000-0000-0000-000000000000"),
 					WithTo(now),
 				)
 			},
@@ -212,7 +233,7 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
-					WithEntityType("repository"),
+					WithProjectIDStr("deadbeef-0000-0000-0000-000000000000"),
 					WithFrom(now),
 				)
 			},
@@ -223,6 +244,7 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
+					WithProjectIDStr("deadbeef-0000-0000-0000-000000000000"),
 					WithEntityType("repository"),
 					WithFrom(now.Add(1*time.Millisecond)),
 					WithTo(now),
@@ -324,6 +346,9 @@ func TestFilterOptions(t *testing.T) {
 
 	now := time.Now()
 
+	uuidstr := "deadbeef-0000-0000-0000-000000000000"
+	uuidval := uuid.MustParse(uuidstr)
+
 	tests := []struct {
 		name   string
 		option func(*testing.T) FilterOpt
@@ -331,6 +356,88 @@ func TestFilterOptions(t *testing.T) {
 		check  func(*testing.T, Filter)
 		err    bool
 	}{
+		// project id
+		{
+			name: "project id string",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectIDStr(uuidstr)
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(ProjectFilter)
+				require.Equal(t, uuidval, f.GetProjectID())
+			},
+		},
+		{
+			name: "project id uuid",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectID(uuidval)
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(ProjectFilter)
+				require.Equal(t, uuidval, f.GetProjectID())
+			},
+		},
+		{
+			name: "project id nil",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectID(uuid.Nil)
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "project id malformed",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectIDStr("malformed")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "wrong project filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectIDStr(uuidstr)
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+		{
+			name: "wrong project filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithProjectID(uuidval)
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+
 		// entity type
 		{
 			name: "entity type in filter",

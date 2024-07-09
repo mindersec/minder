@@ -22,12 +22,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/stacklok/minder/internal/db"
 )
 
 var (
 	// ErrMalformedCursor represents errors in the cursor payload.
 	ErrMalformedCursor = errors.New("malformed cursor")
+	// ErrInvalidProjectID is returned when project id is missing
+	// or malformed form the filter.
+	ErrInvalidProjectID = errors.New("invalid project id")
 	// ErrInvalidTimeRange is returned the time range from-to is
 	// either missing one end or from is greater than to.
 	ErrInvalidTimeRange = errors.New("invalid time range")
@@ -122,6 +127,15 @@ type Filter interface{}
 
 // FilterOpt is the option type used to configure filters.
 type FilterOpt func(Filter) error
+
+// ProjectFilter interface should be implemented by types implementing
+// a filter on project id.
+type ProjectFilter interface {
+	// AddProjectID adds a project id for inclusion in the filter.
+	AddProjectID(uuid.UUID) error
+	// GetProjectID returns the included project id.
+	GetProjectID() uuid.UUID
+}
 
 // EntityTypeFilter interface should be implemented by types
 // implementing a filter on entity types.
@@ -219,6 +233,7 @@ type TimeRangeFilter interface {
 // ListEvaluationFilter is a filter to be used when listing historical
 // evaluations.
 type ListEvaluationFilter interface {
+	ProjectFilter
 	EntityTypeFilter
 	EntityNameFilter
 	ProfileNameFilter
@@ -229,6 +244,8 @@ type ListEvaluationFilter interface {
 }
 
 type listEvaluationFilter struct {
+	// Project ID to include in the selection
+	projectID uuid.UUID
 	// List of entity types to include in the selection
 	includedEntityTypes []string
 	// List of entity types to exclude from the selection
@@ -257,6 +274,17 @@ type listEvaluationFilter struct {
 	from *time.Time
 	// Upper bound of the time range, exclusive
 	to *time.Time
+}
+
+func (filter *listEvaluationFilter) AddProjectID(projectID uuid.UUID) error {
+	if projectID == uuid.Nil {
+		return fmt.Errorf("%w: project id", ErrInvalidIdentifier)
+	}
+	filter.projectID = projectID
+	return nil
+}
+func (filter *listEvaluationFilter) GetProjectID() uuid.UUID {
+	return filter.projectID
 }
 
 func (filter *listEvaluationFilter) AddEntityType(entityType string) error {
@@ -415,6 +443,34 @@ func (filter *listEvaluationFilter) GetTo() *time.Time {
 var _ Filter = (*listEvaluationFilter)(nil)
 var _ ListEvaluationFilter = (*listEvaluationFilter)(nil)
 
+// WithProjectIDStr adds a project id (string) to the filter. Whether
+// a null uuid is valid or not is determined on a per-endpoint basis.
+func WithProjectIDStr(projectID string) FilterOpt {
+	return func(filter Filter) error {
+		uuid, err := uuid.Parse(projectID)
+		if err != nil {
+			return fmt.Errorf("%w: project id", ErrInvalidIdentifier)
+		}
+		inner, ok := filter.(ProjectFilter)
+		if !ok {
+			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
+		}
+		return inner.AddProjectID(uuid)
+	}
+}
+
+// WithProjectID adds a project id (uuid) to the filter. Whether a
+// null uuid is valid or not is determined on a per-endpoint basis.
+func WithProjectID(projectID uuid.UUID) FilterOpt {
+	return func(filter Filter) error {
+		inner, ok := filter.(ProjectFilter)
+		if !ok {
+			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
+		}
+		return inner.AddProjectID(projectID)
+	}
+}
+
 // WithEntityType adds an entity type string to the filter. The entity
 // type is added for inclusion unless it starts with a `!` characters,
 // in which case it is added for exclusion.
@@ -552,6 +608,9 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 
 	// Following we check that time range based filtering is
 	// sound.
+	if filter.projectID == uuid.Nil {
+		return nil, fmt.Errorf("%w: missing", ErrInvalidProjectID)
+	}
 	if filter.to != nil && filter.from == nil {
 		return nil, fmt.Errorf("%w: from is missing", ErrInvalidTimeRange)
 	}

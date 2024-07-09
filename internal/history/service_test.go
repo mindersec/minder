@@ -696,11 +696,27 @@ func makeHistoryRow(
 	alert db.NullAlertStatusTypes,
 ) db.ListEvaluationHistoryRow {
 	return db.ListEvaluationHistoryRow{
-		EvaluationID:      id,
-		EvaluatedAt:       evaluatedAt,
-		EntityType:        entityType,
-		EntityID:          id,
-		EntityName:        "repo1",
+		EvaluationID: id,
+		EvaluatedAt:  evaluatedAt,
+		EntityType:   entityType,
+		EntityID:     id,
+		RepoOwner: sql.NullString{
+			Valid:  true,
+			String: "stacklok",
+		},
+		RepoName: sql.NullString{
+			Valid:  true,
+			String: "minder",
+		},
+		PrNumber: sql.NullInt64{
+			Valid: true,
+			Int64: 12345,
+		},
+		ArtifactName: sql.NullString{
+			Valid:  true,
+			String: "artifact1",
+		},
+		// EntityName:        "repo1",
 		RuleType:          "rule_type",
 		RuleName:          "rule_name",
 		ProfileName:       "profile_name",

@@ -79,6 +79,9 @@ func (s *Server) ListEvaluationHistory(
 		opts = append(opts, history.WithTo(in.GetTo().AsTime()))
 	}
 
+	// we always filter by project id
+	opts = append(opts, history.WithProjectIDStr(in.GetContext().GetProject()))
+
 	filter, err := history.NewListEvaluationFilter(opts...)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid filter")
@@ -138,10 +141,9 @@ func fromEvaluationHistoryRow(
 			return nil, errors.New("internal error")
 		}
 		entityType := dbEntityToEntity(dbEntityType)
-
-		entityName, ok := row.EntityName.(string)
-		if !ok {
-			return nil, errors.New("internal error")
+		entityName, err := getEntityName(dbEntityType, row)
+		if err != nil {
+			return nil, err
 		}
 
 		var alert *minderv1.EvaluationHistoryAlert
@@ -587,5 +589,48 @@ func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
+	}
+}
+
+func getEntityName(
+	dbEnt db.Entities,
+	row db.ListEvaluationHistoryRow,
+) (string, error) {
+	switch dbEnt {
+	case db.EntitiesPullRequest:
+		if !row.RepoOwner.Valid {
+			return "", errors.New("repo_owner is missing")
+		}
+		if !row.RepoName.Valid {
+			return "", errors.New("repo_name is missing")
+		}
+		if !row.PrNumber.Valid {
+			return "", errors.New("pr_number is missing")
+		}
+		return fmt.Sprintf("%s/%s#%d",
+			row.RepoOwner.String,
+			row.RepoName.String,
+			row.PrNumber.Int64,
+		), nil
+	case db.EntitiesArtifact:
+		if !row.ArtifactName.Valid {
+			return "", errors.New("artifact_name is missing")
+		}
+		return row.ArtifactName.String, nil
+	case db.EntitiesRepository:
+		if !row.RepoOwner.Valid {
+			return "", errors.New("repo_owner is missing")
+		}
+		if !row.RepoName.Valid {
+			return "", errors.New("repo_name is missing")
+		}
+		return fmt.Sprintf("%s/%s",
+			row.RepoOwner.String,
+			row.RepoName.String,
+		), nil
+	case db.EntitiesBuildEnvironment:
+		return "", errors.New("invalid entity type")
+	default:
+		return "", errors.New("invalid entity type")
 	}
 }
