@@ -162,20 +162,20 @@ func fromEvaluationHistoryRow(
 		}
 
 		res = append(res, &minderv1.EvaluationHistory{
+			EvaluatedAt: timestamppb.New(row.EvaluatedAt),
 			Entity: &minderv1.EvaluationHistoryEntity{
 				Id:   row.EvaluationID.String(),
 				Type: entityType,
 				Name: entityName,
 			},
 			Rule: &minderv1.EvaluationHistoryRule{
-				Name:    row.RuleName,
-				Type:    row.RuleType,
-				Profile: row.ProfileName,
+				Name:     row.RuleName,
+				RuleType: row.RuleType,
+				Profile:  row.ProfileName,
 			},
 			Status: &minderv1.EvaluationHistoryStatus{
-				Status:      string(row.EvaluationStatus),
-				Details:     row.EvaluationDetails,
-				EvaluatedAt: timestamppb.New(row.EvaluatedAt),
+				Status:  string(row.EvaluationStatus),
+				Details: row.EvaluationDetails,
 			},
 			Alert:       alert,
 			Remediation: remediation,

@@ -3637,6 +3637,11 @@
         "remediation": {
           "$ref": "#/definitions/v1EvaluationHistoryRemediation",
           "description": "remediation contains details of the remediation for this evaluation."
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "created_at is the timestamp of creation of this evaluation"
         }
       }
     },
@@ -3658,7 +3663,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "id is the ID of the entity."
+          "description": "id is the unique identifier of the entity."
         },
         "type": {
           "$ref": "#/definitions/v1Entity",
@@ -3690,7 +3695,7 @@
           "type": "string",
           "description": "name is the name of the rule instance."
         },
-        "type": {
+        "ruleType": {
           "type": "string",
           "description": "type is the name of the rule type."
         },
@@ -3710,11 +3715,6 @@
         "details": {
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
-        },
-        "evaluatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "title": "created_at is the timestamp of creation of this evaluation"
         }
       }
     },
