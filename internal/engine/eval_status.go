@@ -201,7 +201,7 @@ func (e *executor) createOrUpdateEvalStatus(
 		logger.Err(err).Msg("error upserting rule alert details")
 	}
 
-	if flags.BoolFromProjectID(ctx, e.featureFlags, flags.EvalHistory, params.ProjectID) {
+	if flags.Bool(ctx, e.featureFlags, flags.EvalHistory, params.ProjectID.String()) {
 		// Log in the evaluation history tables
 		_, err = db.WithTransaction(e.querier, func(qtx db.ExtendQuerier) (uuid.UUID, error) {
 			evalID, err := e.historyService.StoreEvaluationStatus(

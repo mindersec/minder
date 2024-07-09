@@ -19,7 +19,6 @@ package flags
 import (
 	"context"
 
-	"github.com/google/uuid"
 	ofprovider "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
@@ -54,14 +53,11 @@ func BoolFromContext(ctx context.Context, client openfeature.IClient, feature Ex
 	return getBool(ctx, client, feature, fromContext(ctx))
 }
 
-// BoolFromProjectID evaluates the feature flag with respect to the specified project ID.
-// This is useful when evaluating feature flags outside a request context.
-func BoolFromProjectID(ctx context.Context, client openfeature.IClient, feature Experiment, projectID uuid.UUID) bool {
+// Bool evaluates the feature flag with respect to the specified target value.
+func Bool(ctx context.Context, client openfeature.IClient, feature Experiment, target string) bool {
 	ectx := openfeature.NewEvaluationContext(
-		projectID.String(),
-		map[string]interface{}{
-			"project": projectID.String(),
-		},
+		target,
+		map[string]any{},
 	)
 	return getBool(ctx, client, feature, ectx)
 }
