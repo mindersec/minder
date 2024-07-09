@@ -3,11 +3,11 @@ title: Repository registration
 sidebar_position: 50
 ---
 
-_Registering a repository_ tells Minder to apply the [profiles](profiles) that you've defined to that repository. Minder will continuously monitor that repository based on the profiles that you've defined, and optionally [alert you](alerts) or [automatically remediate the problem](remediations) when the repository is out of compliance.
+_Registering a repository_ tells Minder to apply the [profiles](profiles.md) that you've defined to that repository. Minder will continuously monitor that repository based on the profiles that you've defined, and optionally [alert you](alerts.md) or [automatically remediate the problem](remediations.md) when the repository is out of compliance.
 
 ## Registering repositories
 
-Once you have [enrolled the GitHub Provider](providers), you can register repositories that you granted Minder access to within GitHub.
+Once you have [enrolled the GitHub Provider](providers.md), you can register repositories that you granted Minder access to within GitHub.
 
 To get a list of repositories, and select them using a menu in Minder's text user interface, run:
 

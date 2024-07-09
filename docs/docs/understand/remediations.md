@@ -5,7 +5,7 @@ sidebar_position: 60
 
 # Automatic Remediations in Minder
 
-Minder can perform _automatic remediation_ for many rules in an attempt to resolve problems in your software supply chain, and bring your resources into compliance with your [profile](profiles).
+Minder can perform _automatic remediation_ for many rules in an attempt to resolve problems in your software supply chain, and bring your resources into compliance with your [profile](profiles.md).
 
 The steps to take during automatic remediation are defined within the rule itself and can perform actions like sending a REST call to an endpoint to change configuration, or creating a pull request with a proposed fix.
 
