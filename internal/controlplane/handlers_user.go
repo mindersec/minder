@@ -310,7 +310,7 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 // ListInvitations is a service for listing invitations.
 func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsRequest) (*pb.ListInvitationsResponse, error) {
 	// Check if the UserManagement feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+	if !flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 		return nil, status.Error(codes.Unimplemented, "feature not enabled")
 	}
 	invitations := make([]*pb.Invitation, 0)
@@ -370,7 +370,7 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 // ResolveInvitation is a service for resolving an invitation.
 func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitationRequest) (*pb.ResolveInvitationResponse, error) {
 	// Check if the UserManagement feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+	if !flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 		return nil, status.Error(codes.Unimplemented, "feature not enabled")
 	}
 

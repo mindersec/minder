@@ -19,6 +19,7 @@ package flags
 import (
 	"context"
 
+	"github.com/google/uuid"
 	ofprovider "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
@@ -47,15 +48,30 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	)
 }
 
-// Bool provides a simple wrapper around client.Boolean to normalize usage for Minder.
-func Bool(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
-	ret := client.Boolean(ctx, string(feature), false, fromContext(ctx))
-	// TODO: capture in telemetry records
-	return ret
+// BoolFromContext provides a simple wrapper around client.Boolean to normalize usage for Minder.
+// It is assumed the attributes needed for feature flag lookup are encoded in the context.
+func BoolFromContext(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
+	return getBool(ctx, client, feature, fromContext(ctx))
+}
+
+// BoolFromProjectID evaluates the feature flag with respect to the specified project ID.
+// This is useful when evaluating feature flags outside a request context.
+func BoolFromProjectID(ctx context.Context, client openfeature.IClient, feature Experiment, projectID uuid.UUID) bool {
+	ectx := openfeature.NewEvaluationContext(
+		projectID.String(),
+		map[string]interface{}{
+			"project": projectID.String(),
+		},
+	)
+	return getBool(ctx, client, feature, ectx)
+}
+
+func getBool(ctx context.Context, client openfeature.IClient, feature Experiment, evalCtx openfeature.EvaluationContext) bool {
+	return client.Boolean(ctx, string(feature), false, evalCtx)
 }
 
 // OpenFeatureProviderFromFlags installs an OpenFeature Provider based on the flags config.
-// This curently only supports the GoFeatureFlag file-based provider.
+// This currently only supports the GoFeatureFlag file-based provider.
 func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 	var flagProvider openfeature.FeatureProvider
 	// TODO: support relay mode by setting options.Endpoint, etc

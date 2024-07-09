@@ -37,7 +37,7 @@ func (s *Server) ListEvaluationHistory(
 	ctx context.Context,
 	in *minderv1.ListEvaluationHistoryRequest,
 ) (*minderv1.ListEvaluationHistoryResponse, error) {
-	if flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
+	if flags.BoolFromContext(ctx, s.featureFlags, flags.EvalHistory) {
 		cursor := in.GetCursor()
 		zerolog.Ctx(ctx).Debug().
 			Strs("entity_type", in.GetEntityType()).

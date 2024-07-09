@@ -267,7 +267,7 @@ func (s *Server) ListRoleAssignments(
 		}
 	}
 
-	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+	if flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 		// Add invitations, which are only stored in the Minder DB
 		invites, err := s.store.ListInvitationsForProject(ctx, targetProject)
 		if err != nil {
@@ -330,14 +330,14 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 
 	// Decide if it's an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 			return s.inviteUser(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// Enable one or the other.
 		// This is temporary until we deprecate it completely in favor of email-based role assignments
-		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if !flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 			return s.assignRole(ctx, targetProject, authzRole, sub)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is enabled, use invites instead")
@@ -549,7 +549,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 			return s.removeInvite(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
@@ -720,7 +720,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 
 	// Validate the subject and email - decide if it's about updating an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if flags.BoolFromContext(ctx, s.featureFlags, flags.UserManagement) {
 			return s.updateInvite(ctx, targetProject, authzRole, inviteeEmail)
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")

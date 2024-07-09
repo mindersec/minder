@@ -99,7 +99,7 @@ test_flag:
 				Provider: engcontext.Provider{Name: "testing"},
 			})
 
-			flagResult := Bool(ctx, client, testFlag)
+			flagResult := BoolFromContext(ctx, client, testFlag)
 			if flagResult != tt.expectedFlag {
 				t.Errorf("expected %v, got %v", tt.expectedFlag, flagResult)
 			}
