@@ -268,6 +268,8 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 			} else {
 				profiles[p.Profile.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
+
+			selectorsToProfile(profiles[p.Profile.Name], p.ProfilesWithSelectors)
 		}
 		if pm := rowInfoToProfileMap(
 			profiles[p.Profile.Name],
