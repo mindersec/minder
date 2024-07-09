@@ -206,7 +206,8 @@ func getDefaultProjectID(
 	}
 
 	if len(prjs) != 1 {
-		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Cannot determine default project. Please specify one.")
+		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Multiple project found, cannot "+
+			"determine default project. Please explicitly set a project and run the command again.")
 	}
 
 	return prjs[0], nil
