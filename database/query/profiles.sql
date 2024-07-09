@@ -50,7 +50,22 @@ DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
 -- name: GetProfileByProjectAndID :many
-SELECT sqlc.embed(profiles), sqlc.embed(profiles_with_entity_profiles) FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+WITH helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+    FROM profiles pr
+             JOIN profile_selectors ps
+                  ON pr.id = ps.profile_id
+    WHERE pr.project_id = $1
+    GROUP BY pr.id
+)
+SELECT
+    sqlc.embed(profiles),
+    sqlc.embed(profiles_with_entity_profiles),
+    helper.selectors::profile_selector[] AS profiles_with_selectors
+FROM profiles
+JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByID :one

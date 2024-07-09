@@ -276,7 +276,22 @@ func (q *Queries) GetProfileByNameAndLock(ctx context.Context, arg GetProfileByN
 }
 
 const getProfileByProjectAndID = `-- name: GetProfileByProjectAndID :many
-SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels, profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid FROM profiles JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+WITH helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+    FROM profiles pr
+             JOIN profile_selectors ps
+                  ON pr.id = ps.profile_id
+    WHERE pr.project_id = $1
+    GROUP BY pr.id
+)
+SELECT
+    profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
+    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+    helper.selectors::profile_selector[] AS profiles_with_selectors
+FROM profiles
+JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2
 `
 
@@ -288,6 +303,7 @@ type GetProfileByProjectAndIDParams struct {
 type GetProfileByProjectAndIDRow struct {
 	Profile                   Profile                   `json:"profile"`
 	ProfilesWithEntityProfile ProfilesWithEntityProfile `json:"profiles_with_entity_profile"`
+	ProfilesWithSelectors     []ProfileSelector         `json:"profiles_with_selectors"`
 }
 
 func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error) {
@@ -319,6 +335,7 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
 			&i.ProfilesWithEntityProfile.Profid,
+			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
 			return nil, err
 		}
