@@ -798,15 +798,15 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| entity | <TypeLink type="minder-v1-EvaluationHistory-Entity">EvaluationHistory.Entity</TypeLink> |  | entity contains details of the entity which was evaluated. |
-| rule | <TypeLink type="minder-v1-EvaluationHistory-Rule">EvaluationHistory.Rule</TypeLink> |  | rule contains details of the rule which the entity was evaluated against. |
-| status | <TypeLink type="minder-v1-EvaluationHistory-Status">EvaluationHistory.Status</TypeLink> |  | status contains the evaluation status. |
-| alert | <TypeLink type="minder-v1-EvaluationHistory-Alert">EvaluationHistory.Alert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
-| remediation | <TypeLink type="minder-v1-EvaluationHistory-Remediation">EvaluationHistory.Remediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
+| entity | <TypeLink type="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</TypeLink> |  | entity contains details of the entity which was evaluated. |
+| rule | <TypeLink type="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</TypeLink> |  | rule contains details of the rule which the entity was evaluated against. |
+| status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
+| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
+| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
 
 
 
-<Message id="minder-v1-EvaluationHistory-Alert">EvaluationHistory.Alert</Message>
+<Message id="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</Message>
 
 
 
@@ -818,7 +818,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 
 
-<Message id="minder-v1-EvaluationHistory-Entity">EvaluationHistory.Entity</Message>
+<Message id="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</Message>
 
 
 
@@ -831,7 +831,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 
 
-<Message id="minder-v1-EvaluationHistory-Remediation">EvaluationHistory.Remediation</Message>
+<Message id="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</Message>
 
 
 
@@ -843,7 +843,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 
 
-<Message id="minder-v1-EvaluationHistory-Rule">EvaluationHistory.Rule</Message>
+<Message id="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</Message>
 
 
 
@@ -856,7 +856,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 
 
-<Message id="minder-v1-EvaluationHistory-Status">EvaluationHistory.Status</Message>
+<Message id="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</Message>
 
 
 
