@@ -47,6 +47,9 @@ func BuildFilter(tags []string, tagRegex string) (*filter, error) {
 
 	// no tags specified, but a regex was, compile it
 	if tagRegex != "" {
+		if len(tagRegex) > 512 {
+			return nil, fmt.Errorf("tag regular expressions are limited to 512 characters")
+		}
 		re, err := regexp.Compile(tagRegex)
 		if err != nil {
 			return nil, fmt.Errorf("error compiling tag regex: %w", err)
