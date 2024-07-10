@@ -7,25 +7,30 @@ sidebar_position: 60
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Minder account
-* An enrolled Provider (e.g., GitHub) and registered repositories
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub) and registered repositories
 
 ## Create a rule type that you want to use auto-remediation on
 
-The `remediate` feature is available for all rule types that have the `remediate` section defined in their
-`<alert-type>.yaml` file. When the `remediate` feature is turned `on`, Minder will try to automatically remediate failed
-rules based on their type, i.e., by processing a REST call to enable/disable a non-compliant repository setting or by
-creating a pull request with a proposed fix.
+The `remediate` feature is available for all rule types that have the
+`remediate` section defined in their `<alert-type>.yaml` file. When the
+`remediate` feature is turned `on`, Minder will try to automatically remediate
+failed rules based on their type, i.e., by processing a REST call to
+enable/disable a non-compliant repository setting or by creating a pull request
+with a proposed fix.
 
-In this example, we will use a rule type that checks if a repository allows having force pushes on their main branch,
-which is considered a security risk. If their setting allows for force pushes, Minder will automatically remediate it
-and disable it. 
+In this example, we will use a rule type that checks if a repository allows
+having force pushes on their main branch, which is considered a security risk.
+If their setting allows for force pushes, Minder will automatically remediate it
+and disable it.
 
-The rule type is called `branch_protection_allow_force_pushes.yaml` and is one of the reference rule types provided by
-the Minder team.
+The rule type is called `branch_protection_allow_force_pushes.yaml` and is one
+of the reference rule types provided by the Minder team.
 
-Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+Fetch all the reference rules by cloning the
+[minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
 
 ```bash
 git clone https://github.com/stacklok/minder-rules-and-profiles.git
@@ -44,10 +49,12 @@ minder ruletype create -f rule-types/github/branch_protection_allow_force_pushes
 ```
 
 ## Create a profile
+
 Next, create a profile that applies the rule to all registered repositories.
 
-Create a new file called `profile.yaml` using the following profile definition and enable automatic remediation by setting
-`remediate` to `on`. The other available values are `off`(default) and `dry_run`.
+Create a new file called `profile.yaml` using the following profile definition
+and enable automatic remediation by setting `remediate` to `on`. The other
+available values are `off`(default) and `dry_run`.
 
 ```yaml
 ---
@@ -71,14 +78,18 @@ Create the profile in Minder:
 minder profile create -f profile.yaml
 ```
 
-Once the profile is created, Minder will monitor if the `allow_force_pushes` setting on all of your registered
-repositories is set to `false`. If the setting is set to `true`, Minder will automatically remediate it by disabling it
-and will make sure to keep it that way until the profile is deleted.
+Once the profile is created, Minder will monitor if the `allow_force_pushes`
+setting on all of your registered repositories is set to `false`. If the setting
+is set to `true`, Minder will automatically remediate it by disabling it and
+will make sure to keep it that way until the profile is deleted.
 
-Alerts are complementary to the remediation feature. If you have both `alert` and `remediation` enabled for a profile,
-Minder will attempt to remediate it first. If the remediation fails, Minder will create an alert. If the remediation
+Alerts are complementary to the remediation feature. If you have both `alert`
+and `remediation` enabled for a profile, Minder will attempt to remediate it
+first. If the remediation fails, Minder will create an alert. If the remediation
 succeeds, Minder will close any previously opened alerts related to that rule.
 
 ## Limitations
 
-* The automatic remediation feature is only available for rule types that support it, i.e., have the `remediate` section defined in their `<alert-type>.yaml` file.
+- The automatic remediation feature is only available for rule types that
+  support it, i.e., have the `remediate` section defined in their
+  `<alert-type>.yaml` file.
