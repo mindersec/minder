@@ -27,8 +27,8 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v3"
 
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ErrPkgNotFound is returned when the package is not found in the package repository
@@ -57,7 +57,7 @@ type formatterMeta struct {
 // than the review handler.
 type patchLocatorFormatter interface {
 	LineHasDependency(line string) bool
-	IndentedString(indent int, oldDepLine string, oldDep *pb.Dependency) string
+	IndentedString(indent int, oldDepLine string, oldDep *pbinternal.Dependency) string
 	HasPatchedVersion() bool
 	GetPatchedVersion() string
 	GetFormatterMeta() formatterMeta
@@ -65,9 +65,9 @@ type patchLocatorFormatter interface {
 
 // RepoQuerier is the interface for querying a repository
 type RepoQuerier interface {
-	SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (patchLocatorFormatter, error)
-	NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter
-	PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter
+	SendRecvRequest(ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool) (patchLocatorFormatter, error)
+	NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter
+	PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter
 }
 
 type repoCache struct {
@@ -112,7 +112,7 @@ type packageJson struct {
 	} `json:"dist"`
 }
 
-func (pj *packageJson) IndentedString(indent int, oldDepLine string, _ *pb.Dependency) string {
+func (pj *packageJson) IndentedString(indent int, oldDepLine string, _ *pbinternal.Dependency) string {
 	padding := fmt.Sprintf("%*s", indent, "")
 	innerPadding := padding + "  " // Add 2 extra spaces
 
@@ -179,7 +179,7 @@ type PyPiReply struct {
 // them. Since PyPi doesn't indent, but can specify zero or multiple versions, we
 // don't care about the indent parameter. This is ripe for refactoring, though,
 // see the comment in the patchLocatorFormatter interface.
-func (p *PyPiReply) IndentedString(_ int, oldDepLine string, oldDep *pb.Dependency) string {
+func (p *PyPiReply) IndentedString(_ int, oldDepLine string, oldDep *pbinternal.Dependency) string {
 	return strings.Replace(oldDepLine, oldDep.Version, p.Info.Version, 1)
 }
 
@@ -212,7 +212,7 @@ func (p *PyPiReply) GetFormatterMeta() formatterMeta {
 	return p.formatterMeta
 }
 
-func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
 ) (patchLocatorFormatter, error) {
 	req, err := p.newRequest(ctx, dep, patched, latest)
 	if err != nil {
@@ -240,7 +240,7 @@ func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency
 	return &pkgJson, nil
 }
 
-func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &PyPiReply{
 		Info: struct {
 			Name    string `json:"name"`
@@ -249,7 +249,7 @@ func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLoca
 	}
 }
 
-func (_ *pypiRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+func (_ *pypiRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &PyPiReply{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,
@@ -268,7 +268,9 @@ func newPyPIRepository(endpoint string) *pypiRepository {
 	}
 }
 
-func (p *pypiRepository) newRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (*http.Request, error) {
+func (p *pypiRepository) newRequest(
+	ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
+) (*http.Request, error) {
 	var u *url.URL
 	var err error
 
@@ -305,7 +307,9 @@ func newNpmRepository(endpoint string) *npmRepository {
 // check that npmRepository implements RepoQuerier
 var _ RepoQuerier = (*npmRepository)(nil)
 
-func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool) (*http.Request, error) {
+func (n *npmRepository) newRequest(
+	ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
+) (*http.Request, error) {
 	var version string
 	if latest {
 		version = "latest"
@@ -325,7 +329,7 @@ func (n *npmRepository) newRequest(ctx context.Context, dep *pb.Dependency, patc
 	return req, nil
 }
 
-func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
 ) (patchLocatorFormatter, error) {
 	req, err := n.newRequest(ctx, dep, patched, latest)
 	if err != nil {
@@ -353,14 +357,14 @@ func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency,
 	return &pkgJson, nil
 }
 
-func (_ *npmRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+func (_ *npmRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &packageJson{
 		Name:    dep.Name,
 		Version: "",
 	}
 }
 
-func (_ *npmRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+func (_ *npmRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &packageJson{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,
@@ -382,7 +386,7 @@ type goModPackage struct {
 	DependencyHash string `json:"dependency_hash"`
 }
 
-func (gmp *goModPackage) IndentedString(indent int, _ string, _ *pb.Dependency) string {
+func (gmp *goModPackage) IndentedString(indent int, _ string, _ *pbinternal.Dependency) string {
 	return fmt.Sprintf("%s%s %s", strings.Repeat(" ", indent), gmp.Name, gmp.Version)
 }
 
@@ -424,7 +428,7 @@ func newGoProxySumRepository(proxyEndpoint, sumEndpoint string) *goProxyReposito
 // check that npmRepository implements RepoQuerier
 var _ RepoQuerier = (*goProxyRepository)(nil)
 
-func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+func (r *goProxyRepository) goProxyRequest(ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
 ) (*http.Request, error) {
 	var u *url.URL
 	var err error
@@ -505,7 +509,7 @@ func parseGoSumReply(goPkg *goModPackage, reply io.Reader) error {
 	return nil
 }
 
-func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Dependency, patched string, latest bool,
+func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pbinternal.Dependency, patched string, latest bool,
 ) (patchLocatorFormatter, error) {
 	proxyReq, err := r.goProxyRequest(ctx, dep, patched, latest)
 	if err != nil {
@@ -561,14 +565,14 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pb.Depende
 	return goPackage, nil
 }
 
-func (_ *goProxyRepository) NoPatchAvailableFormatter(dep *pb.Dependency) patchLocatorFormatter {
+func (_ *goProxyRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &goModPackage{
 		Name:       dep.Name,
 		oldVersion: dep.Version,
 	}
 }
 
-func (_ *goProxyRepository) PkgRegistryErrorFormatter(dep *pb.Dependency, registryErr error) patchLocatorFormatter {
+func (_ *goProxyRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &goModPackage{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,

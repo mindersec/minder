@@ -28,7 +28,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -135,7 +135,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 }
 
 func getEcosystemConfig(
-	logger *zerolog.Logger, ruleConfig *config, dep *pb.PrDependencies_ContextualDependency,
+	logger *zerolog.Logger, ruleConfig *config, dep *pbinternal.PrDependencies_ContextualDependency,
 ) *ecosystemConfig {
 	ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
 	if ecoConfig == nil {
@@ -149,8 +149,8 @@ func getEcosystemConfig(
 }
 
 // readPullRequestDependencies returns the dependencies found in theingestion results
-func readPullRequestDependencies(res *engif.Result) (*pb.PrDependencies, error) {
-	prdeps, ok := res.Object.(*pb.PrDependencies)
+func readPullRequestDependencies(res *engif.Result) (*pbinternal.PrDependencies, error) {
+	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")
 	}
@@ -224,7 +224,7 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 }
 
 func getDependencyScore(
-	ctx context.Context, trustyClient *trusty.Trusty, dep *pb.PrDependencies_ContextualDependency,
+	ctx context.Context, trustyClient *trusty.Trusty, dep *pbinternal.PrDependencies_ContextualDependency,
 ) (*trustytypes.Reply, error) {
 	// Call the Trusty API
 	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
@@ -242,7 +242,7 @@ func getDependencyScore(
 // low scores and adds them to the summary if needed
 func classifyDependency(
 	_ context.Context, logger *zerolog.Logger, resp *trustytypes.Reply, ruleConfig *config,
-	prSummary *summaryPrHandler, dep *pb.PrDependencies_ContextualDependency,
+	prSummary *summaryPrHandler, dep *pbinternal.PrDependencies_ContextualDependency,
 ) {
 	// Check all the policy violations
 	reasons := []RuleViolationReason{}

@@ -32,6 +32,7 @@ import (
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -193,7 +194,7 @@ type templateScoreComponent struct {
 }
 
 type dependencyAlternatives struct {
-	Dependency *pb.Dependency
+	Dependency *pbinternal.Dependency
 
 	// Reason captures the reason why a package was flagged
 	Reasons []RuleViolationReason

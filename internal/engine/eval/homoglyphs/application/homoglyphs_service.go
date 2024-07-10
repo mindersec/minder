@@ -25,6 +25,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -74,7 +75,7 @@ func evaluateHomoglyphs(
 	}
 
 	//nolint:govet
-	prContents, ok := res.Object.(*pb.PrContents)
+	prContents, ok := res.Object.(*pbinternal.PrContents)
 	if !ok {
 		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}

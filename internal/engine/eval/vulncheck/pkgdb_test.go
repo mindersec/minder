@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 func TestNpmPkgDb(t *testing.T) {
@@ -146,7 +146,7 @@ func TestNpmPkgDb(t *testing.T) {
 
 			repo := newNpmRepository(server.URL)
 
-			dep := &pb.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 
@@ -383,7 +383,7 @@ func TestPyPiPkgDb(t *testing.T) {
 			repo := newPyPIRepository(pyPiMockServer.URL)
 			assert.NotNil(t, repo, "Failed to create repository")
 
-			dep := &pb.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 
@@ -401,7 +401,7 @@ func TestPyPiPkgDb(t *testing.T) {
 				assert.NoError(t, err, "Expected no error")
 				actualReply := reply.IndentedString(0,
 					"requests>=2.19.0",
-					&pb.Dependency{
+					&pbinternal.Dependency{
 						Name:    "requests",
 						Version: "2.19.0",
 					})
@@ -592,7 +592,7 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 			repo := newGoProxySumRepository(proxyServer.URL, sumServer.URL)
 			assert.NotNil(t, repo, "Failed to create repository")
 
-			dep := &pb.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 

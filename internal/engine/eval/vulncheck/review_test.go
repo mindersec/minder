@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -112,13 +113,13 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pb.PrDependencies_ContextualDependency{
-		Dep: &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
@@ -221,13 +222,13 @@ func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pb.PrDependencies_ContextualDependency{
-		Dep: &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
@@ -315,13 +316,13 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pb.PrDependencies_ContextualDependency{
-		Dep: &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
@@ -421,13 +422,13 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pb.PrDependencies_ContextualDependency{
-		Dep: &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
@@ -572,13 +573,13 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pb.PrDependencies_ContextualDependency{
-		Dep: &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pb.PrDependencies_ContextualDependency_FilePatch{
+		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 			Name:     "package-lock.json",
 			PatchUrl: server.URL,
 		},
