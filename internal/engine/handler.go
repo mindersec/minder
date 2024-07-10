@@ -17,12 +17,14 @@ package engine
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/events"
 	minderlogger "github.com/stacklok/minder/internal/logger"
@@ -48,6 +50,11 @@ type ExecutorEventHandler struct {
 	// when the server is shutting down.
 	terminationcontext context.Context
 	executor           Executor
+	// cancels are a set of cancel functions for current entity events in flight.
+	// This allows us to cancel rule evaluation directly when terminationContext
+	// is cancelled.
+	cancels []*context.CancelFunc
+	lock    sync.Mutex
 }
 
 // NewExecutorEventHandler creates the event handler for the executor
@@ -57,13 +64,24 @@ func NewExecutorEventHandler(
 	handlerMiddleware []message.HandlerMiddleware,
 	executor Executor,
 ) *ExecutorEventHandler {
-	return &ExecutorEventHandler{
+	eh := &ExecutorEventHandler{
 		evt:                    evt,
 		wgEntityEventExecution: &sync.WaitGroup{},
 		terminationcontext:     ctx,
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
 	}
+	go func() {
+		<-ctx.Done()
+		eh.lock.Lock()
+		defer eh.lock.Unlock()
+
+		for _, cancel := range eh.cancels {
+			(*cancel)()
+		}
+	}()
+
+	return eh
 }
 
 // Register implements the Consumer interface.
@@ -79,9 +97,24 @@ func (e *ExecutorEventHandler) Wait() {
 // HandleEntityEvent handles events coming from webhooks/signals
 // as well as the init event.
 func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
-	// Grab the context before making a copy of the message
-	msgCtx := msg.Context()
-	// Let's not share memory with the caller
+
+	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
+	// completion, because the default watermill behavior for both Go channels and
+	// SQL is to process messages sequentially, but we need additional parallelism
+	// beyond that.  When we switch to a different message processing system, we
+	// should aim to remove this goroutine altogether and have the messaging system
+	// provide the parallelism.
+	// We _do_ still want to cancel on shutdown, however.
+	// TODO: Make this timeout configurable
+	msgCtx := context.WithoutCancel(msg.Context())
+	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
+	{
+		e.lock.Lock()
+		defer e.lock.Unlock()
+		e.cancels = append(e.cancels, &shutdownCancel)
+	}
+
+	// Let's not share memory with the caller.  Note that this does not copy Context
 	msg = msg.Copy()
 
 	inf, err := entities.ParseEntityEvent(msg)
@@ -95,11 +128,15 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
-		// TODO: Make this timeout configurable
-		ctx, cancel := context.WithTimeout(e.terminationcontext, DefaultExecutionTimeout)
-		defer cancel()
 
-		ts := minderlogger.BusinessRecord(msgCtx)
+		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
+		defer cancel()
+		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+			Project:  engcontext.Project{ID: inf.ProjectID},
+			// TODO: extract Provider name from ProviderID
+		})
+
+		ts := minderlogger.BusinessRecord(ctx)
 		ctx = ts.WithTelemetry(ctx)
 
 		logger := zerolog.Ctx(ctx)
@@ -116,14 +153,14 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		// here even though we also record it in the middleware because the evaluation
 		// is done in a separate goroutine which usually still runs after the middleware
 		// had already recorded the telemetry.
-		logMsg := zerolog.Ctx(ctx).Info()
+		logMsg := logger.Info()
 		if err != nil {
-			logMsg = zerolog.Ctx(ctx).Error()
+			logMsg = logger.Error()
 		}
 		ts.Record(logMsg).Send()
 
 		if err != nil {
-			zerolog.Ctx(ctx).Info().
+			logger.Info().
 				Str("project", inf.ProjectID.String()).
 				Str("provider_id", inf.ProviderID.String()).
 				Str("entity", inf.Type.String()).
@@ -142,6 +179,11 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
 			logger.Err(err).Msg("error publishing flush event")
 		}
+		e.lock.Lock()
+		defer e.lock.Unlock()
+		e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
+			return cf == &shutdownCancel
+		})
 	}()
 
 	return nil
