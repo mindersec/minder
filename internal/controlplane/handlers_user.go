@@ -80,9 +80,9 @@ func (s *Server) CreateUser(ctx context.Context,
 		// Set up the default project for the user
 		baseName := subject
 		if token.PreferredUsername() != "" {
-			// Check if `project_name_lower_idx` unique constraint was violated. This happens when
-			// the project name is already taken. In this case, we will append a random string to the
-			// project name. This is a temporary solution until we have a better way to handle this.
+			// Ensure there's no existing project with that name. In case there is, we will append a
+			// random string to the project name. This is a temporary solution until we have a better
+			// way to handle this, i.e. this should happen separately from user creation.
 			baseName, err = getUniqueProjectBaseName(ctx, s.store, token.PreferredUsername())
 			if err != nil {
 				return nil, status.Errorf(codes.Internal, "failed to get unique project name: %s", err)
@@ -504,12 +504,14 @@ func generateRandomString(length int) (string, error) {
 
 // getUniqueProjectBaseName is used to generate a unique project name
 func getUniqueProjectBaseName(ctx context.Context, store db.Store, baseName string) (string, error) {
+	const maxRetries = 10
+	retryCount := 0
 	uniqueBaseName := baseName
-	for {
+	for retryCount < maxRetries {
 		_, err := store.GetProjectByName(ctx, uniqueBaseName)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				break
+				return uniqueBaseName, nil
 			}
 			return "", status.Errorf(codes.Internal, "failed to get project by name: %s", err)
 		}
@@ -518,6 +520,7 @@ func getUniqueProjectBaseName(ctx context.Context, store db.Store, baseName stri
 			return "", status.Errorf(codes.Internal, "failed to generate random string: %s", err)
 		}
 		uniqueBaseName = baseName + "-" + r
+		retryCount++
 	}
-	return uniqueBaseName, nil
+	return "", status.Errorf(codes.ResourceExhausted, "failed to generate a unique project base name after %d attempts", maxRetries)
 }
