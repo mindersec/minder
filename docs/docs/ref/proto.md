@@ -803,6 +803,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
 | alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
 | remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
+| evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
 
 
 
@@ -825,7 +826,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the entity. |
 | type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the entity type. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the entity name. |
 
@@ -851,7 +852,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule instance. |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
+| rule_type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
 | profile | <TypeLink type="string">string</TypeLink> |  | profile is the name of the profile which contains the rule. |
 
 

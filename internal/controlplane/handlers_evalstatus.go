@@ -17,7 +17,10 @@ package controlplane
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -28,7 +31,12 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
+	"github.com/stacklok/minder/internal/history"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+const (
+	defaultPageSize uint64 = 25
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
@@ -37,24 +45,170 @@ func (s *Server) ListEvaluationHistory(
 	ctx context.Context,
 	in *minderv1.ListEvaluationHistoryRequest,
 ) (*minderv1.ListEvaluationHistoryResponse, error) {
-	if flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
-		cursor := in.GetCursor()
-		zerolog.Ctx(ctx).Debug().
-			Strs("entity_type", in.GetEntityType()).
-			Strs("entity_name", in.GetEntityName()).
-			Strs("profile_name", in.GetProfileName()).
-			Strs("status", in.GetStatus()).
-			Strs("remediation", in.GetRemediation()).
-			Strs("alert", in.GetAlert()).
-			Str("from", in.GetFrom().String()).
-			Str("to", in.GetTo().String()).
-			Str("cursor.cursor", cursor.Cursor).
-			Uint64("cursor.size", cursor.Size).
-			Msg("ListEvaluationHistory request")
-		return &minderv1.ListEvaluationHistoryResponse{}, nil
+	if !flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
+		return nil, status.Error(codes.Unimplemented, "Not implemented")
 	}
 
-	return nil, status.Error(codes.Unimplemented, "Not implemented")
+	// process cursor
+	cursor := &history.DefaultCursor
+	size := defaultPageSize
+	if in.GetCursor() != nil {
+		parsedCursor, err := history.ParseListEvaluationCursor(
+			in.GetCursor().GetCursor(),
+		)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid cursor")
+		}
+		cursor = parsedCursor
+		size = in.GetCursor().GetSize()
+	}
+
+	// process filter
+	opts := []history.FilterOpt{}
+	opts = append(opts, FilterOptsFromStrings(in.GetEntityType(), history.WithEntityType)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetEntityName(), history.WithEntityName)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetProfileName(), history.WithProfileName)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetStatus(), history.WithStatus)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetRemediation(), history.WithRemediation)...)
+	opts = append(opts, FilterOptsFromStrings(in.GetAlert(), history.WithAlert)...)
+
+	if in.GetFrom() != nil {
+		opts = append(opts, history.WithFrom(in.GetFrom().AsTime()))
+	}
+	if in.GetTo() != nil {
+		opts = append(opts, history.WithTo(in.GetTo().AsTime()))
+	}
+
+	// we always filter by project id
+	opts = append(opts, history.WithProjectIDStr(in.GetContext().GetProject()))
+
+	filter, err := history.NewListEvaluationFilter(opts...)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid filter")
+	}
+
+	// retrieve data set
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+	}
+	defer s.store.Rollback(tx)
+
+	result, err := s.history.ListEvaluationHistory(
+		ctx,
+		s.store.GetQuerierWithTransaction(tx),
+		cursor,
+		size,
+		filter,
+	)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "error retrieving evaluations")
+	}
+
+	// convert data set to proto
+	data, err := fromEvaluationHistoryRow(result.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	// return data set to client
+	resp := &minderv1.ListEvaluationHistoryResponse{}
+	if len(data) == 0 {
+		return resp, nil
+	}
+
+	resp.Data = data
+	resp.Page = &minderv1.CursorPage{}
+
+	if result.Next != nil {
+		resp.Page.Next = makeCursor(result.Next, size)
+	}
+	if result.Prev != nil {
+		resp.Page.Prev = makeCursor(result.Prev, size)
+	}
+
+	return resp, nil
+}
+
+func fromEvaluationHistoryRow(
+	rows []db.ListEvaluationHistoryRow,
+) ([]*minderv1.EvaluationHistory, error) {
+	res := []*minderv1.EvaluationHistory{}
+
+	for _, row := range rows {
+		var dbEntityType db.Entities
+		if err := dbEntityType.Scan(row.EntityType); err != nil {
+			return nil, errors.New("internal error")
+		}
+		entityType := dbEntityToEntity(dbEntityType)
+		entityName, err := getEntityName(dbEntityType, row)
+		if err != nil {
+			return nil, err
+		}
+
+		var alert *minderv1.EvaluationHistoryAlert
+		if row.AlertStatus.Valid {
+			alert = &minderv1.EvaluationHistoryAlert{
+				Status:  string(row.AlertStatus.AlertStatusTypes),
+				Details: row.AlertDetails.String,
+			}
+		}
+		var remediation *minderv1.EvaluationHistoryRemediation
+		if row.RemediationStatus.Valid {
+			remediation = &minderv1.EvaluationHistoryRemediation{
+				Status:  string(row.RemediationStatus.RemediationStatusTypes),
+				Details: row.RemediationDetails.String,
+			}
+		}
+
+		res = append(res, &minderv1.EvaluationHistory{
+			EvaluatedAt: timestamppb.New(row.EvaluatedAt),
+			Entity: &minderv1.EvaluationHistoryEntity{
+				Id:   row.EvaluationID.String(),
+				Type: entityType,
+				Name: entityName,
+			},
+			Rule: &minderv1.EvaluationHistoryRule{
+				Name:     row.RuleName,
+				RuleType: row.RuleType,
+				Profile:  row.ProfileName,
+			},
+			Status: &minderv1.EvaluationHistoryStatus{
+				Status:  string(row.EvaluationStatus),
+				Details: row.EvaluationDetails,
+			},
+			Alert:       alert,
+			Remediation: remediation,
+		})
+	}
+
+	return res, nil
+}
+
+func makeCursor(cursor []byte, size uint64) *minderv1.Cursor {
+	return &minderv1.Cursor{
+		Cursor: base64.StdEncoding.EncodeToString(cursor),
+		Size:   size,
+	}
+}
+
+// FilterOptsFromStrings calls the given function `f` on each element
+// of values. Such elements are either "complex", i.e. they represent
+// a comma-separated list of sub-elements, or "simple", they do not
+// contain comma characters. If element contains one or more comma
+// characters, it is further split into sub-elements before calling
+// `f` in them.
+func FilterOptsFromStrings(
+	values []string,
+	f func(string) history.FilterOpt,
+) []history.FilterOpt {
+	opts := []history.FilterOpt{}
+	for _, val := range values {
+		for _, part := range strings.Split(val, ",") {
+			opts = append(opts, f(part))
+		}
+	}
+	return opts
 }
 
 // ListEvaluationResults lists the latest evaluation results for
@@ -435,5 +589,48 @@ func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
+	}
+}
+
+func getEntityName(
+	dbEnt db.Entities,
+	row db.ListEvaluationHistoryRow,
+) (string, error) {
+	switch dbEnt {
+	case db.EntitiesPullRequest:
+		if !row.RepoOwner.Valid {
+			return "", errors.New("repo_owner is missing")
+		}
+		if !row.RepoName.Valid {
+			return "", errors.New("repo_name is missing")
+		}
+		if !row.PrNumber.Valid {
+			return "", errors.New("pr_number is missing")
+		}
+		return fmt.Sprintf("%s/%s#%d",
+			row.RepoOwner.String,
+			row.RepoName.String,
+			row.PrNumber.Int64,
+		), nil
+	case db.EntitiesArtifact:
+		if !row.ArtifactName.Valid {
+			return "", errors.New("artifact_name is missing")
+		}
+		return row.ArtifactName.String, nil
+	case db.EntitiesRepository:
+		if !row.RepoOwner.Valid {
+			return "", errors.New("repo_owner is missing")
+		}
+		if !row.RepoName.Valid {
+			return "", errors.New("repo_name is missing")
+		}
+		return fmt.Sprintf("%s/%s",
+			row.RepoOwner.String,
+			row.RepoName.String,
+		), nil
+	case db.EntitiesBuildEnvironment:
+		return "", errors.New("invalid entity type")
+	default:
+		return "", errors.New("invalid entity type")
 	}
 }

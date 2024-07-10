@@ -2577,10 +2577,13 @@ message EvaluationHistory {
 
     // remediation contains details of the remediation for this evaluation.
     EvaluationHistoryRemediation remediation = 5;
+
+    // created_at is the timestamp of creation of this evaluation
+    google.protobuf.Timestamp evaluated_at = 6;
 }
 
 message EvaluationHistoryEntity {
-    // id is the ID of the entity.
+    // id is the unique identifier of the entity.
     string id = 1;
 
     // type is the entity type.
@@ -2595,7 +2598,7 @@ message EvaluationHistoryRule {
     string name = 1;
 
     // type is the name of the rule type.
-    string type = 2;
+    string rule_type = 2;
 
     // profile is the name of the profile which contains the rule.
     string profile = 3;
