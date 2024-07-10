@@ -585,6 +585,16 @@ paths:
           in: query
           required: false
           type: string
+        - name: roleAssignment.firstName
+          description: first_name is the first name of the subject.
+          in: query
+          required: false
+          type: string
+        - name: roleAssignment.lastName
+          description: last_name is the last name of the subject.
+          in: query
+          required: false
+          type: string
       tags:
         - PermissionsService
   /api/v1/permissions/roles:
@@ -3456,6 +3466,12 @@ definitions:
       email:
         type: string
         description: email is the email address of the subject used for invitations.
+      firstName:
+        type: string
+        description: first_name is the first name of the subject.
+      lastName:
+        type: string
+        description: last_name is the last name of the subject.
   v1RuleEvaluationStatus:
     type: object
     properties:
