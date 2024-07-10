@@ -5,77 +5,94 @@ sidebar_position: 100
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Stacklok account
+- The `minder` CLI application
+- A Stacklok account with [`admin` permission](../user_management/user_roles.md)
 
 ## Overview
 
-To add a new user to your project, you need to:
+To invite a new user to your project, you need to:
 
-1. Identify your project ID
-2. Have the new user create a Minder account
-3. Identify the new user's role
-4. Add the user to your project
+1. Identify the new user's role
+2. Invite the user to your project
+3. Have the user exercise the invitation code
 
-## Identify your project ID
-Identify the project that you want to add a new user to. To see all the projects that are available to you, use the [`minder project list`](../ref/cli/minder_project_list.md) command.
+## Identify their role
+
+When adding a user into your project, it's crucial to assign them the
+appropriate role based on their responsibilities and required access levels.
+
+Roles are [documented here](user_roles.md). To view the available roles in your
+project, and their descriptions, run:
+
+```
+minder project role list
+```
+
+## Invite the user to your project
+
+Minder uses an invitation code system to allow users to accept (or decline) the
+invitation to join a project. The invitation code may be delivered over email,
+or may be copied into a channel like Slack or a ticket system. **Any user with
+access to an unused invitation code may accept the invitation, so treat the code
+like a password.**
+
+To add a user to your project, follow these steps:
+
+1. Determine the User's Role: Decide the appropriate role for the user based on
+   their responsibilities.
+
+2. Execute the Command:
+
+   ```bash
+   minder project role grant --email email@example.com --role desired-role
+   ```
+
+   - Replace `email@example.com` with the email address of the user you want to
+     invite.
+   - Replace `desired-role` with the chosen role for the user (e.g., `viewer`,
+     `editor`).
+
+3. You will receive a response message including an invitation code which can be
+   used with
+   [`minder auth invite accept`](../ref/cli/minder_auth_invite_accept.md).
+
+## Have the User Exercise the Invitation Code
+
+Relay the invitation code to the user who you are inviting to join your project.
+They will need to [install the `minder` CLI](../getting_started/install_cli.md)
+and run `minder auth invite accept <invitation code>` to accept the invitation.
+Invitations will expire when used, or after 7 days, though users who have not
+accepted an invitation can be invited again.
+
+## Viewing outstanding invitations
+
+You can then view all the project collaborators and outstanding user invitations
+by executing:
+
+```bash
+minder project role grant list
+```
+
+## Working with Multiple Projects
+
+When you have access to more than one project, you will need to qualify many
+`minder` commands with which project you want them to apply to. You can either
+use the `--project` flag, set a default in your
+[minder configuration](../ref/cli_configuration.md), or set the `MINDER_PROJECT`
+environment variable. To see all the projects that are available to you, use the
+[`minder project list`](../ref/cli/minder_project_list.md) command.
 
 ```
 +--------------------------------------+-------------------+
 |                  ID                  |        NAME       |
 +--------------------------------------+-------------------+
 | 086df3e2-f1bb-4b3a-b2fe-0ebd147e1538 | my_minder_project |
+| f9f4aef0-74af-4909-a0c3-0e8ac7fbc38d | another_project   |
 +--------------------------------------+-------------------+
 ```
 
-In this example, the `my_minder_project` project has Project ID `086df3e2-f1bb-4b3a-b2fe-0ebd147e1538`.
-
-## Have the new user create a Minder account
-To add a user to your project, that user must first [create their Minder account](https://docs.stacklok.com/minder/getting_started/login#logging-in-to-the-stacklok-hosted-instance), and provide you with their user ID.
-
-The new user must create an account and log in using [`minder auth login`](../ref/cli/minder_auth_login.md). After login, the user ID will be displayed as the `Subject`. For example:
-
-```
-Here are your details:
-
-+----------------+--------------------------------------+
-|      KEY       |                VALUE                 |
-+----------------+--------------------------------------+
-| Subject        | ef5588e2-802b-47cb-b64a-52167acfea41 |
-+----------------+--------------------------------------+
-| Created At     | 2024-04-01 09:10:11.121314           |
-|                | +0000 UTC                            |
-+----------------+--------------------------------------+
-...
-```
-
-In this example, the new user's User ID is `ef5588e2-802b-47cb-b64a-52167acfea41`. Once the new user has provided you with their User ID, you can add them to your project.
-
-## Identify their role
-When adding a user into your project, it's crucial to assign them the appropriate role based on their responsibilities and required access levels.
-
-Roles are [documented here](user_roles.md). To view the available roles in your project, and their descriptions, run:
-
-```
-minder project role list
-```
-
-## Add the user to your project
-To add a user to your project, follow these steps:
-
-1. Determine the User's Role: Decide the appropriate role for the user based on their responsibilities.
-
-2. Execute the Command:
-
-   ```bash
-   minder project role grant --project project-id --sub user-id --role desired-role
-    ```
-
-   - Replace `project-id` with the identifier of the project to which you want to add the user.
-   - Replace `user-id` with the unique identifier of the user you want to add.
-   - Replace `desired-role` with the chosen role for the user (e.g., `viewer`, `editor`).
-
-You can then view all the project collaborators and their roles by executing:
-```bash
-minder project role grant list --project project-id
-```
+In this example, the `my_minder_project` project has Project ID
+`086df3e2-f1bb-4b3a-b2fe-0ebd147e1538`, and `another_project` has ID
+`f9f4aef0-74af-4909-a0c3-0e8ac7fbc38d`. Note that you need to specify the
+project _ID_ when using the `--project` flag or `MINDER_CONFIG`, not the project
+name.
