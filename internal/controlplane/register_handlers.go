@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbalpha "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1alpha"
 )
 
 // RegisterGatewayHTTPHandlers registers the gateway HTTP handlers
@@ -81,6 +82,10 @@ func RegisterGatewayHTTPHandlers(ctx context.Context, gwmux *runtime.ServeMux, g
 	if err := pb.RegisterInviteServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
 		log.Fatal().Err(err).Msg("failed to register gateway")
 	}
+
+	if err := pbalpha.RegisterEvalResultsServiceHandlerFromEndpoint(ctx, gwmux, grpcAddress, opts); err != nil {
+		log.Fatal().Err(err).Msg("failed to register gateway")
+	}
 }
 
 // RegisterGRPCServices registers the GRPC services
@@ -117,4 +122,7 @@ func RegisterGRPCServices(s *Server) {
 
 	// Register the InviteService service
 	pb.RegisterInviteServiceServer(s.grpcServer, s)
+
+	// Register the EvalResultsService service
+	pbalpha.RegisterEvalResultsServiceServer(s.grpcServer, s)
 }

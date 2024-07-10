@@ -29,14 +29,15 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1alpha "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1alpha"
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
 // entities.
 func (s *Server) ListEvaluationHistory(
 	ctx context.Context,
-	in *minderv1.ListEvaluationHistoryRequest,
-) (*minderv1.ListEvaluationHistoryResponse, error) {
+	in *minderv1alpha.ListEvaluationHistoryRequest,
+) (*minderv1alpha.ListEvaluationHistoryResponse, error) {
 	if flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
 		cursor := in.GetCursor()
 		zerolog.Ctx(ctx).Debug().
@@ -51,7 +52,7 @@ func (s *Server) ListEvaluationHistory(
 			Str("cursor.cursor", cursor.Cursor).
 			Uint64("cursor.size", cursor.Size).
 			Msg("ListEvaluationHistory request")
-		return &minderv1.ListEvaluationHistoryResponse{}, nil
+		return &minderv1alpha.ListEvaluationHistoryResponse{}, nil
 	}
 
 	return nil, status.Error(codes.Unimplemented, "Not implemented")

@@ -69,6 +69,7 @@ import (
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbalpha "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1alpha"
 )
 
 const metricsPath = "/metrics"
@@ -120,6 +121,8 @@ type Server struct {
 	pb.UnimplementedProvidersServiceServer
 	pb.UnimplementedEvalResultsServiceServer
 	pb.UnimplementedInviteServiceServer
+
+	pbalpha.UnimplementedEvalResultsServiceServer
 }
 
 // NewServer creates a new server instance
