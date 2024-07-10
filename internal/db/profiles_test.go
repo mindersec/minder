@@ -314,6 +314,35 @@ func TestProfileListWithSelectors(t *testing.T) {
 		require.Contains(t, rows[genSelIdx].ProfilesWithSelectors, genericSel)
 	})
 
+	t.Run("Get profile by project and ID", func(t *testing.T) {
+		t.Parallel()
+
+		oneResult, err := testQueries.GetProfileByProjectAndID(context.Background(), GetProfileByProjectAndIDParams{
+			ProjectID: randomEntities.proj.ID,
+			ID:        oneSelectorProfile.ID,
+		})
+		require.NoError(t, err)
+		require.Len(t, oneResult, 1)
+		require.Len(t, oneResult[0].ProfilesWithSelectors, 1)
+		require.Contains(t, oneResult[0].ProfilesWithSelectors, oneSel)
+
+		noResult, err := testQueries.GetProfileByProjectAndID(context.Background(), GetProfileByProjectAndIDParams{
+			ProjectID: randomEntities.proj.ID,
+			ID:        noSelectors.ID,
+		})
+		require.NoError(t, err)
+		require.Len(t, noResult, 1)
+		require.Len(t, noResult[0].ProfilesWithSelectors, 0)
+
+		multiResult, err := testQueries.GetProfileByProjectAndID(context.Background(), GetProfileByProjectAndIDParams{
+			ProjectID: randomEntities.proj.ID,
+			ID:        multiSelectorProfile.ID,
+		})
+		require.NoError(t, err)
+		require.Len(t, multiResult, 1)
+		require.Len(t, multiResult[0].ProfilesWithSelectors, 3)
+		require.Subset(t, multiResult[0].ProfilesWithSelectors, []ProfileSelector{mulitSel1, mulitSel2, mulitSel3})
+	})
 }
 
 func TestProfileLabels(t *testing.T) {
