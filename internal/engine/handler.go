@@ -46,10 +46,7 @@ type ExecutorEventHandler struct {
 	evt                    events.Publisher
 	handlerMiddleware      []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
-	// terminationcontext is used to terminate the executor
-	// when the server is shutting down.
-	terminationcontext context.Context
-	executor           Executor
+	executor               Executor
 	// cancels are a set of cancel functions for current entity events in flight.
 	// This allows us to cancel rule evaluation directly when terminationContext
 	// is cancelled.
@@ -67,7 +64,6 @@ func NewExecutorEventHandler(
 	eh := &ExecutorEventHandler{
 		evt:                    evt,
 		wgEntityEventExecution: &sync.WaitGroup{},
-		terminationcontext:     ctx,
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
 	}
@@ -132,7 +128,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
 		defer cancel()
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
-			Project:  engcontext.Project{ID: inf.ProjectID},
+			Project: engcontext.Project{ID: inf.ProjectID},
 			// TODO: extract Provider name from ProviderID
 		})
 
