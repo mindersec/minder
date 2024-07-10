@@ -703,19 +703,6 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-<Message id="minder-v1-Dependency">Dependency</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ecosystem | <TypeLink type="minder-v1-DepEcosystem">DepEcosystem</TypeLink> |  |  |
-| name | <TypeLink type="string">string</TypeLink> |  |  |
-| version | <TypeLink type="string">string</TypeLink> |  |  |
-
-
-
 <Message id="minder-v1-DiffType">DiffType</Message>
 
 DiffType defines the diff data ingester.
@@ -1724,79 +1711,6 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
-<Message id="minder-v1-PrContents">PrContents</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
-| files | <TypeLink type="minder-v1-PrContents-File">PrContents.File</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrContents-File">PrContents.File</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  |  |
-| file_patch_url | <TypeLink type="string">string</TypeLink> |  |  |
-| patch_lines | <TypeLink type="minder-v1-PrContents-File-Line">PrContents.File.Line</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrContents-File-Line">PrContents.File.Line</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| line_number | <TypeLink type="int32">int32</TypeLink> |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
-| content | <TypeLink type="string">string</TypeLink> |  |  |
-
-
-
-<Message id="minder-v1-PrDependencies">PrDependencies</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
-| deps | <TypeLink type="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| dep | <TypeLink type="minder-v1-Dependency">Dependency</TypeLink> |  |  |
-| file | <TypeLink type="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</TypeLink> |  |  |
-
-
-
-<Message id="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  | file changed, e.g. package-lock.json |
-| patch_url | <TypeLink type="string">string</TypeLink> |  | points to the the raw patchfile |
-
-
-
 <Message id="minder-v1-Profile">Profile</Message>
 
 Profile defines a profile that is user defined.
@@ -2694,19 +2608,6 @@ name, if it has been created
 | CREDENTIALS_STATE_SET | 1 |  |
 | CREDENTIALS_STATE_UNSET | 2 |  |
 | CREDENTIALS_STATE_NOT_APPLICABLE | 3 |  |
-
-
-
-<Enum id="minder-v1-DepEcosystem">DepEcosystem</Enum>
-
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| DEP_ECOSYSTEM_UNSPECIFIED | 0 |  |
-| DEP_ECOSYSTEM_NPM | 1 |  |
-| DEP_ECOSYSTEM_GO | 2 |  |
-| DEP_ECOSYSTEM_PYPI | 3 |  |
 
 
 
