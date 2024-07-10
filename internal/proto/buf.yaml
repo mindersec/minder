@@ -14,6 +14,12 @@
 # limitations under the License.
 
 version: v1
-directories:
-  - proto
-  - internal/proto
+breaking:
+  use:
+    - WIRE_JSON
+lint:
+  use:
+    - DEFAULT
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+  allow_comment_ignores: true
