@@ -262,6 +262,8 @@ func (s *Server) ListRoleAssignments(
 			continue
 		}
 		as[i].DisplayName = identity.Human()
+		as[i].FirstName = identity.FirstName
+		as[i].LastName = identity.LastName
 		if mapIdToDisplay[as[i].Subject] == "" {
 			mapIdToDisplay[as[i].Subject] = identity.Human()
 		}

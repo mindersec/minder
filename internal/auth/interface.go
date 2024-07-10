@@ -50,6 +50,11 @@ type Identity struct {
 	// UserID and HumanName are only unique within the context of a single
 	// identity provider.
 	Provider IdentityProvider
+	// FirstName and LastName are optional fields that may be provided by the
+	// identity provider. These are not guaranteed to be present, and may be
+	// empty.
+	FirstName string
+	LastName  string
 }
 
 // String implements strings.Stringer, and also provides a stable storage

@@ -2254,6 +2254,10 @@ message RoleAssignment {
     optional string project = 4;
     // email is the email address of the subject used for invitations.
     string email = 6;
+    // first_name is the first name of the subject.
+    string first_name = 7;
+    // last_name is the last name of the subject.
+    string last_name = 8;
 
     reserved 3; // deprecated context
 }

@@ -157,11 +157,19 @@ func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity
 	if user.Attributes == nil || user.Id == nil {
 		return nil
 	}
-	return &auth.Identity{
+	ret := &auth.Identity{
 		UserID:    *user.Id,
 		HumanName: *user.Username,
 		Provider:  k,
 	}
+	// If the user has a first and last name, return them too
+	if user.FirstName != nil {
+		ret.FirstName = *user.FirstName
+	}
+	if user.LastName != nil {
+		ret.LastName = *user.LastName
+	}
+	return ret
 }
 
 func (_ *KeyCloak) lookupGithubUser(_ context.Context, _ string) (*auth.Identity, error) {

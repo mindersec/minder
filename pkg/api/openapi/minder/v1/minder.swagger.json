@@ -864,6 +864,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "roleAssignment.firstName",
+            "description": "first_name is the first name of the subject.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "roleAssignment.lastName",
+            "description": "last_name is the last name of the subject.",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -4650,6 +4664,14 @@
         "email": {
           "type": "string",
           "description": "email is the email address of the subject used for invitations."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "first_name is the first name of the subject."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "last_name is the last name of the subject."
         }
       }
     },
