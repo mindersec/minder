@@ -2175,6 +2175,8 @@ This is used to fetch data from a REST endpoint.
 | display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the subject. |
 | project | <TypeLink type="string">string</TypeLink> | optional | project is the project in which the role is assigned. |
 | email | <TypeLink type="string">string</TypeLink> |  | email is the email address of the subject used for invitations. |
+| first_name | <TypeLink type="string">string</TypeLink> |  | first_name is the first name of the subject. |
+| last_name | <TypeLink type="string">string</TypeLink> |  | last_name is the last name of the subject. |
 
 
 
