@@ -32,7 +32,7 @@ import (
 
 	"github.com/stacklok/minder/internal/constants"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -194,7 +194,7 @@ type templateScoreComponent struct {
 }
 
 type dependencyAlternatives struct {
-	Dependency *pbinternal.Dependency
+	Dependency *models.Dependency
 
 	// Reason captures the reason why a package was flagged
 	Reasons []RuleViolationReason
@@ -289,11 +289,11 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				score = *alternative.trustyReply.Summary.Score
 			}
 			packageData := templatePackageData{
-				Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
+				Ecosystem:   string(alternative.Dependency.Ecosystem),
 				PackageName: alternative.Dependency.Name,
 				TrustyURL: fmt.Sprintf(
 					"%s%s/%s", constants.TrustyHttpURL,
-					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+					strings.ToLower(string(alternative.Dependency.Ecosystem)),
 					url.PathEscape(alternative.trustyReply.PackageName),
 				),
 				Score: score,
@@ -326,11 +326,11 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 
 			altPackageData := templateAlternative{
 				templatePackageData: templatePackageData{
-					Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
+					Ecosystem:   string(alternative.Dependency.Ecosystem),
 					PackageName: altData.PackageName,
 					TrustyURL: fmt.Sprintf(
 						"%s%s/%s", constants.TrustyHttpURL,
-						strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+						strings.ToLower(string(alternative.Dependency.Ecosystem)),
 						url.PathEscape(altData.PackageName),
 					),
 					Score: altData.Score,

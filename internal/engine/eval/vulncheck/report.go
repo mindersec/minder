@@ -147,7 +147,7 @@ func (r *vulnSummaryReport) render() (string, error) {
 			DependencyVersion   string
 			Vulnerabilities     []Vulnerability
 		}{
-			DependencyEcosystem: dep.Dependency.Ecosystem.AsString(),
+			DependencyEcosystem: string(dep.Dependency.Ecosystem),
 			DependencyName:      dep.Dependency.Name,
 			DependencyVersion:   dep.Dependency.Version,
 			Vulnerabilities:     dep.Vulnerabilities,
