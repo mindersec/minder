@@ -16,7 +16,9 @@ package controlplane
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"path"
@@ -78,7 +80,13 @@ func (s *Server) CreateUser(ctx context.Context,
 		// Set up the default project for the user
 		baseName := subject
 		if token.PreferredUsername() != "" {
-			baseName = token.PreferredUsername()
+			// Ensure there's no existing project with that name. In case there is, we will append a
+			// random string to the project name. This is a temporary solution until we have a better
+			// way to handle this, i.e. this should happen separately from user creation.
+			baseName, err = getUniqueProjectBaseName(ctx, s.store, token.PreferredUsername())
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to get unique project name: %s", err)
+			}
 		}
 
 		project, err := s.projectCreator.ProvisionSelfEnrolledOAuthProject(
@@ -482,4 +490,37 @@ func isUserSelfResolving(ctx context.Context, store db.Store, i db.GetInvitation
 	}
 
 	return nil
+}
+
+// generateRandomString is used to generate a random string of a given length
+func generateRandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes)[:length], nil
+}
+
+// getUniqueProjectBaseName is used to generate a unique project name
+func getUniqueProjectBaseName(ctx context.Context, store db.Store, baseName string) (string, error) {
+	const maxRetries = 10
+	retryCount := 0
+	uniqueBaseName := baseName
+	for retryCount < maxRetries {
+		_, err := store.GetProjectByName(ctx, uniqueBaseName)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return uniqueBaseName, nil
+			}
+			return "", status.Errorf(codes.Internal, "failed to get project by name: %s", err)
+		}
+		r, err := generateRandomString(4)
+		if err != nil {
+			return "", status.Errorf(codes.Internal, "failed to generate random string: %s", err)
+		}
+		uniqueBaseName = baseName + "-" + r
+		retryCount++
+	}
+	return "", status.Errorf(codes.ResourceExhausted, "failed to generate a unique project base name after %d attempts", maxRetries)
 }
