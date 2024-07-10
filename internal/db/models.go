@@ -154,6 +154,10 @@ const (
 	EntitiesBuildEnvironment Entities = "build_environment"
 	EntitiesArtifact         Entities = "artifact"
 	EntitiesPullRequest      Entities = "pull_request"
+	EntitiesRelease          Entities = "release"
+	EntitiesPipelineRun      Entities = "pipeline_run"
+	EntitiesTaskRun          Entities = "task_run"
+	EntitiesBuild            Entities = "build"
 )
 
 func (e *Entities) Scan(src interface{}) error {
