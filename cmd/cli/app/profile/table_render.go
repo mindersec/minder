@@ -16,12 +16,12 @@
 package profile
 
 import (
-	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
+	"github.com/stacklok/minder/cmd/cli/app/common"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -42,15 +42,6 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 
 	return string(out)
 }
-
-const (
-	successStatus      = "success"
-	failureStatus      = "failure"
-	errorStatus        = "error"
-	skippedStatus      = "skipped"
-	pendingStatus      = "pending"
-	notAvailableStatus = "not_available"
-)
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable() table.Table {
@@ -107,26 +98,9 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table) {
 	t.AddRowWithColor(
 		layouts.NoColor(ps.ProfileId),
 		layouts.NoColor(ps.ProfileName),
-		getColoredEvalStatus(ps.ProfileStatus),
+		common.GetEvalStatusColor(ps.ProfileStatus),
 		layouts.NoColor(ps.LastUpdated.AsTime().Format(time.RFC3339)),
 	)
-}
-
-func getColoredEvalStatus(status string) layouts.ColoredColumn {
-	txt := getEvalStatusText(status)
-	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
-	switch strings.ToLower(status) {
-	case successStatus:
-		return layouts.GreenColumn(txt)
-	case failureStatus:
-		return layouts.RedColumn(txt)
-	case errorStatus:
-		return layouts.RedColumn(txt)
-	case skippedStatus:
-		return layouts.YellowColumn(txt)
-	default:
-		return layouts.NoColor(txt)
-	}
 }
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
@@ -144,67 +118,10 @@ func RenderRuleEvaluationStatusTable(
 			layouts.NoColor(eval.RuleId),
 			layouts.NoColor(eval.RuleDescriptionName),
 			layouts.NoColor(eval.Entity),
-			getColoredEvalStatus(eval.Status),
-			getRemediateStatusColor(eval.RemediationStatus),
+			common.GetEvalStatusColor(eval.Status),
+			common.GetRemediateStatusColor(eval.RemediationStatus),
 			layouts.NoColor(mapToYAMLOrEmpty(eval.EntityInfo)),
 		)
-	}
-}
-
-func getRemediateStatusColor(status string) layouts.ColoredColumn {
-	txt := getRemediationStatusText(status)
-	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'not supported'
-	switch strings.ToLower(status) {
-	case successStatus:
-		return layouts.GreenColumn(txt)
-	case failureStatus:
-		return layouts.RedColumn(txt)
-	case errorStatus:
-		return layouts.RedColumn(txt)
-	case notAvailableStatus, skippedStatus:
-		return layouts.YellowColumn(txt)
-	default:
-		return layouts.NoColor(txt)
-	}
-}
-
-// Gets a friendly status text with an emoji
-func getEvalStatusText(status string) string {
-	// eval statuses can be 'success', 'failure', 'error', 'skipped', 'pending'
-	switch strings.ToLower(status) {
-	case successStatus:
-		return "Success"
-	case failureStatus:
-		return "Failure"
-	case errorStatus:
-		return "Error"
-	case skippedStatus:
-		return "Skipped"
-	case pendingStatus:
-		return "Pending"
-	default:
-		return "Unknown"
-	}
-}
-
-// Gets a friendly status text with an emoji
-func getRemediationStatusText(status string) string {
-	// remediation statuses can be 'success', 'failure', 'error', 'skipped', 'pending' or 'not supported'
-	switch strings.ToLower(status) {
-	case successStatus:
-		return "Success"
-	case failureStatus:
-		return "Failure"
-	case errorStatus:
-		return "Error"
-	case skippedStatus:
-		return "Skipped" // visually empty as we didn't have to remediate
-	case pendingStatus:
-		return "Pending"
-	case notAvailableStatus:
-		return "Not Available"
-	default:
-		return "Unknown"
 	}
 }
 
