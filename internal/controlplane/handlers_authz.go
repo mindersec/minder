@@ -220,20 +220,20 @@ var _ minder.PermissionsServiceServer = (*Server)(nil)
 // ListRoles returns the list of available roles for the minder instance
 func (*Server) ListRoles(_ context.Context, _ *minder.ListRolesRequest) (*minder.ListRolesResponse, error) {
 	resp := minder.ListRolesResponse{
-		Roles: make([]*minder.Role, 0, len(authz.AllRoles)),
+		Roles: make([]*minder.Role, 0, len(authz.AllRolesDescriptions)),
 	}
 	// Iterate over all roles and add them to the response if they have a description. Skip if they don't.
 	// The roles are sorted by the order in which they are defined in the authz package, i.e. admin, editor, viewer, etc.
 	for _, role := range authz.AllRolesSorted {
 		// Skip roles that don't have a description
-		if authz.AllRoles[role] == "" {
+		if authz.AllRolesDescriptions[role] == "" {
 			continue
 		}
 		// Add the role to the response
 		resp.Roles = append(resp.Roles, &minder.Role{
 			Name:        role.String(),
 			DisplayName: authz.AllRolesDisplayName[role],
-			Description: authz.AllRoles[role],
+			Description: authz.AllRolesDescriptions[role],
 		})
 	}
 	return &resp, nil
@@ -667,7 +667,7 @@ func (s *Server) removeRole(
 	}
 
 	// Validate in case there's only one admin for the project and the user is trying to remove themselves
-	if roleToRemove == authz.AuthzRoleAdmin {
+	if roleToRemove == authz.RoleAdmin {
 		// Get all role assignments for the project
 		as, err := s.authzClient.AssignmentsToProject(ctx, targetProject)
 		if err != nil {
@@ -676,7 +676,7 @@ func (s *Server) removeRole(
 		// Count the number of admin roles
 		adminRolesCnt := 0
 		for _, existing := range as {
-			if existing.Role == authz.AuthzRoleAdmin.String() {
+			if existing.Role == authz.RoleAdmin.String() {
 				adminRolesCnt++
 			}
 		}

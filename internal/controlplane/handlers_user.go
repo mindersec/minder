@@ -254,7 +254,7 @@ func (s *Server) getUserDependencies(ctx context.Context, user db.User) ([]*pb.P
 			projectRole = &pb.Role{
 				Name:        authzRole.String(),
 				DisplayName: authz.AllRolesDisplayName[authzRole],
-				Description: authz.AllRoles[authzRole],
+				Description: authz.AllRolesDescriptions[authzRole],
 			}
 		}
 

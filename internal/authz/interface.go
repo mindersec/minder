@@ -32,41 +32,41 @@ var ErrNotAuthorized = fmt.Errorf("not authorized")
 type Role string
 
 const (
-	// AuthzRoleAdmin is the admin role
-	AuthzRoleAdmin Role = "admin"
-	// AuthzRoleEditor is the editor role
-	AuthzRoleEditor Role = "editor"
-	// AuthzRoleViewer is the viewer role
-	AuthzRoleViewer Role = "viewer"
-	// AuthzRolePolicyWriter is the `policy_writer` role
-	AuthzRolePolicyWriter Role = "policy_writer"
-	// AuthzRolePermissionsManager is the `permissions_manager` role
-	AuthzRolePermissionsManager Role = "permissions_manager"
+	// RoleAdmin is the admin role
+	RoleAdmin Role = "admin"
+	// RoleEditor is the editor role
+	RoleEditor Role = "editor"
+	// RoleViewer is the viewer role
+	RoleViewer Role = "viewer"
+	// RolePolicyWriter is the `policy_writer` role
+	RolePolicyWriter Role = "policy_writer"
+	// RolePermissionsManager is the `permissions_manager` role
+	RolePermissionsManager Role = "permissions_manager"
 )
 
 var (
-	// AllRoles is a list of all roles
-	AllRoles = map[Role]string{
-		AuthzRoleAdmin: "The Admin role allows the user to perform all actions on the project and " +
+	// AllRolesDescriptions is a list of all roles
+	AllRolesDescriptions = map[Role]string{
+		RoleAdmin: "The Admin role allows the user to perform all actions on the project and " +
 			"sub-projects.",
-		AuthzRoleEditor: "The Editor role allows for more write and read actions on the project and " +
+		RoleEditor: "The Editor role allows for more write and read actions on the project and " +
 			"sub-projects except for project administration.",
-		AuthzRoleViewer: "The Viewer role allows for read actions on the project and sub-projects.",
-		AuthzRolePolicyWriter: "The Policy Writer role allows for writing policies (rule types and " +
+		RoleViewer: "The Viewer role allows for read actions on the project and sub-projects.",
+		RolePolicyWriter: "The Policy Writer role allows for writing policies (rule types and " +
 			"profiles) on the project and sub-projects. This is handy for CI jobs.",
-		AuthzRolePermissionsManager: "The Permissions Manager role allows for managing permissions " +
+		RolePermissionsManager: "The Permissions Manager role allows for managing permissions " +
 			"on the project and sub-projects.",
 	}
 	// AllRolesDisplayName is a list of all roles with their display names
 	AllRolesDisplayName = map[Role]string{
-		AuthzRoleAdmin:              "Admin",
-		AuthzRoleEditor:             "Editor",
-		AuthzRoleViewer:             "Viewer",
-		AuthzRolePolicyWriter:       "Policy Writer",
-		AuthzRolePermissionsManager: "Permissions Manager",
+		RoleAdmin:              "Admin",
+		RoleEditor:             "Editor",
+		RoleViewer:             "Viewer",
+		RolePolicyWriter:       "Policy Writer",
+		RolePermissionsManager: "Permissions Manager",
 	}
 	// AllRolesSorted is a list of all roles sorted
-	AllRolesSorted = []Role{AuthzRoleAdmin, AuthzRoleEditor, AuthzRoleViewer, AuthzRolePolicyWriter, AuthzRolePermissionsManager}
+	AllRolesSorted = []Role{RoleAdmin, RoleEditor, RoleViewer, RolePolicyWriter, RolePermissionsManager}
 )
 
 func (r Role) String() string {
@@ -79,7 +79,7 @@ func ParseRole(r string) (Role, error) {
 		return "", fmt.Errorf("role cannot be empty")
 	}
 	rr := Role(r)
-	if _, ok := AllRoles[rr]; !ok {
+	if _, ok := AllRolesDescriptions[rr]; !ok {
 		return "", fmt.Errorf("invalid role %s", r)
 	}
 

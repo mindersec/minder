@@ -317,50 +317,50 @@ func TestRoleManagement(t *testing.T) {
 	}{{
 		name: "simple adds",
 		adds: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user1.String(),
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:        authz.AuthzRoleAdmin.String(),
+				Role:        authz.RoleAdmin.String(),
 				Subject:     user1.String(),
 				DisplayName: "user1",
 				Project:     proto.String(project.String()),
 			}, {
-				Role:        authz.AuthzRoleAdmin.String(),
+				Role:        authz.RoleAdmin.String(),
 				DisplayName: "user2",
 				Subject:     user2.String(),
 				Project:     proto.String(project.String()),
 			}},
 		},
 		stored: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user1.String(),
 			Project: proto.String(project.String()),
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 			Project: proto.String(project.String()),
 		}},
 	}, {
 		name: "add and remove",
 		adds: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user1.String(),
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
 		removes: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:        authz.AuthzRoleAdmin.String(),
+				Role:        authz.RoleAdmin.String(),
 				DisplayName: "user1",
 				Subject:     user1.String(),
 				Project:     proto.String(project.String()),
@@ -370,31 +370,31 @@ func TestRoleManagement(t *testing.T) {
 		name:    "IDP resolution",
 		idpFlag: true,
 		adds: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: "user1",
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{{
-				Role:        authz.AuthzRoleAdmin.String(),
+				Role:        authz.RoleAdmin.String(),
 				Subject:     user1.String(),
 				DisplayName: "user1",
 				Project:     proto.String(project.String()),
 			}, {
-				Role:        authz.AuthzRoleAdmin.String(),
+				Role:        authz.RoleAdmin.String(),
 				Subject:     user2.String(),
 				DisplayName: "user2",
 				Project:     proto.String(project.String()),
 			}},
 		},
 		stored: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user1.String(),
 			Project: proto.String(project.String()),
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 			Project: proto.String(project.String()),
 		}},
@@ -403,15 +403,15 @@ func TestRoleManagement(t *testing.T) {
 		// NOTE: we don't have a way to create invitations yet.
 		userManagementFlag: true,
 		adds: []*minder.RoleAssignment{{
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user1.String(),
 		}, {
-			Role:    authz.AuthzRoleAdmin.String(),
+			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
 		invites: []db.ListInvitationsForProjectRow{{
 			Email:           "george@happyplace.dev",
-			Role:            authz.AuthzRoleEditor.String(),
+			Role:            authz.RoleEditor.String(),
 			IdentitySubject: user1.String(),
 			CreatedAt:       time.Time{},
 			UpdatedAt:       time.Time{},
@@ -419,7 +419,7 @@ func TestRoleManagement(t *testing.T) {
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{},
 			Invitations: []*minder.Invitation{{
-				Role:      authz.AuthzRoleEditor.String(),
+				Role:      authz.RoleEditor.String(),
 				Email:     "george@happyplace.dev",
 				Project:   project.String(),
 				Sponsor:   user1.String(),
