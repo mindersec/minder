@@ -747,21 +747,21 @@ var (
 		RuleEntityID:    ruleEntityID,
 		Status:          db.EvalStatusTypesError,
 		Details:         errTest.Error(),
-		EvaluationTimes: []time.Time{time.Now()},
+		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
 	}
 	differentDetails = db.EvaluationStatus{
 		ID:              evaluationID,
 		RuleEntityID:    ruleEntityID,
 		Status:          db.EvalStatusTypesError,
 		Details:         "something went wrong",
-		EvaluationTimes: []time.Time{time.Now()},
+		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
 	}
 	differentState = db.EvaluationStatus{
 		ID:              evaluationID,
 		RuleEntityID:    ruleEntityID,
 		Status:          db.EvalStatusTypesSkipped,
 		Details:         engerr.ErrEvaluationSkipped.Error(),
-		EvaluationTimes: []time.Time{time.Now()},
+		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
 	}
 	errTest = errors.New("oh no")
 )
