@@ -68,16 +68,19 @@ webhook-config:
   webhook_secret: "your-password"
 # previous_webhook_secret_file: ./previous_secrets
 
-# OAuth2 Configuration (used during enrollment)
-# These values are to be set within the GitHub OAuth2 App page
-github:
-    client_id: "abcde....."
-    client_secret: "abcde....."
-    payload_secret: "your-password"
-    redirect_uri: "http://localhost:8080/api/v1/auth/callback/github"
-    # [*] for all events. It can also be a list such as [push,branch_protection_rule].
-    # Please check complete list on https://docs.github.com/en/webhooks-and-events/webhooks/webhook-events-and-payloads
-    events: ["*"]
+
+# See https://minder-docs.stacklok.dev/run_minder_server/config_oauth for more information on setting these values
+github-app:
+  client_id: <client-id>
+  client_secret: <client-secret>
+  redirect_uri: "http://localhost:8080/api/v1/auth/callback/github-app/app" # This needs to match the registered callback URL in the GitHub App
+
+provider:
+  github-app:
+    app_name: <app-name>
+    app_id: <app-id>
+    user_id: <user-id>
+    private_key: ".secrets/github-app.pem"
 
 events:
   driver: go-channel

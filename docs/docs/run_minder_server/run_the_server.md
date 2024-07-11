@@ -1,290 +1,152 @@
 ---
-title: Run the server
+title: Installing a Development version
 sidebar_position: 10
 ---
 
-# Run a minder server
+# Installing a Development version 
 
-Minder is platform, comprising of a control plane, a CLI, a database and an identity provider.
+This guide shows you how to run a Minder server locally. It is intended for users who would like to contribute to the Minder project. It is not intended for production use. 
+This guide will walk you through how to: 
+- Retrieve the latest source code
+- Set up your development environment
+- Run the dependant applications
+- Create a Provider
+- Set up authentication
 
-The control plane runs two endpoints, a gRPC endpoint and a HTTP endpoint.
-
-Minder is controlled and managed via the CLI application `minder`.
-
-PostgreSQL is used as the database.
-
-Keycloak is used as the identity provider.
-
-There are two methods to get started with Minder, either by downloading the
-latest release, building from source or (quickest) using the provided `docker-compose.yaml`
-file.
+Once you complete this guide, you will have a Minder server built from source and ready to contribute to.
 
 ## Prerequisites
 
-- [Go 1.20](https://golang.org/doc/install)
-- [PostgreSQL](https://www.postgresql.org/download/)
-- [Keycloak](https://www.keycloak.org/guides)
-- [OpenFGA](https://openfga.dev/#quick-start)
+- [Go 1.22](https://golang.org/doc/install)
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [ko](https://ko.build/install/)
+- [yq](https://github.com/mikefarah/yq)
 
-## Download the latest release
 
-[stub for when we cut a first release]
-
-## Build from source
-
-Alternatively, you can build from source.
+## Steps
 
 ### Clone the repository
+Begin by cloning the Minder repository to get the latest source code. 
 
 ```bash
 git clone git@github.com:stacklok/minder.git
+cd minder
 ```
 
-### Build the application
+### Set up Development Environment
+To set up your development environment, run:
 
+```bash
+make bootstrap
+```
+This will install the required tools for running different make targets, initialize required configuration files, as well as generate a token key passphrase.
+
+### Build the application
+Run the following to build minder and minder-server (binaries will be present at ./bin/)
 ```bash
 make build
 ```
 
-This will create two binaries, `bin/minder-server` and `bin/minder`.
+You may copy these into a location on your path, or run them directly from the `bin` directory.
 
-You may now copy these into a location on your path, or run them directly from the `bin` directory.
 
-You will also need a configuration file. You can copy the example configuration file from `configs/server-config.yaml.example` to `$(PWD)/server-config.yaml`.
+### Configure the Repository Provider
+You now need to create a Provider to enable Minder to inspect and manage your repository configuration. Currently only GitHub is supported as a Provider, so we'll do this using a GitHub App. This app will also provide Keycloak with an authentication source. Follow the steps in [Configuring a Provider](./config_provider.md) then return here to complete configuring the server. Be sure to save the Client ID and Client secret values, because you will need them again below. 
 
-If you prefer to use a different file name or location, you can specify this using the `--config` 
-flag, e.g. `minder-server --config /file/path/server-config.yaml serve` when you later run the application.
 
-## OpenFGA
-
-Minder requires a OpenFGA instance to be running. You can install this locally, or use a container.
-
-Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local OpenFGA configuration.
-
-```yaml
-authz:
-   api_url: http://localhost:8082
-   store_name: minder
-   auth:
-      # Set to token for production
-      method: none
-```
-
-### Using a container
-
-A simple way to get started is to use the provided `docker-compose.yaml` file.
+### Start the Minder server
+At this point, you should have a GitHub provider configured and your `server-config.yaml` file updated. 
+Start `minder-server` along with its dependant services (`keycloak` and `postgres`) by running:
 
 ```bash
-docker compose up -d openfga
+make run-docker
 ```
-
-## Database creation
-
-Minder requires a PostgreSQL database to be running. You can install this locally, or use a container.
-
-Should you install locally, you will need to set certain configuration options in your `server-config.yaml` file, to reflect your local database configuration.
-
-```yaml
-database:
-  dbhost: "localhost"
-  dbport: 5432
-  dbuser: postgres
-  dbpass: postgres
-  dbname: minder
-  sslmode: disable
-```
-
-### Using a container
-
-A simple way to get started is to use the provided `docker-compose.yaml` file.
-
+As this command runs, you will see it build the Minder server container and then start the dependant containers.
+If you run
 ```bash
-docker compose up -d postgres
+docker ps
 ```
+you should see 4 new services running:
+- keycloak
+- minder
+- openfga
+- postgres
 
-### Create the database and OpenFGA model
 
-Once you have a running database and OpenFGA instance, you can create the
-database and OpenFGA model using the `minder-server` CLI tool or via the `make`
-command.
+### Configure Keycloak
+Now that the Keycloak application is running, you need to configure it using the GitHub App you previous configured. 
+To enable GitHub login on Keycloak run the following command, using the `client_id` and `client_secret` you generated setting up the GitHub app: 
 
-```bash
-make migrateup
-```
-
-or:
-
-```bash
-minder-server migrate up
-```
-
-## Identity Provider
-Minder requires a Keycloak instance to be running. You can install this locally, or use a container.
-
-Should you install locally, you will need to configure the client on Keycloak.
-You will need the following:
-- A Keycloak realm named "stacklok" with event saving turned on for the "Delete account" event.
-- A registered public client with the redirect URI `http://localhost/*`. This is used for the minder CLI.
-- A registered confidential client with a service account that can manage users and view events. This is used for the minder server.
-
-You will also need to set certain configuration options in your `server-config.yaml` file, to reflect your local Keycloak configuration.
-```yaml
-identity:
-  server:
-    issuer_url: http://localhost:8081
-    client_id: minder-server
-    client_secret: secret
-```
-
-Similarly, for the CLI `config.yaml`.
-```yaml
-identity:
-  cli:
-    issuer_url: http://localhost:8081
-    client_id: minder-cli
-```
-
-### Using a container
-
-A simple way to get started is to use the provided `docker-compose.yaml` file.
-
-```bash
-docker compose up -d keycloak
-```
-
-### Social login
-Once you have a Keycloak instance running locally, you can set up GitHub authentication.
-
-#### Create a GitHub OAuth Application for Social Login
-
-1. Navigate to [GitHub Developer Settings](https://github.com/settings/profile)
-2. Select "Developer Settings" from the left hand menu
-3. Select "OAuth Apps" from the left hand menu
-4. Select "New OAuth App"
-5. Enter the following details:
-    - Application Name: `Stacklok Identity Provider` (or any other name you like)
-    - Homepage URL: `http://localhost:8081` or the URL you specified as the `issuer_url` in your `server-config.yaml`
-    - Authorization callback URL: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
-6. Select "Register Application"
-7. Generate a client secret
-
-![github oauth2 page](./images/minder-social-login-github.png)
-
-#### Enable GitHub login
-
-Using the client ID and client secret you created above, enable GitHub login your local Keycloak instance by running the 
-following command:
 ```bash
 make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
 ```
 
-## Create token key passphrase
+You should see it create a new instance and new mappers. You may see a resource not found message. This is safe to ignore. 
 
-Create a token key passphrase that is used when storing the provider's token in the database. 
 
-The default configuration expects these keys to be in a directory named `.ssh`, relative to where you run the `minder-server` binary.
-Start by creating the `.ssh` directory.
-
-```bash
-mkdir .ssh
-```
-
-You can create the passphrase using the `openssl` CLI tool.
-
-```bash
-openssl rand -base64 32 > .ssh/token_key_passphrase
-```
-
-If your key lives in a directory other than `.ssh`, you can specify the location of the key in the `server-config.yaml` file.
-
-```yaml
-crypto:
-   keystore:
-      local:
-         key_dir: "./.ssh"
-   default:
-      key_id:    "token_key_passphrase"
-```
-
-(Note that `key_id` is the filename, and `key_dir` is the path to the file)
-
-## Configure the Repository Provider
-
+### Authenticate minder 
 At this point, you should have the following:
 
-- A running PostgreSQL database, with the `minder` database created
-- A running Keycloak instance
-- A GitHub OAuth application configured for social login using Keycloak
+- A PostgreSQL database and Keycloak instance running in containers
+- A minder-server built from source running in a container 
+- A GitHub application configured to provide access to a set of repositories
 
-**Prior to running the application**, you need to configure your repository provider. Currently, Minder only supports GitHub.
-See [Configure Repository Provider](./config_oauth.md) for more information.
+The final step is to authenticate the `minder` application using Keycloak and the GitHub application that was previous configured. 
+To do this run:
+```bash
+minder auth login
+```
 
-## Updating the Webhook Configuration
+This will open Keycloak login window in your browser.
+![Keycloak Login](./images/keycloak-login.png)
 
-Minder requires a webhook to be configured on the repository provider. Currently, Minder only supports GitHub. 
-The webhook allows GitHub to notify Minder when certain events occur in your repositories.
-To configure the webhook, Minder needs to be accessible from the internet. If you are running the server locally, you 
-can use a service like [ngrok](https://ngrok.com/) to expose your local server to the internet.
+Click GitHub to sign in. This should display a GitHub authorization window asking if you'd like to give permission to your Minder server. 
+![Github Auth](./images/github-auth.png)
 
-Here are the steps to configure the webhook:
+Click Authorize. The browser window should say Authentication Successful and the command line should say you've been successfully registered. 
+![Successful Minder Auth](./images/successful-install.png)
 
-1. **Expose your local server:** If you are running the server locally, start ngrok or a similar service to expose your 
-local server to the internet. Note down the URL provided by ngrok (it will look something like `https://<random-hash>.ngrok.io`).
-Make sure to expose the port that Minder is running on (by default, this is port `8080`).
 
-2. **Update the Minder configuration:** Open your `server-config.yaml` file and update the `webhook-config` section with 
-the ngrok URL Minder is running on. The `external_webhook_url` should point to the `/api/v1/webhook/github`
-endpoint on your Minder server, and the `external_ping_url` should point to the `/api/v1/health` endpoint. The `webhook_secret`
-should match the secret configured in the GitHub webhook (under `github.payload_secret`).
+Congratulations! You've set up a Minder server! Now you're all ready to contribute to Minder.
+
+For more information about the development process, please see the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
+
+For more information on contributing, please see our [Contributing Guide](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md).
+
+A list of good first issues can be found in the [Minder GitHub project](https://github.com/stacklok/minder/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22).
+
+
+## Optional Steps
+
+### Setting up a Webhook
+With the basic setup, GitHub is unable to notify Minder when certain events occur in your repositories. MORE DETAILS WOULD BE NICE. Configuring a Webhook will allow GitHub to communicate back to the Minder instance. Details on how to set this up can be found in the [Configuring a Webhook](./config_webhook.md) guide. 
+
+### Running Minder server directly
+There are certain situations where you might want to run the Minder server directly, instead of as a container. 
+These steps will allow you to do that. They assume you have completed the basic setup. 
+
+#### Stop the Minder server container
+Stop the Minder server, while leaving the dependant containers to continue running. 
+```bash
+docker stop minder_server
+```
+
+#### Configuration Changes
+Find the authz section in your `server-config.yaml` file located in your root Minder directory. Update the `api_url` to point to `http://localhost:8082`.
 
 ```yaml
-webhook-config:
-    external_webhook_url: "https://<ngrok-url>/api/v1/webhook/github"
-    external_ping_url: "https://<ngrok-url>/api/v1/health"
-    webhook_secret: "your-password" # Should match the secret configured in the GitHub webhook (github.payload_secret)
+authz:
+  api_url: http://localhost:8082 
+  store_name: minder
+  auth:
+    # Set to token for production
+    method: none
 ```
 
-After these steps, your Minder server should be ready to receive webhook events from GitHub, and add webhooks to repositories.
-
-In case you need to update the webhook secret, you can do so by putting the
-new secret in `webhook-config.webhook_secret` and for the duration of the
-migration, the old secret(s) in a file referenced by
-`webhook-config.previous_webhook_secret_file`. The old webhook secrets will
-then only be used to verify incoming webhooks messages, not for creating or
-updating webhooks and can be removed after the migration is complete.
-
-In order to rotate webhook secrets, you can use the `minder-server` CLI tool to update the webhook secret.
-
+#### Run the server
+Start the server from the command line using the following command:
 ```bash
-minder-server webhook update -p github
+go run cmd/server/main.go serve
 ```
-
-Note that the command simply replaces the webhook secret on the provider
-side. You will still need to update the webhook secret in the server configuration
-to match the provider's secret.
-
-## Run the application
-
-```bash
-minder-server serve
-```
-
-If the application is configured using `docker compose`, you need to modify the `server-config.yaml` file to reflect the database host url.
-
-```yaml
-database:
-  dbhost: "postgres" # Changed from localhost to postgres
-  dbport: 5432
-  dbuser: postgres
-  dbpass: postgres
-  dbname: minder
-  sslmode: disable
-```
-
-After configuring `server-config.yaml`, you can run the application using `docker compose`.
-
-```bash
-docker compose up -d minder
-```
-
-The application will be available on `http://localhost:8080` and gRPC on `localhost:8090`.
+You should see the server start up and then a series of log messages. You are now running the Minder server directly.
