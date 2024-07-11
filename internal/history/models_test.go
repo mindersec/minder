@@ -314,8 +314,8 @@ func TestListEvaluationFilter(t *testing.T) {
 			filter: func(t *testing.T) (ListEvaluationFilter, error) {
 				t.Helper()
 				return NewListEvaluationFilter(
-					WithAlert("success"),
-					WithAlert("!failure"),
+					WithAlert("on"),
+					WithAlert("!off"),
 				)
 			},
 			err: true,
@@ -491,7 +491,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "bogus entity type",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithEntityType("!")
+				return WithEntityType("foo")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -665,7 +665,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "status in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithStatus("repository")
+				return WithStatus("success")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -675,7 +675,7 @@ func TestFilterOptions(t *testing.T) {
 				t.Helper()
 				f := filter.(StatusFilter)
 				require.NotNil(t, f.IncludedStatuses())
-				require.Equal(t, []string{"repository"}, f.IncludedStatuses())
+				require.Equal(t, []string{"success"}, f.IncludedStatuses())
 				require.Nil(t, f.ExcludedStatuses())
 			},
 		},
@@ -683,7 +683,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "status not in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithStatus("!repository")
+				return WithStatus("!success")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -694,7 +694,7 @@ func TestFilterOptions(t *testing.T) {
 				f := filter.(StatusFilter)
 				require.Nil(t, f.IncludedStatuses())
 				require.NotNil(t, f.ExcludedStatuses())
-				require.Equal(t, []string{"repository"}, f.ExcludedStatuses())
+				require.Equal(t, []string{"success"}, f.ExcludedStatuses())
 			},
 		},
 		{
@@ -713,7 +713,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "bogus status",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithStatus("!")
+				return WithStatus("foo")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -739,7 +739,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "remediation in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithRemediation("repository")
+				return WithRemediation("success")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -749,7 +749,7 @@ func TestFilterOptions(t *testing.T) {
 				t.Helper()
 				f := filter.(RemediationFilter)
 				require.NotNil(t, f.IncludedRemediations())
-				require.Equal(t, []string{"repository"}, f.IncludedRemediations())
+				require.Equal(t, []string{"success"}, f.IncludedRemediations())
 				require.Nil(t, f.ExcludedRemediations())
 			},
 		},
@@ -757,7 +757,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "remediation not in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithRemediation("!repository")
+				return WithRemediation("!success")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -768,7 +768,7 @@ func TestFilterOptions(t *testing.T) {
 				f := filter.(RemediationFilter)
 				require.Nil(t, f.IncludedRemediations())
 				require.NotNil(t, f.ExcludedRemediations())
-				require.Equal(t, []string{"repository"}, f.ExcludedRemediations())
+				require.Equal(t, []string{"success"}, f.ExcludedRemediations())
 			},
 		},
 		{
@@ -787,7 +787,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "bogus remediation",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithRemediation("!")
+				return WithRemediation("foo")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -813,7 +813,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "alert in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithAlert("repository")
+				return WithAlert("on")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -823,7 +823,7 @@ func TestFilterOptions(t *testing.T) {
 				t.Helper()
 				f := filter.(AlertFilter)
 				require.NotNil(t, f.IncludedAlerts())
-				require.Equal(t, []string{"repository"}, f.IncludedAlerts())
+				require.Equal(t, []string{"on"}, f.IncludedAlerts())
 				require.Nil(t, f.ExcludedAlerts())
 			},
 		},
@@ -831,7 +831,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "alert not in filter",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithAlert("!repository")
+				return WithAlert("!on")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
@@ -842,7 +842,7 @@ func TestFilterOptions(t *testing.T) {
 				f := filter.(AlertFilter)
 				require.Nil(t, f.IncludedAlerts())
 				require.NotNil(t, f.ExcludedAlerts())
-				require.Equal(t, []string{"repository"}, f.ExcludedAlerts())
+				require.Equal(t, []string{"on"}, f.ExcludedAlerts())
 			},
 		},
 		{
@@ -861,7 +861,7 @@ func TestFilterOptions(t *testing.T) {
 			name: "bogus alert",
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
-				return WithAlert("!")
+				return WithAlert("foo")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()
