@@ -16,6 +16,75 @@
     "application/json"
   ],
   "paths": {
+    "/api/v1/results": {
+      "get": {
+        "operationId": "EvalResultsService_ListEvaluationResults",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/minderv1alphaListEvaluationResultsResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "newField",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "profile",
+            "description": "ID can contain either a profile name or an ID",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "labelFilter",
+            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleName",
+            "description": "If set, only return evaluation results for the named rules.\nIf empty, return evaluation results for all rules",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "EvalResultsService"
+        ]
+      }
+    },
     "/api/v1alpha/history": {
       "get": {
         "operationId": "EvalResultsService_ListEvaluationHistory",
@@ -153,6 +222,51 @@
     }
   },
   "definitions": {
+    "minderv1alphaListEvaluationResultsResponse": {
+      "type": "object",
+      "properties": {
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/minderv1alphaListEvaluationResultsResponseEntityEvaluationResults"
+          },
+          "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
+        }
+      }
+    },
+    "minderv1alphaListEvaluationResultsResponseEntityEvaluationResults": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityTypedId"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/minderv1alphaListEvaluationResultsResponseEntityProfileEvaluationResults"
+          }
+        }
+      }
+    },
+    "minderv1alphaListEvaluationResultsResponseEntityProfileEvaluationResults": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile - id, name, status, last_updated"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "Note that some fields like profile_id and entity might be empty\nEventually we might replace this type with another one that fits the API better"
+        }
+      }
+    },
     "v1Context": {
       "type": "object",
       "properties": {
@@ -215,6 +329,181 @@
       ],
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
+    },
+    "v1EntityTypedId": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/v1Entity",
+          "title": "entity is the entity to get status for. Incompatible with `all`"
+        },
+        "id": {
+          "type": "string",
+          "title": "id is the ID of the entity to get status for. Incompatible with `all`"
+        }
+      },
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+    },
+    "v1EvalResultAlert": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "title": "status is the status of the alert"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the alert was performed or attempted"
+        },
+        "details": {
+          "type": "string",
+          "title": "details is the description of the alert attempt if any"
+        },
+        "url": {
+          "type": "string",
+          "title": "url is the URL to the alert"
+        }
+      },
+      "title": "EvalResultAlert holds the alert details for a given rule evaluation"
+    },
+    "v1ProfileStatus": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "title": "profile_id is the id of the profile"
+        },
+        "profileName": {
+          "type": "string",
+          "title": "profile_name is the name of the profile"
+        },
+        "profileStatus": {
+          "type": "string",
+          "title": "profile_status is the status of the profile"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the profile was updated"
+        },
+        "profileDisplayName": {
+          "type": "string",
+          "title": "profile_display_name is the display name of the profile"
+        }
+      },
+      "title": "get the overall profile status"
+    },
+    "v1RuleEvaluationStatus": {
+      "type": "object",
+      "properties": {
+        "profileId": {
+          "type": "string",
+          "title": "profile_id is the id of the profile"
+        },
+        "ruleId": {
+          "type": "string",
+          "title": "rule_id is the id of the rule"
+        },
+        "ruleName": {
+          "type": "string",
+          "title": "rule_name is the type of the rule. Deprecated in favor of rule_type_name"
+        },
+        "entity": {
+          "type": "string",
+          "title": "entity is the entity that was evaluated"
+        },
+        "status": {
+          "type": "string",
+          "title": "status is the status of the evaluation"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "last_updated is the last time the profile was updated"
+        },
+        "entityInfo": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "entity_info is the information about the entity"
+        },
+        "details": {
+          "type": "string",
+          "title": "details is the description of the evaluation if any"
+        },
+        "guidance": {
+          "type": "string",
+          "title": "guidance is the guidance for the evaluation if any"
+        },
+        "remediationStatus": {
+          "type": "string",
+          "title": "remediation_status is the status of the remediation"
+        },
+        "remediationLastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "title": "remediation_last_updated is the last time the remediation was performed or attempted"
+        },
+        "remediationDetails": {
+          "type": "string",
+          "title": "remediation_details is the description of the remediation attempt if any"
+        },
+        "ruleTypeName": {
+          "type": "string",
+          "title": "rule_type_name is the name of the rule"
+        },
+        "ruleDescriptionName": {
+          "type": "string",
+          "title": "rule_description_name is the name to describe the rule"
+        },
+        "alert": {
+          "$ref": "#/definitions/v1EvalResultAlert",
+          "title": "alert holds the alert details if the rule generated an alert in an external system"
+        },
+        "severity": {
+          "$ref": "#/definitions/v1Severity",
+          "title": "severity is the severity of the rule"
+        },
+        "ruleEvaluationId": {
+          "type": "string",
+          "title": "rule_evaluation_id is the id of the rule evaluation"
+        },
+        "remediationUrl": {
+          "type": "string",
+          "title": "remediation_url is a url to get more data about a remediation, for PRs is the link to the PR"
+        },
+        "ruleDisplayName": {
+          "type": "string",
+          "title": "rule_display_name captures the display name of the rule"
+        }
+      },
+      "title": "get the status of the rules for a given profile"
+    },
+    "v1Severity": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "$ref": "#/definitions/v1SeverityValue",
+          "description": "value is the severity value."
+        }
+      },
+      "description": "Severity defines the severity of the rule."
+    },
+    "v1SeverityValue": {
+      "type": "string",
+      "enum": [
+        "VALUE_UNSPECIFIED",
+        "VALUE_UNKNOWN",
+        "VALUE_INFO",
+        "VALUE_LOW",
+        "VALUE_MEDIUM",
+        "VALUE_HIGH",
+        "VALUE_CRITICAL"
+      ],
+      "default": "VALUE_UNSPECIFIED",
+      "description": "Value enumerates the severity values.\n\n - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't\nbeen set.\n - VALUE_INFO: info severity means that the severity is informational and\ndoes not incur risk.\n - VALUE_LOW: low severity means that the severity is low and does not\nincur significant risk.\n - VALUE_MEDIUM: medium severity means that the severity is medium and may\nincur some risk.\n - VALUE_HIGH: high severity means that the severity is high and may incur\nsignificant risk.\n - VALUE_CRITICAL: critical severity means that the severity is critical and\nrequires immediate attention."
     },
     "v1alphaEvaluationHistory": {
       "type": "object",

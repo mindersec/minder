@@ -34,6 +34,7 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
+	EvalResultsService_ListEvaluationResults_FullMethodName = "/minder.v1alpha.EvalResultsService/ListEvaluationResults"
 	EvalResultsService_ListEvaluationHistory_FullMethodName = "/minder.v1alpha.EvalResultsService/ListEvaluationHistory"
 )
 
@@ -41,6 +42,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EvalResultsServiceClient interface {
+	ListEvaluationResults(ctx context.Context, in *ListEvaluationResultsRequest, opts ...grpc.CallOption) (*ListEvaluationResultsResponse, error)
 	ListEvaluationHistory(ctx context.Context, in *ListEvaluationHistoryRequest, opts ...grpc.CallOption) (*ListEvaluationHistoryResponse, error)
 }
 
@@ -50,6 +52,16 @@ type evalResultsServiceClient struct {
 
 func NewEvalResultsServiceClient(cc grpc.ClientConnInterface) EvalResultsServiceClient {
 	return &evalResultsServiceClient{cc}
+}
+
+func (c *evalResultsServiceClient) ListEvaluationResults(ctx context.Context, in *ListEvaluationResultsRequest, opts ...grpc.CallOption) (*ListEvaluationResultsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEvaluationResultsResponse)
+	err := c.cc.Invoke(ctx, EvalResultsService_ListEvaluationResults_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *evalResultsServiceClient) ListEvaluationHistory(ctx context.Context, in *ListEvaluationHistoryRequest, opts ...grpc.CallOption) (*ListEvaluationHistoryResponse, error) {
@@ -66,6 +78,7 @@ func (c *evalResultsServiceClient) ListEvaluationHistory(ctx context.Context, in
 // All implementations must embed UnimplementedEvalResultsServiceServer
 // for forward compatibility
 type EvalResultsServiceServer interface {
+	ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error)
 	ListEvaluationHistory(context.Context, *ListEvaluationHistoryRequest) (*ListEvaluationHistoryResponse, error)
 	mustEmbedUnimplementedEvalResultsServiceServer()
 }
@@ -74,6 +87,9 @@ type EvalResultsServiceServer interface {
 type UnimplementedEvalResultsServiceServer struct {
 }
 
+func (UnimplementedEvalResultsServiceServer) ListEvaluationResults(context.Context, *ListEvaluationResultsRequest) (*ListEvaluationResultsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEvaluationResults not implemented")
+}
 func (UnimplementedEvalResultsServiceServer) ListEvaluationHistory(context.Context, *ListEvaluationHistoryRequest) (*ListEvaluationHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEvaluationHistory not implemented")
 }
@@ -88,6 +104,24 @@ type UnsafeEvalResultsServiceServer interface {
 
 func RegisterEvalResultsServiceServer(s grpc.ServiceRegistrar, srv EvalResultsServiceServer) {
 	s.RegisterService(&EvalResultsService_ServiceDesc, srv)
+}
+
+func _EvalResultsService_ListEvaluationResults_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEvaluationResultsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EvalResultsServiceServer).ListEvaluationResults(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EvalResultsService_ListEvaluationResults_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EvalResultsServiceServer).ListEvaluationResults(ctx, req.(*ListEvaluationResultsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _EvalResultsService_ListEvaluationHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -115,6 +149,10 @@ var EvalResultsService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "minder.v1alpha.EvalResultsService",
 	HandlerType: (*EvalResultsServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListEvaluationResults",
+			Handler:    _EvalResultsService_ListEvaluationResults_Handler,
+		},
 		{
 			MethodName: "ListEvaluationHistory",
 			Handler:    _EvalResultsService_ListEvaluationHistory_Handler,

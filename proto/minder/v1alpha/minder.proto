@@ -18,11 +18,30 @@ package minder.v1alpha;
 import "google/api/annotations.proto";
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 import "minder/v1/minder.proto";
 
 option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1alpha";
 
+extend google.protobuf.MethodOptions {
+    minder.v1.RpcOptions rpc_options = 51078;
+}
+
 service EvalResultsService {
+    rpc ListEvaluationResults(ListEvaluationResultsRequest) returns (ListEvaluationResultsResponse) {
+        option (google.api.http) = {
+            // TODO: use
+            // get: "/api/v1/projects/{Context.project}/results"
+            // If we can promote Context.project to not be optional
+            get: "/api/v1/results"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
     rpc ListEvaluationHistory(ListEvaluationHistoryRequest) returns (ListEvaluationHistoryResponse) {
         option (google.api.http) = {
             get: "/api/v1alpha/history"
@@ -33,6 +52,57 @@ service EvalResultsService {
             relation: RELATION_PROFILE_STATUS_GET
         };
     }
+}
+
+message ListEvaluationResultsRequest{
+    // context is the context in which the evaluation results are evaluated.
+    minder.v1.Context context = 1;
+
+    string new_field = 6;
+
+    // profile is the profile name or ID to retrieve results for.
+    // If empty, return evaluation results for profiles selected by
+    // an empty label_filter.
+    oneof profile_selector {
+        // ID can contain either a profile name or an ID
+        string profile = 2;
+        // Filter profiles to only those matching the specified labels.
+        //
+        // The default is to return all user-created profiles; the string "*" can
+        // be used to select all profiles, including system profiles.  This syntax
+        // may be expanded in the future.
+        string label_filter = 3;
+    }
+
+    // If set, only return evaluation results for the named entities.
+    // If empty, return evaluation results for all entities
+    repeated minder.v1.EntityTypedId entity = 4;
+
+    // If set, only return evaluation results for the named rules.
+    // If empty, return evaluation results for all rules
+    repeated string rule_name = 5;
+}
+
+message ListEvaluationResultsResponse {
+    reserved 1; // deprecated status
+    reserved "status";
+
+    message EntityProfileEvaluationResults {
+        // profile_status is the status of the profile - id, name, status, last_updated
+        minder.v1.ProfileStatus profile_status = 1;
+
+        // Note that some fields like profile_id and entity might be empty
+        // Eventually we might replace this type with another one that fits the API better
+        repeated minder.v1.RuleEvaluationStatus results = 2;
+    }
+
+    message EntityEvaluationResults {
+        minder.v1.EntityTypedId entity = 1;
+        repeated EntityProfileEvaluationResults profiles = 2;
+    }
+
+    // Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile.
+    repeated EntityEvaluationResults entities = 2;
 }
 
 // ListEvaluationHistoryRequest represents a request message for the

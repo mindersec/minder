@@ -82,6 +82,22 @@ var (
 	RequestBodyMaxBytes int64 = 2 << 20
 )
 
+type alphaServer struct {
+	pbalpha.UnimplementedEvalResultsServiceServer
+}
+
+type v1Server struct {
+	pb.UnimplementedEvalResultsServiceServer
+}
+
+func (alphaServer) ListEvaluationHistory(context.Context, *pbalpha.ListEvaluationHistoryRequest) (*pbalpha.ListEvaluationHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListEvaluationHistory not implemented")
+}
+
+func (alphaServer) ListEvaluationResults(context.Context, *pbalpha.ListEvaluationResultsRequest) (*pbalpha.ListEvaluationResultsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListEvaluationResults not implemented")
+}
+
 // Server represents the controlplane server
 type Server struct {
 	store        db.Store
@@ -119,10 +135,10 @@ type Server struct {
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
-	pb.UnimplementedEvalResultsServiceServer
 	pb.UnimplementedInviteServiceServer
 
-	pbalpha.UnimplementedEvalResultsServiceServer
+	v1Server
+	alphaServer
 }
 
 // NewServer creates a new server instance

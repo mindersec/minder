@@ -117,12 +117,12 @@ func RegisterGRPCServices(s *Server) {
 	// Register the Projects service
 	pb.RegisterProjectsServiceServer(s.grpcServer, s)
 
-	// Register the EvalResultsService service
-	pb.RegisterEvalResultsServiceServer(s.grpcServer, s)
-
 	// Register the InviteService service
 	pb.RegisterInviteServiceServer(s.grpcServer, s)
 
-	// Register the EvalResultsService service
-	pbalpha.RegisterEvalResultsServiceServer(s.grpcServer, s)
+	// Register the EvalResultsService service - alpha
+	pbalpha.RegisterEvalResultsServiceServer(s.grpcServer, s.alphaServer)
+	// Register the EvalResultsService service - v1
+	pb.RegisterEvalResultsServiceServer(s.grpcServer, s.v1Server)
+
 }
