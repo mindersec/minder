@@ -287,8 +287,10 @@ func readEntityFromFile(fpath string, entType minderv1.Entity) (protoreflect.Pro
 		out = &minderv1.Artifact{}
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		out = &minderv1.PullRequest{}
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
-		return nil, fmt.Errorf("build environments not yet supported")
+	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, minderv1.Entity_ENTITY_RELEASE,
+		minderv1.Entity_ENTITY_PIPELINE_RUN,
+		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
+		return nil, fmt.Errorf("entity type not yet supported")
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		return nil, fmt.Errorf("entity type unspecified")
 	default:
