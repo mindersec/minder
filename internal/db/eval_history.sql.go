@@ -62,7 +62,7 @@ func (q *Queries) GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLa
 		&i.RuleEntityID,
 		&i.Status,
 		&i.Details,
-		pq.Array(&i.EvaluationTimes),
+		&i.EvaluationTimes,
 		&i.MostRecentEvaluation,
 	)
 	return i, err
@@ -375,12 +375,12 @@ WHERE id = $2
 `
 
 type UpdateEvaluationTimesParams struct {
-	EvaluationTimes []time.Time `json:"evaluation_times"`
+	EvaluationTimes PgTimeArray `json:"evaluation_times"`
 	ID              uuid.UUID   `json:"id"`
 }
 
 func (q *Queries) UpdateEvaluationTimes(ctx context.Context, arg UpdateEvaluationTimesParams) error {
-	_, err := q.db.ExecContext(ctx, updateEvaluationTimes, pq.Array(arg.EvaluationTimes), arg.ID)
+	_, err := q.db.ExecContext(ctx, updateEvaluationTimes, arg.EvaluationTimes, arg.ID)
 	return err
 }
 

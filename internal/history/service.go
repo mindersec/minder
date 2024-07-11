@@ -162,10 +162,10 @@ func (_ *evaluationHistoryService) updateExistingStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	evaluationID uuid.UUID,
-	times []time.Time,
+	times db.PgTimeArray,
 ) error {
 	// if the status is repeated, then just append the current timestamp to it
-	times = append(times, time.Now())
+	times = append(times, db.PgTime{Time: time.Now()})
 	return qtx.UpdateEvaluationTimes(ctx, db.UpdateEvaluationTimesParams{
 		EvaluationTimes: times,
 		ID:              evaluationID,

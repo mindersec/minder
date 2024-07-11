@@ -31,3 +31,7 @@ sql:
           - db_type: profile_selector
             go_type:
               type: "ProfileSelector"
+          - column: "evaluation_statuses.evaluation_times"
+            go_type:
+              type: "PgTimeArray"
+

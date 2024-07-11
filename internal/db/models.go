@@ -494,7 +494,7 @@ type EvaluationStatus struct {
 	RuleEntityID         uuid.UUID       `json:"rule_entity_id"`
 	Status               EvalStatusTypes `json:"status"`
 	Details              string          `json:"details"`
-	EvaluationTimes      []time.Time     `json:"evaluation_times"`
+	EvaluationTimes      PgTimeArray     `json:"evaluation_times"`
 	MostRecentEvaluation time.Time       `json:"most_recent_evaluation"`
 }
 
