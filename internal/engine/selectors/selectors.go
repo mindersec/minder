@@ -24,9 +24,7 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/engine/entities"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -42,7 +40,7 @@ func genericEnvFactory() (*cel.Env, error) {
 	return newEnvForEntity(
 		"entity",
 		&internalpb.SelectorEntity{},
-		"minder.v1.SelectorEntity")
+		"internal.SelectorEntity")
 }
 
 // repoEnvFactory is a factory for creating a CEL environment
@@ -51,7 +49,7 @@ func repoEnvFactory() (*cel.Env, error) {
 	return newEnvForEntity(
 		"repository",
 		&internalpb.SelectorRepository{},
-		"minder.v1.SelectorRepository")
+		"internal.SelectorRepository")
 }
 
 // artifactEnvFactory is a factory for creating a CEL environment
@@ -60,7 +58,7 @@ func artifactEnvFactory() (*cel.Env, error) {
 	return newEnvForEntity(
 		"artifact",
 		&internalpb.SelectorArtifact{},
-		"minder.v1.SelectorArtifact")
+		"internal.SelectorArtifact")
 }
 
 // newEnvForEntity creates a new CEL environment for an entity. All environments are allowed to
@@ -201,94 +199,9 @@ func (e *Env) envForEntity(entity minderv1.Entity) (*cel.Env, error) {
 	return cache.env, cache.err
 }
 
-// entityInfoConverter is an interface for converting an entity from an EntityInfoWrapper to a SelectorEntity
-type entityInfoConverter interface {
-	toSelectorEntity(entity proto.Message) *internalpb.SelectorEntity
-}
-
-type repositoryInfoConverter struct{}
-
-func (_ *repositoryInfoConverter) toSelectorEntity(entity proto.Message) *internalpb.SelectorEntity {
-	r, ok := entity.(*minderv1.Repository)
-	if !ok {
-		return nil
-	}
-
-	return &internalpb.SelectorEntity{
-		EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
-		Name:       fmt.Sprintf("%s/%s", r.GetOwner(), r.GetName()),
-		Entity: &internalpb.SelectorEntity_Repository{
-			Repository: &internalpb.SelectorRepository{
-				Name:      fmt.Sprintf("%s/%s", r.GetOwner(), r.GetName()),
-				IsFork:    proto.Bool(r.GetIsFork()),
-				IsPrivate: proto.Bool(r.GetIsPrivate()),
-			},
-		},
-	}
-}
-
-type artifactInfoConverter struct{}
-
-func (_ *artifactInfoConverter) toSelectorEntity(entity proto.Message) *internalpb.SelectorEntity {
-	a, ok := entity.(*minderv1.Artifact)
-	if !ok {
-		return nil
-	}
-
-	return &internalpb.SelectorEntity{
-		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
-		Name:       fmt.Sprintf("%s/%s", a.GetOwner(), a.GetName()),
-		Entity: &internalpb.SelectorEntity_Artifact{
-			Artifact: &internalpb.SelectorArtifact{
-				Name: fmt.Sprintf("%s/%s", a.GetOwner(), a.GetName()),
-				Type: a.GetType(),
-			},
-		},
-	}
-}
-
-// converterFactory is a map of entity types to their respective converters
-type converterFactory struct {
-	converters map[minderv1.Entity]entityInfoConverter
-}
-
-// newConverterFactory creates a new converterFactory with the default converters for each entity type
-func newConverterFactory() *converterFactory {
-	return &converterFactory{
-		converters: map[minderv1.Entity]entityInfoConverter{
-			minderv1.Entity_ENTITY_REPOSITORIES: &repositoryInfoConverter{},
-			minderv1.Entity_ENTITY_ARTIFACTS:    &artifactInfoConverter{},
-		},
-	}
-}
-
-func (cf *converterFactory) getConverter(entityType minderv1.Entity) (entityInfoConverter, error) {
-	conv, ok := cf.converters[entityType]
-	if !ok {
-		return nil, fmt.Errorf("no converter found for entity type %v", entityType)
-	}
-
-	return conv, nil
-}
-
-func newSelectorEntity(eiw *entities.EntityInfoWrapper) *internalpb.SelectorEntity {
-	if eiw == nil {
-		return nil
-	}
-
-	convertFactory := newConverterFactory()
-	conv, err := convertFactory.getConverter(eiw.Type)
-	if err != nil {
-		return nil
-	}
-
-	return conv.toSelectorEntity(eiw.Entity)
-}
-
 // Selection is an interface for selecting entities based on a profile
 type Selection interface {
 	Select(*internalpb.SelectorEntity) (bool, error)
-	SelectEiw(*entities.EntityInfoWrapper) (bool, error)
 }
 
 // EntitySelection is a struct that holds the compiled CEL expressions for a given entity type
@@ -324,17 +237,6 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity) (bool, error) {
 	}
 
 	return true, nil
-}
-
-// SelectEiw selects an entity based on an EntityInfoWrapper. It is a convenience method
-// around Select that creates a SelectorEntity from the EntityInfoWrapper
-func (s *EntitySelection) SelectEiw(eiw *entities.EntityInfoWrapper) (bool, error) {
-	se := newSelectorEntity(eiw)
-	if se == nil {
-		return false, fmt.Errorf("failed to create SelectorEntity from EntityInfoWrapper")
-	}
-
-	return s.Select(se)
 }
 
 func inputAsMap(se *internalpb.SelectorEntity) (map[string]any, error) {

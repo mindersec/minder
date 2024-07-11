@@ -16,12 +16,11 @@
 package selectors
 
 import (
-	internalpb "github.com/stacklok/minder/internal/proto"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/engine/entities"
+	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -296,121 +295,6 @@ func TestSelectSelectorEntity(t *testing.T) {
 			require.NotNil(t, sels)
 
 			selected, err := sels.Select(se)
-			require.NoError(t, err)
-			require.Equal(t, scenario.selected, selected)
-		})
-	}
-}
-
-func TestSelectEntityInfoWrapper(t *testing.T) {
-	t.Parallel()
-
-	scenarios := []struct {
-		name           string
-		eiwConstructor func() *entities.EntityInfoWrapper
-		exprs          []*minderv1.Profile_Selector
-		selected       bool
-		expectedErr    string
-	}{
-		{
-			name: "Simple true repository expression",
-			eiwConstructor: func() *entities.EntityInfoWrapper {
-				eiw := entities.NewEntityInfoWrapper()
-				eiw.WithRepository(&minderv1.Repository{
-					Owner:     "stacklok",
-					Name:      "minder",
-					IsPrivate: false,
-					IsFork:    false,
-				})
-				return eiw
-			},
-			exprs: []*minderv1.Profile_Selector{
-				{
-					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "entity.name == 'stacklok/minder'",
-				},
-			},
-			selected: true,
-		},
-		{
-			name: "Simple true artifact expression",
-			eiwConstructor: func() *entities.EntityInfoWrapper {
-				eiw := entities.NewEntityInfoWrapper()
-				eiw.WithArtifact(&minderv1.Artifact{
-					Owner: "stacklok",
-					Name:  "minder",
-					Type:  "container",
-				})
-				return eiw
-			},
-			exprs: []*minderv1.Profile_Selector{
-				{
-					Entity:   minderv1.ArtifactEntity.String(),
-					Selector: "artifact.type == 'container'",
-				},
-			},
-			selected: true,
-		},
-		{
-			name: "Simple false artifact expression",
-			eiwConstructor: func() *entities.EntityInfoWrapper {
-				eiw := entities.NewEntityInfoWrapper()
-				eiw.WithArtifact(&minderv1.Artifact{
-					Owner: "stacklok",
-					Name:  "minder",
-					Type:  "container",
-				})
-				return eiw
-			},
-			exprs: []*minderv1.Profile_Selector{
-				{
-					Entity:   minderv1.ArtifactEntity.String(),
-					Selector: "artifact.type != 'container'",
-				},
-			},
-			selected: false,
-		},
-		{
-			name: "Simple false repository expression",
-			eiwConstructor: func() *entities.EntityInfoWrapper {
-				eiw := entities.NewEntityInfoWrapper()
-				eiw.WithRepository(&minderv1.Repository{
-					Owner:     "stacklok",
-					Name:      "minder",
-					IsPrivate: false,
-					IsFork:    false,
-				})
-				return eiw
-			},
-			exprs: []*minderv1.Profile_Selector{
-				{
-					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "entity.name != 'stacklok/minder'",
-				},
-			},
-			selected: false,
-		},
-	}
-	for _, scenario := range scenarios {
-		t.Run(scenario.name, func(t *testing.T) {
-			t.Parallel()
-
-			env, err := NewEnv()
-			require.NoError(t, err)
-
-			eiw := scenario.eiwConstructor()
-
-			sels, err := env.NewSelectionFromProfile(eiw.Type, scenario.exprs)
-			if scenario.expectedErr != "" {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), scenario.expectedErr)
-				return
-			}
-
-			require.NoError(t, err)
-			require.NotNil(t, sels)
-
-			selected, err := sels.SelectEiw(eiw)
 			require.NoError(t, err)
 			require.Equal(t, scenario.selected, selected)
 		})
