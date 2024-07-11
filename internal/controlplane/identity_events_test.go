@@ -127,7 +127,7 @@ func TestDeleteUserOneProject(t *testing.T) {
 			p1.ID: {
 				{
 					Subject: u1.IdentitySubject,
-					Role:    authz.AuthzRoleAdmin.String(),
+					Role:    authz.RoleAdmin.String(),
 					Project: &pID,
 				},
 			},
@@ -196,19 +196,19 @@ func TestDeleteUserMultiProjectMembership(t *testing.T) {
 			p1.ID: {
 				{
 					Subject: u1.IdentitySubject,
-					Role:    authz.AuthzRoleAdmin.String(),
+					Role:    authz.RoleAdmin.String(),
 					Project: &p1ID,
 				},
 			},
 			p2.ID: {
 				{
 					Subject: u2.IdentitySubject,
-					Role:    authz.AuthzRoleAdmin.String(),
+					Role:    authz.RoleAdmin.String(),
 					Project: &p2ID,
 				},
 				{
 					Subject: u1.IdentitySubject,
-					Role:    authz.AuthzRoleViewer.String(),
+					Role:    authz.RoleViewer.String(),
 					Project: &p2ID,
 				},
 			},
@@ -247,7 +247,7 @@ func TestDeleteUserMultiProjectMembership(t *testing.T) {
 	assert.NotEmpty(t, assignments, "Assignments are empty")
 	assert.Len(t, assignments, 1, "Assignments length is not 1")
 	assert.Equal(t, u2.IdentitySubject, assignments[0].Subject, "User2 is not a member of project2")
-	assert.Equal(t, authz.AuthzRoleAdmin.String(), assignments[0].Role, "User2 is not an admin of project2")
+	assert.Equal(t, authz.RoleAdmin.String(), assignments[0].Role, "User2 is not an admin of project2")
 	assert.Equal(t, p2ID, *assignments[0].Project, "User2 is not a member of project2")
 }
 

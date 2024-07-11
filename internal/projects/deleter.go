@@ -167,6 +167,6 @@ func (p *projectDeleter) DeleteProject(
 
 func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
-		return a.GetRole() == authz.AuthzRoleAdmin.String() && a.Subject != subject
+		return a.GetRole() == authz.RoleAdmin.String() && a.Subject != subject
 	})
 }

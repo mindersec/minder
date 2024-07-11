@@ -124,14 +124,14 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	projectID := uuid.New()
 
 	// Create authorization tuple
-	if err := p.authzClient.Write(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+	if err := p.authzClient.Write(ctx, userSub, authz.RoleAdmin, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create authorization tuple: %w", err)
 	}
 	defer func() {
 		// TODO: this can't be part of a transaction, so we should probably find a saga-ish
 		// way to reverse this operation if the transaction fails.
 		if outproj == nil && projerr != nil {
-			if err := p.authzClient.Delete(ctx, userSub, authz.AuthzRoleAdmin, projectID); err != nil {
+			if err := p.authzClient.Delete(ctx, userSub, authz.RoleAdmin, projectID); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to delete authorization tuple")
 			}
 		}

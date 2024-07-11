@@ -43,7 +43,7 @@ func FuzzAllAuthzApis(f *testing.F) {
 		}
 		prj := uuid.New()
 
-		c.Write(ctx, str1, authz.AuthzRoleAdmin, prj)
+		c.Write(ctx, str1, authz.RoleAdmin, prj)
 
 		userJWT := openid.New()
 
@@ -58,7 +58,7 @@ func FuzzAllAuthzApis(f *testing.F) {
 
 		c.ProjectsForUser(userctx, str4)
 		c.AssignmentsToProject(userctx, prj)
-		c.Delete(ctx, str5, authz.AuthzRoleAdmin, prj)
+		c.Delete(ctx, str5, authz.RoleAdmin, prj)
 		c.Check(userctx, "get", prj)
 		c.ProjectsForUser(userctx, str6)
 		c.AssignmentsToProject(userctx, prj)
