@@ -250,6 +250,12 @@ message PullRequest {
     Context context = 8;
 }
 
+// Stubs for the SDLC entities
+message Release {}
+message PipelineRun {}
+message TaskRun {}
+message Build {}
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
