@@ -826,6 +826,7 @@ func (s *Server) updateInvite(
 		}
 	}
 
+	emailSkipped := false
 	// Publish the event for sending the invitation email
 	// This will happen only if the role is updated (existingInvites[0].Role != authzRole.String())
 	// or the role stayed the same, but the last invite update was more than a day ago
@@ -846,6 +847,9 @@ func (s *Server) updateInvite(
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
 		}
+	} else {
+		zerolog.Ctx(ctx).Info().Msg("skipping sending email, role stayed the same and last update was less than a day ago")
+		emailSkipped = true
 	}
 
 	// Commit the transaction to persist the changes
@@ -867,6 +871,7 @@ func (s *Server) updateInvite(
 				CreatedAt:      timestamppb.New(userInvite.CreatedAt),
 				ExpiresAt:      invite.GetExpireIn7Days(userInvite.UpdatedAt),
 				Expired:        invite.IsExpired(userInvite.UpdatedAt),
+				EmailSkipped:   emailSkipped,
 			},
 		},
 	}, nil

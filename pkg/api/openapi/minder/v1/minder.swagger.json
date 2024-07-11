@@ -3982,6 +3982,10 @@
         "inviteUrl": {
           "type": "string",
           "description": "inviteURL is the URL that can be used to accept the invitation."
+        },
+        "emailSkipped": {
+          "type": "boolean",
+          "description": "emailSkipped is true if the email was not sent to the invitee."
         }
       }
     },

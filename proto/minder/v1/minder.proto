@@ -2326,6 +2326,8 @@ message Invitation {
     string project_display = 10;
     // inviteURL is the URL that can be used to accept the invitation.
     string invite_url = 11;
+    // emailSkipped is true if the email was not sent to the invitee.
+    bool email_skipped = 12;
 }
 
 message GetProviderRequest {
