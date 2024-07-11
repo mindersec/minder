@@ -1286,6 +1286,7 @@ GitType defines the git data ingester.
 | sponsor_display | <TypeLink type="string">string</TypeLink> |  | sponsor_display is the display name of the user who created the invitation. |
 | project_display | <TypeLink type="string">string</TypeLink> |  | project_display is the display name of the project to which the user is invited. |
 | invite_url | <TypeLink type="string">string</TypeLink> |  | inviteURL is the URL that can be used to accept the invitation. |
+| email_skipped | <TypeLink type="bool">bool</TypeLink> |  | emailSkipped is true if the email was not sent to the invitee. |
 
 
 
