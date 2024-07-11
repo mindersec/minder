@@ -65,6 +65,8 @@ var (
 		AuthzRolePolicyWriter:       "Policy Writer",
 		AuthzRolePermissionsManager: "Permissions Manager",
 	}
+	// AllRolesSorted is a list of all roles sorted
+	AllRolesSorted = []Role{AuthzRoleAdmin, AuthzRoleEditor, AuthzRoleViewer, AuthzRolePolicyWriter, AuthzRolePermissionsManager}
 )
 
 func (r Role) String() string {

@@ -222,14 +222,20 @@ func (*Server) ListRoles(_ context.Context, _ *minder.ListRolesRequest) (*minder
 	resp := minder.ListRolesResponse{
 		Roles: make([]*minder.Role, 0, len(authz.AllRoles)),
 	}
-	for role, desc := range authz.AllRoles {
+	// Iterate over all roles and add them to the response if they have a description. Skip if they don't.
+	// The roles are sorted by the order in which they are defined in the authz package, i.e. admin, editor, viewer, etc.
+	for _, role := range authz.AllRolesSorted {
+		// Skip roles that don't have a description
+		if authz.AllRoles[role] == "" {
+			continue
+		}
+		// Add the role to the response
 		resp.Roles = append(resp.Roles, &minder.Role{
 			Name:        role.String(),
 			DisplayName: authz.AllRolesDisplayName[role],
-			Description: desc,
+			Description: authz.AllRoles[role],
 		})
 	}
-
 	return &resp, nil
 }
 
