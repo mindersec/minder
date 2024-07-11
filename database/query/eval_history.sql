@@ -141,7 +141,7 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.most_recent_evaluation)
    -- inclusion filters
    AND (sqlc.slice(entityTypes)::entities[] IS NULL OR entity_type::entities = ANY(sqlc.slice(entityTypes)::entities[]))
-   AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name = ANY(sqlc.slice(entityNames)::text[]))
+   AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(profileNames)::text[] IS NULL OR p.name = ANY(sqlc.slice(profileNames)::text[]))
@@ -150,7 +150,7 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.slice(statuses)::eval_status_types[] IS NULL OR s.status = ANY(sqlc.slice(statuses)::eval_status_types[]))
    -- exclusion filters
    AND (sqlc.slice(notEntityTypes)::entities[] IS NULL OR entity_type::entities != ANY(sqlc.slice(notEntityTypes)::entities[]))
-   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.repository_id IS NULL OR r.repo_name != ANY(sqlc.slice(notEntityNames)::text[]))
+   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) != ANY(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notProfileNames)::text[] IS NULL OR p.name != ANY(sqlc.slice(notProfileNames)::text[]))

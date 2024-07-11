@@ -18,6 +18,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +43,13 @@ var (
 	// ErrInvalidIdentifier is returned when an identifier
 	// (e.g. entity name) is empty or malformed.
 	ErrInvalidIdentifier = errors.New("invalid identifier")
+)
+
+var (
+	allowedEntityTypes         = []string{"repository", "build_environment", "artifact", "pull_request"}
+	allowedEvaluationStatuses  = []string{"success", "failure", "error", "skipped", "pending"}
+	allowedRemediationStatuses = []string{"success", "failure", "error", "skipped", "not_available", "pending"}
+	allowedAlertStatuses       = []string{"on", "off", "error", "skipped", "not_available"}
 )
 
 // Direction enumerates the direction of the Cursor.
@@ -294,6 +302,9 @@ func (filter *listEvaluationFilter) AddEntityType(entityType string) error {
 	} else {
 		filter.includedEntityTypes = append(filter.includedEntityTypes, entityType)
 	}
+	if !slices.Contains(allowedEntityTypes, entityType) {
+		return fmt.Errorf("%w: entity type", ErrInvalidIdentifier)
+	}
 
 	// Prevent filtering for both inclusion and exclusion
 	if len(filter.includedEntityTypes) > 0 &&
@@ -363,6 +374,9 @@ func (filter *listEvaluationFilter) AddStatus(status string) error {
 	} else {
 		filter.includedStatuses = append(filter.includedStatuses, status)
 	}
+	if !slices.Contains(allowedEvaluationStatuses, status) {
+		return fmt.Errorf("%w: status", ErrInvalidIdentifier)
+	}
 
 	// Prevent filtering for both inclusion and exclusion
 	if len(filter.includedStatuses) > 0 &&
@@ -386,6 +400,9 @@ func (filter *listEvaluationFilter) AddRemediation(remediation string) error {
 	} else {
 		filter.includedRemediations = append(filter.includedRemediations, remediation)
 	}
+	if !slices.Contains(allowedRemediationStatuses, remediation) {
+		return fmt.Errorf("%w: remediation", ErrInvalidIdentifier)
+	}
 
 	// Prevent filtering for both inclusion and exclusion
 	if len(filter.includedRemediations) > 0 &&
@@ -408,6 +425,9 @@ func (filter *listEvaluationFilter) AddAlert(alert string) error {
 		filter.excludedAlerts = append(filter.excludedAlerts, alert)
 	} else {
 		filter.includedAlerts = append(filter.includedAlerts, alert)
+	}
+	if !slices.Contains(allowedAlertStatuses, alert) {
+		return fmt.Errorf("%w: alert", ErrInvalidIdentifier)
 	}
 
 	// Prevent filtering for both inclusion and exclusion
@@ -483,7 +503,6 @@ func WithEntityType(entityType string) FilterOpt {
 		if !ok {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
-		// TODO add validation on enumerated types
 		return inner.AddEntityType(entityType)
 	}
 }
@@ -532,7 +551,6 @@ func WithStatus(status string) FilterOpt {
 		if !ok {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
-		// TODO add validation on enumerated types
 		return inner.AddStatus(status)
 	}
 }
@@ -549,7 +567,6 @@ func WithRemediation(remediation string) FilterOpt {
 		if !ok {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
-		// TODO add validation on enumerated types
 		return inner.AddRemediation(remediation)
 	}
 }
@@ -566,7 +583,6 @@ func WithAlert(alert string) FilterOpt {
 		if !ok {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
-		// TODO add validation on enumerated types
 		return inner.AddAlert(alert)
 	}
 }
