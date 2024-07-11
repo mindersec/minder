@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1
+package proto
 
 // AsString returns the string representation of the DepEcosystem
 func (ecosystem DepEcosystem) AsString() string {

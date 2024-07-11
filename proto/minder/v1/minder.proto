@@ -250,53 +250,6 @@ message PullRequest {
     Context context = 8;
 }
 
-enum DepEcosystem {
-    DEP_ECOSYSTEM_UNSPECIFIED = 0;
-    DEP_ECOSYSTEM_NPM = 1;
-    DEP_ECOSYSTEM_GO = 2;
-    DEP_ECOSYSTEM_PYPI = 3;
-}
-
-message Dependency {
-    DepEcosystem ecosystem = 1;
-
-    string name = 2;
-    string version = 3;
-}
-
-message PrDependencies {
-    message ContextualDependency {
-        message FilePatch {
-            string name = 1;      // file changed, e.g. package-lock.json
-            string patch_url = 2;  // points to the the raw patchfile
-        }
-
-        Dependency dep = 1;
-        FilePatch file = 2;
-    }
-
-    PullRequest pr = 1;
-    repeated ContextualDependency deps = 2;
-}
-
-message PrContents {
-    message File {
-        string name = 1;
-        string file_patch_url = 2;
-        repeated Line patch_lines = 3;
-
-        message Line {
-            // Deliberately left as an int32: a diff with more than 2^31 lines
-            // could lead to various problems while processing.
-            int32 line_number = 1;
-            string content = 2;
-        }
-    }
-
-    PullRequest pr = 1;
-    repeated File files = 2;
-}
-
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {

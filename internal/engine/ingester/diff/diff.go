@@ -28,6 +28,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -94,7 +95,7 @@ func (di *Diff) Ingest(
 	page := 0
 	switch di.cfg.GetType() {
 	case "", pb.DiffTypeDep:
-		allDiffs := make([]*pb.PrDependencies_ContextualDependency, 0)
+		allDiffs := make([]*pbinternal.PrDependencies_ContextualDependency, 0)
 		for {
 			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 			if err != nil {
@@ -117,14 +118,14 @@ func (di *Diff) Ingest(
 		}
 
 		return &engif.Result{
-			Object: &pb.PrDependencies{
+			Object: &pbinternal.PrDependencies{
 				Pr:   pr,
 				Deps: allDiffs,
 			},
 		}, nil
 
 	case pb.DiffTypeFull:
-		allDiffs := make([]*pb.PrContents_File, 0)
+		allDiffs := make([]*pbinternal.PrContents_File, 0)
 		for {
 			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 			if err != nil {
@@ -147,7 +148,7 @@ func (di *Diff) Ingest(
 		}
 
 		return &engif.Result{
-			Object: &pb.PrContents{
+			Object: &pbinternal.PrContents{
 				Pr:    pr,
 				Files: allDiffs,
 			},
@@ -161,7 +162,7 @@ func (di *Diff) Ingest(
 func (di *Diff) ingestFileForDepDiff(
 	filename, patchContents, patchUrl string,
 	logger zerolog.Logger,
-) ([]*pb.PrDependencies_ContextualDependency, error) {
+) ([]*pbinternal.PrDependencies_ContextualDependency, error) {
 	parser := di.getParserForFile(filename, logger)
 	if parser == nil {
 		return nil, nil
@@ -172,12 +173,12 @@ func (di *Diff) ingestFileForDepDiff(
 		return nil, fmt.Errorf("error parsing file %s: %w", filename, err)
 	}
 
-	batchCtxDeps := make([]*pb.PrDependencies_ContextualDependency, 0, len(depBatch))
+	batchCtxDeps := make([]*pbinternal.PrDependencies_ContextualDependency, 0, len(depBatch))
 	for i := range depBatch {
 		dep := depBatch[i]
-		batchCtxDeps = append(batchCtxDeps, &pb.PrDependencies_ContextualDependency{
+		batchCtxDeps = append(batchCtxDeps, &pbinternal.PrDependencies_ContextualDependency{
 			Dep: dep,
-			File: &pb.PrDependencies_ContextualDependency_FilePatch{
+			File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 				Name:     filename,
 				PatchUrl: patchUrl,
 			},
@@ -191,8 +192,8 @@ func (di *Diff) ingestFileForDepDiff(
 // It scans through the patch line by line, identifying the changes made.
 // If it's a hunk header, it extracts the starting line number. If it's an addition, it records the line content and its number.
 // The function also increments the line number for context lines (lines that provide context but haven't been modified).
-func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_File, error) {
-	var result []*pb.PrContents_File_Line
+func ingestFileForFullDiff(filename, patch, patchUrl string) (*pbinternal.PrContents_File, error) {
+	var result []*pbinternal.PrContents_File_Line
 
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	regex := regexp.MustCompile(`@@ -\d+,\d+ \+(\d+),\d+ @@`)
@@ -208,7 +209,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_Fil
 				return nil, fmt.Errorf("error parsing line number from the hunk header: %w", err)
 			}
 		} else if strings.HasPrefix(line, "+") {
-			result = append(result, &pb.PrContents_File_Line{
+			result = append(result, &pbinternal.PrContents_File_Line{
 				Content: line[1:],
 				// see the use of strconv.ParseInt above: this is a safe downcast
 				LineNumber: int32(currentLineNumber),
@@ -224,7 +225,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pb.PrContents_Fil
 		return nil, fmt.Errorf("error reading patch: %w", err)
 	}
 
-	return &pb.PrContents_File{
+	return &pbinternal.PrContents_File{
 		Name:         filename,
 		FilePatchUrl: patchUrl,
 		PatchLines:   result,

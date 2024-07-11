@@ -26,7 +26,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 // Vulnerability is a vulnerability JSON representation
@@ -46,8 +46,8 @@ type VulnerabilityResponse struct {
 
 // TODO(jakub): it's ugly that we depend on types from ingester/diff
 type vulnDb interface {
-	NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcosystem) (*http.Request, error)
-	SendRecvRequest(r *http.Request, dep *pb.Dependency) (*VulnerabilityResponse, error)
+	NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pbinternal.DepEcosystem) (*http.Request, error)
+	SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error)
 }
 
 // OSVResponse is a response from the OSV database
@@ -95,7 +95,7 @@ type OSVResponse struct {
 	} `json:"vulns"`
 }
 
-func toVulnerabilityResponse(osvResp *OSVResponse, dep *pb.Dependency) *VulnerabilityResponse {
+func toVulnerabilityResponse(osvResp *OSVResponse, dep *pbinternal.Dependency) *VulnerabilityResponse {
 	var vulnResp VulnerabilityResponse
 
 	for _, osvVuln := range osvResp.Vulns {
@@ -171,7 +171,7 @@ func newOsvDb(endpoint string) *osvdb {
 	}
 }
 
-func (o *osvdb) NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcosystem) (*http.Request, error) {
+func (o *osvdb) NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pbinternal.DepEcosystem) (*http.Request, error) {
 	reqBody := map[string]interface{}{
 		"version": dep.Version,
 		"package": map[string]string{
@@ -195,7 +195,7 @@ func (o *osvdb) NewQuery(ctx context.Context, dep *pb.Dependency, eco pb.DepEcos
 	return req, nil
 }
 
-func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pb.Dependency) (*VulnerabilityResponse, error) {
+func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
