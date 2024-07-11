@@ -15,7 +15,7 @@ project.
 
 ## Prerequisites
 
-- A Stacklok account
+- A Minder account
 - A GitHub organization you are an administrator for which does not have the
   Minder app installed on.
 
