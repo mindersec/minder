@@ -80,7 +80,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 
 	// we always filter by project id
-	opts = append(opts, history.WithProjectIDStr(in.GetContext().GetProject()))
+	opts = append(opts, history.WithProjectID(GetProjectID(ctx)))
 
 	filter, err := history.NewListEvaluationFilter(opts...)
 	if err != nil {

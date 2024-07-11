@@ -16,6 +16,7 @@
 package controlplane
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -25,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 
+	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -189,4 +191,16 @@ func getAlertURLFromMetadata(data []byte, repoSlug string) (string, error) {
 	return fmt.Sprintf(
 		"%s/%s/security/advisories/%s", githubURL, repoSlug, jsonMeta.GhsaId,
 	), nil
+}
+
+// GetProjectID retrieves the project ID from the request context.
+func GetProjectID(ctx context.Context) uuid.UUID {
+	entityCtx := engcontext.EntityFromContext(ctx)
+	return entityCtx.Project.ID
+}
+
+// GetProviderName retrieves the provider name from the request context.
+func GetProviderName(ctx context.Context) string {
+	entityCtx := engcontext.EntityFromContext(ctx)
+	return entityCtx.Provider.Name
 }
