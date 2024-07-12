@@ -56,6 +56,14 @@ func EntityTypeFromDB(entity db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_ARTIFACTS
 	case db.EntitiesPullRequest:
 		return minderv1.Entity_ENTITY_PULL_REQUESTS
+	case db.EntitiesRelease:
+		return minderv1.Entity_ENTITY_RELEASE
+	case db.EntitiesPipelineRun:
+		return minderv1.Entity_ENTITY_PIPELINE_RUN
+	case db.EntitiesTaskRun:
+		return minderv1.Entity_ENTITY_TASK_RUN
+	case db.EntitiesBuild:
+		return minderv1.Entity_ENTITY_BUILD
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
 	}
@@ -74,6 +82,14 @@ func EntityTypeToDB(entity minderv1.Entity) db.Entities {
 		dbEnt = db.EntitiesArtifact
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		dbEnt = db.EntitiesPullRequest
+	case minderv1.Entity_ENTITY_RELEASE:
+		dbEnt = db.EntitiesRelease
+	case minderv1.Entity_ENTITY_PIPELINE_RUN:
+		dbEnt = db.EntitiesPipelineRun
+	case minderv1.Entity_ENTITY_TASK_RUN:
+		dbEnt = db.EntitiesTaskRun
+	case minderv1.Entity_ENTITY_BUILD:
+		dbEnt = db.EntitiesBuild
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		// This shouldn't happen
 	}

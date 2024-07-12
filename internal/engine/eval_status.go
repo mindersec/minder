@@ -69,8 +69,9 @@ func (e *executor) createEvalStatusParams(
 		entityID = params.RepoID
 	case db.EntitiesPullRequest:
 		entityID = params.PullRequestID
-	case db.EntitiesBuildEnvironment:
-		return nil, fmt.Errorf("build environment entity type not supported")
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
+		db.EntitiesTaskRun, db.EntitiesBuild:
+		return nil, fmt.Errorf("entity type not yet supported")
 	}
 
 	ruleTypeName := sql.NullString{

@@ -321,6 +321,12 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 
 
 
+<Message id="minder-v1-Build">Build</Message>
+
+
+
+
+
 <Message id="minder-v1-BuiltinType">BuiltinType</Message>
 
 BuiltinType defines the builtin data evaluation.
@@ -1711,6 +1717,12 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
+<Message id="minder-v1-PipelineRun">PipelineRun</Message>
+
+
+
+
+
 <Message id="minder-v1-Profile">Profile</Message>
 
 Profile defines a profile that is user defined.
@@ -1730,6 +1742,10 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | build_environment | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | artifact | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | pull_request | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| release | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| pipeline_run | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| task_run | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| build | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | selection | <TypeLink type="minder-v1-Profile-Selector">Profile.Selector</TypeLink> | repeated |  |
 | remediate | <TypeLink type="string">string</TypeLink> | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
 | alert | <TypeLink type="string">string</TypeLink> | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
@@ -1955,6 +1971,12 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | result | <TypeLink type="minder-v1-RegisterRepoResult">RegisterRepoResult</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-Release">Release</Message>
+
+Stubs for the SDLC entities
 
 
 
@@ -2403,6 +2425,12 @@ Severity defines the severity of the rule.
 
 
 
+<Message id="minder-v1-TaskRun">TaskRun</Message>
+
+
+
+
+
 <Message id="minder-v1-UpdateProfileRequest">UpdateProfileRequest</Message>
 
 
@@ -2622,6 +2650,10 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_BUILD_ENVIRONMENTS | 2 |  |
 | ENTITY_ARTIFACTS | 3 |  |
 | ENTITY_PULL_REQUESTS | 4 |  |
+| ENTITY_RELEASE | 5 |  |
+| ENTITY_PIPELINE_RUN | 6 |  |
+| ENTITY_TASK_RUN | 7 |  |
+| ENTITY_BUILD | 8 |  |
 
 
 
