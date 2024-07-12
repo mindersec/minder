@@ -17,16 +17,19 @@
 package offline_token
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
+	"github.com/stacklok/minder/internal/util/cli"
 )
 
 // offlineTokenRevokeCmd represents the offline-token use command
@@ -40,39 +43,42 @@ Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
 
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	RunE: cli.GRPCClientWrapRunE(offlineRevokeCommand),
+}
+
+// offlineRevokeCommand is the offline-token revoke subcommand
+func offlineRevokeCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	if err != nil {
+		return fmt.Errorf("error reading config: %w", err)
+	}
+
+	f := viper.GetString("file")
+	tok := viper.GetString("token")
+	if tok == "" {
+		fpath := filepath.Clean(f)
+		tokbytes, err := os.ReadFile(fpath)
 		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
+			return fmt.Errorf("error reading file: %w", err)
 		}
 
-		f := viper.GetString("file")
-		tok := viper.GetString("token")
-		if tok == "" {
-			fpath := filepath.Clean(f)
-			tokbytes, err := os.ReadFile(fpath)
-			if err != nil {
-				return fmt.Errorf("error reading file: %w", err)
-			}
+		tok = string(tokbytes)
+	}
 
-			tok = string(tokbytes)
-		}
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
-		// No longer print usage on returned error, since we've parsed our inputs
-		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-		cmd.SilenceUsage = true
+	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
+	clientID := clientConfig.Identity.CLI.ClientId
 
-		issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
-		clientID := clientConfig.Identity.CLI.ClientId
+	if err := util.RevokeOfflineToken(tok, issuerUrlStr, clientID); err != nil {
+		return fmt.Errorf("couldn't revoke token: %v", err)
+	}
 
-		if err := util.RevokeOfflineToken(tok, issuerUrlStr, clientID); err != nil {
-			return fmt.Errorf("couldn't revoke token: %v", err)
-		}
+	cmd.Printf("Token revoked\n")
 
-		cmd.Printf("Token revoked\n")
-
-		return nil
-	},
+	return nil
 }
 
 func init() {
@@ -80,8 +86,7 @@ func init() {
 
 	offlineTokenRevokeCmd.Flags().StringP("file", "f", "offline.token", "The file that contains the offline token")
 	offlineTokenRevokeCmd.Flags().StringP("token", "t", "",
-		"The environment variable to use for the offline token. "+
-			"Also settable through the MINDER_OFFLINE_TOKEN environment variable.")
+		"The offline token to revoke. Also settable through the MINDER_OFFLINE_TOKEN environment variable.")
 
 	offlineTokenRevokeCmd.MarkFlagsMutuallyExclusive("file", "token")
 
