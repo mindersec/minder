@@ -56,7 +56,7 @@ func NewRuleAlert(
 				Msg("provider is not a GitHub provider. Silently skipping alerts.")
 			return noop.NewNoopAlert(ActionType)
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype.GetSeverity(), alertCfg.GetSecurityAdvisory(), client)
+		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype, alertCfg.GetSecurityAdvisory(), client)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

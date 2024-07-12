@@ -30,6 +30,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
@@ -190,7 +191,7 @@ func (e *executor) getEvaluator(
 	rule *pb.Profile_Rule,
 	hierarchy []uuid.UUID,
 	ingestCache ingestcache.Cache,
-) (*engif.EvalStatusParams, *RuleTypeEngine, *actions.RuleActionsEngine, error) {
+) (*engif.EvalStatusParams, *rtengine.RuleTypeEngine, *actions.RuleActionsEngine, error) {
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
 	if err != nil {
@@ -220,10 +221,10 @@ func (e *executor) getEvaluator(
 		return nil, nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
 	}
 	params.RuleTypeID = ruleTypeID
-	params.RuleType = ruleType
+	params.RuleTypeName = ruleType.Name
 
 	// Create the rule type engine
-	rte, err := NewRuleTypeEngine(ctx, ruleType, provider)
+	rte, err := rtengine.NewRuleTypeEngine(ctx, ruleType, provider)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

@@ -110,11 +110,6 @@ func (ts *TelemetryStore) AddRuleEval(
 		return
 	}
 
-	// Get rule type ID
-	ruleTypeID, err := uuid.Parse(evalInfo.GetRuleType().GetId())
-	if err != nil {
-		return
-	}
 	// Get profile ID
 	profileID, err := uuid.Parse(evalInfo.GetProfile().GetId())
 	if err != nil {
@@ -122,7 +117,7 @@ func (ts *TelemetryStore) AddRuleEval(
 	}
 
 	red := RuleEvalData{
-		RuleType:   RuleType{Name: evalInfo.GetRuleType().GetName(), ID: ruleTypeID},
+		RuleType:   RuleType{Name: evalInfo.GetRuleTypeName(), ID: evalInfo.GetRuleTypeID()},
 		Profile:    Profile{Name: evalInfo.GetProfile().GetName(), ID: profileID},
 		EvalResult: errors.EvalErrorAsString(evalInfo.GetEvalErr()),
 		Actions: map[interfaces.ActionType]ActionEvalData{

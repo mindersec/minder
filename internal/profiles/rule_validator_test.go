@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/profiles"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -67,7 +67,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			rval, err := profiles.NewRuleValidator(rt)
 			require.NoError(t, err, "failed to create rule validator for rule type %s", path)
 
-			rules, err := engine.GetRulesFromProfileOfType(pol, rt)
+			rules, err := rtengine.GetRulesFromProfileOfType(pol, rt)
 			require.NoError(t, err, "failed to get rules from profile for rule type %s", path)
 
 			t.Log("validating rules")

@@ -31,12 +31,12 @@ import (
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/actions"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -159,7 +159,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	off := "off"
 	profile.Alert = &off
 
-	rules, err := engine.GetRulesFromProfileOfType(profile, ruletype)
+	rules, err := rtengine.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -172,7 +172,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// TODO: use cobra context here
 	ctx := context.Background()
-	eng, err := engine.NewRuleTypeEngine(ctx, ruletype, prov)
+	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov)
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
@@ -198,7 +198,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 func runEvaluationForRules(
 	cmd *cobra.Command,
-	eng *engine.RuleTypeEngine,
+	eng *rtengine.RuleTypeEngine,
 	inf *entities.EntityInfoWrapper,
 	remediateStatus db.NullRemediationStatusTypes,
 	remMetadata pqtype.NullRawMessage,
