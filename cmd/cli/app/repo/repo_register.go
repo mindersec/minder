@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
@@ -58,7 +59,14 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 
 		providerClient := minderv1.NewProvidersServiceClient(conn)
-		_, err := providerClient.ReconcileEntityRegistration(ctx, &minderv1.ReconcileEntityRegistrationRequest{
+
+		err := enableAutoRegistration(ctx, providerClient, project, provider)
+		if err != nil {
+			return cli.MessageAndError("Error enabling auto registration", err)
+		}
+		cmd.Println("Enabled auto registration for future repositories")
+
+		_, err = providerClient.ReconcileEntityRegistration(ctx, &minderv1.ReconcileEntityRegistrationRequest{
 			Context: &minderv1.Context{
 				Provider: &provider,
 				Project:  &project,
@@ -256,6 +264,51 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 		t.AddRow(row...)
 	}
 	t.Render()
+}
+
+func enableAutoRegistration(
+	ctx context.Context, provCli minderv1.ProvidersServiceClient,
+	project, providerName string,
+) error {
+	serde, err := cli.GetProviderConfig(ctx, provCli, project, providerName)
+	if err != nil {
+		return cli.MessageAndError("failed to get provider config", err)
+	}
+
+	if serde == nil {
+		serde = &cli.ProviderConfigUnion{}
+	}
+
+	if serde.ProviderConfig == nil {
+		serde.ProviderConfig = &minderv1.ProviderConfig{}
+	}
+
+	if serde.AutoRegistration == nil {
+		serde.AutoRegistration = &minderv1.AutoRegistration{}
+	}
+
+	if serde.AutoRegistration.Entities == nil {
+		serde.AutoRegistration.Entities = make(map[string]*minderv1.EntityAutoRegistrationConfig)
+	}
+
+	repoReg, ok := serde.AutoRegistration.Entities[minderv1.Entity_ENTITY_REPOSITORIES.ToString()]
+	if !ok {
+		repoReg = &minderv1.EntityAutoRegistrationConfig{}
+	}
+
+	if repoReg.GetEnabled() {
+		return cli.MessageAndError("auto registration is already enabled", nil)
+	}
+
+	repoReg.Enabled = proto.Bool(true)
+	serde.AutoRegistration.Entities[minderv1.Entity_ENTITY_REPOSITORIES.ToString()] = repoReg
+
+	err = cli.SetProviderConfig(ctx, provCli, project, providerName, serde)
+	if err != nil {
+		return cli.MessageAndError("failed to update provider", err)
+	}
+
+	return nil
 }
 
 func printWarnings(cmd *cobra.Command, warnings []string) {
