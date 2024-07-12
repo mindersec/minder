@@ -53,10 +53,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 				Name: "artifact_profile",
 				Id:   &testUUIDString,
 			}
-			ep.RuleType = &minderv1.RuleType{
-				Name: "artifact_signature",
-				Id:   &testUUIDString,
-			}
+			ep.RuleTypeName = "artifact_signature"
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
 				alert.ActionType:     engif.ActionOptOn,
@@ -83,10 +80,8 @@ func TestTelemetryStore_Record(t *testing.T) {
 				Name: "artifact_profile",
 				Id:   &testUUIDString,
 			}
-			ep.RuleType = &minderv1.RuleType{
-				Name: "artifact_signature",
-				Id:   &testUUIDString,
-			}
+			ep.RuleTypeName = "artifact_signature"
+			ep.RuleTypeID = testUUID
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
 				alert.ActionType:     engif.ActionOptOff,
@@ -139,7 +134,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": "true"}`,
-		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletype", "artifact", "pr"},
+		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletypes", "artifact", "pr"},
 	}}
 
 	count := len(cases)

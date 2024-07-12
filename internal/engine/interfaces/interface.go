@@ -131,7 +131,7 @@ type EvalStatusParams struct {
 	Result           *Result
 	Profile          *pb.Profile
 	Rule             *pb.Profile_Rule
-	RuleType         *pb.RuleType
+	RuleTypeName     string
 	ProfileID        uuid.UUID
 	RepoID           uuid.NullUUID
 	ArtifactID       uuid.NullUUID
@@ -208,14 +208,19 @@ func (e *EvalStatusParams) GetRule() *pb.Profile_Rule {
 	return e.Rule
 }
 
+// GetRuleTypeID returns the rule type ID
+func (e *EvalStatusParams) GetRuleTypeID() uuid.UUID {
+	return e.RuleTypeID
+}
+
 // GetEvalStatusFromDb returns the evaluation status from the database
 func (e *EvalStatusParams) GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow {
 	return e.EvalStatusFromDb
 }
 
-// GetRuleType returns the rule type
-func (e *EvalStatusParams) GetRuleType() *pb.RuleType {
-	return e.RuleType
+// GetRuleTypeName returns the rule type name
+func (e *EvalStatusParams) GetRuleTypeName() string {
+	return e.RuleTypeName
 }
 
 // GetProfile returns the profile
@@ -240,7 +245,7 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 		Str("profile_id", e.ProfileID.String()).
 		Str("rule_type", e.GetRule().GetType()).
 		Str("rule_name", e.GetRule().GetName()).
-		Str("rule_type_id", e.GetRuleType().GetId()).
+		Str("rule_type_id", e.GetRuleTypeID().String()).
 		Logger()
 	if e.RepoID.Valid {
 		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()
@@ -275,6 +280,7 @@ type ActionsParams interface {
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
-	GetRuleType() *pb.RuleType
+	GetRuleTypeName() string
 	GetProfile() *pb.Profile
+	GetRuleTypeID() uuid.UUID
 }

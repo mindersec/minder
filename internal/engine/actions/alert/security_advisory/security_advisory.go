@@ -98,7 +98,7 @@ If you have any questions or believe that this evaluation is incorrect, please d
 type Alert struct {
 	actionType           interfaces.ActionType
 	cli                  provifv1.GitHub
-	sev                  *pb.Severity
+	ruleType             *pb.RuleType
 	saCfg                *pb.RuleType_Definition_Alert_AlertTypeSA
 	summaryTmpl          *htmltemplate.Template
 	descriptionTmpl      *htmltemplate.Template
@@ -126,6 +126,7 @@ type templateParamsSA struct {
 	RuleRemediation string
 	Name            string
 }
+
 type alertMetadata struct {
 	ID string `json:"ghsa_id,omitempty"`
 }
@@ -133,7 +134,7 @@ type alertMetadata struct {
 // NewSecurityAdvisoryAlert creates a new security-advisory alert action
 func NewSecurityAdvisoryAlert(
 	actionType interfaces.ActionType,
-	sev *pb.Severity,
+	ruleType *pb.RuleType,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	cli provifv1.GitHub,
 ) (*Alert, error) {
@@ -160,7 +161,7 @@ func NewSecurityAdvisoryAlert(
 	return &Alert{
 		actionType:           actionType,
 		cli:                  cli,
-		sev:                  sev,
+		ruleType:             ruleType,
 		saCfg:                saCfg,
 		summaryTmpl:          sumT,
 		descriptionTmpl:      descT,
@@ -349,16 +350,16 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	// Get the severity
 	result.Template.Severity = alert.getSeverityString()
 	// Get the guidance
-	result.Template.Guidance = params.GetRuleType().Guidance
+	result.Template.Guidance = alert.ruleType.Guidance
 	// Get the rule type name
-	result.Template.Rule = params.GetRuleType().Name
+	result.Template.Rule = alert.ruleType.Name
 	// Get the profile name
 	result.Template.Profile = params.GetProfile().Name
 	// Get the rule name
 	result.Template.Name = params.GetRule().Name
 
 	// Check if remediation is available for the rule type
-	if params.GetRuleType().Def.Remediate != nil {
+	if alert.ruleType.Def.Remediate != nil {
 		result.Template.RuleRemediation = "already available"
 	} else {
 		result.Template.RuleRemediation = "not available yet"
@@ -386,7 +387,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 func (alert *Alert) getSeverityString() string {
 	if alert.saCfg.Severity == "" {
-		ruleSev := alert.sev.GetValue().Enum().AsString()
+		ruleSev := alert.ruleType.Severity.GetValue().Enum().AsString()
 		if ruleSev == "info" || ruleSev == "unknown" {
 			return "low"
 		}
