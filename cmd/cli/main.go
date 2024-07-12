@@ -23,6 +23,7 @@ import (
 	_ "github.com/stacklok/minder/cmd/cli/app/auth/invite"
 	_ "github.com/stacklok/minder/cmd/cli/app/auth/offline_token"
 	_ "github.com/stacklok/minder/cmd/cli/app/docs"
+	_ "github.com/stacklok/minder/cmd/cli/app/history"
 	_ "github.com/stacklok/minder/cmd/cli/app/profile"
 	_ "github.com/stacklok/minder/cmd/cli/app/profile/status"
 	_ "github.com/stacklok/minder/cmd/cli/app/project"
