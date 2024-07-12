@@ -45,15 +45,15 @@ var listCmd = &cobra.Command{
 // listCommand is the profile "list" subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewEvalResultsServiceClient(conn)
-	//client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")
-	profileName := viper.GetString("profileName")
-	entityName := viper.GetString("entityName")
-	entityType := viper.GetString("entityType")
-	evalStatus := viper.GetString("evalStatus")
-	remediationStatus := viper.GetString("remediationStatus")
-	alertStatus := viper.GetString("alertStatus")
+	profileName := viper.GetStringSlice("profile-name")
+	entityName := viper.GetStringSlice("entity-name")
+	entityType := viper.GetStringSlice("entity-type")
+	evalStatus := viper.GetStringSlice("eval-status")
+	remediationStatus := viper.GetStringSlice("remediation-status")
+	alertStatus := viper.GetStringSlice("alert-status")
+
 	format := viper.GetString("output")
 
 	// Ensure the output format is supported
@@ -62,35 +62,31 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	// validate the filters which need validation
-	evalStatusFilter, err := valitedFilter(evalStatus, evalStatuses)
-	if err != nil {
+	if err := validatedFilter(evalStatus, evalStatuses); err != nil {
 		return err
 	}
 
-	remediationStatusFilter, err := valitedFilter(remediationStatus, remediationStatuses)
-	if err != nil {
+	if err := validatedFilter(remediationStatus, remediationStatuses); err != nil {
 		return err
 	}
 
-	alertStatusFilter, err := valitedFilter(alertStatus, alertStatuses)
-	if err != nil {
+	if err := validatedFilter(alertStatus, alertStatuses); err != nil {
 		return err
 	}
 
-	entityTypeFilter, err := valitedFilter(entityType, entityTypes)
-	if err != nil {
+	if err := validatedFilter(entityType, entityTypes); err != nil {
 		return err
 	}
 
 	// list all the things
 	resp, err := client.ListEvaluationHistory(ctx, &minderv1.ListEvaluationHistoryRequest{
 		Context:     &minderv1.Context{Project: &project},
-		EntityType:  entityTypeFilter,
-		EntityName:  asFilter(entityName),
-		ProfileName: asFilter(profileName),
-		Status:      evalStatusFilter,
-		Remediation: remediationStatusFilter,
-		Alert:       alertStatusFilter,
+		EntityType:  entityType,
+		EntityName:  entityName,
+		ProfileName: profileName,
+		Status:      evalStatus,
+		Remediation: remediationStatus,
+		Alert:       alertStatus,
 		From:        nil,
 		To:          nil,
 		Cursor:      nil,
@@ -121,23 +117,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	return nil
 }
 
-func asFilter(filter string) []string {
-	if filter == "" {
-		return nil
+func validatedFilter(filters []string, acceptedValues []string) error {
+	for _, filter := range filters {
+		if !slices.Contains(acceptedValues, filter) {
+			return fmt.Errorf("unexpected filter value %s expected one of %s", filter, strings.Join(acceptedValues, ", "))
+		}
 	}
-	return []string{filter}
-}
-
-func valitedFilter(filter string, acceptedValues []string) ([]string, error) {
-	if filter == "" {
-		return nil, nil
-	}
-	// since the CLI uses capitalized statuses, lowercase to be safe
-	filter = strings.ToLower(filter)
-	if !slices.Contains(acceptedValues, filter) {
-		return nil, fmt.Errorf("unexpected filter value %s expected one of %s", filter, strings.Join(acceptedValues, ", "))
-	}
-	return []string{filter}, nil
+	return nil
 }
 
 func renderRuleEvaluationStatusTable(
@@ -166,13 +152,13 @@ func init() {
 	entityTypesMsg := fmt.Sprintf(basicMsg, "entity type", strings.Join(entityTypes, ", "))
 
 	// Flags
-	listCmd.Flags().String("ruleName", "", "Filter evaluation history list by rule name")
-	listCmd.Flags().String("profileName", "", "Filter evaluation history list by profile name")
-	listCmd.Flags().String("entityName", "", "Filter evaluation history list by entity name")
-	listCmd.Flags().String("entityType", "", entityTypesMsg)
-	listCmd.Flags().String("evalStatus", "", evalFilterMsg)
-	listCmd.Flags().String("remediationStatus", "", remediationFilterMsg)
-	listCmd.Flags().String("alertStatus", "", alertFilterMsg)
+	listCmd.Flags().String("rule-name", "", "Filter evaluation history list by rule name")
+	listCmd.Flags().String("profile-name", "", "Filter evaluation history list by profile name")
+	listCmd.Flags().String("entity-name", "", "Filter evaluation history list by entity name")
+	listCmd.Flags().String("entity-type", "", entityTypesMsg)
+	listCmd.Flags().String("eval-status", "", evalFilterMsg)
+	listCmd.Flags().String("remediation-status", "", remediationFilterMsg)
+	listCmd.Flags().String("alert-status", "", alertFilterMsg)
 }
 
 // TODO: we should have a common set of enums and validators in `internal`
