@@ -709,6 +709,10 @@ paths:
             - ENTITY_BUILD_ENVIRONMENTS
             - ENTITY_ARTIFACTS
             - ENTITY_PULL_REQUESTS
+            - ENTITY_RELEASE
+            - ENTITY_PIPELINE_RUN
+            - ENTITY_TASK_RUN
+            - ENTITY_BUILD
           default: ENTITY_UNSPECIFIED
         - name: entity.id
           description: >-
@@ -2565,6 +2569,10 @@ definitions:
       - ENTITY_BUILD_ENVIRONMENTS
       - ENTITY_ARTIFACTS
       - ENTITY_PULL_REQUESTS
+      - ENTITY_RELEASE
+      - ENTITY_PIPELINE_RUN
+      - ENTITY_TASK_RUN
+      - ENTITY_BUILD
     default: ENTITY_UNSPECIFIED
     description: Entity defines the entity that is supported by the provider.
   v1EntityTypedId:
@@ -3140,6 +3148,26 @@ definitions:
           type: object
           $ref: '#/definitions/ProfileRule'
       pullRequest:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ProfileRule'
+      release:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ProfileRule'
+      pipelineRun:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ProfileRule'
+      taskRun:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ProfileRule'
+      build:
         type: array
         items:
           type: object
