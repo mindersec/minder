@@ -37,6 +37,10 @@ import (
 
 const (
 	defaultPageSize uint64 = 25
+	// Maximum page size has a conservative value at the moment,
+	// we can raise it once we have more insight on its
+	// performance impact.
+	maxPageSize uint64 = 25
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
@@ -61,6 +65,10 @@ func (s *Server) ListEvaluationHistory(
 		}
 		cursor = parsedCursor
 		size = in.GetCursor().GetSize()
+	}
+
+	if size > maxPageSize {
+		return nil, status.Error(codes.InvalidArgument, "invalid cursor")
 	}
 
 	// process filter
