@@ -11,7 +11,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.26.6
-	github.com/charmbracelet/lipgloss v0.11.1
+	github.com/charmbracelet/lipgloss v0.12.0
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fergusstrange/embedded-postgres v1.27.0
@@ -46,8 +46,8 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.3.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.33.0
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.17.0
-	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.17.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.18.0
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.18.0
 	github.com/sigstore/protobuf-specs v0.3.2
 	github.com/sigstore/sigstore-go v0.4.0
 	github.com/spf13/cobra v1.8.1
@@ -168,7 +168,7 @@ require (
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.17.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.18.0 // indirect
 	github.com/sigstore/sigstore v1.8.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
