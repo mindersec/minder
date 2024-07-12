@@ -19,9 +19,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/proto"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 )
 
 func TestGoParse(t *testing.T) {
@@ -31,7 +30,7 @@ func TestGoParse(t *testing.T) {
 		description          string
 		content              string
 		expectedCount        int
-		expectedDependencies []*pbinternal.Dependency
+		expectedDependencies []models.Dependency
 	}{
 		{
 			description: "Single addition",
@@ -41,9 +40,9 @@ func TestGoParse(t *testing.T) {
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8
 	github.com/prometheus/client_golang v1.18.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Ecosystem: models.GoDependency,
 					Name:      "github.com/openfga/openfga",
 					Version:   "v1.4.3",
 				},
@@ -68,9 +67,9 @@ func TestGoParse(t *testing.T) {
 -	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Ecosystem: models.GoDependency,
 					Name:      "go.opentelemetry.io/proto/otlp",
 					Version:   "v1.0.0",
 				},
@@ -86,7 +85,7 @@ func TestGoParse(t *testing.T) {
 -	gotest.tools/v3 v3.4.0 // indirect
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect`,
 			expectedCount:        0,
-			expectedDependencies: []*pbinternal.Dependency{},
+			expectedDependencies: []models.Dependency{},
 		},
 		{
 			description: "Replace",
@@ -97,9 +96,9 @@ func TestGoParse(t *testing.T) {
 +
 +replace github.com/opencontainers/runc => github.com/stacklok/runc v1.1.12`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+					Ecosystem: models.GoDependency,
 					Name:      "github.com/stacklok/runc",
 					Version:   "v1.1.12",
 				},
@@ -114,7 +113,7 @@ func TestGoParse(t *testing.T) {
 +
 +replace github.com/opencontainers/runc => `,
 			expectedCount:        0,
-			expectedDependencies: []*pbinternal.Dependency{},
+			expectedDependencies: []models.Dependency{},
 		},
 		{
 			description: "Bad Require",
@@ -125,7 +124,7 @@ func TestGoParse(t *testing.T) {
 +
 +require github.com/opencontainers/runc`,
 			expectedCount:        0,
-			expectedDependencies: []*pbinternal.Dependency{},
+			expectedDependencies: []models.Dependency{},
 		},
 	}
 	for _, tt := range tests {
@@ -140,7 +139,7 @@ func TestGoParse(t *testing.T) {
 			assert.Equal(t, tt.expectedCount, len(got), "mismatched dependency count")
 
 			for i, expectedDep := range tt.expectedDependencies {
-				if !proto.Equal(expectedDep, got[i]) {
+				if expectedDep != got[i] {
 					t.Errorf("mismatch at index %d: expected %v, got %v", i, expectedDep, got[i])
 				}
 			}
@@ -155,7 +154,7 @@ func TestPyPiParse(t *testing.T) {
 		description          string
 		content              string
 		expectedCount        int
-		expectedDependencies []*pbinternal.Dependency
+		expectedDependencies []models.Dependency
 	}{
 		{
 			description: "Single addition, exact version",
@@ -163,9 +162,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests==2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -178,9 +177,9 @@ func TestPyPiParse(t *testing.T) {
 +# this version has a CVE
 +requests==2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -193,9 +192,9 @@ func TestPyPiParse(t *testing.T) {
 + 
 +requests==2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -207,9 +206,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests>=2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -221,9 +220,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests>=2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -235,9 +234,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests==2.19.0 # this version has a CVE`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -249,9 +248,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests==2.*`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2",
 				},
@@ -263,9 +262,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "",
 				},
@@ -277,9 +276,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests<=2.19.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.19.0",
 				},
@@ -291,9 +290,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests<3,>=2.0`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.0",
 				},
@@ -305,9 +304,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 +requests>=2.0,<3`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.0",
 				},
@@ -321,19 +320,20 @@ func TestPyPiParse(t *testing.T) {
 +pandas<0.25.0,>=0.24.0
 +numpy==1.16.0`,
 			expectedCount: 3,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "requests",
 					Version:   "2.0",
 				},
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+
+					Ecosystem: models.PyPIDependency,
 					Name:      "pandas",
 					Version:   "0.24.0",
 				},
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "numpy",
 					Version:   "1.16.0",
 				},
@@ -346,7 +346,7 @@ func TestPyPiParse(t *testing.T) {
 # just a comment
 `,
 			expectedCount:        0,
-			expectedDependencies: []*pbinternal.Dependency{},
+			expectedDependencies: []models.Dependency{},
 		},
 		{
 			description: "Single addition, uppercase",
@@ -354,9 +354,9 @@ func TestPyPiParse(t *testing.T) {
  Flask
 + Django==3.2.21`,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Ecosystem: models.PyPIDependency,
 					Name:      "django",
 					Version:   "3.2.21",
 				},
@@ -375,7 +375,7 @@ func TestPyPiParse(t *testing.T) {
 			assert.Equal(t, tt.expectedCount, len(got), "mismatched dependency count")
 
 			for i, expectedDep := range tt.expectedDependencies {
-				if !proto.Equal(expectedDep, got[i]) {
+				if expectedDep != got[i] {
 					t.Errorf("mismatch at index %d: expected %v, got %v", i, expectedDep, got[i])
 				}
 			}
@@ -390,7 +390,7 @@ func TestNpmParse(t *testing.T) {
 		description          string
 		content              string
 		expectedCount        int
-		expectedDependencies []*pbinternal.Dependency
+		expectedDependencies []models.Dependency
 	}{
 		{
 			description: "New dependency addition",
@@ -418,9 +418,9 @@ func TestNpmParse(t *testing.T) {
        "resolved": "https://registry.npmjs.org/lodash/-/lodash-3.10.1.tgz",
 `,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Ecosystem: models.NPMDependency,
 					Name:      "chalk",
 					Version:   "5.3.0",
 				},
@@ -443,9 +443,9 @@ func TestNpmParse(t *testing.T) {
  }
 `,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Ecosystem: models.NPMDependency,
 					Name:      "lodash",
 					Version:   "4.17.21",
 				},
@@ -477,9 +477,9 @@ func TestNpmParse(t *testing.T) {
 +}
 `,
 			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Ecosystem: models.NPMDependency,
 					Name:      "lodash",
 					Version:   "4.17.21",
 				},
@@ -517,14 +517,14 @@ func TestNpmParse(t *testing.T) {
  }
 `,
 			expectedCount: 2,
-			expectedDependencies: []*pbinternal.Dependency{
+			expectedDependencies: []models.Dependency{
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Ecosystem: models.NPMDependency,
 					Name:      "@types/node",
 					Version:   "20.9.0",
 				},
 				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+					Ecosystem: models.NPMDependency,
 					Name:      "undici-types",
 					Version:   "5.26.5",
 				},
@@ -543,7 +543,7 @@ func TestNpmParse(t *testing.T) {
 			assert.Equal(t, tt.expectedCount, len(got), "mismatched dependency count")
 
 			for i, expectedDep := range tt.expectedDependencies {
-				if !proto.Equal(expectedDep, got[i]) {
+				if expectedDep != got[i] {
 					t.Errorf("mismatch at index %d: expected %v, got %v", i, expectedDep, got[i])
 				}
 			}

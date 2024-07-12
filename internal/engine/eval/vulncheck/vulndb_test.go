@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 )
 
 const multipleRanges = `
@@ -306,7 +306,7 @@ func TestGoVulnDb(t *testing.T) {
 			db := newOsvDb(vulnServer.URL)
 			assert.NotNil(t, db, "Failed to create OSV DB")
 
-			dep := &pbinternal.Dependency{
+			dep := models.Dependency{
 				Name:    tt.depName,
 				Version: tt.depVersion,
 			}

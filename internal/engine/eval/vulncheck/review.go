@@ -25,7 +25,7 @@ import (
 	"github.com/google/go-github/v61/github"
 	"github.com/rs/zerolog"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -62,10 +62,10 @@ func countLeadingWhitespace(line string) int {
 func locateDepInPr(
 	ctx context.Context,
 	client provifv1.GitHub,
-	dep *pbinternal.PrDependencies_ContextualDependency,
+	dep models.ContextualDependency,
 	patch patchLocatorFormatter,
 ) (*reviewLocation, error) {
-	req, err := client.NewRequest("GET", dep.File.PatchUrl, nil)
+	req, err := client.NewRequest("GET", dep.File.PatchURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
@@ -88,7 +88,8 @@ func locateDepInPr(
 		// was causing 422 issues with GitHub when trying to submit a review.
 		// Also, to ensure we are grabbing the correct line, we need to check if the
 		// versions align.
-		if dep.Dep.Ecosystem == pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM && i+1 < len(lines) {
+
+		if dep.Dep.Ecosystem == models.NPMDependency && i+1 < len(lines) {
 			line = strings.Join([]string{line, lines[i+1], dep.Dep.Version}, "\n")
 			loc.lineToChange = i + 2
 		} else {
@@ -188,7 +189,7 @@ func newReviewPrHandler(
 
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
-	dep *pbinternal.PrDependencies_ContextualDependency,
+	dep models.ContextualDependency,
 	vulnResp *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
@@ -235,7 +236,7 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		Msg("vulnerable dependency found")
 
 	ra.trackedDeps = append(ra.trackedDeps, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    patch.GetPatchedVersion(),
 	})
@@ -510,19 +511,19 @@ type summaryPrHandler struct {
 }
 
 type dependencyVulnerabilities struct {
-	Dependency      *pbinternal.Dependency
+	Dependency      *models.Dependency
 	Vulnerabilities []Vulnerability
 	PatchVersion    string
 }
 
 func (sph *summaryPrHandler) trackVulnerableDep(
 	_ context.Context,
-	dep *pbinternal.PrDependencies_ContextualDependency,
+	dep models.ContextualDependency,
 	vulnResp *VulnerabilityResponse,
 	patch patchLocatorFormatter,
 ) error {
 	sph.trackedDeps = append(sph.trackedDeps, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    patch.GetPatchedVersion(),
 	})
@@ -571,7 +572,7 @@ type profileOnlyPrHandler struct{}
 
 func (profileOnlyPrHandler) trackVulnerableDep(
 	_ context.Context,
-	_ *pbinternal.PrDependencies_ContextualDependency,
+	_ models.ContextualDependency,
 	_ *VulnerabilityResponse,
 	_ patchLocatorFormatter,
 ) error {

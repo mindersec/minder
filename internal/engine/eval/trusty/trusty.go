@@ -28,7 +28,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -87,9 +87,9 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	logger := zerolog.Ctx(ctx).With().
-		Int64("pull-number", prDependencies.Pr.Number).
-		Str("repo-owner", prDependencies.Pr.RepoOwner).
-		Str("repo-name", prDependencies.Pr.RepoName).Logger()
+		Int64("pull-number", prDependencies.PR.Number).
+		Str("repo-owner", prDependencies.PR.RepoOwner).
+		Str("repo-name", prDependencies.PR.RepoName).Logger()
 
 	// Parse the profile data to get the policy configuration
 	ruleConfig, err := parseRuleConfig(pol)
@@ -97,14 +97,14 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("parsing policy configuration: %w", err)
 	}
 
-	prSummaryHandler, err := newSummaryPrHandler(prDependencies.Pr, e.cli, e.endpoint)
+	prSummaryHandler, err := newSummaryPrHandler(prDependencies.PR, e.cli, e.endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create summary handler: %w", err)
 	}
 
 	// Classify all dependencies, tracking all that are malicious or scored low
 	for _, dep := range prDependencies.Deps {
-		depscore, err := getDependencyScore(ctx, e.client, dep)
+		depscore, err := getDependencyScore(ctx, e.client, &dep)
 		if err != nil {
 			logger.Error().Msgf("error fetching trusty data: %s", err)
 			return fmt.Errorf("getting dependency score: %w", err)
@@ -135,22 +135,22 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 }
 
 func getEcosystemConfig(
-	logger *zerolog.Logger, ruleConfig *config, dep *pbinternal.PrDependencies_ContextualDependency,
+	logger *zerolog.Logger, ruleConfig *config, dep models.ContextualDependency,
 ) *ecosystemConfig {
 	ecoConfig := ruleConfig.getEcosystemConfig(dep.Dep.Ecosystem)
 	if ecoConfig == nil {
 		logger.Info().
 			Str("dependency", dep.Dep.Name).
-			Str("ecosystem", dep.Dep.Ecosystem.AsString()).
+			Str("ecosystem", string(dep.Dep.Ecosystem)).
 			Msgf("no config for ecosystem, skipping")
 		return nil
 	}
 	return ecoConfig
 }
 
-// readPullRequestDependencies returns the dependencies found in theingestion results
-func readPullRequestDependencies(res *engif.Result) (*pbinternal.PrDependencies, error) {
-	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
+// readPullRequestDependencies returns the dependencies found in the ingestion results
+func readPullRequestDependencies(res *engif.Result) (*models.PRDependencies, error) {
+	prdeps, ok := res.Object.(*models.PRDependencies)
 	if !ok {
 		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")
 	}
@@ -224,13 +224,17 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 }
 
 func getDependencyScore(
-	ctx context.Context, trustyClient *trusty.Trusty, dep *pbinternal.PrDependencies_ContextualDependency,
+	ctx context.Context, trustyClient *trusty.Trusty, dep *models.ContextualDependency,
 ) (*trustytypes.Reply, error) {
+	trustyEcosystem, err := toTrustyEcosystem(dep.Dep.Ecosystem)
+	if err != nil {
+		return nil, err
+	}
 	// Call the Trusty API
 	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
 		Name:      dep.Dep.Name,
 		Version:   dep.Dep.Version,
-		Ecosystem: trustytypes.Ecosystem(dep.Dep.Ecosystem),
+		Ecosystem: trustyEcosystem,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -242,7 +246,7 @@ func getDependencyScore(
 // low scores and adds them to the summary if needed
 func classifyDependency(
 	_ context.Context, logger *zerolog.Logger, resp *trustytypes.Reply, ruleConfig *config,
-	prSummary *summaryPrHandler, dep *pbinternal.PrDependencies_ContextualDependency,
+	prSummary *summaryPrHandler, dep models.ContextualDependency,
 ) {
 	// Check all the policy violations
 	reasons := []RuleViolationReason{}
@@ -311,7 +315,7 @@ func classifyDependency(
 			Msgf("the dependency has lower score than threshold or is malicious, tracking")
 
 		prSummary.trackAlternatives(dependencyAlternatives{
-			Dependency:  dep.Dep,
+			Dependency:  &dep.Dep,
 			Reasons:     reasons,
 			BlockPR:     shouldBlockPR,
 			trustyReply: resp,
@@ -343,4 +347,17 @@ func readPackageDescription(resp *trustytypes.Reply) map[string]any {
 		}
 	}
 	return descr
+}
+
+func toTrustyEcosystem(ecosystem models.DependencyEcosystem) (trustytypes.Ecosystem, error) {
+	switch ecosystem {
+	case models.NPMDependency:
+		return trustytypes.ECOSYSTEM_NPM, nil
+	case models.PyPIDependency:
+		return trustytypes.ECOSYSTEM_PYPI, nil
+	case models.GoDependency:
+		return trustytypes.ECOSYSTEM_GO, nil
+	default:
+		return 0, fmt.Errorf("unexpected ecosystem %s", ecosystem)
+	}
 }

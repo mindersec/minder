@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/stacklok/minder/internal/engine/models"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -113,15 +113,15 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+		File: models.FilePatch{
 			Name:     "package-lock.json",
-			PatchUrl: server.URL,
+			PatchURL: server.URL,
 		},
 	}
 
@@ -155,7 +155,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	require.NoError(t, err)
 
 	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "0.6.0",
 	},
@@ -222,15 +222,15 @@ func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+		File: models.FilePatch{
 			Name:     "package-lock.json",
-			PatchUrl: server.URL,
+			PatchURL: server.URL,
 		},
 	}
 
@@ -316,15 +316,15 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+		File: models.FilePatch{
 			Name:     "package-lock.json",
-			PatchUrl: server.URL,
+			PatchURL: server.URL,
 		},
 	}
 
@@ -348,7 +348,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
-		Dependency:      dep.Dep,
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "",
 	},
@@ -422,15 +422,15 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+		File: models.FilePatch{
 			Name:     "package-lock.json",
-			PatchUrl: server.URL,
+			PatchURL: server.URL,
 		},
 	}
 
@@ -446,7 +446,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 		}, nil)
 
 	statusReport := createStatusReport(vulnsFoundText, commitSHA, minderReviewID, dependencyVulnerabilities{
-		Dependency:      dep.GetDep(),
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "",
 	})
@@ -573,15 +573,15 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	}))
 	defer server.Close()
 
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "mongodb",
 			Version:   "0.5.0",
 		},
-		File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+		File: models.FilePatch{
 			Name:     "package-lock.json",
-			PatchUrl: server.URL,
+			PatchURL: server.URL,
 		},
 	}
 
@@ -615,7 +615,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	require.NoError(t, err)
 
 	statusReport := createStatusReport(vulnsFoundText, commitSHA, 0, dependencyVulnerabilities{
-		Dependency:      dep.GetDep(),
+		Dependency:      &dep.Dep,
 		Vulnerabilities: vulnResp.Vulns,
 		PatchVersion:    "0.6.0",
 	})
