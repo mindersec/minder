@@ -18,8 +18,6 @@ syntax = "proto3";
 // buf:lint:ignore PACKAGE_VERSION_SUFFIX
 package internal;
 
-import "minder/v1/minder.proto";
-
 option go_package = "github.com/stacklok/minder/internal/proto";
 
 /*
