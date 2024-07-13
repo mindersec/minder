@@ -17,7 +17,6 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -28,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -108,14 +106,6 @@ var (
 	}
 )
 
-type configStruct struct {
-	*minderv1.ProviderConfig
-	//nolint:lll
-	GitHub *minderv1.GitHubProviderConfig `json:"github,omitempty" yaml:"github" mapstructure:"github" validate:"required"`
-	//nolint:lll
-	GitHubApp *minderv1.GitHubAppProviderConfig `json:"github_app,omitempty" yaml:"github_app" mapstructure:"github_app" validate:"required"`
-}
-
 // UpdateProviderCommand is the command for enrolling a provider
 //
 //nolint:gocyclo
@@ -141,42 +131,10 @@ func UpdateProviderCommand(
 	unsetAttrs := viper.GetStringSlice("unset-attribute")
 
 	client := minderv1.NewProvidersServiceClient(conn)
-	resp, err := client.GetProvider(ctx, &minderv1.GetProviderRequest{
-		Context: &minderv1.Context{
-			Project: &project,
-		},
-		Name: providerName,
-	})
-	if err != nil {
-		return cli.MessageAndError("Failed to get provider", err)
-	}
-	if resp.GetProvider() == nil {
-		return cli.MessageAndError(
-			"could not retrieve provider",
-			errors.New("provider was empty"),
-		)
-	}
 
-	provider := resp.GetProvider()
-	bytes, err := provider.GetConfig().MarshalJSON()
+	serde, err := cli.GetProviderConfig(ctx, client, project, providerName)
 	if err != nil {
-		// TODO this is likely to be an internal error and
-		// should be mapped to a more suitable user-facing
-		// error.
-		return cli.MessageAndError(
-			"invalid config",
-			fmt.Errorf("error marshalling provider config: %w", err),
-		)
-	}
-	serde := &configStruct{}
-	if err := json.Unmarshal(bytes, &serde); err != nil {
-		// TODO this is likely to be an internal error and
-		// should be mapped to a more suitable user-facing
-		// error.
-		return cli.MessageAndError(
-			"invalid config",
-			fmt.Errorf("error unmarshalling provider config: %w", err),
-		)
+		return cli.MessageAndError("failed to get provider config", err)
 	}
 
 	config := serde.ProviderConfig
@@ -230,49 +188,13 @@ func UpdateProviderCommand(
 	}
 
 	serde.ProviderConfig = config
-	var structConfig map[string]any
-	bytes, err = json.Marshal(serde)
-	if err != nil {
-		// TODO this is likely to be an internal error and
-		// should be mapped to a more suitable user-facing
-		// error.
-		return cli.MessageAndError(
-			"invalid config",
-			err,
-		)
-	}
-	if err := json.Unmarshal(bytes, &structConfig); err != nil {
-		// TODO this is likely to be an internal error and
-		// should be mapped to a more suitable user-facing
-		// error.
-		return cli.MessageAndError(
-			"invalid configuration",
-			err,
-		)
-	}
 
-	cfg, err := structpb.NewStruct(structConfig)
+	err = cli.SetProviderConfig(ctx, client, project, providerName, serde)
 	if err != nil {
-		return cli.MessageAndError("invalid config patch", err)
-	}
-
-	req := &minderv1.PatchProviderRequest{
-		Context: &minderv1.Context{
-			Project:  &project,
-			Provider: &providerName,
-		},
-		Patch: &minderv1.Provider{
-			Config: cfg,
-		},
-	}
-
-	_, err = client.PatchProvider(ctx, req)
-	if err != nil {
-		return cli.MessageAndError("failed calling minder", err)
+		return cli.MessageAndError("failed to update provider", err)
 	}
 
 	cmd.Println("Provider updated successfully")
-
 	return nil
 }
 

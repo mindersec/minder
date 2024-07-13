@@ -17,6 +17,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -82,6 +83,10 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		Str("project_id", inf.ProjectID.String())
 	logger.Msg("entity evaluation - started")
 
+	// track the time taken to evaluate each entity
+	entityStartTime := time.Now()
+	defer e.metrics.TimeProfileEvaluation(ctx, entityStartTime)
+
 	provider, err := e.providerManager.InstantiateFromID(ctx, inf.ProviderID)
 	if err != nil {
 		return fmt.Errorf("could not instantiate provider: %w", err)
@@ -104,6 +109,8 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	err = e.forProjectsInHierarchy(
 		ctx, inf, func(ctx context.Context, profile *pb.Profile, hierarchy []uuid.UUID) error {
+			profileStartTime := time.Now()
+			defer e.metrics.TimeProfileEvaluation(ctx, profileStartTime)
 			// Get only these rules that are relevant for this entity type
 			relevant, err := profiles.GetRulesForEntity(profile, inf.Type)
 			if err != nil {

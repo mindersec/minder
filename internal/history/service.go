@@ -191,9 +191,10 @@ func paramsFromEntity(
 		params.PullRequestID = nullableEntityID
 	case db.EntitiesArtifact:
 		params.ArtifactID = nullableEntityID
-	case db.EntitiesBuildEnvironment:
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
+		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 	default:
-		return nil, fmt.Errorf("unknown entity %s", entityType)
+		return nil, fmt.Errorf("unknown entity %q", entityType)
 	}
 	return &params, nil
 }

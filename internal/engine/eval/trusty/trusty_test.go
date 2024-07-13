@@ -27,8 +27,8 @@ import (
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/engine/models"
+	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -46,14 +46,14 @@ func TestBuildEvalResult(t *testing.T) {
 		{"malicious-package", &summaryPrHandler{
 			trackedAlternatives: []dependencyAlternatives{
 				{
-					Dependency: &pbinternal.Dependency{
-						Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Dependency: &models.Dependency{
+						Ecosystem: models.PyPIDependency,
 						Name:      "requests",
 						Version:   "0.0.1",
 					},
 					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
-						PackageType: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
+						PackageType: string(models.PyPIDependency),
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
@@ -76,14 +76,14 @@ func TestBuildEvalResult(t *testing.T) {
 		{"low-scored-package", &summaryPrHandler{
 			trackedAlternatives: []dependencyAlternatives{
 				{
-					Dependency: &pbinternal.Dependency{
-						Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Dependency: &models.Dependency{
+						Ecosystem: models.PyPIDependency,
 						Name:      "requests",
 						Version:   "0.0.1",
 					},
 					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
-						PackageType: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
+						PackageType: string(models.PyPIDependency),
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
@@ -94,28 +94,28 @@ func TestBuildEvalResult(t *testing.T) {
 		{"malicious-and-low-score", &summaryPrHandler{
 			trackedAlternatives: []dependencyAlternatives{
 				{
-					Dependency: &pbinternal.Dependency{
-						Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Dependency: &models.Dependency{
+						Ecosystem: models.PyPIDependency,
 						Name:      "python-oauth",
 						Version:   "0.0.1",
 					},
 					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
-						PackageType: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
+						PackageType: string(models.PyPIDependency),
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
 					},
 				},
 				{
-					Dependency: &pbinternal.Dependency{
-						Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+					Dependency: &models.Dependency{
+						Ecosystem: models.PyPIDependency,
 						Name:      "requestts",
 						Version:   "0.0.1",
 					},
 					trustyReply: &trustytypes.Reply{
 						PackageName: "requests",
-						PackageType: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI.AsString(),
+						PackageType: string(models.PyPIDependency),
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
@@ -195,7 +195,7 @@ func TestReadPullRequestDependencies(t *testing.T) {
 		sut     *engif.Result
 		mustErr bool
 	}{
-		{name: "normal", sut: &engif.Result{Object: &pbinternal.PrDependencies{}}, mustErr: false},
+		{name: "normal", sut: &engif.Result{Object: &models.PRDependencies{}}, mustErr: false},
 		{name: "invalid-object", sut: &engif.Result{Object: context.Background()}, mustErr: true},
 	} {
 		tc := tc
@@ -213,7 +213,7 @@ func TestReadPullRequestDependencies(t *testing.T) {
 }
 
 func TestNewTrustyEvaluator(t *testing.T) {
-	ghProvider := mock_github.NewMockGitHub(nil)
+	ghProvider := mockgithub.NewMockGitHub(nil)
 	t.Parallel()
 	for _, tc := range []struct {
 		name    string
@@ -243,9 +243,9 @@ func TestClassifyDependency(t *testing.T) {
 
 	ctx := context.Background()
 	logger := zerolog.Ctx(ctx).With().Logger()
-	dep := &pbinternal.PrDependencies_ContextualDependency{
-		Dep: &pbinternal.Dependency{
-			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+	dep := models.ContextualDependency{
+		Dep: models.Dependency{
+			Ecosystem: models.NPMDependency,
 			Name:      "test",
 			Version:   "v0.0.1",
 		},
@@ -398,7 +398,7 @@ func TestBuildScoreMatrix(t *testing.T) {
 		{
 			name: "no-description",
 			sut: dependencyAlternatives{
-				Dependency: &pbinternal.Dependency{},
+				Dependency: &models.Dependency{},
 				Reasons:    []RuleViolationReason{},
 				trustyReply: &trustytypes.Reply{
 					Summary: trustytypes.ScoreSummary{},
@@ -408,7 +408,7 @@ func TestBuildScoreMatrix(t *testing.T) {
 		{
 			name: "normal-response",
 			sut: dependencyAlternatives{
-				Dependency: &pbinternal.Dependency{},
+				Dependency: &models.Dependency{},
 				Reasons:    []RuleViolationReason{},
 				trustyReply: &trustytypes.Reply{
 					Summary: trustytypes.ScoreSummary{
@@ -431,7 +431,7 @@ func TestBuildScoreMatrix(t *testing.T) {
 		{
 			name: "normal-response",
 			sut: dependencyAlternatives{
-				Dependency: &pbinternal.Dependency{},
+				Dependency: &models.Dependency{},
 				Reasons:    []RuleViolationReason{},
 				trustyReply: &trustytypes.Reply{
 					Summary: trustytypes.ScoreSummary{
@@ -454,7 +454,7 @@ func TestBuildScoreMatrix(t *testing.T) {
 		{
 			name: "typosquatting-low",
 			sut: dependencyAlternatives{
-				Dependency: &pbinternal.Dependency{},
+				Dependency: &models.Dependency{},
 				Reasons:    []RuleViolationReason{},
 				trustyReply: &trustytypes.Reply{
 					Summary: trustytypes.ScoreSummary{
@@ -469,7 +469,7 @@ func TestBuildScoreMatrix(t *testing.T) {
 		{
 			name: "typosquatting-high",
 			sut: dependencyAlternatives{
-				Dependency: &pbinternal.Dependency{},
+				Dependency: &models.Dependency{},
 				Reasons:    []RuleViolationReason{},
 				trustyReply: &trustytypes.Reply{
 					Summary: trustytypes.ScoreSummary{

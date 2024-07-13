@@ -166,6 +166,10 @@ func validateRuleNames(profile *minderv1.Profile) error {
 		minderv1.Entity_ENTITY_ARTIFACTS:          profile.GetArtifact(),
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: profile.GetBuildEnvironment(),
 		minderv1.Entity_ENTITY_PULL_REQUESTS:      profile.GetPullRequest(),
+		minderv1.Entity_ENTITY_RELEASE:            profile.GetRelease(),
+		minderv1.Entity_ENTITY_PIPELINE_RUN:       profile.GetPipelineRun(),
+		minderv1.Entity_ENTITY_TASK_RUN:           profile.GetTaskRun(),
+		minderv1.Entity_ENTITY_BUILD:              profile.GetBuild(),
 	} {
 		if err := validateRuleNamesForEntity(ent, entRules); err != nil {
 			return err

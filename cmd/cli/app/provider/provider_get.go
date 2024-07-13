@@ -18,6 +18,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -97,6 +98,10 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 		t.AddRow("Version", p.GetVersion())
 		t.AddRow("Implements", strings.Join(impls, ", "))
 		t.AddRow("Auth Flows", strings.Join(afs, ", "))
+		config := configAsKeyValues(p)
+		if config != "" {
+			t.AddRow("Config", config)
+		}
 
 		t.Render()
 		return nil
@@ -105,4 +110,48 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 	}
 
 	return nil
+}
+
+// mapToKvPairs converts a map to a list of key-value pairs
+// TODO(jakub): This works OK now that we have a low-number of config options
+// if we have more elaborate configs, we might want to just dump the config as YAML, but for the usual
+// case now (1 option..) that would not be very readable
+func mapToKvPairs(m map[string]any, parentKey string, result *[]string, nesting int) {
+	// just in case
+	if nesting > 10 {
+		return
+	}
+
+	for key, value := range m {
+		fullKey := key
+		if parentKey != "" {
+			fullKey = parentKey + "." + key
+		}
+
+		v := reflect.ValueOf(value)
+		switch v.Kind() { // nolint:exhaustive
+		case reflect.Map:
+			nestedMap := value.(map[string]any)
+			mapToKvPairs(nestedMap, fullKey, result, nesting+1)
+		default:
+			// this should work for most types, if not, we'll likely just switch to printing YAML
+			*result = append(*result, fmt.Sprintf("%s=%v", fullKey, value))
+		}
+	}
+}
+
+func configAsKeyValues(p *minderv1.Provider) string {
+	if p == nil {
+		return ""
+	}
+
+	conf := p.GetConfig().AsMap()
+	if conf == nil {
+		return ""
+	}
+
+	var result []string
+	mapToKvPairs(conf, "", &result, 0)
+
+	return strings.Join(result, "\n")
 }
