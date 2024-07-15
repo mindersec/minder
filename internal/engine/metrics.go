@@ -59,14 +59,14 @@ func NewExecutorMetrics(meterFactory meters.MeterFactory) (*ExecutorMetrics, err
 		return nil, fmt.Errorf("failed to create alert counter: %w", err)
 	}
 
-	profileDuration, err := meter.Int64Histogram("eval.entity-eval-duration",
+	profileDuration, err := meter.Int64Histogram("eval.entity.duration",
 		metric.WithDescription("Time taken to evaluate all profiles against an entity"),
 		metric.WithUnit("milliseconds"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create profile histogram: %w", err)
 	}
 
-	entityDuration, err := meter.Int64Histogram("eval.profile-eval-duration",
+	entityDuration, err := meter.Int64Histogram("eval.profile.duration",
 		metric.WithDescription("Time taken to evaluate a single profile against an entity"),
 		metric.WithUnit("milliseconds"))
 	if err != nil {
@@ -99,7 +99,7 @@ func (e *ExecutorMetrics) CountRemediationStatus(
 	ctx context.Context,
 	status db.RemediationStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
+	e.remediationCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("remediation_status_type", string(status)),
 	))
 }
@@ -109,7 +109,7 @@ func (e *ExecutorMetrics) CountAlertStatus(
 	ctx context.Context,
 	status db.AlertStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
+	e.alertCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("alert_status_type", string(status)),
 	))
 }
