@@ -104,11 +104,10 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
-	{
-		e.lock.Lock()
-		defer e.lock.Unlock()
-		e.cancels = append(e.cancels, &shutdownCancel)
-	}
+
+	e.lock.Lock()
+	e.cancels = append(e.cancels, &shutdownCancel)
+	e.lock.Unlock()
 
 	// Let's not share memory with the caller.  Note that this does not copy Context
 	msg = msg.Copy()
@@ -127,9 +126,17 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
 		defer cancel()
+		defer func() {
+			e.lock.Lock()
+			e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
+				return cf == &shutdownCancel
+			})
+			e.lock.Unlock()
+		}()
+
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
-			// TODO: extract Provider name from ProviderID
+			// TODO: extract Provider name from ProviderID?
 		})
 
 		ts := minderlogger.BusinessRecord(ctx)
@@ -175,11 +182,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		if err := e.evt.Publish(events.TopicQueueEntityFlush, msg); err != nil {
 			logger.Err(err).Msg("error publishing flush event")
 		}
-		e.lock.Lock()
-		defer e.lock.Unlock()
-		e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
-			return cf == &shutdownCancel
-		})
 	}()
 
 	return nil
