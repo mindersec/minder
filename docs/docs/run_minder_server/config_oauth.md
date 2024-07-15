@@ -11,7 +11,7 @@ sidebar_position: 120
 ## Steps
 
 
-A legacy method for allowing users to enroll into Minder is using a GitHub OAuth application. T
+A legacy method for allowing users to enroll into Minder is using a GitHub OAuth application.
 
 1. Navigate to [GitHub Developer Settings](https://github.com/settings/profile)
 2. Select "Developer Settings" from the left hand menu
