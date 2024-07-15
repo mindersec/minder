@@ -88,7 +88,7 @@ You should see it create a new instance and new mappers. You may see a resource 
 ### Authenticate minder 
 At this point, you should have the following:
 
-- A PostgreSQL database and Keycloak instance running in containers
+- A PostgreSQL database and Keycloak and OpenFGA instances running in containers
 - A minder-server built from source running in a container 
 - A GitHub application configured to provide access to a set of repositories
 
