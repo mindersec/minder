@@ -71,15 +71,15 @@ webhook-config:
 
 # See https://minder-docs.stacklok.dev/run_minder_server/config_oauth for more information on setting these values
 github-app:
-  client_id: <client-id>
-  client_secret: <client-secret>
+  client_id: "client-id"
+  client_secret: "client-secret"
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/github-app/app" # This needs to match the registered callback URL in the GitHub App
 
 provider:
   github-app:
-    app_name: <app-name>
-    app_id: <app-id>
-    user_id: <user-id>
+    app_name: "app-name"
+    app_id: 1234
+    user_id: 1234
     private_key: ".secrets/github-app.pem"
 
 events:

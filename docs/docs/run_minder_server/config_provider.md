@@ -100,11 +100,11 @@ Now that we've created our GitHub App, we need to configure the Minder server to
 In your `server-config.yaml` file, located in the root Minder directory, find the following section:
 ```yaml
 github-app:
-  client_id: <client-id>
-  client_secret: <client-secret>
+  client_id: "client-id"
+  client_secret: "client-secret"
   redirect_uri: "http://localhost:8080/api/v1/auth/callback/github-app/app" # This needs to match the registered callback URL in the GitHub App
 ```
-Replace `<client-id>` and `<client-secret>` with the client ID and secret of your GitHub App.
+Update the `client_id` and `client_secret` values with the following:
 - Client ID : Found in the General -> About section of your GitHub App on GitHub.
 ![Client ID](./images/provider-client-id.png)
 - Client Secret : The value you saved previously. 
@@ -115,24 +115,23 @@ Then, find the following section in the same `server-config.yaml` file:
 ```yaml
 provider:
   github-app:
-    app_name: <app-name>
-    app_id: <app-id>
-    user_id: <user-id>
+    app_name: "app-name"
+    app_id: 1234
+    user_id: 1234
     private_key: ".secrets/github-app.pem"
 ```
-
-Replace `<app-name>` with the name of your app, which you can get by looking at the GitHub URL when editing your GitHub App. For example, if the URL is https://github.com/settings/apps/my-test-app, then your app name is my-test-app.
+Update the `app_name` with the name of your app, which you can get by looking at the GitHub URL when editing your GitHub App. For example, if the URL is https://github.com/settings/apps/my-test-app, then your app name is my-test-app.
 ![App name](./images/provider-app-name.png)
 
-Replace `<app-id>` with the app ID of your GitHub App, which is found in the General -> About section of your GitHub App on GitHub.
-![Client ID](./images/provider-app-id.png)
+Update `app_id` with the app ID of your GitHub App, which is found in the General -> About section of your GitHub App on GitHub.
+![App ID](./images/provider-app-id.png)
 
-To get the `<user-id>` value, run the following command, where `<app-name>` is the App name you used above:
+Finally, you need the `user_id` value. To get the value, run the following command, where `<app-name>` is the App name you used above:
 
 ```bash
 curl https://api.github.com/users/<app-name>%5Bbot%5D
 ```
-Replace `<user-id>` with the `id` value returned from that command. 
+Update the `user_id` value with the `id` value returned from that command. 
 ![User ID](./images/provider-user-id.png)
 
 Now save the file. Your Provider is now created and the Minder server is configured to use it.
