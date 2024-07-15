@@ -36,7 +36,7 @@ Complete the following fields:
 ### Identifying and authorizing users
 Complete the following fields:
    - Callback URL: `http://localhost:8080/api/v1/auth/callback/github-app/app`
-   - Add an additional Callback URL: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
+   - Add an additional Callback URL for Keycloak: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
    - Select the checkbox for "Request user authorization (OAuth) during installation"
 ![Configuring the GitHub Provider](./images/provider-ident-and-auth.png)
 
