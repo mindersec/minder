@@ -62,7 +62,7 @@ Start `minder-server` along with its dependent services (`keycloak` and `postgre
 ```bash
 make run-docker
 ```
-As this command runs, you will see it build the Minder server container and then start the dependant containers.
+As this command runs, you will see it build the Minder server container and then start the dependent containers.
 If you run
 ```bash
 docker ps
