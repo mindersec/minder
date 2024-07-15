@@ -50,13 +50,6 @@ INSERT INTO evaluation_statuses(
 )
 RETURNING id;
 
--- name: UpdateEvaluationTimes :exec
-UPDATE evaluation_statuses
-SET
-    evaluation_times = $1,
-    most_recent_evaluation = NOW()
-WHERE id = $2;
-
 -- name: UpsertLatestEvaluationStatus :exec
 INSERT INTO latest_evaluation_statuses(
     rule_entity_id,
@@ -96,7 +89,7 @@ INSERT INTO alert_events(
 
 -- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
-       s.most_recent_evaluation as evaluated_at,
+       s.evaluation_time as evaluated_at,
        -- entity type
        CASE WHEN ere.repository_id IS NOT NULL THEN 'repository'::entities
             WHEN ere.pull_request_id IS NOT NULL THEN 'pull_request'::entities
@@ -137,8 +130,8 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN projects j ON r.project_id = j.id
- WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.most_recent_evaluation)
-   AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.most_recent_evaluation)
+ WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.evaluation_time)
+   AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.evaluation_time)
    -- inclusion filters
    AND (sqlc.slice(entityTypes)::entities[] IS NULL OR entity_type::entities = ANY(sqlc.slice(entityTypes)::entities[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY(sqlc.slice(entityNames)::text[]))
@@ -160,8 +153,8 @@ SELECT s.id::uuid AS evaluation_id,
    -- time range filter
    AND (sqlc.narg(fromts)::timestamp without time zone IS NULL
         OR sqlc.narg(tots)::timestamp without time zone IS NULL
-        OR s.most_recent_evaluation BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
+        OR s.evaluation_time BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
    -- implicit filter by project id
    AND j.id = sqlc.arg(projectId)
- ORDER BY s.most_recent_evaluation DESC
+ ORDER BY s.evaluation_time DESC
  LIMIT sqlc.arg(size)::integer;
