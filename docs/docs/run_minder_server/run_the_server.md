@@ -75,7 +75,7 @@ you should see 4 new services running:
 
 
 ### Configure Keycloak
-Now that the Keycloak application is running, you need to configure it using the GitHub App you previous configured. 
+Now that the Keycloak application is running, you need to configure it using the GitHub App you previously configured. 
 To enable GitHub login on Keycloak run the following command, using the `client_id` and `client_secret` you generated setting up the GitHub app: 
 
 ```bash
