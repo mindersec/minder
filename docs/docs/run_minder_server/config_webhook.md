@@ -4,7 +4,7 @@ sidebar_position: 70
 ---
 
 # Configuring a Webhook
-Minder requires a webhook to be configured on the repository provider. Currently, Minder only supports GitHub. 
+Minder allows a webhook to be configured on the repository provider to respond to provider events. Currently, Minder only supports GitHub. 
 The webhook allows GitHub to notify Minder when certain events occur in your repositories.
 To configure the webhook, Minder needs to be accessible from the internet. If you are running the server locally, you 
 can use a service like [ngrok](https://ngrok.com/) to expose your local server to the internet.
