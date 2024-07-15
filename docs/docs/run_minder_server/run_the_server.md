@@ -9,7 +9,7 @@ This guide shows you how to run a Minder server locally. It is intended for user
 This guide will walk you through how to: 
 - Retrieve the latest source code
 - Set up your development environment
-- Run the dependant applications
+- Run the dependent applications
 - Create a Provider
 - Set up authentication
 
