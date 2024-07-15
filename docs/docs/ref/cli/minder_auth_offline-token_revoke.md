@@ -23,7 +23,7 @@ minder auth offline-token revoke [flags]
 ```
   -f, --file string    The file that contains the offline token (default "offline.token")
   -h, --help           help for revoke
-  -t, --token string   The environment variable to use for the offline token. Also settable through the MINDER_OFFLINE_TOKEN environment variable.
+  -t, --token string   The offline token to revoke. Also settable through the MINDER_OFFLINE_TOKEN environment variable.
 ```
 
 ### Options inherited from parent commands
