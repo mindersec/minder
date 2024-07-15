@@ -57,7 +57,7 @@ You now need to create a Provider to enable Minder to inspect and manage your re
 
 ### Start the Minder server
 At this point, you should have a GitHub provider configured and your `server-config.yaml` file updated. 
-Start `minder-server` along with its dependant services (`keycloak` and `postgres`) by running:
+Start `minder-server` along with its dependent services (`keycloak` and `postgres`) by running:
 
 ```bash
 make run-docker
