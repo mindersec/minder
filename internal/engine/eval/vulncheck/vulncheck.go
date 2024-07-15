@@ -25,7 +25,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -70,7 +70,7 @@ func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[strin
 
 	// TODO(jhrozek): Fix this!
 	//nolint:govet
-	prdeps, ok := res.Object.(*models.PRDependencies)
+	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")
 	}
@@ -84,7 +84,7 @@ func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[strin
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
-	prReplyHandler, err := newPrStatusHandler(ctx, ruleConfig.Action, prdeps.PR, e.cli)
+	prReplyHandler, err := newPrStatusHandler(ctx, ruleConfig.Action, prdeps.Pr, e.cli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pr action: %w", err)
 	}
@@ -92,7 +92,7 @@ func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[strin
 	pkgRepoCache := newRepoCache()
 
 	for _, dep := range prdeps.Deps {
-		if dep.Dep.Version == "" {
+		if dep.Dep == nil || dep.Dep.Version == "" {
 			continue
 		}
 
@@ -153,8 +153,8 @@ func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error
 func (_ *Evaluator) queryVulnDb(
 	ctx context.Context,
 	db vulnDb,
-	dep models.Dependency,
-	ecosystem models.DependencyEcosystem,
+	dep *pbinternal.Dependency,
+	ecosystem pbinternal.DepEcosystem,
 ) (*VulnerabilityResponse, error) {
 	req, err := db.NewQuery(ctx, dep, ecosystem)
 	if err != nil {
@@ -172,7 +172,7 @@ func (_ *Evaluator) queryVulnDb(
 // checkVulnerabilities checks whether a PR dependency contains any vulnerabilities.
 func (e *Evaluator) checkVulnerabilities(
 	ctx context.Context,
-	dep models.ContextualDependency,
+	dep *pbinternal.PrDependencies_ContextualDependency,
 	cfg *config,
 	cache *repoCache,
 	prHandler prStatusHandler,

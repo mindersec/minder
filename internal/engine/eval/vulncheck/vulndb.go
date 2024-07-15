@@ -26,7 +26,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 // Vulnerability is a vulnerability JSON representation
@@ -46,8 +46,8 @@ type VulnerabilityResponse struct {
 
 // TODO(jakub): it's ugly that we depend on types from ingester/diff
 type vulnDb interface {
-	NewQuery(ctx context.Context, dep models.Dependency, eco models.DependencyEcosystem) (*http.Request, error)
-	SendRecvRequest(r *http.Request, dep models.Dependency) (*VulnerabilityResponse, error)
+	NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pbinternal.DepEcosystem) (*http.Request, error)
+	SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error)
 }
 
 // OSVResponse is a response from the OSV database
@@ -95,7 +95,7 @@ type OSVResponse struct {
 	} `json:"vulns"`
 }
 
-func toVulnerabilityResponse(osvResp *OSVResponse, dep models.Dependency) *VulnerabilityResponse {
+func toVulnerabilityResponse(osvResp *OSVResponse, dep *pbinternal.Dependency) *VulnerabilityResponse {
 	var vulnResp VulnerabilityResponse
 
 	for _, osvVuln := range osvResp.Vulns {
@@ -171,12 +171,12 @@ func newOsvDb(endpoint string) *osvdb {
 	}
 }
 
-func (o *osvdb) NewQuery(ctx context.Context, dep models.Dependency, eco models.DependencyEcosystem) (*http.Request, error) {
+func (o *osvdb) NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pbinternal.DepEcosystem) (*http.Request, error) {
 	reqBody := map[string]interface{}{
 		"version": dep.Version,
 		"package": map[string]string{
 			"name":      dep.Name,
-			"ecosystem": string(eco),
+			"ecosystem": eco.AsString(),
 		},
 	}
 
@@ -195,7 +195,7 @@ func (o *osvdb) NewQuery(ctx context.Context, dep models.Dependency, eco models.
 	return req, nil
 }
 
-func (_ *osvdb) SendRecvRequest(r *http.Request, dep models.Dependency) (*VulnerabilityResponse, error) {
+func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {

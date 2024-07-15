@@ -25,7 +25,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -75,13 +75,13 @@ func evaluateHomoglyphs(
 	}
 
 	//nolint:govet
-	prContents, ok := res.Object.(*models.PRContents)
+	prContents, ok := res.Object.(*pbinternal.PrContents)
 	if !ok {
 		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}
 
-	if prContents.PR == nil || prContents.Files == nil {
-		return false, fmt.Errorf("invalid prContents fields: %v, %v", prContents.PR, prContents.Files)
+	if prContents.Pr == nil || prContents.Files == nil {
+		return false, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
 	}
 
 	if len(prContents.Files) == 0 {
@@ -90,7 +90,7 @@ func evaluateHomoglyphs(
 
 	// Note: This is a mandatory step to reassign certain fields in the handler.
 	// This is a workaround to avoid recreating the object.
-	reviewHandler.Hydrate(ctx, prContents.PR)
+	reviewHandler.Hydrate(ctx, prContents.Pr)
 
 	for _, file := range prContents.Files {
 		for _, line := range file.PatchLines {
