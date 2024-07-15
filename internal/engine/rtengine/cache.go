@@ -57,7 +57,7 @@ func NewRuleEngineCache(
 		Projects:   hierarchy,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error while retrieving rule types from db: %w", err)
 	}
 
 	engines := make(map[uuid.UUID]*RuleTypeEngine, len(ruleTypes))
