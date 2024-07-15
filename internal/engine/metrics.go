@@ -89,8 +89,8 @@ func (e *ExecutorMetrics) CountEvalStatus(
 	entityType db.Entities,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("entity_type", string(entityType)),
-		attribute.String("status", string(status)),
+		attribute.String("eval_entity_type", string(entityType)),
+		attribute.String("eval_status_type", string(status)),
 	))
 }
 
@@ -100,7 +100,7 @@ func (e *ExecutorMetrics) CountRemediationStatus(
 	status db.RemediationStatusTypes,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("status", string(status)),
+		attribute.String("remediation_status_type", string(status)),
 	))
 }
 
@@ -110,7 +110,7 @@ func (e *ExecutorMetrics) CountAlertStatus(
 	status db.AlertStatusTypes,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("status", string(status)),
+		attribute.String("alert_status_type", string(status)),
 	))
 }
 
