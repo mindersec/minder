@@ -16,7 +16,7 @@ For GitHub, you configure a Provider by creating a GitHub App.
 - [GitHub](https://github.com) account
 
 ## Create a GitHub App
-This approach allows users fine-grained control over the permissions that Minder has in their repositories. It also 
+This approach allows fine-grained control over the permissions that Minder has in users' repositories.  It also 
 allows users to limit the repositories that Minder can access.
 
 1. Navigate to [GitHub Developer Settings](https://github.com/settings/profile)
