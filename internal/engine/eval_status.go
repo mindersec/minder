@@ -55,6 +55,7 @@ func (e *executor) createEvalStatusParams(
 		ArtifactID:    artID,
 		PullRequestID: prID,
 		ProjectID:     inf.ProjectID,
+		ExecutionID:   *inf.ExecutionID, // Execution ID is required in the executor.
 	}
 
 	// Prepare params for fetching the current rule evaluation from the database
