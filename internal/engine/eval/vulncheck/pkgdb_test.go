@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 func TestNpmPkgDb(t *testing.T) {
@@ -146,7 +146,7 @@ func TestNpmPkgDb(t *testing.T) {
 
 			repo := newNpmRepository(server.URL)
 
-			dep := models.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 
@@ -162,7 +162,7 @@ func TestNpmPkgDb(t *testing.T) {
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				require.Equal(t, tt.expectReply.IndentedString(0, "", models.Dependency{}), reply.IndentedString(0, "", models.Dependency{}), "expected reply to match mock data")
+				require.Equal(t, tt.expectReply.IndentedString(0, "", nil), reply.IndentedString(0, "", nil), "expected reply to match mock data")
 			}
 		})
 	}
@@ -383,7 +383,7 @@ func TestPyPiPkgDb(t *testing.T) {
 			repo := newPyPIRepository(pyPiMockServer.URL)
 			assert.NotNil(t, repo, "Failed to create repository")
 
-			dep := models.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 
@@ -401,7 +401,7 @@ func TestPyPiPkgDb(t *testing.T) {
 				assert.NoError(t, err, "Expected no error")
 				actualReply := reply.IndentedString(0,
 					"requests>=2.19.0",
-					models.Dependency{
+					&pbinternal.Dependency{
 						Name:    "requests",
 						Version: "2.19.0",
 					})
@@ -592,7 +592,7 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 			repo := newGoProxySumRepository(proxyServer.URL, sumServer.URL)
 			assert.NotNil(t, repo, "Failed to create repository")
 
-			dep := models.Dependency{
+			dep := &pbinternal.Dependency{
 				Name: tt.depName,
 			}
 
@@ -608,7 +608,7 @@ golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=`))
 				assert.Error(t, err, "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				require.Equal(t, tt.expectReply.IndentedString(0, "", models.Dependency{}), reply.IndentedString(0, "", models.Dependency{}), "expected reply to match mock data")
+				require.Equal(t, tt.expectReply.IndentedString(0, "", nil), reply.IndentedString(0, "", nil), "expected reply to match mock data")
 			}
 		})
 	}

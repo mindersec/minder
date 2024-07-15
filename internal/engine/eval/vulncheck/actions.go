@@ -22,7 +22,7 @@ import (
 	"github.com/google/go-github/v61/github"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -30,7 +30,7 @@ import (
 type prStatusHandler interface {
 	trackVulnerableDep(
 		ctx context.Context,
-		dep models.ContextualDependency,
+		dep *pbinternal.PrDependencies_ContextualDependency,
 		vulnResp *VulnerabilityResponse,
 		patch patchLocatorFormatter,
 	) error

@@ -23,7 +23,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	"github.com/stacklok/minder/internal/engine/models"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 type vulnDbType string
@@ -106,8 +106,8 @@ func parseConfig(ruleCfg map[string]any) (*config, error) {
 	return &conf, nil
 }
 
-func (c *config) getEcosystemConfig(ecosystem models.DependencyEcosystem) *ecosystemConfig {
-	sEco := string(ecosystem)
+func (c *config) getEcosystemConfig(ecosystem pbinternal.DepEcosystem) *ecosystemConfig {
+	sEco := ecosystem.AsString()
 	if sEco == "" {
 		return nil
 	}
