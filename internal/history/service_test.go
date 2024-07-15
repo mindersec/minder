@@ -27,7 +27,6 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	engerr "github.com/stacklok/minder/internal/engine/errors"
 )
 
 func TestStoreEvaluationStatus(t *testing.T) {
@@ -81,15 +80,6 @@ func TestStoreEvaluationStatus(t *testing.T) {
 			ExpectedError: "error while creating new evaluation status for rule/entity",
 		},
 		{
-			Name:       "StoreEvaluationStatus returns error when unable to update status with timestamp",
-			EntityType: db.EntitiesRepository,
-			DBSetup: dbf.NewDBMock(
-				withGetLatestEval(sameState, nil),
-				withUpdateEvaluationTimes(errTest),
-			),
-			ExpectedError: "error while updating existing evaluation status for rule/entity",
-		},
-		{
 			Name:       "StoreEvaluationStatus creates new status for new rule/entity",
 			EntityType: db.EntitiesRepository,
 			DBSetup: dbf.NewDBMock(
@@ -103,26 +93,9 @@ func TestStoreEvaluationStatus(t *testing.T) {
 			Name:       "StoreEvaluationStatus creates new status for state change",
 			EntityType: db.EntitiesRepository,
 			DBSetup: dbf.NewDBMock(
-				withGetLatestEval(differentState, nil),
+				withGetLatestEval(existingState, nil),
 				withInsertEvaluationStatus(evaluationID, nil),
 				withUpsertLatestEvaluationStatus(nil),
-			),
-		},
-		{
-			Name:       "StoreEvaluationStatus creates new status when status is the same, but details differ",
-			EntityType: db.EntitiesRepository,
-			DBSetup: dbf.NewDBMock(
-				withGetLatestEval(differentDetails, nil),
-				withInsertEvaluationStatus(evaluationID, nil),
-				withUpsertLatestEvaluationStatus(nil),
-			),
-		},
-		{
-			Name:       "StoreEvaluationStatus adds timestamp when state does not change",
-			EntityType: db.EntitiesRepository,
-			DBSetup: dbf.NewDBMock(
-				withGetLatestEval(sameState, nil),
-				withUpdateEvaluationTimes(nil),
 			),
 		},
 	}
@@ -742,26 +715,11 @@ var (
 	evaluationID = uuid.New()
 
 	emptyLatestResult = db.EvaluationStatus{}
-	sameState         = db.EvaluationStatus{
-		ID:              evaluationID,
-		RuleEntityID:    ruleEntityID,
-		Status:          db.EvalStatusTypesError,
-		Details:         errTest.Error(),
-		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
-	}
-	differentDetails = db.EvaluationStatus{
-		ID:              evaluationID,
-		RuleEntityID:    ruleEntityID,
-		Status:          db.EvalStatusTypesError,
-		Details:         "something went wrong",
-		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
-	}
-	differentState = db.EvaluationStatus{
-		ID:              evaluationID,
-		RuleEntityID:    ruleEntityID,
-		Status:          db.EvalStatusTypesSkipped,
-		Details:         engerr.ErrEvaluationSkipped.Error(),
-		EvaluationTimes: db.PgTimeArray{db.PgTime{Time: time.Now()}},
+	existingState     = db.EvaluationStatus{
+		ID:           evaluationID,
+		RuleEntityID: ruleEntityID,
+		Status:       db.EvalStatusTypesError,
+		Details:      errTest.Error(),
 	}
 	errTest = errors.New("oh no")
 )
@@ -787,14 +745,6 @@ func withInsertEvaluationStatus(id uuid.UUID, err error) func(dbf.DBMock) {
 		mock.EXPECT().
 			InsertEvaluationStatus(gomock.Any(), gomock.Any()).
 			Return(id, err)
-	}
-}
-
-func withUpdateEvaluationTimes(err error) func(dbf.DBMock) {
-	return func(mock dbf.DBMock) {
-		mock.EXPECT().
-			UpdateEvaluationTimes(gomock.Any(), gomock.Any()).
-			Return(err)
 	}
 }
 
