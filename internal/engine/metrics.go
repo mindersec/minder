@@ -59,14 +59,14 @@ func NewExecutorMetrics(meterFactory meters.MeterFactory) (*ExecutorMetrics, err
 		return nil, fmt.Errorf("failed to create alert counter: %w", err)
 	}
 
-	profileDuration, err := meter.Int64Histogram("eval.entity-eval-duration",
+	profileDuration, err := meter.Int64Histogram("eval.entity.duration",
 		metric.WithDescription("Time taken to evaluate all profiles against an entity"),
 		metric.WithUnit("milliseconds"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create profile histogram: %w", err)
 	}
 
-	entityDuration, err := meter.Int64Histogram("eval.profile-eval-duration",
+	entityDuration, err := meter.Int64Histogram("eval.profile.duration",
 		metric.WithDescription("Time taken to evaluate a single profile against an entity"),
 		metric.WithUnit("milliseconds"))
 	if err != nil {
