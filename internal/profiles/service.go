@@ -158,6 +158,10 @@ func (p *profileService) CreateProfile(
 		minderv1.Entity_ENTITY_ARTIFACTS:          profile.GetArtifact(),
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: profile.GetBuildEnvironment(),
 		minderv1.Entity_ENTITY_PULL_REQUESTS:      profile.GetPullRequest(),
+		minderv1.Entity_ENTITY_RELEASE:            profile.GetRelease(),
+		minderv1.Entity_ENTITY_PIPELINE_RUN:       profile.GetPipelineRun(),
+		minderv1.Entity_ENTITY_TASK_RUN:           profile.GetTaskRun(),
+		minderv1.Entity_ENTITY_BUILD:              profile.GetBuild(),
 	} {
 		if err := createProfileRulesForEntity(ctx, ent, &newProfile, qtx, entRules, rulesInProf); err != nil {
 			return nil, err
@@ -259,6 +263,10 @@ func (p *profileService) UpdateProfile(
 		minderv1.Entity_ENTITY_ARTIFACTS:          profile.GetArtifact(),
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS: profile.GetBuildEnvironment(),
 		minderv1.Entity_ENTITY_PULL_REQUESTS:      profile.GetPullRequest(),
+		minderv1.Entity_ENTITY_RELEASE:            profile.GetRelease(),
+		minderv1.Entity_ENTITY_PIPELINE_RUN:       profile.GetPipelineRun(),
+		minderv1.Entity_ENTITY_TASK_RUN:           profile.GetTaskRun(),
+		minderv1.Entity_ENTITY_BUILD:              profile.GetBuild(),
 	} {
 		if err = updateProfileRulesForEntity(ctx, ent, &updatedProfile, qtx, entRules, rules); err != nil {
 			return nil, err

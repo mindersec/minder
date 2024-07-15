@@ -55,6 +55,7 @@ func (e *executor) createEvalStatusParams(
 		ArtifactID:    artID,
 		PullRequestID: prID,
 		ProjectID:     inf.ProjectID,
+		ExecutionID:   *inf.ExecutionID, // Execution ID is required in the executor.
 	}
 
 	// Prepare params for fetching the current rule evaluation from the database
@@ -69,8 +70,9 @@ func (e *executor) createEvalStatusParams(
 		entityID = params.RepoID
 	case db.EntitiesPullRequest:
 		entityID = params.PullRequestID
-	case db.EntitiesBuildEnvironment:
-		return nil, fmt.Errorf("build environment entity type not supported")
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
+		db.EntitiesTaskRun, db.EntitiesBuild:
+		return nil, fmt.Errorf("entity type not yet supported")
 	}
 
 	ruleTypeName := sql.NullString{

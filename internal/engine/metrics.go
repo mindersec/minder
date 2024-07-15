@@ -17,6 +17,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -30,6 +31,8 @@ type ExecutorMetrics struct {
 	evalCounter        metric.Int64Counter
 	remediationCounter metric.Int64Counter
 	alertCounter       metric.Int64Counter
+	entityDuration     metric.Int64Histogram
+	profileDuration    metric.Int64Histogram
 }
 
 // NewExecutorMetrics instantiates the ExecutorMetrics struct.
@@ -56,10 +59,26 @@ func NewExecutorMetrics(meterFactory meters.MeterFactory) (*ExecutorMetrics, err
 		return nil, fmt.Errorf("failed to create alert counter: %w", err)
 	}
 
+	profileDuration, err := meter.Int64Histogram("eval.entity.duration",
+		metric.WithDescription("Time taken to evaluate all profiles against an entity"),
+		metric.WithUnit("milliseconds"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create profile histogram: %w", err)
+	}
+
+	entityDuration, err := meter.Int64Histogram("eval.profile.duration",
+		metric.WithDescription("Time taken to evaluate a single profile against an entity"),
+		metric.WithUnit("milliseconds"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entity histogram: %w", err)
+	}
+
 	return &ExecutorMetrics{
 		evalCounter:        evalCounter,
 		remediationCounter: remediationCounter,
 		alertCounter:       alertCounter,
+		profileDuration:    profileDuration,
+		entityDuration:     entityDuration,
 	}, nil
 }
 
@@ -70,8 +89,8 @@ func (e *ExecutorMetrics) CountEvalStatus(
 	entityType db.Entities,
 ) {
 	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("entity_type", string(entityType)),
-		attribute.String("status", string(status)),
+		attribute.String("eval_entity_type", string(entityType)),
+		attribute.String("eval_status_type", string(status)),
 	))
 }
 
@@ -80,8 +99,8 @@ func (e *ExecutorMetrics) CountRemediationStatus(
 	ctx context.Context,
 	status db.RemediationStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("status", string(status)),
+	e.remediationCounter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("remediation_status_type", string(status)),
 	))
 }
 
@@ -90,7 +109,17 @@ func (e *ExecutorMetrics) CountAlertStatus(
 	ctx context.Context,
 	status db.AlertStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
-		attribute.String("status", string(status)),
+	e.alertCounter.Add(ctx, 1, metric.WithAttributes(
+		attribute.String("alert_status_type", string(status)),
 	))
+}
+
+// TimeEntityEvaluation records how long it took to evaluate a profile.
+func (e *ExecutorMetrics) TimeEntityEvaluation(ctx context.Context, startTime time.Time) {
+	e.entityDuration.Record(ctx, time.Since(startTime).Milliseconds())
+}
+
+// TimeProfileEvaluation records how long it took to evaluate a profile.
+func (e *ExecutorMetrics) TimeProfileEvaluation(ctx context.Context, startTime time.Time) {
+	e.profileDuration.Record(ctx, time.Since(startTime).Milliseconds())
 }

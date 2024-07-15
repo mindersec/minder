@@ -137,12 +137,17 @@ type EvalStatusParams struct {
 	ArtifactID       uuid.NullUUID
 	PullRequestID    uuid.NullUUID
 	ProjectID        uuid.UUID
+	ReleaseID        uuid.UUID
+	PipelineRunID    uuid.UUID
+	TaskRunID        uuid.UUID
+	BuildID          uuid.UUID
 	EntityType       db.Entities
 	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
 	actionsOnOff     map[ActionType]ActionOpt
 	actionsErr       evalerrors.ActionsError
+	ExecutionID      uuid.UUID
 }
 
 // Ensure EvalStatusParams implements the necessary interfaces
@@ -246,6 +251,7 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 		Str("rule_type", e.GetRule().GetType()).
 		Str("rule_name", e.GetRule().GetName()).
 		Str("rule_type_id", e.GetRuleTypeID().String()).
+		Str("execution_id", e.ExecutionID.String()).
 		Logger()
 	if e.RepoID.Valid {
 		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()

@@ -78,6 +78,14 @@ const (
 	ArtifactIDEventKey = "artifact_id"
 	// PullRequestIDEventKey is the key for the pull request ID
 	PullRequestIDEventKey = "pull_request_id"
+	// ReleaseIDEventKey is the key for the pull request ID
+	ReleaseIDEventKey = "release_id"
+	// PipelineRunIDEventKey is the key for a pipeline run
+	PipelineRunIDEventKey = "pipeline_run_id"
+	// TaskRunIDEventKey is the key for a task run
+	TaskRunIDEventKey = "task_run_id"
+	// BuildIDEventKey is the key for a build
+	BuildIDEventKey = "build_run_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
 	// ActionEventKey is the key for the action event
@@ -129,6 +137,38 @@ func (eiw *EntityInfoWrapper) WithPullRequest(p *minderv1.PullRequest) *EntityIn
 	return eiw
 }
 
+// WithRelease sets a Release as the entity of the wrapper
+func (eiw *EntityInfoWrapper) WithRelease(r *minderv1.Release) *EntityInfoWrapper {
+	eiw.Type = minderv1.Entity_ENTITY_RELEASE
+	eiw.Entity = r
+
+	return eiw
+}
+
+// WithPipelineRun sets a PipelineRun as the entity of the wrapper
+func (eiw *EntityInfoWrapper) WithPipelineRun(plr *minderv1.PipelineRun) *EntityInfoWrapper {
+	eiw.Type = minderv1.Entity_ENTITY_PIPELINE_RUN
+	eiw.Entity = plr
+
+	return eiw
+}
+
+// WithTaskRun sets a TaskRun as the entity of the wrapper
+func (eiw *EntityInfoWrapper) WithTaskRun(tr *minderv1.TaskRun) *EntityInfoWrapper {
+	eiw.Type = minderv1.Entity_ENTITY_TASK_RUN
+	eiw.Entity = tr
+
+	return eiw
+}
+
+// WithBuild sets a Build as the entity of the wrapper
+func (eiw *EntityInfoWrapper) WithBuild(tr *minderv1.Build) *EntityInfoWrapper {
+	eiw.Type = minderv1.Entity_ENTITY_TASK_RUN
+	eiw.Entity = tr
+
+	return eiw
+}
+
 // WithProjectID sets the project ID
 func (eiw *EntityInfoWrapper) WithProjectID(id uuid.UUID) *EntityInfoWrapper {
 	eiw.ProjectID = id
@@ -153,6 +193,34 @@ func (eiw *EntityInfoWrapper) WithArtifactID(id uuid.UUID) *EntityInfoWrapper {
 // WithPullRequestID sets the pull request ID
 func (eiw *EntityInfoWrapper) WithPullRequestID(id uuid.UUID) *EntityInfoWrapper {
 	eiw.withID(PullRequestIDEventKey, id.String())
+
+	return eiw
+}
+
+// WithReleaseID sets the release ID
+func (eiw *EntityInfoWrapper) WithReleaseID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(ReleaseIDEventKey, id.String())
+
+	return eiw
+}
+
+// WithPipelineRunID sets the pipeline run ID
+func (eiw *EntityInfoWrapper) WithPipelineRunID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(PipelineRunIDEventKey, id.String())
+
+	return eiw
+}
+
+// WithTaskRunID sets the pipeline run ID
+func (eiw *EntityInfoWrapper) WithTaskRunID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(TaskRunIDEventKey, id.String())
+
+	return eiw
+}
+
+// WithBuildID sets the pipeline run ID
+func (eiw *EntityInfoWrapper) WithBuildID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.withID(BuildIDEventKey, id.String())
 
 	return eiw
 }
@@ -368,6 +436,14 @@ func pbEntityTypeToString(t minderv1.Entity) (string, error) {
 		return VersionedArtifactEventEntityType, nil
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return PullRequestEventEntityType, nil
+	case minderv1.Entity_ENTITY_RELEASE:
+		return "", fmt.Errorf("releases not yet supported")
+	case minderv1.Entity_ENTITY_PIPELINE_RUN:
+		return "", fmt.Errorf("pipeline runs not yet supported")
+	case minderv1.Entity_ENTITY_TASK_RUN:
+		return "", fmt.Errorf("task runs not yet supported")
+	case minderv1.Entity_ENTITY_BUILD:
+		return "", fmt.Errorf("builds not yet supported")
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return "", fmt.Errorf("build environments not yet supported")
 	case minderv1.Entity_ENTITY_UNSPECIFIED:

@@ -595,6 +595,14 @@ func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_REPOSITORIES
 	case db.EntitiesBuildEnvironment:
 		return minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS
+	case db.EntitiesRelease:
+		return minderv1.Entity_ENTITY_RELEASE
+	case db.EntitiesPipelineRun:
+		return minderv1.Entity_ENTITY_PIPELINE_RUN
+	case db.EntitiesTaskRun:
+		return minderv1.Entity_ENTITY_TASK_RUN
+	case db.EntitiesBuild:
+		return minderv1.Entity_ENTITY_BUILD
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
 	}
@@ -636,7 +644,8 @@ func getEntityName(
 			row.RepoOwner.String,
 			row.RepoName.String,
 		), nil
-	case db.EntitiesBuildEnvironment:
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
+		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 		return "", errors.New("invalid entity type")
 	default:
 		return "", errors.New("invalid entity type")

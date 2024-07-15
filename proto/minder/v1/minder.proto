@@ -250,6 +250,12 @@ message PullRequest {
     Context context = 8;
 }
 
+// Stubs for the SDLC entities
+message Release {}
+message PipelineRun {}
+message TaskRun {}
+message Build {}
+
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
         option (google.api.http) = {
@@ -1410,6 +1416,10 @@ enum Entity {
     ENTITY_BUILD_ENVIRONMENTS = 2;
     ENTITY_ARTIFACTS = 3;
     ENTITY_PULL_REQUESTS = 4;
+    ENTITY_RELEASE = 5;
+    ENTITY_PIPELINE_RUN = 6;
+    ENTITY_TASK_RUN = 7;
+    ENTITY_BUILD = 8;
 }
 
 message EntityAutoRegistrationConfig {
@@ -1981,6 +1991,10 @@ message Profile {
     repeated Rule build_environment = 5;
     repeated Rule artifact = 6;
     repeated Rule pull_request = 7;
+    repeated Rule release = 15;
+    repeated Rule pipeline_run = 16;
+    repeated Rule task_run = 17;
+    repeated Rule build = 18;
 
     message Selector {
         // id is optional and use for updates to match upserts as well as read operations. It is ignored for creates.
