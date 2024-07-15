@@ -99,7 +99,7 @@ func (e *ExecutorMetrics) CountRemediationStatus(
 	ctx context.Context,
 	status db.RemediationStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
+	e.remediationCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("remediation_status_type", string(status)),
 	))
 }
@@ -109,7 +109,7 @@ func (e *ExecutorMetrics) CountAlertStatus(
 	ctx context.Context,
 	status db.AlertStatusTypes,
 ) {
-	e.evalCounter.Add(ctx, 1, metric.WithAttributes(
+	e.alertCounter.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("alert_status_type", string(status)),
 	))
 }
