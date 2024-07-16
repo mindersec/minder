@@ -8,7 +8,6 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -534,35 +533,25 @@ func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListP
 }
 
 const listProfilesInstantiatingRuleType = `-- name: ListProfilesInstantiatingRuleType :many
-SELECT profiles.id, profiles.name, profiles.created_at FROM profiles
-JOIN entity_profiles ON profiles.id = entity_profiles.profile_id 
-JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_profile_id
-WHERE entity_profile_rules.rule_type_id = $1
-GROUP BY profiles.id
+SELECT p.name
+FROM profiles AS p
+JOIN rule_instances AS r ON p.id = r.profile_id
+WHERE r.rule_type_id = $1
 `
 
-type ListProfilesInstantiatingRuleTypeRow struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
-// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
-// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error) {
+func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listProfilesInstantiatingRuleType, ruleTypeID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListProfilesInstantiatingRuleTypeRow{}
+	items := []string{}
 	for rows.Next() {
-		var i ListProfilesInstantiatingRuleTypeRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, name)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
