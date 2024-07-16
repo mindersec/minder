@@ -26,10 +26,6 @@ type CountProfilesByEntityTypeRow struct {
 	ProfileEntity Entities `json:"profile_entity"`
 }
 
-// SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
-// FROM profiles AS p
-// JOIN entity_profiles AS ep ON p.id = ep.profile_id
-// GROUP BY ep.entity;
 func (q *Queries) CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error) {
 	rows, err := q.db.QueryContext(ctx, countProfilesByEntityType)
 	if err != nil {
