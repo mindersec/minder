@@ -29,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/profiles/models"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -62,43 +63,6 @@ type Result struct {
 	Storer storage.Storer
 }
 
-// ActionOpt is the type that defines what action to take when remediating
-type ActionOpt int
-
-const (
-	// ActionOptOn means perform the remediation
-	ActionOptOn ActionOpt = iota
-	// ActionOptOff means do not perform the remediation
-	ActionOptOff
-	// ActionOptDryRun means perform a dry run of the remediation
-	ActionOptDryRun
-	// ActionOptUnknown means the action is unknown. This is a sentinel value.
-	ActionOptUnknown
-)
-
-func (a ActionOpt) String() string {
-	return [...]string{"on", "off", "dry_run", "unknown"}[a]
-}
-
-// ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
-	var actionOptMap = map[string]ActionOpt{
-		"on":      ActionOptOn,
-		"off":     ActionOptOff,
-		"dry_run": ActionOptDryRun,
-	}
-
-	if s == nil {
-		return defAction
-	}
-
-	if v, ok := actionOptMap[*s]; ok {
-		return v
-	}
-
-	return ActionOptUnknown
-}
-
 // ActionType represents the type of action, i.e., remediate, alert, etc.
 type ActionType string
 
@@ -106,8 +70,8 @@ type ActionType string
 type Action interface {
 	Class() ActionType
 	Type() string
-	GetOnOffState(*pb.Profile) ActionOpt
-	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
+	GetOnOffState(*pb.Profile) models.ActionOpt
+	Do(ctx context.Context, cmd ActionCmd, setting models.ActionOpt, entity protoreflect.ProtoMessage,
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
@@ -144,7 +108,7 @@ type EvalStatusParams struct {
 	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
-	actionsOnOff     map[ActionType]ActionOpt
+	actionsOnOff     map[ActionType]models.ActionOpt
 	actionsErr       evalerrors.ActionsError
 	ExecutionID      uuid.UUID
 }
@@ -165,12 +129,12 @@ func (e *EvalStatusParams) SetEvalErr(err error) {
 }
 
 // GetActionsOnOff returns the actions' on/off state
-func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]ActionOpt {
+func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]models.ActionOpt {
 	return e.actionsOnOff
 }
 
 // SetActionsOnOff sets the actions' on/off state
-func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]ActionOpt) {
+func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]models.ActionOpt) {
 	e.actionsOnOff = actionsOnOff
 }
 
@@ -277,7 +241,7 @@ type EvalParamsReadWriter interface {
 // ActionsParams is the interface used for processing a rule type action
 type ActionsParams interface {
 	EvalParamsReader
-	GetActionsOnOff() map[ActionType]ActionOpt
+	GetActionsOnOff() map[ActionType]models.ActionOpt
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow

@@ -106,11 +106,12 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
+	entityType := entities.EntityTypeToDB(inf.Type)
 	// Load all the relevant rule type engines for this entity
 	ruleEngineCache, err := rtengine.NewRuleEngineCache(
 		ctx,
 		e.querier,
-		entities.EntityTypeToDB(inf.Type),
+		entityType,
 		inf.ProjectID,
 		provider,
 		ingestCache,
