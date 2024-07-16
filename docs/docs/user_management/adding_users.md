@@ -6,7 +6,7 @@ sidebar_position: 100
 ## Prerequisites
 
 - The `minder` CLI application
-- A Stacklok account with [`admin` permission](../user_management/user_roles.md)
+- A Minder account with [`admin` permission](../user_management/user_roles.md)
 
 ## Overview
 
