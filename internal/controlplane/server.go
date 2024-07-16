@@ -58,6 +58,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/history"
+	"github.com/stacklok/minder/internal/invites"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/projects"
@@ -67,6 +68,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/session"
 	"github.com/stacklok/minder/internal/repositories/github"
+	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -97,8 +99,10 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
+	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
 	repos               github.RepositoryService
+	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
 	ghProviders         service.GitHubProviderService
@@ -134,7 +138,9 @@ func NewServer(
 	cryptoEngine crypto.Engine,
 	authzClient authz.Client,
 	idClient auth.Resolver,
+	inviteService invites.InviteService,
 	repoService github.RepositoryService,
+	roleService roles.RoleService,
 	profileService profiles.ProfileService,
 	historyService history.EvaluationHistoryService,
 	ruleService ruletypes.RuleTypeService,
@@ -163,7 +169,9 @@ func NewServer(
 		providerManager:     providerManager,
 		providerAuthManager: providerAuthManager,
 		sessionService:      sessionService,
+		invites:             inviteService,
 		repos:               repoService,
+		roles:               roleService,
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
 		idClient:            idClient,
