@@ -151,10 +151,10 @@ WHERE entity_profile_rules.rule_type_id = $1
 GROUP BY profiles.id;
 
 -- name: CountProfilesByEntityType :many
-SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+SELECT COUNT(DISTINCT(p.id)) AS num_profiles, r.entity_type AS profile_entity
 FROM profiles AS p
-JOIN entity_profiles AS ep ON p.id = ep.profile_id
-GROUP BY ep.entity;
+JOIN rule_instances AS r ON p.id = r.profile_id
+GROUP BY r.entity_type;
 
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));

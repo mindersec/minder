@@ -13,6 +13,10 @@ import (
 )
 
 type Querier interface {
+	//SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+	//FROM profiles AS p
+	//JOIN entity_profiles AS ep ON p.id = ep.profile_id
+	//GROUP BY ep.entity;
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)

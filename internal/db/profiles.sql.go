@@ -15,10 +15,10 @@ import (
 )
 
 const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
-SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+SELECT COUNT(DISTINCT(p.id)) AS num_profiles, r.entity_type AS profile_entity
 FROM profiles AS p
-JOIN entity_profiles AS ep ON p.id = ep.profile_id
-GROUP BY ep.entity
+JOIN rule_instances AS r ON p.id = r.profile_id
+GROUP BY r.entity_type
 `
 
 type CountProfilesByEntityTypeRow struct {
@@ -26,6 +26,10 @@ type CountProfilesByEntityTypeRow struct {
 	ProfileEntity Entities `json:"profile_entity"`
 }
 
+// SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+// FROM profiles AS p
+// JOIN entity_profiles AS ep ON p.id = ep.profile_id
+// GROUP BY ep.entity;
 func (q *Queries) CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error) {
 	rows, err := q.db.QueryContext(ctx, countProfilesByEntityType)
 	if err != nil {
