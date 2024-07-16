@@ -69,7 +69,8 @@ func (e *executor) createEvalStatusParams(
 		return nil, fmt.Errorf("entity type not yet supported")
 	}
 
-	// TODO: replace with new tables
+	// TODO: once we replace the existing profile state types with the new
+	// evaluation history tables, this can go away.
 	ruleTypeName, err := e.querier.GetRuleTypeNameByID(ctx, rule.RuleTypeID)
 	if err != nil {
 		return nil, fmt.Errorf("error while retrieving rule type name: %w", err)
