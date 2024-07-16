@@ -143,7 +143,7 @@ The Minder community are actively working on new features and improvements for M
 
 You can find our roadmap [here](https://minder-docs.stacklok.dev/about/roadmap).
 
-Should you wish to contribute a feature or improvement, please use the following
+Should you wish to request or contribute a feature or improvement, please use the following
 [issue template](https://github.com/stacklok/minder/issues/new?template=enhancement.yml)
 
 # Development
