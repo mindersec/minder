@@ -100,4 +100,9 @@ func init() {
 		os.Exit(1)
 	}
 
+	if err := getCmd.MarkFlagRequired("entity-type"); err != nil {
+		getCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
+
 }
