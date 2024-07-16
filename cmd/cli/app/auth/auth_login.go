@@ -48,7 +48,7 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	filePath, err := cli.EnsureCredentials(ctx, cmd, clientConfig)
+	filePath, err := cli.LoginAndSaveCreds(ctx, cmd, clientConfig)
 	if err != nil {
 		return cli.MessageAndError("Error ensuring credentials", err)
 	}

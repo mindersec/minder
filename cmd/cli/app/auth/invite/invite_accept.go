@@ -20,12 +20,8 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -35,29 +31,12 @@ var inviteAcceptCmd = &cobra.Command{
 	Use:   "accept",
 	Short: "Accept a pending invitation",
 	Long:  `Accept a pending invitation for the current minder user`,
-	PreRunE: ensureCredentials,
+	PreRunE: cli.EnsureCredentials,
 	RunE:  cli.GRPCClientWrapRunE(inviteAcceptCommand),
 	Args:  cobra.ExactArgs(1),
 }
 
-func ensureCredentials(cmd *cobra.Command, args []string) error {
-	ctx := context.Background()
 
-	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
-	if err != nil {
-		return cli.MessageAndError("Unable to read config", err)
-	}
-
-	_, err = util.GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
-	if err != nil {  // or token is expired?
-		tokenFile, err := cli.EnsureCredentials(ctx, cmd, clientConfig)
-		if err != nil {
-			return cli.MessageAndError("Error fetching credentials from Minder", err)
-		}
-		cmd.Printf("Your access credentials have been saved to %s\n", tokenFile)
-	}
-	return nil
-}
 
 // inviteAcceptCommand is the "invite accept" subcommand
 func inviteAcceptCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {

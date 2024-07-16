@@ -71,9 +71,30 @@ func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
 		grpcHost, grpcPort, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
 }
 
-// EnsureCredentials ensures that the user's credentials are available.
+// EnsureCredentials is a PreRunE function to ensure that the user
+// has valid credentials, opening a browser for login if needed.
+func EnsureCredentials(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
+
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	if err != nil {
+		return MessageAndError("Unable to read config", err)
+	}
+
+	_, err = util.GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
+	if err != nil { // or token is expired?
+		tokenFile, err := LoginAndSaveCreds(ctx, cmd, clientConfig)
+		if err != nil {
+			return MessageAndError("Error fetching credentials from Minder", err)
+		}
+		cmd.Printf("Your access credentials have been saved to %s\n", tokenFile)
+	}
+	return nil
+}
+
+// LoginAndSaveCreds runs a login flow for the user, opening a browser if needed.
 // If the credentials need to be refreshed, the new credentials will be saved for future use.
-func EnsureCredentials(ctx context.Context, cmd *cobra.Command, clientConfig *clientconfig.Config) (string, error) {
+func LoginAndSaveCreds(ctx context.Context, cmd *cobra.Command, clientConfig *clientconfig.Config) (string, error) {
 	skipBrowser := viper.GetBool("login.skip-browser")
 
 	// wait for the token to be received
