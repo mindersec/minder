@@ -54,7 +54,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "error when no existing invites",
 			dBSetup: dbf.NewDBMock(
-				withGetUser(validUser),
+				withGetUserBySubject(validUser),
 				withExistingInvites(noInvites),
 			),
 			expectedError: "no invitations found for this email and project",
@@ -62,7 +62,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "error when multiple existing invites",
 			dBSetup: dbf.NewDBMock(
-				withGetUser(validUser),
+				withGetUserBySubject(validUser),
 				withExistingInvites(multipleInvites),
 			),
 			expectedError: "multiple invitations found for this email and project",
@@ -70,7 +70,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "no message sent when role is the same",
 			dBSetup: dbf.NewDBMock(
-				withGetUser(validUser),
+				withGetUserBySubject(validUser),
 				withExistingInvites(singleInviteWithSameRole),
 				withInviteRoleUpdate(userInvite, nil),
 				withProject(),
@@ -79,7 +79,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "invite updated and message sent successfully",
 			dBSetup: dbf.NewDBMock(
-				withGetUser(validUser),
+				withGetUserBySubject(validUser),
 				withExistingInvites(singleInviteWithDifferentRole),
 				withInviteRoleUpdate(userInvite, nil),
 				withProject(),
@@ -140,6 +140,75 @@ func TestUpdateInvite(t *testing.T) {
 	}
 }
 
+func TestRemoveInvite(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name           string
+		dBSetup        dbf.DBMockBuilder
+		expectedError  string
+		expectedResult *minder.Invitation
+	}{
+		{
+			name: "error when no existing invites",
+			dBSetup: dbf.NewDBMock(
+				withExistingInvites(noInvites),
+			),
+			expectedError: "no invitations found for this email and project",
+		},
+		{
+			name: "error when no invite matches role",
+			dBSetup: dbf.NewDBMock(
+				withExistingInvites(singleInviteWithDifferentRole),
+			),
+			expectedError: "no invitation found for this role and email in the project",
+		},
+		{
+			name: "no message sent when role is the same",
+			dBSetup: dbf.NewDBMock(
+				withExistingInvites(singleInviteWithSameRole),
+				withDeleteInvite(userInvite, nil),
+				withProject(),
+				withGetUserByID(validUser),
+			),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("sub", userEmail))
+
+			ctx := context.Background()
+			ctx = authjwt.WithAuthTokenContext(ctx, user)
+
+			idClient := mockauth.NewMockResolver(ctrl)
+			idClient.EXPECT().Resolve(ctx, userSubject).Return(&auth.Identity{
+				UserID: userSubject,
+			}, nil).AnyTimes()
+
+			service := NewInviteService()
+			invite, err := service.RemoveInvite(ctx, scenario.dBSetup(ctrl), idClient, projectId, updatedRole, userEmail)
+
+			if scenario.expectedError != "" {
+				require.ErrorContains(t, err, scenario.expectedError)
+				return
+			}
+			require.NoError(t, err)
+
+			if scenario.expectedResult != nil {
+				require.Equal(t, scenario.expectedResult.Role, invite.Role)
+				require.Equal(t, scenario.expectedResult.Project, invite.Project)
+			}
+		})
+	}
+}
+
 var (
 	projectId   = uuid.New()
 	userEmail   = "test@example.com"
@@ -191,10 +260,18 @@ var (
 	}
 )
 
-func withGetUser(result db.User) func(dbf.DBMock) {
+func withGetUserBySubject(result db.User) func(dbf.DBMock) {
 	return func(mock dbf.DBMock) {
 		mock.EXPECT().
 			GetUserBySubject(gomock.Any(), gomock.Any()).
+			Return(result, nil)
+	}
+}
+
+func withGetUserByID(result db.User) func(dbf.DBMock) {
+	return func(mock dbf.DBMock) {
+		mock.EXPECT().
+			GetUserByID(gomock.Any(), gomock.Any()).
 			Return(result, nil)
 	}
 }
@@ -214,6 +291,13 @@ func withInviteRoleUpdate(result db.UserInvite, err error) func(dbf.DBMock) {
 				Code: inviteCode,
 				Role: updatedRole.String(),
 			}).
+			Return(result, err)
+	}
+}
+func withDeleteInvite(result db.UserInvite, err error) func(dbf.DBMock) {
+	return func(mock dbf.DBMock) {
+		mock.EXPECT().
+			DeleteInvitation(gomock.Any(), inviteCode).
 			Return(result, err)
 	}
 }

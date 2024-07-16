@@ -44,6 +44,21 @@ func (m *MockRoleService) EXPECT() *MockRoleServiceMockRecorder {
 	return m.recorder
 }
 
+// RemoveRoleAssignment mocks base method.
+func (m *MockRoleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver, targetProject uuid.UUID, subject string, roleToRemove authz.Role) (*v1.RoleAssignment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveRoleAssignment", ctx, qtx, authzClient, idClient, targetProject, subject, roleToRemove)
+	ret0, _ := ret[0].(*v1.RoleAssignment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveRoleAssignment indicates an expected call of RemoveRoleAssignment.
+func (mr *MockRoleServiceMockRecorder) RemoveRoleAssignment(ctx, qtx, authzClient, idClient, targetProject, subject, roleToRemove any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRoleAssignment", reflect.TypeOf((*MockRoleService)(nil).RemoveRoleAssignment), ctx, qtx, authzClient, idClient, targetProject, subject, roleToRemove)
+}
+
 // UpdateRoleAssignment mocks base method.
 func (m *MockRoleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver, targetProject uuid.UUID, subject string, authzRole authz.Role) (*v1.RoleAssignment, error) {
 	m.ctrl.T.Helper()

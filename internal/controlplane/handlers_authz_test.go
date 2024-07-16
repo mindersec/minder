@@ -48,6 +48,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	mockinvites "github.com/stacklok/minder/internal/invites/mock"
+	"github.com/stacklok/minder/internal/roles"
 	mockroles "github.com/stacklok/minder/internal/roles/mock"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -449,6 +450,9 @@ func TestRoleManagement(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 
+			// User real implementation, not mock
+			roleService := roles.NewRoleService()
+
 			for _, add := range tc.adds {
 				match := gomock.Eq(add.GetSubject())
 				if tc.idpFlag {
@@ -467,6 +471,10 @@ func TestRoleManagement(t *testing.T) {
 					// note: in the flag case, subject may be translated to UUID.
 					match = gomock.Any()
 				}
+				mockStore.EXPECT().BeginTransaction()
+				mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+				mockStore.EXPECT().Rollback(gomock.Any())
+				mockStore.EXPECT().Commit(gomock.Any())
 				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
 			}
 			if tc.userManagementFlag {
@@ -491,7 +499,8 @@ func TestRoleManagement(t *testing.T) {
 						HumanName: "user2",
 					}},
 				},
-				jwt: noop.NewJwtValidator("test"),
+				jwt:   noop.NewJwtValidator("test"),
+				roles: roleService,
 			}
 
 			ctx := context.Background()
@@ -638,6 +647,114 @@ func TestUpdateRole(t *testing.T) {
 			}
 			if tc.expectedRole {
 				require.Equal(t, 1, len(response.RoleAssignments))
+			}
+		})
+	}
+}
+
+func TestRemoveRole(t *testing.T) {
+	t.Parallel()
+
+	projectIdString := uuid.New().String()
+	userEmail := "test@example.com"
+	authzRole := authz.RoleAdmin
+
+	tests := []struct {
+		name               string
+		inviteeEmail       string
+		subject            string
+		expectedError      string
+		expectedInvitation bool
+		expectedRole       bool
+	}{
+		{
+			name:          "error with no subject or email",
+			expectedError: "one of subject or email must be specified",
+		},
+		{
+			name:               "request with email deletes invite",
+			inviteeEmail:       "other@example.com",
+			expectedInvitation: true,
+		},
+		{
+			name:         "request with subject deletes role assignment",
+			subject:      "user",
+			expectedRole: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("email", userEmail))
+
+			ctx := context.Background()
+			ctx = authjwt.WithAuthTokenContext(ctx, user)
+
+			featureClient := &flags.FakeClient{}
+			featureClient.Data = map[string]any{
+				"user_management": true,
+			}
+
+			mockInviteService := mockinvites.NewMockInviteService(ctrl)
+			if tc.expectedInvitation {
+				mockInviteService.EXPECT().RemoveInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					authzRole, tc.inviteeEmail).Return(&minder.Invitation{
+					Role:    authzRole.String(),
+					Project: projectIdString,
+				}, nil)
+			}
+			mockRoleService := mockroles.NewMockRoleService(ctrl)
+			if tc.expectedRole {
+				mockRoleService.EXPECT().RemoveRoleAssignment(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), tc.subject, authzRole).Return(&minder.RoleAssignment{
+					Role:    authzRole.String(),
+					Project: &projectIdString,
+				}, nil)
+			}
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockStore.EXPECT().BeginTransaction().AnyTimes()
+			mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).AnyTimes()
+			mockStore.EXPECT().Commit(gomock.Any()).AnyTimes()
+			mockStore.EXPECT().Rollback(gomock.Any()).AnyTimes()
+
+			server := &Server{
+				featureFlags: featureClient,
+				invites:      mockInviteService,
+				roles:        mockRoleService,
+				store:        mockStore,
+				cfg:          &serverconfig.Config{Email: serverconfig.EmailConfig{}},
+			}
+
+			response, err := server.RemoveRole(ctx, &minder.RemoveRoleRequest{
+				Context: &minder.Context{
+					Project: &projectIdString,
+				},
+				RoleAssignment: &minder.RoleAssignment{
+					Role:    authzRole.String(),
+					Subject: tc.subject,
+					Email:   tc.inviteeEmail,
+				},
+			})
+
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			if tc.expectedInvitation {
+				require.Equal(t, authzRole.String(), response.Invitation.Role)
+				require.Equal(t, projectIdString, response.Invitation.Project)
+			}
+			if tc.expectedRole {
+				require.Equal(t, authzRole.String(), response.RoleAssignment.Role)
 			}
 		})
 	}
