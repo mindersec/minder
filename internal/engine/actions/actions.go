@@ -33,15 +33,16 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	models "github.com/stacklok/minder/internal/engine/interfaces"
+	act "github.com/stacklok/minder/internal/profiles/models"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
-	actions      map[engif.ActionType]engif.Action
-	actionsOnOff map[engif.ActionType]engif.ActionOpt
+	actions      map[models.ActionType]models.Action
+	actionsOnOff map[models.ActionType]act.ActionOpt
 }
 
 // NewRuleActions creates a new rule actions engine
@@ -64,13 +65,13 @@ func NewRuleActions(
 	}
 
 	return &RuleActionsEngine{
-		actions: map[engif.ActionType]engif.Action{
+		actions: map[models.ActionType]models.Action{
 			remEngine.Class():   remEngine,
 			alertEngine.Class(): alertEngine,
 		},
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
-		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
+		actionsOnOff: map[models.ActionType]act.ActionOpt{
 			remEngine.Class():   remEngine.GetOnOffState(profile),
 			alertEngine.Class(): alertEngine.GetOnOffState(profile),
 		},
@@ -78,7 +79,7 @@ func NewRuleActions(
 }
 
 // GetOnOffState returns the on/off state of the actions
-func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]engif.ActionOpt {
+func (rae *RuleActionsEngine) GetOnOffState() map[models.ActionType]act.ActionOpt {
 	return rae.actionsOnOff
 }
 
@@ -86,7 +87,7 @@ func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]engif.ActionO
 func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
-	params engif.ActionsParams,
+	params models.ActionsParams,
 ) enginerr.ActionsError {
 	// Get logger
 	logger := zerolog.Ctx(ctx)
@@ -137,10 +138,10 @@ func (rae *RuleActionsEngine) DoActions(
 // processAction runs the action engine for the given action type, and also sanity checks the result of the action
 func (rae *RuleActionsEngine) processAction(
 	ctx context.Context,
-	actionType engif.ActionType,
-	cmd engif.ActionCmd,
+	actionType models.ActionType,
+	cmd models.ActionCmd,
 	ent protoreflect.ProtoMessage,
-	params engif.ActionsParams,
+	params models.ActionsParams,
 	metadata *json.RawMessage,
 ) (jmsg json.RawMessage, finalErr error) {
 	defer func() {
@@ -159,7 +160,7 @@ func (rae *RuleActionsEngine) processAction(
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
-func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
+func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) models.ActionCmd {
 	// Get current evaluation status
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
@@ -181,25 +182,25 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
 		if db.RemediationStatusTypesSkipped != prevRemediation {
-			return engif.ActionCmdOff
+			return models.ActionCmdOff
 		}
 		// We should do nothing if remediation was already skipped
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	case db.EvalStatusTypesFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
 		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
 		if db.RemediationStatusTypesSkipped == prevRemediation {
-			return engif.ActionCmdOn
+			return models.ActionCmdOn
 		}
 		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	case db.EvalStatusTypesSkipped:
 	case db.EvalStatusTypesPending:
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	}
 
 	// Default to do nothing
-	return engif.ActionCmdDoNothing
+	return models.ActionCmdDoNothing
 }
 
 // shouldAlert returns the action command for alerting taking into account previous evaluations
@@ -208,7 +209,7 @@ func shouldAlert(
 	evalErr error,
 	remErr error,
 	remType string,
-) engif.ActionCmd {
+) models.ActionCmd {
 	// Get current evaluation status
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
@@ -224,9 +225,9 @@ func shouldAlert(
 	if remType != pull_request.RemediateType && remErr == nil {
 		// If this is the case either skip alerting or turn it off if it was on
 		if prevAlert != db.AlertStatusTypesOff {
-			return engif.ActionCmdOff
+			return models.ActionCmdOff
 		}
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	}
 
 	// Case 2 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
@@ -239,29 +240,29 @@ func shouldAlert(
 		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
 		// The Alert should be on (if it wasn't already)
 		if db.AlertStatusTypesOn != prevAlert {
-			return engif.ActionCmdOn
+			return models.ActionCmdOn
 		}
 		// We should do nothing if alert was already turned on
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	case db.EvalStatusTypesSuccess:
 		// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
 		// The Alert should be turned OFF (if it wasn't already)
 		if db.AlertStatusTypesOff != prevAlert {
-			return engif.ActionCmdOff
+			return models.ActionCmdOff
 		}
 		// We should do nothing if the Alert is already OFF
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	case db.EvalStatusTypesSkipped:
 	case db.EvalStatusTypesPending:
-		return engif.ActionCmdDoNothing
+		return models.ActionCmdDoNothing
 	}
 
 	// Default to do nothing
-	return engif.ActionCmdDoNothing
+	return models.ActionCmdDoNothing
 }
 
 // isSkippable returns true if the action should be skipped
-func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
+func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType models.ActionType, evalErr error) bool {
 	var skipAction bool
 
 	logger := zerolog.Ctx(ctx).Info().
@@ -277,15 +278,15 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	}
 	// Check the action option
 	switch actionOnOff {
-	case engif.ActionOptOff:
+	case act.ActionOptOff:
 		// Action is off, skip
 		logger.Msg("action is off, skipping")
 		return true
-	case engif.ActionOptUnknown:
+	case act.ActionOptUnknown:
 		// Action is unknown, skip
 		logger.Msg("unknown action option, skipping")
 		return true
-	case engif.ActionOptDryRun, engif.ActionOptOn:
+	case act.ActionOptDryRun, act.ActionOptOn:
 		// Action is on or dry-run, do not skip yet. Check the evaluation error
 		skipAction =
 			// rule evaluation was skipped, skip action too

@@ -25,6 +25,7 @@ import (
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -49,15 +50,15 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the off state of the noop engine
-func (_ *Remediator) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptOff
+func (_ *Remediator) GetOnOffState(_ *pb.Profile) models.ActionOpt {
+	return models.ActionOptOff
 }
 
 // Do perform the remediation
 func (r *Remediator) Do(
 	_ context.Context,
 	_ interfaces.ActionCmd,
-	_ interfaces.ActionOpt,
+	_ models.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ interfaces.ActionsParams,
 	_ *json.RawMessage,

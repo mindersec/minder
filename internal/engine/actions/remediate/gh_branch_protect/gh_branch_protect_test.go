@@ -28,6 +28,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
@@ -132,7 +133,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 	})
 
 	type remediateArgs struct {
-		remAction interfaces.ActionOpt
+		remAction models.ActionOpt
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
 		params    map[string]any
@@ -162,7 +163,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 			mockSetup: func(_ *mock_ghclient.MockGitHub) {
 			},
 			remArgs: &remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner: repoOwner,
 					Name:  repoName,
@@ -185,7 +186,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				actionType: TestActionTypeValid,
 			},
 			remArgs: &remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner: repoOwner,
 					Name:  repoName,
@@ -224,7 +225,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				actionType: TestActionTypeValid,
 			},
 			remArgs: &remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner: repoOwner,
 					Name:  repoName,

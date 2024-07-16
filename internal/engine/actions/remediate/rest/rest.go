@@ -30,6 +30,7 @@ import (
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -106,15 +107,15 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
+func (_ *Remediator) GetOnOffState(p *pb.Profile) models.ActionOpt {
+	return models.ActionOptFromString(p.Remediate, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting interfaces.ActionOpt,
+	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
@@ -148,11 +149,11 @@ func (r *Remediator) Do(
 
 	var err error
 	switch setting {
-	case interfaces.ActionOptOn:
+	case models.ActionOptOn:
 		err = r.run(ctx, endpoint.String(), body.Bytes())
-	case interfaces.ActionOptDryRun:
+	case models.ActionOptDryRun:
 		err = r.dryRun(ctx, endpoint.String(), body.String())
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+	case models.ActionOptOff, models.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
 	return nil, err
