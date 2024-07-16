@@ -140,6 +140,55 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 	return i, err
 }
 
+const getRuleTypesByEntityInHierarchy = `-- name: GetRuleTypesByEntityInHierarchy :many
+SELECT rt.id, rt.name, rt.provider, rt.project_id, rt.description, rt.guidance, rt.definition, rt.created_at, rt.updated_at, rt.severity_value, rt.provider_id, rt.subscription_id, rt.display_name FROM rule_type AS rt
+JOIN rule_instances AS ri ON ri.rule_type_id = rt.id
+WHERE ri.entity_type = $1
+AND ri.project_id = ANY($2::uuid[])
+`
+
+type GetRuleTypesByEntityInHierarchyParams struct {
+	EntityType Entities    `json:"entity_type"`
+	Projects   []uuid.UUID `json:"projects"`
+}
+
+func (q *Queries) GetRuleTypesByEntityInHierarchy(ctx context.Context, arg GetRuleTypesByEntityInHierarchyParams) ([]RuleType, error) {
+	rows, err := q.db.QueryContext(ctx, getRuleTypesByEntityInHierarchy, arg.EntityType, pq.Array(arg.Projects))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RuleType{}
+	for rows.Next() {
+		var i RuleType
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Description,
+			&i.Guidance,
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SeverityValue,
+			&i.ProviderID,
+			&i.SubscriptionID,
+			&i.DisplayName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRuleTypesByProject = `-- name: ListRuleTypesByProject :many
 SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name FROM rule_type WHERE project_id = $1
 `

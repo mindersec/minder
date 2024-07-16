@@ -144,6 +144,10 @@ type Querier interface {
 	GetRuleInstancesForProfileEntity(ctx context.Context, arg GetRuleInstancesForProfileEntityParams) ([]RuleInstance, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
+	// intended as a temporary transition query
+	// this will be removed once rule_instances is used consistently in the engine
+	GetRuleTypeIDByRuleNameEntityProfile(ctx context.Context, arg GetRuleTypeIDByRuleNameEntityProfileParams) (uuid.UUID, error)
+	GetRuleTypesByEntityInHierarchy(ctx context.Context, arg GetRuleTypesByEntityInHierarchyParams) ([]RuleType, error)
 	GetSelectorByID(ctx context.Context, id uuid.UUID) (ProfileSelector, error)
 	GetSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) ([]ProfileSelector, error)
 	GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (Subscription, error)

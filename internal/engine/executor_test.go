@@ -147,7 +147,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	mockStore.EXPECT().
 		GetParentProjects(gomock.Any(), projectID).
-		Return([]uuid.UUID{projectID}, nil)
+		Return([]uuid.UUID{projectID}, nil).
+		Times(2)
 
 	mockStore.EXPECT().
 		ListProfilesByProjectID(gomock.Any(), projectID).
@@ -197,15 +198,22 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Projects: []uuid.UUID{projectID},
-			Name:     passthroughRuleType,
-		}).Return(db.RuleType{
-		ID:         ruleTypeID,
-		Name:       passthroughRuleType,
-		ProjectID:  projectID,
-		Definition: marshalledRTD,
-	}, nil)
+		GetRuleTypeIDByRuleNameEntityProfile(gomock.Any(), gomock.Any()).
+		Return(ruleTypeID, nil)
+
+	mockStore.EXPECT().
+		GetRuleTypesByEntityInHierarchy(gomock.Any(), db.GetRuleTypesByEntityInHierarchyParams{
+			EntityType: db.EntitiesRepository,
+			Projects:   []uuid.UUID{projectID},
+		}).
+		Return([]db.RuleType{
+			{
+				ID:         ruleTypeID,
+				Name:       passthroughRuleType,
+				ProjectID:  projectID,
+				Definition: marshalledRTD,
+			},
+		}, nil)
 
 	ruleEvalId := uuid.New()
 
