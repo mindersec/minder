@@ -1895,20 +1895,6 @@ func (mr *MockStoreMockRecorder) UpdateEncryptedSecret(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEncryptedSecret", reflect.TypeOf((*MockStore)(nil).UpdateEncryptedSecret), arg0, arg1)
 }
 
-// UpdateEvaluationTimes mocks base method.
-func (m *MockStore) UpdateEvaluationTimes(arg0 context.Context, arg1 db.UpdateEvaluationTimesParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEvaluationTimes", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEvaluationTimes indicates an expected call of UpdateEvaluationTimes.
-func (mr *MockStoreMockRecorder) UpdateEvaluationTimes(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEvaluationTimes", reflect.TypeOf((*MockStore)(nil).UpdateEvaluationTimes), arg0, arg1)
-}
-
 // UpdateInvitationRole mocks base method.
 func (m *MockStore) UpdateInvitationRole(arg0 context.Context, arg1 db.UpdateInvitationRoleParams) (db.UserInvite, error) {
 	m.ctrl.T.Helper()

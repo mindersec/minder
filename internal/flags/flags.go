@@ -39,10 +39,12 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	// Note: engine.EntityFromContext is best-effort, so these values may be zero.
 	ec := engcontext.EntityFromContext(ctx)
 	return openfeature.NewEvaluationContext(
-		jwt.GetUserSubjectFromContext(ctx),
+		ec.Project.ID.String(),
 		map[string]interface{}{
-			"project":  ec.Project.ID.String(),
+			"project": ec.Project.ID.String(),
+			// TODO: is this useful, given how provider names are used?
 			"provider": ec.Provider.Name,
+			"user":     jwt.GetUserSubjectFromContext(ctx),
 		},
 	)
 }
