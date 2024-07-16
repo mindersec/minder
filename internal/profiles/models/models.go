@@ -41,7 +41,7 @@ type ActionConfiguration struct {
 
 // RuleInstance is a domain-level model of a rule instance
 type RuleInstance struct {
-	ID         uuid.UUID // will be used when writing to the history table
+	ID         uuid.UUID
 	Name       string
 	Def        map[string]any
 	Params     map[string]any
