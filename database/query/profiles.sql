@@ -141,14 +141,10 @@ ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING *;
 DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2;
 
 -- name: ListProfilesInstantiatingRuleType :many
--- get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
--- with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
--- so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-SELECT profiles.id, profiles.name, profiles.created_at FROM profiles
-JOIN entity_profiles ON profiles.id = entity_profiles.profile_id 
-JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_profile_id
-WHERE entity_profile_rules.rule_type_id = $1
-GROUP BY profiles.id;
+SELECT DISTINCT(p.name)
+FROM profiles AS p
+JOIN rule_instances AS r ON p.id = r.profile_id
+WHERE r.rule_type_id = $1;
 
 -- name: CountProfilesByEntityType :many
 SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity

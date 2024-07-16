@@ -1675,10 +1675,10 @@ func (mr *MockStoreMockRecorder) ListProfilesByProjectIDAndLabel(arg0, arg1 any)
 }
 
 // ListProfilesInstantiatingRuleType mocks base method.
-func (m *MockStore) ListProfilesInstantiatingRuleType(arg0 context.Context, arg1 uuid.UUID) ([]db.ListProfilesInstantiatingRuleTypeRow, error) {
+func (m *MockStore) ListProfilesInstantiatingRuleType(arg0 context.Context, arg1 uuid.UUID) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListProfilesInstantiatingRuleType", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListProfilesInstantiatingRuleTypeRow)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
