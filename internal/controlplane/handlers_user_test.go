@@ -609,7 +609,11 @@ func TestResolveInvitation(t *testing.T) {
 		{
 			name: "code not found",
 			setup: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{}, sql.ErrNoRows)
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			expectedError: "invitation not found or already used",
 		},
@@ -617,6 +621,9 @@ func TestResolveInvitation(t *testing.T) {
 			name: "user self resolving",
 			setup: func(store *mockdb.MockStore) {
 				userId := int32(1)
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
 					Project:         projectID,
 					IdentitySubject: userSubject,
@@ -625,12 +632,16 @@ func TestResolveInvitation(t *testing.T) {
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
 					ID: userId,
 				}, nil)
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			expectedError: "user cannot resolve their own invitation",
 		},
 		{
 			name: "expired invitation",
 			setup: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
 					Project:         projectID,
 					IdentitySubject: userSubject,
@@ -640,6 +651,7 @@ func TestResolveInvitation(t *testing.T) {
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
 					ID: 2,
 				}, nil)
+				store.EXPECT().Rollback(gomock.Any())
 			},
 			expectedError: "invitation expired",
 		},
@@ -647,6 +659,9 @@ func TestResolveInvitation(t *testing.T) {
 			name:   "Success accept",
 			accept: true,
 			setup: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
 					Project:         projectID,
 					IdentitySubject: userSubject,
@@ -665,12 +680,17 @@ func TestResolveInvitation(t *testing.T) {
 					Name:     "project1",
 					Metadata: projectMetadata,
 				}, nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
 			},
 		},
 		{
 			name:   "Success decline",
 			accept: false,
 			setup: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
 					Project:         projectID,
 					IdentitySubject: userSubject,
@@ -689,6 +709,36 @@ func TestResolveInvitation(t *testing.T) {
 					Name:     "project1",
 					Metadata: projectMetadata,
 				}, nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+			},
+		},
+		{
+			name:   "Success create user",
+			accept: true,
+			setup: func(store *mockdb.MockStore) {
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
+					Project:         projectID,
+					IdentitySubject: userSubject,
+					Sponsor:         1,
+					Role:            "viewer",
+					UpdatedAt:       time.Now(),
+				}, nil)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{}, sql.ErrNoRows)
+				store.EXPECT().CreateUser(gomock.Any(), userSubject).Return(db.User{ID: 2}, nil)
+				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
+					Project: projectID,
+					Email:   userEmail,
+				}, nil)
+				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
+				}, nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
 			},
 		},
 	}

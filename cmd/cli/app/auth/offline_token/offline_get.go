@@ -25,7 +25,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/cmd/cli/app/auth"
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -60,7 +59,7 @@ func offlineGetCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *g
 	cmd.SilenceUsage = true
 
 	// wait for the token to be received
-	token, err := auth.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
+	token, err := cli.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
 	if err != nil {
 		return err
 	}

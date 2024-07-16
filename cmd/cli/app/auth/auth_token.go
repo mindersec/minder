@@ -60,7 +60,7 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 		cmd.Printf("Error getting token: %v\n", err)
 		if errors.Is(err, os.ErrNotExist) || errors.Is(err, util.ErrGettingRefreshToken) {
 			// wait for the token to be received
-			token, err := Login(ctx, cmd, clientConfig, []string{}, skipBrowser)
+			token, err := cli.Login(ctx, cmd, clientConfig, []string{}, skipBrowser)
 			if err != nil {
 				return err
 			}
