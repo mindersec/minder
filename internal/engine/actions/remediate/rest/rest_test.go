@@ -32,6 +32,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
@@ -169,7 +170,7 @@ func TestRestRemediate(t *testing.T) {
 	t.Parallel()
 
 	type remediateArgs struct {
-		remAction interfaces.ActionOpt
+		remAction models.ActionOpt
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
 		params    map[string]any
@@ -195,7 +196,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -233,7 +234,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -267,7 +268,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -308,7 +309,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptDryRun,
+				remAction: models.ActionOptDryRun,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -332,7 +333,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -358,7 +359,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptUnknown,
+				remAction: models.ActionOptUnknown,
 				ent: &pb.Repository{
 					Owner:  "Foo",
 					Name:   "Bar",

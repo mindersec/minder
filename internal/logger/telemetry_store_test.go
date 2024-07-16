@@ -29,6 +29,7 @@ import (
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/profiles/models"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -53,9 +54,9 @@ func TestTelemetryStore_Record(t *testing.T) {
 				Id:   &testUUIDString,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
-				alert.ActionType:     engif.ActionOptOn,
-				remediate.ActionType: engif.ActionOptOff,
+			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
+				alert.ActionType:     models.ActionOptOn,
+				remediate.ActionType: models.ActionOptOff,
 			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
@@ -80,9 +81,9 @@ func TestTelemetryStore_Record(t *testing.T) {
 			}
 			ep.RuleTypeID = testUUID
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
-				alert.ActionType:     engif.ActionOptOff,
-				remediate.ActionType: engif.ActionOptOn,
+			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
+				alert.ActionType:     models.ActionOptOff,
+				remediate.ActionType: models.ActionOptOn,
 			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,

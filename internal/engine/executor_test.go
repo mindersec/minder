@@ -41,7 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/flags"
-	mock_history "github.com/stacklok/minder/internal/history/mock"
+	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
@@ -322,7 +322,7 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
-	historyService := mock_history.NewMockEvaluationHistoryService(ctrl)
+	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 
 	executor := engine.NewExecutor(
 		mockStore,

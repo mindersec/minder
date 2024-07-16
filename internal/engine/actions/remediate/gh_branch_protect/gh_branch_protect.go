@@ -31,6 +31,7 @@ import (
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	mindergh "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -97,15 +98,15 @@ func (_ *GhBranchProtectRemediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *GhBranchProtectRemediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
+func (_ *GhBranchProtectRemediator) GetOnOffState(p *pb.Profile) models.ActionOpt {
+	return models.ActionOptFromString(p.Remediate, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *GhBranchProtectRemediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	remAction interfaces.ActionOpt,
+	remAction models.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
@@ -172,11 +173,11 @@ func (r *GhBranchProtectRemediator) Do(
 	}
 
 	switch remAction {
-	case interfaces.ActionOptOn:
+	case models.ActionOptOn:
 		err = r.cli.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
-	case interfaces.ActionOptDryRun:
+	case models.ActionOptDryRun:
 		err = dryRun(ctx, r.cli.GetBaseURL(), repo.Owner, repo.Name, branch, updatedRequest)
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+	case models.ActionOptOff, models.ActionOptUnknown:
 		err = errors.New("unexpected action")
 	}
 	return nil, err
