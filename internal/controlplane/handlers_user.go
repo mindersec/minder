@@ -35,7 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/flags"
-	"github.com/stacklok/minder/internal/invite"
+	"github.com/stacklok/minder/internal/invites"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
@@ -330,13 +330,13 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 	}
 
 	// Get the list of invitations for the user
-	invites, err := s.store.GetInvitationsByEmail(ctx, tokenEmail)
+	userInvites, err := s.store.GetInvitationsByEmail(ctx, tokenEmail)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get invitations: %s", err)
 	}
 
 	// Build the response list of invitations
-	for _, i := range invites {
+	for _, i := range userInvites {
 		// Resolve the sponsor's identity and display name
 		identity, err := s.idClient.Resolve(ctx, i.IdentitySubject)
 		if err != nil {
@@ -363,8 +363,8 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 			Project:        i.Project.String(),
 			ProjectDisplay: meta.Public.DisplayName,
 			CreatedAt:      timestamppb.New(i.CreatedAt),
-			ExpiresAt:      invite.GetExpireIn7Days(i.UpdatedAt),
-			Expired:        invite.IsExpired(i.UpdatedAt),
+			ExpiresAt:      invites.GetExpireIn7Days(i.UpdatedAt),
+			Expired:        invites.IsExpired(i.UpdatedAt),
 			Sponsor:        identity.String(),
 			SponsorDisplay: identity.Human(),
 		})
@@ -397,7 +397,7 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 	}
 
 	// Check if the invitation is expired
-	if invite.IsExpired(userInvite.UpdatedAt) {
+	if invites.IsExpired(userInvite.UpdatedAt) {
 		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation expired")
 	}
 

@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package invite provides the invite utilities for minder
-package invite
+// Package invites provides the invite utilities for minder
+package invites
 
 import (
 	"crypto/rand"
