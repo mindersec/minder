@@ -533,7 +533,7 @@ func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListP
 }
 
 const listProfilesInstantiatingRuleType = `-- name: ListProfilesInstantiatingRuleType :many
-SELECT p.name
+SELECT DISTINCT(p.name)
 FROM profiles AS p
 JOIN rule_instances AS r ON p.id = r.profile_id
 WHERE r.rule_type_id = $1
