@@ -132,6 +132,28 @@ func (q *Queries) GetRuleInstancesForProfileEntity(ctx context.Context, arg GetR
 	return items, nil
 }
 
+const getRuleTypeIDByRuleNameEntityProfile = `-- name: GetRuleTypeIDByRuleNameEntityProfile :one
+SELECT rule_type_id FROM rule_instances
+WHERE name = $1
+AND entity_type = $2
+AND profile_id = $3
+`
+
+type GetRuleTypeIDByRuleNameEntityProfileParams struct {
+	Name       string    `json:"name"`
+	EntityType Entities  `json:"entity_type"`
+	ProfileID  uuid.UUID `json:"profile_id"`
+}
+
+// intended as a temporary transition query
+// this will be removed once rule_instances is used consistently in the engine
+func (q *Queries) GetRuleTypeIDByRuleNameEntityProfile(ctx context.Context, arg GetRuleTypeIDByRuleNameEntityProfileParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getRuleTypeIDByRuleNameEntityProfile, arg.Name, arg.EntityType, arg.ProfileID)
+	var rule_type_id uuid.UUID
+	err := row.Scan(&rule_type_id)
+	return rule_type_id, err
+}
+
 const upsertRuleInstance = `-- name: UpsertRuleInstance :one
 
 INSERT INTO rule_instances (

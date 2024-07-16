@@ -41,7 +41,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/flags"
-	mock_history "github.com/stacklok/minder/internal/history/mock"
+	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/providers"
@@ -147,7 +147,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	mockStore.EXPECT().
 		GetParentProjects(gomock.Any(), projectID).
-		Return([]uuid.UUID{projectID}, nil)
+		Return([]uuid.UUID{projectID}, nil).
+		Times(2)
 
 	mockStore.EXPECT().
 		ListProfilesByProjectID(gomock.Any(), projectID).
@@ -197,15 +198,22 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Projects: []uuid.UUID{projectID},
-			Name:     passthroughRuleType,
-		}).Return(db.RuleType{
-		ID:         ruleTypeID,
-		Name:       passthroughRuleType,
-		ProjectID:  projectID,
-		Definition: marshalledRTD,
-	}, nil)
+		GetRuleTypeIDByRuleNameEntityProfile(gomock.Any(), gomock.Any()).
+		Return(ruleTypeID, nil)
+
+	mockStore.EXPECT().
+		GetRuleTypesByEntityInHierarchy(gomock.Any(), db.GetRuleTypesByEntityInHierarchyParams{
+			EntityType: db.EntitiesRepository,
+			Projects:   []uuid.UUID{projectID},
+		}).
+		Return([]db.RuleType{
+			{
+				ID:         ruleTypeID,
+				Name:       passthroughRuleType,
+				ProjectID:  projectID,
+				Definition: marshalledRTD,
+			},
+		}, nil)
 
 	ruleEvalId := uuid.New()
 
@@ -314,7 +322,7 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
-	historyService := mock_history.NewMockEvaluationHistoryService(ctrl)
+	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 
 	executor := engine.NewExecutor(
 		mockStore,

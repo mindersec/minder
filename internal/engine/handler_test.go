@@ -45,6 +45,8 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	repositoryID := uuid.New()
 	executionID := uuid.New()
 
+	parallelOps := 2
+
 	// -- end expectations
 
 	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
@@ -80,9 +82,11 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		WithExecutionID(executionID)
 
 	executor := mockengine.NewMockExecutor(ctrl)
-	executor.EXPECT().
-		EvalEntityEvent(gomock.Any(), gomock.Eq(eiw)).
-		Return(nil)
+	for i := 0; i < parallelOps; i++ {
+		executor.EXPECT().
+			EvalEntityEvent(gomock.Any(), gomock.Eq(eiw)).
+			Return(nil)
+	}
 
 	handler := engine.NewExecutorEventHandler(
 		ctx,
@@ -97,19 +101,23 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")
 
-	// Run in the background
-	go func() {
-		t.Log("Running entity event handler")
-		require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
-	}()
+	// Run in the background, twice
+	for i := 0; i < parallelOps; i++ {
+		go func() {
+			t.Log("Running entity event handler")
+			require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
+		}()
+	}
 
 	// expect flush
-	t.Log("waiting for flush")
-	result := <-queued
-	require.NotNil(t, result)
-	require.Equal(t, providerID.String(), msg.Metadata.Get(entities.ProviderIDEventKey))
-	require.Equal(t, "repository", msg.Metadata.Get(entities.EntityTypeEventKey))
-	require.Equal(t, projectID.String(), msg.Metadata.Get(entities.ProjectIDEventKey))
+	for i := 0; i < parallelOps; i++ {
+		t.Log("waiting for flush")
+		result := <-queued
+		require.NotNil(t, result)
+		require.Equal(t, providerID.String(), msg.Metadata.Get(entities.ProviderIDEventKey))
+		require.Equal(t, "repository", msg.Metadata.Get(entities.EntityTypeEventKey))
+		require.Equal(t, projectID.String(), msg.Metadata.Get(entities.ProjectIDEventKey))
+	}
 
 	require.NoError(t, evt.Close(), "expected no error")
 

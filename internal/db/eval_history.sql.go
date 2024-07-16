@@ -17,7 +17,7 @@ import (
 
 const getLatestEvalStateForRuleEntity = `-- name: GetLatestEvalStateForRuleEntity :one
 
-SELECT eh.id, eh.rule_entity_id, eh.status, eh.details, eh.evaluation_times, eh.most_recent_evaluation FROM evaluation_rule_entities AS re
+SELECT eh.id, eh.rule_entity_id, eh.status, eh.details, eh.evaluation_time FROM evaluation_rule_entities AS re
 JOIN latest_evaluation_statuses AS les ON les.rule_entity_id = re.id
 JOIN evaluation_statuses AS eh ON les.evaluation_history_id = eh.id
 WHERE re.rule_id = $1
@@ -62,8 +62,7 @@ func (q *Queries) GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLa
 		&i.RuleEntityID,
 		&i.Status,
 		&i.Details,
-		&i.EvaluationTimes,
-		&i.MostRecentEvaluation,
+		&i.EvaluationTime,
 	)
 	return i, err
 }
@@ -192,7 +191,7 @@ func (q *Queries) InsertRemediationEvent(ctx context.Context, arg InsertRemediat
 
 const listEvaluationHistory = `-- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
-       s.most_recent_evaluation as evaluated_at,
+       s.evaluation_time as evaluated_at,
        -- entity type
        CASE WHEN ere.repository_id IS NOT NULL THEN 'repository'::entities
             WHEN ere.pull_request_id IS NOT NULL THEN 'pull_request'::entities
@@ -233,8 +232,8 @@ SELECT s.id::uuid AS evaluation_id,
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN projects j ON r.project_id = j.id
- WHERE ($1::timestamp without time zone IS NULL OR $1 > s.most_recent_evaluation)
-   AND ($2::timestamp without time zone IS NULL OR $2 < s.most_recent_evaluation)
+ WHERE ($1::timestamp without time zone IS NULL OR $1 > s.evaluation_time)
+   AND ($2::timestamp without time zone IS NULL OR $2 < s.evaluation_time)
    -- inclusion filters
    AND ($3::entities[] IS NULL OR entity_type::entities = ANY($3::entities[]))
    AND ($4::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY($4::text[]))
@@ -256,10 +255,10 @@ SELECT s.id::uuid AS evaluation_id,
    -- time range filter
    AND ($15::timestamp without time zone IS NULL
         OR $16::timestamp without time zone IS NULL
-        OR s.most_recent_evaluation BETWEEN $15 AND $16)
+        OR s.evaluation_time BETWEEN $15 AND $16)
    -- implicit filter by project id
    AND j.id = $17
- ORDER BY s.most_recent_evaluation DESC
+ ORDER BY s.evaluation_time DESC
  LIMIT $18::integer
 `
 
@@ -364,24 +363,6 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateEvaluationTimes = `-- name: UpdateEvaluationTimes :exec
-UPDATE evaluation_statuses
-SET
-    evaluation_times = $1,
-    most_recent_evaluation = NOW()
-WHERE id = $2
-`
-
-type UpdateEvaluationTimesParams struct {
-	EvaluationTimes PgTimeArray `json:"evaluation_times"`
-	ID              uuid.UUID   `json:"id"`
-}
-
-func (q *Queries) UpdateEvaluationTimes(ctx context.Context, arg UpdateEvaluationTimesParams) error {
-	_, err := q.db.ExecContext(ctx, updateEvaluationTimes, arg.EvaluationTimes, arg.ID)
-	return err
 }
 
 const upsertLatestEvaluationStatus = `-- name: UpsertLatestEvaluationStatus :exec

@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/invite"
+	"github.com/stacklok/minder/internal/invites"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -66,7 +66,7 @@ func (s *Server) GetInviteDetails(ctx context.Context, req *pb.GetInviteDetailsR
 	return &pb.GetInviteDetailsResponse{
 		ProjectDisplay: meta.Public.DisplayName,
 		SponsorDisplay: identity.Human(),
-		ExpiresAt:      invite.GetExpireIn7Days(retInvite.UpdatedAt),
-		Expired:        invite.IsExpired(retInvite.UpdatedAt),
+		ExpiresAt:      invites.GetExpireIn7Days(retInvite.UpdatedAt),
+		Expired:        invites.IsExpired(retInvite.UpdatedAt),
 	}, nil
 }

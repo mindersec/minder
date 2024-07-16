@@ -1061,3 +1061,39 @@ func generateConsistentUUID(t *testing.T, ruleType, ruleName string) uuid.UUID {
 	t.Helper()
 	return uuid.NewSHA1(uuid.Nil, []byte(ruleType+ruleName))
 }
+
+func getUnusedOldRuleStatuses(
+	newRules, oldRules profiles.RuleMapping,
+) profiles.RuleMapping {
+	unusedRuleStatuses := make(profiles.RuleMapping)
+
+	for ruleTypeAndName, rule := range oldRules {
+		if _, ok := newRules[ruleTypeAndName]; !ok {
+			unusedRuleStatuses[ruleTypeAndName] = rule
+		}
+	}
+
+	return unusedRuleStatuses
+}
+
+func getUnusedOldRuleTypes(newRules, oldRules profiles.RuleMapping) []profiles.EntityAndRuleTuple {
+	var unusedRuleTypes []profiles.EntityAndRuleTuple
+
+	oldRulesTypeMap := make(map[string]profiles.EntityAndRuleTuple)
+	for ruleTypeAndName, rule := range oldRules {
+		oldRulesTypeMap[ruleTypeAndName.RuleType] = rule
+	}
+
+	newRulesTypeMap := make(map[string]profiles.EntityAndRuleTuple)
+	for ruleTypeAndName, rule := range newRules {
+		newRulesTypeMap[ruleTypeAndName.RuleType] = rule
+	}
+
+	for ruleType, rule := range oldRulesTypeMap {
+		if _, ok := newRulesTypeMap[ruleType]; !ok {
+			unusedRuleTypes = append(unusedRuleTypes, rule)
+		}
+	}
+
+	return unusedRuleTypes
+}

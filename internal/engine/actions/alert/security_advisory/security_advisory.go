@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/stacklok/minder/internal/profiles/models"
 	htmltemplate "html/template"
 	"strings"
 
@@ -180,15 +181,15 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Alert, interfaces.ActionOptOn)
+func (_ *Alert) GetOnOffState(p *pb.Profile) models.ActionOpt {
+	return models.ActionOptFromString(p.Alert, models.ActionOptOn)
 }
 
 // Do alerts through security advisory
 func (alert *Alert) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting interfaces.ActionOpt,
+	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -201,11 +202,11 @@ func (alert *Alert) Do(
 
 	// Process the command based on the action setting
 	switch setting {
-	case interfaces.ActionOptOn:
+	case models.ActionOptOn:
 		return alert.run(ctx, p, cmd)
-	case interfaces.ActionOptDryRun:
+	case models.ActionOptDryRun:
 		return alert.runDry(ctx, p, cmd)
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+	case models.ActionOptOff, models.ActionOptUnknown:
 		return nil, fmt.Errorf("unexpected action setting: %w", enginerr.ErrActionFailed)
 	}
 	return nil, enginerr.ErrActionSkipped
@@ -373,7 +374,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if interfaces.ActionOptFromString(params.GetProfile().Remediate, interfaces.ActionOptOff) == interfaces.ActionOptOn {
+	if models.ActionOptFromString(params.GetProfile().Remediate, models.ActionOptOff) == models.ActionOptOn {
 		err = alert.descriptionTmpl.Execute(&descriptionStr, result.Template)
 	} else {
 		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, result.Template)

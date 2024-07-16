@@ -20,7 +20,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -68,7 +67,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityID uuid.UUID,
 	evalError error,
 ) (uuid.UUID, error) {
-	var ruleEntityID, evaluationID uuid.UUID
+	var ruleEntityID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
 	details := evalerrors.ErrorAsEvalDetails(evalError)
 
@@ -105,22 +104,11 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 		}
 	} else {
 		ruleEntityID = latestRecord.RuleEntityID
-		evaluationID = latestRecord.ID
 	}
 
-	previousDetails := latestRecord.Details
-	previousStatus := latestRecord.Status
-
-	if evaluationID == uuid.Nil || previousDetails != details || previousStatus != status {
-		// if there is no prior state for this rule/entity, or the previous state
-		// differs from the current one, create a new status record.
-		if evaluationID, err = e.createNewStatus(ctx, qtx, ruleEntityID, status, details); err != nil {
-			return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
-		}
-	} else {
-		if err = e.updateExistingStatus(ctx, qtx, entityID, latestRecord.EvaluationTimes); err != nil {
-			return uuid.Nil, fmt.Errorf("error while updating existing evaluation status for rule/entity %s: %w", ruleEntityID, err)
-		}
+	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, status, details)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 	}
 
 	return evaluationID, nil
@@ -156,20 +144,6 @@ func (_ *evaluationHistoryService) createNewStatus(
 	}
 
 	return newEvaluationID, err
-}
-
-func (_ *evaluationHistoryService) updateExistingStatus(
-	ctx context.Context,
-	qtx db.Querier,
-	evaluationID uuid.UUID,
-	times db.PgTimeArray,
-) error {
-	// if the status is repeated, then just append the current timestamp to it
-	times = append(times, db.PgTime{Time: time.Now()})
-	return qtx.UpdateEvaluationTimes(ctx, db.UpdateEvaluationTimesParams{
-		EvaluationTimes: times,
-		ID:              evaluationID,
-	})
 }
 
 func paramsFromEntity(

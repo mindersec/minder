@@ -43,9 +43,12 @@ import (
 	"github.com/stacklok/minder/internal/auth/jwt/noop"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
+	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
+	mockinvites "github.com/stacklok/minder/internal/invites/mock"
+	mockroles "github.com/stacklok/minder/internal/roles/mock"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -535,6 +538,106 @@ func TestRoleManagement(t *testing.T) {
 				wantStored := RoleAssignmentsToJson(t, tc.stored)
 				gotStored := RoleAssignmentsToJson(t, authzClient.Assignments[project])
 				assert.ElementsMatchf(t, wantStored, gotStored, "Stored results mismatch, want: A, got: B")
+			}
+		})
+	}
+}
+
+func TestUpdateRole(t *testing.T) {
+	t.Parallel()
+
+	userEmail := "test@example.com"
+	authzRole := authz.RoleAdmin
+
+	tests := []struct {
+		name               string
+		inviteeEmail       string
+		subject            string
+		expectedError      string
+		expectedInvitation bool
+		expectedRole       bool
+	}{
+		{
+			name:          "error when self update",
+			inviteeEmail:  userEmail,
+			expectedError: "cannot update your own role",
+		},
+		{
+			name:          "error with no subject or email",
+			expectedError: "one of subject or email must be specified",
+		},
+		{
+			name:               "request with email updates invite",
+			inviteeEmail:       "other@example.com",
+			expectedInvitation: true,
+		},
+		{
+			name:         "request with subject updates role assignment",
+			subject:      "user",
+			expectedRole: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("email", userEmail))
+
+			ctx := context.Background()
+			ctx = authjwt.WithAuthTokenContext(ctx, user)
+
+			featureClient := &flags.FakeClient{}
+			featureClient.Data = map[string]any{
+				"user_management": true,
+			}
+
+			mockInviteService := mockinvites.NewMockInviteService(ctrl)
+			if tc.expectedInvitation {
+				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{}, nil)
+			}
+			mockRoleService := mockroles.NewMockRoleService(ctrl)
+			if tc.expectedRole {
+				mockRoleService.EXPECT().UpdateRoleAssignment(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), tc.subject, authzRole).Return(&minder.RoleAssignment{}, nil)
+			}
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockStore.EXPECT().BeginTransaction().AnyTimes()
+			mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).AnyTimes()
+			mockStore.EXPECT().Commit(gomock.Any()).AnyTimes()
+			mockStore.EXPECT().Rollback(gomock.Any()).AnyTimes()
+
+			server := &Server{
+				featureFlags: featureClient,
+				invites:      mockInviteService,
+				roles:        mockRoleService,
+				store:        mockStore,
+				cfg:          &serverconfig.Config{Email: serverconfig.EmailConfig{}},
+			}
+
+			response, err := server.UpdateRole(ctx, &minder.UpdateRoleRequest{
+				Email:   tc.inviteeEmail,
+				Subject: tc.subject,
+				Roles:   []string{authzRole.String()},
+			})
+
+			if tc.expectedError != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+			if tc.expectedInvitation {
+				require.Equal(t, 1, len(response.Invitations))
+			}
+			if tc.expectedRole {
+				require.Equal(t, 1, len(response.RoleAssignments))
 			}
 		})
 	}

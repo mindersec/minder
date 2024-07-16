@@ -58,3 +58,11 @@ SELECT id FROM rule_instances
 WHERE profile_id = $1
 AND entity_type = $2
 AND name = $3;
+
+-- intended as a temporary transition query
+-- this will be removed once rule_instances is used consistently in the engine
+-- name: GetRuleTypeIDByRuleNameEntityProfile :one
+SELECT rule_type_id FROM rule_instances
+WHERE name = $1
+AND entity_type = $2
+AND profile_id = $3;

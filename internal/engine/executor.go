@@ -36,7 +36,6 @@ import (
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/ruletypes"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -107,8 +106,22 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
+	entityType := entities.EntityTypeToDB(inf.Type)
+	// Load all the relevant rule type engines for this entity
+	ruleEngineCache, err := rtengine.NewRuleEngineCache(
+		ctx,
+		e.querier,
+		entityType,
+		inf.ProjectID,
+		provider,
+		ingestCache,
+	)
+	if err != nil {
+		return fmt.Errorf("unable to fetch rule type instances for project: %w", err)
+	}
+
 	err = e.forProjectsInHierarchy(
-		ctx, inf, func(ctx context.Context, profile *pb.Profile, hierarchy []uuid.UUID) error {
+		ctx, inf, func(ctx context.Context, profile *pb.Profile) error {
 			profileStartTime := time.Now()
 			defer e.metrics.TimeProfileEvaluation(ctx, profileStartTime)
 			// Get only these rules that are relevant for this entity type
@@ -121,7 +134,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 			err = profiles.TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
 				// Get the engine evaluator for this rule type
 				evalParams, ruleEngine, actionEngine, err := e.getEvaluator(
-					ctx, inf, provider, profile, rule, hierarchy, ingestCache)
+					ctx, inf, provider, profile, rule, ruleEngineCache)
 				if err != nil {
 					return err
 				}
@@ -138,7 +151,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 				evalParams.SetActionsErr(ctx, actionsErr)
 
 				// Log the evaluation
-				logEval(ctx, inf, evalParams)
+				logEval(ctx, inf, evalParams, ruleEngine.Meta.Name)
 
 				// Create or update the evaluation status
 				return e.createOrUpdateEvalStatus(ctx, evalParams)
@@ -165,15 +178,14 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 func (e *executor) forProjectsInHierarchy(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
-	f func(context.Context, *pb.Profile, []uuid.UUID) error,
+	f func(context.Context, *pb.Profile) error,
 ) error {
 	projList, err := e.querier.GetParentProjects(ctx, inf.ProjectID)
 	if err != nil {
 		return fmt.Errorf("error getting parent projects: %w", err)
 	}
 
-	for idx, projID := range projList {
-		projectHierarchy := projList[idx:]
+	for _, projID := range projList {
 		// Get profiles relevant to project
 		dbpols, err := e.querier.ListProfilesByProjectID(ctx, projID)
 		if err != nil {
@@ -181,7 +193,7 @@ func (e *executor) forProjectsInHierarchy(
 		}
 
 		for _, profile := range profiles.MergeDatabaseListIntoProfiles(dbpols) {
-			if err := f(ctx, profile, projectHierarchy); err != nil {
+			if err := f(ctx, profile); err != nil {
 				return err
 			}
 		}
@@ -196,8 +208,7 @@ func (e *executor) getEvaluator(
 	provider provinfv1.Provider,
 	profile *pb.Profile,
 	rule *pb.Profile_Rule,
-	hierarchy []uuid.UUID,
-	ingestCache ingestcache.Cache,
+	ruleEngineCache rtengine.Cache,
 ) (*engif.EvalStatusParams, *rtengine.RuleTypeEngine, *actions.RuleActionsEngine, error) {
 	// Create eval status params
 	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
@@ -205,40 +216,34 @@ func (e *executor) getEvaluator(
 		return nil, nil, nil, fmt.Errorf("error creating eval status params: %w", err)
 	}
 
-	// Load Rule Class from database
-	// TODO(jaosorior): Rule types should be cached in memory so
-	// we don't have to query the database for each rule.
-	dbrt, err := e.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-		Projects: hierarchy,
-		Name:     rule.Type,
-	})
+	if profile.Id == nil {
+		return nil, nil, nil, fmt.Errorf("profile %s missing ID", profile.Name)
+	}
+	profileID, err := uuid.Parse(*profile.Id)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error getting rule type when traversing profile %s: %w", params.ProfileID, err)
+		return nil, nil, nil, fmt.Errorf("unable to parse %s as profile ID", *profile.Id)
 	}
 
-	// Parse the rule type
-	ruleType, err := ruletypes.RuleTypePBFromDB(&dbrt)
+	// TODO: Once we use the rule instance table, this will no longer be necessary
+	ruleTypeID, err := e.querier.GetRuleTypeIDByRuleNameEntityProfile(ctx,
+		db.GetRuleTypeIDByRuleNameEntityProfileParams{
+			ProfileID:  profileID,
+			EntityType: entities.EntityTypeToDB(inf.Type),
+			Name:       rule.Name,
+		},
+	)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error parsing rule type when traversing profile %s: %w", params.ProfileID, err)
+		return nil, nil, nil, fmt.Errorf("unable to retrieve rule type ID: %w", err)
 	}
 
-	// Save the rule type uuid
-	ruleTypeID, err := uuid.Parse(*ruleType.Id)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error parsing rule type ID: %w", err)
-	}
 	params.RuleTypeID = ruleTypeID
-	params.RuleTypeName = ruleType.Name
 
-	// Create the rule type engine
-	rte, err := rtengine.NewRuleTypeEngine(ctx, ruleType, provider)
+	rte, err := ruleEngineCache.GetRuleEngine(ruleTypeID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	rte = rte.WithIngesterCache(ingestCache)
-
-	actionEngine, err := actions.NewRuleActions(ctx, profile, ruleType, provider)
+	actionEngine, err := actions.NewRuleActions(ctx, profile, rte.GetRuleType(), provider)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
@@ -305,6 +310,7 @@ func logEval(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	params *engif.EvalStatusParams,
+	ruleTypeName string,
 ) {
 	evalLog := params.DecorateLogger(
 		zerolog.Ctx(ctx).With().
@@ -321,5 +327,5 @@ func logEval(
 		Msg("entity evaluation - completed")
 
 	// log business logic
-	minderlogger.BusinessRecord(ctx).AddRuleEval(params)
+	minderlogger.BusinessRecord(ctx).AddRuleEval(params, ruleTypeName)
 }

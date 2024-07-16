@@ -205,9 +205,7 @@ func runEvaluationForRules(
 	frags []*minderv1.Profile_Rule,
 	actionEngine *actions.RuleActionsEngine,
 ) error {
-	for idx := range frags {
-		frag := frags[idx]
-
+	for _, frag := range frags {
 		val := eng.GetRuleInstanceValidator()
 		err := val.ValidateRuleDefAgainstSchema(frag.Def.AsMap())
 		if err != nil {

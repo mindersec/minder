@@ -34,6 +34,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -41,7 +42,7 @@ import (
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
 	actions      map[engif.ActionType]engif.Action
-	actionsOnOff map[engif.ActionType]engif.ActionOpt
+	actionsOnOff map[engif.ActionType]models.ActionOpt
 }
 
 // NewRuleActions creates a new rule actions engine
@@ -70,7 +71,7 @@ func NewRuleActions(
 		},
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
-		actionsOnOff: map[engif.ActionType]engif.ActionOpt{
+		actionsOnOff: map[engif.ActionType]models.ActionOpt{
 			remEngine.Class():   remEngine.GetOnOffState(profile),
 			alertEngine.Class(): alertEngine.GetOnOffState(profile),
 		},
@@ -78,7 +79,7 @@ func NewRuleActions(
 }
 
 // GetOnOffState returns the on/off state of the actions
-func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]engif.ActionOpt {
+func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]models.ActionOpt {
 	return rae.actionsOnOff
 }
 
@@ -277,15 +278,15 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	}
 	// Check the action option
 	switch actionOnOff {
-	case engif.ActionOptOff:
+	case models.ActionOptOff:
 		// Action is off, skip
 		logger.Msg("action is off, skipping")
 		return true
-	case engif.ActionOptUnknown:
+	case models.ActionOptUnknown:
 		// Action is unknown, skip
 		logger.Msg("unknown action option, skipping")
 		return true
-	case engif.ActionOptDryRun, engif.ActionOptOn:
+	case models.ActionOptDryRun, models.ActionOptOn:
 		// Action is on or dry-run, do not skip yet. Check the evaluation error
 		skipAction =
 			// rule evaluation was skipped, skip action too

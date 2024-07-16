@@ -41,6 +41,7 @@ import (
 
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
@@ -140,7 +141,7 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 }
 
 type remediateArgs struct {
-	remAction interfaces.ActionOpt
+	remAction models.ActionOpt
 	ent       protoreflect.ProtoMessage
 	pol       map[string]any
 	params    map[string]any
@@ -148,7 +149,7 @@ type remediateArgs struct {
 
 func createTestRemArgs() *remediateArgs {
 	return &remediateArgs{
-		remAction: interfaces.ActionOptOn,
+		remAction: models.ActionOptOn,
 		ent: &pb.Repository{
 			Owner: repoOwner,
 			Name:  repoName,
@@ -166,7 +167,7 @@ func createTestRemArgs() *remediateArgs {
 
 func createTestRemArgsWithExcludes() *remediateArgs {
 	return &remediateArgs{
-		remAction: interfaces.ActionOptOn,
+		remAction: models.ActionOptOn,
 		ent: &pb.Repository{
 			Owner: repoOwner,
 			Name:  repoName,
