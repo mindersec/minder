@@ -181,10 +181,7 @@ type Querier interface {
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
 	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
-	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
-	// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
-	// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error)
+	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error)
 	// ListProvidersByProjectID allows us to list all providers
 	// for a given array of projects.
 	ListProvidersByProjectID(ctx context.Context, projects []uuid.UUID) ([]Provider, error)
