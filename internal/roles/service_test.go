@@ -103,6 +103,83 @@ func TestUpdateRoleAssignment(t *testing.T) {
 	}
 }
 
+func TestRemoveRole(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name          string
+		dBSetup       dbf.DBMockBuilder
+		role          authz.Role
+		expectedError string
+	}{
+		{
+			name: "error when user doesn't exist",
+			dBSetup: dbf.NewDBMock(
+				withGetUser(emptyUser, sql.ErrNoRows),
+			),
+			expectedError: "User not found",
+		},
+		{
+			name: "error when deleting last project admin",
+			dBSetup: dbf.NewDBMock(
+				withGetUser(validUser, nil),
+			),
+			role:          authz.RoleAdmin,
+			expectedError: "cannot remove the last admin from the project",
+		},
+		{
+			name: "role deleted successfully",
+			role: authz.RoleViewer,
+			dBSetup: dbf.NewDBMock(
+				withGetUser(validUser, nil),
+			),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			var store db.Store
+			if scenario.dBSetup != nil {
+				store = scenario.dBSetup(ctrl)
+			}
+
+			idClient := mockauth.NewMockResolver(ctrl)
+			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
+				UserID: subject,
+			}, nil)
+
+			authzClient := &mock.SimpleClient{
+				Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
+					project: {
+						{
+							Subject: subject,
+							Role:    scenario.role.String(),
+						},
+					},
+				},
+			}
+
+			service := NewRoleService()
+			_, err := service.RemoveRoleAssignment(ctx, store, authzClient, idClient, project, subject, scenario.role)
+
+			if scenario.expectedError != "" {
+				require.ErrorContains(t, err, scenario.expectedError)
+				return
+			}
+			require.NoError(t, err)
+
+			// verify the only role is removed
+			require.Equal(t, 0, len(authzClient.Assignments[project]))
+		})
+	}
+}
+
 var (
 	project = uuid.New()
 	subject = "subject"

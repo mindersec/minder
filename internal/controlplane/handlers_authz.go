@@ -557,146 +557,31 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.removeInvite(ctx, targetProject, authzRole, inviteeEmail)
+			deletedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
+				return s.invites.RemoveInvite(ctx, qtx, s.idClient, targetProject, authzRole, inviteeEmail)
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return &minder.RemoveRoleResponse{
+				Invitation: deletedInvitation,
+			}, nil
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment
-		return s.removeRole(ctx, targetProject, authzRole, sub)
+		deletedRoleAssignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
+			return s.roles.RemoveRoleAssignment(ctx, qtx, s.authzClient, s.idClient, targetProject, sub, authzRole)
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &minder.RemoveRoleResponse{
+			RoleAssignment: deletedRoleAssignment,
+		}, nil
 	}
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
-}
-
-func (s *Server) removeInvite(
-	ctx context.Context,
-	targetPrj uuid.UUID,
-	role authz.Role,
-	inviteeEmail string,
-) (*minder.RemoveRoleResponse, error) {
-	// Get all invitations for this email and project
-	invitesToRemove, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
-		Email:   inviteeEmail,
-		Project: targetPrj,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting invitation: %v", err)
-	}
-
-	// If there are no invitations for this email, return an error
-	if len(invitesToRemove) == 0 {
-		return nil, util.UserVisibleError(codes.NotFound, "no invitations found for this email and project")
-	}
-
-	// Find the invitation to remove. There should be only one invitation for the given role and email in the project.
-	var inviteToRemove *db.GetInvitationsByEmailAndProjectRow
-	for _, i := range invitesToRemove {
-		if i.Role == role.String() {
-			inviteToRemove = &i
-			break
-		}
-	}
-	// If there's no invitation to remove, return an error
-	if inviteToRemove == nil {
-		return nil, util.UserVisibleError(codes.NotFound, "no invitation found for this role and email in the project")
-	}
-	// Delete the invitation
-	ret, err := s.store.DeleteInvitation(ctx, inviteToRemove.Code)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error deleting invitation: %v", err)
-	}
-
-	// Resolve the project's display name
-	prj, err := s.store.GetProjectByID(ctx, ret.Project)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
-	}
-
-	// Get the sponsor's user information (current user)
-	sponsorUser, err := s.store.GetUserByID(ctx, ret.Sponsor)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	// Resolve the sponsor's identity and display name
-	sponsorDisplay := sponsorUser.IdentitySubject
-	identity, err := s.idClient.Resolve(ctx, sponsorUser.IdentitySubject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-	} else {
-		sponsorDisplay = identity.Human()
-	}
-
-	// Return the response
-	return &minder.RemoveRoleResponse{
-		Invitation: &minder.Invitation{
-			Role:           ret.Role,
-			Email:          ret.Email,
-			Project:        ret.Project.String(),
-			Code:           ret.Code,
-			CreatedAt:      timestamppb.New(ret.CreatedAt),
-			ExpiresAt:      invites.GetExpireIn7Days(ret.UpdatedAt),
-			Expired:        invites.IsExpired(ret.UpdatedAt),
-			Sponsor:        sponsorUser.IdentitySubject,
-			SponsorDisplay: sponsorDisplay,
-			ProjectDisplay: prj.Name,
-		},
-	}, nil
-}
-
-func (s *Server) removeRole(
-	ctx context.Context,
-	targetProject uuid.UUID,
-	roleToRemove authz.Role,
-	subject string,
-) (*minder.RemoveRoleResponse, error) {
-	var err error
-	// Resolve the subject to an identity
-	identity, err := s.idClient.Resolve(ctx, subject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
-	}
-
-	// Verify if user exists
-	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
-	}
-
-	// Validate in case there's only one admin for the project and the user is trying to remove themselves
-	if roleToRemove == authz.RoleAdmin {
-		// Get all role assignments for the project
-		as, err := s.authzClient.AssignmentsToProject(ctx, targetProject)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
-		}
-		// Count the number of admin roles
-		adminRolesCnt := 0
-		for _, existing := range as {
-			if existing.Role == authz.RoleAdmin.String() {
-				adminRolesCnt++
-			}
-		}
-		// If there's only one admin role, return an error
-		if adminRolesCnt <= 1 {
-			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
-		}
-	}
-
-	// Delete the role assignment
-	if err := s.authzClient.Delete(ctx, identity.String(), roleToRemove, targetProject); err != nil {
-		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
-	}
-	prj := targetProject.String()
-	return &minder.RemoveRoleResponse{
-		RoleAssignment: &minder.RoleAssignment{
-			Role:    roleToRemove.String(),
-			Subject: identity.Human(),
-			Project: &prj,
-		},
-	}, nil
 }
 
 // UpdateRole updates a role for a user on a project

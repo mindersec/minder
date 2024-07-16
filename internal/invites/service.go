@@ -47,6 +47,11 @@ type InviteService interface {
 	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
+
+	// RemoveInvite removes the user invite
+	RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID,
+		authzRole authz.Role, inviteeEmail string,
+	) (*minder.Invitation, error)
 }
 
 type inviteService struct {
@@ -160,6 +165,75 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 		EmailSkipped:   emailSkipped,
 	}, nil
 
+}
+
+func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID,
+	authzRole authz.Role, inviteeEmail string) (*minder.Invitation, error) {
+	// Get all invitations for this email and project
+	invitesToRemove, err := qtx.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
+		Email:   inviteeEmail,
+		Project: targetProject,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting invitation: %v", err)
+	}
+
+	// If there are no invitations for this email, return an error
+	if len(invitesToRemove) == 0 {
+		return nil, util.UserVisibleError(codes.NotFound, "no invitations found for this email and project")
+	}
+
+	// Find the invitation to remove. There should be only one invitation for the given role and email in the project.
+	var inviteToRemove *db.GetInvitationsByEmailAndProjectRow
+	for _, i := range invitesToRemove {
+		if i.Role == authzRole.String() {
+			inviteToRemove = &i
+			break
+		}
+	}
+	// If there's no invitation to remove, return an error
+	if inviteToRemove == nil {
+		return nil, util.UserVisibleError(codes.NotFound, "no invitation found for this role and email in the project")
+	}
+	// Delete the invitation
+	ret, err := qtx.DeleteInvitation(ctx, inviteToRemove.Code)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error deleting invitation: %v", err)
+	}
+
+	// Resolve the project's display name
+	prj, err := qtx.GetProjectByID(ctx, ret.Project)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
+
+	// Get the sponsor's user information (current user)
+	sponsorUser, err := qtx.GetUserByID(ctx, ret.Sponsor)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// Resolve the sponsor's identity and display name
+	sponsorDisplay := sponsorUser.IdentitySubject
+	identity, err := idClient.Resolve(ctx, sponsorUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+	} else {
+		sponsorDisplay = identity.Human()
+	}
+
+	return &minder.Invitation{
+		Role:           ret.Role,
+		Email:          ret.Email,
+		Project:        ret.Project.String(),
+		Code:           ret.Code,
+		CreatedAt:      timestamppb.New(ret.CreatedAt),
+		ExpiresAt:      GetExpireIn7Days(ret.UpdatedAt),
+		Expired:        IsExpired(ret.UpdatedAt),
+		Sponsor:        sponsorUser.IdentitySubject,
+		SponsorDisplay: sponsorDisplay,
+		ProjectDisplay: prj.Name,
+	}, nil
 }
 
 func getInviteUrl(emailCfg serverconfig.EmailConfig, userInvite db.UserInvite) (string, error) {

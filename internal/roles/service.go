@@ -40,6 +40,10 @@ type RoleService interface {
 	// UpdateRoleAssignment updates the users role on a project
 	UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
 		targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error)
+
+	// RemoveRoleAssignment removes the role assignment for the user on a project
+	RemoveRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
+		targetProject uuid.UUID, subject string, roleToRemove authz.Role) (*pb.RoleAssignment, error)
 }
 
 type roleService struct {
@@ -95,5 +99,55 @@ func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, 
 		Role:    authzRole.String(),
 		Subject: identity.UserID,
 		Project: &respProj,
+	}, nil
+}
+
+func (_ *roleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+	idClient auth.Resolver, targetProject uuid.UUID, subject string, roleToRemove authz.Role) (*pb.RoleAssignment, error) {
+
+	// Resolve the subject to an identity
+	identity, err := idClient.Resolve(ctx, subject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
+	}
+
+	// Verify if user exists
+	if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	}
+
+	// Validate in case there's only one admin for the project and the user is trying to remove themselves
+	if roleToRemove == authz.RoleAdmin {
+		// Get all role assignments for the project
+		as, err := authzClient.AssignmentsToProject(ctx, targetProject)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+		}
+		// Count the number of admin roles
+		adminRolesCnt := 0
+		for _, existing := range as {
+			if existing.Role == authz.RoleAdmin.String() {
+				adminRolesCnt++
+			}
+		}
+		// If there's only one admin role, return an error
+		if adminRolesCnt <= 1 {
+			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
+		}
+	}
+
+	// Delete the role assignment
+	if err := authzClient.Delete(ctx, identity.String(), roleToRemove, targetProject); err != nil {
+		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+	prj := targetProject.String()
+	return &pb.RoleAssignment{
+		Role:    roleToRemove.String(),
+		Subject: identity.Human(),
+		Project: &prj,
 	}, nil
 }
