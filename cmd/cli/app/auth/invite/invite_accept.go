@@ -28,15 +28,13 @@ import (
 
 // inviteAcceptCmd represents the accept command
 var inviteAcceptCmd = &cobra.Command{
-	Use:   "accept",
-	Short: "Accept a pending invitation",
-	Long:  `Accept a pending invitation for the current minder user`,
+	Use:     "accept",
+	Short:   "Accept a pending invitation",
+	Long:    `Accept a pending invitation for the current minder user`,
 	PreRunE: cli.EnsureCredentials,
-	RunE:  cli.GRPCClientWrapRunE(inviteAcceptCommand),
-	Args:  cobra.ExactArgs(1),
+	RunE:    cli.GRPCClientWrapRunE(inviteAcceptCommand),
+	Args:    cobra.ExactArgs(1),
 }
-
-
 
 // inviteAcceptCommand is the "invite accept" subcommand
 func inviteAcceptCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
