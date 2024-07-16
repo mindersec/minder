@@ -137,6 +137,15 @@ For more information about `minder`, see:
 * `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/stacklok/minder-rules-and-profiles).
 * Minder documentation - [Docs](https://minder-docs.stacklok.dev).
 
+# Roadmap
+
+The Minder community are actively working on new features and improvements for Minder.
+
+You can find our roadmap [here](https://minder-docs.stacklok.dev/about/roadmap).
+
+Should you wish to contribute a feature or improvement, please use the following
+[issue template](https://github.com/stacklok/minder/issues/new?template=enhancement.yml)
+
 # Development
 
 This section describes how to build and run Minder from source.
