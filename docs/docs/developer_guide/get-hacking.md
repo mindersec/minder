@@ -5,93 +5,12 @@ sidebar_position: 1
 
 # Get Hacking
 
-## Prerequisites
-
-- [Go](https://golang.org/doc/install)
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
-## Clone the repository
-
-```bash
-git clone git@github.com:stacklok/minder.git
-```
-
-## Build the application
-
-```bash
-make build
-```
-
-## Install tools
-
-You may bootstrap the whole development environment, which includes initializing the `config.yaml` and `server-config.yaml`
-files with:
-
-```bash
-make bootstrap
-```
-This also installs the required tools for running different make targets.
-
-Note that if you intend to run minder outside `docker compose`, you should
-change the Keycloak and OpenFGA URLs in `server-config.yaml` to refer to
-localhost instead of the `docker-compose.yaml` names. There are comments inside the
-config file which explain what needs to be changed.
-
-## Start dependencies
-
-Note that the application requires a database to be running. This can be achieved
-using docker compose:
-
-```bash
-services="postgres keycloak migrate openfga" make run-docker
-```
-
-## Set up a Keycloak user
-
-You have two options here: setting up a GitHub app (possibly the same one you
-use for Minder enrollment), or using username / password.
-
-### Username / password Keycloak user
-
-Assuming that you've run `make run-docker`, you can run:
-
-```bash
-make password-login
-```
-
-to create a `testuser` Keycloak user with the password `tester`.  (You can create more users either through the KeyCloak UI or by modifying the command in [./mk/identity.mk](https://github.com/stacklok/minder/blob/main/.mk/identity.mk).)  This is purely intended as a convenience method, and is fairly fragile.
-
-### GitHub App
-
-[Create an OAuth2 application for GitHub](../run_minder_server/config_oauth.md).
-Select `New OAuth App` and fill in the details.
-
-Create a new client secret for your OAuth2 client.
-
-Using the client ID and client secret you created above, enable GitHub login on Keycloak by running the following command:
-```bash
-make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> github-login
-```
-
-## Run the application
-
-Then run the application
-
-```bash
-bin/minder-server serve
-```
-
-Or direct from source
-
-```bash
-go run cmd/server/main.go serve
-```
+## Run Minder
+Follow the steps in the [Installing a Development version](./../run_minder_server/run_the_server.md) guide.
 
 The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
 
 ## Run the tests
-
 ```bash
 make test
 ```
