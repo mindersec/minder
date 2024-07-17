@@ -23,7 +23,6 @@ minder history list [flags]
   -h, --help                        help for list
       --profile-name string         Filter evaluation history list by profile name
       --remediation-status string   Filter evaluation history list by remediation status - one of failure, failure, error, success, skipped, not_available
-      --rule-name string            Filter evaluation history list by rule name
 ```
 
 ### Options inherited from parent commands
