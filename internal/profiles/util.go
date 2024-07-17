@@ -357,10 +357,10 @@ func selectorsToProfile(
 	profile.Selection = make([]*pb.Profile_Selector, 0, len(selectors))
 	for _, s := range selectors {
 		profile.Selection = append(profile.Selection, &pb.Profile_Selector{
-			Id:       s.ID.String(),
-			Entity:   string(s.Entity.Entities),
-			Selector: s.Selector,
-			Comment:  s.Comment,
+			Id:          s.ID.String(),
+			Entity:      string(s.Entity.Entities),
+			Selector:    s.Selector,
+			Description: s.Comment,
 		})
 	}
 }

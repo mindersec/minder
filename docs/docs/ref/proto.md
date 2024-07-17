@@ -1779,7 +1779,7 @@ Rule defines the individual call of a certain rule type.
 | id | <TypeLink type="string">string</TypeLink> |  | id is optional and use for updates to match upserts as well as read operations. It is ignored for creates. |
 | entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity to select. |
 | selector | <TypeLink type="string">string</TypeLink> |  | expr is the expression to select the entity. |
-| comment | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
 
 
 

@@ -3035,7 +3035,7 @@
           "type": "string",
           "description": "expr is the expression to select the entity."
         },
-        "comment": {
+        "description": {
           "type": "string",
           "description": "description is the human-readable description of the selector."
         }
