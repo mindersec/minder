@@ -29,7 +29,7 @@ import (
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/timestamppb"

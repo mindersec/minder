@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"go.uber.org/mock/gomock"
 
 	ghprovider "github.com/stacklok/minder/internal/providers/github"

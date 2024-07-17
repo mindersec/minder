@@ -21,7 +21,7 @@ import (
 	"net/url"
 	"os"
 
-	gogithub "github.com/google/go-github/v61/github"
+	gogithub "github.com/google/go-github/v63/github"
 	"github.com/motemen/go-loghttp"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"

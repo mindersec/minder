@@ -29,7 +29,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )

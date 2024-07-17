@@ -27,7 +27,7 @@ import (
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
