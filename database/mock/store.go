@@ -58,6 +58,21 @@ func (mr *MockStoreMockRecorder) BeginTransaction() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeginTransaction", reflect.TypeOf((*MockStore)(nil).BeginTransaction))
 }
 
+// BulkGetProfilesByID mocks base method.
+func (m *MockStore) BulkGetProfilesByID(arg0 context.Context, arg1 []uuid.UUID) ([]db.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BulkGetProfilesByID", arg0, arg1)
+	ret0, _ := ret[0].([]db.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BulkGetProfilesByID indicates an expected call of BulkGetProfilesByID.
+func (mr *MockStoreMockRecorder) BulkGetProfilesByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkGetProfilesByID", reflect.TypeOf((*MockStore)(nil).BulkGetProfilesByID), arg0, arg1)
+}
+
 // CheckHealth mocks base method.
 func (m *MockStore) CheckHealth() error {
 	m.ctrl.T.Helper()
@@ -1030,21 +1045,6 @@ func (m *MockStore) GetProfileStatusByProject(arg0 context.Context, arg1 uuid.UU
 func (mr *MockStoreMockRecorder) GetProfileStatusByProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileStatusByProject", reflect.TypeOf((*MockStore)(nil).GetProfileStatusByProject), arg0, arg1)
-}
-
-// GetProfilesInProjectsWithEntity mocks base method.
-func (m *MockStore) GetProfilesInProjectsWithEntity(arg0 context.Context, arg1 db.GetProfilesInProjectsWithEntityParams) ([]db.Profile, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProfilesInProjectsWithEntity", arg0, arg1)
-	ret0, _ := ret[0].([]db.Profile)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetProfilesInProjectsWithEntity indicates an expected call of GetProfilesInProjectsWithEntity.
-func (mr *MockStoreMockRecorder) GetProfilesInProjectsWithEntity(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfilesInProjectsWithEntity", reflect.TypeOf((*MockStore)(nil).GetProfilesInProjectsWithEntity), arg0, arg1)
 }
 
 // GetProjectByID mocks base method.

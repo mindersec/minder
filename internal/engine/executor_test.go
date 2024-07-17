@@ -159,12 +159,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		Times(2)
 
 	// list one profile
-	profileParams := db.GetProfilesInProjectsWithEntityParams{
-		EntityType: db.EntitiesRepository,
-		ProjectIds: []uuid.UUID{projectID},
-	}
 	mockStore.EXPECT().
-		GetProfilesInProjectsWithEntity(gomock.Any(), profileParams).
+		BulkGetProfilesByID(gomock.Any(), []uuid.UUID{profileID}).
 		Return([]db.Profile{
 			{
 				ID:        profileID,

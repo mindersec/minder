@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/maps"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/profiles/models"
@@ -54,20 +55,7 @@ func (p *profileStore) GetProfilesForEvaluation(
 		return nil, fmt.Errorf("error while querying project hierarchy: %w", err)
 	}
 
-	// Get all profiles which belong in the project hierarchy, and which have
-	// at least one rule instance for the specified entity type.
-	profiles, err := p.store.GetProfilesInProjectsWithEntity(ctx,
-		db.GetProfilesInProjectsWithEntityParams{
-			EntityType: entityType,
-			ProjectIds: projects,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error while querying profiles to use in evaluation: %w", err)
-	}
-
 	// Get all the rule instances in the project hierarchy for this entity.
-	// Assumption: Set of rule instances line up with the set of profiles above.
 	rules, err := p.store.GetRuleInstancesEntityInProjects(ctx,
 		db.GetRuleInstancesEntityInProjectsParams{
 			EntityType: entityType,
@@ -79,7 +67,7 @@ func (p *profileStore) GetProfilesForEvaluation(
 	}
 
 	// Transform the rule instances into the structure we want, and group by project ID.
-	rulesByProfileID := make(map[uuid.UUID][]models.RuleInstance, len(profiles))
+	rulesByProfileID := map[uuid.UUID][]models.RuleInstance{}
 	for _, dbRule := range rules {
 		rule, err := models.RuleFromDB(dbRule)
 		if err != nil {
@@ -88,6 +76,15 @@ func (p *profileStore) GetProfilesForEvaluation(
 		ruleList := rulesByProfileID[dbRule.ProfileID]
 		ruleList = append(ruleList, rule)
 		rulesByProfileID[dbRule.ProfileID] = ruleList
+	}
+
+	// Get all profiles which belong to the above rule instances
+	// The query is written in such a way that if a profile is deleted between
+	// the rule instance query and this query, it will simply be omitted from
+	// the results.
+	profiles, err := p.store.BulkGetProfilesByID(ctx, maps.Keys(rulesByProfileID))
+	if err != nil {
+		return nil, fmt.Errorf("error while querying profiles to use in evaluation: %w", err)
 	}
 
 	// Finally, create the ProfileAggregate instances

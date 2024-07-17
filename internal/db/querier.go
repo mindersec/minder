@@ -13,6 +13,7 @@ import (
 )
 
 type Querier interface {
+	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -119,7 +120,6 @@ type Querier interface {
 	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
 	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
-	GetProfilesInProjectsWithEntity(ctx context.Context, arg GetProfilesInProjectsWithEntityParams) ([]Profile, error)
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)
 	GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error)
