@@ -73,7 +73,7 @@ func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
 
 // EnsureCredentials is a PreRunE function to ensure that the user
 // has valid credentials, opening a browser for login if needed.
-func EnsureCredentials(cmd *cobra.Command, args []string) error {
+func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
