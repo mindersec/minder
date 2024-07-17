@@ -16,6 +16,8 @@ package rtengine
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -28,14 +30,22 @@ import (
 
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
-	GetRuleEngine(ruleTypeID uuid.UUID) (*RuleTypeEngine, error)
+	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
+	GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error)
 }
 
+type cacheType = map[uuid.UUID]*RuleTypeEngine
+
 type ruleEngineCache struct {
-	engines map[uuid.UUID]*RuleTypeEngine
+	store       db.Store
+	provider    provinfv1.Provider
+	ingestCache ingestcache.Cache
+	engines     cacheType
 }
 
 // NewRuleEngineCache creates the rule engine cache
+// It attempts to pre-populate the cache with all the relevant rule types
+// for this entity and project hierarchy.
 func NewRuleEngineCache(
 	ctx context.Context,
 	store db.Querier,
@@ -60,29 +70,71 @@ func NewRuleEngineCache(
 		return nil, fmt.Errorf("error while retrieving rule types from db: %w", err)
 	}
 
-	engines := make(map[uuid.UUID]*RuleTypeEngine, len(ruleTypes))
+	// Populate the cache with rule type engines for the rule types we found.
+	engines := make(cacheType, len(ruleTypes))
 	for _, ruleType := range ruleTypes {
-		// Parse the rule type
-		pbRuleType, err := ruletypes.RuleTypePBFromDB(&ruleType)
+		ruleEngine, err := cacheRuleEngine(ctx, &ruleType, provider, ingestCache, engines)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing rule type when parsing rule type %s: %w", ruleType.ID, err)
+			return nil, err
 		}
-
-		// Create the rule type engine
-		ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider)
-		if err != nil {
-			return nil, fmt.Errorf("error creating rule type engine: %w", err)
-		}
-
-		engines[ruleType.ID] = ruleEngine.WithIngesterCache(ingestCache)
+		engines[ruleType.ID] = ruleEngine
 	}
 
 	return &ruleEngineCache{engines: engines}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
-	return nil, fmt.Errorf("unknown rule type with ID: %s", ruleTypeID)
+
+	// If a new rule instance is added  to a profile after the rule engine
+	// cache is populated, but before the list of profiles and rule instances
+	// is queried, then the rule type may not be in the cache. This case is not
+	// expected to happen often, so the code handles it by querying for that
+	// rule type, building the rule type engine, and caching it.
+
+	// In this part of the code, we can be sure that the rule type ID is
+	// authorized for this project/user, since the rule type ID comes from
+	// the rule_instances table, and it is validated before it is inserted
+	// into that table.
+	ruleType, err := r.store.GetRuleTypeByID(ctx, ruleTypeID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("unknown rule type with ID: %s", ruleTypeID)
+		}
+		return nil, fmt.Errorf("error creating rule type engine: %s", ruleTypeID)
+	}
+
+	// If we find the rule type, insert into the cache and return.
+	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines)
+	if err != nil {
+		return nil, fmt.Errorf("error while caching rule type engine: %w", err)
+	}
+	return ruleTypeEngine, nil
+}
+
+func cacheRuleEngine(
+	ctx context.Context,
+	ruleType *db.RuleType,
+	provider provinfv1.Provider,
+	ingestCache ingestcache.Cache,
+	engineCache cacheType,
+) (*RuleTypeEngine, error) {
+	// Parse the rule type
+	pbRuleType, err := ruletypes.RuleTypePBFromDB(ruleType)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing rule type when parsing rule type %s: %w", ruleType.ID, err)
+	}
+
+	// Create the rule type engine
+	ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider)
+	if err != nil {
+		return nil, fmt.Errorf("error creating rule type engine: %w", err)
+	}
+
+	// Add the rule type engine to the cache
+	ruleEngine = ruleEngine.WithIngesterCache(ingestCache)
+	engineCache[ruleType.ID] = ruleEngine
+	return ruleEngine, nil
 }
