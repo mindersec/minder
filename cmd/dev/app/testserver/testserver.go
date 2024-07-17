@@ -24,7 +24,7 @@ import (
 	"os/signal"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

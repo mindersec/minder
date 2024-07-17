@@ -21,7 +21,7 @@ import (
 
 	"dario.cat/mergo"
 	"github.com/go-playground/validator/v10"
-	gogithub "github.com/google/go-github/v61/github"
+	gogithub "github.com/google/go-github/v63/github"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/config/server"

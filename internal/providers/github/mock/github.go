@@ -18,7 +18,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	authn "github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	github "github.com/google/go-github/v61/github"
+	github "github.com/google/go-github/v63/github"
 	v10 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v11 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"

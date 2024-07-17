@@ -28,7 +28,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 

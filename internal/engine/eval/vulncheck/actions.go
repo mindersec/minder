@@ -19,7 +19,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	pbinternal "github.com/stacklok/minder/internal/proto"
