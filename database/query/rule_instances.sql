@@ -44,20 +44,16 @@ RETURNING id;
 -- name: GetRuleInstancesForProfile :many
 SELECT * FROM rule_instances WHERE profile_id = $1;
 
--- name: GetRuleInstancesForProfileEntity :many
-SELECT * FROM rule_instances WHERE profile_id = $1 AND entity_type = $2;
+-- name: GetRuleInstancesEntityInProjects :many
+SELECT * FROM rule_instances
+WHERE entity_type = $1
+AND project_id = ANY(sqlc.arg(project_ids)::UUID[]);
 
 -- name: DeleteNonUpdatedRules :exec
 DELETE FROM rule_instances
 WHERE profile_id = $1
 AND entity_type = $2
 AND NOT id = ANY(sqlc.arg(updated_ids)::UUID[]);
-
--- name: GetIDByProfileEntityName :one
-SELECT id FROM rule_instances
-WHERE profile_id = $1
-AND entity_type = $2
-AND name = $3;
 
 -- intended as a temporary transition query
 -- this will be removed once rule_instances is used consistently in the engine

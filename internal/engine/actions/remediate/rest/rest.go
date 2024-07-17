@@ -128,8 +128,8 @@ func (r *Remediator) Do(
 
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	endpoint := new(bytes.Buffer)

@@ -154,3 +154,10 @@ GROUP BY r.entity_type;
 
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
+
+-- name: GetProfilesInProjectsWithEntity :many
+SELECT DISTINCT p.*
+FROM profiles AS p
+JOIN rule_instances AS r ON r.profile_id = p.id
+WHERE r.entity_type = $1
+AND p.project_id = ANY(sqlc.arg(project_ids)::UUID[]);

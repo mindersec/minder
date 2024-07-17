@@ -37,7 +37,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
@@ -609,20 +608,10 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			tt.mockSetup(t, mockClient)
 
-			structPol, err := structpb.NewStruct(tt.remArgs.pol)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
-			structParams, err := structpb.NewStruct(tt.remArgs.params)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
 			evalParams := &interfaces.EvalStatusParams{
-				Rule: &pb.Profile_Rule{
-					Def:    structPol,
-					Params: structParams,
+				Rule: &models.RuleInstance{
+					Def:    tt.remArgs.pol,
+					Params: tt.remArgs.params,
 				},
 			}
 

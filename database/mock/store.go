@@ -762,21 +762,6 @@ func (mr *MockStoreMockRecorder) GetFeatureInProject(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureInProject", reflect.TypeOf((*MockStore)(nil).GetFeatureInProject), arg0, arg1)
 }
 
-// GetIDByProfileEntityName mocks base method.
-func (m *MockStore) GetIDByProfileEntityName(arg0 context.Context, arg1 db.GetIDByProfileEntityNameParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIDByProfileEntityName", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetIDByProfileEntityName indicates an expected call of GetIDByProfileEntityName.
-func (mr *MockStoreMockRecorder) GetIDByProfileEntityName(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDByProfileEntityName", reflect.TypeOf((*MockStore)(nil).GetIDByProfileEntityName), arg0, arg1)
-}
-
 // GetImmediateChildrenProjects mocks base method.
 func (m *MockStore) GetImmediateChildrenProjects(arg0 context.Context, arg1 uuid.UUID) ([]db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1047,6 +1032,21 @@ func (mr *MockStoreMockRecorder) GetProfileStatusByProject(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileStatusByProject", reflect.TypeOf((*MockStore)(nil).GetProfileStatusByProject), arg0, arg1)
 }
 
+// GetProfilesInProjectsWithEntity mocks base method.
+func (m *MockStore) GetProfilesInProjectsWithEntity(arg0 context.Context, arg1 db.GetProfilesInProjectsWithEntityParams) ([]db.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfilesInProjectsWithEntity", arg0, arg1)
+	ret0, _ := ret[0].([]db.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfilesInProjectsWithEntity indicates an expected call of GetProfilesInProjectsWithEntity.
+func (mr *MockStoreMockRecorder) GetProfilesInProjectsWithEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfilesInProjectsWithEntity", reflect.TypeOf((*MockStore)(nil).GetProfilesInProjectsWithEntity), arg0, arg1)
+}
+
 // GetProjectByID mocks base method.
 func (m *MockStore) GetProjectByID(arg0 context.Context, arg1 uuid.UUID) (db.Project, error) {
 	m.ctrl.T.Helper()
@@ -1271,6 +1271,21 @@ func (mr *MockStoreMockRecorder) GetRuleEvaluationByProfileIdAndRuleType(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleEvaluationByProfileIdAndRuleType", reflect.TypeOf((*MockStore)(nil).GetRuleEvaluationByProfileIdAndRuleType), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// GetRuleInstancesEntityInProjects mocks base method.
+func (m *MockStore) GetRuleInstancesEntityInProjects(arg0 context.Context, arg1 db.GetRuleInstancesEntityInProjectsParams) ([]db.RuleInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleInstancesEntityInProjects", arg0, arg1)
+	ret0, _ := ret[0].([]db.RuleInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleInstancesEntityInProjects indicates an expected call of GetRuleInstancesEntityInProjects.
+func (mr *MockStoreMockRecorder) GetRuleInstancesEntityInProjects(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleInstancesEntityInProjects", reflect.TypeOf((*MockStore)(nil).GetRuleInstancesEntityInProjects), arg0, arg1)
+}
+
 // GetRuleInstancesForProfile mocks base method.
 func (m *MockStore) GetRuleInstancesForProfile(arg0 context.Context, arg1 uuid.UUID) ([]db.RuleInstance, error) {
 	m.ctrl.T.Helper()
@@ -1284,21 +1299,6 @@ func (m *MockStore) GetRuleInstancesForProfile(arg0 context.Context, arg1 uuid.U
 func (mr *MockStoreMockRecorder) GetRuleInstancesForProfile(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleInstancesForProfile", reflect.TypeOf((*MockStore)(nil).GetRuleInstancesForProfile), arg0, arg1)
-}
-
-// GetRuleInstancesForProfileEntity mocks base method.
-func (m *MockStore) GetRuleInstancesForProfileEntity(arg0 context.Context, arg1 db.GetRuleInstancesForProfileEntityParams) ([]db.RuleInstance, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRuleInstancesForProfileEntity", arg0, arg1)
-	ret0, _ := ret[0].([]db.RuleInstance)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRuleInstancesForProfileEntity indicates an expected call of GetRuleInstancesForProfileEntity.
-func (mr *MockStoreMockRecorder) GetRuleInstancesForProfileEntity(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleInstancesForProfileEntity", reflect.TypeOf((*MockStore)(nil).GetRuleInstancesForProfileEntity), arg0, arg1)
 }
 
 // GetRuleTypeByID mocks base method.
@@ -1344,6 +1344,21 @@ func (m *MockStore) GetRuleTypeIDByRuleNameEntityProfile(arg0 context.Context, a
 func (mr *MockStoreMockRecorder) GetRuleTypeIDByRuleNameEntityProfile(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeIDByRuleNameEntityProfile", reflect.TypeOf((*MockStore)(nil).GetRuleTypeIDByRuleNameEntityProfile), arg0, arg1)
+}
+
+// GetRuleTypeNameByID mocks base method.
+func (m *MockStore) GetRuleTypeNameByID(arg0 context.Context, arg1 uuid.UUID) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRuleTypeNameByID", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRuleTypeNameByID indicates an expected call of GetRuleTypeNameByID.
+func (mr *MockStoreMockRecorder) GetRuleTypeNameByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRuleTypeNameByID", reflect.TypeOf((*MockStore)(nil).GetRuleTypeNameByID), arg0, arg1)
 }
 
 // GetRuleTypesByEntityInHierarchy mocks base method.

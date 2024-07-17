@@ -373,6 +373,55 @@ func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEnti
 	return i, err
 }
 
+const getProfilesInProjectsWithEntity = `-- name: GetProfilesInProjectsWithEntity :many
+SELECT DISTINCT p.id, p.name, p.provider, p.project_id, p.remediate, p.alert, p.created_at, p.updated_at, p.provider_id, p.subscription_id, p.display_name, p.labels
+FROM profiles AS p
+JOIN rule_instances AS r ON r.profile_id = p.id
+WHERE r.entity_type = $1
+AND p.project_id = ANY($2::UUID[])
+`
+
+type GetProfilesInProjectsWithEntityParams struct {
+	EntityType Entities    `json:"entity_type"`
+	ProjectIds []uuid.UUID `json:"project_ids"`
+}
+
+func (q *Queries) GetProfilesInProjectsWithEntity(ctx context.Context, arg GetProfilesInProjectsWithEntityParams) ([]Profile, error) {
+	rows, err := q.db.QueryContext(ctx, getProfilesInProjectsWithEntity, arg.EntityType, pq.Array(arg.ProjectIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Profile{}
+	for rows.Next() {
+		var i Profile
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.Alert,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProviderID,
+			&i.SubscriptionID,
+			&i.DisplayName,
+			pq.Array(&i.Labels),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
 WITH helper AS(
      SELECT pr.id as profid,

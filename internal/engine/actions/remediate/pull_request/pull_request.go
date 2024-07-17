@@ -194,8 +194,8 @@ func (r *Remediator) getParamsForPRRemediation(
 
 	tmplParams := &PrTemplateParams{
 		Entity:  ent,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	ingested := params.GetIngestResult()
@@ -212,7 +212,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		prCfg: r.prCfg,
 		ghCli: r.ghCli,
 		bfs:   ingested.Fs,
-		def:   params.GetRule().Def.AsMap(),
+		def:   params.GetRule().Def,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get modification: %w", err)

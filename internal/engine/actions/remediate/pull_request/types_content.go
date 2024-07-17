@@ -108,8 +108,8 @@ func (ca *contentModification) createFsModEntries(
 	params interfaces.ActionsParams,
 ) error {
 	data := map[string]interface{}{
-		"Params":  params.GetRule().Params.AsMap(),
-		"Profile": params.GetRule().Def.AsMap(),
+		"Params":  params.GetRule().Params,
+		"Profile": params.GetRule().Def,
 	}
 	for i, entry := range ca.entries {
 		content := new(bytes.Buffer)

@@ -189,6 +189,8 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to create metrics for executor: %w", err)
 	}
 
+	profileStore := profiles.NewProfileStore(store)
+
 	// Register the executor to handle entity evaluations
 	exec := engine.NewExecutor(
 		store,
@@ -196,6 +198,7 @@ func AllInOneServerService(
 		executorMetrics,
 		history.NewEvaluationHistoryService(),
 		featureFlagClient,
+		profileStore,
 	)
 
 	handler := engine.NewExecutorEventHandler(

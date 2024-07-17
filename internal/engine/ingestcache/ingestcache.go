@@ -16,6 +16,7 @@ package ingestcache
 
 import (
 	"crypto/sha512"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
@@ -47,7 +47,7 @@ func NewCache() Cache {
 func (c *cache) Get(
 	ingester engif.Ingester,
 	entity protoreflect.ProtoMessage,
-	params *structpb.Struct,
+	params map[string]any,
 ) (*engif.Result, bool) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *cache) Get(
 func (c *cache) Set(
 	ingester engif.Ingester,
 	entity protoreflect.ProtoMessage,
-	params *structpb.Struct,
+	params map[string]any,
 	result *engif.Result,
 ) {
 	key, err := buildCacheKey(ingester, entity, params)
@@ -79,7 +79,7 @@ func (c *cache) Set(
 func buildCacheKey(
 	ingester engif.Ingester,
 	entity protoreflect.ProtoMessage,
-	ruleparams *structpb.Struct,
+	ruleparams map[string]any,
 ) (string, error) {
 	chsum := sha512.New()
 
@@ -109,7 +109,7 @@ func buildCacheKey(
 	}
 
 	if ruleparams != nil {
-		marshaleldParams, err := protojson.Marshal(ruleparams)
+		marshaleldParams, err := json.Marshal(ruleparams)
 		if err != nil {
 			return "", fmt.Errorf("%w: couldn't marshal rule params: %v", ErrBuildingCacheKey, err)
 		}

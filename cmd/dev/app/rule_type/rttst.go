@@ -39,6 +39,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -170,13 +171,18 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	actionConfig := models.ActionConfiguration{
+		Remediate: models.ActionOptFromString(profile.Remediate, models.ActionOptOff),
+		Alert:     models.ActionOptFromString(profile.Alert, models.ActionOptOff),
+	}
+
 	// TODO: use cobra context here
 	ctx := context.Background()
 	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov)
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
-	actionEngine, err := actions.NewRuleActions(ctx, profile, ruletype, prov)
+	actionEngine, err := actions.NewRuleActions(ctx, ruletype, prov, &actionConfig)
 	if err != nil {
 		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
@@ -217,9 +223,14 @@ func runEvaluationForRules(
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 
+		rule := models.RuleFromPB(
+			uuid.New(), // Actual rule type ID does not matter here
+			frag,
+		)
+
 		// Create the eval status params
 		evalStatus := &engif.EvalStatusParams{
-			Rule: frag,
+			Rule: &rule,
 			EvalStatusFromDb: &db.ListRuleEvaluationsByProfileIdRow{
 				RemStatus:   remediateStatus,
 				RemMetadata: remMetadata,

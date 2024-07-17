@@ -119,8 +119,8 @@ func (r *GhBranchProtectRemediator) Do(
 
 	retp := &PatchTemplateParams{
 		Entity:  ent,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	repo, ok := ent.(*pb.Repository)
@@ -128,7 +128,7 @@ func (r *GhBranchProtectRemediator) Do(
 		return nil, fmt.Errorf("expected repository, got %T", ent)
 	}
 
-	branch, err := util.JQReadFrom[string](ctx, ".branch", params.GetRule().Params.AsMap())
+	branch, err := util.JQReadFrom[string](ctx, ".branch", params.GetRule().Params)
 	if err != nil {
 		return nil, fmt.Errorf("error reading branch from params: %w", err)
 	}
