@@ -238,7 +238,7 @@ func (e *executor) getEvaluator(
 
 	params.RuleTypeID = ruleTypeID
 
-	rte, err := ruleEngineCache.GetRuleEngine(ruleTypeID)
+	rte, err := ruleEngineCache.GetRuleEngine(ctx, ruleTypeID)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
