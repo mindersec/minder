@@ -12,7 +12,7 @@ package mock_clients
 import (
 	reflect "reflect"
 
-	github "github.com/google/go-github/v61/github"
+	github "github.com/google/go-github/v63/github"
 	github0 "github.com/stacklok/minder/internal/providers/github"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"

@@ -37,6 +37,10 @@ import (
 
 // RoleService encapsulates the methods to manage user role assignments
 type RoleService interface {
+	// CreateRoleAssignment assigns a user a role on a project
+	CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
+		targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error)
+
 	// UpdateRoleAssignment updates the users role on a project
 	UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
 		targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error)
@@ -52,6 +56,51 @@ type roleService struct {
 // NewRoleService creates a new instance of RoleService
 func NewRoleService() RoleService {
 	return &roleService{}
+}
+
+func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+	idClient auth.Resolver, targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error) {
+	// Resolve the subject to an identity
+	identity, err := idClient.Resolve(ctx, subject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
+	}
+
+	// Verify if user exists.
+	// TODO: this assumes that we store all users in the database, and that we don't
+	// need to namespace identify providers.  We should revisit these assumptions.
+	//
+	if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	}
+
+	// Check in case there's an existing role assignment for the user
+	as, err := authzClient.AssignmentsToProject(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	for _, a := range as {
+		if a.Subject == identity.String() {
+			return nil, util.UserVisibleError(codes.AlreadyExists, "role assignment for this user already exists, use update instead")
+		}
+	}
+
+	// Assign the role to the user
+	if err := authzClient.Write(ctx, identity.String(), authzRole, targetProject); err != nil {
+		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
+	}
+
+	respProj := targetProject.String()
+	return &pb.RoleAssignment{
+		Role:    authzRole.String(),
+		Subject: identity.Human(),
+		Project: &respProj,
+	}, nil
 }
 
 func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,

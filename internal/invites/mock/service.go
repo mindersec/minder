@@ -46,6 +46,21 @@ func (m *MockInviteService) EXPECT() *MockInviteServiceMockRecorder {
 	return m.recorder
 }
 
+// CreateInvite mocks base method.
+func (m *MockInviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateInvite", ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+	ret0, _ := ret[0].(*v1.Invitation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateInvite indicates an expected call of CreateInvite.
+func (mr *MockInviteServiceMockRecorder) CreateInvite(ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvite", reflect.TypeOf((*MockInviteService)(nil).CreateInvite), ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+}
+
 // RemoveInvite mocks base method.
 func (m *MockInviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
 	m.ctrl.T.Helper()

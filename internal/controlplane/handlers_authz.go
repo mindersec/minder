@@ -18,12 +18,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,14 +29,10 @@ import (
 
 	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/config"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/email"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/invites"
-	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/util"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -338,204 +331,37 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Decide if it's an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.inviteUser(ctx, targetProject, authzRole, inviteeEmail)
+			invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
+				return s.invites.CreateInvite(ctx, qtx, s.idClient, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return &minder.AssignRoleResponse{
+				// Leaving the role assignment empty as it's an invitation
+				Invitation: invitation,
+			}, nil
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// Enable one or the other.
 		// This is temporary until we deprecate it completely in favor of email-based role assignments
 		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			return s.assignRole(ctx, targetProject, authzRole, sub)
+			assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
+				return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, s.idClient, targetProject, sub, authzRole)
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return &minder.AssignRoleResponse{
+				RoleAssignment: assignment,
+			}, nil
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is enabled, use invites instead")
 	}
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
-}
-
-//nolint:gocyclo
-func (s *Server) inviteUser(
-	ctx context.Context,
-	targetProject uuid.UUID,
-	role authz.Role,
-	inviteeEmail string,
-) (*minder.AssignRoleResponse, error) {
-	var userInvite db.UserInvite
-	// Get the sponsor's user information (current user)
-	currentUser, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
-	}
-
-	// Check if the user is already invited
-	existingInvites, err := s.store.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
-		Email:   inviteeEmail,
-		Project: targetProject,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting invitations: %v", err)
-	}
-
-	// Check if there are any existing invitations for this email
-	if len(existingInvites) != 0 {
-		return nil, util.UserVisibleError(
-			codes.AlreadyExists,
-			"invitation for this email and project already exists, use update instead",
-		)
-	}
-
-	// If there are no invitations for this email, great, we should create one
-	// Resolve the sponsor's identity and display name
-	sponsorDisplay := currentUser.IdentitySubject
-	identity, err := s.idClient.Resolve(ctx, currentUser.IdentitySubject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-	} else {
-		sponsorDisplay = identity.Human()
-	}
-
-	// Resolve the target project's display name
-	prj, err := s.store.GetProjectByID(ctx, targetProject)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get target project: %s", err)
-	}
-
-	// Parse the project metadata, so we can get the display name set by project owner
-	meta, err := projects.ParseMetadata(&prj)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
-	}
-
-	// Begin a transaction to ensure that the invitation is created atomically
-	tx, err := s.store.BeginTransaction()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-	}
-	defer s.store.Rollback(tx)
-
-	// Create the invitation
-	userInvite, err = s.store.CreateInvitation(ctx, db.CreateInvitationParams{
-		Code:    invites.GenerateCode(),
-		Email:   inviteeEmail,
-		Role:    role.String(),
-		Project: targetProject,
-		Sponsor: currentUser.ID,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
-	}
-
-	// Read the server config, so we can get the Minder base URL
-	cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
-	if err != nil {
-		return nil, fmt.Errorf("unable to read config: %w", err)
-	}
-
-	// Create the invite URL
-	inviteURL := ""
-	if cfg.Email.MinderURLBase != "" {
-		baseUrl, err := url.Parse(cfg.Email.MinderURLBase)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing base URL: %w", err)
-		}
-		inviteURL, err = url.JoinPath(baseUrl.String(), "join", userInvite.Code)
-		if err != nil {
-			return nil, fmt.Errorf("error joining URL path: %w", err)
-		}
-	}
-
-	// Publish the event for sending the invitation email
-	msg, err := email.NewMessage(
-		ctx,
-		userInvite.Email,
-		inviteURL,
-		cfg.Email.MinderURLBase,
-		userInvite.Role,
-		meta.Public.DisplayName,
-		sponsorDisplay,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error generating UUID: %w", err)
-	}
-
-	err = s.evt.Publish(email.TopicQueueInviteEmail, msg)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
-	}
-
-	// Commit the transaction to persist the changes
-	if err = s.store.Commit(tx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-	}
-
-	// Send the invitation response
-	return &minder.AssignRoleResponse{
-		// Leaving the role assignment empty as it's an invitation
-		Invitation: &minder.Invitation{
-			Role:           userInvite.Role,
-			Email:          userInvite.Email,
-			Project:        userInvite.Project.String(),
-			ProjectDisplay: prj.Name,
-			Code:           userInvite.Code,
-			InviteUrl:      inviteURL,
-			Sponsor:        currentUser.IdentitySubject,
-			SponsorDisplay: sponsorDisplay,
-			CreatedAt:      timestamppb.New(userInvite.CreatedAt),
-			ExpiresAt:      invites.GetExpireIn7Days(userInvite.UpdatedAt),
-			Expired:        invites.IsExpired(userInvite.UpdatedAt),
-		},
-	}, nil
-}
-
-func (s *Server) assignRole(
-	ctx context.Context,
-	targetPrj uuid.UUID,
-	role authz.Role,
-	subject string,
-) (*minder.AssignRoleResponse, error) {
-	var err error
-	// Resolve the subject to an identity
-	identity, err := s.idClient.Resolve(ctx, subject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
-	}
-
-	// Verify if user exists.
-	// TODO: this assumes that we store all users in the database, and that we don't
-	// need to namespace identify providers.  We should revisit these assumptions.
-	//
-	if _, err := s.store.GetUserBySubject(ctx, identity.String()); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
-	}
-
-	// Check in case there's an existing role assignment for the user
-	as, err := s.authzClient.AssignmentsToProject(ctx, targetPrj)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
-	}
-
-	for _, a := range as {
-		if a.Subject == identity.String() {
-			return nil, util.UserVisibleError(codes.AlreadyExists, "role assignment for this user already exists, use update instead")
-		}
-	}
-
-	// Assign the role to the user
-	if err := s.authzClient.Write(ctx, identity.String(), role, targetPrj); err != nil {
-		return nil, status.Errorf(codes.Internal, "error writing role assignment: %v", err)
-	}
-
-	respProj := targetPrj.String()
-	return &minder.AssignRoleResponse{
-		RoleAssignment: &minder.RoleAssignment{
-			Role:    role.String(),
-			Subject: identity.Human(),
-			Project: &respProj,
-		},
-	}, nil
 }
 
 // RemoveRole removes a role from a user on a project

@@ -41,6 +41,86 @@ import (
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+func TestCreateInvite(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name           string
+		dBSetup        dbf.DBMockBuilder
+		publisherSetup func(t *testing.T, pub *mockevents.MockPublisher)
+		expectedError  string
+		expectedResult *minder.Invitation
+	}{
+		{
+			name: "error when existing invites",
+			dBSetup: dbf.NewDBMock(
+				withGetUserBySubject(validUser),
+				withExistingInvites(multipleInvites),
+			),
+			expectedError: "invitation for this email and project already exists, use update instead",
+		},
+		{
+			name: "invite created and message sent successfully",
+			dBSetup: dbf.NewDBMock(
+				withGetUserBySubject(validUser),
+				withExistingInvites(noInvites),
+				withCreateInvite(userInvite, nil),
+				withProject(),
+			),
+			publisherSetup: func(_ *testing.T, pub *mockevents.MockPublisher) {
+				pub.EXPECT().Publish(email.TopicQueueInviteEmail, gomock.Any())
+			},
+			expectedResult: &minder.Invitation{
+				Project: projectId.String(),
+				Role:    userRole.String(),
+			},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			user := openid.New()
+			assert.NoError(t, user.Set("sub", userEmail))
+
+			ctx := context.Background()
+			ctx = authjwt.WithAuthTokenContext(ctx, user)
+
+			idClient := mockauth.NewMockResolver(ctrl)
+			idClient.EXPECT().Resolve(ctx, userSubject).Return(&auth.Identity{
+				UserID: userSubject,
+			}, nil).AnyTimes()
+
+			publisher := mockevents.NewMockPublisher(ctrl)
+			if scenario.publisherSetup != nil {
+				scenario.publisherSetup(t, publisher)
+			}
+
+			emailConfig := server.EmailConfig{
+				MinderURLBase: baseUrl,
+			}
+
+			service := NewInviteService()
+			invite, err := service.CreateInvite(ctx, scenario.dBSetup(ctrl), idClient, publisher, emailConfig, projectId, userRole, userEmail)
+
+			if scenario.expectedError != "" {
+				require.ErrorContains(t, err, scenario.expectedError)
+				return
+			}
+			require.NoError(t, err)
+
+			if scenario.expectedResult != nil {
+				require.Equal(t, scenario.expectedResult.Role, invite.Role)
+				require.Equal(t, scenario.expectedResult.Project, invite.Project)
+			}
+		})
+	}
+}
+
 func TestUpdateInvite(t *testing.T) {
 	t.Parallel()
 
@@ -89,7 +169,7 @@ func TestUpdateInvite(t *testing.T) {
 			},
 			expectedResult: &minder.Invitation{
 				Project:   projectId.String(),
-				Role:      updatedRole.String(),
+				Role:      userRole.String(),
 				InviteUrl: fmt.Sprintf("%s/join/%s", baseUrl, inviteCode),
 			},
 		},
@@ -123,7 +203,7 @@ func TestUpdateInvite(t *testing.T) {
 			}
 
 			service := NewInviteService()
-			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), idClient, publisher, emailConfig, projectId, updatedRole, userEmail)
+			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), idClient, publisher, emailConfig, projectId, userRole, userEmail)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -193,7 +273,7 @@ func TestRemoveInvite(t *testing.T) {
 			}, nil).AnyTimes()
 
 			service := NewInviteService()
-			invite, err := service.RemoveInvite(ctx, scenario.dBSetup(ctrl), idClient, projectId, updatedRole, userEmail)
+			invite, err := service.RemoveInvite(ctx, scenario.dBSetup(ctrl), idClient, projectId, userRole, userEmail)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -213,7 +293,7 @@ var (
 	projectId   = uuid.New()
 	userEmail   = "test@example.com"
 	userSubject = "subject"
-	updatedRole = authz.RoleAdmin
+	userRole    = authz.RoleAdmin
 	inviteCode  = "code"
 	baseUrl     = "https://minder.example.com"
 
@@ -255,7 +335,7 @@ var (
 	userInvite = db.UserInvite{
 		Code:      inviteCode,
 		Project:   projectId,
-		Role:      updatedRole.String(),
+		Role:      userRole.String(),
 		UpdatedAt: time.Now().Add(-time.Minute),
 	}
 )
@@ -289,11 +369,20 @@ func withInviteRoleUpdate(result db.UserInvite, err error) func(dbf.DBMock) {
 		mock.EXPECT().
 			UpdateInvitationRole(gomock.Any(), db.UpdateInvitationRoleParams{
 				Code: inviteCode,
-				Role: updatedRole.String(),
+				Role: userRole.String(),
 			}).
 			Return(result, err)
 	}
 }
+
+func withCreateInvite(result db.UserInvite, err error) func(dbf.DBMock) {
+	return func(mock dbf.DBMock) {
+		mock.EXPECT().
+			CreateInvitation(gomock.Any(), gomock.Any()).
+			Return(result, err)
+	}
+}
+
 func withDeleteInvite(result db.UserInvite, err error) func(dbf.DBMock) {
 	return func(mock dbf.DBMock) {
 		mock.EXPECT().

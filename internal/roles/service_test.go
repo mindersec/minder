@@ -33,6 +33,86 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+func TestCreateRoleAssignment(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name                    string
+		dBSetup                 dbf.DBMockBuilder
+		existingRoleAssignments []*minderv1.RoleAssignment
+		expectedError           string
+	}{
+		{
+			name: "error when user doesn't exist",
+			dBSetup: dbf.NewDBMock(
+				withGetUser(emptyUser, sql.ErrNoRows),
+			),
+			expectedError: "User not found",
+		},
+		{
+			name: "error when role assignment already exists",
+			dBSetup: dbf.NewDBMock(
+				withGetUser(validUser, nil),
+			),
+			existingRoleAssignments: []*minderv1.RoleAssignment{
+				{
+					Subject: subject,
+					Role:    string(authz.RoleViewer),
+				},
+			},
+			expectedError: "role assignment for this user already exists, use update instead",
+		},
+		{
+			name: "role assignment created successfully",
+			dBSetup: dbf.NewDBMock(
+				withGetUser(validUser, nil),
+			),
+			existingRoleAssignments: []*minderv1.RoleAssignment{},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			var store db.Store
+			if scenario.dBSetup != nil {
+				store = scenario.dBSetup(ctrl)
+			}
+
+			authzClient := &mock.SimpleClient{
+				Allowed: []uuid.UUID{project},
+				Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
+					project: scenario.existingRoleAssignments,
+				},
+			}
+
+			idClient := mockauth.NewMockResolver(ctrl)
+			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
+				UserID: subject,
+			}, nil)
+
+			service := NewRoleService()
+			_, err := service.CreateRoleAssignment(ctx, store, authzClient, idClient, project, subject, userRole)
+
+			if scenario.expectedError != "" {
+				require.ErrorContains(t, err, scenario.expectedError)
+				return
+			}
+			require.NoError(t, err)
+
+			// Verify the assignment is created
+			require.Equal(t, 1, len(authzClient.Assignments[project]))
+			require.Equal(t, userRole.String(), authzClient.Assignments[project][0].Role)
+			require.Equal(t, subject, authzClient.Assignments[project][0].Subject)
+		})
+	}
+}
+
 func TestUpdateRoleAssignment(t *testing.T) {
 	t.Parallel()
 
@@ -87,7 +167,7 @@ func TestUpdateRoleAssignment(t *testing.T) {
 			}, nil)
 
 			service := NewRoleService()
-			_, err := service.UpdateRoleAssignment(ctx, store, authzClient, idClient, project, subject, authz.RoleAdmin)
+			_, err := service.UpdateRoleAssignment(ctx, store, authzClient, idClient, project, subject, userRole)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -97,7 +177,7 @@ func TestUpdateRoleAssignment(t *testing.T) {
 
 			// Verify only the role is updated
 			require.Equal(t, 1, len(authzClient.Assignments[project]))
-			require.Equal(t, authz.RoleAdmin.String(), authzClient.Assignments[project][0].Role)
+			require.Equal(t, userRole.String(), authzClient.Assignments[project][0].Role)
 			require.Equal(t, subject, authzClient.Assignments[project][0].Subject)
 		})
 	}
@@ -181,8 +261,9 @@ func TestRemoveRole(t *testing.T) {
 }
 
 var (
-	project = uuid.New()
-	subject = "subject"
+	project  = uuid.New()
+	subject  = "subject"
+	userRole = authz.RoleAdmin
 
 	emptyUser = db.User{}
 	validUser = db.User{

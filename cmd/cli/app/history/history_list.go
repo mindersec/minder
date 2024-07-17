@@ -152,7 +152,6 @@ func init() {
 	entityTypesMsg := fmt.Sprintf(basicMsg, "entity type", strings.Join(entityTypes, ", "))
 
 	// Flags
-	listCmd.Flags().String("rule-name", "", "Filter evaluation history list by rule name")
 	listCmd.Flags().String("profile-name", "", "Filter evaluation history list by profile name")
 	listCmd.Flags().String("entity-name", "", "Filter evaluation history list by entity name")
 	listCmd.Flags().String("entity-type", "", entityTypesMsg)

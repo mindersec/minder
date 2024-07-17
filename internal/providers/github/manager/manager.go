@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"slices"
 
-	gogithub "github.com/google/go-github/v61/github"
+	gogithub "github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"

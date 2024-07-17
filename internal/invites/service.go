@@ -43,6 +43,11 @@ import (
 
 // InviteService encapsulates the methods to manage user invites to a project
 type InviteService interface {
+	// CreateInvite creates a new user invite
+	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+	) (*minder.Invitation, error)
+
 	// UpdateInvite updates the invite status
 	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
@@ -233,6 +238,105 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 		Sponsor:        sponsorUser.IdentitySubject,
 		SponsorDisplay: sponsorDisplay,
 		ProjectDisplay: prj.Name,
+	}, nil
+}
+
+func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
+) (*minder.Invitation, error) {
+
+	// Get the sponsor's user information (current user)
+	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	}
+
+	// Check if the user is already invited
+	existingInvites, err := qtx.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
+		Email:   inviteeEmail,
+		Project: targetProject,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting invitations: %v", err)
+	}
+
+	if len(existingInvites) != 0 {
+		return nil, util.UserVisibleError(
+			codes.AlreadyExists,
+			"invitation for this email and project already exists, use update instead",
+		)
+	}
+
+	// If there are no invitations for this email, great, we should create one
+	// Resolve the sponsor's identity and display name
+	sponsorDisplay := currentUser.IdentitySubject
+	identity, err := idClient.Resolve(ctx, currentUser.IdentitySubject)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
+	} else {
+		sponsorDisplay = identity.Human()
+	}
+
+	// Resolve the target project's display name
+	prj, err := qtx.GetProjectByID(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get target project: %s", err)
+	}
+
+	// Parse the project metadata, so we can get the display name set by project owner
+	meta, err := projects.ParseMetadata(&prj)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
+	}
+
+	// Create the invitation
+	userInvite, err := qtx.CreateInvitation(ctx, db.CreateInvitationParams{
+		Code:    GenerateCode(),
+		Email:   inviteeEmail,
+		Role:    authzRole.String(),
+		Project: targetProject,
+		Sponsor: currentUser.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating invitation: %v", err)
+	}
+
+	inviteURL, err := getInviteUrl(emailConfig, userInvite)
+	if err != nil {
+		return nil, fmt.Errorf("error getting invite URL: %w", err)
+	}
+
+	// Publish the event for sending the invitation email
+	msg, err := email.NewMessage(
+		ctx,
+		userInvite.Email,
+		inviteURL,
+		emailConfig.MinderURLBase,
+		userInvite.Role,
+		meta.Public.DisplayName,
+		sponsorDisplay,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error generating UUID: %w", err)
+	}
+
+	err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error publishing event: %v", err)
+	}
+
+	return &minder.Invitation{
+		Role:           userInvite.Role,
+		Email:          userInvite.Email,
+		Project:        userInvite.Project.String(),
+		ProjectDisplay: prj.Name,
+		Code:           userInvite.Code,
+		InviteUrl:      inviteURL,
+		Sponsor:        currentUser.IdentitySubject,
+		SponsorDisplay: sponsorDisplay,
+		CreatedAt:      timestamppb.New(userInvite.CreatedAt),
+		ExpiresAt:      GetExpireIn7Days(userInvite.UpdatedAt),
+		Expired:        IsExpired(userInvite.UpdatedAt),
 	}, nil
 }
 

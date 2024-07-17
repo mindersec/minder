@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"dario.cat/mergo"
-	gogithub "github.com/google/go-github/v61/github"
+	gogithub "github.com/google/go-github/v63/github"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/config/server"
