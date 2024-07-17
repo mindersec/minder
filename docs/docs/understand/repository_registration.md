@@ -35,15 +35,17 @@ First, identify the _name_ of your GitHub Provider. You can list your enrolled p
 minder provider list
 ```
 
-To enable automatic registration for your repositories, set the `auto_registration.entities.repository.enabled` attribute to `true` for your provider. For example, if your provider was named `github-app-myorg`, run:
+To enable automatic registration for your future repositories, set the `auto_registration.entities.repository.enabled` attribute to `true` for your provider. For example, if your provider was named `github-app-myorg`, run:
 
 ```bash
 minder provider update --set-attribute=auto_registration.entities.repository.enabled=true --name=github-app-myorg
 ```
 
-:::note
-Enabling automatic registration only applies to new repositories that are created in your organization, it does not retroactively register existing repositories.
-:::
+To enable automatic registration for existing repositories and enroll all the currently existing repositories, you can use the `minder repo register` command:
+```bash
+minder repo register --all
+```
+You can pass the `--provider` flag to restrict the registration to a specific provider. By default, the `repo register` command will register repositories for all providers.
 
 To disable automatic registration, set the `auto_registration.entities.repository.enabled` attribute to `false`:
 
