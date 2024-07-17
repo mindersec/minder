@@ -594,6 +594,7 @@ func TestResolveInvitation(t *testing.T) {
 
 	userEmail := "user@example.com"
 	userSubject := "subject1"
+	userGitHubId := "31137"
 	projectDisplayName := "Project"
 	projectMetadata, err := json.Marshal(
 		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
@@ -729,6 +730,7 @@ func TestResolveInvitation(t *testing.T) {
 				}, nil)
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{}, sql.ErrNoRows)
 				store.EXPECT().CreateUser(gomock.Any(), userSubject).Return(db.User{ID: 2}, nil)
+				store.EXPECT().GetUnclaimedInstallationsByUser(gomock.Any(), sql.NullString{String: userGitHubId, Valid: true}).Return(nil, nil)
 				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
 					Project: projectID,
 					Email:   userEmail,
@@ -753,6 +755,7 @@ func TestResolveInvitation(t *testing.T) {
 			user := openid.New()
 			assert.NoError(t, user.Set("email", userEmail))
 			assert.NoError(t, user.Set("sub", userSubject))
+			assert.NoError(t, user.Set("gh_id", userGitHubId))
 
 			ctx := context.Background()
 			ctx = jwt.WithAuthTokenContext(ctx, user)

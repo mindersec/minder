@@ -401,7 +401,7 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
 
-	user, err := ensureUser(ctx, qtx)
+	user, err := ensureUser(ctx, s, qtx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get or create user: %s", err)
 	}
@@ -495,7 +495,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 	return nil
 }
 
-func ensureUser(ctx context.Context, store db.Querier) (db.User, error) {
+func ensureUser(ctx context.Context, s *Server, store db.Querier) (db.User, error) {
 	sub := jwt.GetUserSubjectFromContext(ctx)
 	if sub == "" {
 		return db.User{}, status.Error(codes.Internal, "failed to get user subject")
@@ -509,7 +509,14 @@ func ensureUser(ctx context.Context, store db.Querier) (db.User, error) {
 
 	// Create a user if necessary, see https://github.com/stacklok/minder/pull/3837/files#r1674108001
 	if errors.Is(err, sql.ErrNoRows) {
-		return store.CreateUser(ctx, sub)
+		user, err := store.CreateUser(ctx, sub)
+		if err != nil {
+			return db.User{}, status.Errorf(codes.Internal, "failed to create user: %s", err)
+		}
+		// If we create a new user, we should see if they have outstanding GitHub installations
+		// to create projects for.
+		s.claimGitHubInstalls(ctx, store)
+		return user, err
 	}
 
 	return db.User{}, err
