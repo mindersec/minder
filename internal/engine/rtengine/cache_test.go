@@ -98,7 +98,7 @@ func TestGetRuleEngine(t *testing.T) {
 			if scenario.ExpectedError != "" {
 				require.ErrorContains(t, err, scenario.ExpectedError)
 				require.Nil(t, result)
-				// ensure that the value is present in the cache after testing
+				// ensure that this rule type ID was not cached
 				require.NotContains(t, cache.engines, ruleTypeID)
 			} else {
 				require.NoError(t, err)
