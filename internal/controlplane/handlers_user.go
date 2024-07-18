@@ -382,8 +382,18 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Error(codes.Unimplemented, "feature not enabled")
 	}
 
+	tx, err := s.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
+	}
+	defer s.store.Rollback(tx)
+	qtx := s.store.GetQuerierWithTransaction(tx)
+	if qtx == nil {
+		return nil, status.Errorf(codes.Internal, "failed to get transaction")
+	}
+
 	// Check if the invitation code is valid
-	userInvite, err := s.store.GetInvitationByCode(ctx, req.Code)
+	userInvite, err := qtx.GetInvitationByCode(ctx, req.Code)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound, "invitation not found or already used")
@@ -391,9 +401,13 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
 
-	// Check if the user is trying to resolve their own invitation
-	if err = isUserSelfResolving(ctx, s.store, userInvite); err != nil {
-		return nil, err
+	user, err := ensureUser(ctx, s, qtx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get or create user: %s", err)
+	}
+
+	if user.ID == userInvite.Sponsor {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "user cannot resolve their own invitation")
 	}
 
 	// Check if the invitation is expired
@@ -409,15 +423,20 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 	}
 
 	// Delete the invitation since its resolved
-	deletedInvite, err := s.store.DeleteInvitation(ctx, req.Code)
+	deletedInvite, err := qtx.DeleteInvitation(ctx, req.Code)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete invitation: %s", err)
 	}
 
 	// Resolve the project's display name
-	targetProject, err := s.store.GetProjectByID(ctx, deletedInvite.Project)
+	targetProject, err := qtx.GetProjectByID(ctx, deletedInvite.Project)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
+	}
+
+	err = s.store.Commit(tx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to commit transaction: %s", err)
 	}
 
 	// Parse the project metadata, so we can get the display name set by project owner
@@ -476,20 +495,31 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 	return nil
 }
 
-// isUserSelfResolving is used to prevent if the user is trying to resolve an invitation they created
-func isUserSelfResolving(ctx context.Context, store db.Store, i db.GetInvitationByCodeRow) error {
-	// Get current user data
-	currentUser, err := store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get user: %s", err)
+func ensureUser(ctx context.Context, s *Server, store db.Querier) (db.User, error) {
+	sub := jwt.GetUserSubjectFromContext(ctx)
+	if sub == "" {
+		return db.User{}, status.Error(codes.Internal, "failed to get user subject")
 	}
 
-	// Check if the user is trying to resolve their own invitation
-	if currentUser.ID == i.Sponsor {
-		return util.UserVisibleError(codes.InvalidArgument, "user cannot resolve their own invitation")
+	// Get the user by the subject
+	user, err := store.GetUserBySubject(ctx, sub)
+	if err == nil {
+		return user, nil
 	}
 
-	return nil
+	// Create a user if necessary, see https://github.com/stacklok/minder/pull/3837/files#r1674108001
+	if errors.Is(err, sql.ErrNoRows) {
+		user, err := store.CreateUser(ctx, sub)
+		if err != nil {
+			return db.User{}, status.Errorf(codes.Internal, "failed to create user: %s", err)
+		}
+		// If we create a new user, we should see if they have outstanding GitHub installations
+		// to create projects for.
+		s.claimGitHubInstalls(ctx, store)
+		return user, err
+	}
+
+	return db.User{}, err
 }
 
 // generateRandomString is used to generate a random string of a given length

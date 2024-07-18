@@ -17,27 +17,15 @@ package auth
 
 import (
 	"context"
-	_ "embed"
-	"errors"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-//go:embed html/login_success.html
-var loginSuccessHtml []byte
-
-//go:embed html/access_denied.html
-var accessDeniedHtml []byte
-
-//go:embed html/generic_failure.html
-var genericAuthFailure []byte
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -56,32 +44,13 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
 	}
-
-	skipBrowser := viper.GetBool("login.skip-browser")
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	// wait for the token to be received
-	var loginErr loginError
-	token, err := Login(ctx, cmd, clientConfig, nil, skipBrowser)
-	if errors.As(err, &loginErr) && loginErr.isAccessDenied() {
-		cmd.Println("Access denied. Please run the command again and accept the terms and conditions.")
-		return nil
-	}
+	filePath, err := cli.LoginAndSaveCreds(ctx, cmd, clientConfig)
 	if err != nil {
-		return err
-	}
-
-	// save credentials
-	filePath, err := util.SaveCredentials(util.OpenIdCredentials{
-		AccessToken:          token.AccessToken,
-		RefreshToken:         token.RefreshToken,
-		AccessTokenExpiresAt: token.Expiry,
-	})
-	if err != nil {
-		cmd.PrintErrf("couldn't save credentials: %s\n", err)
+		return cli.MessageAndError("Error ensuring credentials", err)
 	}
 
 	conn, err := cli.GrpcForCommand(viper.GetViper())
