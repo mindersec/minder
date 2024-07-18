@@ -157,9 +157,8 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.slice(notAlerts)::alert_status_types[] IS NULL OR ae.status != ANY(sqlc.slice(notAlerts)::alert_status_types[]))
    AND (sqlc.slice(notStatuses)::eval_status_types[] IS NULL OR s.status != ANY(sqlc.slice(notStatuses)::eval_status_types[]))
    -- time range filter
-   AND (sqlc.narg(fromts)::timestamp without time zone IS NULL
-        OR sqlc.narg(tots)::timestamp without time zone IS NULL
-        OR s.evaluation_time BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
+   AND (sqlc.narg(fromts)::timestamp without time zone IS NULL OR s.evaluation_time >= sqlc.narg(fromts))
+   AND (sqlc.narg(tots)::timestamp without time zone IS NULL OR  s.evaluation_time < sqlc.narg(tots))
    -- implicit filter by project id
    AND j.id = sqlc.arg(projectId)
  ORDER BY s.evaluation_time DESC
