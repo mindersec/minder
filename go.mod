@@ -40,7 +40,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
 	github.com/open-policy-agent/opa v0.66.0
 	github.com/openfga/go-sdk v0.5.0
-	github.com/openfga/openfga v1.5.5
+	github.com/openfga/openfga v1.5.6
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.1
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
@@ -89,7 +89,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/MicahParks/keyfunc v1.9.0 // indirect
+	github.com/MicahParks/keyfunc/v2 v2.0.3 // indirect
 	github.com/Microsoft/hcsshim v0.11.5 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
@@ -118,6 +118,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/cel-go v0.20.1 // indirect
 	github.com/google/go-github/v61 v61.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
@@ -155,7 +156,7 @@ require (
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20240612172407-db6f98774490 // indirect
+	github.com/openfga/api/proto v0.0.0-20240620215129-f5a955a47ae4 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240409225820-a53ea2892d6d // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pressly/goose/v3 v3.20.0 // indirect
@@ -311,7 +312,7 @@ require (
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240709173604-40e1e62336c5 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
