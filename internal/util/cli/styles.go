@@ -36,7 +36,12 @@ var (
 	BlackColor = lipgloss.Color("#000000")
 )
 
-// Styles
+// Common styles
+var (
+	CursorStyle = lipgloss.NewStyle().Foreground(SecondaryColor)
+)
+
+// Banner styles
 var (
 	// DefaultBannerWidth is the default width for a banner
 	DefaultBannerWidth = 80

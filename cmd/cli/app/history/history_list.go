@@ -17,6 +17,7 @@ package history
 import (
 	"context"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"time"
@@ -42,6 +43,10 @@ var listCmd = &cobra.Command{
 	RunE:  cli.GRPCClientWrapRunE(listCommand),
 }
 
+const (
+	defaultPageSize = 25
+)
+
 // listCommand is the profile "list" subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewEvalResultsServiceClient(conn)
@@ -53,6 +58,10 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	evalStatus := viper.GetStringSlice("eval-status")
 	remediationStatus := viper.GetStringSlice("remediation-status")
 	alertStatus := viper.GetStringSlice("alert-status")
+
+	// page options
+	cursorStr := viper.GetString("cursor")
+	size := viper.GetUint64("size")
 
 	format := viper.GetString("output")
 
@@ -89,7 +98,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		Alert:       alertStatus,
 		From:        nil,
 		To:          nil,
-		Cursor:      nil,
+		Cursor:      cursorFromOptions(cursorStr, size),
 	})
 	if err != nil {
 		return cli.MessageAndError("Error getting profile status", err)
@@ -109,11 +118,61 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		historyTable := table.New(table.Simple, layouts.EvaluationHistory, nil)
-		renderRuleEvaluationStatusTable(resp.Data, historyTable)
-		historyTable.Render()
+		printTable(cmd.OutOrStderr(), resp)
 	}
 
+	return nil
+}
+
+func cursorFromOptions(cursorStr string, size uint64) *minderv1.Cursor {
+	var cursor *minderv1.Cursor
+	if cursorStr != "" || size != 0 {
+		cursor = &minderv1.Cursor{}
+	}
+	if cursorStr != "" {
+		cursor.Cursor = cursorStr
+	}
+	if size != 0 {
+		cursor.Size = size
+	}
+	return cursor
+}
+
+func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse) {
+	historyTable := table.New(table.Simple, layouts.EvaluationHistory, nil)
+	renderRuleEvaluationStatusTable(resp.Data, historyTable)
+	historyTable.Render()
+	if next := getNext(resp); next != nil {
+		// Ordering is fixed for evaluation history
+		// log and the next page points to older
+		// records.
+		msg := fmt.Sprintf("Older records: %s",
+			cli.CursorStyle.Render(next.Cursor),
+		)
+		fmt.Fprintln(w, msg)
+	}
+	if prev := getPrev(resp); prev != nil {
+		// Ordering is fixed for evaluation history
+		// log and the previous page points to newer
+		// records.
+		msg := fmt.Sprintf("Newer records: %s",
+			cli.CursorStyle.Render(prev.Cursor),
+		)
+		fmt.Fprintln(w, msg)
+	}
+}
+
+func getNext(resp *minderv1.ListEvaluationHistoryResponse) *minderv1.Cursor {
+	if resp.Page != nil && resp.Page.Next != nil {
+		return resp.Page.Next
+	}
+	return nil
+}
+
+func getPrev(resp *minderv1.ListEvaluationHistoryResponse) *minderv1.Cursor {
+	if resp.Page != nil && resp.Page.Prev != nil {
+		return resp.Page.Prev
+	}
 	return nil
 }
 
@@ -158,6 +217,8 @@ func init() {
 	listCmd.Flags().String("eval-status", "", evalFilterMsg)
 	listCmd.Flags().String("remediation-status", "", remediationFilterMsg)
 	listCmd.Flags().String("alert-status", "", alertFilterMsg)
+	listCmd.Flags().StringP("cursor", "c", "", "Fetch previous or next page from the list")
+	listCmd.Flags().Uint64P("size", "s", defaultPageSize, "Change the number of items fetched")
 }
 
 // TODO: we should have a common set of enums and validators in `internal`
