@@ -59,7 +59,7 @@ To generate the Go code, run:
 make sqlc
 ```
 
-Users will then need to peform a migration
+Users will then need to perform a migration
 
 ```bash
 make migrateup

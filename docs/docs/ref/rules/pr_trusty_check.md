@@ -37,4 +37,4 @@ The `pr_trusty_check` rule has the following options:
   - `provenance` (number): Minimum provenance score to consider a package's proof of origin satisfactory.
   - `activity` (number): Minimum activity score to consider a package as active.
   - `allow_malicious` (boolean): Don't raise an error when a PR introduces dependencies known to be malicious (not recommended)
-  - `allow_deprecated` (boolean): Don't block when a pull request introduces dependencies marked as deprectaed upstream.
+  - `allow_deprecated` (boolean): Don't block when a pull request introduces dependencies marked as deprecated upstream.
