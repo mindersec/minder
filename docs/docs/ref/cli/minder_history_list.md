@@ -17,13 +17,14 @@ minder history list [flags]
 
 ```
       --alert-status string         Filter evaluation history list by alert status - one of off, on, error, skipped, not_available
+  -c, --cursor string               Fetch previous or next page from the list
       --entity-name string          Filter evaluation history list by entity name
       --entity-type string          Filter evaluation history list by entity type - one of repository, artifact, pull_request
       --eval-status string          Filter evaluation history list by evaluation status - one of pending, failure, error, success, skipped
   -h, --help                        help for list
       --profile-name string         Filter evaluation history list by profile name
       --remediation-status string   Filter evaluation history list by remediation status - one of failure, failure, error, success, skipped, not_available
-      --rule-name string            Filter evaluation history list by rule name
+  -s, --size uint                   Change the number of items fetched (default 25)
 ```
 
 ### Options inherited from parent commands
