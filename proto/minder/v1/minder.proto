@@ -2003,8 +2003,10 @@ message Profile {
         string entity = 2;
         // expr is the expression to select the entity.
         string selector = 4;
+        reserved 5;
+        reserved "comment";
         // description is the human-readable description of the selector.
-        string comment = 5;
+        string description = 6;
     }
 
     repeated Selector selection = 14;
