@@ -39,7 +39,7 @@ environment. You can also specify things like the default `provider`, `project` 
 for each of those.
 
 To create a new context, create a new configuration file and set the `MINDER_CONFIG` environment variable
-to point to the config file.  For a single command, you can alsothe path to the file through the `--config`
+to point to the config file.  For a single command, you can also set the path to the file through the `--config`
 flag . For example, you can create your staging configuration in `config-staging.yaml` and use it as either:
 
 ```bash

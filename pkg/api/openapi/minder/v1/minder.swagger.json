@@ -2762,7 +2762,7 @@
     },
     "/api/v1/user/invitations": {
       "get": {
-        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is beacuse understanding the routing of\nemail messages is beyond the scope of Minder.",
+        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is because understanding the routing of\nemail messages is beyond the scope of Minder.",
         "description": "This API endpoint may be called without the logged-in user\npreviously having called `CreateUser`.",
         "operationId": "UserService_ListInvitations",
         "responses": {
