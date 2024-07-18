@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -86,9 +87,13 @@ func withIsFork(isFork bool) testRepoOption {
 	}
 }
 
-func withProperties(properties map[string]string) testRepoOption {
+func withProperties(properties map[string]any) testRepoOption {
 	return func(selRepo *internalpb.SelectorRepository) {
-		selRepo.Properties = properties
+		protoProperties, err := structpb.NewStruct(properties)
+		if err != nil {
+			panic(err)
+		}
+		selRepo.Properties = protoProperties
 	}
 }
 
@@ -286,32 +291,74 @@ func TestSelectSelectorEntity(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_fork'] != 'true'",
+					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withProperties(map[string]string{"is_fork": "false"})),
-			selected:          true,
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"github": map[string]any{"is_fork": false},
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Use a string property that is defined and true result",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.RepositoryEntity.String(),
+					Selector: "repository.properties.license == 'MIT'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"license": "MIT",
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Use a string property that is defined and false result",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.RepositoryEntity.String(),
+					Selector: "repository.properties.license == 'MIT'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"license": "BSD",
+				}),
+			),
+			selected: false,
 		},
 		{
 			name: "Use a property that is defined and false result",
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_fork'] != 'true'",
+					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withProperties(map[string]string{"is_fork": "true"})),
-			selected:          false,
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"github": map[string]any{"is_fork": true},
+				}),
+			),
+			selected: false,
 		},
 		{
 			name: "Properties are non-nil but we use one that is not defined",
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_private'] != 'true'",
+					Selector: "repository.properties.github['is_private'] != true",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withProperties(map[string]string{"is_fork": "true"})),
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"github": map[string]any{"is_fork": true},
+				}),
+			),
 			expectedSelectErr: ErrResultUnknown,
 			selected:          false,
 		},
@@ -320,7 +367,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_fork'] != 'true'",
+					Selector: "repository.properties.github['is_fork'] != 'true'",
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(),
@@ -332,7 +379,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.name == 'testorg/testrepo' || repository.properties['is_fork'] != 'true'",
+					Selector: "repository.name == 'testorg/testrepo' || repository.properties.github['is_fork'] != 'true'",
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(),
@@ -343,13 +390,17 @@ func TestSelectSelectorEntity(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_fork'] != 'true'",
+					Selector: "repository.properties.github['is_fork'] != 'true'",
 				},
 			},
 			selectOptions: []SelectOption{
 				WithUnknownPaths("repository.properties"),
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withProperties(map[string]string{"is_fork": "true"})),
+			selectorEntityBld: newTestRepoSelectorEntity(
+				withProperties(map[string]any{
+					"github": map[string]any{"is_fork": true},
+				}),
+			),
 			expectedSelectErr: ErrResultUnknown,
 			selected:          false,
 		},
@@ -401,13 +452,26 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_fork'] == 'false'",
+					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
 			mockFetch: func(se *internalpb.SelectorEntity) {
-				se.Entity.(*internalpb.SelectorEntity_Repository).Repository.Properties = map[string]string{
-					"is_fork": "false",
-				}
+				se.Entity.(*internalpb.SelectorEntity_Repository).Repository.Properties = &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"github": {
+							Kind: &structpb.Value_StructValue{
+								StructValue: &structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"is_fork": {
+											Kind: &structpb.Value_BoolValue{
+												BoolValue: false,
+											},
+										},
+									},
+								},
+							},
+						},
+					}}
 			},
 			secondSucceeds: true,
 		},
@@ -416,13 +480,26 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 			exprs: []*minderv1.Profile_Selector{
 				{
 					Entity:   minderv1.RepositoryEntity.String(),
-					Selector: "repository.properties['is_private'] == 'false'",
+					Selector: "repository.properties.github['is_private'] == false",
 				},
 			},
 			mockFetch: func(se *internalpb.SelectorEntity) {
-				se.Entity.(*internalpb.SelectorEntity_Repository).Repository.Properties = map[string]string{
-					"is_fork": "false",
-				}
+				se.Entity.(*internalpb.SelectorEntity_Repository).Repository.Properties = &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"github": {
+							Kind: &structpb.Value_StructValue{
+								StructValue: &structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"is_fork": {
+											Kind: &structpb.Value_BoolValue{
+												BoolValue: false,
+											},
+										},
+									},
+								},
+							},
+						},
+					}}
 			},
 			secondSucceeds: false,
 		},

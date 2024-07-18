@@ -158,6 +158,7 @@ func NewEnv() (*Env, error) {
 		minderv1.Entity_ENTITY_UNSPECIFIED:  genericEnvFactory,
 		minderv1.Entity_ENTITY_REPOSITORIES: repoEnvFactory,
 		minderv1.Entity_ENTITY_ARTIFACTS:    artifactEnvFactory,
+		// TODO(jakub): Add pull requests when we add then to the selector protobuf
 	}
 
 	entityEnvs := make(map[minderv1.Entity]*entityEnvCache, len(factoryMap))
