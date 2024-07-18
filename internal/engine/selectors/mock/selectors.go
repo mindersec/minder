@@ -80,16 +80,21 @@ func (m *MockSelection) EXPECT() *MockSelectionMockRecorder {
 }
 
 // Select mocks base method.
-func (m *MockSelection) Select(arg0 *proto.SelectorEntity) (bool, error) {
+func (m *MockSelection) Select(arg0 *proto.SelectorEntity, arg1 ...selectors.SelectOption) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Select", arg0)
+	varargs := []any{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Select", varargs...)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Select indicates an expected call of Select.
-func (mr *MockSelectionMockRecorder) Select(arg0 any) *gomock.Call {
+func (mr *MockSelectionMockRecorder) Select(arg0 any, arg1 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockSelection)(nil).Select), arg0)
+	varargs := append([]any{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockSelection)(nil).Select), varargs...)
 }

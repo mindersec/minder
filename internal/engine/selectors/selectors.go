@@ -19,14 +19,25 @@
 package selectors
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/interpreter"
 
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	// ErrResultUnknown is returned when the result of a selector expression is unknown
+	// this tells the caller to try again with more information
+	ErrResultUnknown = errors.New("result is unknown")
 )
 
 // celEnvFactory is an interface for creating CEL environments
@@ -85,7 +96,36 @@ func newEnvForEntity(varName string, typ any, typName string) (*cel.Env, error) 
 	return env, nil
 }
 
-type compiledSelector = cel.Program
+type compiledSelector struct {
+	ast     *cel.Ast
+	program cel.Program
+}
+
+// compileSelectorForEntity compiles a selector expression for a given entity type into a CEL program
+func compileSelectorForEntity(env *cel.Env, selector string) (*compiledSelector, error) {
+	ast, issues := env.Parse(selector)
+	if issues.Err() != nil {
+		return nil, fmt.Errorf("failed to parse expression %q: %w", selector, issues.Err())
+	}
+
+	checked, issues := env.Check(ast)
+	if issues.Err() != nil {
+		return nil, fmt.Errorf("failed to check expression %q: %w", selector, issues.Err())
+	}
+
+	program, err := env.Program(checked,
+		// OptPartialEval is needed to enable partial evaluation of the expression
+		// OptTrackState is needed to get the details about partial evaluation (aka what is missing)
+		cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create program for expression %q: %w", selector, err)
+	}
+
+	return &compiledSelector{
+		ast:     checked,
+		program: program,
+	}, nil
+}
 
 // SelectionBuilder is an interface for creating Selections (a collection of compiled CEL expressions)
 // for an entity type. This is what the user of this module uses. The interface makes it easier to pass
@@ -137,7 +177,12 @@ func (e *Env) NewSelectionFromProfile(
 	entityType minderv1.Entity,
 	profileSelection []*minderv1.Profile_Selector,
 ) (Selection, error) {
-	selector := make([]cel.Program, 0, len(profileSelection))
+	selector := make([]*compiledSelector, 0, len(profileSelection))
+
+	env, err := e.envForEntity(entityType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get environment for entity %v: %w", entityType, err)
+	}
 
 	for _, sel := range profileSelection {
 		ent := minderv1.EntityFromString(sel.GetEntity())
@@ -145,43 +190,19 @@ func (e *Env) NewSelectionFromProfile(
 			continue
 		}
 
-		program, err := e.compileSelectorForEntity(sel.Selector, ent)
+		compSel, err := compileSelectorForEntity(env, sel.Selector)
 		if err != nil {
 			return nil, fmt.Errorf("failed to compile selector %q: %w", sel.Selector, err)
 		}
 
-		selector = append(selector, program)
+		selector = append(selector, compSel)
 	}
 
 	return &EntitySelection{
+		env:      env,
 		selector: selector,
 		entity:   entityType,
 	}, nil
-}
-
-// compileSelectorForEntity compiles a selector expression for a given entity type into a CEL program
-func (e *Env) compileSelectorForEntity(selector string, entityType minderv1.Entity) (compiledSelector, error) {
-	env, err := e.envForEntity(entityType)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get environment for entity %v: %w", entityType, err)
-	}
-
-	ast, issues := env.Parse(selector)
-	if issues.Err() != nil {
-		return nil, fmt.Errorf("failed to parse expression %q: %w", selector, issues.Err())
-	}
-
-	checked, issues := env.Check(ast)
-	if issues.Err() != nil {
-		return nil, fmt.Errorf("failed to check expression %q: %w", selector, issues.Err())
-	}
-
-	program, err := env.Program(checked)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create program for expression %q: %w", selector, err)
-	}
-
-	return program, nil
 }
 
 // envForEntity gets the CEL environment for a given entity type. If the environment is not cached,
@@ -199,21 +220,42 @@ func (e *Env) envForEntity(entity minderv1.Entity) (*cel.Env, error) {
 	return cache.env, cache.err
 }
 
+// SelectOption is a functional option for the Select method
+type SelectOption func(*selectionOptions)
+
+type selectionOptions struct {
+	unknownPaths []string
+}
+
+// WithUnknownPaths sets the explicit unknown paths for the selection
+func WithUnknownPaths(paths ...string) SelectOption {
+	return func(o *selectionOptions) {
+		o.unknownPaths = paths
+	}
+}
+
 // Selection is an interface for selecting entities based on a profile
 type Selection interface {
-	Select(*internalpb.SelectorEntity) (bool, error)
+	Select(*internalpb.SelectorEntity, ...SelectOption) (bool, error)
 }
 
 // EntitySelection is a struct that holds the compiled CEL expressions for a given entity type
 type EntitySelection struct {
-	selector []cel.Program
+	env *cel.Env
+
+	selector []*compiledSelector
 	entity   minderv1.Entity
 }
 
 // Select return true if the entity matches all the compiled expressions and false otherwise
-func (s *EntitySelection) Select(se *internalpb.SelectorEntity) (bool, error) {
+func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...SelectOption) (bool, error) {
 	if se == nil {
 		return false, fmt.Errorf("input entity is nil")
+	}
+
+	var opts selectionOptions
+	for _, opt := range userOpts {
+		opt(&opts)
 	}
 
 	for _, sel := range s.selector {
@@ -222,9 +264,19 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity) (bool, error) {
 			return false, fmt.Errorf("failed to convert input to map: %w", err)
 		}
 
-		out, _, err := sel.Eval(entityMap)
+		out, details, err := s.evalWithOpts(&opts, sel, entityMap)
+		// check unknowns /before/ an error. Maybe we should try to special-case the one
+		// error we get from the CEL library in this case and check for the rest?
+		if s.detailHasUnknowns(sel, details) {
+			return false, ErrResultUnknown
+		}
+
 		if err != nil {
 			return false, fmt.Errorf("failed to evaluate Expression: %w", err)
+		}
+
+		if types.IsUnknown(out) {
+			return false, ErrResultUnknown
 		}
 
 		if out.Type() != cel.BoolType {
@@ -237,6 +289,65 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func unknownAttributesFromOpts(unknownPaths []string) []*interpreter.AttributePattern {
+	unknowns := make([]*interpreter.AttributePattern, 0, len(unknownPaths))
+
+	for _, path := range unknownPaths {
+		frags := strings.Split(path, ".")
+		if len(frags) == 0 {
+			continue
+		}
+
+		unknownAttr := interpreter.NewAttributePattern(frags[0])
+		if len(frags) > 1 {
+			for _, frag := range frags[1:] {
+				unknownAttr = unknownAttr.QualString(frag)
+			}
+		}
+		unknowns = append(unknowns, unknownAttr)
+	}
+
+	return unknowns
+}
+
+func (_ *EntitySelection) evalWithOpts(
+	opts *selectionOptions, sel *compiledSelector, entityMap map[string]any,
+) (ref.Val, *cel.EvalDetails, error) {
+	unknowns := unknownAttributesFromOpts(opts.unknownPaths)
+	if len(unknowns) > 0 {
+		partialMap, err := cel.PartialVars(entityMap, unknowns...)
+		if err != nil {
+			return types.NewErr("failed to create partial value"), nil, fmt.Errorf("failed to create partial vars: %w", err)
+		}
+
+		return sel.program.Eval(partialMap)
+	}
+
+	return sel.program.Eval(entityMap)
+}
+
+func (s *EntitySelection) detailHasUnknowns(sel *compiledSelector, details *cel.EvalDetails) bool {
+	if details == nil {
+		return false
+	}
+
+	// TODO(jakub): We should also extract what the unknowns are and return them
+	// there exists cel.AstToString() which prints the part that was not evaluated, but as a whole
+	// (e.g. properties['is_fork'] == true) and not as a list of unknowns. We should either take a look
+	// at its implementation or walk the AST ourselves
+	residualAst, err := s.env.ResidualAst(sel.ast, details)
+	if err != nil {
+		return false
+	}
+
+	checked, err := cel.AstToCheckedExpr(residualAst)
+	if err != nil {
+		return false
+	}
+
+	return checked.GetExpr().GetConstExpr() == nil
 }
 
 func inputAsMap(se *internalpb.SelectorEntity) (map[string]any, error) {

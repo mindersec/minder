@@ -88,6 +88,8 @@ message SelectorRepository {
   // is_private is true if the repository is private, nil if "don't know" or rather
   // not applicable to this provider
   optional bool is_private = 4;
+
+  map<string, string> properties = 5;
 }
 
 message SelectorArtifact {
