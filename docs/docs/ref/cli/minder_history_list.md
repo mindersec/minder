@@ -21,10 +21,12 @@ minder history list [flags]
       --entity-name string          Filter evaluation history list by entity name
       --entity-type string          Filter evaluation history list by entity type - one of repository, artifact, pull_request
       --eval-status string          Filter evaluation history list by evaluation status - one of pending, failure, error, success, skipped
+      --from string                 Filter evaluation history list by time
   -h, --help                        help for list
       --profile-name string         Filter evaluation history list by profile name
       --remediation-status string   Filter evaluation history list by remediation status - one of failure, failure, error, success, skipped, not_available
   -s, --size uint                   Change the number of items fetched (default 25)
+      --to string                   Filter evaluation history list by time
 ```
 
 ### Options inherited from parent commands
