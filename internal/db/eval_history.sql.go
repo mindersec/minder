@@ -193,15 +193,21 @@ const listEvaluationHistory = `-- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
        -- entity type
-       CASE WHEN ere.repository_id IS NOT NULL THEN 'repository'::entities
-            WHEN ere.pull_request_id IS NOT NULL THEN 'pull_request'::entities
-            WHEN ere.artifact_id IS NOT NULL THEN 'artifact'::entities
-       END AS entity_type,
+       CAST(
+         CASE
+         WHEN ere.repository_id IS NOT NULL THEN 'repository'
+         WHEN ere.pull_request_id IS NOT NULL THEN 'pull_request'
+         WHEN ere.artifact_id IS NOT NULL THEN 'artifact'
+         END AS entities
+       ) AS entity_type,
        -- entity id
-       CASE WHEN ere.repository_id IS NOT NULL THEN r.id
-            WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-            WHEN ere.artifact_id IS NOT NULL THEN a.id
-       END AS entity_id,
+       CAST(
+         CASE
+         WHEN ere.repository_id IS NOT NULL THEN r.id
+         WHEN ere.pull_request_id IS NOT NULL THEN pr.id
+         WHEN ere.artifact_id IS NOT NULL THEN a.id
+         END AS uuid
+       ) AS entity_id,
        -- raw fields for entity names
        r.repo_owner,
        r.repo_name,
@@ -286,8 +292,8 @@ type ListEvaluationHistoryParams struct {
 type ListEvaluationHistoryRow struct {
 	EvaluationID       uuid.UUID                  `json:"evaluation_id"`
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
-	EntityType         interface{}                `json:"entity_type"`
-	EntityID           interface{}                `json:"entity_id"`
+	EntityType         Entities                   `json:"entity_type"`
+	EntityID           uuid.UUID                  `json:"entity_id"`
 	RepoOwner          sql.NullString             `json:"repo_owner"`
 	RepoName           sql.NullString             `json:"repo_name"`
 	PrNumber           sql.NullInt64              `json:"pr_number"`

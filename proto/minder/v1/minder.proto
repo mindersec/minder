@@ -444,7 +444,7 @@ service UserService {
     // based on the user's registered email address.  Note that a
     // user who receives an invitation code may still accept the
     // invitation even if the code was directed to a different
-    // email address.  This is beacuse understanding the routing of
+    // email address.  This is because understanding the routing of
     // email messages is beyond the scope of Minder.
     //
     // This API endpoint may be called without the logged-in user
@@ -2003,8 +2003,10 @@ message Profile {
         string entity = 2;
         // expr is the expression to select the entity.
         string selector = 4;
+        reserved 5;
+        reserved "comment";
         // description is the human-readable description of the selector.
-        string comment = 5;
+        string description = 6;
     }
 
     repeated Selector selection = 14;

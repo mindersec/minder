@@ -203,7 +203,7 @@ manage Users CRUD
 | CreateUser | [CreateUserRequest](#minder-v1-CreateUserRequest) | [CreateUserResponse](#minder-v1-CreateUserResponse) |  |
 | DeleteUser | [DeleteUserRequest](#minder-v1-DeleteUserRequest) | [DeleteUserResponse](#minder-v1-DeleteUserResponse) |  |
 | GetUser | [GetUserRequest](#minder-v1-GetUserRequest) | [GetUserResponse](#minder-v1-GetUserResponse) |  |
-| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is beacuse understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
+| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is because understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
 | ResolveInvitation | [ResolveInvitationRequest](#minder-v1-ResolveInvitationRequest) | [ResolveInvitationResponse](#minder-v1-ResolveInvitationResponse) | ResolveInvitation allows a user to accept or decline an invitation to a project given the code for the invitation. A user may call ResolveInvitation to accept or decline an invitation even if they have not called CreateUser.  If a user accepts an invitation via this call before calling CreateUser, a Minder user record will be created, but no additional projects will be created (unlike CreateUser, which will also create a default project). |
 
 
@@ -1779,7 +1779,7 @@ Rule defines the individual call of a certain rule type.
 | id | <TypeLink type="string">string</TypeLink> |  | id is optional and use for updates to match upserts as well as read operations. It is ignored for creates. |
 | entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity to select. |
 | selector | <TypeLink type="string">string</TypeLink> |  | expr is the expression to select the entity. |
-| comment | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
 
 
 

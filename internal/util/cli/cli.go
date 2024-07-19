@@ -34,9 +34,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli/useragent"
 )
 
 // ErrWrappedCLIError is an error that wraps another error and provides a message used from within the CLI
@@ -73,25 +71,6 @@ func PrintYesNoPrompt(cmd *cobra.Command, promptMsg, confirmMsg, fallbackMsg str
 		cmd.Println(Header.Render(fallbackMsg))
 	}
 	return ok
-}
-
-// GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
-	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read config: %w", err)
-	}
-
-	grpcHost := clientConfig.GRPCClientConfig.Host
-	grpcPort := clientConfig.GRPCClientConfig.Port
-	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
-	allowInsecure := clientConfig.GRPCClientConfig.Insecure || insecureDefault
-
-	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
-	clientId := clientConfig.Identity.CLI.ClientId
-
-	return util.GetGrpcConnection(
-		grpcHost, grpcPort, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
 }
 
 // GetAppContext is a helper for getting the cmd app context
