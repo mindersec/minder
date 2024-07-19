@@ -354,6 +354,46 @@ func TestCreateProfile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Profile with selectors",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {
@@ -832,6 +872,166 @@ func TestPatchProfile(t *testing.T) {
 							Type: ruleTypeName("repo", 4),
 							Def:  &structpb.Struct{},
 							Name: ruleTypeName("repo", 4),
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Patch profile to add selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_add_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_add_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_add_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Patch profile to replace selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_replace_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_fork == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_private == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_replace_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_replace_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_private == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Patch profile to remove all selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_remove_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_remove_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_remove_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
 						},
 					},
 				},

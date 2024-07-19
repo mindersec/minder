@@ -168,6 +168,10 @@ func (p *profileService) CreateProfile(
 		}
 	}
 
+	if err := createSelectors(ctx, newProfile.ID, qtx, profile.GetSelection()); err != nil {
+		return nil, err
+	}
+
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: newProfile.ID}
 	p.sendNewProfileEvent(projectID)
 
@@ -305,6 +309,10 @@ func (p *profileService) UpdateProfile(
 	}
 
 	if err := deleteRuleStatusesForProfile(ctx, &updatedProfile, unusedRuleStatuses, qtx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
+	}
+
+	if err := updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
@@ -805,4 +813,44 @@ func upsertRuleInstances(
 	}
 
 	return updatedIDs, nil
+}
+
+func createSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	for _, sel := range selection {
+		dbEnt := db.NullEntities{}
+		if minderv1.EntityFromString(sel.GetEntity()) != minderv1.Entity_ENTITY_UNSPECIFIED {
+			dbEnt.Entities = entities.EntityTypeToDB(minderv1.EntityFromString(sel.GetEntity()))
+			dbEnt.Valid = true
+		}
+		_, err := qtx.CreateSelector(ctx, db.CreateSelectorParams{
+			ProfileID: profID,
+			Entity:    dbEnt,
+			Selector:  sel.GetSelector(),
+			Comment:   sel.GetDescription(),
+		})
+		if err != nil {
+			return fmt.Errorf("error creating selector: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func updateSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	err := qtx.DeleteSelectorsByProfileID(ctx, profID)
+	if err != nil {
+		return fmt.Errorf("error deleting selectors: %w", err)
+	}
+
+	return createSelectors(ctx, profID, qtx, selection)
 }
