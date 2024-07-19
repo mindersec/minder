@@ -19,6 +19,7 @@ syntax = "proto3";
 package internal;
 
 import "minder/v1/minder.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/stacklok/minder/internal/proto";
 
@@ -67,4 +68,53 @@ message PrContents {
 
   minder.v1.PullRequest pr = 1;
   repeated File files = 2;
+}
+
+message SelectorProvider {
+  // the name of the provider, e.g. github-app-jakubtestorg
+  string name = 1;
+  // the class of the provider, e.g. github-app
+  string class = 2;
+}
+
+message SelectorRepository {
+  // the full name of the repository, e.g. stacklok/minder
+  string name = 1;
+  // the provider of the repository
+  SelectorProvider provider = 2;
+
+  // is_fork is true if the repository is a fork, nil if "don't know" or rather
+  // not applicable to this provider
+  optional bool is_fork = 3;
+  // is_private is true if the repository is private, nil if "don't know" or rather
+  // not applicable to this provider
+  optional bool is_private = 4;
+
+  google.protobuf.Struct properties = 5;
+}
+
+message SelectorArtifact {
+  // the full name of the artifact, e.g. stacklok/minder-server
+  string name = 1;
+  // the provider of the artifact
+  SelectorProvider provider = 2;
+
+  // the type of the artifact, e.g. "container"
+  string type = 4;
+
+  google.protobuf.Struct properties = 5;
+}
+
+message SelectorEntity {
+  // one of repository, pull_request, artifact (see oneof entity)
+  minder.v1.Entity entity_type = 1;
+  // the name of the entity, same as the name in the entity message
+  string name = 2;
+  SelectorProvider provider = 3;
+
+  oneof entity {
+    SelectorRepository repository = 4;
+    SelectorArtifact artifact = 5;
+    // TODO(jakub): add pull request, too - what would it contain? Just properties?
+  }
 }
