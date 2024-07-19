@@ -19,7 +19,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,7 +28,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/profiles/models"
@@ -386,20 +384,10 @@ func TestRestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			structPol, err := structpb.NewStruct(tt.remArgs.pol)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
-			structParams, err := structpb.NewStruct(tt.remArgs.params)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
 			evalParams := &interfaces.EvalStatusParams{
-				Rule: &pb.Profile_Rule{
-					Def:    structPol,
-					Params: structParams,
+				Rule: &models.RuleInstance{
+					Def:    tt.remArgs.pol,
+					Params: tt.remArgs.params,
 				},
 			}
 

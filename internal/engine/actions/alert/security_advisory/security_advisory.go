@@ -374,7 +374,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if models.ActionOptFromString(params.GetProfile().Remediate, models.ActionOptOff) == models.ActionOptOn {
+	if params.GetProfile().ActionConfig.Remediate == models.ActionOptOn {
 		err = alert.descriptionTmpl.Execute(&descriptionStr, result.Template)
 	} else {
 		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, result.Template)

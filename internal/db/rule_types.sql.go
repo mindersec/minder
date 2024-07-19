@@ -140,6 +140,20 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 	return i, err
 }
 
+const getRuleTypeNameByID = `-- name: GetRuleTypeNameByID :one
+SELECT name FROM rule_type
+WHERE id = $1
+`
+
+// intended as a temporary transition query
+// this will be removed once the evaluation history tables replace the old state tables
+func (q *Queries) GetRuleTypeNameByID(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getRuleTypeNameByID, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
 const getRuleTypesByEntityInHierarchy = `-- name: GetRuleTypesByEntityInHierarchy :many
 SELECT rt.id, rt.name, rt.provider, rt.project_id, rt.description, rt.guidance, rt.definition, rt.created_at, rt.updated_at, rt.severity_value, rt.provider_id, rt.subscription_id, rt.display_name FROM rule_type AS rt
 JOIN rule_instances AS ri ON ri.rule_type_id = rt.id

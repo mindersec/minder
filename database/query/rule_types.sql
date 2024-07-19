@@ -42,3 +42,9 @@ SELECT rt.* FROM rule_type AS rt
 JOIN rule_instances AS ri ON ri.rule_type_id = rt.id
 WHERE ri.entity_type = $1
 AND ri.project_id = ANY(sqlc.arg(projects)::uuid[]);
+
+-- intended as a temporary transition query
+-- this will be removed once the evaluation history tables replace the old state tables
+-- name: GetRuleTypeNameByID :one
+SELECT name FROM rule_type
+WHERE id = $1;

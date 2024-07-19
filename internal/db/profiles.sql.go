@@ -13,6 +13,48 @@ import (
 	"github.com/lib/pq"
 )
 
+const bulkGetProfilesByID = `-- name: BulkGetProfilesByID :many
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+FROM profiles
+WHERE id = ANY($1::UUID[])
+`
+
+func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error) {
+	rows, err := q.db.QueryContext(ctx, bulkGetProfilesByID, pq.Array(profileIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Profile{}
+	for rows.Next() {
+		var i Profile
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.Alert,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProviderID,
+			&i.SubscriptionID,
+			&i.DisplayName,
+			pq.Array(&i.Labels),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
 SELECT COUNT(DISTINCT(p.id)) AS num_profiles, r.entity_type AS profile_entity
 FROM profiles AS p

@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/profiles/models"
@@ -308,20 +307,10 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			tt.mockSetup(mockClient)
 
-			structPol, err := structpb.NewStruct(tt.remArgs.pol)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
-			structParams, err := structpb.NewStruct(tt.remArgs.params)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
 			evalParams := &interfaces.EvalStatusParams{
-				Rule: &pb.Profile_Rule{
-					Def:    structPol,
-					Params: structParams,
+				Rule: &models.RuleInstance{
+					Def:    tt.remArgs.pol,
+					Params: tt.remArgs.params,
 				},
 			}
 

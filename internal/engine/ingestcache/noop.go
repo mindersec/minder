@@ -16,7 +16,6 @@ package ingestcache
 
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
@@ -34,7 +33,7 @@ func NewNoopCache() Cache {
 func (*NoopCache) Get(
 	_ engif.Ingester,
 	_ protoreflect.ProtoMessage,
-	_ *structpb.Struct,
+	_ map[string]any,
 ) (*engif.Result, bool) {
 	return nil, false
 }
@@ -43,7 +42,7 @@ func (*NoopCache) Get(
 func (*NoopCache) Set(
 	_ engif.Ingester,
 	_ protoreflect.ProtoMessage,
-	_ *structpb.Struct,
+	_ map[string]any,
 	_ *engif.Result,
 ) {
 }
