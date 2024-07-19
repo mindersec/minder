@@ -144,12 +144,8 @@ func fromEvaluationHistoryRow(
 	res := []*minderv1.EvaluationHistory{}
 
 	for _, row := range rows {
-		var dbEntityType db.Entities
-		if err := dbEntityType.Scan(row.EntityType); err != nil {
-			return nil, errors.New("internal error")
-		}
-		entityType := dbEntityToEntity(dbEntityType)
-		entityName, err := getEntityName(dbEntityType, row)
+		entityType := dbEntityToEntity(row.EntityType)
+		entityName, err := getEntityName(row.EntityType, row)
 		if err != nil {
 			return nil, err
 		}
