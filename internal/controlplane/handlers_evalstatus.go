@@ -114,7 +114,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 
 	// convert data set to proto
-	data, err := fromEvaluationHistoryRow(result.Data)
+	data, err := fromEvaluationHistoryRows(result.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (s *Server) ListEvaluationHistory(
 	return resp, nil
 }
 
-func fromEvaluationHistoryRow(
+func fromEvaluationHistoryRows(
 	rows []db.ListEvaluationHistoryRow,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := []*minderv1.EvaluationHistory{}
