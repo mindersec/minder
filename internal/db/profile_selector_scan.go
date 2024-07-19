@@ -63,7 +63,9 @@ func (s *ProfileSelector) Scan(value interface{}) error {
 	selector = strings.TrimSuffix(selector, "\"")
 	s.Selector = selector
 
-	s.Comment = parts[4]
+	comment := strings.TrimPrefix(parts[4], "\"")
+	comment = strings.TrimSuffix(comment, "\"")
+	s.Comment = comment
 
 	return nil
 }
