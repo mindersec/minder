@@ -47,7 +47,7 @@ type EvaluationHistoryService interface {
 		ctx context.Context,
 		qtx db.Querier,
 		cursor *ListEvaluationCursor,
-		size uint64,
+		size uint32,
 		filter ListEvaluationFilter,
 	) (*ListEvaluationHistoryResult, error)
 }
@@ -184,7 +184,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	ctx context.Context,
 	qtx db.Querier,
 	cursor *ListEvaluationCursor,
-	size uint64,
+	size uint32,
 	filter ListEvaluationFilter,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{

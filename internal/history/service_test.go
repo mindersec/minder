@@ -152,7 +152,7 @@ func TestListEvaluationHistory(t *testing.T) {
 		name    string
 		dbSetup dbf.DBMockBuilder
 		cursor  *ListEvaluationCursor
-		size    uint64
+		size    uint32
 		filter  ListEvaluationFilter
 		checkf  func(*testing.T, *ListEvaluationHistoryResult)
 		err     bool
