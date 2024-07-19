@@ -131,7 +131,6 @@ func (e *executor) createOrUpdateEvalStatus(
 	}
 
 	// Upsert evaluation
-	// TODO: once we use the new history table, get rid of RuleTypeID from the params struct
 	// TODO: replace this table with the evaluation statuses table
 	evalID, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
 		ProfileID:     params.Profile.ID,
