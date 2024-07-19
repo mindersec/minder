@@ -22,3 +22,7 @@ WHERE id = $1;
 SELECT id, profile_id, entity, selector, comment
 FROM profile_selectors
 WHERE id = $1;
+
+-- name: DeleteSelectorsByProfileID :exec
+DELETE FROM profile_selectors
+WHERE profile_id = $1;
