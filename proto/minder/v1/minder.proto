@@ -103,7 +103,7 @@ message Cursor {
     // an per-rpc basis.
     string cursor = 1;
     // size is the number of items to retrieve from the collection.
-    uint64 size = 2;
+    uint32 size = 2;
 }
 
 // CursorPage message used in response messages. Its purpose is to
@@ -111,7 +111,7 @@ message Cursor {
 // subsets with respect to the one containing this struct.
 message CursorPage {
     // Total number of records matching the request. This is optional.
-    uint64 total_records = 1;
+    uint32 total_records = 1;
     // Cursor pointing to retrieve results logically placed after the
     // ones shipped with the message containing this struct.
     Cursor next = 2;

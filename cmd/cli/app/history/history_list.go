@@ -66,7 +66,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	// page options
 	cursorStr := viper.GetString("cursor")
-	size := viper.GetUint64("size")
+	size := viper.GetUint32("size")
 
 	format := viper.GetString("output")
 
@@ -141,7 +141,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	return nil
 }
 
-func cursorFromOptions(cursorStr string, size uint64) *minderv1.Cursor {
+func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 	var cursor *minderv1.Cursor
 	if cursorStr != "" || size != 0 {
 		cursor = &minderv1.Cursor{}

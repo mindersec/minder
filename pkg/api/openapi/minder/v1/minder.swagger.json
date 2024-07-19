@@ -661,8 +661,8 @@
             "description": "size is the number of items to retrieve from the collection.",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -3473,8 +3473,8 @@
           "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis."
         },
         "size": {
-          "type": "string",
-          "format": "uint64",
+          "type": "integer",
+          "format": "int64",
           "description": "size is the number of items to retrieve from the collection."
         }
       },
@@ -3484,8 +3484,8 @@
       "type": "object",
       "properties": {
         "totalRecords": {
-          "type": "string",
-          "format": "uint64",
+          "type": "integer",
+          "format": "int64",
           "description": "Total number of records matching the request. This is optional."
         },
         "next": {
