@@ -569,6 +569,20 @@ func (mr *MockStoreMockRecorder) DeleteSelector(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSelector", reflect.TypeOf((*MockStore)(nil).DeleteSelector), arg0, arg1)
 }
 
+// DeleteSelectorsByProfileID mocks base method.
+func (m *MockStore) DeleteSelectorsByProfileID(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSelectorsByProfileID", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteSelectorsByProfileID indicates an expected call of DeleteSelectorsByProfileID.
+func (mr *MockStoreMockRecorder) DeleteSelectorsByProfileID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSelectorsByProfileID", reflect.TypeOf((*MockStore)(nil).DeleteSelectorsByProfileID), arg0, arg1)
+}
+
 // DeleteSessionStateByProjectID mocks base method.
 func (m *MockStore) DeleteSessionStateByProjectID(arg0 context.Context, arg1 db.DeleteSessionStateByProjectIDParams) error {
 	m.ctrl.T.Helper()
