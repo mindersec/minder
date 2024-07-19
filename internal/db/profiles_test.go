@@ -246,7 +246,7 @@ func TestProfileListWithSelectors(t *testing.T) {
 
 	noSelectors := createRandomProfile(t, randomEntities.proj.ID, []string{})
 	oneSelectorProfile := createRandomProfile(t, randomEntities.proj.ID, []string{})
-	oneSel := createRepoSelector(t, oneSelectorProfile.ID, "one_selector1", "one_comment1")
+	oneSel := createRepoSelector(t, oneSelectorProfile.ID, "one_selector1", "multi word comment")
 
 	multiSelectorProfile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 	mulitSel1 := createRepoSelector(t, multiSelectorProfile.ID, "multi_selector1", "multi_comment1")
