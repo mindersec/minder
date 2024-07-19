@@ -172,7 +172,7 @@ func fromEvaluationHistoryRow(
 		res = append(res, &minderv1.EvaluationHistory{
 			EvaluatedAt: timestamppb.New(row.EvaluatedAt),
 			Entity: &minderv1.EvaluationHistoryEntity{
-				Id:   row.EvaluationID.String(),
+				Id:   row.EntityID.String(),
 				Type: entityType,
 				Name: entityName,
 			},
