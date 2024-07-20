@@ -52,10 +52,10 @@ WHERE id > $1
 ORDER BY id
 LIMIT sqlc.arg('limit')::bigint;
 
--- name: UpdateReminderLastSentById :exec
+-- name: UpdateReminderLastSentForRepositories :exec
 UPDATE repositories
 SET reminder_last_sent = NOW()
-WHERE id = $1;
+WHERE id = ANY (sqlc.arg('repository_ids')::uuid[]);
 
 -- name: RepositoryExistsAfterID :one
 SELECT EXISTS (

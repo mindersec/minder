@@ -23,11 +23,11 @@ import (
 	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
+
+	"github.com/stacklok/minder/internal/events/common"
 )
 
-type driverCloser func()
-
-func (r *reminder) setupSQLPublisher(ctx context.Context) (message.Publisher, driverCloser, error) {
+func (r *reminder) setupSQLPublisher(ctx context.Context) (message.Publisher, common.DriverCloser, error) {
 	logger := zerolog.Ctx(ctx)
 
 	db, _, err := r.cfg.EventConfig.Connection.GetDBConnection(ctx)

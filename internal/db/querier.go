@@ -230,7 +230,7 @@ type Querier interface {
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
 	UpdateProvider(ctx context.Context, arg UpdateProviderParams) error
-	UpdateReminderLastSentById(ctx context.Context, id uuid.UUID) error
+	UpdateReminderLastSentForRepositories(ctx context.Context, repositoryIds []uuid.UUID) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpdateSelector(ctx context.Context, arg UpdateSelectorParams) (ProfileSelector, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)

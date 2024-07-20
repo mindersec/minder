@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const countRepositories = `-- name: CountRepositories :one
@@ -473,13 +474,13 @@ func (q *Queries) RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bo
 	return exists, err
 }
 
-const updateReminderLastSentById = `-- name: UpdateReminderLastSentById :exec
+const updateReminderLastSentForRepositories = `-- name: UpdateReminderLastSentForRepositories :exec
 UPDATE repositories
 SET reminder_last_sent = NOW()
-WHERE id = $1
+WHERE id = ANY ($1::uuid[])
 `
 
-func (q *Queries) UpdateReminderLastSentById(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateReminderLastSentById, id)
+func (q *Queries) UpdateReminderLastSentForRepositories(ctx context.Context, repositoryIds []uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateReminderLastSentForRepositories, pq.Array(repositoryIds))
 	return err
 }

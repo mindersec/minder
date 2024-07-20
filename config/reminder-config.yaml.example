@@ -26,14 +26,14 @@ database:
   dbname: minder
   sslmode: disable
 
-logging
+logging:
   level: "debug"
 
 events:
   sql_connection:
-    dbhost: "reminder-event-postgres"
+    dbhost: "watermill-postgres"
     dbport: 5432
     dbuser: postgres
     dbpass: postgres
-    dbname: reminder
+    dbname: watermill
     sslmode: disable

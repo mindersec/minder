@@ -2027,18 +2027,18 @@ func (mr *MockStoreMockRecorder) UpdateProvider(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProvider", reflect.TypeOf((*MockStore)(nil).UpdateProvider), arg0, arg1)
 }
 
-// UpdateReminderLastSentById mocks base method.
-func (m *MockStore) UpdateReminderLastSentById(arg0 context.Context, arg1 uuid.UUID) error {
+// UpdateReminderLastSentForRepositories mocks base method.
+func (m *MockStore) UpdateReminderLastSentForRepositories(arg0 context.Context, arg1 []uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateReminderLastSentById", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateReminderLastSentForRepositories", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateReminderLastSentById indicates an expected call of UpdateReminderLastSentById.
-func (mr *MockStoreMockRecorder) UpdateReminderLastSentById(arg0, arg1 any) *gomock.Call {
+// UpdateReminderLastSentForRepositories indicates an expected call of UpdateReminderLastSentForRepositories.
+func (mr *MockStoreMockRecorder) UpdateReminderLastSentForRepositories(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReminderLastSentById", reflect.TypeOf((*MockStore)(nil).UpdateReminderLastSentById), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReminderLastSentForRepositories", reflect.TypeOf((*MockStore)(nil).UpdateReminderLastSentForRepositories), arg0, arg1)
 }
 
 // UpdateRuleType mocks base method.

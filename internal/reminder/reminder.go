@@ -28,6 +28,9 @@ import (
 
 	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/events/common"
+	remindermessages "github.com/stacklok/minder/internal/reminder/messages"
 )
 
 // Interface is an interface over the reminder service
@@ -51,7 +54,7 @@ type reminder struct {
 	ticker *time.Ticker
 
 	eventPublisher message.Publisher
-	eventDBCloser  driverCloser
+	eventDBCloser  common.DriverCloser
 }
 
 // NewReminder creates a new reminder instance
@@ -106,10 +109,8 @@ func (r *reminder) Start(ctx context.Context) error {
 			// In-case sending reminders i.e. iterating over entities consumes more time than the
 			// interval, the ticker will adjust the time interval or drop ticks to make up for
 			// slow receivers.
-			if errs := r.sendReminders(ctx); errs != nil {
-				for _, err := range errs {
-					logger.Error().Err(err).Msg("reconciliation request unsuccessful")
-				}
+			if err := r.sendReminders(ctx); err != nil {
+				logger.Error().Err(err).Msg("reconciliation request unsuccessful")
 			}
 		}
 	}
@@ -132,28 +133,46 @@ func (r *reminder) Stop() {
 	})
 }
 
-func (r *reminder) sendReminders(ctx context.Context) []error {
+func (r *reminder) sendReminders(ctx context.Context) error {
 	logger := zerolog.Ctx(ctx)
 
 	// Fetch a batch of repositories
 	repos, err := r.getRepositoryBatch(ctx)
 	if err != nil {
-		logger.Error().Err(err).Msg("unable to fetch repositories")
-		return []error{err}
+		return fmt.Errorf("error fetching repository batch: %w", err)
+	}
+
+	if len(repos) == 0 {
+		logger.Debug().Msg("no repositories to send reminders for")
+		return nil
 	}
 
 	logger.Info().Msgf("created repository batch of size: %d", len(repos))
 
-	// Update the reminder_last_sent for each repository to export as metrics
+	messages, err := createReminderMessages(ctx, repos)
+	if err != nil {
+		return fmt.Errorf("error creating reminder messages: %w", err)
+	}
+
+	err = r.eventPublisher.Publish(events.TopicQueueRepoReminder, messages...)
+	if err != nil {
+		return fmt.Errorf("error publishing messages: %w", err)
+	}
+
+	repoIds := make([]uuid.UUID, len(repos))
 	for _, repo := range repos {
-		logger.Debug().Str("repo", repo.ID.String()).
-			Time("previously", repo.ReminderLastSent.Time).Msg("updating reminder_last_sent")
-		err := r.store.UpdateReminderLastSentById(ctx, repo.ID)
-		if err != nil {
-			logger.Error().Err(err).Str("repo", repo.ID.String()).Msg("unable to update reminder_last_sent")
-			return []error{err}
-		}
-		// TODO: Send the actual reminders
+		repoIds = append(repoIds, repo.ID)
+	}
+
+	// TODO: Collect Metrics
+	// Potential metrics:
+	// - Gauge: Number of reminders in the current batch
+	// - UpDownCounter: Average reminders sent per batch
+	// - Histogram: reminder_last_sent time distribution
+
+	err = r.store.UpdateReminderLastSentForRepositories(ctx, repoIds)
+	if err != nil {
+		return fmt.Errorf("reminders published but error updating last sent time: %w", err)
 	}
 
 	return nil
@@ -240,4 +259,26 @@ func (r *reminder) adjustCursorForEndOfList(ctx context.Context) {
 			r.repositoryCursor)
 		r.repositoryCursor = uuid.Nil
 	}
+}
+
+func createReminderMessages(ctx context.Context, repos []db.Repository) ([]*message.Message, error) {
+	logger := zerolog.Ctx(ctx)
+
+	messages := make([]*message.Message, 0, len(repos))
+	for _, repo := range repos {
+		repoReconcileMessage, err := remindermessages.NewRepoReminderMessage(
+			repo.ProviderID, repo.RepoID, repo.ProjectID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error creating reminder message: %w", err)
+		}
+
+		logger.Debug().
+			Str("repo", repo.ID.String()).
+			Msg("created reminder message")
+
+		messages = append(messages, repoReconcileMessage)
+	}
+
+	return messages, nil
 }
