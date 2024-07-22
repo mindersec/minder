@@ -102,25 +102,6 @@ func (a ActionOpt) String() string {
 	return [...]string{"on", "off", "dry_run", "unknown"}[a]
 }
 
-// ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
-	var actionOptMap = map[string]ActionOpt{
-		"on":      ActionOptOn,
-		"off":     ActionOptOff,
-		"dry_run": ActionOptDryRun,
-	}
-
-	if s == nil {
-		return defAction
-	}
-
-	if v, ok := actionOptMap[*s]; ok {
-		return v
-	}
-
-	return ActionOptUnknown
-}
-
 // ActionOptFromDB converts the db representation of action type to ActionOpt
 func ActionOptFromDB(dbState db.NullActionType) ActionOpt {
 	if !dbState.Valid {

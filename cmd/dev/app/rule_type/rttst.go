@@ -177,8 +177,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	actionConfig := models.ActionConfiguration{
-		Remediate: models.ActionOptFromString(profile.Remediate, models.ActionOptOff),
-		Alert:     models.ActionOptFromString(profile.Alert, models.ActionOptOff),
+		Remediate: actionOptFromString(profile.Remediate, models.ActionOptOff),
+		Alert:     actionOptFromString(profile.Alert, models.ActionOptOff),
 	}
 
 	// TODO: use cobra context here
@@ -428,4 +428,22 @@ func readProviderConfig(fpath string) ([]byte, error) {
 	}
 
 	return w.Bytes(), nil
+}
+
+func actionOptFromString(s *string, defAction models.ActionOpt) models.ActionOpt {
+	var actionOptMap = map[string]models.ActionOpt{
+		"on":      models.ActionOptOn,
+		"off":     models.ActionOptOff,
+		"dry_run": models.ActionOptDryRun,
+	}
+
+	if s == nil {
+		return defAction
+	}
+
+	if v, ok := actionOptMap[*s]; ok {
+		return v
+	}
+
+	return models.ActionOptUnknown
 }
