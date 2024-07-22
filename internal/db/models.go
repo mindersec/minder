@@ -567,6 +567,20 @@ type ProfilesWithEntityProfile struct {
 	Profid          uuid.UUID             `json:"profid"`
 }
 
+type ProfilesWithRuleInstance struct {
+	ID         uuid.NullUUID         `json:"id"`
+	ProfileID  uuid.NullUUID         `json:"profile_id"`
+	RuleTypeID uuid.NullUUID         `json:"rule_type_id"`
+	Name       sql.NullString        `json:"name"`
+	EntityType NullEntities          `json:"entity_type"`
+	Def        pqtype.NullRawMessage `json:"def"`
+	Params     pqtype.NullRawMessage `json:"params"`
+	CreatedAt  sql.NullTime          `json:"created_at"`
+	UpdatedAt  sql.NullTime          `json:"updated_at"`
+	ProjectID  uuid.NullUUID         `json:"project_id"`
+	Profid     uuid.UUID             `json:"profid"`
+}
+
 type Project struct {
 	ID             uuid.UUID       `json:"id"`
 	Name           string          `json:"name"`
