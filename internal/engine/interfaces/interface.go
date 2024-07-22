@@ -30,7 +30,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/profiles/models"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Ingester is the interface for a rule type ingester
@@ -70,7 +69,7 @@ type ActionType string
 type Action interface {
 	Class() ActionType
 	Type() string
-	GetOnOffState(*pb.Profile) models.ActionOpt
+	GetOnOffState(models.ActionOpt) models.ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting models.ActionOpt, entity protoreflect.ProtoMessage,
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
