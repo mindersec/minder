@@ -182,7 +182,7 @@ func (_ *Alert) Type() string {
 
 // GetOnOffState returns the alert action state read from the profile
 func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOn)
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do alerts through security advisory
