@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -38,83 +37,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func TestGetUnusedOldRuleStatuses(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name            string
-		newRules        profiles.RuleMapping
-		oldRules        profiles.RuleMapping
-		wantUnusedRules profiles.RuleMapping
-	}{
-		{
-			name: "Unused rule in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-		},
-		{
-			name: "No unused rules in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			wantUnusedRules: profiles.RuleMapping{},
-		},
-		{
-			name: "Unused rules with same rule type",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-		},
-		{
-			name: "Unused old rules statuses with empty name",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
-				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
-				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			gotUnusedRules := getUnusedOldRuleStatuses(test.newRules, test.oldRules)
-			require.True(t, reflect.DeepEqual(test.wantUnusedRules, gotUnusedRules))
-		})
-	}
-}
 
 //nolint:gocyclo
 func TestCreateProfile(t *testing.T) {
@@ -1165,23 +1087,4 @@ func TestPatchManagedProfile(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "attempted to edit a rule type or profile which belongs to a bundle")
 	require.Nil(t, patchedProfile)
-}
-
-func generateConsistentUUID(t *testing.T, ruleType, ruleName string) uuid.UUID {
-	t.Helper()
-	return uuid.NewSHA1(uuid.Nil, []byte(ruleType+ruleName))
-}
-
-func getUnusedOldRuleStatuses(
-	newRules, oldRules profiles.RuleMapping,
-) profiles.RuleMapping {
-	unusedRuleStatuses := make(profiles.RuleMapping)
-
-	for ruleTypeAndName, rule := range oldRules {
-		if _, ok := newRules[ruleTypeAndName]; !ok {
-			unusedRuleStatuses[ruleTypeAndName] = rule
-		}
-	}
-
-	return unusedRuleStatuses
 }
