@@ -56,26 +56,6 @@ func (r ListProfilesByProjectIDAndLabelRow) GetSelectors() []ProfileSelector {
 	return r.ProfilesWithSelectors
 }
 
-// GetProfile returns the profile
-func (r ListProfilesByProjectIDRow) GetProfile() Profile {
-	return r.Profile
-}
-
-// GetEntityProfile returns the entity profile
-func (r ListProfilesByProjectIDRow) GetEntityProfile() NullEntities {
-	return r.ProfilesWithEntityProfile.Entity
-}
-
-// GetContextualRules returns the contextual rules
-func (r ListProfilesByProjectIDRow) GetContextualRules() pqtype.NullRawMessage {
-	return r.ProfilesWithEntityProfile.ContextualRules
-}
-
-// GetSelectors returns the selectors
-func (r ListProfilesByProjectIDRow) GetSelectors() []ProfileSelector {
-	return r.ProfilesWithSelectors
-}
-
 // LabelsFromFilter parses the filter string and populates the IncludeLabels and ExcludeLabels fields
 func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string) {
 	// If s does not contain sep and sep is not empty, Split returns a
