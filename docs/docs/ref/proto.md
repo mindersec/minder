@@ -797,6 +797,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
 | remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
 | evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the evaluation. |
 
 
 
