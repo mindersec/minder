@@ -137,7 +137,7 @@ func TestListEvaluationHistory(t *testing.T) {
 	evaluatedAt1 := time.Now()
 	evaluatedAt2 := evaluatedAt1.Add(-1 * time.Second)
 	evaluatedAt3 := evaluatedAt1.Add(-2 * time.Second)
-	entityType := []byte("repository")
+	entityType := db.EntitiesRepository
 
 	remediation := db.NullRemediationStatusTypes{
 		RemediationStatusTypes: db.RemediationStatusTypesSuccess,
@@ -152,7 +152,7 @@ func TestListEvaluationHistory(t *testing.T) {
 		name    string
 		dbSetup dbf.DBMockBuilder
 		cursor  *ListEvaluationCursor
-		size    uint64
+		size    uint32
 		filter  ListEvaluationFilter
 		checkf  func(*testing.T, *ListEvaluationHistoryResult)
 		err     bool
@@ -664,7 +664,7 @@ func TestListEvaluationHistory(t *testing.T) {
 func makeHistoryRow(
 	id uuid.UUID,
 	evaluatedAt time.Time,
-	entityType interface{},
+	entityType db.Entities,
 	status db.NullRemediationStatusTypes,
 	alert db.NullAlertStatusTypes,
 ) db.ListEvaluationHistoryRow {

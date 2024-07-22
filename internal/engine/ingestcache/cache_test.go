@@ -19,7 +19,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester/artifact"
@@ -37,7 +36,7 @@ func TestCache(t *testing.T) {
 	type args struct {
 		in0 engif.Ingester
 		in1 protoreflect.ProtoMessage
-		in2 *structpb.Struct
+		in2 map[string]any
 	}
 	tests := []struct {
 		name string
@@ -50,14 +49,8 @@ func TestCache(t *testing.T) {
 				in1: &minderv1.RestType{
 					Endpoint: "http://localhost:8080",
 				},
-				in2: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"foo": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "bar",
-							},
-						},
-					},
+				in2: map[string]any{
+					"foo": "bar",
 				},
 			},
 		},
@@ -78,14 +71,8 @@ func TestCache(t *testing.T) {
 				in1: &minderv1.BuiltinType{
 					Method: "foo",
 				},
-				in2: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"bar": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "barbar",
-							},
-						},
-					},
+				in2: map[string]any{
+					"bar": "barbar",
 				},
 			},
 		},
@@ -94,14 +81,8 @@ func TestCache(t *testing.T) {
 			args: args{
 				in0: &artifact.Ingest{},
 				in1: nil, // Artifacts have no config
-				in2: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"baz": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "bazbaz",
-							},
-						},
-					},
+				in2: map[string]any{
+					"baz": "bazbaz",
 				},
 			},
 		},
@@ -117,14 +98,8 @@ func TestCache(t *testing.T) {
 						},
 					},
 				},
-				in2: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"qux": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "quxqux",
-							},
-						},
-					},
+				in2: map[string]any{
+					"qux": "quxqux",
 				},
 			},
 		},
@@ -135,14 +110,8 @@ func TestCache(t *testing.T) {
 				in1: &minderv1.GitType{
 					CloneUrl: "http://localhost:8080",
 				},
-				in2: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"quux": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "quxqux",
-							},
-						},
-					},
+				in2: map[string]any{
+					"quux": "quxqux",
 				},
 			},
 		},

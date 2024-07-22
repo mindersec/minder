@@ -267,3 +267,59 @@ func TestQueries_GetSelectorsByProfileID(t *testing.T) {
 		require.Empty(t, selectors)
 	})
 }
+
+func TestQueries_DeleteSelectorsByProfileID(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	proj := createRandomProject(t, org.ID)
+
+	t.Run("Delete all profile selectors", func(t *testing.T) {
+		t.Parallel()
+
+		prof := createRandomProfile(t, proj.ID, []string{})
+
+		sel1, err := testQueries.CreateSelector(context.Background(), CreateSelectorParams{
+			ProfileID: prof.ID,
+			Entity:    NullEntities{},
+			Selector:  "entity.name.startsWith(\"foo\") && !entity.name.startsWith(\"foobar\")",
+			Comment:   "no foobar allowed, only foo",
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, sel1)
+
+		sel2, err := testQueries.CreateSelector(context.Background(), CreateSelectorParams{
+			ProfileID: prof.ID,
+			Entity: NullEntities{
+				Entities: EntitiesRepository,
+				Valid:    true,
+			},
+			Selector: "entity.name.startsWith(\"bar\") && !entity.name.startsWith(\"barfoo\")",
+			Comment:  "no barfoo allowed, only bar",
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, sel2)
+
+		selectors, err := testQueries.GetSelectorsByProfileID(context.Background(), prof.ID)
+		require.NoError(t, err)
+		require.NotEmpty(t, selectors)
+		require.Len(t, selectors, 2)
+
+		err = testQueries.DeleteSelectorsByProfileID(context.Background(), prof.ID)
+		require.NoError(t, err)
+
+		selectors, err = testQueries.GetSelectorsByProfileID(context.Background(), prof.ID)
+		require.NoError(t, err)
+		require.Empty(t, selectors)
+	})
+
+	t.Run("Profile with no selectors", func(t *testing.T) {
+		t.Parallel()
+
+		prof := createRandomProfile(t, proj.ID, []string{})
+
+		selectors, err := testQueries.GetSelectorsByProfileID(context.Background(), prof.ID)
+		require.NoError(t, err)
+		require.Empty(t, selectors)
+	})
+}

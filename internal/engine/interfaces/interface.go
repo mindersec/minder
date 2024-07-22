@@ -30,7 +30,6 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/profiles/models"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Ingester is the interface for a rule type ingester
@@ -70,7 +69,7 @@ type ActionType string
 type Action interface {
 	Class() ActionType
 	Type() string
-	GetOnOffState(*pb.Profile) models.ActionOpt
+	GetOnOffState(models.ActionOpt) models.ActionOpt
 	Do(ctx context.Context, cmd ActionCmd, setting models.ActionOpt, entity protoreflect.ProtoMessage,
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
@@ -93,9 +92,8 @@ const (
 // other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
 	Result           *Result
-	Profile          *pb.Profile
-	Rule             *pb.Profile_Rule
-	ProfileID        uuid.UUID
+	Profile          *models.ProfileAggregate
+	Rule             *models.RuleInstance
 	RepoID           uuid.NullUUID
 	ArtifactID       uuid.NullUUID
 	PullRequestID    uuid.NullUUID
@@ -105,7 +103,6 @@ type EvalStatusParams struct {
 	TaskRunID        uuid.UUID
 	BuildID          uuid.UUID
 	EntityType       db.Entities
-	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
 	actionsOnOff     map[ActionType]models.ActionOpt
@@ -172,13 +169,8 @@ func (e *EvalStatusParams) GetActionsErr() evalerrors.ActionsError {
 }
 
 // GetRule returns the rule
-func (e *EvalStatusParams) GetRule() *pb.Profile_Rule {
+func (e *EvalStatusParams) GetRule() *models.RuleInstance {
 	return e.Rule
-}
-
-// GetRuleTypeID returns the rule type ID
-func (e *EvalStatusParams) GetRuleTypeID() uuid.UUID {
-	return e.RuleTypeID
 }
 
 // GetEvalStatusFromDb returns the evaluation status from the database
@@ -187,7 +179,7 @@ func (e *EvalStatusParams) GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfil
 }
 
 // GetProfile returns the profile
-func (e *EvalStatusParams) GetProfile() *pb.Profile {
+func (e *EvalStatusParams) GetProfile() *models.ProfileAggregate {
 	return e.Profile
 }
 
@@ -205,12 +197,10 @@ func (e *EvalStatusParams) GetIngestResult() *Result {
 func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 	outl := l.With().
 		Str("entity_type", string(e.EntityType)).
-		Str("profile_id", e.ProfileID.String()).
-		Str("rule_type", e.GetRule().GetType()).
-		Str("rule_name", e.GetRule().GetName()).
-		Str("rule_type_id", e.GetRuleTypeID().String()).
+		Str("profile_id", e.Profile.ID.String()).
+		Str("rule_name", e.GetRule().Name).
 		Str("execution_id", e.ExecutionID.String()).
-		Str("rule_type_id", e.RuleTypeID.String()).
+		Str("rule_type_id", e.Rule.RuleTypeID.String()).
 		Logger()
 	if e.RepoID.Valid {
 		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()
@@ -228,7 +218,7 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 
 // EvalParamsReader is the interface used for a rule type evaluator
 type EvalParamsReader interface {
-	GetRule() *pb.Profile_Rule
+	GetRule() *models.RuleInstance
 	GetIngestResult() *Result
 }
 
@@ -245,6 +235,5 @@ type ActionsParams interface {
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
-	GetProfile() *pb.Profile
-	GetRuleTypeID() uuid.UUID
+	GetProfile() *models.ProfileAggregate
 }

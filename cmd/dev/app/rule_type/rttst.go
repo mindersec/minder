@@ -37,12 +37,15 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/rego"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/engine/rtengine"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/ratecache"
+	provsel "github.com/stacklok/minder/internal/providers/selectors"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -118,7 +121,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		Project:  &rootProject,
 	}
 
-	ent, err := readEntityFromFile(epath.Value.String(), minderv1.EntityFromString(ruletype.Def.InEntity))
+	eiw, err := getEiwFromFile(ruletype, epath.Value.String())
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
@@ -163,11 +166,19 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
+	if len(rules) == 0 {
+		return fmt.Errorf("no rules found with type %s", ruletype.Name)
+	}
 
 	// TODO: Whenever we add more Provider classes, we will need to rethink this
 	prov, err := getProvider(providerclass.Value.String(), token, providerconfig.Value.String())
 	if err != nil {
 		return err
+	}
+
+	actionConfig := models.ActionConfiguration{
+		Remediate: actionOptFromString(profile.Remediate, models.ActionOptOff),
+		Alert:     actionOptFromString(profile.Alert, models.ActionOptOff),
 	}
 
 	// TODO: use cobra context here
@@ -176,30 +187,53 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
-	actionEngine, err := actions.NewRuleActions(ctx, profile, ruletype, prov)
+	actionEngine, err := actions.NewRuleActions(ctx, ruletype, prov, &actionConfig)
 	if err != nil {
 		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
-	inf := &entities.EntityInfoWrapper{
-		Entity:      ent,
-		ExecutionID: &uuid.Nil,
-	}
+	profSel, err := getProfileSelectors(eiw.Type, profile)
 	if err != nil {
-		return fmt.Errorf("error creating rule type engine: %w", err)
+		return fmt.Errorf("error creating selectors: %w", err)
 	}
 
-	if len(rules) == 0 {
-		return fmt.Errorf("no rules found with type %s", ruletype.Name)
+	return runEvaluationForRules(cmd, eng, eiw, prov, profSel, remediateStatus, remMetadata, rules, actionEngine)
+}
+
+func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
+	selectorEnv, err := selectors.NewEnv()
+	if err != nil {
+		return nil, fmt.Errorf("error creating selector environment: %w", err)
 	}
 
-	return runEvaluationForRules(cmd, eng, inf, remediateStatus, remMetadata, rules, actionEngine)
+	profSel, err := selectorEnv.NewSelectionFromProfile(entType, profile.Selection)
+	if err != nil {
+		return nil, fmt.Errorf("error creating selectors: %w", err)
+	}
+
+	return profSel, nil
+}
+
+func getEiwFromFile(ruletype *minderv1.RuleType, epath string) (*entities.EntityInfoWrapper, error) {
+	entType := minderv1.EntityFromString(ruletype.Def.InEntity)
+	ent, err := readEntityFromFile(epath, entType)
+	if err != nil {
+		return nil, fmt.Errorf("error reading entity from file: %w", err)
+	}
+
+	return &entities.EntityInfoWrapper{
+		Entity:      ent,
+		Type:        entType,
+		ExecutionID: &uuid.Nil,
+	}, nil
 }
 
 func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *rtengine.RuleTypeEngine,
 	inf *entities.EntityInfoWrapper,
+	provider provifv1.Provider,
+	entitySelectors selectors.Selection,
 	remediateStatus db.NullRemediationStatusTypes,
 	remMetadata pqtype.NullRawMessage,
 	frags []*minderv1.Profile_Rule,
@@ -217,9 +251,14 @@ func runEvaluationForRules(
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 
+		rule := models.RuleFromPB(
+			uuid.New(), // Actual rule type ID does not matter here
+			frag,
+		)
+
 		// Create the eval status params
 		evalStatus := &engif.EvalStatusParams{
-			Rule: frag,
+			Rule: &rule,
 			EvalStatusFromDb: &db.ListRuleEvaluationsByProfileIdRow{
 				RemStatus:   remediateStatus,
 				RemMetadata: remMetadata,
@@ -232,7 +271,8 @@ func runEvaluationForRules(
 		ctx = logger.FromFlags(logConfig).WithContext(ctx)
 
 		// Perform rule evaluation
-		evalStatus.SetEvalErr(eng.Eval(ctx, inf, evalStatus))
+		evalErr := selectAndEval(ctx, eng, provider, inf, evalStatus, entitySelectors)
+		evalStatus.SetEvalErr(evalErr)
 
 		// Perform the actions, if any
 		evalStatus.SetActionsErr(ctx, actionEngine.DoActions(ctx, inf.Entity, evalStatus))
@@ -249,6 +289,34 @@ func runEvaluationForRules(
 	}
 
 	return nil
+}
+
+func selectAndEval(
+	ctx context.Context,
+	eng *rtengine.RuleTypeEngine,
+	provider provifv1.Provider,
+	inf *entities.EntityInfoWrapper,
+	evalStatus *engif.EvalStatusParams,
+	profileSelectors selectors.Selection,
+) error {
+	selEnt := provsel.EntityToSelectorEntity(ctx, provider, inf.Type, inf.Entity)
+	if selEnt == nil {
+		return fmt.Errorf("error converting entity to selector entity")
+	}
+
+	selected, err := profileSelectors.Select(selEnt)
+	if err != nil {
+		return fmt.Errorf("error selecting entity: %w", err)
+	}
+
+	var evalErr error
+	if selected {
+		evalErr = eng.Eval(ctx, inf, evalStatus)
+	} else {
+		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selectors")
+	}
+
+	return evalErr
 }
 
 func readRuleTypeFromFile(fpath string) (*minderv1.RuleType, error) {
@@ -360,4 +428,22 @@ func readProviderConfig(fpath string) ([]byte, error) {
 	}
 
 	return w.Bytes(), nil
+}
+
+func actionOptFromString(s *string, defAction models.ActionOpt) models.ActionOpt {
+	var actionOptMap = map[string]models.ActionOpt{
+		"on":      models.ActionOptOn,
+		"off":     models.ActionOptOff,
+		"dry_run": models.ActionOptDryRun,
+	}
+
+	if s == nil {
+		return defAction
+	}
+
+	if v, ok := actionOptMap[*s]; ok {
+		return v
+	}
+
+	return models.ActionOptUnknown
 }

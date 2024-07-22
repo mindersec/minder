@@ -181,8 +181,8 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(p *pb.Profile) models.ActionOpt {
-	return models.ActionOptFromString(p.Alert, models.ActionOptOn)
+func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOn)
 }
 
 // Do alerts through security advisory
@@ -374,7 +374,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if models.ActionOptFromString(params.GetProfile().Remediate, models.ActionOptOff) == models.ActionOptOn {
+	if params.GetProfile().ActionConfig.Remediate == models.ActionOptOn {
 		err = alert.descriptionTmpl.Execute(&descriptionStr, result.Template)
 	} else {
 		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, result.Template)

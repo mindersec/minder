@@ -36,11 +36,11 @@ import (
 )
 
 const (
-	defaultPageSize uint64 = 25
+	defaultPageSize uint32 = 25
 	// Maximum page size has a conservative value at the moment,
 	// we can raise it once we have more insight on its
 	// performance impact.
-	maxPageSize uint64 = 25
+	maxPageSize uint32 = 25
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
@@ -114,7 +114,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 
 	// convert data set to proto
-	data, err := fromEvaluationHistoryRow(result.Data)
+	data, err := fromEvaluationHistoryRows(result.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -138,18 +138,14 @@ func (s *Server) ListEvaluationHistory(
 	return resp, nil
 }
 
-func fromEvaluationHistoryRow(
+func fromEvaluationHistoryRows(
 	rows []db.ListEvaluationHistoryRow,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := []*minderv1.EvaluationHistory{}
 
 	for _, row := range rows {
-		var dbEntityType db.Entities
-		if err := dbEntityType.Scan(row.EntityType); err != nil {
-			return nil, errors.New("internal error")
-		}
-		entityType := dbEntityToEntity(dbEntityType)
-		entityName, err := getEntityName(dbEntityType, row)
+		entityType := dbEntityToEntity(row.EntityType)
+		entityName, err := getEntityName(row.EntityType, row)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +168,7 @@ func fromEvaluationHistoryRow(
 		res = append(res, &minderv1.EvaluationHistory{
 			EvaluatedAt: timestamppb.New(row.EvaluatedAt),
 			Entity: &minderv1.EvaluationHistoryEntity{
-				Id:   row.EvaluationID.String(),
+				Id:   row.EntityID.String(),
 				Type: entityType,
 				Name: entityName,
 			},
@@ -193,7 +189,7 @@ func fromEvaluationHistoryRow(
 	return res, nil
 }
 
-func makeCursor(cursor []byte, size uint64) *minderv1.Cursor {
+func makeCursor(cursor []byte, size uint32) *minderv1.Cursor {
 	return &minderv1.Cursor{
 		Cursor: base64.StdEncoding.EncodeToString(cursor),
 		Size:   size,

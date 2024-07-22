@@ -18,13 +18,12 @@ package ingestcache
 
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 )
 
 // Cache is the interface for the ingest cache.
 type Cache interface {
-	Get(ingester engif.Ingester, entity protoreflect.ProtoMessage, params *structpb.Struct) (*engif.Result, bool)
-	Set(ingester engif.Ingester, entity protoreflect.ProtoMessage, params *structpb.Struct, result *engif.Result)
+	Get(ingester engif.Ingester, entity protoreflect.ProtoMessage, params map[string]any) (*engif.Result, bool)
+	Set(ingester engif.Ingester, entity protoreflect.ProtoMessage, params map[string]any, result *engif.Result)
 }

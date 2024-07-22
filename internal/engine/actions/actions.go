@@ -48,9 +48,9 @@ type RuleActionsEngine struct {
 // NewRuleActions creates a new rule actions engine
 func NewRuleActions(
 	ctx context.Context,
-	profile *minderv1.Profile,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	actionConfig *models.ActionConfiguration,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
 	remEngine, err := remediate.NewRuleRemediator(ruletype, provider)
@@ -72,8 +72,8 @@ func NewRuleActions(
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
 		actionsOnOff: map[engif.ActionType]models.ActionOpt{
-			remEngine.Class():   remEngine.GetOnOffState(profile),
-			alertEngine.Class(): alertEngine.GetOnOffState(profile),
+			remEngine.Class():   remEngine.GetOnOffState(actionConfig.Remediate),
+			alertEngine.Class(): alertEngine.GetOnOffState(actionConfig.Alert),
 		},
 	}, nil
 }

@@ -31,32 +31,19 @@ func (q *Queries) DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdate
 	return err
 }
 
-const getIDByProfileEntityName = `-- name: GetIDByProfileEntityName :one
-SELECT id FROM rule_instances
-WHERE profile_id = $1
-AND entity_type = $2
-AND name = $3
+const getRuleInstancesEntityInProjects = `-- name: GetRuleInstancesEntityInProjects :many
+SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances
+WHERE entity_type = $1
+AND project_id = ANY($2::UUID[])
 `
 
-type GetIDByProfileEntityNameParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
-	EntityType Entities  `json:"entity_type"`
-	Name       string    `json:"name"`
+type GetRuleInstancesEntityInProjectsParams struct {
+	EntityType Entities    `json:"entity_type"`
+	ProjectIds []uuid.UUID `json:"project_ids"`
 }
 
-func (q *Queries) GetIDByProfileEntityName(ctx context.Context, arg GetIDByProfileEntityNameParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getIDByProfileEntityName, arg.ProfileID, arg.EntityType, arg.Name)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
-const getRuleInstancesForProfile = `-- name: GetRuleInstancesForProfile :many
-SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1
-`
-
-func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error) {
-	rows, err := q.db.QueryContext(ctx, getRuleInstancesForProfile, profileID)
+func (q *Queries) GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getRuleInstancesEntityInProjects, arg.EntityType, pq.Array(arg.ProjectIds))
 	if err != nil {
 		return nil, err
 	}
@@ -89,17 +76,12 @@ func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid
 	return items, nil
 }
 
-const getRuleInstancesForProfileEntity = `-- name: GetRuleInstancesForProfileEntity :many
-SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1 AND entity_type = $2
+const getRuleInstancesForProfile = `-- name: GetRuleInstancesForProfile :many
+SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1
 `
 
-type GetRuleInstancesForProfileEntityParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
-	EntityType Entities  `json:"entity_type"`
-}
-
-func (q *Queries) GetRuleInstancesForProfileEntity(ctx context.Context, arg GetRuleInstancesForProfileEntityParams) ([]RuleInstance, error) {
-	rows, err := q.db.QueryContext(ctx, getRuleInstancesForProfileEntity, arg.ProfileID, arg.EntityType)
+func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getRuleInstancesForProfile, profileID)
 	if err != nil {
 		return nil, err
 	}

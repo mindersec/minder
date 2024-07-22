@@ -150,8 +150,8 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(p *pb.Profile) models.ActionOpt {
-	return models.ActionOptFromString(p.Remediate, models.ActionOptOff)
+func (_ *Remediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do perform the remediation
@@ -194,8 +194,8 @@ func (r *Remediator) getParamsForPRRemediation(
 
 	tmplParams := &PrTemplateParams{
 		Entity:  ent,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	ingested := params.GetIngestResult()
@@ -212,7 +212,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		prCfg: r.prCfg,
 		ghCli: r.ghCli,
 		bfs:   ingested.Fs,
-		def:   params.GetRule().Def.AsMap(),
+		def:   params.GetRule().Def,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get modification: %w", err)

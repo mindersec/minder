@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/manager"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -53,6 +54,7 @@ type executor struct {
 	metrics         *ExecutorMetrics
 	historyService  history.EvaluationHistoryService
 	featureFlags    openfeature.IClient
+	profileStore    profiles.ProfileStore
 }
 
 // NewExecutor creates a new executor
@@ -62,6 +64,7 @@ func NewExecutor(
 	metrics *ExecutorMetrics,
 	historyService history.EvaluationHistoryService,
 	featureFlags openfeature.IClient,
+	profileStore profiles.ProfileStore,
 ) Executor {
 	return &executor{
 		querier:         querier,
@@ -69,6 +72,7 @@ func NewExecutor(
 		metrics:         metrics,
 		historyService:  historyService,
 		featureFlags:    featureFlags,
+		profileStore:    profileStore,
 	}
 }
 
@@ -120,81 +124,18 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		return fmt.Errorf("unable to fetch rule type instances for project: %w", err)
 	}
 
-	err = e.forProjectsInHierarchy(
-		ctx, inf, func(ctx context.Context, profile *pb.Profile) error {
-			profileStartTime := time.Now()
-			defer e.metrics.TimeProfileEvaluation(ctx, profileStartTime)
-			// Get only these rules that are relevant for this entity type
-			relevant, err := profiles.GetRulesForEntity(profile, inf.Type)
-			if err != nil {
-				return fmt.Errorf("error getting rules for entity: %w", err)
-			}
-
-			// Let's evaluate all the rules for this profile
-			err = profiles.TraverseRules(relevant, func(rule *pb.Profile_Rule) error {
-				// Get the engine evaluator for this rule type
-				evalParams, ruleEngine, actionEngine, err := e.getEvaluator(
-					ctx, inf, provider, profile, rule, ruleEngineCache)
-				if err != nil {
-					return err
-				}
-
-				// Update the lock lease at the end of the evaluation
-				defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
-
-				// Evaluate the rule
-				evalErr := ruleEngine.Eval(ctx, inf, evalParams)
-				evalParams.SetEvalErr(evalErr)
-
-				// Perform actionEngine, if any
-				actionsErr := actionEngine.DoActions(ctx, inf.Entity, evalParams)
-				evalParams.SetActionsErr(ctx, actionsErr)
-
-				// Log the evaluation
-				logEval(ctx, inf, evalParams, ruleEngine.Meta.Name)
-
-				// Create or update the evaluation status
-				return e.createOrUpdateEvalStatus(ctx, evalParams)
-			})
-
-			if err != nil {
-				p := profile.Name
-				if profile.Id != nil {
-					p = *profile.Id
-				}
-				return fmt.Errorf("error traversing rules for profile %s: %w", p, err)
-			}
-
-			return nil
-		})
-
+	// Get the profiles in the project hierarchy which have rules for this entity type
+	// along with the relevant rule instances
+	profileAggregates, err := e.profileStore.GetProfilesForEvaluation(ctx, inf.ProjectID, entityType)
 	if err != nil {
-		return fmt.Errorf("error evaluating entity event: %w", err)
+		return fmt.Errorf("error while retrieving profiles and rule instances: %w", err)
 	}
 
-	return nil
-}
-
-func (e *executor) forProjectsInHierarchy(
-	ctx context.Context,
-	inf *entities.EntityInfoWrapper,
-	f func(context.Context, *pb.Profile) error,
-) error {
-	projList, err := e.querier.GetParentProjects(ctx, inf.ProjectID)
-	if err != nil {
-		return fmt.Errorf("error getting parent projects: %w", err)
-	}
-
-	for _, projID := range projList {
-		// Get profiles relevant to project
-		dbpols, err := e.querier.ListProfilesByProjectID(ctx, projID)
-		if err != nil {
-			return fmt.Errorf("error getting profiles: %w", err)
-		}
-
-		for _, profile := range profiles.MergeDatabaseListIntoProfiles(dbpols) {
-			if err := f(ctx, profile); err != nil {
-				return err
+	// For each profile, evaluate each rule and store the outcome in the database
+	for _, profile := range profileAggregates {
+		for _, rule := range profile.Rules {
+			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache); err != nil {
+				return fmt.Errorf("error evaluating entity event: %w", err)
 			}
 		}
 	}
@@ -202,55 +143,51 @@ func (e *executor) forProjectsInHierarchy(
 	return nil
 }
 
-func (e *executor) getEvaluator(
+func (e *executor) evaluateRule(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 	provider provinfv1.Provider,
-	profile *pb.Profile,
-	rule *pb.Profile_Rule,
+	profile *models.ProfileAggregate,
+	rule *models.RuleInstance,
 	ruleEngineCache rtengine.Cache,
-) (*engif.EvalStatusParams, *rtengine.RuleTypeEngine, *actions.RuleActionsEngine, error) {
+) error {
 	// Create eval status params
-	params, err := e.createEvalStatusParams(ctx, inf, profile, rule)
+	evalParams, err := e.createEvalStatusParams(ctx, inf, profile, rule)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error creating eval status params: %w", err)
+		return fmt.Errorf("error creating eval status params: %w", err)
 	}
 
-	if profile.Id == nil {
-		return nil, nil, nil, fmt.Errorf("profile %s missing ID", profile.Name)
-	}
-	profileID, err := uuid.Parse(*profile.Id)
+	// retrieve the rule type engine from the cache
+	ruleEngine, err := ruleEngineCache.GetRuleEngine(ctx, rule.RuleTypeID)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to parse %s as profile ID", *profile.Id)
+		return fmt.Errorf("error creating rule type engine: %w", err)
 	}
 
-	// TODO: Once we use the rule instance table, this will no longer be necessary
-	ruleTypeID, err := e.querier.GetRuleTypeIDByRuleNameEntityProfile(ctx,
-		db.GetRuleTypeIDByRuleNameEntityProfileParams{
-			ProfileID:  profileID,
-			EntityType: entities.EntityTypeToDB(inf.Type),
-			Name:       rule.Name,
-		},
-	)
+	// create the action engine for this rule instance
+	// unlike the rule type engine, this cannot be cached
+	actionEngine, err := actions.NewRuleActions(ctx, ruleEngine.GetRuleType(), provider, &profile.ActionConfig)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("unable to retrieve rule type ID: %w", err)
+		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
-	params.RuleTypeID = ruleTypeID
+	evalParams.SetActionsOnOff(actionEngine.GetOnOffState())
 
-	rte, err := ruleEngineCache.GetRuleEngine(ctx, ruleTypeID)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("error creating rule type engine: %w", err)
-	}
+	// Update the lock lease at the end of the evaluation
+	defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
-	actionEngine, err := actions.NewRuleActions(ctx, profile, rte.GetRuleType(), provider)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("cannot create rule actions engine: %w", err)
-	}
+	// Evaluate the rule
+	evalErr := ruleEngine.Eval(ctx, inf, evalParams)
+	evalParams.SetEvalErr(evalErr)
 
-	// All okay
-	params.SetActionsOnOff(actionEngine.GetOnOffState())
-	return params, rte, actionEngine, nil
+	// Perform actionEngine, if any
+	actionsErr := actionEngine.DoActions(ctx, inf.Entity, evalParams)
+	evalParams.SetActionsErr(ctx, actionsErr)
+
+	// Log the evaluation
+	logEval(ctx, inf, evalParams, ruleEngine.GetRuleType().Name)
+
+	// Create or update the evaluation status
+	return e.createOrUpdateEvalStatus(ctx, evalParams)
 }
 
 func (e *executor) updateLockLease(

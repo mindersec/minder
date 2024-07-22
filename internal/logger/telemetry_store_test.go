@@ -30,12 +30,10 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles/models"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
-	testUUIDString := "00000000-0000-0000-0000-000000000001"
-	testUUID := uuid.MustParse(testUUIDString)
+	testUUID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 
 	t.Parallel()
 	cases := []struct {
@@ -49,9 +47,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 		name: "nil telemetry",
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-			ep.Profile = &minderv1.Profile{
+			ep.Rule = &models.RuleInstance{
+				RuleTypeID: testUUID,
+			}
+			ep.Profile = &models.ProfileAggregate{
 				Name: "artifact_profile",
-				Id:   &testUUIDString,
+				ID:   testUUID,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
@@ -74,12 +75,13 @@ func TestTelemetryStore_Record(t *testing.T) {
 		telemetry: &logger.TelemetryStore{},
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-			ep.RuleTypeID = testUUID
-			ep.Profile = &minderv1.Profile{
-				Name: "artifact_profile",
-				Id:   &testUUIDString,
+			ep.Rule = &models.RuleInstance{
+				RuleTypeID: testUUID,
 			}
-			ep.RuleTypeID = testUUID
+			ep.Profile = &models.ProfileAggregate{
+				Name: "artifact_profile",
+				ID:   testUUID,
+			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
 			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
 				alert.ActionType:     models.ActionOptOff,

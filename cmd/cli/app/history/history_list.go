@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/cmd/cli/app/common"
@@ -59,9 +60,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	remediationStatus := viper.GetStringSlice("remediation-status")
 	alertStatus := viper.GetStringSlice("alert-status")
 
+	// time range
+	from := viper.GetTime("from")
+	to := viper.GetTime("to")
+
 	// page options
 	cursorStr := viper.GetString("cursor")
-	size := viper.GetUint64("size")
+	size := viper.GetUint32("size")
 
 	format := viper.GetString("output")
 
@@ -88,7 +93,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	// list all the things
-	resp, err := client.ListEvaluationHistory(ctx, &minderv1.ListEvaluationHistoryRequest{
+	req := &minderv1.ListEvaluationHistoryRequest{
 		Context:     &minderv1.Context{Project: &project},
 		EntityType:  entityType,
 		EntityName:  entityName,
@@ -99,7 +104,19 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		From:        nil,
 		To:          nil,
 		Cursor:      cursorFromOptions(cursorStr, size),
-	})
+	}
+
+	// Viper returns time.Time rather than a pointer to it, so we
+	// have to check whether from and/or to were specified by
+	// other means.
+	if cmd.Flags().Lookup("from").Changed {
+		req.From = timestamppb.New(from)
+	}
+	if cmd.Flags().Lookup("to").Changed {
+		req.To = timestamppb.New(to)
+	}
+
+	resp, err := client.ListEvaluationHistory(ctx, req)
 	if err != nil {
 		return cli.MessageAndError("Error getting profile status", err)
 	}
@@ -124,7 +141,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	return nil
 }
 
-func cursorFromOptions(cursorStr string, size uint64) *minderv1.Cursor {
+func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 	var cursor *minderv1.Cursor
 	if cursorStr != "" || size != 0 {
 		cursor = &minderv1.Cursor{}
@@ -217,6 +234,8 @@ func init() {
 	listCmd.Flags().String("eval-status", "", evalFilterMsg)
 	listCmd.Flags().String("remediation-status", "", remediationFilterMsg)
 	listCmd.Flags().String("alert-status", "", alertFilterMsg)
+	listCmd.Flags().String("from", "", "Filter evaluation history list by time")
+	listCmd.Flags().String("to", "", "Filter evaluation history list by time")
 	listCmd.Flags().StringP("cursor", "c", "", "Fetch previous or next page from the list")
 	listCmd.Flags().Uint64P("size", "s", defaultPageSize, "Change the number of items fetched")
 }

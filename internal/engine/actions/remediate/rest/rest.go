@@ -107,8 +107,8 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(p *pb.Profile) models.ActionOpt {
-	return models.ActionOptFromString(p.Remediate, models.ActionOptOff)
+func (_ *Remediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do perform the remediation
@@ -128,8 +128,8 @@ func (r *Remediator) Do(
 
 	retp := &EndpointTemplateParams{
 		Entity:  entity,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	endpoint := new(bytes.Buffer)
