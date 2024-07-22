@@ -98,8 +98,8 @@ func (_ *GhBranchProtectRemediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *GhBranchProtectRemediator) GetOnOffState(p *pb.Profile) models.ActionOpt {
-	return models.ActionOptFromString(p.Remediate, models.ActionOptOff)
+func (_ *GhBranchProtectRemediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do perform the remediation

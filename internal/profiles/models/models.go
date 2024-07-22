@@ -138,3 +138,12 @@ func ActionOptFromDB(dbState db.NullActionType) ActionOpt {
 		return ActionOptUnknown
 	}
 }
+
+// ActionOptOrDefault returns defaultVal if the ActionOpt is
+// ActionOptUnknown, or returns actionOpt otherwise
+func ActionOptOrDefault(actionOpt ActionOpt, defaultVal ActionOpt) ActionOpt {
+	if actionOpt == ActionOptUnknown {
+		return defaultVal
+	}
+	return actionOpt
+}
