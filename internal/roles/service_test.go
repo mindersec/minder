@@ -191,6 +191,7 @@ func TestRemoveRole(t *testing.T) {
 		dBSetup       dbf.DBMockBuilder
 		role          authz.Role
 		expectedError string
+		noAssignment  bool
 	}{
 		{
 			name: "error when user doesn't exist",
@@ -213,6 +214,15 @@ func TestRemoveRole(t *testing.T) {
 			dBSetup: dbf.NewDBMock(
 				withGetUser(validUser, nil),
 			),
+		},
+		{
+			name: "error when role assignment doesn't exist",
+			role: authz.RoleEditor,
+			dBSetup: dbf.NewDBMock(
+				withGetUser(validUser, nil),
+			),
+			noAssignment:  true,
+			expectedError: "role assignment for this user does not exist",
 		},
 	}
 
@@ -243,6 +253,10 @@ func TestRemoveRole(t *testing.T) {
 						},
 					},
 				},
+			}
+
+			if scenario.noAssignment {
+				authzClient.Assignments[project] = []*minderv1.RoleAssignment{}
 			}
 
 			service := NewRoleService()

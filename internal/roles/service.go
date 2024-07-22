@@ -169,24 +169,32 @@ func (_ *roleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, 
 		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
-	// Validate in case there's only one admin for the project and the user is trying to remove themselves
-	if roleToRemove == authz.RoleAdmin {
-		// Get all role assignments for the project
-		as, err := authzClient.AssignmentsToProject(ctx, targetProject)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	// Get all role assignments for the project
+	as, err := authzClient.AssignmentsToProject(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting role assignments: %v", err)
+	}
+
+	// Check if there is such role assignment for the user or the user is the last admin
+	found := false
+	adminRolesCnt := 0
+	for _, a := range as {
+		if a.Subject == identity.String() && a.Role == roleToRemove.String() {
+			found = true
 		}
-		// Count the number of admin roles
-		adminRolesCnt := 0
-		for _, existing := range as {
-			if existing.Role == authz.RoleAdmin.String() {
-				adminRolesCnt++
-			}
+		if a.Role == authz.RoleAdmin.String() {
+			adminRolesCnt++
 		}
-		// If there's only one admin role, return an error
-		if adminRolesCnt <= 1 {
-			return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
-		}
+	}
+
+	// If there's no role assignment for the user, return an error
+	if !found {
+		return nil, util.UserVisibleError(codes.NotFound, "role assignment for this user does not exist")
+	}
+
+	// If there's only one admin role, return an error
+	if roleToRemove == authz.RoleAdmin && adminRolesCnt <= 1 {
+		return nil, util.UserVisibleError(codes.FailedPrecondition, "cannot remove the last admin from the project")
 	}
 
 	// Delete the role assignment
