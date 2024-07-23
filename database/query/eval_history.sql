@@ -162,5 +162,7 @@ SELECT s.id::uuid AS evaluation_id,
         OR s.evaluation_time BETWEEN sqlc.narg(fromts) AND sqlc.narg(tots))
    -- implicit filter by project id
    AND j.id = sqlc.arg(projectId)
- ORDER BY s.evaluation_time DESC
+ ORDER BY
+ CASE WHEN sqlc.narg(next)::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
  LIMIT sqlc.arg(size)::integer;

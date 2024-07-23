@@ -264,7 +264,9 @@ SELECT s.id::uuid AS evaluation_id,
         OR s.evaluation_time BETWEEN $15 AND $16)
    -- implicit filter by project id
    AND j.id = $17
- ORDER BY s.evaluation_time DESC
+ ORDER BY
+ CASE WHEN $1::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
  LIMIT $18::integer
 `
 
