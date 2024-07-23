@@ -210,7 +210,7 @@ func TestListEvaluationHistory(t *testing.T) {
 
 		// cursor flips on direction
 		{
-			name: "prev does not flip",
+			name: "next does not flip",
 			dbSetup: dbf.NewDBMock(
 				withListEvaluationHistory(nil, nil,
 					makeHistoryRow(
@@ -230,7 +230,7 @@ func TestListEvaluationHistory(t *testing.T) {
 				),
 			),
 			cursor: &ListEvaluationCursor{
-				Direction: Prev,
+				Direction: Next,
 			},
 			checkf: func(t *testing.T, rows *ListEvaluationHistoryResult) {
 				t.Helper()
@@ -251,7 +251,7 @@ func TestListEvaluationHistory(t *testing.T) {
 			},
 		},
 		{
-			name: "next does flip",
+			name: "prev does flip",
 			dbSetup: dbf.NewDBMock(
 				withListEvaluationHistory(nil, nil,
 					makeHistoryRow(
@@ -271,7 +271,7 @@ func TestListEvaluationHistory(t *testing.T) {
 				),
 			),
 			cursor: &ListEvaluationCursor{
-				Direction: Next,
+				Direction: Prev,
 			},
 			checkf: func(t *testing.T, rows *ListEvaluationHistoryResult) {
 				t.Helper()
