@@ -2551,6 +2551,9 @@ message EvaluationHistory {
 
     // created_at is the timestamp of creation of this evaluation
     google.protobuf.Timestamp evaluated_at = 6;
+
+    // id is the unique identifier of the evaluation.
+    string id = 7;
 }
 
 message EvaluationHistoryEntity {
