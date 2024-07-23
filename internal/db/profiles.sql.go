@@ -215,20 +215,6 @@ func (q *Queries) DeleteProfileForEntity(ctx context.Context, arg DeleteProfileF
 	return err
 }
 
-const deleteRuleInstantiation = `-- name: DeleteRuleInstantiation :exec
-DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2
-`
-
-type DeleteRuleInstantiationParams struct {
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-}
-
-func (q *Queries) DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error {
-	_, err := q.db.ExecContext(ctx, deleteRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
-	return err
-}
-
 const getProfileByID = `-- name: GetProfileByID :one
 SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels FROM profiles WHERE id = $1 AND project_id = $2
 `
@@ -389,30 +375,6 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 		return nil, err
 	}
 	return items, nil
-}
-
-const getProfileForEntity = `-- name: GetProfileForEntity :one
-SELECT id, entity, profile_id, contextual_rules, created_at, updated_at, migrated FROM entity_profiles WHERE profile_id = $1 AND entity = $2
-`
-
-type GetProfileForEntityParams struct {
-	ProfileID uuid.UUID `json:"profile_id"`
-	Entity    Entities  `json:"entity"`
-}
-
-func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileForEntity, arg.ProfileID, arg.Entity)
-	var i EntityProfile
-	err := row.Scan(
-		&i.ID,
-		&i.Entity,
-		&i.ProfileID,
-		&i.ContextualRules,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Migrated,
-	)
-	return i, err
 }
 
 const listProfilesByProjectIDAndLabel = `-- name: ListProfilesByProjectIDAndLabel :many
@@ -610,29 +572,6 @@ func (q *Queries) UpsertProfileForEntity(ctx context.Context, arg UpsertProfileF
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Migrated,
-	)
-	return i, err
-}
-
-const upsertRuleInstantiation = `-- name: UpsertRuleInstantiation :one
-INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
-VALUES ($1, $2)
-ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING id, entity_profile_id, rule_type_id, created_at
-`
-
-type UpsertRuleInstantiationParams struct {
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-}
-
-func (q *Queries) UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error) {
-	row := q.db.QueryRowContext(ctx, upsertRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
-	var i EntityProfileRule
-	err := row.Scan(
-		&i.ID,
-		&i.EntityProfileID,
-		&i.RuleTypeID,
-		&i.CreatedAt,
 	)
 	return i, err
 }

@@ -22,14 +22,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stacklok/minder/internal/profiles/models"
 	htmltemplate "html/template"
 	"strings"
 
-	"github.com/stacklok/minder/internal/db"
-
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
