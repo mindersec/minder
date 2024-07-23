@@ -204,7 +204,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 		return nil, errors.New("internal error")
 	}
 
-	if cursor != nil && cursor.Direction == Next {
+	if cursor != nil && cursor.Direction == Prev {
 		slices.Reverse(rows)
 	}
 
