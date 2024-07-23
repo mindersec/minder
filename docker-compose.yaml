@@ -188,6 +188,15 @@ services:
       - 8085:8085
     networks:
       - app_net
+
+  nats:
+    container_name: nats
+    image: "nats:latest"
+    ports:
+      - "8222:8222"
+    command: "-js --http_port 8222 "
+    networks:
+      - app_net
 networks:
   app_net:
     driver: bridge

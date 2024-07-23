@@ -4,6 +4,7 @@ go 1.22.5
 
 require (
 	github.com/ThreeDotsLabs/watermill v1.3.5
+	github.com/ThreeDotsLabs/watermill-nats/v2 v2.0.2
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.0.1
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go v1.54.19
@@ -154,6 +155,9 @@ require (
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
+	github.com/nats-io/nats.go v1.34.0 // indirect
+	github.com/nats-io/nkeys v0.4.7 // indirect
+	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20240620215129-f5a955a47ae4 // indirect

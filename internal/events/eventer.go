@@ -38,6 +38,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events/common"
 	gochannel "github.com/stacklok/minder/internal/events/gochannel"
+	"github.com/stacklok/minder/internal/events/nats"
 	eventersql "github.com/stacklok/minder/internal/events/sql"
 )
 
@@ -96,7 +97,7 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (Interface, error
 	}
 	zerolog.Ctx(ctx).Info().Msg("Metrics Instruments registered")
 
-	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
+	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg, l)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
@@ -148,6 +149,7 @@ func instantiateDriver(
 	ctx context.Context,
 	driver string,
 	cfg *serverconfig.EventConfig,
+	l watermill.LoggerAdapter,
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
 	switch driver {
 	case GoChannelDriver:
@@ -156,6 +158,9 @@ func instantiateDriver(
 	case SQLDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
+	case NATSDriver:
+		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
+		return nats.BuildNATSDriver(ctx, cfg, l)
 	default:
 		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)

@@ -27,6 +27,8 @@ type EventConfig struct {
 	GoChannel GoChannelEventConfig `mapstructure:"go-channel"`
 	// SQLPubSub is the configuration for the database event driver
 	SQLPubSub SQLEventConfig `mapstructure:"sql"`
+	// NATSPubSub is the configuration for the NATS event driver
+	NATSPubSub NATSEventConfig `mapstructure:"nats"`
 	// Aggregator is the configuration for the event aggregator middleware
 	Aggregator AggregatorConfig `mapstructure:"aggregator"`
 }
@@ -48,6 +50,11 @@ type SQLEventConfig struct {
 	// InitSchema is whether or not to initialize the schema
 	InitSchema bool                  `mapstructure:"init_schema" default:"true"`
 	Connection config.DatabaseConfig `mapstructure:"connection" default:"{\"dbname\":\"watermill\"}"`
+}
+
+type NATSEventConfig struct {
+	// URL is the URL for the NATS server
+	URL string `mapstructure:"url" default:"nats://localhost:4222"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware
