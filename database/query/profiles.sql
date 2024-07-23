@@ -46,9 +46,6 @@ RETURNING *;
 -- name: DeleteProfileForEntity :exec
 DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
--- name: GetProfileForEntity :one
-SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
-
 -- name: GetProfileByProjectAndID :many
 WITH helper AS(
     SELECT pr.id as profid,
@@ -112,14 +109,6 @@ AND (
 -- name: DeleteProfile :exec
 DELETE FROM profiles
 WHERE id = $1 AND project_id = $2;
-
--- name: UpsertRuleInstantiation :one
-INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
-VALUES ($1, $2)
-ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING *;
-
--- name: DeleteRuleInstantiation :exec
-DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2;
 
 -- name: ListProfilesInstantiatingRuleType :many
 SELECT DISTINCT(p.name)
