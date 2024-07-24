@@ -9,11 +9,35 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
+
+const deleteEvaluationHistoryByIDs = `-- name: DeleteEvaluationHistoryByIDs :execrows
+DELETE FROM evaluation_statuses s
+ WHERE s.id = ANY($1)
+`
+
+func (q *Queries) DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error) {
+	query := deleteEvaluationHistoryByIDs
+	var queryParams []interface{}
+	if len(evaluationids) > 0 {
+		for _, v := range evaluationids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:evaluationids*/?", strings.Repeat(",?", len(evaluationids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:evaluationids*/?", "NULL", 1)
+	}
+	result, err := q.db.ExecContext(ctx, query, queryParams...)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
 
 const getLatestEvalStateForRuleEntity = `-- name: GetLatestEvalStateForRuleEntity :one
 
@@ -362,6 +386,76 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.RemediationDetails,
 			&i.AlertStatus,
 			&i.AlertDetails,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEvaluationHistoryOlderThan = `-- name: ListEvaluationHistoryOlderThan :many
+SELECT s.evaluation_time,
+       s.id,
+       ere.rule_id,
+       -- entity type
+       CAST(
+	 CASE
+	 WHEN ere.repository_id IS NOT NULL THEN 1
+	 WHEN ere.pull_request_id IS NOT NULL THEN 2
+	 WHEN ere.artifact_id IS NOT NULL THEN 3
+	 END AS integer
+       ) AS entity_type,
+       -- entity id
+       CAST(
+         CASE
+         WHEN ere.repository_id IS NOT NULL THEN ere.repository_id
+         WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
+         WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
+         END AS uuid
+       ) AS entity_id
+  FROM evaluation_statuses s
+       JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+ WHERE s.evaluation_time < $1
+ -- listing from oldest to newest
+ ORDER BY s.evaluation_time ASC, rule_id ASC, entity_id ASC
+ LIMIT $2::integer
+`
+
+type ListEvaluationHistoryOlderThanParams struct {
+	Threshold time.Time `json:"threshold"`
+	Size      int32     `json:"size"`
+}
+
+type ListEvaluationHistoryOlderThanRow struct {
+	EvaluationTime time.Time `json:"evaluation_time"`
+	ID             uuid.UUID `json:"id"`
+	RuleID         uuid.UUID `json:"rule_id"`
+	EntityType     int32     `json:"entity_type"`
+	EntityID       uuid.UUID `json:"entity_id"`
+}
+
+func (q *Queries) ListEvaluationHistoryOlderThan(ctx context.Context, arg ListEvaluationHistoryOlderThanParams) ([]ListEvaluationHistoryOlderThanRow, error) {
+	rows, err := q.db.QueryContext(ctx, listEvaluationHistoryOlderThan, arg.Threshold, arg.Size)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListEvaluationHistoryOlderThanRow{}
+	for rows.Next() {
+		var i ListEvaluationHistoryOlderThanRow
+		if err := rows.Scan(
+			&i.EvaluationTime,
+			&i.ID,
+			&i.RuleID,
+			&i.EntityType,
+			&i.EntityID,
 		); err != nil {
 			return nil, err
 		}
