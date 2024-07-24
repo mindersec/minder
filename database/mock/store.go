@@ -2204,3 +2204,17 @@ func (mr *MockStoreMockRecorder) UpsertRuleInstance(arg0, arg1 any) *gomock.Call
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleInstance", reflect.TypeOf((*MockStore)(nil).UpsertRuleInstance), arg0, arg1)
 }
+
+// WithTransactionErr mocks base method.
+func (m *MockStore) WithTransactionErr(arg0 func(db.ExtendQuerier) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithTransactionErr", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WithTransactionErr indicates an expected call of WithTransactionErr.
+func (mr *MockStoreMockRecorder) WithTransactionErr(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithTransactionErr", reflect.TypeOf((*MockStore)(nil).WithTransactionErr), arg0)
+}

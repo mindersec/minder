@@ -28,7 +28,6 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	ent "github.com/stacklok/minder/internal/entities"
-	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/profiles/models"
 )
 
@@ -192,51 +191,49 @@ func (e *executor) createOrUpdateEvalStatus(
 		logger.Err(err).Msg("error upserting rule alert details")
 	}
 
-	if flags.Bool(ctx, e.featureFlags, flags.EvalHistory) {
-		// Log in the evaluation history tables
-		_, err = db.WithTransaction(e.querier, func(qtx db.ExtendQuerier) (uuid.UUID, error) {
-			evalID, err := e.historyService.StoreEvaluationStatus(
-				ctx,
-				qtx,
-				params.Rule.ID,
-				params.EntityType,
-				entityID,
-				params.GetEvalErr(),
-			)
-			if err != nil {
-				return uuid.Nil, err
-			}
-
-			// These could be added into the history service, but since there
-			// is ongoing discussion about decoupling alerting and remediation
-			// from evaluation, I am leaving them here to make them easy to
-			// move elsewhere.
-			err = qtx.InsertRemediationEvent(ctx, db.InsertRemediationEventParams{
-				EvaluationID: evalID,
-				Status:       remediationStatus,
-				Details:      errorAsActionDetails(params.GetActionsErr().RemediateErr),
-				Metadata:     params.GetActionsErr().RemediateMeta,
-			})
-			if err != nil {
-				return uuid.Nil, err
-			}
-
-			err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
-				EvaluationID: evalID,
-				Status:       alertStatus,
-				Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
-				Metadata:     params.GetActionsErr().AlertMeta,
-			})
-			if err != nil {
-				return uuid.Nil, err
-			}
-
-			return evalID, nil
-		})
+	// Log in the evaluation history tables
+	err = e.querier.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+		evalID, err := e.historyService.StoreEvaluationStatus(
+			ctx,
+			qtx,
+			params.Rule.ID,
+			params.EntityType,
+			entityID,
+			params.GetEvalErr(),
+		)
 		if err != nil {
-			logger.Err(err).Msg("error logging evaluation status")
 			return err
 		}
+
+		// These could be added into the history service, but since there
+		// is ongoing discussion about decoupling alerting and remediation
+		// from evaluation, I am leaving them here to make them easy to
+		// move elsewhere.
+		err = qtx.InsertRemediationEvent(ctx, db.InsertRemediationEventParams{
+			EvaluationID: evalID,
+			Status:       remediationStatus,
+			Details:      errorAsActionDetails(params.GetActionsErr().RemediateErr),
+			Metadata:     params.GetActionsErr().RemediateMeta,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
+			EvaluationID: evalID,
+			Status:       alertStatus,
+			Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
+			Metadata:     params.GetActionsErr().AlertMeta,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		logger.Err(err).Msg("error logging evaluation status")
+		return err
 	}
 
 	return err
