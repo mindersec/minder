@@ -7,9 +7,10 @@ sidebar_position: 60
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Minder account
-* An enrolled Provider (e.g., GitHub) and registered repositories
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub) and registered repositories
 
 ## Create a rule type that you want to use auto-remediation on
 
@@ -20,7 +21,7 @@ creating a pull request with a proposed fix.
 
 In this example, we will use a rule type that checks if a repository allows having force pushes on their main branch,
 which is considered a security risk. If their setting allows for force pushes, Minder will automatically remediate it
-and disable it. 
+and disable it.
 
 The rule type is called `branch_protection_allow_force_pushes.yaml` and is one of the reference rule types provided by
 the Minder team.
@@ -44,6 +45,7 @@ minder ruletype create -f rule-types/github/branch_protection_allow_force_pushes
 ```
 
 ## Create a profile
+
 Next, create a profile that applies the rule to all registered repositories.
 
 Create a new file called `profile.yaml` using the following profile definition and enable automatic remediation by setting

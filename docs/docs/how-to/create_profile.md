@@ -5,16 +5,19 @@ sidebar_position: 10
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Stacklok account
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
 
 ## Use a reference rule
+
 The first step to creating a profile is to create the rules that your profile will apply.
 
 The Minder team has provided several reference rules for common use cases. To get started quickly, create a rule from
 the set of references.
 
 Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+
 ```
 git clone https://github.com/stacklok/minder-rules-and-profiles.git
 ```
@@ -30,14 +33,15 @@ minder ruletype create -f rule-types/github/secret_scanning.yaml
 ```
 
 ## Write your own rule
+
 This section describes how to write your own rule, using the existing rule `secret_scanning` as a reference. If you've
 already created the `secret_scanning` rule, you may choose to skip this section.
 
-Start by creating a rule that checks if secret scanning is enabled.  
+Start by creating a rule that checks if secret scanning is enabled.
 
 Create a new file called `secret_scanning.yaml`.
 
-Add some basic information about the rule to the new file, such as the version, type, name, context, description and 
+Add some basic information about the rule to the new file, such as the version, type, name, context, description and
 guidance.
 
 ```yaml
@@ -60,6 +64,7 @@ guidance: |
 
 Next, add the rule definition to the `secret_scanning.yaml` file.
 Set `in_entity` to be `repository`, since secret scanning is enabled on the repository.
+
 ```yaml
 def:
   in_entity: repository
@@ -106,7 +111,7 @@ def:
           def: ".enabled"
 ```
 
-Set up the remediation action that will be taken if this rule is not satisfied 
+Set up the remediation action that will be taken if this rule is not satisfied
 (and the profile has turned on remediation). The remediation action in this case is to make a PATCH request to the
 repository and enable secret scanning.
 ```yaml
@@ -220,6 +225,7 @@ repository:
 ```
 
 Putting it all together, you get the following content if `profile.yaml`:
+
 ```yaml
 version: v1
 type: profile
@@ -260,7 +266,7 @@ In Minder profiles, rules are identified by their type and, optionally, a unique
 
 ### Rule Types vs Rule Names
 
-Rule types are mandatory and refer to the kind of rule being applied. Rule names, on the other hand, are optional 
+Rule types are mandatory and refer to the kind of rule being applied. Rule names, on the other hand, are optional
 identifiers that become crucial when multiple rules of the same type exist under an entity.
 
 ```yaml
@@ -270,11 +276,12 @@ repository:
     def:
       enabled: true
 ```
+
 In this example, `secret_scanning` is the rule type and `secret_scanning_github` is the rule name.
 
 ### When are Rule Names Mandatory?
 
-If you're using multiple rules of the same type under an entity, each rule must have a unique name. This helps 
+If you're using multiple rules of the same type under an entity, each rule must have a unique name. This helps
 distinguish between rules and understand their specific purpose.
 
 ```yaml
@@ -292,7 +299,7 @@ Here, we have two rules of the same type `secret_scanning` under the `repository
 
 ### Uniqueness of Rule Names
 
-No two rules, whether of the same type or different types, can have the same name under an entity. This avoids 
+No two rules, whether of the same type or different types, can have the same name under an entity. This avoids
 confusion and ensures each rule can be individually managed.
 
 ```yaml
@@ -306,8 +313,8 @@ repository: # Would return an error while creating
     def:
       enabled: false
 ```
-In the above used example, even though the rules are of different types (`secret_scanning` and `secret_push_protection`), 
-Minder will return an error while creating this profile as rule names are same under the same entity. 
+In the above used example, even though the rules are of different types (`secret_scanning` and `secret_push_protection`),
+Minder will return an error while creating this profile as rule names are same under the same entity.
 You may use same rule names under different entities (repository, artifacts, etc.)
 
 Rule name should not match any rule type, except its own rule type. If a rule name matches its own rule type, it should
@@ -334,8 +341,8 @@ the explicit name of the `gomod` rule.
 
 ### Example
 
-Consider a profile with two `dependabot_configured` rules under the `repository` entity. The first rule has a unique 
-name, "Dependabot Configured for GoLang". The second rule doesn't have a name, which is acceptable as Minder would 
+Consider a profile with two `dependabot_configured` rules under the `repository` entity. The first rule has a unique
+name, "Dependabot Configured for GoLang". The second rule doesn't have a name, which is acceptable as Minder would
 add rule type as the default name for the rule.
 
 ```yaml
@@ -353,5 +360,5 @@ repository:
       apply_if_file: docs/package.json
 ```
 
-You can find the rule definitions used above and many profile examples at 
+You can find the rule definitions used above and many profile examples at
 [minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles) repository.

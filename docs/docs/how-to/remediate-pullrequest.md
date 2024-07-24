@@ -10,13 +10,14 @@ import TabItem from '@theme/TabItem';
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Minder account
-* An enrolled Provider (e.g., GitHub) and registered repositories
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub) and registered repositories
 
 ## Create a rule type that has support for pull request automatic remediation
 
-The pull request automatic remediation feature provides the functionality to fix a failed rule type by creating a pull request. 
+The pull request automatic remediation feature provides the functionality to fix a failed rule type by creating a pull request.
 
 This feature is only available for rule types that support it. To find out if a rule type supports it, check the
 `remediate` section in their `<alert-type>.yaml` file. It should have the `pull_request` section defined like below:
@@ -31,8 +32,8 @@ type: rule-type
 ```
 
 In this example, we will use a rule type that checks if a repository has Dependabot enabled. If it's not enabled, Minder
-will create a pull request that enables Dependabot. The rule type is called `dependabot_configured.yaml` and is one of 
-the reference rule types provided by the Minder team.
+will create a pull request that enables Dependabot. The rule type is called `dependabot_configured.yaml` and is
+one of the reference rule types provided by the Minder team.
 
 Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
 

@@ -7,9 +7,10 @@ import TabItem from '@theme/TabItem';
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Minder account
-* An enrolled Provider (e.g., GitHub) and registered repositories
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub) and registered repositories
 
 ## Create the PR vulnerability check rule
 Start by creating a rule that checks if a pull request adds a new dependency with known vulnerabilities. If it does,
@@ -130,7 +131,7 @@ Create the profile in Minder:
 minder profile create -f profile.yaml
 ```
 
-Once the profile is created, Minder will monitor any pull requests to the registered repositories. If a pull 
+Once the profile is created, Minder will monitor any pull requests to the registered repositories. If a pull
 request brings in a dependency with a known vulnerability, then Minder will add a review to the pull request and
 suggest changes.
 
