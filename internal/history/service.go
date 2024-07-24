@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -201,6 +202,10 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	rows, err := qtx.ListEvaluationHistory(ctx, params)
 	if err != nil {
 		return nil, errors.New("internal error")
+	}
+
+	if cursor != nil && cursor.Direction == Prev {
+		slices.Reverse(rows)
 	}
 
 	result := &ListEvaluationHistoryResult{

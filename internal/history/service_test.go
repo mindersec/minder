@@ -208,6 +208,90 @@ func TestListEvaluationHistory(t *testing.T) {
 			},
 		},
 
+		// cursor flips on direction
+		{
+			name: "next does not flip",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(nil, nil,
+					makeHistoryRow(
+						uuid1,
+						evaluatedAt1,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid2,
+						evaluatedAt2,
+						entityType,
+						remediation,
+						alert,
+					),
+				),
+			),
+			cursor: &ListEvaluationCursor{
+				Direction: Next,
+			},
+			checkf: func(t *testing.T, rows *ListEvaluationHistoryResult) {
+				t.Helper()
+
+				require.NotNil(t, rows)
+				require.Len(t, rows.Data, 2)
+
+				// database order is maintained
+				item1 := rows.Data[0]
+				require.Equal(t, uuid1, item1.EvaluationID)
+				require.Equal(t, evaluatedAt1, item1.EvaluatedAt)
+				require.Equal(t, uuid1, item1.EntityID)
+
+				item2 := rows.Data[1]
+				require.Equal(t, uuid2, item2.EvaluationID)
+				require.Equal(t, evaluatedAt2, item2.EvaluatedAt)
+				require.Equal(t, uuid2, item2.EntityID)
+			},
+		},
+		{
+			name: "prev does flip",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(nil, nil,
+					makeHistoryRow(
+						uuid2,
+						evaluatedAt2,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid1,
+						evaluatedAt1,
+						entityType,
+						remediation,
+						alert,
+					),
+				),
+			),
+			cursor: &ListEvaluationCursor{
+				Direction: Prev,
+			},
+			checkf: func(t *testing.T, rows *ListEvaluationHistoryResult) {
+				t.Helper()
+
+				require.NotNil(t, rows)
+				require.Len(t, rows.Data, 2)
+
+				// database order is maintained
+				item1 := rows.Data[0]
+				require.Equal(t, uuid1, item1.EvaluationID)
+				require.Equal(t, evaluatedAt1, item1.EvaluatedAt)
+				require.Equal(t, uuid1, item1.EntityID)
+
+				item2 := rows.Data[1]
+				require.Equal(t, uuid2, item2.EvaluationID)
+				require.Equal(t, evaluatedAt2, item2.EvaluatedAt)
+				require.Equal(t, uuid2, item2.EntityID)
+			},
+		},
+
 		// cursor
 		{
 			name: "cursor next",
@@ -661,6 +745,7 @@ func TestListEvaluationHistory(t *testing.T) {
 	}
 }
 
+//nolint:unparam
 func makeHistoryRow(
 	id uuid.UUID,
 	evaluatedAt time.Time,

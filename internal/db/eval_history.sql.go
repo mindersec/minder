@@ -259,12 +259,13 @@ SELECT s.id::uuid AS evaluation_id,
    AND ($13::alert_status_types[] IS NULL OR ae.status != ANY($13::alert_status_types[]))
    AND ($14::eval_status_types[] IS NULL OR s.status != ANY($14::eval_status_types[]))
    -- time range filter
-   AND ($15::timestamp without time zone IS NULL
-        OR $16::timestamp without time zone IS NULL
-        OR s.evaluation_time BETWEEN $15 AND $16)
+   AND ($15::timestamp without time zone IS NULL OR s.evaluation_time >= $15)
+   AND ($16::timestamp without time zone IS NULL OR  s.evaluation_time < $16)
    -- implicit filter by project id
    AND j.id = $17
- ORDER BY s.evaluation_time DESC
+ ORDER BY
+ CASE WHEN $1::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
  LIMIT $18::integer
 `
 
