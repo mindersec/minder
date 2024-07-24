@@ -30,7 +30,6 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/history"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -49,10 +48,6 @@ func (s *Server) ListEvaluationHistory(
 	ctx context.Context,
 	in *minderv1.ListEvaluationHistoryRequest,
 ) (*minderv1.ListEvaluationHistoryResponse, error) {
-	if !flags.Bool(ctx, s.featureFlags, flags.EvalHistory) {
-		return nil, status.Error(codes.Unimplemented, "Not implemented")
-	}
-
 	// process cursor
 	cursor := &history.DefaultCursor
 	size := defaultPageSize
