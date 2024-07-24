@@ -25,7 +25,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -70,7 +70,7 @@ func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[strin
 
 	// TODO(jhrozek): Fix this!
 	//nolint:govet
-	prdeps, ok := res.Object.(*pb.PrDependencies)
+	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")
 	}
@@ -153,8 +153,8 @@ func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error
 func (_ *Evaluator) queryVulnDb(
 	ctx context.Context,
 	db vulnDb,
-	dep *pb.Dependency,
-	ecosystem pb.DepEcosystem,
+	dep *pbinternal.Dependency,
+	ecosystem pbinternal.DepEcosystem,
 ) (*VulnerabilityResponse, error) {
 	req, err := db.NewQuery(ctx, dep, ecosystem)
 	if err != nil {
@@ -172,7 +172,7 @@ func (_ *Evaluator) queryVulnDb(
 // checkVulnerabilities checks whether a PR dependency contains any vulnerabilities.
 func (e *Evaluator) checkVulnerabilities(
 	ctx context.Context,
-	dep *pb.PrDependencies_ContextualDependency,
+	dep *pbinternal.PrDependencies_ContextualDependency,
 	cfg *config,
 	cache *repoCache,
 	prHandler prStatusHandler,

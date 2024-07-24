@@ -661,8 +661,8 @@
             "description": "size is the number of items to retrieve from the collection.",
             "in": "query",
             "required": false,
-            "type": "string",
-            "format": "uint64"
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -1050,7 +1050,11 @@
               "ENTITY_REPOSITORIES",
               "ENTITY_BUILD_ENVIRONMENTS",
               "ENTITY_ARTIFACTS",
-              "ENTITY_PULL_REQUESTS"
+              "ENTITY_PULL_REQUESTS",
+              "ENTITY_RELEASE",
+              "ENTITY_PIPELINE_RUN",
+              "ENTITY_TASK_RUN",
+              "ENTITY_BUILD"
             ],
             "default": "ENTITY_UNSPECIFIED"
           },
@@ -2758,7 +2762,7 @@
     },
     "/api/v1/user/invitations": {
       "get": {
-        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is beacuse understanding the routing of\nemail messages is beyond the scope of Minder.",
+        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is because understanding the routing of\nemail messages is beyond the scope of Minder.",
         "description": "This API endpoint may be called without the logged-in user\npreviously having called `CreateUser`.",
         "operationId": "UserService_ListInvitations",
         "responses": {
@@ -3031,7 +3035,7 @@
           "type": "string",
           "description": "expr is the expression to select the entity."
         },
-        "comment": {
+        "description": {
           "type": "string",
           "description": "description is the human-readable description of the selector."
         }
@@ -3469,8 +3473,8 @@
           "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis."
         },
         "size": {
-          "type": "string",
-          "format": "uint64",
+          "type": "integer",
+          "format": "int64",
           "description": "size is the number of items to retrieve from the collection."
         }
       },
@@ -3480,8 +3484,8 @@
       "type": "object",
       "properties": {
         "totalRecords": {
-          "type": "string",
-          "format": "uint64",
+          "type": "integer",
+          "format": "int64",
           "description": "Total number of records matching the request. This is optional."
         },
         "next": {
@@ -3573,7 +3577,11 @@
         "ENTITY_REPOSITORIES",
         "ENTITY_BUILD_ENVIRONMENTS",
         "ENTITY_ARTIFACTS",
-        "ENTITY_PULL_REQUESTS"
+        "ENTITY_PULL_REQUESTS",
+        "ENTITY_RELEASE",
+        "ENTITY_PIPELINE_RUN",
+        "ENTITY_TASK_RUN",
+        "ENTITY_BUILD"
       ],
       "default": "ENTITY_UNSPECIFIED",
       "description": "Entity defines the entity that is supported by the provider."
@@ -3637,6 +3645,15 @@
         "remediation": {
           "$ref": "#/definitions/v1EvaluationHistoryRemediation",
           "description": "remediation contains details of the remediation for this evaluation."
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "created_at is the timestamp of creation of this evaluation"
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the evaluation."
         }
       }
     },
@@ -3658,7 +3675,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "id is the ID of the entity."
+          "description": "id is the unique identifier of the entity."
         },
         "type": {
           "$ref": "#/definitions/v1Entity",
@@ -3690,7 +3707,7 @@
           "type": "string",
           "description": "name is the name of the rule instance."
         },
-        "type": {
+        "ruleType": {
           "type": "string",
           "description": "type is the name of the rule type."
         },
@@ -3977,6 +3994,10 @@
         "inviteUrl": {
           "type": "string",
           "description": "inviteURL is the URL that can be used to accept the invitation."
+        },
+        "emailSkipped": {
+          "type": "boolean",
+          "description": "emailSkipped is true if the email was not sent to the invitee."
         }
       }
     },
@@ -4244,6 +4265,34 @@
           }
         },
         "pullRequest": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProfileRule"
+          }
+        },
+        "release": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProfileRule"
+          }
+        },
+        "pipelineRun": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProfileRule"
+          }
+        },
+        "taskRun": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/ProfileRule"
+          }
+        },
+        "build": {
           "type": "array",
           "items": {
             "type": "object",

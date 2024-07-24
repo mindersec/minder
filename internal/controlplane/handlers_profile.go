@@ -580,39 +580,3 @@ func (s *Server) UpdateProfile(ctx context.Context,
 		Profile: updatedProfile,
 	}, nil
 }
-
-func getUnusedOldRuleStatuses(
-	newRules, oldRules prof.RuleMapping,
-) prof.RuleMapping {
-	unusedRuleStatuses := make(prof.RuleMapping)
-
-	for ruleTypeAndName, rule := range oldRules {
-		if _, ok := newRules[ruleTypeAndName]; !ok {
-			unusedRuleStatuses[ruleTypeAndName] = rule
-		}
-	}
-
-	return unusedRuleStatuses
-}
-
-func getUnusedOldRuleTypes(newRules, oldRules prof.RuleMapping) []prof.EntityAndRuleTuple {
-	var unusedRuleTypes []prof.EntityAndRuleTuple
-
-	oldRulesTypeMap := make(map[string]prof.EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range oldRules {
-		oldRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	newRulesTypeMap := make(map[string]prof.EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range newRules {
-		newRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	for ruleType, rule := range oldRulesTypeMap {
-		if _, ok := newRulesTypeMap[ruleType]; !ok {
-			unusedRuleTypes = append(unusedRuleTypes, rule)
-		}
-	}
-
-	return unusedRuleTypes
-}

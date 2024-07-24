@@ -13,6 +13,7 @@ import (
 )
 
 type Querier interface {
+	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -50,12 +51,12 @@ type Querier interface {
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
-	DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error
 	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
 	// but locks the table before doing so.
 	DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
+	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
@@ -75,7 +76,6 @@ type Querier interface {
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
-	GetIDByProfileEntityName(ctx context.Context, arg GetIDByProfileEntityNameParams) (uuid.UUID, error)
 	// GetImmediateChildrenProjects is a query that returns all the immediate children of a project.
 	GetImmediateChildrenProjects(ctx context.Context, parentID uuid.UUID) ([]Project, error)
 	GetInstallationIDByAppID(ctx context.Context, appInstallationID int64) (ProviderGithubAppInstallation, error)
@@ -116,7 +116,6 @@ type Querier interface {
 	GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDAndLockParams) (Profile, error)
 	GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error)
 	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
-	GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error)
 	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
 	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
@@ -140,10 +139,17 @@ type Querier interface {
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
+	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
-	GetRuleInstancesForProfileEntity(ctx context.Context, arg GetRuleInstancesForProfileEntityParams) ([]RuleInstance, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
 	GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNameParams) (RuleType, error)
+	// intended as a temporary transition query
+	// this will be removed once rule_instances is used consistently in the engine
+	GetRuleTypeIDByRuleNameEntityProfile(ctx context.Context, arg GetRuleTypeIDByRuleNameEntityProfileParams) (uuid.UUID, error)
+	// intended as a temporary transition query
+	// this will be removed once the evaluation history tables replace the old state tables
+	GetRuleTypeNameByID(ctx context.Context, id uuid.UUID) (string, error)
+	GetRuleTypesByEntityInHierarchy(ctx context.Context, arg GetRuleTypesByEntityInHierarchyParams) ([]RuleType, error)
 	GetSelectorByID(ctx context.Context, id uuid.UUID) (ProfileSelector, error)
 	GetSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) ([]ProfileSelector, error)
 	GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (Subscription, error)
@@ -157,6 +163,7 @@ type Querier interface {
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
+	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it
@@ -174,12 +181,8 @@ type Querier interface {
 	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
-	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
-	// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
-	// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
-	// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error)
+	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error)
 	// ListProvidersByProjectID allows us to list all providers
 	// for a given array of projects.
 	ListProvidersByProjectID(ctx context.Context, projects []uuid.UUID) ([]Provider, error)
@@ -216,7 +219,6 @@ type Querier interface {
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
-	UpdateEvaluationTimes(ctx context.Context, arg UpdateEvaluationTimesParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the
 	// role of the invitee.
@@ -267,7 +269,6 @@ type Querier interface {
 	// See the License for the specific language governing permissions and
 	// limitations under the License.
 	UpsertRuleInstance(ctx context.Context, arg UpsertRuleInstanceParams) (uuid.UUID, error)
-	UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error)
 }
 
 var _ Querier = (*Queries)(nil)

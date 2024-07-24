@@ -1,5 +1,5 @@
 ---
-sidebar_label: Installing with Helm
+sidebar_label: Installing a Production version
 sidebar_position: 80
 ---
 

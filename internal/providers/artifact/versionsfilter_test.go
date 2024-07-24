@@ -16,13 +16,88 @@
 package artifact
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
+
+func TestBuildFilter(t *testing.T) {
+	t.Parallel()
+	simpleRegex := `^simpleregex$`
+	compiledSimpleRegex := regexp.MustCompile(simpleRegex)
+	for _, tc := range []struct {
+		name     string
+		tags     []string
+		regex    string
+		expected *filter
+		mustErr  bool
+	}{
+		{
+			name:    "tags",
+			tags:    []string{"hello", "bye"},
+			mustErr: false,
+			expected: &filter{
+				tagMatcher:      &tagListMatcher{tags: []string{"hello", "bye"}},
+				retentionPeriod: time.Time{},
+			},
+		},
+		{
+			name:    "empty-tag",
+			tags:    []string{"hello", ""},
+			mustErr: true,
+		},
+		{
+			name:    "regex",
+			tags:    []string{},
+			regex:   simpleRegex,
+			mustErr: false,
+			expected: &filter{
+				tagMatcher: &tagRegexMatcher{
+					re: compiledSimpleRegex,
+				},
+			},
+		},
+		{
+			name:    "invalidregexp",
+			tags:    []string{},
+			regex:   `$(invalid^`,
+			mustErr: true,
+		},
+		{
+			name:    "valid-long-regexp",
+			tags:    []string{},
+			regex:   `^` + strings.Repeat("A", 1000) + `$`,
+			mustErr: true,
+		},
+		{
+			name:    "no-tags",
+			tags:    []string{},
+			mustErr: false,
+			expected: &filter{
+				tagMatcher: &tagAllMatcher{},
+			},
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			f, err := BuildFilter(tc.tags, tc.regex)
+			if tc.mustErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, f.tagMatcher)
+			require.Equal(t, tc.expected.tagMatcher, f.tagMatcher)
+		})
+	}
+}
 
 func Test_filter_IsSkippable(t *testing.T) {
 	t.Parallel()

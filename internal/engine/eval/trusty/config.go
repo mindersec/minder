@@ -23,7 +23,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/stacklok/minder/internal/proto"
 )
 
 var (
@@ -110,7 +110,7 @@ func parseConfig(ruleCfg map[string]any) (*config, error) {
 	return &conf, nil
 }
 
-func (c *config) getEcosystemConfig(ecosystem pb.DepEcosystem) *ecosystemConfig {
+func (c *config) getEcosystemConfig(ecosystem pbinternal.DepEcosystem) *ecosystemConfig {
 	sEco := ecosystem.AsString()
 	if sEco == "" {
 		return nil

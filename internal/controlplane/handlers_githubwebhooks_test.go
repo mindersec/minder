@@ -35,7 +35,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -32,15 +32,15 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
@@ -140,7 +140,7 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 }
 
 type remediateArgs struct {
-	remAction interfaces.ActionOpt
+	remAction models.ActionOpt
 	ent       protoreflect.ProtoMessage
 	pol       map[string]any
 	params    map[string]any
@@ -148,7 +148,7 @@ type remediateArgs struct {
 
 func createTestRemArgs() *remediateArgs {
 	return &remediateArgs{
-		remAction: interfaces.ActionOptOn,
+		remAction: models.ActionOptOn,
 		ent: &pb.Repository{
 			Owner: repoOwner,
 			Name:  repoName,
@@ -166,7 +166,7 @@ func createTestRemArgs() *remediateArgs {
 
 func createTestRemArgsWithExcludes() *remediateArgs {
 	return &remediateArgs{
-		remAction: interfaces.ActionOptOn,
+		remAction: models.ActionOptOn,
 		ent: &pb.Repository{
 			Owner: repoOwner,
 			Name:  repoName,
@@ -608,20 +608,10 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			tt.mockSetup(t, mockClient)
 
-			structPol, err := structpb.NewStruct(tt.remArgs.pol)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
-			structParams, err := structpb.NewStruct(tt.remArgs.params)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
 			evalParams := &interfaces.EvalStatusParams{
-				Rule: &pb.Profile_Rule{
-					Def:    structPol,
-					Params: structParams,
+				Rule: &models.RuleInstance{
+					Def:    tt.remArgs.pol,
+					Params: tt.remArgs.params,
 				},
 			}
 

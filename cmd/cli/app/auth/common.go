@@ -16,31 +16,17 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"os"
-	"time"
 
-	"github.com/gorilla/securecookie"
-	"github.com/pkg/browser"
-	"github.com/spf13/cobra"
-	"github.com/zitadel/oidc/v3/pkg/client/rp"
-	httphelper "github.com/zitadel/oidc/v3/pkg/http"
-	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
 	"github.com/stacklok/minder/internal/util/cli/table/layouts"
-	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -115,182 +101,4 @@ func getProjectTableRows(projects []*minderv1.ProjectRole) [][]string {
 		rows = append(rows, []string{fmt.Sprintf("%s (role: %s)", projectKey, project.GetRole().GetName()), projectVal})
 	}
 	return rows
-}
-
-type loginError struct {
-	ErrorType   string
-	Description string
-}
-
-func (e loginError) Error() string {
-	return fmt.Sprintf("Error: %s\nDescription: %s\n", e.ErrorType, e.Description)
-}
-
-func (e loginError) isAccessDenied() bool {
-	return e.ErrorType == "access_denied"
-}
-
-func writeError(w http.ResponseWriter, loginerr loginError) (string, error) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	htmlPage := genericAuthFailure
-	msg := "Access Denied."
-
-	if loginerr.isAccessDenied() {
-		htmlPage = accessDeniedHtml
-		msg = "Access Denied. Please accept the terms and conditions"
-	}
-
-	_, err := w.Write(htmlPage)
-	if err != nil {
-		return msg, err
-	}
-	return "", nil
-}
-
-// Login is a helper function to handle the login process
-// and return the access token
-func Login(
-	ctx context.Context,
-	cmd *cobra.Command,
-	cfg *clientconfig.Config,
-	extraScopes []string,
-	skipBroswer bool,
-) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
-	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
-	clientID := cfg.Identity.CLI.ClientId
-
-	parsedURL, err := url.Parse(issuerUrlStr)
-	if err != nil {
-		return nil, cli.MessageAndError("Error parsing issuer URL", err)
-	}
-
-	issuerUrl := parsedURL.JoinPath("realms/stacklok")
-	scopes := []string{"openid", "minder-audience"}
-
-	if len(extraScopes) > 0 {
-		scopes = append(scopes, extraScopes...)
-	}
-
-	callbackPath := "/auth/callback"
-
-	errChan := make(chan loginError)
-
-	errorHandler := func(w http.ResponseWriter, _ *http.Request, errorType string, errorDesc string, _ string) {
-		loginerr := loginError{
-			ErrorType:   errorType,
-			Description: errorDesc,
-		}
-
-		msg, writeErr := writeError(w, loginerr)
-		if writeErr != nil {
-			// if we cannot display the access denied page, just print an error message
-			cmd.Println(msg)
-		}
-		errChan <- loginerr
-	}
-
-	// create encrypted cookie handler to mitigate CSRF attacks
-	hashKey := securecookie.GenerateRandomKey(32)
-	encryptKey := securecookie.GenerateRandomKey(32)
-	cookieHandler := httphelper.NewCookieHandler(hashKey, encryptKey, httphelper.WithUnsecure(),
-		httphelper.WithSameSite(http.SameSiteLaxMode))
-	options := []rp.Option{
-		rp.WithCookieHandler(cookieHandler),
-		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
-		rp.WithPKCE(cookieHandler),
-		rp.WithErrorHandler(errorHandler),
-	}
-
-	// Get random port
-	port, err := rand.GetRandomPort()
-	if err != nil {
-		return nil, cli.MessageAndError("Error getting random port", err)
-	}
-
-	parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
-	if err != nil {
-		return nil, cli.MessageAndError("Error parsing callback URL", err)
-	}
-	redirectURI := parsedURL.JoinPath(callbackPath)
-
-	provider, err := rp.NewRelyingPartyOIDC(ctx, issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
-	if err != nil {
-		return nil, cli.MessageAndError("Error creating relying party", err)
-	}
-
-	stateFn := func() string {
-		state, err := mcrypto.GenerateNonce()
-		if err != nil {
-			cmd.PrintErrln("error generating state for login")
-			os.Exit(1)
-		}
-		return state
-	}
-
-	tokenChan := make(chan *oidc.Tokens[*oidc.IDTokenClaims])
-
-	callback := func(w http.ResponseWriter, _ *http.Request,
-		tokens *oidc.Tokens[*oidc.IDTokenClaims], _ string, _ rp.RelyingParty) {
-
-		tokenChan <- tokens
-		// send a success message to the browser
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, err := w.Write(loginSuccessHtml)
-		if err != nil {
-			// if we cannot display the success page, just print a success message
-			cmd.Println("Authentication Successful")
-		}
-	}
-
-	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
-	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
-
-	server := &http.Server{
-		Addr:              fmt.Sprintf(":%d", port),
-		ReadHeaderTimeout: time.Second * 10,
-	}
-	// Start the server in a goroutine
-	go func() {
-		err := server.ListenAndServe()
-		// ignore error if it's just a graceful shutdown
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			cmd.Printf("Error starting server: %v\n", err)
-		}
-	}()
-
-	defer server.Shutdown(ctx)
-
-	// get the OAuth authorization URL
-	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
-
-	if !skipBroswer {
-		// Redirect user to provider to log in
-		cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
-
-		// open user's browser to login page
-		if err := browser.OpenURL(loginUrl); err != nil {
-			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
-		}
-	} else {
-		cmd.Printf("Skipping browser login. You may login by pasting this URL into your browser: %s\n", loginUrl)
-	}
-
-	cmd.Println("Please follow the instructions on the page to log in.")
-
-	cmd.Println("Waiting for token...")
-
-	// wait for the token to be received
-	var token *oidc.Tokens[*oidc.IDTokenClaims]
-	var loginErr error
-
-	select {
-	case token = <-tokenChan:
-		break
-	case loginErr = <-errChan:
-		break
-	}
-
-	return token, loginErr
 }

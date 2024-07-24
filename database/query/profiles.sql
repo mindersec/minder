@@ -46,9 +46,6 @@ RETURNING *;
 -- name: DeleteProfileForEntity :exec
 DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
--- name: GetProfileForEntity :one
-SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
-
 -- name: GetProfileByProjectAndID :many
 WITH helper AS(
     SELECT pr.id as profid,
@@ -76,25 +73,6 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
 SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
-
--- name: ListProfilesByProjectID :many
-WITH helper AS(
-     SELECT pr.id as profid,
-            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
-       FROM profiles pr
-       JOIN profile_selectors ps
-         ON pr.id = ps.profile_id
-      WHERE pr.project_id = $1
-      GROUP BY pr.id
-)
-SELECT
-    sqlc.embed(profiles),
-    sqlc.embed(profiles_with_entity_profiles),
-    helper.selectors::profile_selector[] AS profiles_with_selectors
-FROM profiles
-JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-LEFT JOIN helper ON profiles.id = helper.profid
-WHERE profiles.project_id = $1;
 
 -- name: ListProfilesByProjectIDAndLabel :many
 WITH helper AS(
@@ -132,29 +110,22 @@ AND (
 DELETE FROM profiles
 WHERE id = $1 AND project_id = $2;
 
--- name: UpsertRuleInstantiation :one
-INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
-VALUES ($1, $2)
-ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING *;
-
--- name: DeleteRuleInstantiation :exec
-DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2;
-
 -- name: ListProfilesInstantiatingRuleType :many
--- get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
--- with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
--- so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-SELECT profiles.id, profiles.name, profiles.created_at FROM profiles
-JOIN entity_profiles ON profiles.id = entity_profiles.profile_id 
-JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_profile_id
-WHERE entity_profile_rules.rule_type_id = $1
-GROUP BY profiles.id;
+SELECT DISTINCT(p.name)
+FROM profiles AS p
+JOIN rule_instances AS r ON p.id = r.profile_id
+WHERE r.rule_type_id = $1;
 
 -- name: CountProfilesByEntityType :many
-SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+SELECT COUNT(DISTINCT(p.id)) AS num_profiles, r.entity_type AS profile_entity
 FROM profiles AS p
-JOIN entity_profiles AS ep ON p.id = ep.profile_id
-GROUP BY ep.entity;
+JOIN rule_instances AS r ON p.id = r.profile_id
+GROUP BY r.entity_type;
 
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
+
+-- name: BulkGetProfilesByID :many
+SELECT *
+FROM profiles
+WHERE id = ANY(sqlc.arg(profile_ids)::UUID[]);

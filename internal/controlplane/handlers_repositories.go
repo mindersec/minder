@@ -53,8 +53,8 @@ func (s *Server) RegisterRepository(
 	ctx context.Context,
 	in *pb.RegisterRepositoryRequest,
 ) (*pb.RegisterRepositoryResponse, error) {
-	projectID := getProjectID(ctx)
-	providerName := getProviderName(ctx)
+	projectID := GetProjectID(ctx)
+	providerName := GetProviderName(ctx)
 
 	// Validate that the Repository struct in the request
 	githubRepo := in.GetRepository()
@@ -182,7 +182,7 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
-	projectID := getProjectID(ctx)
+	projectID := GetProjectID(ctx)
 
 	// read the repository
 	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
@@ -265,7 +265,7 @@ func (s *Server) DeleteRepositoryById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository ID")
 	}
 
-	projectID := getProjectID(ctx)
+	projectID := GetProjectID(ctx)
 
 	err = s.repos.DeleteByID(ctx, parsedRepositoryID, projectID)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -291,8 +291,8 @@ func (s *Server) DeleteRepositoryByName(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
-	projectID := getProjectID(ctx)
-	providerName := getProviderName(ctx)
+	projectID := GetProjectID(ctx)
+	providerName := GetProviderName(ctx)
 
 	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -477,14 +477,4 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 
 	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
-}
-
-func getProjectID(ctx context.Context) uuid.UUID {
-	entityCtx := engcontext.EntityFromContext(ctx)
-	return entityCtx.Project.ID
-}
-
-func getProviderName(ctx context.Context) string {
-	entityCtx := engcontext.EntityFromContext(ctx)
-	return entityCtx.Provider.Name
 }

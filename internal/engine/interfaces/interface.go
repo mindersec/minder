@@ -29,7 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/profiles/models"
 )
 
 // Ingester is the interface for a rule type ingester
@@ -62,43 +62,6 @@ type Result struct {
 	Storer storage.Storer
 }
 
-// ActionOpt is the type that defines what action to take when remediating
-type ActionOpt int
-
-const (
-	// ActionOptOn means perform the remediation
-	ActionOptOn ActionOpt = iota
-	// ActionOptOff means do not perform the remediation
-	ActionOptOff
-	// ActionOptDryRun means perform a dry run of the remediation
-	ActionOptDryRun
-	// ActionOptUnknown means the action is unknown. This is a sentinel value.
-	ActionOptUnknown
-)
-
-func (a ActionOpt) String() string {
-	return [...]string{"on", "off", "dry_run", "unknown"}[a]
-}
-
-// ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
-	var actionOptMap = map[string]ActionOpt{
-		"on":      ActionOptOn,
-		"off":     ActionOptOff,
-		"dry_run": ActionOptDryRun,
-	}
-
-	if s == nil {
-		return defAction
-	}
-
-	if v, ok := actionOptMap[*s]; ok {
-		return v
-	}
-
-	return ActionOptUnknown
-}
-
 // ActionType represents the type of action, i.e., remediate, alert, etc.
 type ActionType string
 
@@ -106,8 +69,8 @@ type ActionType string
 type Action interface {
 	Class() ActionType
 	Type() string
-	GetOnOffState(*pb.Profile) ActionOpt
-	Do(ctx context.Context, cmd ActionCmd, setting ActionOpt, entity protoreflect.ProtoMessage,
+	GetOnOffState(models.ActionOpt) models.ActionOpt
+	Do(ctx context.Context, cmd ActionCmd, setting models.ActionOpt, entity protoreflect.ProtoMessage,
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
@@ -129,20 +92,22 @@ const (
 // other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
 	Result           *Result
-	Profile          *pb.Profile
-	Rule             *pb.Profile_Rule
-	RuleType         *pb.RuleType
-	ProfileID        uuid.UUID
+	Profile          *models.ProfileAggregate
+	Rule             *models.RuleInstance
 	RepoID           uuid.NullUUID
 	ArtifactID       uuid.NullUUID
 	PullRequestID    uuid.NullUUID
 	ProjectID        uuid.UUID
+	ReleaseID        uuid.UUID
+	PipelineRunID    uuid.UUID
+	TaskRunID        uuid.UUID
+	BuildID          uuid.UUID
 	EntityType       db.Entities
-	RuleTypeID       uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
-	actionsOnOff     map[ActionType]ActionOpt
+	actionsOnOff     map[ActionType]models.ActionOpt
 	actionsErr       evalerrors.ActionsError
+	ExecutionID      uuid.UUID
 }
 
 // Ensure EvalStatusParams implements the necessary interfaces
@@ -161,12 +126,12 @@ func (e *EvalStatusParams) SetEvalErr(err error) {
 }
 
 // GetActionsOnOff returns the actions' on/off state
-func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]ActionOpt {
+func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]models.ActionOpt {
 	return e.actionsOnOff
 }
 
 // SetActionsOnOff sets the actions' on/off state
-func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]ActionOpt) {
+func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]models.ActionOpt) {
 	e.actionsOnOff = actionsOnOff
 }
 
@@ -204,7 +169,7 @@ func (e *EvalStatusParams) GetActionsErr() evalerrors.ActionsError {
 }
 
 // GetRule returns the rule
-func (e *EvalStatusParams) GetRule() *pb.Profile_Rule {
+func (e *EvalStatusParams) GetRule() *models.RuleInstance {
 	return e.Rule
 }
 
@@ -213,13 +178,8 @@ func (e *EvalStatusParams) GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfil
 	return e.EvalStatusFromDb
 }
 
-// GetRuleType returns the rule type
-func (e *EvalStatusParams) GetRuleType() *pb.RuleType {
-	return e.RuleType
-}
-
 // GetProfile returns the profile
-func (e *EvalStatusParams) GetProfile() *pb.Profile {
+func (e *EvalStatusParams) GetProfile() *models.ProfileAggregate {
 	return e.Profile
 }
 
@@ -237,10 +197,10 @@ func (e *EvalStatusParams) GetIngestResult() *Result {
 func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 	outl := l.With().
 		Str("entity_type", string(e.EntityType)).
-		Str("profile_id", e.ProfileID.String()).
-		Str("rule_type", e.GetRule().GetType()).
-		Str("rule_name", e.GetRule().GetName()).
-		Str("rule_type_id", e.GetRuleType().GetId()).
+		Str("profile_id", e.Profile.ID.String()).
+		Str("rule_name", e.GetRule().Name).
+		Str("execution_id", e.ExecutionID.String()).
+		Str("rule_type_id", e.Rule.RuleTypeID.String()).
 		Logger()
 	if e.RepoID.Valid {
 		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()
@@ -258,7 +218,7 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 
 // EvalParamsReader is the interface used for a rule type evaluator
 type EvalParamsReader interface {
-	GetRule() *pb.Profile_Rule
+	GetRule() *models.RuleInstance
 	GetIngestResult() *Result
 }
 
@@ -271,10 +231,9 @@ type EvalParamsReadWriter interface {
 // ActionsParams is the interface used for processing a rule type action
 type ActionsParams interface {
 	EvalParamsReader
-	GetActionsOnOff() map[ActionType]ActionOpt
+	GetActionsOnOff() map[ActionType]models.ActionOpt
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
-	GetRuleType() *pb.RuleType
-	GetProfile() *pb.Profile
+	GetProfile() *models.ProfileAggregate
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"

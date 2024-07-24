@@ -302,10 +302,11 @@ func (e *EEA) buildEntityWrapper(
 		return e.buildArtifactInfoWrapper(ctx, repoID, projID, artID)
 	case db.EntitiesPullRequest:
 		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, prID)
-	case db.EntitiesBuildEnvironment:
-		return nil, fmt.Errorf("build environment entity not supported")
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
+		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
+		return nil, fmt.Errorf("entity type %q not yet supported", entity)
 	default:
-		return nil, fmt.Errorf("unknown entity type: %s", entity)
+		return nil, fmt.Errorf("unknown entity type: %q", entity)
 	}
 }
 

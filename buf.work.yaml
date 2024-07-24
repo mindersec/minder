@@ -16,3 +16,4 @@
 version: v1
 directories:
   - proto
+  - internal/proto

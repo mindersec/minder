@@ -203,7 +203,7 @@ manage Users CRUD
 | CreateUser | [CreateUserRequest](#minder-v1-CreateUserRequest) | [CreateUserResponse](#minder-v1-CreateUserResponse) |  |
 | DeleteUser | [DeleteUserRequest](#minder-v1-DeleteUserRequest) | [DeleteUserResponse](#minder-v1-DeleteUserResponse) |  |
 | GetUser | [GetUserRequest](#minder-v1-GetUserRequest) | [GetUserResponse](#minder-v1-GetUserResponse) |  |
-| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is beacuse understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
+| ListInvitations | [ListInvitationsRequest](#minder-v1-ListInvitationsRequest) | [ListInvitationsResponse](#minder-v1-ListInvitationsResponse) | ListInvitations returns a list of invitations for the user based on the user's registered email address.  Note that a user who receives an invitation code may still accept the invitation even if the code was directed to a different email address.  This is because understanding the routing of email messages is beyond the scope of Minder.  This API endpoint may be called without the logged-in user previously having called `CreateUser`. |
 | ResolveInvitation | [ResolveInvitationRequest](#minder-v1-ResolveInvitationRequest) | [ResolveInvitationResponse](#minder-v1-ResolveInvitationResponse) | ResolveInvitation allows a user to accept or decline an invitation to a project given the code for the invitation. A user may call ResolveInvitation to accept or decline an invitation even if they have not called CreateUser.  If a user accepts an invitation via this call before calling CreateUser, a Minder user record will be created, but no additional projects will be created (unlike CreateUser, which will also create a default project). |
 
 
@@ -318,6 +318,12 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 | ----- | ---- | ----- | ----------- |
 | branch | <TypeLink type="string">string</TypeLink> |  |  |
 | is_protected | <TypeLink type="bool">bool</TypeLink> |  | Add other relevant fields |
+
+
+
+<Message id="minder-v1-Build">Build</Message>
+
+
 
 
 
@@ -522,7 +528,7 @@ retrieve.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
-| size | <TypeLink type="uint64">uint64</TypeLink> |  | size is the number of items to retrieve from the collection. |
+| size | <TypeLink type="uint32">uint32</TypeLink> |  | size is the number of items to retrieve from the collection. |
 
 
 
@@ -535,7 +541,7 @@ subsets with respect to the one containing this struct.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| total_records | <TypeLink type="uint64">uint64</TypeLink> |  | Total number of records matching the request. This is optional. |
+| total_records | <TypeLink type="uint32">uint32</TypeLink> |  | Total number of records matching the request. This is optional. |
 | next | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. |
 | prev | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. |
 
@@ -703,19 +709,6 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
-<Message id="minder-v1-Dependency">Dependency</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ecosystem | <TypeLink type="minder-v1-DepEcosystem">DepEcosystem</TypeLink> |  |  |
-| name | <TypeLink type="string">string</TypeLink> |  |  |
-| version | <TypeLink type="string">string</TypeLink> |  |  |
-
-
-
 <Message id="minder-v1-DiffType">DiffType</Message>
 
 DiffType defines the diff data ingester.
@@ -803,6 +796,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
 | alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
 | remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
+| evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the evaluation. |
 
 
 
@@ -825,7 +820,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the entity. |
 | type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the entity type. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the entity name. |
 
@@ -851,7 +846,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule instance. |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
+| rule_type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
 | profile | <TypeLink type="string">string</TypeLink> |  | profile is the name of the profile which contains the rule. |
 
 
@@ -1285,6 +1280,7 @@ GitType defines the git data ingester.
 | sponsor_display | <TypeLink type="string">string</TypeLink> |  | sponsor_display is the display name of the user who created the invitation. |
 | project_display | <TypeLink type="string">string</TypeLink> |  | project_display is the display name of the project to which the user is invited. |
 | invite_url | <TypeLink type="string">string</TypeLink> |  | inviteURL is the URL that can be used to accept the invitation. |
+| email_skipped | <TypeLink type="bool">bool</TypeLink> |  | emailSkipped is true if the email was not sent to the invitee. |
 
 
 
@@ -1722,76 +1718,9 @@ ListRuleTypesResponse is the response to list rule types.
 
 
 
-<Message id="minder-v1-PrContents">PrContents</Message>
+<Message id="minder-v1-PipelineRun">PipelineRun</Message>
 
 
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
-| files | <TypeLink type="minder-v1-PrContents-File">PrContents.File</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrContents-File">PrContents.File</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  |  |
-| file_patch_url | <TypeLink type="string">string</TypeLink> |  |  |
-| patch_lines | <TypeLink type="minder-v1-PrContents-File-Line">PrContents.File.Line</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrContents-File-Line">PrContents.File.Line</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| line_number | <TypeLink type="int32">int32</TypeLink> |  | Deliberately left as an int32: a diff with more than 2^31 lines could lead to various problems while processing. |
-| content | <TypeLink type="string">string</TypeLink> |  |  |
-
-
-
-<Message id="minder-v1-PrDependencies">PrDependencies</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| pr | <TypeLink type="minder-v1-PullRequest">PullRequest</TypeLink> |  |  |
-| deps | <TypeLink type="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</TypeLink> | repeated |  |
-
-
-
-<Message id="minder-v1-PrDependencies-ContextualDependency">PrDependencies.ContextualDependency</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| dep | <TypeLink type="minder-v1-Dependency">Dependency</TypeLink> |  |  |
-| file | <TypeLink type="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</TypeLink> |  |  |
-
-
-
-<Message id="minder-v1-PrDependencies-ContextualDependency-FilePatch">PrDependencies.ContextualDependency.FilePatch</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  | file changed, e.g. package-lock.json |
-| patch_url | <TypeLink type="string">string</TypeLink> |  | points to the the raw patchfile |
 
 
 
@@ -1814,6 +1743,10 @@ DNS_STR = "[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?" ($DNS_STR:)?$DNS_STR |
 | build_environment | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | artifact | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | pull_request | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| release | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| pipeline_run | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| task_run | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
+| build | <TypeLink type="minder-v1-Profile-Rule">Profile.Rule</TypeLink> | repeated |  |
 | selection | <TypeLink type="minder-v1-Profile-Selector">Profile.Selector</TypeLink> | repeated |  |
 | remediate | <TypeLink type="string">string</TypeLink> | optional | whether and how to remediate (on,off,dry_run) this is optional and defaults to "off" |
 | alert | <TypeLink type="string">string</TypeLink> | optional | whether and how to alert (on,off,dry_run) this is optional and defaults to "on" |
@@ -1847,7 +1780,7 @@ Rule defines the individual call of a certain rule type.
 | id | <TypeLink type="string">string</TypeLink> |  | id is optional and use for updates to match upserts as well as read operations. It is ignored for creates. |
 | entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity to select. |
 | selector | <TypeLink type="string">string</TypeLink> |  | expr is the expression to select the entity. |
-| comment | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the human-readable description of the selector. |
 
 
 
@@ -2039,6 +1972,12 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | result | <TypeLink type="minder-v1-RegisterRepoResult">RegisterRepoResult</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-Release">Release</Message>
+
+Stubs for the SDLC entities
 
 
 
@@ -2487,6 +2426,12 @@ Severity defines the severity of the rule.
 
 
 
+<Message id="minder-v1-TaskRun">TaskRun</Message>
+
+
+
+
+
 <Message id="minder-v1-UpdateProfileRequest">UpdateProfileRequest</Message>
 
 
@@ -2695,19 +2640,6 @@ name, if it has been created
 
 
 
-<Enum id="minder-v1-DepEcosystem">DepEcosystem</Enum>
-
-
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| DEP_ECOSYSTEM_UNSPECIFIED | 0 |  |
-| DEP_ECOSYSTEM_NPM | 1 |  |
-| DEP_ECOSYSTEM_GO | 2 |  |
-| DEP_ECOSYSTEM_PYPI | 3 |  |
-
-
-
 <Enum id="minder-v1-Entity">Entity</Enum>
 
 Entity defines the entity that is supported by the provider.
@@ -2719,6 +2651,10 @@ Entity defines the entity that is supported by the provider.
 | ENTITY_BUILD_ENVIRONMENTS | 2 |  |
 | ENTITY_ARTIFACTS | 3 |  |
 | ENTITY_PULL_REQUESTS | 4 |  |
+| ENTITY_RELEASE | 5 |  |
+| ENTITY_PIPELINE_RUN | 6 |  |
+| ENTITY_TASK_RUN | 7 |  |
+| ENTITY_BUILD | 8 |  |
 
 
 

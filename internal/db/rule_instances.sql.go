@@ -31,24 +31,49 @@ func (q *Queries) DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdate
 	return err
 }
 
-const getIDByProfileEntityName = `-- name: GetIDByProfileEntityName :one
-SELECT id FROM rule_instances
-WHERE profile_id = $1
-AND entity_type = $2
-AND name = $3
+const getRuleInstancesEntityInProjects = `-- name: GetRuleInstancesEntityInProjects :many
+SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances
+WHERE entity_type = $1
+AND project_id = ANY($2::UUID[])
 `
 
-type GetIDByProfileEntityNameParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
-	EntityType Entities  `json:"entity_type"`
-	Name       string    `json:"name"`
+type GetRuleInstancesEntityInProjectsParams struct {
+	EntityType Entities    `json:"entity_type"`
+	ProjectIds []uuid.UUID `json:"project_ids"`
 }
 
-func (q *Queries) GetIDByProfileEntityName(ctx context.Context, arg GetIDByProfileEntityNameParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, getIDByProfileEntityName, arg.ProfileID, arg.EntityType, arg.Name)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getRuleInstancesEntityInProjects, arg.EntityType, pq.Array(arg.ProjectIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RuleInstance{}
+	for rows.Next() {
+		var i RuleInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProfileID,
+			&i.RuleTypeID,
+			&i.Name,
+			&i.EntityType,
+			&i.Def,
+			&i.Params,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProjectID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getRuleInstancesForProfile = `-- name: GetRuleInstancesForProfile :many
@@ -89,47 +114,26 @@ func (q *Queries) GetRuleInstancesForProfile(ctx context.Context, profileID uuid
 	return items, nil
 }
 
-const getRuleInstancesForProfileEntity = `-- name: GetRuleInstancesForProfileEntity :many
-SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances WHERE profile_id = $1 AND entity_type = $2
+const getRuleTypeIDByRuleNameEntityProfile = `-- name: GetRuleTypeIDByRuleNameEntityProfile :one
+SELECT rule_type_id FROM rule_instances
+WHERE name = $1
+AND entity_type = $2
+AND profile_id = $3
 `
 
-type GetRuleInstancesForProfileEntityParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
+type GetRuleTypeIDByRuleNameEntityProfileParams struct {
+	Name       string    `json:"name"`
 	EntityType Entities  `json:"entity_type"`
+	ProfileID  uuid.UUID `json:"profile_id"`
 }
 
-func (q *Queries) GetRuleInstancesForProfileEntity(ctx context.Context, arg GetRuleInstancesForProfileEntityParams) ([]RuleInstance, error) {
-	rows, err := q.db.QueryContext(ctx, getRuleInstancesForProfileEntity, arg.ProfileID, arg.EntityType)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []RuleInstance{}
-	for rows.Next() {
-		var i RuleInstance
-		if err := rows.Scan(
-			&i.ID,
-			&i.ProfileID,
-			&i.RuleTypeID,
-			&i.Name,
-			&i.EntityType,
-			&i.Def,
-			&i.Params,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProjectID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+// intended as a temporary transition query
+// this will be removed once rule_instances is used consistently in the engine
+func (q *Queries) GetRuleTypeIDByRuleNameEntityProfile(ctx context.Context, arg GetRuleTypeIDByRuleNameEntityProfileParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getRuleTypeIDByRuleNameEntityProfile, arg.Name, arg.EntityType, arg.ProfileID)
+	var rule_type_id uuid.UUID
+	err := row.Scan(&rule_type_id)
+	return rule_type_id, err
 }
 
 const upsertRuleInstance = `-- name: UpsertRuleInstance :one

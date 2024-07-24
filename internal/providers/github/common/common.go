@@ -16,7 +16,7 @@
 package common
 
 import (
-	gogithub "github.com/google/go-github/v61/github"
+	gogithub "github.com/google/go-github/v63/github"
 
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )

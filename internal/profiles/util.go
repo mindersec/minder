@@ -109,6 +109,14 @@ func GetRulesForEntity(p *pb.Profile, entity pb.Entity) ([]*pb.Profile_Rule, err
 		return p.Artifact, nil
 	case pb.Entity_ENTITY_PULL_REQUESTS:
 		return p.PullRequest, nil
+	case pb.Entity_ENTITY_RELEASE:
+		return p.Release, nil
+	case pb.Entity_ENTITY_PIPELINE_RUN:
+		return p.PipelineRun, nil
+	case pb.Entity_ENTITY_TASK_RUN:
+		return p.TaskRun, nil
+	case pb.Entity_ENTITY_BUILD:
+		return p.Build, nil
 	case pb.Entity_ENTITY_UNSPECIFIED:
 		return nil, fmt.Errorf("entity type unspecified")
 	default:
@@ -123,6 +131,10 @@ func TraverseRuleTypesForEntities(p *pb.Profile, fn func(pb.Entity, *pb.Profile_
 		pb.Entity_ENTITY_BUILD_ENVIRONMENTS: p.BuildEnvironment,
 		pb.Entity_ENTITY_ARTIFACTS:          p.Artifact,
 		pb.Entity_ENTITY_PULL_REQUESTS:      p.PullRequest,
+		pb.Entity_ENTITY_RELEASE:            p.Release,
+		pb.Entity_ENTITY_PIPELINE_RUN:       p.PipelineRun,
+		pb.Entity_ENTITY_TASK_RUN:           p.TaskRun,
+		pb.Entity_ENTITY_BUILD:              p.Build,
 	}
 
 	for entity, rules := range pairs {
@@ -212,6 +224,8 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 			} else {
 				profiles[p.GetProfile().Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
+
+			selectorsToProfile(profiles[p.GetProfile().Name], p.GetSelectors())
 		}
 		if pm := rowInfoToProfileMap(
 			profiles[p.GetProfile().Name], p.GetEntityProfile(),
@@ -266,6 +280,8 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 			} else {
 				profiles[p.Profile.Name].Alert = proto.String(string(db.ActionTypeOn))
 			}
+
+			selectorsToProfile(profiles[p.Profile.Name], p.ProfilesWithSelectors)
 		}
 		if pm := rowInfoToProfileMap(
 			profiles[p.Profile.Name],
@@ -318,10 +334,33 @@ func rowInfoToProfileMap(
 		profile.Artifact = ruleset
 	case pb.Entity_ENTITY_PULL_REQUESTS:
 		profile.PullRequest = ruleset
+	case pb.Entity_ENTITY_RELEASE:
+		profile.Release = ruleset
+	case pb.Entity_ENTITY_PIPELINE_RUN:
+		profile.PipelineRun = ruleset
+	case pb.Entity_ENTITY_TASK_RUN:
+		profile.TaskRun = ruleset
+	case pb.Entity_ENTITY_BUILD:
+		profile.Build = ruleset
 	case pb.Entity_ENTITY_UNSPECIFIED:
 		// This shouldn't happen
 		log.Printf("unknown entity found in database: %s", entity)
 	}
 
 	return profile
+}
+
+func selectorsToProfile(
+	profile *pb.Profile,
+	selectors []db.ProfileSelector,
+) {
+	profile.Selection = make([]*pb.Profile_Selector, 0, len(selectors))
+	for _, s := range selectors {
+		profile.Selection = append(profile.Selection, &pb.Profile_Selector{
+			Id:          s.ID.String(),
+			Entity:      string(s.Entity.Entities),
+			Selector:    s.Selector,
+			Description: s.Comment,
+		})
+	}
 }

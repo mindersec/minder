@@ -281,11 +281,11 @@ func TestCleanupUnmanaged(t *testing.T) {
 	authzClient := &mock.SimpleClient{
 		Assignments: map[uuid.UUID][]*minderv1.RoleAssignment{
 			projTwo: {{
-				Role:    authz.AuthzRoleAdmin.String(),
+				Role:    authz.RoleAdmin.String(),
 				Subject: "user2",
 			}},
 			projThree: {{
-				Role:    authz.AuthzRoleViewer.String(),
+				Role:    authz.RoleViewer.String(),
 				Subject: "user2",
 			}},
 		},

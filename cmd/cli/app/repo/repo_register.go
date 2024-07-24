@@ -18,10 +18,12 @@ package repo
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/util/cli"
 	"github.com/stacklok/minder/internal/util/cli/table"
@@ -54,22 +56,18 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	if registerAll {
 		if len(inputRepoList) > 0 {
-			return cli.MessageAndError("Cannot use --all with --name", nil)
+			fmt.Println("Cannot use --all and --name together")
+			return nil
 		}
 
 		providerClient := minderv1.NewProvidersServiceClient(conn)
-		_, err := providerClient.ReconcileEntityRegistration(ctx, &minderv1.ReconcileEntityRegistrationRequest{
-			Context: &minderv1.Context{
-				Provider: &provider,
-				Project:  &project,
-			},
-			Entity: minderv1.Entity_ENTITY_REPOSITORIES.ToString(),
-		})
-		if err != nil {
-			return cli.MessageAndError("Error reconciling provider registration", err)
-		}
 
-		cmd.Println("Issued task to register all available repositories")
+		err := enableAutoRegistration(ctx, cmd, providerClient, project, provider)
+		if err != nil {
+			return cli.MessageAndError("Error enabling auto registration", err)
+		}
+		cmd.Println("Enabled auto registration for future repositories")
+		cmd.Println("Issued task to register all currently available repositories")
 		cmd.Println("Use `minder repo list` to check the list registered repositories")
 		return nil
 	}
@@ -256,6 +254,120 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 		t.AddRow(row...)
 	}
 	t.Render()
+}
+
+func enableAutoRegistration(
+	ctx context.Context,
+	cmd *cobra.Command,
+	provCli minderv1.ProvidersServiceClient,
+	project, provName string,
+) error {
+	if provName != "" {
+		return enableAutoRegistrationForProvider(ctx, cmd, provCli, project, provName)
+	}
+
+	return enableAutoRegistrationAllProviders(ctx, cmd, provCli, project)
+}
+
+func enableAutoRegistrationAllProviders(
+	ctx context.Context,
+	cmd *cobra.Command,
+	provCli minderv1.ProvidersServiceClient,
+	project string,
+) error {
+	var cursor string
+
+	for {
+		allProviders, err := provCli.ListProviders(ctx, &minderv1.ListProvidersRequest{
+			Context: &minderv1.Context{
+				Project: &project,
+			},
+			Cursor: cursor,
+		})
+
+		if err != nil {
+			return cli.MessageAndError("failed to get providers", err)
+		}
+
+		cursor = allProviders.Cursor
+
+		for _, provider := range allProviders.Providers {
+			if !slices.Contains(provider.GetImplements(), minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER) {
+				continue
+			}
+
+			err := enableAutoRegistrationForProvider(ctx, cmd, provCli, project, provider.Name)
+			if err != nil {
+				// we could print a diagnostical message here, but since the legacy github provider doesn't support
+				// auto-enrollment and we still pre-create it, the user would see the message all the time.
+				continue
+			}
+		}
+
+		if allProviders.Cursor == "" {
+			break
+		}
+	}
+
+	return nil
+}
+
+func enableAutoRegistrationForProvider(
+	ctx context.Context,
+	cmd *cobra.Command,
+	provCli minderv1.ProvidersServiceClient,
+	project, providerName string,
+) error {
+	serde, err := cli.GetProviderConfig(ctx, provCli, project, providerName)
+	if err != nil {
+		return cli.MessageAndError("failed to get provider config", err)
+	}
+
+	if serde == nil {
+		serde = &cli.ProviderConfigUnion{}
+	}
+
+	if serde.ProviderConfig == nil {
+		serde.ProviderConfig = &minderv1.ProviderConfig{}
+	}
+
+	if serde.AutoRegistration == nil {
+		serde.AutoRegistration = &minderv1.AutoRegistration{}
+	}
+
+	if serde.AutoRegistration.Entities == nil {
+		serde.AutoRegistration.Entities = make(map[string]*minderv1.EntityAutoRegistrationConfig)
+	}
+
+	repoReg, ok := serde.AutoRegistration.Entities[minderv1.Entity_ENTITY_REPOSITORIES.ToString()]
+	if !ok {
+		repoReg = &minderv1.EntityAutoRegistrationConfig{}
+	}
+
+	if repoReg.GetEnabled() {
+		cmd.Printf("Auto registration is already enabled for %s\n", providerName)
+	}
+
+	repoReg.Enabled = proto.Bool(true)
+	serde.AutoRegistration.Entities[minderv1.Entity_ENTITY_REPOSITORIES.ToString()] = repoReg
+
+	err = cli.SetProviderConfig(ctx, provCli, project, providerName, serde)
+	if err != nil {
+		return cli.MessageAndError("failed to update provider", err)
+	}
+
+	_, err = provCli.ReconcileEntityRegistration(ctx, &minderv1.ReconcileEntityRegistrationRequest{
+		Context: &minderv1.Context{
+			Provider: &providerName,
+			Project:  &project,
+		},
+		Entity: minderv1.Entity_ENTITY_REPOSITORIES.ToString(),
+	})
+	if err != nil {
+		return cli.MessageAndError("Error reconciling provider registration", err)
+	}
+
+	return nil
 }
 
 func printWarnings(cmd *cobra.Command, warnings []string) {

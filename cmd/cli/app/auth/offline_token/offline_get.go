@@ -17,13 +17,14 @@
 package offline_token
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/cmd/cli/app/auth"
 	"github.com/stacklok/minder/internal/config"
 	clientconfig "github.com/stacklok/minder/internal/config/client"
 	"github.com/stacklok/minder/internal/util/cli"
@@ -40,37 +41,37 @@ Offline tokens are used to authenticate to the minder control plane without
 requiring the user's presence. This is useful for long-running processes
 that need to authenticate to the control plane.`,
 
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-		defer cancel()
+	RunE: cli.GRPCClientWrapRunE(offlineGetCommand),
+}
 
-		clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
-		if err != nil {
-			return fmt.Errorf("error reading config: %w", err)
-		}
+// offlineGetCommand is the offline-token get subcommand
+func offlineGetCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
+	if err != nil {
+		return fmt.Errorf("error reading config: %w", err)
+	}
 
-		f := viper.GetString("file")
-		skipBrowser := viper.GetBool("offline.get.skip-browser")
+	f := viper.GetString("file")
+	skipBrowser := viper.GetBool("offline.get.skip-browser")
 
-		// No longer print usage on returned error, since we've parsed our inputs
-		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-		cmd.SilenceUsage = true
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
-		// wait for the token to be received
-		token, err := auth.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
-		if err != nil {
-			return err
-		}
+	// wait for the token to be received
+	token, err := cli.Login(ctx, cmd, clientConfig, []string{"offline_access"}, skipBrowser)
+	if err != nil {
+		return err
+	}
 
-		// write the token to the file
-		if err := os.WriteFile(f, []byte(token.RefreshToken), 0600); err != nil {
-			return fmt.Errorf("error writing offline token to file: %w", err)
-		}
+	// write the token to the file
+	if err := os.WriteFile(f, []byte(token.RefreshToken), 0600); err != nil {
+		return fmt.Errorf("error writing offline token to file: %w", err)
+	}
 
-		cmd.Printf("Offline token written to %s\n", f)
+	cmd.Printf("Offline token written to %s\n", f)
 
-		return nil
-	},
+	return nil
 }
 
 func init() {

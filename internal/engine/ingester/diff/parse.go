@@ -22,8 +22,8 @@ import (
 	"slices"
 	"strings"
 
+	pbinternal "github.com/stacklok/minder/internal/proto"
 	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 	dependencyNameRegex = regexp.MustCompile(`\s*"([^"]+)"\s*:\s*{\s*`)
 )
 
-type ecosystemParser func(string) ([]*pb.Dependency, error)
+type ecosystemParser func(string) ([]*pbinternal.Dependency, error)
 
 func newEcosystemParser(eco DependencyEcosystem) ecosystemParser {
 	switch strings.ToLower(string(eco)) {
@@ -50,8 +50,8 @@ func newEcosystemParser(eco DependencyEcosystem) ecosystemParser {
 	}
 }
 
-func requirementsParse(patch string) ([]*pb.Dependency, error) {
-	var deps []*pb.Dependency
+func requirementsParse(patch string) ([]*pbinternal.Dependency, error) {
+	var deps []*pbinternal.Dependency
 
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 	for scanner.Scan() {
@@ -122,9 +122,9 @@ func pyReqNormalizeLine(line string) string {
 	return strings.TrimSpace(line)
 }
 
-func pyReqAddPkgName(depList []*pb.Dependency, pkgName, version string) []*pb.Dependency {
-	dep := &pb.Dependency{
-		Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+func pyReqAddPkgName(depList []*pbinternal.Dependency, pkgName, version string) []*pbinternal.Dependency {
+	dep := &pbinternal.Dependency{
+		Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
 		Name:      pyNormalizeName(pkgName),
 		Version:   version,
 	}
@@ -137,8 +137,8 @@ func pyNormalizeName(pkgName string) string {
 	return strings.ToLower(result)
 }
 
-func goParse(patch string) ([]*pb.Dependency, error) {
-	var deps []*pb.Dependency
+func goParse(patch string) ([]*pbinternal.Dependency, error) {
+	var deps []*pbinternal.Dependency
 	scanner := bufio.NewScanner(strings.NewReader(patch))
 
 	// Iterate over the lines of the go.mod patch and parse the dependencies
@@ -147,7 +147,7 @@ func goParse(patch string) ([]*pb.Dependency, error) {
 		dep := extractGoDepFromPatchLine(scanner.Text())
 
 		// If we failed to extract a dependency, or if it's already in the slice, skip it
-		if dep == nil || slices.ContainsFunc(deps, func(n *pb.Dependency) bool {
+		if dep == nil || slices.ContainsFunc(deps, func(n *pbinternal.Dependency) bool {
 			if n.Name == dep.Name && n.Version == dep.Version {
 				return true
 			}
@@ -165,7 +165,7 @@ func goParse(patch string) ([]*pb.Dependency, error) {
 	return deps, nil
 }
 
-func extractGoDepFromPatchLine(line string) *pb.Dependency {
+func extractGoDepFromPatchLine(line string) *pbinternal.Dependency {
 	// Look for lines that add dependencies.
 	// We ignore lines that contain "// indirect" because they are transitive dependencies, and therefore
 	// not actionable.
@@ -179,8 +179,8 @@ func extractGoDepFromPatchLine(line string) *pb.Dependency {
 			return nil
 		}
 
-		dep := &pb.Dependency{
-			Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_GO,
+		dep := &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
 		}
 		if fields[0] == "require" && fields[1] != "(" && len(fields) >= 3 {
 			dep.Name = fields[1]
@@ -204,10 +204,10 @@ func extractGoDepFromPatchLine(line string) *pb.Dependency {
 	return nil
 }
 
-func npmParse(patch string) ([]*pb.Dependency, error) {
+func npmParse(patch string) ([]*pbinternal.Dependency, error) {
 	lines := strings.Split(patch, "\n")
 
-	var deps []*pb.Dependency
+	var deps []*pbinternal.Dependency
 
 	for i, line := range lines {
 		// Check if the line contains a version
@@ -218,8 +218,8 @@ func npmParse(patch string) ([]*pb.Dependency, error) {
 			// The version is not always a dependency version. It may also be the version of the package in this repo,
 			// or the version of the root project. See https://docs.npmjs.com/cli/v10/configuring-npm/package-lock-json
 			if name != "" {
-				deps = append(deps, &pb.Dependency{
-					Ecosystem: pb.DepEcosystem_DEP_ECOSYSTEM_NPM,
+				deps = append(deps, &pbinternal.Dependency{
+					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 					Name:      name,
 					Version:   version,
 				})

@@ -25,10 +25,10 @@ import (
 	htmltemplate "html/template"
 	"strings"
 
-	"github.com/stacklok/minder/internal/db"
-
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
@@ -98,7 +98,7 @@ If you have any questions or believe that this evaluation is incorrect, please d
 type Alert struct {
 	actionType           interfaces.ActionType
 	cli                  provifv1.GitHub
-	sev                  *pb.Severity
+	ruleType             *pb.RuleType
 	saCfg                *pb.RuleType_Definition_Alert_AlertTypeSA
 	summaryTmpl          *htmltemplate.Template
 	descriptionTmpl      *htmltemplate.Template
@@ -126,6 +126,7 @@ type templateParamsSA struct {
 	RuleRemediation string
 	Name            string
 }
+
 type alertMetadata struct {
 	ID string `json:"ghsa_id,omitempty"`
 }
@@ -133,7 +134,7 @@ type alertMetadata struct {
 // NewSecurityAdvisoryAlert creates a new security-advisory alert action
 func NewSecurityAdvisoryAlert(
 	actionType interfaces.ActionType,
-	sev *pb.Severity,
+	ruleType *pb.RuleType,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	cli provifv1.GitHub,
 ) (*Alert, error) {
@@ -160,7 +161,7 @@ func NewSecurityAdvisoryAlert(
 	return &Alert{
 		actionType:           actionType,
 		cli:                  cli,
-		sev:                  sev,
+		ruleType:             ruleType,
 		saCfg:                saCfg,
 		summaryTmpl:          sumT,
 		descriptionTmpl:      descT,
@@ -179,15 +180,15 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Alert, interfaces.ActionOptOn)
+func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do alerts through security advisory
 func (alert *Alert) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting interfaces.ActionOpt,
+	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -200,11 +201,11 @@ func (alert *Alert) Do(
 
 	// Process the command based on the action setting
 	switch setting {
-	case interfaces.ActionOptOn:
+	case models.ActionOptOn:
 		return alert.run(ctx, p, cmd)
-	case interfaces.ActionOptDryRun:
+	case models.ActionOptDryRun:
 		return alert.runDry(ctx, p, cmd)
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+	case models.ActionOptOff, models.ActionOptUnknown:
 		return nil, fmt.Errorf("unexpected action setting: %w", enginerr.ErrActionFailed)
 	}
 	return nil, enginerr.ErrActionSkipped
@@ -349,16 +350,16 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	// Get the severity
 	result.Template.Severity = alert.getSeverityString()
 	// Get the guidance
-	result.Template.Guidance = params.GetRuleType().Guidance
+	result.Template.Guidance = alert.ruleType.Guidance
 	// Get the rule type name
-	result.Template.Rule = params.GetRuleType().Name
+	result.Template.Rule = alert.ruleType.Name
 	// Get the profile name
 	result.Template.Profile = params.GetProfile().Name
 	// Get the rule name
 	result.Template.Name = params.GetRule().Name
 
 	// Check if remediation is available for the rule type
-	if params.GetRuleType().Def.Remediate != nil {
+	if alert.ruleType.Def.Remediate != nil {
 		result.Template.RuleRemediation = "already available"
 	} else {
 		result.Template.RuleRemediation = "not available yet"
@@ -372,7 +373,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
-	if interfaces.ActionOptFromString(params.GetProfile().Remediate, interfaces.ActionOptOff) == interfaces.ActionOptOn {
+	if params.GetProfile().ActionConfig.Remediate == models.ActionOptOn {
 		err = alert.descriptionTmpl.Execute(&descriptionStr, result.Template)
 	} else {
 		err = alert.descriptionNoRemTmpl.Execute(&descriptionStr, result.Template)
@@ -386,7 +387,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 
 func (alert *Alert) getSeverityString() string {
 	if alert.saCfg.Severity == "" {
-		ruleSev := alert.sev.GetValue().Enum().AsString()
+		ruleSev := alert.ruleType.Severity.GetValue().Enum().AsString()
 		if ruleSev == "info" || ruleSev == "unknown" {
 			return "low"
 		}

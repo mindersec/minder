@@ -39,6 +39,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/history"
+	"github.com/stacklok/minder/internal/invites"
 	"github.com/stacklok/minder/internal/marketplaces"
 	"github.com/stacklok/minder/internal/metrics/meters"
 	"github.com/stacklok/minder/internal/profiles"
@@ -57,6 +58,7 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
+	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 )
 
@@ -91,8 +93,11 @@ func AllInOneServerService(
 	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
 	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
 
+	historySvc := history.NewEvaluationHistoryService()
+	inviteSvc := invites.NewInviteService()
 	profileSvc := profiles.NewProfileService(evt)
 	ruleSvc := ruletypes.NewRuleTypeService()
+	roleScv := roles.NewRoleService()
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
 	if err != nil {
 		return fmt.Errorf("failed to create marketplace: %w", err)
@@ -150,8 +155,11 @@ func AllInOneServerService(
 		cryptoEngine,
 		authzClient,
 		idClient,
+		inviteSvc,
 		repos,
+		roleScv,
 		profileSvc,
+		historySvc,
 		ruleSvc,
 		ghProviders,
 		providerManager,
@@ -181,6 +189,8 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to create metrics for executor: %w", err)
 	}
 
+	profileStore := profiles.NewProfileStore(store)
+
 	// Register the executor to handle entity evaluations
 	exec := engine.NewExecutor(
 		store,
@@ -188,6 +198,7 @@ func AllInOneServerService(
 		executorMetrics,
 		history.NewEvaluationHistoryService(),
 		featureFlagClient,
+		profileStore,
 	)
 
 	handler := engine.NewExecutorEventHandler(

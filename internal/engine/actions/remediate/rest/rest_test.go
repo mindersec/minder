@@ -19,7 +19,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -29,9 +28,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	httpclient "github.com/stacklok/minder/internal/providers/http"
@@ -169,7 +168,7 @@ func TestRestRemediate(t *testing.T) {
 	t.Parallel()
 
 	type remediateArgs struct {
-		remAction interfaces.ActionOpt
+		remAction models.ActionOpt
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
 		params    map[string]any
@@ -195,7 +194,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -233,7 +232,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -267,7 +266,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -308,7 +307,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptDryRun,
+				remAction: models.ActionOptDryRun,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -332,7 +331,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptOn,
+				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
 					Owner:  "OwnerVar",
 					Name:   "NameVar",
@@ -358,7 +357,7 @@ func TestRestRemediate(t *testing.T) {
 				},
 			},
 			remArgs: remediateArgs{
-				remAction: interfaces.ActionOptUnknown,
+				remAction: models.ActionOptUnknown,
 				ent: &pb.Repository{
 					Owner:  "Foo",
 					Name:   "Bar",
@@ -385,20 +384,10 @@ func TestRestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
-			structPol, err := structpb.NewStruct(tt.remArgs.pol)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
-			structParams, err := structpb.NewStruct(tt.remArgs.params)
-			if err != nil {
-				fmt.Printf("Error creating Struct: %v\n", err)
-				return
-			}
 			evalParams := &interfaces.EvalStatusParams{
-				Rule: &pb.Profile_Rule{
-					Def:    structPol,
-					Params: structParams,
+				Rule: &models.RuleInstance{
+					Def:    tt.remArgs.pol,
+					Params: tt.remArgs.params,
 				},
 			}
 

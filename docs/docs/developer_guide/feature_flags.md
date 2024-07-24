@@ -19,7 +19,7 @@ Appropriate usages of feature flags:
 
 ### Inappropriate Use Of Feature Flags
 
-We expect that feature flags will generally be short-lived (a few months in most cases).  There are costs (testing, maintenance, complexity, and general opportunity costs) to maintaing two code paths, so we aim to retire feature flags once the feature is considered "stable".  Here are some examples of alternative mechanisms to use for long-term behavior changes:
+We expect that feature flags will generally be short-lived (a few months in most cases).  There are costs (testing, maintenance, complexity, and general opportunity costs) to maintaining two code paths, so we aim to retire feature flags once the feature is considered "stable".  Here are some examples of alternative mechanisms to use for long-term behavior changes:
 
 * **Server Configuration**.  See [`internal/config/server`](https://github.com/stacklok/minder/tree/main/internal/config/server) for long-term options that should be on or off at server startup and don't need to change based on the invocation.
 

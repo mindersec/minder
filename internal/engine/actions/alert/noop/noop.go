@@ -25,7 +25,7 @@ import (
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/profiles/models"
 )
 
 // Alert is the structure backing the noop alert
@@ -49,15 +49,15 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the off state of the noop engine
-func (_ *Alert) GetOnOffState(_ *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptOff
+func (_ *Alert) GetOnOffState(_ models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOff
 }
 
 // Do perform the noop alert
 func (a *Alert) Do(
 	_ context.Context,
 	_ interfaces.ActionCmd,
-	_ interfaces.ActionOpt,
+	_ models.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ interfaces.ActionsParams,
 	_ *json.RawMessage,

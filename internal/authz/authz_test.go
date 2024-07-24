@@ -70,7 +70,7 @@ func TestAllRolesExistInFGAModel(t *testing.T) {
 
 	t.Logf("relations: %v", projectTypeDef.Relations)
 
-	for r := range authz.AllRoles {
+	for r := range authz.AllRolesDescriptions {
 		assert.Contains(t, *projectTypeDef.Relations, r.String(), "role %s not found in authz model", r)
 	}
 }
@@ -101,7 +101,7 @@ func TestVerifyOneProject(t *testing.T) {
 
 	// create a project
 	prj := uuid.New()
-	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to write project")
+	assert.NoError(t, c.Write(ctx, "user-1", authz.RoleAdmin, prj), "failed to write project")
 
 	userJWT := openid.New()
 	assert.NoError(t, userJWT.Set("sub", "user-1"))
@@ -123,7 +123,7 @@ func TestVerifyOneProject(t *testing.T) {
 	assert.Equal(t, "user-1", assignments[0].Subject, "expected user to be assigned to project")
 
 	// delete the project
-	assert.NoError(t, c.Delete(ctx, "user-1", authz.AuthzRoleAdmin, prj), "failed to delete project")
+	assert.NoError(t, c.Delete(ctx, "user-1", authz.RoleAdmin, prj), "failed to delete project")
 
 	// verify the project is gone
 	assert.Error(t, c.Check(userctx, "get", prj), "expected project to be gone")
@@ -155,7 +155,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 
 	// create a project
 	prj1 := uuid.New()
-	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleAdmin, prj1), "failed to write project")
+	assert.NoError(t, c.Write(ctx, "user-1", authz.RoleAdmin, prj1), "failed to write project")
 
 	user1JWT := openid.New()
 	assert.NoError(t, user1JWT.Set("sub", "user-1"))
@@ -166,14 +166,14 @@ func TestVerifyMultipleProjects(t *testing.T) {
 
 	// create another project
 	prj2 := uuid.New()
-	assert.NoError(t, c.Write(ctx, "user-1", authz.AuthzRoleViewer, prj2), "failed to write project")
+	assert.NoError(t, c.Write(ctx, "user-1", authz.RoleViewer, prj2), "failed to write project")
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj2), "failed to check project")
 
 	// create an unrelated project
 	prj3 := uuid.New()
-	assert.NoError(t, c.Write(ctx, "user-2", authz.AuthzRoleAdmin, prj3), "failed to write project")
+	assert.NoError(t, c.Write(ctx, "user-2", authz.RoleAdmin, prj3), "failed to write project")
 
 	// verify the project
 	user2JWT := openid.New()

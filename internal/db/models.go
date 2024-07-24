@@ -154,6 +154,10 @@ const (
 	EntitiesBuildEnvironment Entities = "build_environment"
 	EntitiesArtifact         Entities = "artifact"
 	EntitiesPullRequest      Entities = "pull_request"
+	EntitiesRelease          Entities = "release"
+	EntitiesPipelineRun      Entities = "pipeline_run"
+	EntitiesTaskRun          Entities = "task_run"
+	EntitiesBuild            Entities = "build"
 )
 
 func (e *Entities) Scan(src interface{}) error {
@@ -490,12 +494,11 @@ type EvaluationRuleEntity struct {
 }
 
 type EvaluationStatus struct {
-	ID                   uuid.UUID       `json:"id"`
-	RuleEntityID         uuid.UUID       `json:"rule_entity_id"`
-	Status               EvalStatusTypes `json:"status"`
-	Details              string          `json:"details"`
-	EvaluationTimes      []time.Time     `json:"evaluation_times"`
-	MostRecentEvaluation time.Time       `json:"most_recent_evaluation"`
+	ID             uuid.UUID       `json:"id"`
+	RuleEntityID   uuid.UUID       `json:"rule_entity_id"`
+	Status         EvalStatusTypes `json:"status"`
+	Details        string          `json:"details"`
+	EvaluationTime time.Time       `json:"evaluation_time"`
 }
 
 type Feature struct {

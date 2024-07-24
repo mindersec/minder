@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package engine
+// Package rtengine contains the rule type engine
+package rtengine
 
 import (
 	"context"
@@ -82,12 +83,12 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
 	}
 
-	rdi, err := ingester.NewRuleDataIngest(ruletype, provider)
+	ingest, err := ingester.NewRuleDataIngest(ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	reval, err := eval.NewRuleEvaluator(ctx, ruletype, provider)
+	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
@@ -97,8 +98,8 @@ func NewRuleTypeEngine(
 			Name: ruletype.Name,
 		},
 		ruleValidator: rval,
-		ingester:      rdi,
-		ruleEvaluator: reval,
+		ingester:      ingest,
+		ruleEvaluator: evaluator,
 		ruletype:      ruletype,
 		ingestCache:   ingestcache.NewNoopCache(),
 	}
@@ -131,6 +132,11 @@ func (r *RuleTypeEngine) GetRuleInstanceValidator() *profiles.RuleValidator {
 	return r.ruleValidator
 }
 
+// GetRuleType returns the rule type PB structure.
+func (r *RuleTypeEngine) GetRuleType() *minderv1.RuleType {
+	return r.ruletype
+}
+
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(
 	ctx context.Context,
@@ -156,7 +162,7 @@ func (r *RuleTypeEngine) Eval(
 	if !ok {
 		var err error
 		// Ingest the data needed for the rule evaluation
-		result, err = r.ingester.Ingest(ctx, inf.Entity, params.GetRule().Params.AsMap())
+		result, err = r.ingester.Ingest(ctx, inf.Entity, params.GetRule().Params)
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
@@ -171,7 +177,7 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def.AsMap(), result)
+	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }

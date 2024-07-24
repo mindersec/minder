@@ -29,12 +29,11 @@ import (
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/logger"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/profiles/models"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
-	testUUIDString := "00000000-0000-0000-0000-000000000001"
-	testUUID := uuid.MustParse(testUUIDString)
+	testUUID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 
 	t.Parallel()
 	cases := []struct {
@@ -48,19 +47,17 @@ func TestTelemetryStore_Record(t *testing.T) {
 		name: "nil telemetry",
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-
-			ep.Profile = &minderv1.Profile{
-				Name: "artifact_profile",
-				Id:   &testUUIDString,
+			ep.Rule = &models.RuleInstance{
+				RuleTypeID: testUUID,
 			}
-			ep.RuleType = &minderv1.RuleType{
-				Name: "artifact_signature",
-				Id:   &testUUIDString,
+			ep.Profile = &models.ProfileAggregate{
+				Name: "artifact_profile",
+				ID:   testUUID,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
-				alert.ActionType:     engif.ActionOptOn,
-				remediate.ActionType: engif.ActionOptOff,
+			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
+				alert.ActionType:     models.ActionOptOn,
+				remediate.ActionType: models.ActionOptOff,
 			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
@@ -71,26 +68,24 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = testUUID
 			logger.BusinessRecord(ctx).Repository = testUUID
-			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams, ruleTypeName)
 		},
 	}, {
 		name:      "standard telemetry",
 		telemetry: &logger.TelemetryStore{},
 		evalParamsFunc: func() *engif.EvalStatusParams {
 			ep := &engif.EvalStatusParams{}
-
-			ep.Profile = &minderv1.Profile{
-				Name: "artifact_profile",
-				Id:   &testUUIDString,
+			ep.Rule = &models.RuleInstance{
+				RuleTypeID: testUUID,
 			}
-			ep.RuleType = &minderv1.RuleType{
-				Name: "artifact_signature",
-				Id:   &testUUIDString,
+			ep.Profile = &models.ProfileAggregate{
+				Name: "artifact_profile",
+				ID:   testUUID,
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]engif.ActionOpt{
-				alert.ActionType:     engif.ActionOptOff,
-				remediate.ActionType: engif.ActionOptOn,
+			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
+				alert.ActionType:     models.ActionOptOff,
+				remediate.ActionType: models.ActionOptOn,
 			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
@@ -101,7 +96,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(ctx context.Context, evalParams engif.ActionsParams) {
 			logger.BusinessRecord(ctx).Project = testUUID
 			logger.BusinessRecord(ctx).Repository = testUUID
-			logger.BusinessRecord(ctx).AddRuleEval(evalParams)
+			logger.BusinessRecord(ctx).AddRuleEval(evalParams, ruleTypeName)
 		},
 		expected: `{
     "project": "00000000-0000-0000-0000-000000000001",
@@ -139,7 +134,7 @@ func TestTelemetryStore_Record(t *testing.T) {
 		recordFunc: func(_ context.Context, _ engif.ActionsParams) {
 		},
 		expected:   `{"telemetry": "true"}`,
-		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletype", "artifact", "pr"},
+		notPresent: []string{"project", "rules", "login_sha", "repository", "provider", "profile", "ruletypes", "artifact", "pr"},
 	}}
 
 	count := len(cases)
@@ -188,3 +183,5 @@ func TestTelemetryStore_Record(t *testing.T) {
 
 	}
 }
+
+const ruleTypeName = "artifact_signature"

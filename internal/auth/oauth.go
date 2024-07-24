@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	go_github "github.com/google/go-github/v61/github"
+	go_github "github.com/google/go-github/v63/github"
 	"github.com/spf13/viper"
 )
 

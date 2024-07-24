@@ -52,6 +52,8 @@ func New(layout layouts.TableLayout, header []string) *Table {
 		ruleEvaluationsLayout(table)
 	case layouts.RoleList:
 		roleListLayout(table)
+	case layouts.EvaluationHistory:
+		evaluationHistoryLayout(table)
 	case layouts.Default:
 		table.SetHeader(header)
 		defaultLayout(table)
@@ -153,4 +155,13 @@ func providerListLayout(table *tablewriter.Table) {
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(false)
+}
+
+func evaluationHistoryLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{
+		"Time", "Rule", "Entity", "Status", "Remediation Status", "Alert Status"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0})
+	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(true)
 }

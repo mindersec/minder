@@ -26,7 +26,7 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       # Install the `buf` CLI
-      - uses: bufbuild/buf-setup-action@35c243d7f2a909b1d4e40399b348a7fdab27d78d # v1.34.0
+      - uses: bufbuild/buf-setup-action@7f067c396a65cacbedc3258cb05884cd93a4033c # v1.35.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       # Lint your Protobuf sources
@@ -35,19 +35,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: bufbuild/buf-setup-action@35c243d7f2a909b1d4e40399b348a7fdab27d78d # v1.34.0
+      - uses: bufbuild/buf-setup-action@7f067c396a65cacbedc3258cb05884cd93a4033c # v1.35.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - uses: bufbuild/buf-breaking-action@c57b3d842a5c3f3b454756ef65305a50a587c5ba # v1.1.4
         with:
-          against: "https://github.com/stacklok/minder.git#branch=main"
+          input: 'proto'
+          against: "https://github.com/stacklok/minder.git#branch=main,subdir=proto"
   sqlc-generation:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       - name: Set up Go
-        uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
+        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
         with:
           go-version-file: "go.mod"
       - name: Make bootstrap

@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-version: '3.2'
 services:
   minder:
     container_name: minder_server
@@ -65,6 +64,7 @@ services:
       - MINDER_PROVIDER_GITHUB_APP_PRIVATE_KEY=/app/.secrets/github-app.pem
       - MINDER_FLAGS_GO_FEATURE_FILE_PATH=/app/flags-config.yaml
       - MINDER_LOG_GITHUB_REQUESTS=1
+    working_dir: /app
     networks:
       - app_net
     depends_on:

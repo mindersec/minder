@@ -94,7 +94,10 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 		ts.Artifact = ent
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		ts.PullRequest = ent
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
+	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		minderv1.Entity_ENTITY_RELEASE, minderv1.Entity_ENTITY_PIPELINE_RUN,
+		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
+		// Noop, see https://github.com/stacklok/minder/issues/3838
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		// Do nothing
 	}
@@ -121,6 +124,9 @@ func getEntityID(inf *entities.EntityInfoWrapper) (uuid.UUID, error) {
 		ent = artID.UUID
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		ent = prID.UUID
+	case minderv1.Entity_ENTITY_RELEASE, minderv1.Entity_ENTITY_PIPELINE_RUN,
+		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
+		// Noop, see https://github.com/stacklok/minder/issues/3838
 	}
 
 	return ent, nil

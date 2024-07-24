@@ -19,7 +19,7 @@ package clients
 import (
 	"context"
 
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

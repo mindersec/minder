@@ -29,7 +29,7 @@ import (
 
 	backoffv4 "github.com/cenkalti/backoff/v4"
 	"github.com/go-git/go-git/v5"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -790,9 +790,10 @@ func (gv *GitHub) GetArtifactVersions(
 	ctx context.Context, artifact *minderv1.Artifact,
 	filter provifv1.GetArtifactVersionsFilter,
 ) ([]*minderv1.ArtifactVersion, error) {
-	artifactName := url.QueryEscape(artifact.GetName())
+	// We don't need to URL-encode the artifact name
+	// since this already happens in go-github
 	upstreamVersions, err := gv.getPackageVersions(
-		ctx, artifact.GetOwner(), artifact.GetTypeLower(), artifactName,
+		ctx, artifact.GetOwner(), artifact.GetTypeLower(), artifact.GetName(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving artifact versions: %w", err)

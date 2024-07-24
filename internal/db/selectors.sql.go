@@ -52,6 +52,16 @@ func (q *Queries) DeleteSelector(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteSelectorsByProfileID = `-- name: DeleteSelectorsByProfileID :exec
+DELETE FROM profile_selectors
+WHERE profile_id = $1
+`
+
+func (q *Queries) DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteSelectorsByProfileID, profileID)
+	return err
+}
+
 const getSelectorByID = `-- name: GetSelectorByID :one
 SELECT id, profile_id, entity, selector, comment
 FROM profile_selectors

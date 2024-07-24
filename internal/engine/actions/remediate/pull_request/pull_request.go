@@ -30,13 +30,14 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/google/go-github/v61/github"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -149,15 +150,15 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(p *pb.Profile) interfaces.ActionOpt {
-	return interfaces.ActionOptFromString(p.Remediate, interfaces.ActionOptOff)
+func (_ *Remediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting interfaces.ActionOpt,
+	setting models.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -168,11 +169,11 @@ func (r *Remediator) Do(
 	}
 	var remErr error
 	switch setting {
-	case interfaces.ActionOptOn:
+	case models.ActionOptOn:
 		return r.run(ctx, cmd, p)
-	case interfaces.ActionOptDryRun:
+	case models.ActionOptDryRun:
 		return r.dryRun(ctx, cmd, p)
-	case interfaces.ActionOptOff, interfaces.ActionOptUnknown:
+	case models.ActionOptOff, models.ActionOptUnknown:
 		remErr = errors.New("unexpected action")
 	}
 	return nil, remErr
@@ -193,8 +194,8 @@ func (r *Remediator) getParamsForPRRemediation(
 
 	tmplParams := &PrTemplateParams{
 		Entity:  ent,
-		Profile: params.GetRule().Def.AsMap(),
-		Params:  params.GetRule().Params.AsMap(),
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
 	}
 
 	ingested := params.GetIngestResult()
@@ -211,7 +212,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		prCfg: r.prCfg,
 		ghCli: r.ghCli,
 		bfs:   ingested.Fs,
-		def:   params.GetRule().Def.AsMap(),
+		def:   params.GetRule().Def,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get modification: %w", err)

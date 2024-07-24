@@ -31,4 +31,4 @@ In addition, Minder will set up a webhook in each repository that was registered
 
 ## More information
 
-For more information about repository registration, see the [additional documentaiton in "How Minder works"](../understand/repository_registration).
+For more information about repository registration, see the [additional documentation in "How Minder works"](../understand/repository_registration).

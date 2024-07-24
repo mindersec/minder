@@ -103,7 +103,7 @@ message Cursor {
     // an per-rpc basis.
     string cursor = 1;
     // size is the number of items to retrieve from the collection.
-    uint64 size = 2;
+    uint32 size = 2;
 }
 
 // CursorPage message used in response messages. Its purpose is to
@@ -111,7 +111,7 @@ message Cursor {
 // subsets with respect to the one containing this struct.
 message CursorPage {
     // Total number of records matching the request. This is optional.
-    uint64 total_records = 1;
+    uint32 total_records = 1;
     // Cursor pointing to retrieve results logically placed after the
     // ones shipped with the message containing this struct.
     Cursor next = 2;
@@ -250,52 +250,11 @@ message PullRequest {
     Context context = 8;
 }
 
-enum DepEcosystem {
-    DEP_ECOSYSTEM_UNSPECIFIED = 0;
-    DEP_ECOSYSTEM_NPM = 1;
-    DEP_ECOSYSTEM_GO = 2;
-    DEP_ECOSYSTEM_PYPI = 3;
-}
-
-message Dependency {
-    DepEcosystem ecosystem = 1;
-
-    string name = 2;
-    string version = 3;
-}
-
-message PrDependencies {
-    message ContextualDependency {
-        message FilePatch {
-            string name = 1;      // file changed, e.g. package-lock.json
-            string patch_url = 2;  // points to the the raw patchfile
-        }
-
-        Dependency dep = 1;
-        FilePatch file = 2;
-    }
-
-    PullRequest pr = 1;
-    repeated ContextualDependency deps = 2;
-}
-
-message PrContents {
-    message File {
-        string name = 1;
-        string file_patch_url = 2;
-        repeated Line patch_lines = 3;
-
-        message Line {
-            // Deliberately left as an int32: a diff with more than 2^31 lines
-            // could lead to various problems while processing.
-            int32 line_number = 1;
-            string content = 2;
-        }
-    }
-
-    PullRequest pr = 1;
-    repeated File files = 2;
-}
+// Stubs for the SDLC entities
+message Release {}
+message PipelineRun {}
+message TaskRun {}
+message Build {}
 
 service OAuthService {
     rpc GetAuthorizationURL (GetAuthorizationURLRequest) returns (GetAuthorizationURLResponse) {
@@ -485,7 +444,7 @@ service UserService {
     // based on the user's registered email address.  Note that a
     // user who receives an invitation code may still accept the
     // invitation even if the code was directed to a different
-    // email address.  This is beacuse understanding the routing of
+    // email address.  This is because understanding the routing of
     // email messages is beyond the scope of Minder.
     //
     // This API endpoint may be called without the logged-in user
@@ -1457,6 +1416,10 @@ enum Entity {
     ENTITY_BUILD_ENVIRONMENTS = 2;
     ENTITY_ARTIFACTS = 3;
     ENTITY_PULL_REQUESTS = 4;
+    ENTITY_RELEASE = 5;
+    ENTITY_PIPELINE_RUN = 6;
+    ENTITY_TASK_RUN = 7;
+    ENTITY_BUILD = 8;
 }
 
 message EntityAutoRegistrationConfig {
@@ -2028,6 +1991,10 @@ message Profile {
     repeated Rule build_environment = 5;
     repeated Rule artifact = 6;
     repeated Rule pull_request = 7;
+    repeated Rule release = 15;
+    repeated Rule pipeline_run = 16;
+    repeated Rule task_run = 17;
+    repeated Rule build = 18;
 
     message Selector {
         // id is optional and use for updates to match upserts as well as read operations. It is ignored for creates.
@@ -2036,8 +2003,10 @@ message Profile {
         string entity = 2;
         // expr is the expression to select the entity.
         string selector = 4;
+        reserved 5;
+        reserved "comment";
         // description is the human-readable description of the selector.
-        string comment = 5;
+        string description = 6;
     }
 
     repeated Selector selection = 14;
@@ -2326,6 +2295,8 @@ message Invitation {
     string project_display = 10;
     // inviteURL is the URL that can be used to accept the invitation.
     string invite_url = 11;
+    // emailSkipped is true if the email was not sent to the invitee.
+    bool email_skipped = 12;
 }
 
 message GetProviderRequest {
@@ -2577,10 +2548,16 @@ message EvaluationHistory {
 
     // remediation contains details of the remediation for this evaluation.
     EvaluationHistoryRemediation remediation = 5;
+
+    // created_at is the timestamp of creation of this evaluation
+    google.protobuf.Timestamp evaluated_at = 6;
+
+    // id is the unique identifier of the evaluation.
+    string id = 7;
 }
 
 message EvaluationHistoryEntity {
-    // id is the ID of the entity.
+    // id is the unique identifier of the entity.
     string id = 1;
 
     // type is the entity type.
@@ -2595,7 +2572,7 @@ message EvaluationHistoryRule {
     string name = 1;
 
     // type is the name of the rule type.
-    string type = 2;
+    string rule_type = 2;
 
     // profile is the name of the profile which contains the rule.
     string profile = 3;

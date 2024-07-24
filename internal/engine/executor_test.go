@@ -41,9 +41,10 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/flags"
-	mock_history "github.com/stacklok/minder/internal/history/mock"
+	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/metrics/meters"
+	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
@@ -133,43 +134,42 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			EncryptedAccessToken: authtoken,
 		}, nil)
 
-	// list one profile
-	crs := []*minderv1.Profile_Rule{
-		{
-			Type: passthroughRuleType,
-			Name: passthroughRuleType,
-			Def:  &structpb.Struct{},
-		},
+	// one rule for the profile
+	ruleParams := db.GetRuleInstancesEntityInProjectsParams{
+		EntityType: db.EntitiesRepository,
+		ProjectIds: []uuid.UUID{projectID},
 	}
+	mockStore.EXPECT().
+		GetRuleInstancesEntityInProjects(gomock.Any(), ruleParams).
+		Return([]db.RuleInstance{
+			{
+				ProfileID:  profileID,
+				RuleTypeID: ruleTypeID,
+				Name:       passthroughRuleType,
+				EntityType: db.EntitiesRepository,
+				Def:        emptyJSON,
+				Params:     emptyJSON,
+				ProjectID:  projectID,
+			}}, nil)
 
-	marshalledCRS, err := json.Marshal(crs)
-	require.NoError(t, err, "expected no error")
-
+	// only one project in the hierarchy
 	mockStore.EXPECT().
 		GetParentProjects(gomock.Any(), projectID).
-		Return([]uuid.UUID{projectID}, nil)
+		Return([]uuid.UUID{projectID}, nil).
+		Times(2)
 
+	// list one profile
 	mockStore.EXPECT().
-		ListProfilesByProjectID(gomock.Any(), projectID).
-		Return([]db.ListProfilesByProjectIDRow{
+		BulkGetProfilesByID(gomock.Any(), []uuid.UUID{profileID}).
+		Return([]db.Profile{
 			{
-				Profile: db.Profile{
-					ID:        profileID,
-					Name:      "test-profile",
-					ProjectID: projectID,
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				},
-				ProfilesWithEntityProfile: db.ProfilesWithEntityProfile{
-					Entity: db.NullEntities{
-						Entities: db.EntitiesRepository,
-						Valid:    true,
-					},
-					ContextualRules: pqtype.NullRawMessage{
-						RawMessage: marshalledCRS,
-						Valid:      true,
-					},
-				},
+				ID:        profileID,
+				Name:      "test-profile",
+				ProjectID: projectID,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
 			},
 		}, nil)
 
@@ -197,15 +197,22 @@ default allow = true`,
 	require.NoError(t, err, "expected no error")
 
 	mockStore.EXPECT().
-		GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
-			Projects: []uuid.UUID{projectID},
-			Name:     passthroughRuleType,
-		}).Return(db.RuleType{
-		ID:         ruleTypeID,
-		Name:       passthroughRuleType,
-		ProjectID:  projectID,
-		Definition: marshalledRTD,
-	}, nil)
+		GetRuleTypeNameByID(gomock.Any(), gomock.Any()).
+		Return(passthroughRuleType, nil)
+
+	mockStore.EXPECT().
+		GetRuleTypesByEntityInHierarchy(gomock.Any(), db.GetRuleTypesByEntityInHierarchyParams{
+			EntityType: db.EntitiesRepository,
+			Projects:   []uuid.UUID{projectID},
+		}).
+		Return([]db.RuleType{
+			{
+				ID:         ruleTypeID,
+				Name:       passthroughRuleType,
+				ProjectID:  projectID,
+				Definition: marshalledRTD,
+			},
+		}, nil)
 
 	ruleEvalId := uuid.New()
 
@@ -231,15 +238,6 @@ default allow = true`,
 			Status:     db.EvalStatusTypesSuccess,
 			Details:    "",
 		}).Return(ruleEvalDetailsId, nil)
-
-	ruleInstanceID := uuid.New()
-	mockStore.EXPECT().
-		GetIDByProfileEntityName(gomock.Any(), db.GetIDByProfileEntityNameParams{
-			ProfileID:  profileID,
-			EntityType: db.EntitiesRepository,
-			Name:       passthroughRuleType,
-		}).
-		Return(ruleInstanceID, nil)
 
 	// Mock upserting remediate status
 	ruleEvalRemediationId := uuid.New()
@@ -314,7 +312,7 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
-	historyService := mock_history.NewMockEvaluationHistoryService(ctrl)
+	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 
 	executor := engine.NewExecutor(
 		mockStore,
@@ -322,6 +320,7 @@ default allow = true`,
 		execMetrics,
 		historyService,
 		&flags.FakeClient{},
+		profiles.NewProfileStore(mockStore),
 	)
 
 	eiw := entities.NewEntityInfoWrapper().
@@ -374,3 +373,5 @@ func generateFakeAccessToken(t *testing.T, cryptoEngine crypto.Engine) pqtype.Nu
 		Valid:      true,
 	}
 }
+
+var emptyJSON = []byte("{}")

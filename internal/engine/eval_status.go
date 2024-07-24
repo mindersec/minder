@@ -29,38 +29,33 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	ent "github.com/stacklok/minder/internal/entities"
 	"github.com/stacklok/minder/internal/flags"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/stacklok/minder/internal/profiles/models"
 )
 
 func (e *executor) createEvalStatusParams(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
-	profile *pb.Profile,
-	rule *pb.Profile_Rule,
+	profile *models.ProfileAggregate,
+	rule *models.RuleInstance,
 ) (*engif.EvalStatusParams, error) {
-	// Get Profile UUID
-	profileID, err := uuid.Parse(*profile.Id)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing profile ID: %w", err)
-	}
-
 	repoID, artID, prID := inf.GetEntityDBIDs()
 
 	params := &engif.EvalStatusParams{
 		Rule:          rule,
 		Profile:       profile,
-		ProfileID:     profileID,
 		EntityType:    entities.EntityTypeToDB(inf.Type),
 		RepoID:        repoID,
 		ArtifactID:    artID,
 		PullRequestID: prID,
 		ProjectID:     inf.ProjectID,
+		ExecutionID:   *inf.ExecutionID, // Execution ID is required in the executor.
 	}
 
 	// Prepare params for fetching the current rule evaluation from the database
 	entityType := db.NullEntities{
 		Entities: params.EntityType,
-		Valid:    true}
+		Valid:    true,
+	}
 	entityID := uuid.NullUUID{}
 	switch params.EntityType {
 	case db.EntitiesArtifact:
@@ -69,12 +64,20 @@ func (e *executor) createEvalStatusParams(
 		entityID = params.RepoID
 	case db.EntitiesPullRequest:
 		entityID = params.PullRequestID
-	case db.EntitiesBuildEnvironment:
-		return nil, fmt.Errorf("build environment entity type not supported")
+	case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
+		db.EntitiesTaskRun, db.EntitiesBuild:
+		return nil, fmt.Errorf("entity type not yet supported")
 	}
 
-	ruleTypeName := sql.NullString{
-		String: rule.Type,
+	// TODO: once we replace the existing profile state types with the new
+	// evaluation history tables, this can go away.
+	ruleTypeName, err := e.querier.GetRuleTypeNameByID(ctx, rule.RuleTypeID)
+	if err != nil {
+		return nil, fmt.Errorf("error while retrieving rule type name: %w", err)
+	}
+
+	nullableRuleTypeName := sql.NullString{
+		String: ruleTypeName,
 		Valid:  true,
 	}
 
@@ -85,11 +88,11 @@ func (e *executor) createEvalStatusParams(
 
 	// Get the current rule evaluation from the database
 	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
-		params.ProfileID,
+		params.Profile.ID,
 		entityType,
 		ruleName,
 		entityID,
-		ruleTypeName,
+		nullableRuleTypeName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting rule evaluation status from db: %w", err)
@@ -127,26 +130,14 @@ func (e *executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	// Get rule instance ID
-	// TODO: we should use the rule instance table in the evaluation process
-	// it should not be necessary to query it here.
-	ruleID, err := e.querier.GetIDByProfileEntityName(ctx, db.GetIDByProfileEntityNameParams{
-		ProfileID:  params.ProfileID,
-		EntityType: params.EntityType,
-		Name:       params.Rule.Name,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to retrieve rule instance ID from DB: %w", err)
-	}
-
 	// Upsert evaluation
 	// TODO: replace this table with the evaluation statuses table
 	evalID, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-		ProfileID:     params.ProfileID,
+		ProfileID:     params.Profile.ID,
 		RepositoryID:  params.RepoID,
 		ArtifactID:    params.ArtifactID,
 		Entity:        params.EntityType,
-		RuleTypeID:    params.RuleTypeID,
+		RuleTypeID:    params.Rule.RuleTypeID,
 		PullRequestID: params.PullRequestID,
 		RuleName:      params.Rule.Name,
 	})
@@ -207,7 +198,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			evalID, err := e.historyService.StoreEvaluationStatus(
 				ctx,
 				qtx,
-				ruleID,
+				params.Rule.ID,
 				params.EntityType,
 				entityID,
 				params.GetEvalErr(),

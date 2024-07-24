@@ -55,13 +55,13 @@ func NewRuleEvaluator(
 	case vulncheck.VulncheckEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, errors.New("provider does not implement git trait")
+			return nil, errors.New("provider does not implement github trait")
 		}
 		return vulncheck.NewVulncheckEvaluator(client)
 	case trusty.TrustyEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
-			return nil, errors.New("provider does not implement git trait")
+			return nil, errors.New("provider does not implement github trait")
 		}
 		return trusty.NewTrustyEvaluator(ctx, client)
 	case application.HomoglyphsEvalType:

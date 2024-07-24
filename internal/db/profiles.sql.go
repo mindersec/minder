@@ -8,17 +8,58 @@ package db
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
+const bulkGetProfilesByID = `-- name: BulkGetProfilesByID :many
+SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+FROM profiles
+WHERE id = ANY($1::UUID[])
+`
+
+func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error) {
+	rows, err := q.db.QueryContext(ctx, bulkGetProfilesByID, pq.Array(profileIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Profile{}
+	for rows.Next() {
+		var i Profile
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Provider,
+			&i.ProjectID,
+			&i.Remediate,
+			&i.Alert,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProviderID,
+			&i.SubscriptionID,
+			&i.DisplayName,
+			pq.Array(&i.Labels),
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countProfilesByEntityType = `-- name: CountProfilesByEntityType :many
-SELECT COUNT(p.id) AS num_profiles, ep.entity AS profile_entity
+SELECT COUNT(DISTINCT(p.id)) AS num_profiles, r.entity_type AS profile_entity
 FROM profiles AS p
-JOIN entity_profiles AS ep ON p.id = ep.profile_id
-GROUP BY ep.entity
+JOIN rule_instances AS r ON p.id = r.profile_id
+GROUP BY r.entity_type
 `
 
 type CountProfilesByEntityTypeRow struct {
@@ -171,20 +212,6 @@ type DeleteProfileForEntityParams struct {
 
 func (q *Queries) DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error {
 	_, err := q.db.ExecContext(ctx, deleteProfileForEntity, arg.ProfileID, arg.Entity)
-	return err
-}
-
-const deleteRuleInstantiation = `-- name: DeleteRuleInstantiation :exec
-DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2
-`
-
-type DeleteRuleInstantiationParams struct {
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-}
-
-func (q *Queries) DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error {
-	_, err := q.db.ExecContext(ctx, deleteRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
 	return err
 }
 
@@ -350,100 +377,6 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 	return items, nil
 }
 
-const getProfileForEntity = `-- name: GetProfileForEntity :one
-SELECT id, entity, profile_id, contextual_rules, created_at, updated_at, migrated FROM entity_profiles WHERE profile_id = $1 AND entity = $2
-`
-
-type GetProfileForEntityParams struct {
-	ProfileID uuid.UUID `json:"profile_id"`
-	Entity    Entities  `json:"entity"`
-}
-
-func (q *Queries) GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileForEntity, arg.ProfileID, arg.Entity)
-	var i EntityProfile
-	err := row.Scan(
-		&i.ID,
-		&i.Entity,
-		&i.ProfileID,
-		&i.ContextualRules,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Migrated,
-	)
-	return i, err
-}
-
-const listProfilesByProjectID = `-- name: ListProfilesByProjectID :many
-WITH helper AS(
-     SELECT pr.id as profid,
-            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
-       FROM profiles pr
-       JOIN profile_selectors ps
-         ON pr.id = ps.profile_id
-      WHERE pr.project_id = $1
-      GROUP BY pr.id
-)
-SELECT
-    profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
-    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
-    helper.selectors::profile_selector[] AS profiles_with_selectors
-FROM profiles
-JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-LEFT JOIN helper ON profiles.id = helper.profid
-WHERE profiles.project_id = $1
-`
-
-type ListProfilesByProjectIDRow struct {
-	Profile                   Profile                   `json:"profile"`
-	ProfilesWithEntityProfile ProfilesWithEntityProfile `json:"profiles_with_entity_profile"`
-	ProfilesWithSelectors     []ProfileSelector         `json:"profiles_with_selectors"`
-}
-
-func (q *Queries) ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listProfilesByProjectID, projectID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListProfilesByProjectIDRow{}
-	for rows.Next() {
-		var i ListProfilesByProjectIDRow
-		if err := rows.Scan(
-			&i.Profile.ID,
-			&i.Profile.Name,
-			&i.Profile.Provider,
-			&i.Profile.ProjectID,
-			&i.Profile.Remediate,
-			&i.Profile.Alert,
-			&i.Profile.CreatedAt,
-			&i.Profile.UpdatedAt,
-			&i.Profile.ProviderID,
-			&i.Profile.SubscriptionID,
-			&i.Profile.DisplayName,
-			pq.Array(&i.Profile.Labels),
-			&i.ProfilesWithEntityProfile.ID,
-			&i.ProfilesWithEntityProfile.Entity,
-			&i.ProfilesWithEntityProfile.ProfileID,
-			&i.ProfilesWithEntityProfile.ContextualRules,
-			&i.ProfilesWithEntityProfile.CreatedAt,
-			&i.ProfilesWithEntityProfile.UpdatedAt,
-			&i.ProfilesWithEntityProfile.Profid,
-			pq.Array(&i.ProfilesWithSelectors),
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listProfilesByProjectIDAndLabel = `-- name: ListProfilesByProjectIDAndLabel :many
 WITH helper AS(
      SELECT pr.id as profid,
@@ -534,35 +467,25 @@ func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListP
 }
 
 const listProfilesInstantiatingRuleType = `-- name: ListProfilesInstantiatingRuleType :many
-SELECT profiles.id, profiles.name, profiles.created_at FROM profiles
-JOIN entity_profiles ON profiles.id = entity_profiles.profile_id 
-JOIN entity_profile_rules ON entity_profiles.id = entity_profile_rules.entity_profile_id
-WHERE entity_profile_rules.rule_type_id = $1
-GROUP BY profiles.id
+SELECT DISTINCT(p.name)
+FROM profiles AS p
+JOIN rule_instances AS r ON p.id = r.profile_id
+WHERE r.rule_type_id = $1
 `
 
-type ListProfilesInstantiatingRuleTypeRow struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// get profile information that instantiate a rule. This is done by joining the profiles with entity_profiles, then correlating those
-// with entity_profile_rules. The rule_type_id is used to filter the results. Note that we only really care about the overal profile,
-// so we only return the profile information. We also should group the profiles so that we don't get duplicates.
-func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]ListProfilesInstantiatingRuleTypeRow, error) {
+func (q *Queries) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listProfilesInstantiatingRuleType, ruleTypeID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListProfilesInstantiatingRuleTypeRow{}
+	items := []string{}
 	for rows.Next() {
-		var i ListProfilesInstantiatingRuleTypeRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, name)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -649,29 +572,6 @@ func (q *Queries) UpsertProfileForEntity(ctx context.Context, arg UpsertProfileF
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Migrated,
-	)
-	return i, err
-}
-
-const upsertRuleInstantiation = `-- name: UpsertRuleInstantiation :one
-INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
-VALUES ($1, $2)
-ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING id, entity_profile_id, rule_type_id, created_at
-`
-
-type UpsertRuleInstantiationParams struct {
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-}
-
-func (q *Queries) UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error) {
-	row := q.db.QueryRowContext(ctx, upsertRuleInstantiation, arg.EntityProfileID, arg.RuleTypeID)
-	var i EntityProfileRule
-	err := row.Scan(
-		&i.ID,
-		&i.EntityProfileID,
-		&i.RuleTypeID,
-		&i.CreatedAt,
 	)
 	return i, err
 }

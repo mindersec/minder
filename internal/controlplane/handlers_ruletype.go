@@ -240,15 +240,10 @@ func (s *Server) DeleteRuleType(
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	profileInfo, err := s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
+	profiles, err := s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
 	// We have profiles that use this rule type, so we can't delete it
 	if err == nil {
-		if len(profileInfo) > 0 {
-			profiles := make([]string, 0, len(profileInfo))
-			for _, p := range profileInfo {
-				profiles = append(profiles, p.Name)
-			}
-
+		if len(profiles) > 0 {
 			return nil, util.UserVisibleError(codes.FailedPrecondition,
 				fmt.Sprintf("cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", ")))
 		}
