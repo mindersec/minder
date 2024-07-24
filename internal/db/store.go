@@ -38,6 +38,7 @@ type Store interface {
 	GetQuerierWithTransaction(tx *sql.Tx) ExtendQuerier
 	Commit(tx *sql.Tx) error
 	Rollback(tx *sql.Tx) error
+	WithTransactionErr(fn func(querier ExtendQuerier) error) error
 }
 
 // SQLStore provides all functions to execute SQL queries and transactions
@@ -69,6 +70,28 @@ func (*SQLStore) Commit(tx *sql.Tx) error {
 // Rollback rolls back a transaction
 func (*SQLStore) Rollback(tx *sql.Tx) error {
 	return tx.Rollback()
+}
+
+// WithTransactionErr wraps an operation in a DB transaction.
+// Compared with the `WithTransaction` function, this only returns errors and not
+// values. Since this does not rely on generics, it can be modelled as a method
+// and stubbed out more easily.
+func (s *SQLStore) WithTransactionErr(fn func(querier ExtendQuerier) error) error {
+	tx, err := s.BeginTransaction()
+	if err != nil {
+		return err
+	}
+	qtx := s.GetQuerierWithTransaction(tx)
+
+	defer func() {
+		_ = s.Rollback(tx)
+	}()
+
+	err = fn(qtx)
+	if err != nil {
+		return err
+	}
+	return s.Commit(tx)
 }
 
 // NewStore creates a new store

@@ -135,6 +135,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	// one rule for the profile
+	ruleInstanceID := uuid.New()
 	ruleParams := db.GetRuleInstancesEntityInProjectsParams{
 		EntityType: db.EntitiesRepository,
 		ProjectIds: []uuid.UUID{projectID},
@@ -143,6 +144,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		GetRuleInstancesEntityInProjects(gomock.Any(), ruleParams).
 		Return([]db.RuleInstance{
 			{
+				ID:         ruleInstanceID,
 				ProfileID:  profileID,
 				RuleTypeID: ruleTypeID,
 				Name:       passthroughRuleType,
@@ -312,7 +314,27 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
+
+	// stubbing related to evaluation history
+	var txFunction func(querier db.ExtendQuerier) error
+	mockStore.EXPECT().
+		WithTransactionErr(gomock.AssignableToTypeOf(txFunction)).
+		DoAndReturn(func(fn func(querier db.ExtendQuerier) error) error {
+			return fn(mockStore)
+		})
+
 	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
+	historyService.EXPECT().
+		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		Return(uuid.New(), nil)
+
+	mockStore.EXPECT().
+		InsertRemediationEvent(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	mockStore.EXPECT().
+		InsertAlertEvent(gomock.Any(), gomock.Any()).
+		Return(nil)
 
 	executor := engine.NewExecutor(
 		mockStore,
