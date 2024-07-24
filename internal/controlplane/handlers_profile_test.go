@@ -31,6 +31,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/providers"
@@ -226,6 +227,96 @@ func TestCreateProfile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Selector with wrong entity",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors_bad_entity",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "no_such_entity",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			wantErr: `unsupported entity type: invalid entity type no_such_entity: unsupported entity type`,
+		},
+		{
+			name: "Selector with valid but unsupported entity",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors_bad_entity",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							// this entity is valid in the sense that it converts to an entity type but
+							// the current selelectors implementation does not support it
+							Entity:      "build_environment",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			wantErr: `unsupported entity type: no environment for entity ENTITY_BUILD_ENVIRONMENTS: unsupported entity type`,
+		},
+		{
+			name: "Selector does not parse",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors_syntax_error",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != ",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			wantErr: `selector failed to parse: Syntax error: mismatched input '<EOF>' expecting {'[', '{', '(', '.', '-', '!', 'true', 'false', 'null', NUM_FLOAT, NUM_INT, NUM_UINT, STRING, BYTES, IDENTIFIER}`,
+		},
+		{
+			name: "Selector uses wrong attribute",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors_attr_error",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.foo != 'stacklok/demo-repo-go'",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			wantErr: `selector is invalid: undefined field 'foo'`,
+		},
 	}
 
 	for _, tc := range tests {
@@ -246,11 +337,12 @@ func TestCreateProfile(t *testing.T) {
 			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
 				Project: engcontext.Project{ID: dbproj.ID},
 			})
+
 			evts := &stubeventer.StubEventer{}
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles:      profiles.NewProfileService(evts),
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
 				providerStore: providers.NewProviderStore(dbStore),
 				evt:           evts,
 			}
@@ -965,7 +1057,7 @@ func TestPatchProfile(t *testing.T) {
 			s := &Server{
 				store: dbStore,
 				// Do not replace this with a mock - these tests are used to test ProfileService as well
-				profiles:      profiles.NewProfileService(evts),
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
 				providerStore: providers.NewProviderStore(dbStore),
 				evt:           evts,
 			}
@@ -1069,11 +1161,12 @@ func TestPatchManagedProfile(t *testing.T) {
 	ctx = engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
 		Project: engcontext.Project{ID: dbproj.ID},
 	})
+
 	evts := &stubeventer.StubEventer{}
 	s := &Server{
 		store: dbStore,
 		// Do not replace this with a mock - these tests are used to test ProfileService as well
-		profiles:      profiles.NewProfileService(evts),
+		profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
 		providerStore: providers.NewProviderStore(dbStore),
 		evt:           evts,
 	}

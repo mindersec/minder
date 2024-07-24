@@ -34,6 +34,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/marketplaces/namespaces"
@@ -89,10 +90,13 @@ type profileService struct {
 }
 
 // NewProfileService creates an instance of ProfileService
-func NewProfileService(publisher events.Publisher) ProfileService {
+func NewProfileService(
+	publisher events.Publisher,
+	selChecker selectors.SelectionChecker,
+) ProfileService {
 	return &profileService{
 		publisher: publisher,
-		validator: &Validator{},
+		validator: NewValidator(selChecker),
 	}
 }
 
@@ -168,7 +172,7 @@ func (p *profileService) CreateProfile(
 		}
 	}
 
-	if err := createSelectors(ctx, newProfile.ID, qtx, profile.GetSelection()); err != nil {
+	if err := p.createSelectors(ctx, newProfile.ID, qtx, profile.GetSelection()); err != nil {
 		return nil, err
 	}
 
@@ -307,7 +311,7 @@ func (p *profileService) UpdateProfile(
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
-	if err := updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
+	if err := p.updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
@@ -712,7 +716,38 @@ func upsertRuleInstances(
 	return updatedIDs, nil
 }
 
-func createSelectors(
+func (p *profileService) createSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	if err := p.validator.ValidateSelection(selection); err != nil {
+		return err
+	}
+
+	return createSelectorDbRecords(ctx, profID, qtx, selection)
+}
+
+func (p *profileService) updateSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	if err := p.validator.ValidateSelection(selection); err != nil {
+		return err
+	}
+
+	err := qtx.DeleteSelectorsByProfileID(ctx, profID)
+	if err != nil {
+		return fmt.Errorf("error deleting selectors: %w", err)
+	}
+
+	return createSelectorDbRecords(ctx, profID, qtx, selection)
+}
+
+func createSelectorDbRecords(
 	ctx context.Context,
 	profID uuid.UUID,
 	qtx db.Querier,
@@ -736,18 +771,4 @@ func createSelectors(
 	}
 
 	return nil
-}
-
-func updateSelectors(
-	ctx context.Context,
-	profID uuid.UUID,
-	qtx db.Querier,
-	selection []*minderv1.Profile_Selector,
-) error {
-	err := qtx.DeleteSelectorsByProfileID(ctx, profID)
-	if err != nil {
-		return fmt.Errorf("error deleting selectors: %w", err)
-	}
-
-	return createSelectors(ctx, profID, qtx, selection)
 }

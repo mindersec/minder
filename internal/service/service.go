@@ -96,7 +96,8 @@ func AllInOneServerService(
 
 	historySvc := history.NewEvaluationHistoryService()
 	inviteSvc := invites.NewInviteService()
-	profileSvc := profiles.NewProfileService(evt)
+	selChecker := selectors.NewEnv()
+	profileSvc := profiles.NewProfileService(evt, selChecker)
 	ruleSvc := ruletypes.NewRuleTypeService()
 	roleScv := roles.NewRoleService()
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)

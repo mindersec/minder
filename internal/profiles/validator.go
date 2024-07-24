@@ -27,13 +27,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Validator encapsulates the logic for validating profiles
-type Validator struct{}
+type Validator struct {
+	selBld selectors.SelectionChecker
+}
+
+// NewValidator creates a new profile validator
+func NewValidator(selBld selectors.SelectionChecker) *Validator {
+	return &Validator{selBld: selBld}
+}
 
 // ValidateAndExtractRules validates a profile to ensure it is well-formed
 // it also returns information about the rules in the profile
@@ -322,4 +330,49 @@ func validateEntities(
 	}
 
 	return nil
+}
+
+// ValidateSelection validates the selectors in a profile
+func (v *Validator) ValidateSelection(
+	selection []*minderv1.Profile_Selector,
+) error {
+	for _, sel := range selection {
+		if err := v.selBld.CheckSelector(sel); err != nil {
+			return handleSelectorError(err)
+		}
+	}
+
+	return nil
+}
+
+func handleSelectorError(err error) error {
+	if errors.Is(err, selectors.ErrUnsupported) {
+		return util.UserVisibleError(codes.InvalidArgument, "unsupported entity type: %v", err)
+	} else if errors.Is(err, selectors.ErrSelectorCheck) {
+		return handleErrSelectorCheck(err)
+	}
+
+	// fallback, just return the error as-is
+	return err
+}
+
+func handleErrSelectorCheck(err error) error {
+	var selParseErr *selectors.ParseError
+	var selCheckErr *selectors.CheckError
+
+	if errors.As(err, &selParseErr) {
+		msg := "No error message found"
+		if len(selParseErr.Errors) > 0 {
+			msg = selParseErr.Errors[0].Msg
+		}
+		return util.UserVisibleError(codes.InvalidArgument, "selector failed to parse: %s", msg)
+	} else if errors.As(err, &selCheckErr) {
+		msg := "No error message found"
+		if len(selCheckErr.Errors) > 0 {
+			msg = selCheckErr.Errors[0].Msg
+		}
+		return util.UserVisibleError(codes.InvalidArgument, "selector is invalid: %s", msg)
+	}
+
+	return err
 }
