@@ -29,12 +29,14 @@ INSERT INTO evaluation_rule_entities(
     rule_id,
     repository_id,
     pull_request_id,
-    artifact_id
+    artifact_id,
+    entity_type
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
 RETURNING id;
 
