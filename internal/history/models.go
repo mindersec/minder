@@ -627,12 +627,6 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 	if filter.projectID == uuid.Nil {
 		return nil, fmt.Errorf("%w: missing", ErrInvalidProjectID)
 	}
-	if filter.to != nil && filter.from == nil {
-		return nil, fmt.Errorf("%w: from is missing", ErrInvalidTimeRange)
-	}
-	if filter.from != nil && filter.to == nil {
-		return nil, fmt.Errorf("%w: to is missing", ErrInvalidTimeRange)
-	}
 	if filter.from != nil && filter.to != nil && filter.from.After(*filter.to) {
 		return nil, fmt.Errorf("%w: from is greated than to", ErrInvalidTimeRange)
 	}
