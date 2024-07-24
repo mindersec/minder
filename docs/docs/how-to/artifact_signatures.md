@@ -10,14 +10,17 @@ repositories are built from trusted sources and using trusted workflows based
 on their cryptographically signed provenance.
 
 This is done by creating a profile which utilizes the `artifact_signature`
-`rule_type`. 
+`rule_type`.
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Stacklok account
-* An enrolled Provider (e.g., GitHub)
-* A repository that produces container images. At the moment Minder's artifact signature checks are only available for container images and only the `ghcr.io` registry is supported.
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub)
+- A repository that produces container images. At the moment Minder's artifact
+  signature checks are only available for container images and only the
+  `ghcr.io` registry is supported.
 
 ## Create the artifact provenance rule type
 
@@ -80,6 +83,7 @@ and the policy status will be updated accordingly. If the artifact is not matchi
 violation is presented via the profile status and an alert is raised.
 
 ## Define a more advanced profile that checks artifact provenance
+
 As the next step, let's create a profile that checks the provenance of the artifact.
 Create a new file called `profile-artifact-provenance.yaml`.
 

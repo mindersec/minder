@@ -7,15 +7,17 @@ sidebar_position: 70
 
 ## Prerequisites
 
-* The `minder` CLI application
-* A Minder account
-* An enrolled Provider (e.g., GitHub) and registered repositories
+- The `minder` CLI application
+- A Minder account with
+  [at least `editor` permission](../user_management/user_roles.md)
+- An enrolled Provider (e.g., GitHub) and registered repositories
 
 ## Create a rule type that you want to be alerted on
 
 The `alert` feature is available for all rule types that have the `alert` section defined in their `<alert-type>.yaml`
 file. Alerts are a core feature of Minder providing you with notifications about the status of your registered
-repositories using GitHub Security Advisories. These Security Advisories automatically open and close based on the evaluation of the rules defined in your profiles.
+repositories using GitHub Security Advisories. These Security Advisories automatically open and close based on the evaluation of the rules
+defined in your profiles.
 
 When a rule fails, Minder opens an alert to bring your attention to the non-compliance issue. Conversely, when the
 rule evaluation passes, Minder will automatically close any previously opened alerts related to that rule.
