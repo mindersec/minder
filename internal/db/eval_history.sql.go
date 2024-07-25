@@ -103,12 +103,14 @@ INSERT INTO evaluation_rule_entities(
     rule_id,
     repository_id,
     pull_request_id,
-    artifact_id
+    artifact_id,
+    entity_type
 ) VALUES (
     $1,
     $2,
     $3,
-    $4
+    $4,
+    $5
 )
 RETURNING id
 `
@@ -118,6 +120,7 @@ type InsertEvaluationRuleEntityParams struct {
 	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	EntityType    NullEntities  `json:"entity_type"`
 }
 
 func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
@@ -126,6 +129,7 @@ func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEval
 		arg.RepositoryID,
 		arg.PullRequestID,
 		arg.ArtifactID,
+		arg.EntityType,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
