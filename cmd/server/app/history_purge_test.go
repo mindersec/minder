@@ -17,6 +17,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 	"unsafe"
@@ -47,6 +48,202 @@ func TestRecordSize(t *testing.T) {
 	)
 
 	require.Equal(t, 80, int(size))
+}
+
+func TestPurgeLoop(t *testing.T) {
+	t.Parallel()
+
+	threshold := time.Now().AddDate(0, 0, -30)
+
+	tests := []struct {
+		name      string
+		dbSetup   dbf.DBMockBuilder
+		threshold time.Time
+		dryRun    bool
+		size      uint
+		err       bool
+	}{
+		{
+			name: "happy path",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					nil,
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid1,
+						RuleID:         ruleID1,
+						EntityType:     int32(1),
+						EntityID:       entityID1,
+					},
+				),
+				withTransactionStuff(),
+				withDeleteEvaluationHistoryByIDs(
+					nil,
+					[]uuid.UUID{
+						uuid1,
+					},
+				),
+			),
+			threshold: threshold,
+			size:      5,
+		},
+		{
+			name: "dry run",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					nil,
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid1,
+						RuleID:         ruleID1,
+						EntityType:     int32(1),
+						EntityID:       entityID1,
+					},
+				),
+			),
+			threshold: threshold,
+			dryRun:    true,
+			size:      5,
+		},
+		{
+			name: "batches",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					nil,
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid1,
+						RuleID:         ruleID1,
+						EntityType:     int32(1),
+						EntityID:       entityID1,
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid2,
+						RuleID:         ruleID2,
+						EntityType:     int32(1),
+						EntityID:       entityID2,
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid3,
+						RuleID:         ruleID3,
+						EntityType:     int32(1),
+						EntityID:       entityID3,
+					},
+				),
+				withTransactionStuff(),
+				withDeleteEvaluationHistoryByIDs(
+					nil,
+					[]uuid.UUID{
+						uuid1,
+						uuid2,
+					},
+					[]uuid.UUID{
+						uuid3,
+					},
+				),
+			),
+			threshold: threshold,
+			size:      2,
+		},
+		{
+			name: "no records",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					nil,
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+				),
+			),
+			threshold: threshold,
+			size:      5,
+		},
+		{
+			name: "read error",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					errors.New("boom"),
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+				),
+			),
+			threshold: threshold,
+			size:      5,
+			err:       true,
+		},
+		{
+			name: "write error",
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistoryStaleRecords(
+					nil,
+					db.ListEvaluationHistoryStaleRecordsParams{
+						Threshold: threshold,
+						Size:      int32(4000000),
+					},
+					db.ListEvaluationHistoryStaleRecordsRow{
+						EvaluationTime: time.Now(),
+						ID:             uuid1,
+						RuleID:         ruleID1,
+						EntityType:     int32(1),
+						EntityID:       entityID1,
+					},
+				),
+				withTransactionStuff(),
+				withDeleteEvaluationHistoryByIDs(
+					errors.New("boom"),
+					[]uuid.UUID{
+						uuid1,
+					},
+				),
+			),
+			threshold: threshold,
+			size:      5,
+			err:       true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := context.Background()
+
+			var store db.Store
+			if tt.dbSetup != nil {
+				store = tt.dbSetup(ctrl)
+			}
+
+			err := purgeLoop(ctx, store, tt.threshold, tt.size, tt.dryRun, printf)
+			if tt.err {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func printf(format string, a ...any) {
+	fmt.Printf(format, a...)
 }
 
 func TestDeleteEvaluationHistory(t *testing.T) {
@@ -228,10 +425,13 @@ func TestDeleteEvaluationHistory(t *testing.T) {
 var (
 	uuid1        = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	uuid2        = uuid.MustParse("00000000-0000-0000-0000-000000000002")
+	uuid3        = uuid.MustParse("00000000-0000-0000-0000-000000000003")
 	entityID1    = uuid.MustParse("00000000-0000-0000-0000-000000000011")
 	entityID2    = uuid.MustParse("00000000-0000-0000-0000-000000000022")
+	entityID3    = uuid.MustParse("00000000-0000-0000-0000-000000000033")
 	ruleID1      = uuid.MustParse("00000000-0000-0000-0000-000000000111")
 	ruleID2      = uuid.MustParse("00000000-0000-0000-0000-000000000222")
+	ruleID3      = uuid.MustParse("00000000-0000-0000-0000-000000000333")
 	evaluatedAt1 = time.Now()
 	evaluatedAt2 = evaluatedAt1.Add(-1 * time.Hour)
 	entityType   = int32(1)
@@ -269,6 +469,25 @@ func withTransactionStuff() func(dbf.DBMock) {
 		mock.EXPECT().
 			Rollback(gomock.Any()).
 			AnyTimes()
+	}
+}
+
+func withListEvaluationHistoryStaleRecords(
+	err error,
+	params db.ListEvaluationHistoryStaleRecordsParams,
+	records ...db.ListEvaluationHistoryStaleRecordsRow,
+) func(dbf.DBMock) {
+	if err != nil {
+		return func(mock dbf.DBMock) {
+			mock.EXPECT().
+				ListEvaluationHistoryStaleRecords(gomock.Any(), params).
+				Return(nil, err)
+		}
+	}
+	return func(mock dbf.DBMock) {
+		mock.EXPECT().
+			ListEvaluationHistoryStaleRecords(gomock.Any(), params).
+			Return(records, err)
 	}
 }
 
