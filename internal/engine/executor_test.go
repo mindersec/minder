@@ -99,7 +99,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	authtoken := generateFakeAccessToken(t, cryptoEngine)
 	// -- start expectations
-
 	// not valuable yet, but would have to be updated once actions start using this
 	mockStore.EXPECT().GetRuleEvaluationByProfileIdAndRuleType(gomock.Any(),
 		gomock.Any(),
@@ -153,6 +152,31 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				Params:     emptyJSON,
 				ProjectID:  projectID,
 			}}, nil)
+
+	ruleEntityID := uuid.New()
+	evaluationID := uuid.New()
+	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
+	historyService.EXPECT().
+		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		Return(evaluationID, ruleEntityID, nil)
+
+	mockStore.EXPECT().
+		InsertRemediationEvent(gomock.Any(), db.InsertRemediationEventParams{
+			EvaluationID: evaluationID,
+			Status:       db.RemediationStatusTypesSkipped,
+			Details:      "",
+			Metadata:     json.RawMessage("{}"),
+		}).
+		Return(nil)
+
+	mockStore.EXPECT().
+		InsertAlertEvent(gomock.Any(), db.InsertAlertEventParams{
+			EvaluationID: evaluationID,
+			Status:       db.AlertStatusTypesSkipped,
+			Details:      "",
+			Metadata:     json.RawMessage("{}"),
+		}).
+		Return(nil)
 
 	// only one project in the hierarchy
 	mockStore.EXPECT().
@@ -230,6 +254,14 @@ default allow = true`,
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
 			RuleName:   passthroughRuleType,
+			RuleEntityID: uuid.NullUUID{
+				UUID:  ruleEntityID,
+				Valid: true,
+			},
+			RuleInstanceID: uuid.NullUUID{
+				UUID:  ruleInstanceID,
+				Valid: true,
+			},
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status
@@ -322,19 +354,6 @@ default allow = true`,
 		DoAndReturn(func(fn func(querier db.ExtendQuerier) error) error {
 			return fn(mockStore)
 		})
-
-	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
-	historyService.EXPECT().
-		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
-		Return(uuid.New(), nil)
-
-	mockStore.EXPECT().
-		InsertRemediationEvent(gomock.Any(), gomock.Any()).
-		Return(nil)
-
-	mockStore.EXPECT().
-		InsertAlertEvent(gomock.Any(), gomock.Any()).
-		Return(nil)
 
 	executor := engine.NewExecutor(
 		mockStore,

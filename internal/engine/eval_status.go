@@ -129,23 +129,6 @@ func (e *executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	// Upsert evaluation
-	// TODO: replace this table with the evaluation statuses table
-	evalID, err := e.querier.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-		ProfileID:     params.Profile.ID,
-		RepositoryID:  params.RepoID,
-		ArtifactID:    params.ArtifactID,
-		Entity:        params.EntityType,
-		RuleTypeID:    params.Rule.RuleTypeID,
-		PullRequestID: params.PullRequestID,
-		RuleName:      params.Rule.Name,
-	})
-	if err != nil {
-		logger.Err(err).Msg("error upserting rule evaluation")
-		return err
-	}
-
-	// Upsert evaluation details
 	entityID, entityType, err := ent.EntityFromIDs(params.RepoID.UUID, params.ArtifactID.UUID, params.PullRequestID.UUID)
 	if err != nil {
 		return err
@@ -153,47 +136,15 @@ func (e *executor) createOrUpdateEvalStatus(
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
 	e.metrics.CountEvalStatus(ctx, status, entityType)
 
-	_, err = e.querier.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
-		RuleEvalID: evalID,
-		Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
-		Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
-	})
-	if err != nil {
-		logger.Err(err).Msg("error upserting rule evaluation details")
-		return err
-	}
-
-	// Upsert remediation details
 	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
 	e.metrics.CountRemediationStatus(ctx, remediationStatus)
 
-	_, err = e.querier.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
-		RuleEvalID: evalID,
-		Status:     remediationStatus,
-		Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
-		Metadata:   params.GetActionsErr().RemediateMeta,
-	})
-	if err != nil {
-		logger.Err(err).Msg("error upserting rule remediation details")
-	}
-
-	// Upsert alert details
 	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
 	e.metrics.CountAlertStatus(ctx, alertStatus)
 
-	_, err = e.querier.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
-		RuleEvalID: evalID,
-		Status:     alertStatus,
-		Details:    errorAsActionDetails(params.GetActionsErr().AlertErr),
-		Metadata:   params.GetActionsErr().AlertMeta,
-	})
-	if err != nil {
-		logger.Err(err).Msg("error upserting rule alert details")
-	}
-
-	// Log in the evaluation history tables
+	// Log result in the evaluation history tables
 	err = e.querier.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-		evalID, err := e.historyService.StoreEvaluationStatus(
+		evalID, ruleEntityID, err := e.historyService.StoreEvaluationStatus(
 			ctx,
 			qtx,
 			params.Rule.ID,
@@ -228,6 +179,61 @@ func (e *executor) createOrUpdateEvalStatus(
 		})
 		if err != nil {
 			return err
+		}
+
+		// Upsert evaluation
+		// TODO: replace these tables with the evaluation statuses table after migration
+		legacyEvalID, err := qtx.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
+			ProfileID:     params.Profile.ID,
+			RepositoryID:  params.RepoID,
+			ArtifactID:    params.ArtifactID,
+			Entity:        params.EntityType,
+			RuleTypeID:    params.Rule.RuleTypeID,
+			PullRequestID: params.PullRequestID,
+			RuleName:      params.Rule.Name,
+			RuleInstanceID: uuid.NullUUID{
+				UUID:  params.Rule.ID,
+				Valid: true,
+			},
+			RuleEntityID: uuid.NullUUID{
+				UUID:  ruleEntityID,
+				Valid: true,
+			},
+		})
+		if err != nil {
+			logger.Err(err).Msg("error upserting rule evaluation")
+			return err
+		}
+
+		// Upsert evaluation details
+		_, err = qtx.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
+			RuleEvalID: legacyEvalID,
+			Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
+			Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
+		})
+		if err != nil {
+			logger.Err(err).Msg("error upserting rule evaluation details")
+			return err
+		}
+
+		_, err = qtx.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
+			RuleEvalID: legacyEvalID,
+			Status:     remediationStatus,
+			Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
+			Metadata:   params.GetActionsErr().RemediateMeta,
+		})
+		if err != nil {
+			logger.Err(err).Msg("error upserting rule remediation details")
+		}
+
+		_, err = qtx.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
+			RuleEvalID: legacyEvalID,
+			Status:     alertStatus,
+			Details:    errorAsActionDetails(params.GetActionsErr().AlertErr),
+			Metadata:   params.GetActionsErr().AlertMeta,
+		})
+		if err != nil {
+			logger.Err(err).Msg("error upserting rule alert details")
 		}
 
 		return nil

@@ -33,7 +33,8 @@ import (
 // EvaluationHistoryService contains methods to add/query data in the history table.
 type EvaluationHistoryService interface {
 	// StoreEvaluationStatus stores the result of this evaluation in the history table.
-	// Returns the UUID of the evaluation status.
+	// Returns the UUID of the evaluation status, and the UUID of the rule-entity
+	// TODO: stop returning rule-entity ID once we get rid of the old tables.
 	StoreEvaluationStatus(
 		ctx context.Context,
 		qtx db.Querier,
@@ -42,7 +43,7 @@ type EvaluationHistoryService interface {
 		entityType db.Entities,
 		entityID uuid.UUID,
 		evalError error,
-	) (uuid.UUID, error)
+	) (uuid.UUID, uuid.UUID, error)
 	// ListEvaluationHistory returns a list of evaluations stored
 	// in the history table.
 	ListEvaluationHistory(
@@ -69,14 +70,14 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityType db.Entities,
 	entityID uuid.UUID,
 	evalError error,
-) (uuid.UUID, error) {
+) (uuid.UUID, uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
 	details := evalerrors.ErrorAsEvalDetails(evalError)
 
 	params, err := paramsFromEntity(ruleID, entityID, entityType)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, uuid.Nil, err
 	}
 
 	// find the latest record for this rule/entity pair
@@ -104,10 +105,10 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 				},
 			)
 			if err != nil {
-				return uuid.Nil, fmt.Errorf("error while creating new rule/entity in database: %w", err)
+				return uuid.Nil, uuid.Nil, fmt.Errorf("error while creating new rule/entity in database: %w", err)
 			}
 		} else {
-			return uuid.Nil, fmt.Errorf("error while querying DB: %w", err)
+			return uuid.Nil, uuid.Nil, fmt.Errorf("error while querying DB: %w", err)
 		}
 	} else {
 		ruleEntityID = latestRecord.RuleEntityID
@@ -115,10 +116,10 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 
 	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 	}
 
-	return evaluationID, nil
+	return evaluationID, ruleEntityID, nil
 }
 
 func (_ *evaluationHistoryService) createNewStatus(
