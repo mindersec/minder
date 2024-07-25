@@ -55,10 +55,12 @@ RETURNING id;
 -- name: UpsertLatestEvaluationStatus :exec
 INSERT INTO latest_evaluation_statuses(
     rule_entity_id,
-    evaluation_history_id
+    evaluation_history_id,
+    profile_id
 ) VALUES (
     $1,
-    $2
+    $2,
+    $3
 )
 ON CONFLICT (rule_entity_id) DO UPDATE
 SET evaluation_history_id = $2;

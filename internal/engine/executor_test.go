@@ -325,7 +325,7 @@ default allow = true`,
 
 	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 	historyService.EXPECT().
-		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
 		Return(uuid.New(), nil)
 
 	mockStore.EXPECT().

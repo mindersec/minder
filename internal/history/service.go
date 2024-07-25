@@ -38,6 +38,7 @@ type EvaluationHistoryService interface {
 		ctx context.Context,
 		qtx db.Querier,
 		ruleID uuid.UUID,
+		profileID uuid.UUID,
 		entityType db.Entities,
 		entityID uuid.UUID,
 		evalError error,
@@ -64,6 +65,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	ruleID uuid.UUID,
+	profileID uuid.UUID,
 	entityType db.Entities,
 	entityID uuid.UUID,
 	evalError error,
@@ -111,7 +113,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 		ruleEntityID = latestRecord.RuleEntityID
 	}
 
-	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, status, details)
+	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 	}
@@ -123,6 +125,7 @@ func (_ *evaluationHistoryService) createNewStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	ruleEntityID uuid.UUID,
+	profileID uuid.UUID,
 	status db.EvalStatusTypes,
 	details string,
 ) (uuid.UUID, error) {
@@ -142,6 +145,10 @@ func (_ *evaluationHistoryService) createNewStatus(
 		db.UpsertLatestEvaluationStatusParams{
 			RuleEntityID:        ruleEntityID,
 			EvaluationHistoryID: newEvaluationID,
+			ProfileID: uuid.NullUUID{
+				UUID:  profileID,
+				Valid: true,
+			},
 		},
 	)
 	if err != nil {

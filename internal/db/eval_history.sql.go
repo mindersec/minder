@@ -379,21 +379,24 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 const upsertLatestEvaluationStatus = `-- name: UpsertLatestEvaluationStatus :exec
 INSERT INTO latest_evaluation_statuses(
     rule_entity_id,
-    evaluation_history_id
+    evaluation_history_id,
+    profile_id
 ) VALUES (
     $1,
-    $2
+    $2,
+    $3
 )
 ON CONFLICT (rule_entity_id) DO UPDATE
 SET evaluation_history_id = $2
 `
 
 type UpsertLatestEvaluationStatusParams struct {
-	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
-	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
+	RuleEntityID        uuid.UUID     `json:"rule_entity_id"`
+	EvaluationHistoryID uuid.UUID     `json:"evaluation_history_id"`
+	ProfileID           uuid.NullUUID `json:"profile_id"`
 }
 
 func (q *Queries) UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error {
-	_, err := q.db.ExecContext(ctx, upsertLatestEvaluationStatus, arg.RuleEntityID, arg.EvaluationHistoryID)
+	_, err := q.db.ExecContext(ctx, upsertLatestEvaluationStatus, arg.RuleEntityID, arg.EvaluationHistoryID, arg.ProfileID)
 	return err
 }
