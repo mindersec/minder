@@ -14,7 +14,6 @@ require (
 	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.0
-	github.com/fergusstrange/embedded-postgres v1.27.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/validator/v10 v10.22.0
@@ -59,6 +58,8 @@ require (
 	github.com/stacklok/trusty-sdk-go v0.1.1
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.24.0
+	github.com/testcontainers/testcontainers-go v0.32.0
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.32.0
 	github.com/thomaspoignant/go-feature-flag v1.31.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
@@ -174,13 +175,10 @@ require (
 	github.com/sigstore/sigstore v1.8.7 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
-	github.com/testcontainers/testcontainers-go v0.32.0 // indirect
 	github.com/testcontainers/testcontainers-go/modules/mysql v0.31.0 // indirect
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	github.com/zitadel/logging v0.6.0 // indirect

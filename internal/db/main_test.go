@@ -16,16 +16,18 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
 
-	embeddedpostgres "github.com/fergusstrange/embedded-postgres"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
+
+	"github.com/stacklok/minder/internal/testing/containers"
 )
 
 const (
@@ -39,7 +41,7 @@ var testQueries *Queries
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	var runDBTests = runTestWithInProcessPostgres
+	var runDBTests = runTestWithPostgresContainer
 	if useExternalDB() {
 		log.Print("Using external database for tests")
 		runDBTests = runTestWithExternalPostgres
@@ -60,43 +62,27 @@ func runTestWithExternalPostgres(m *testing.M) int {
 	return m.Run()
 }
 
-func runTestWithInProcessPostgres(m *testing.M) int {
-	tmpName, err := os.MkdirTemp("", "minder-db-test")
+func runTestWithPostgresContainer(m *testing.M) int {
+	ctx := context.Background()
+	connStr, postgres, err := containers.NewPostgresContainer(ctx)
 	if err != nil {
-		log.Err(err).Msg("cannot create tmpdir")
-		return -1
-	}
-
-	defer func() {
-		if err := os.RemoveAll(tmpName); err != nil {
-			log.Err(err).Msg("cannot remove tmpdir")
-		}
-	}()
-
-	dbCfg := embeddedpostgres.DefaultConfig().
-		Database("minder").
-		RuntimePath(tmpName).
-		Port(5433)
-	postgres := embeddedpostgres.NewDatabase(dbCfg)
-
-	if err := postgres.Start(); err != nil {
-		log.Err(err).Msg("cannot start postgres")
+		log.Err(err).Msg("cannot start postgres container")
 		return -1
 	}
 	defer func() {
-		if err := postgres.Stop(); err != nil {
-			log.Err(err).Msg("cannot stop postgres")
+		if err := postgres.Terminate(ctx); err != nil {
+			log.Err(err).Msg("cannot stop postgres container")
 		}
 	}()
 
-	testDB, err = sql.Open("postgres", "user=postgres dbname=minder password=postgres host=localhost port=5433 sslmode=disable")
+	testDB, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Err(err).Msg("cannot connect to db test instance")
 		return -1
 	}
 
 	configPath := "file://../../database/migrations"
-	mig, err := migrate.New(configPath, dbCfg.GetConnectionURL()+"?sslmode=disable")
+	mig, err := migrate.New(configPath, connStr)
 	if err != nil {
 		log.Printf("Error while creating migration instance (%s): %v\n", configPath, err)
 		return -1
