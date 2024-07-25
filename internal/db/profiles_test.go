@@ -225,6 +225,14 @@ func findRowWithLabels(t *testing.T, rows []ListProfilesByProjectIDAndLabelRow, 
 	return slices.IndexFunc(rows, matchIdWithListLabelRow(t, id))
 }
 
+func findBulkRow(t *testing.T, rows []BulkGetProfilesByIDRow, id uuid.UUID) int {
+	t.Helper()
+
+	return slices.IndexFunc(rows, func(r BulkGetProfilesByIDRow) bool {
+		return r.Profile.ID == id
+	})
+}
+
 func TestProfileListWithSelectors(t *testing.T) {
 	t.Parallel()
 
@@ -300,6 +308,36 @@ func TestProfileListWithSelectors(t *testing.T) {
 		require.Len(t, multiResult, 1)
 		require.Len(t, multiResult[0].ProfilesWithSelectors, 3)
 		require.Subset(t, multiResult[0].ProfilesWithSelectors, []ProfileSelector{mulitSel1, mulitSel2, mulitSel3})
+	})
+
+	t.Run("Bulk get profiles by ID with selectors", func(t *testing.T) {
+		t.Parallel()
+
+		profileIDs := []uuid.UUID{
+			noSelectors.ID, oneSelectorProfile.ID, multiSelectorProfile.ID, genericSelectorProfile.ID,
+		}
+
+		rows, err := testQueries.BulkGetProfilesByID(context.Background(), profileIDs)
+		require.NoError(t, err)
+		require.Len(t, rows, len(profileIDs))
+
+		noSelIdx := findBulkRow(t, rows, noSelectors.ID)
+		require.True(t, noSelIdx >= 0, "noSelectors not found in rows")
+		require.Empty(t, rows[noSelIdx].ProfilesWithSelectors)
+
+		oneSelIdx := findBulkRow(t, rows, oneSelectorProfile.ID)
+		require.True(t, oneSelIdx >= 0, "oneSelector not found in rows")
+		require.Len(t, rows[oneSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[oneSelIdx].ProfilesWithSelectors, oneSel)
+
+		multiSelIdx := findBulkRow(t, rows, multiSelectorProfile.ID)
+		require.True(t, multiSelIdx >= 0, "multiSelectorProfile not found in rows")
+		require.Len(t, rows[multiSelIdx].ProfilesWithSelectors, 3)
+		require.Subset(t, rows[multiSelIdx].ProfilesWithSelectors, []ProfileSelector{mulitSel1, mulitSel2, mulitSel3})
+
+		genSelIdx := findBulkRow(t, rows, genericSelectorProfile.ID)
+		require.Len(t, rows[genSelIdx].ProfilesWithSelectors, 1)
+		require.Contains(t, rows[genSelIdx].ProfilesWithSelectors, genericSel)
 	})
 }
 

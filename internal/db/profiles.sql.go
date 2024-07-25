@@ -14,13 +14,25 @@ import (
 )
 
 const bulkGetProfilesByID = `-- name: BulkGetProfilesByID :many
-SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels
+WITH helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+    FROM profiles pr
+             JOIN profile_selectors ps
+                  ON pr.id = ps.profile_id
+    WHERE pr.id = ANY($1::UUID[])
+    GROUP BY pr.id
+)
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
+       helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE id = ANY($1::UUID[])
 `
 
 type BulkGetProfilesByIDRow struct {
-	Profile Profile `json:"profile"`
+	Profile               Profile           `json:"profile"`
+	ProfilesWithSelectors []ProfileSelector `json:"profiles_with_selectors"`
 }
 
 func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error) {
@@ -45,6 +57,7 @@ func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUI
 			&i.Profile.SubscriptionID,
 			&i.Profile.DisplayName,
 			pq.Array(&i.Profile.Labels),
+			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
 			return nil, err
 		}
