@@ -444,22 +444,23 @@ func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRule
 
 const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name, rule_entity_id
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name, rule_entity_id, rule_instance_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, lower(rule_name))
   DO UPDATE SET profile_id = $1
 RETURNING id
 `
 
 type UpsertRuleEvaluationsParams struct {
-	ProfileID     uuid.UUID     `json:"profile_id"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
-	Entity        Entities      `json:"entity"`
-	RuleName      string        `json:"rule_name"`
-	RuleEntityID  uuid.NullUUID `json:"rule_entity_id"`
+	ProfileID      uuid.UUID     `json:"profile_id"`
+	RepositoryID   uuid.NullUUID `json:"repository_id"`
+	ArtifactID     uuid.NullUUID `json:"artifact_id"`
+	PullRequestID  uuid.NullUUID `json:"pull_request_id"`
+	RuleTypeID     uuid.UUID     `json:"rule_type_id"`
+	Entity         Entities      `json:"entity"`
+	RuleName       string        `json:"rule_name"`
+	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
+	RuleInstanceID uuid.NullUUID `json:"rule_instance_id"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
@@ -472,6 +473,7 @@ func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvalu
 		arg.Entity,
 		arg.RuleName,
 		arg.RuleEntityID,
+		arg.RuleInstanceID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

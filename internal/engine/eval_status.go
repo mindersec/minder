@@ -191,6 +191,10 @@ func (e *executor) createOrUpdateEvalStatus(
 			RuleTypeID:    params.Rule.RuleTypeID,
 			PullRequestID: params.PullRequestID,
 			RuleName:      params.Rule.Name,
+			RuleInstanceID: uuid.NullUUID{
+				UUID:  params.Rule.ID,
+				Valid: true,
+			},
 			RuleEntityID: uuid.NullUUID{
 				UUID:  ruleEntityID,
 				Valid: true,

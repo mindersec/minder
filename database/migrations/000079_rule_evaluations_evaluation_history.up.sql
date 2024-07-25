@@ -15,9 +15,10 @@
 BEGIN;
 
 -- link each entry in the rule_evaluations table to the evaluation_rule_entities
--- table. This will simplify migrating statuses from the old status tables over
--- to the new history tables.
-ALTER TABLE public.rule_evaluations ADD COLUMN rule_entity_id UUID REFERENCES evaluation_rule_entities(id) ON DELETE CASCADE;
+-- table, and to the rule_instances table. This will simplify migrating statuses
+-- from the old status tables over to the new history tables.
+ALTER TABLE rule_evaluations ADD COLUMN rule_entity_id UUID REFERENCES evaluation_rule_entities(id) ON DELETE CASCADE;
+ALTER TABLE rule_evaluations ADD COLUMN rule_instance_id UUID REFERENCES rule_instances(id) ON DELETE CASCADE;
 
 -- Fix some omissions from the previous PR
 

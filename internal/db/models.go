@@ -678,15 +678,16 @@ type RuleDetailsRemediate struct {
 }
 
 type RuleEvaluation struct {
-	ID            uuid.UUID     `json:"id"`
-	Entity        Entities      `json:"entity"`
-	ProfileID     uuid.UUID     `json:"profile_id"`
-	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	RuleName      string        `json:"rule_name"`
-	RuleEntityID  uuid.NullUUID `json:"rule_entity_id"`
+	ID             uuid.UUID     `json:"id"`
+	Entity         Entities      `json:"entity"`
+	ProfileID      uuid.UUID     `json:"profile_id"`
+	RuleTypeID     uuid.UUID     `json:"rule_type_id"`
+	RepositoryID   uuid.NullUUID `json:"repository_id"`
+	ArtifactID     uuid.NullUUID `json:"artifact_id"`
+	PullRequestID  uuid.NullUUID `json:"pull_request_id"`
+	RuleName       string        `json:"rule_name"`
+	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
+	RuleInstanceID uuid.NullUUID `json:"rule_instance_id"`
 }
 
 type RuleInstance struct {
