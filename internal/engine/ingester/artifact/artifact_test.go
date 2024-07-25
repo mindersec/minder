@@ -272,10 +272,7 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 		{
 			"san-uri",
 			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeURI,
-					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
-				},
+				SubjectAlternativeName: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
 				Extensions: certificate.Extensions{
 					Issuer:              githubTokenIssuer,
 					SourceRepositoryURI: "https://github.com/openvex/vexctl",
@@ -285,34 +282,9 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 			false,
 		},
 		{
-			"san-email",
-			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeEmail,
-					Value: "test@example.com",
-				},
-			},
-			"test@example.com",
-			false,
-		},
-		{
-			"san-other",
-			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeOther,
-					Value: "Hello Friend",
-				},
-			},
-			"Hello Friend",
-			false,
-		},
-		{
 			"build-signer-uri-ignore",
 			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeURI,
-					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
-				},
+				SubjectAlternativeName: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.6",
 				Extensions: certificate.Extensions{
 					Issuer:              githubTokenIssuer,
 					BuildSignerURI:      "https://github.com/openvex/vexctl/.github/workflows/fake.yaml@refs/tags/v0.2.6",
@@ -325,10 +297,7 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 		{
 			"no-source-repo",
 			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeURI,
-					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.9",
-				},
+				SubjectAlternativeName: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.9",
 				Extensions: certificate.Extensions{
 					Issuer: githubTokenIssuer,
 				},
@@ -339,10 +308,7 @@ func TestSignerIdentityFromCertificate(t *testing.T) {
 		{
 			"not-from-github-actions", // If URLs were note autenticated from actions, don't parse
 			&certificate.Summary{
-				SubjectAlternativeName: certificate.SubjectAlternativeName{
-					Type:  certificate.SubjectAlternativeNameTypeURI,
-					Value: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.7",
-				},
+				SubjectAlternativeName: "https://github.com/openvex/vexctl/.github/workflows/release.yaml@refs/tags/v0.2.7",
 				Extensions: certificate.Extensions{
 					SourceRepositoryURI: "https://github.com/openvex/vexctl",
 				},

@@ -337,19 +337,19 @@ func branchFromRef(ref string) string {
 func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	var builderURL string
 
-	if c.SubjectAlternativeName.Value == "" {
+	if c.SubjectAlternativeName == "" {
 		return "", fmt.Errorf("certificate has no signer identity in SAN (is it a fulcio cert?)")
 	}
 
 	switch {
-	case c.SubjectAlternativeName.Value != "" && c.SubjectAlternativeName.Type == certificate.SubjectAlternativeNameTypeURI:
-		builderURL = c.SubjectAlternativeName.Value
+	case c.SubjectAlternativeName != "":
+		builderURL = c.SubjectAlternativeName
 	default:
 		// Return the SAN in the cert as a last resort. This handles the case when
 		// we don't have a signer identity but also when the SAN is an email
 		// when a user authenticated using an OIDC provider or a SPIFFE ID.
 		// Any other SAN types are returned verbatim
-		return c.SubjectAlternativeName.Value, nil
+		return c.SubjectAlternativeName, nil
 	}
 
 	// Any signer identity not issued by github actions is returned verbatim
