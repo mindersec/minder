@@ -254,7 +254,7 @@ func (r *repositoryService) DeleteByID(ctx context.Context, repositoryID uuid.UU
 
 	repo, err := r.GetRepositoryById(ctx, repositoryID, projectID)
 	if err != nil {
-		return fmt.Errorf("error retrieving repository: %w", err)
+		return fmt.Errorf("error retrieving repository %s in project %s: %w", repositoryID, projectID, err)
 	}
 
 	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
@@ -286,7 +286,7 @@ func (r *repositoryService) DeleteByName(
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error retrieving repository: %w", err)
+		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, err)
 	}
 
 	logger.BusinessRecord(ctx).Repository = repo.ID
