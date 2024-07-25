@@ -40,7 +40,7 @@ const (
 	// we can raise it once we have more insight on its
 	// performance impact.
 	maxPageSize    uint32 = 25
-	listEvalErrMsg        = "error retrieving evaluation history"
+	listEvalErrMsg string = "error retrieving evaluation history"
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
