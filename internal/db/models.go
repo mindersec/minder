@@ -491,7 +491,7 @@ type EvaluationRuleEntity struct {
 	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	EntityType    NullEntities  `json:"entity_type"`
+	EntityType    Entities      `json:"entity_type"`
 }
 
 type EvaluationStatus struct {

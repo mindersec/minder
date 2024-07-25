@@ -144,7 +144,7 @@ type InsertEvaluationRuleEntityParams struct {
 	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	EntityType    NullEntities  `json:"entity_type"`
+	EntityType    Entities      `json:"entity_type"`
 }
 
 func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
@@ -270,7 +270,7 @@ SELECT s.id::uuid AS evaluation_id,
  WHERE ($1::timestamp without time zone IS NULL OR $1 > s.evaluation_time)
    AND ($2::timestamp without time zone IS NULL OR $2 < s.evaluation_time)
    -- inclusion filters
-   AND ($3::entities[] IS NULL OR ri.entity_type = ANY($3::entities[]))
+   AND ($3::entities[] IS NULL OR ere.entity_type = ANY($3::entities[]))
    AND ($4::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY($4::text[]))
    AND ($4::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY($4::text[]))
    AND ($4::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY($4::text[]))
@@ -279,7 +279,7 @@ SELECT s.id::uuid AS evaluation_id,
    AND ($7::alert_status_types[] IS NULL OR ae.status = ANY($7::alert_status_types[]))
    AND ($8::eval_status_types[] IS NULL OR s.status = ANY($8::eval_status_types[]))
    -- exclusion filters
-   AND ($9::entities[] IS NULL OR ri.entity_type != ANY($9::entities[]))
+   AND ($9::entities[] IS NULL OR ere.entity_type != ANY($9::entities[]))
    AND ($10::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) != ANY($10::text[]))
    AND ($10::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY($10::text[]))
    AND ($10::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY($10::text[]))

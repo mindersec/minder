@@ -98,10 +98,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 					RepositoryID:  params.RepositoryID,
 					PullRequestID: params.PullRequestID,
 					ArtifactID:    params.ArtifactID,
-					EntityType: db.NullEntities{
-						Entities: entityType,
-						Valid:    true,
-					},
+					EntityType:    entityType,
 				},
 			)
 			if err != nil {
