@@ -169,3 +169,39 @@ SELECT s.id::uuid AS evaluation_id,
  CASE WHEN sqlc.narg(next)::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
  CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
  LIMIT sqlc.arg(size)::integer;
+
+-- name: ListEvaluationHistoryStaleRecords :many
+SELECT s.evaluation_time,
+       s.id,
+       ere.rule_id,
+       -- entity type
+       CAST(
+	 CASE
+	 WHEN ere.repository_id IS NOT NULL THEN 1
+	 WHEN ere.pull_request_id IS NOT NULL THEN 2
+	 WHEN ere.artifact_id IS NOT NULL THEN 3
+	 END AS integer
+       ) AS entity_type,
+       -- entity id
+       CAST(
+         CASE
+         WHEN ere.repository_id IS NOT NULL THEN ere.repository_id
+         WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
+         WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
+         END AS uuid
+       ) AS entity_id
+  FROM evaluation_statuses s
+       JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+       LEFT JOIN latest_evaluation_statuses l
+	   ON l.rule_entity_id = s.rule_entity_id
+	   AND l.evaluation_history_id = s.id
+ WHERE s.evaluation_time < sqlc.arg(threshold)
+  -- the following predicate ensures we get only "stale" records
+   AND l.evaluation_history_id IS NULL
+ -- listing from oldest to newest
+ ORDER BY s.evaluation_time ASC, rule_id ASC, entity_id ASC
+ LIMIT sqlc.arg(size)::integer;
+
+-- name: DeleteEvaluationHistoryByIDs :execrows
+DELETE FROM evaluation_statuses s
+ WHERE s.id = ANY(sqlc.slice(evaluationIds));

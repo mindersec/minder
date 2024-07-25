@@ -370,6 +370,21 @@ func (mr *MockStoreMockRecorder) DeleteArtifact(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStore)(nil).DeleteArtifact), arg0, arg1)
 }
 
+// DeleteEvaluationHistoryByIDs mocks base method.
+func (m *MockStore) DeleteEvaluationHistoryByIDs(arg0 context.Context, arg1 []uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEvaluationHistoryByIDs", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteEvaluationHistoryByIDs indicates an expected call of DeleteEvaluationHistoryByIDs.
+func (mr *MockStoreMockRecorder) DeleteEvaluationHistoryByIDs(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvaluationHistoryByIDs", reflect.TypeOf((*MockStore)(nil).DeleteEvaluationHistoryByIDs), arg0, arg1)
+}
+
 // DeleteExpiredSessionStates mocks base method.
 func (m *MockStore) DeleteExpiredSessionStates(arg0 context.Context) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1567,6 +1582,21 @@ func (m *MockStore) ListEvaluationHistory(arg0 context.Context, arg1 db.ListEval
 func (mr *MockStoreMockRecorder) ListEvaluationHistory(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistory", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistory), arg0, arg1)
+}
+
+// ListEvaluationHistoryStaleRecords mocks base method.
+func (m *MockStore) ListEvaluationHistoryStaleRecords(arg0 context.Context, arg1 db.ListEvaluationHistoryStaleRecordsParams) ([]db.ListEvaluationHistoryStaleRecordsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEvaluationHistoryStaleRecords", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListEvaluationHistoryStaleRecordsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEvaluationHistoryStaleRecords indicates an expected call of ListEvaluationHistoryStaleRecords.
+func (mr *MockStoreMockRecorder) ListEvaluationHistoryStaleRecords(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistoryStaleRecords", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistoryStaleRecords), arg0, arg1)
 }
 
 // ListFlushCache mocks base method.
