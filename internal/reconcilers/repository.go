@@ -66,7 +66,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 	// first retrieve data for the repository
 	repository, err := r.store.GetRepositoryByRepoID(ctx, evt.Repository)
 	if err != nil {
-		return fmt.Errorf("error retrieving repository: %w", err)
+		return fmt.Errorf("error retrieving repository %d in project %s: %w", evt.Repository, evt.Project, err)
 	}
 
 	providerID := repository.ProviderID
