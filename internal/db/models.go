@@ -524,10 +524,6 @@ type LatestEvaluationStatus struct {
 	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
 }
 
-type MigrationProfileBackfillLog struct {
-	ProfileID uuid.UUID `json:"profile_id"`
-}
-
 type Profile struct {
 	ID             uuid.UUID      `json:"id"`
 	Name           string         `json:"name"`
