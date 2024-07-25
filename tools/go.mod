@@ -3,7 +3,7 @@ module github.com/stacklok/minder/tools
 go 1.22.5
 
 require (
-	github.com/bufbuild/buf v1.35.0
+	github.com/bufbuild/buf v1.35.1
 	github.com/daixiang0/gci v0.13.4
 	github.com/deepmap/oapi-codegen/v2 v2.2.0
 	github.com/go-critic/go-critic v0.11.4
