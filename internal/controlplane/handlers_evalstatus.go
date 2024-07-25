@@ -39,7 +39,8 @@ const (
 	// Maximum page size has a conservative value at the moment,
 	// we can raise it once we have more insight on its
 	// performance impact.
-	maxPageSize uint32 = 25
+	maxPageSize    uint32 = 25
+	listEvalErrMsg        = "error retrieving evaluation history"
 )
 
 // ListEvaluationHistory lists current and past evaluation results for
@@ -93,7 +94,8 @@ func (s *Server) ListEvaluationHistory(
 	// retrieve data set
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error starting transaction")
+		return nil, status.Error(codes.Internal, listEvalErrMsg)
 	}
 	defer s.store.Rollback(tx)
 
@@ -105,7 +107,8 @@ func (s *Server) ListEvaluationHistory(
 		filter,
 	)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "error retrieving evaluations")
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluations")
+		return nil, status.Error(codes.Internal, listEvalErrMsg)
 	}
 
 	// convert data set to proto
