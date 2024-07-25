@@ -57,7 +57,9 @@ func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer closer()
 
-	threshold := time.Now().UTC().AddDate(-30, 0, 0)
+	// We maintain up to 30 days of history, plus any record
+	// that's the latest for any entity/rule pair.
+	threshold := time.Now().UTC().AddDate(0, 0, -30)
 	fmt.Printf("Calculated threshold is %s", threshold)
 
 	if err := purgeLoop(ctx, store, threshold, batchSize, dryRun, cmd.Printf); err != nil {
@@ -68,7 +70,7 @@ func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
 }
 
 // purgeLoop routine cleans up the evaluation history log by deleting
-// all records older than a fixed threshold.
+// all stale records older than a given threshold.
 //
 // As of the time of this writing, the size of the row structs is 80
 // bytes, specifically
@@ -95,12 +97,14 @@ func purgeLoop(
 	dryRun bool,
 	printf func(format string, a ...any),
 ) error {
-	total := 0
 	deleted := 0
 
-	records, err := store.ListEvaluationHistoryOlderThan(
+	// Note: this command relies on the following statement
+	// filtering out records that, despite being older than 30
+	// days, are the latest ones for any given entity/rule pair.
+	records, err := store.ListEvaluationHistoryStaleRecords(
 		ctx,
-		db.ListEvaluationHistoryOlderThanParams{
+		db.ListEvaluationHistoryStaleRecordsParams{
 			Threshold: threshold,
 			Size:      int32(4000000),
 		},
@@ -114,20 +118,12 @@ func purgeLoop(
 		return nil
 	}
 
-	total = len(records)
-	deletes := filterRecords(records)
-
-	if len(deletes) == 0 {
-		printf("No records to delete after filtering\n")
-		return nil
-	}
-
 	// Skip deletion if --dry-run was passed.
 	if !dryRun {
 		deleted, err = deleteEvaluationHistory(
 			ctx,
 			store,
-			deletes,
+			records,
 			batchSize,
 		)
 		if err != nil {
@@ -135,64 +131,21 @@ func purgeLoop(
 		}
 	}
 
-	printf("Done purging history, deleted %d out of %d total records\n",
+	printf("Done purging history, deleted %d records\n",
 		deleted,
-		total,
 	)
 
 	return nil
 }
 
-// filterRecords sift through the records separating the latest for
-// any given entity/rule combination from older ones that can be
-// safely deleted.
-func filterRecords(
-	records []db.ListEvaluationHistoryOlderThanRow,
-) []db.ListEvaluationHistoryOlderThanRow {
-	toDelete := make([]db.ListEvaluationHistoryOlderThanRow, 0)
-	toKeep := make(map[string]db.ListEvaluationHistoryOlderThanRow)
-
-	for _, record := range records {
-		// Record key is the combination of entity type,
-		// entity id and rule id.
-		key := fmt.Sprintf("%d/%s/%s",
-			record.EntityType,
-			record.EntityID,
-			record.RuleID,
-		)
-		latest, found := toKeep[key]
-
-		if !found {
-			// Tracking record as new latest for the same
-			// entity/rule.
-			toKeep[key] = record
-			continue
-		}
-
-		if record.EvaluationTime.After(latest.EvaluationTime) {
-			// Swap records because one was found that was
-			// more recent record for entity/rule.
-			toDelete = append(toDelete, latest)
-			toKeep[key] = record
-			continue
-		}
-
-		// If execution gets this far, we delete the record.
-		toDelete = append(toDelete, record)
-	}
-
-	return toDelete
-}
-
 func deleteEvaluationHistory(
 	ctx context.Context,
 	store db.Store,
-	records []db.ListEvaluationHistoryOlderThanRow,
+	records []db.ListEvaluationHistoryStaleRecordsRow,
 	batchSize uint,
 ) (int, error) {
 	deleted := 0
 	for {
-		// Skip deletion if --dry-run was passed.
 		if len(records) == 0 {
 			break
 		}

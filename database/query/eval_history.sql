@@ -170,7 +170,7 @@ SELECT s.id::uuid AS evaluation_id,
  CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
  LIMIT sqlc.arg(size)::integer;
 
--- name: ListEvaluationHistoryOlderThan :many
+-- name: ListEvaluationHistoryStaleRecords :many
 SELECT s.evaluation_time,
        s.id,
        ere.rule_id,
@@ -192,7 +192,12 @@ SELECT s.evaluation_time,
        ) AS entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+       LEFT JOIN latest_evaluation_statuses l
+	   ON l.rule_entity_id = s.rule_entity_id
+	   AND l.evaluation_history_id = s.id
  WHERE s.evaluation_time < sqlc.arg(threshold)
+  -- the following predicate ensures we get only "stale" records
+   AND l.evaluation_history_id IS NULL
  -- listing from oldest to newest
  ORDER BY s.evaluation_time ASC, rule_id ASC, entity_id ASC
  LIMIT sqlc.arg(size)::integer;

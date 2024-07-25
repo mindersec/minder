@@ -37,7 +37,7 @@ import (
 func TestRecordSize(t *testing.T) {
 	t.Parallel()
 	size := unsafe.Sizeof(
-		db.ListEvaluationHistoryOlderThanRow{
+		db.ListEvaluationHistoryStaleRecordsRow{
 			ID:             uuid.Nil,
 			EvaluationTime: time.Now(),
 			EntityType:     int32(1),
@@ -49,132 +49,13 @@ func TestRecordSize(t *testing.T) {
 	require.Equal(t, 80, int(size))
 }
 
-func TestFilterRecords(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		records  []db.ListEvaluationHistoryOlderThanRow
-		expected []db.ListEvaluationHistoryOlderThanRow
-	}{
-		{
-			name: "older removed",
-			records: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid1,
-					evaluatedAt1,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-				makeHistoryRow(
-					uuid2,
-					evaluatedAt2,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-			},
-			expected: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid2,
-					evaluatedAt2,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-			},
-		},
-		{
-			name: "older removed bis",
-			records: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid2,
-					evaluatedAt2,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-				makeHistoryRow(
-					uuid1,
-					evaluatedAt1,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-			},
-			expected: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid2,
-					evaluatedAt2,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-			},
-		},
-		{
-			name: "all new",
-			records: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid1,
-					evaluatedAt1,
-					entityType,
-					entityID1,
-					ruleID1,
-				),
-				makeHistoryRow(
-					uuid2,
-					evaluatedAt2,
-					entityType,
-					entityID2,
-					ruleID2,
-				),
-			},
-			expected: []db.ListEvaluationHistoryOlderThanRow{},
-		},
-		{
-			name: "entity type",
-			records: []db.ListEvaluationHistoryOlderThanRow{
-				makeHistoryRow(
-					uuid1,
-					evaluatedAt1,
-					entityType, // different entity type
-					entityID1,
-					ruleID1,
-				),
-				makeHistoryRow(
-					uuid1,
-					evaluatedAt1,
-					int32(2), // different entity type
-					entityID1,
-					ruleID1,
-				),
-			},
-			expected: []db.ListEvaluationHistoryOlderThanRow{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			res := filterRecords(tt.records)
-			require.Len(t, res, len(tt.expected))
-			for i := 0; i < len(tt.expected); i++ {
-				require.Equal(t, tt.expected[i], res[i])
-			}
-		})
-	}
-}
-
 func TestDeleteEvaluationHistory(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name    string
 		dbSetup dbf.DBMockBuilder
-		records []db.ListEvaluationHistoryOlderThanRow
+		records []db.ListEvaluationHistoryStaleRecordsRow
 		size    uint
 		err     bool
 	}{
@@ -198,7 +79,7 @@ func TestDeleteEvaluationHistory(t *testing.T) {
 					},
 				),
 			),
-			records: []db.ListEvaluationHistoryOlderThanRow{
+			records: []db.ListEvaluationHistoryStaleRecordsRow{
 				makeHistoryRow(
 					uuid1,
 					evaluatedAt1,
@@ -208,10 +89,10 @@ func TestDeleteEvaluationHistory(t *testing.T) {
 				),
 				makeHistoryRow(
 					uuid2,
-					evaluatedAt1,
+					evaluatedAt2,
 					entityType,
-					entityID1,
-					ruleID1,
+					entityID2,
+					ruleID2,
 				),
 				makeHistoryRow(
 					uuid.Nil,
@@ -270,7 +151,7 @@ func TestDeleteEvaluationHistory(t *testing.T) {
 					},
 				),
 			),
-			records: []db.ListEvaluationHistoryOlderThanRow{
+			records: []db.ListEvaluationHistoryStaleRecordsRow{
 				makeHistoryRow(
 					uuid1,
 					evaluatedAt1,
@@ -300,7 +181,7 @@ func TestDeleteEvaluationHistory(t *testing.T) {
 					},
 				),
 			),
-			records: []db.ListEvaluationHistoryOlderThanRow{
+			records: []db.ListEvaluationHistoryStaleRecordsRow{
 				makeHistoryRow(
 					uuid1,
 					evaluatedAt1,
@@ -363,8 +244,8 @@ func makeHistoryRow(
 	entityType int32,
 	entityID uuid.UUID,
 	ruleID uuid.UUID,
-) db.ListEvaluationHistoryOlderThanRow {
-	return db.ListEvaluationHistoryOlderThanRow{
+) db.ListEvaluationHistoryStaleRecordsRow {
+	return db.ListEvaluationHistoryStaleRecordsRow{
 		ID:             id,
 		EvaluationTime: evaluatedAt,
 		EntityType:     entityType,

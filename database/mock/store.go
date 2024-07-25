@@ -1584,19 +1584,19 @@ func (mr *MockStoreMockRecorder) ListEvaluationHistory(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistory", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistory), arg0, arg1)
 }
 
-// ListEvaluationHistoryOlderThan mocks base method.
-func (m *MockStore) ListEvaluationHistoryOlderThan(arg0 context.Context, arg1 db.ListEvaluationHistoryOlderThanParams) ([]db.ListEvaluationHistoryOlderThanRow, error) {
+// ListEvaluationHistoryStaleRecords mocks base method.
+func (m *MockStore) ListEvaluationHistoryStaleRecords(arg0 context.Context, arg1 db.ListEvaluationHistoryStaleRecordsParams) ([]db.ListEvaluationHistoryStaleRecordsRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListEvaluationHistoryOlderThan", arg0, arg1)
-	ret0, _ := ret[0].([]db.ListEvaluationHistoryOlderThanRow)
+	ret := m.ctrl.Call(m, "ListEvaluationHistoryStaleRecords", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListEvaluationHistoryStaleRecordsRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListEvaluationHistoryOlderThan indicates an expected call of ListEvaluationHistoryOlderThan.
-func (mr *MockStoreMockRecorder) ListEvaluationHistoryOlderThan(arg0, arg1 any) *gomock.Call {
+// ListEvaluationHistoryStaleRecords indicates an expected call of ListEvaluationHistoryStaleRecords.
+func (mr *MockStoreMockRecorder) ListEvaluationHistoryStaleRecords(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistoryOlderThan", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistoryOlderThan), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvaluationHistoryStaleRecords", reflect.TypeOf((*MockStore)(nil).ListEvaluationHistoryStaleRecords), arg0, arg1)
 }
 
 // ListFlushCache mocks base method.

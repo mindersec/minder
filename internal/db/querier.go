@@ -165,7 +165,7 @@ type Querier interface {
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
-	ListEvaluationHistoryOlderThan(ctx context.Context, arg ListEvaluationHistoryOlderThanParams) ([]ListEvaluationHistoryOlderThanRow, error)
+	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it

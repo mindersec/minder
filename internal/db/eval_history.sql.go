@@ -400,7 +400,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 	return items, nil
 }
 
-const listEvaluationHistoryOlderThan = `-- name: ListEvaluationHistoryOlderThan :many
+const listEvaluationHistoryStaleRecords = `-- name: ListEvaluationHistoryStaleRecords :many
 SELECT s.evaluation_time,
        s.id,
        ere.rule_id,
@@ -422,18 +422,23 @@ SELECT s.evaluation_time,
        ) AS entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+       LEFT JOIN latest_evaluation_statuses l
+	   ON l.rule_entity_id = s.rule_entity_id
+	   AND l.evaluation_history_id = s.id
  WHERE s.evaluation_time < $1
+  -- the following predicate ensures we get only "stale" records
+   AND l.evaluation_history_id IS NULL
  -- listing from oldest to newest
  ORDER BY s.evaluation_time ASC, rule_id ASC, entity_id ASC
  LIMIT $2::integer
 `
 
-type ListEvaluationHistoryOlderThanParams struct {
+type ListEvaluationHistoryStaleRecordsParams struct {
 	Threshold time.Time `json:"threshold"`
 	Size      int32     `json:"size"`
 }
 
-type ListEvaluationHistoryOlderThanRow struct {
+type ListEvaluationHistoryStaleRecordsRow struct {
 	EvaluationTime time.Time `json:"evaluation_time"`
 	ID             uuid.UUID `json:"id"`
 	RuleID         uuid.UUID `json:"rule_id"`
@@ -441,15 +446,15 @@ type ListEvaluationHistoryOlderThanRow struct {
 	EntityID       uuid.UUID `json:"entity_id"`
 }
 
-func (q *Queries) ListEvaluationHistoryOlderThan(ctx context.Context, arg ListEvaluationHistoryOlderThanParams) ([]ListEvaluationHistoryOlderThanRow, error) {
-	rows, err := q.db.QueryContext(ctx, listEvaluationHistoryOlderThan, arg.Threshold, arg.Size)
+func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listEvaluationHistoryStaleRecords, arg.Threshold, arg.Size)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListEvaluationHistoryOlderThanRow{}
+	items := []ListEvaluationHistoryStaleRecordsRow{}
 	for rows.Next() {
-		var i ListEvaluationHistoryOlderThanRow
+		var i ListEvaluationHistoryStaleRecordsRow
 		if err := rows.Scan(
 			&i.EvaluationTime,
 			&i.ID,
