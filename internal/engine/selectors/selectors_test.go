@@ -577,6 +577,9 @@ func testErrUnmarshallableValue(t *testing.T, err error, expected *ErrStructure)
 		t.Fatalf("error is not of type CheckError or ParseError")
 	}
 
+	// both errors unwrap to ErrSelectorCheck
+	require.ErrorIs(t, err, ErrSelectorCheck)
+
 	var structuredErr ErrStructure
 	if err := json.NewDecoder(strings.NewReader(jsonString)).Decode(&structuredErr); err != nil {
 		t.Fatalf("failed to unmarshal error: %v", err)

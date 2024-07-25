@@ -41,6 +41,8 @@ var (
 	ErrResultUnknown = errors.New("result is unknown")
 	// ErrUnsupported is returned when the entity type is not supported
 	ErrUnsupported = errors.New("unsupported entity type")
+	// ErrSelectorCheck is returned if the selector fails to be checked for syntax errors
+	ErrSelectorCheck = errors.New("failed to check selector")
 )
 
 // ErrKind is a string for the kind of error that occurred
@@ -100,6 +102,7 @@ type ErrStructure struct {
 // ParseError is an error type for syntax errors in CEL expressions
 type ParseError struct {
 	ErrDetails
+	original error
 }
 
 // Error implements the error interface for ParseError
@@ -113,10 +116,15 @@ func (_ *ParseError) Is(target error) bool {
 	return errors.As(target, &t)
 }
 
+func (pe *ParseError) Unwrap() error {
+	return pe.original
+}
+
 // CheckError is an error type for type checking errors in CEL expressions, e.g.
 // mismatched types
 type CheckError struct {
 	ErrDetails
+	original error
 }
 
 // Error implements the error interface for CheckError
@@ -127,19 +135,24 @@ func (ce *CheckError) Error() string {
 // Is checks if the target error is a CheckError
 func (_ *CheckError) Is(target error) bool {
 	var t *CheckError
-	ok := errors.As(target, &t)
-	return ok
+	return errors.As(target, &t)
+}
+
+func (ce *CheckError) Unwrap() error {
+	return ce.original
 }
 
 func newParseError(source string, issues *cel.Issues) error {
 	return &ParseError{
 		ErrDetails: errDetailsFromCelIssues(source, issues),
+		original:   ErrSelectorCheck,
 	}
 }
 
 func newCheckError(source string, issues *cel.Issues) error {
 	return &CheckError{
 		ErrDetails: errDetailsFromCelIssues(source, issues),
+		original:   ErrSelectorCheck,
 	}
 }
 
