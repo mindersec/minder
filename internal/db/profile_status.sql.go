@@ -444,8 +444,8 @@ func (q *Queries) UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRule
 
 const upsertRuleEvaluations = `-- name: UpsertRuleEvaluations :one
 INSERT INTO rule_evaluations (
-    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name
-) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    profile_id, repository_id, artifact_id, pull_request_id, rule_type_id, entity, rule_name, rule_entity_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 ON CONFLICT (profile_id, repository_id, COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID), entity, rule_type_id, lower(rule_name))
   DO UPDATE SET profile_id = $1
 RETURNING id
@@ -459,6 +459,7 @@ type UpsertRuleEvaluationsParams struct {
 	RuleTypeID    uuid.UUID     `json:"rule_type_id"`
 	Entity        Entities      `json:"entity"`
 	RuleName      string        `json:"rule_name"`
+	RuleEntityID  uuid.NullUUID `json:"rule_entity_id"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
@@ -470,6 +471,7 @@ func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvalu
 		arg.RuleTypeID,
 		arg.Entity,
 		arg.RuleName,
+		arg.RuleEntityID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)

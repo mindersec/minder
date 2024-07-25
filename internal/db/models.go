@@ -686,6 +686,7 @@ type RuleEvaluation struct {
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	RuleName      string        `json:"rule_name"`
+	RuleEntityID  uuid.NullUUID `json:"rule_entity_id"`
 }
 
 type RuleInstance struct {
