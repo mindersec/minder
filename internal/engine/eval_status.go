@@ -197,6 +197,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			ctx,
 			qtx,
 			params.Rule.ID,
+			params.Profile.ID,
 			params.EntityType,
 			entityID,
 			params.GetEvalErr(),

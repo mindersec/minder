@@ -114,7 +114,7 @@ func TestStoreEvaluationStatus(t *testing.T) {
 			}
 
 			service := NewEvaluationHistoryService()
-			id, err := service.StoreEvaluationStatus(ctx, store, ruleID, scenario.EntityType, entityID, errTest)
+			id, err := service.StoreEvaluationStatus(ctx, store, ruleID, profileID, scenario.EntityType, entityID, errTest)
 			if scenario.ExpectedError == "" {
 				require.Equal(t, evaluationID, id)
 				require.NoError(t, err)
@@ -795,6 +795,7 @@ func makeHistoryRow(
 
 var (
 	ruleID       = uuid.New()
+	profileID    = uuid.New()
 	entityID     = uuid.New()
 	ruleEntityID = uuid.New()
 	evaluationID = uuid.New()
