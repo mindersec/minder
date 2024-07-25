@@ -28,8 +28,7 @@ import (
 func TestNewSelectorEngine(t *testing.T) {
 	t.Parallel()
 
-	env, err := NewEnv()
-	require.NoError(t, err)
+	env := NewEnv()
 	require.NotNil(t, env)
 	require.NotNil(t, env.entityEnvs)
 	require.NotNil(t, env.entityEnvs[minderv1.Entity_ENTITY_REPOSITORIES])
@@ -410,8 +409,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 
-			env, err := NewEnv()
-			require.NoError(t, err)
+			env := NewEnv()
 
 			se := scenario.selectorEntityBld()
 
@@ -506,8 +504,7 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		env, err := NewEnv()
-		require.NoError(t, err)
+		env := NewEnv()
 
 		seBuilder := newTestRepoSelectorEntity()
 		se := seBuilder()

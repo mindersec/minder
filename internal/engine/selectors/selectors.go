@@ -153,7 +153,7 @@ type entityEnvCache struct {
 
 // NewEnv creates a new Env struct with the default factories for each entity type. The factories
 // are used on first access to create the CEL environments for each entity type.
-func NewEnv() (*Env, error) {
+func NewEnv() *Env {
 	factoryMap := map[minderv1.Entity]celEnvFactory{
 		minderv1.Entity_ENTITY_UNSPECIFIED:  genericEnvFactory,
 		minderv1.Entity_ENTITY_REPOSITORIES: repoEnvFactory,
@@ -169,7 +169,7 @@ func NewEnv() (*Env, error) {
 	return &Env{
 		entityEnvs: entityEnvs,
 		factories:  factoryMap,
-	}, nil
+	}
 }
 
 // NewSelectionFromProfile creates a new Selection (compiled CEL programs for that entity type)

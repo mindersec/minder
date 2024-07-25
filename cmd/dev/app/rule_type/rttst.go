@@ -201,10 +201,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 }
 
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
-	selectorEnv, err := selectors.NewEnv()
-	if err != nil {
-		return nil, fmt.Errorf("error creating selector environment: %w", err)
-	}
+	selectorEnv := selectors.NewEnv()
 
 	profSel, err := selectorEnv.NewSelectionFromProfile(entType, profile.Selection)
 	if err != nil {
