@@ -101,7 +101,8 @@ func (p *profileStore) GetProfilesForEvaluation(
 				Remediate: models.ActionOptFromDB(profile.Profile.Remediate),
 				Alert:     models.ActionOptFromDB(profile.Profile.Alert),
 			},
-			Rules: profileRules,
+			Rules:     profileRules,
+			Selectors: models.SelectorSliceFromDB(profile.ProfilesWithSelectors),
 		}
 		aggregates = append(aggregates, aggregate)
 	}
