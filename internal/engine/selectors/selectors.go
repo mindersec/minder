@@ -31,6 +31,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 
+	"github.com/stacklok/minder/internal/profiles/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -265,7 +266,7 @@ func checkSelectorForEntity(env *cel.Env, selector string) (*cel.Ast, error) {
 // for an entity type. This is what the user of this module uses. The interface makes it easier to pass
 // mocks by the user of this module.
 type SelectionBuilder interface {
-	NewSelectionFromProfile(minderv1.Entity, []*minderv1.Profile_Selector) (Selection, error)
+	NewSelectionFromProfile(minderv1.Entity, []models.ProfileSelector) (Selection, error)
 }
 
 // SelectionChecker is an interface for checking if a selector expression is valid for a given entity type
@@ -315,7 +316,7 @@ func NewEnv() *Env {
 // from a profile
 func (e *Env) NewSelectionFromProfile(
 	entityType minderv1.Entity,
-	profileSelection []*minderv1.Profile_Selector,
+	profileSelection []models.ProfileSelector,
 ) (Selection, error) {
 	selector := make([]*compiledSelector, 0, len(profileSelection))
 
@@ -325,8 +326,7 @@ func (e *Env) NewSelectionFromProfile(
 	}
 
 	for _, sel := range profileSelection {
-		ent := minderv1.EntityFromString(sel.GetEntity())
-		if ent != entityType && ent != minderv1.Entity_ENTITY_UNSPECIFIED {
+		if sel.Entity != entityType && sel.Entity != minderv1.Entity_ENTITY_UNSPECIFIED {
 			continue
 		}
 

@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	selectors "github.com/stacklok/minder/internal/engine/selectors"
+	models "github.com/stacklok/minder/internal/profiles/models"
 	proto "github.com/stacklok/minder/internal/proto"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
@@ -42,7 +43,7 @@ func (m *MockSelectionBuilder) EXPECT() *MockSelectionBuilderMockRecorder {
 }
 
 // NewSelectionFromProfile mocks base method.
-func (m *MockSelectionBuilder) NewSelectionFromProfile(arg0 v1.Entity, arg1 []*v1.Profile_Selector) (selectors.Selection, error) {
+func (m *MockSelectionBuilder) NewSelectionFromProfile(arg0 v1.Entity, arg1 []models.ProfileSelector) (selectors.Selection, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewSelectionFromProfile", arg0, arg1)
 	ret0, _ := ret[0].(selectors.Selection)
