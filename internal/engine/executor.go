@@ -224,13 +224,13 @@ func (e *executor) profileEvalStatus(
 		return fmt.Errorf("error converting entity to selector entity")
 	}
 
-	selected, err := selection.Select(selEnt)
+	selected, matchedSelector, err := selection.Select(selEnt)
 	if err != nil {
 		return fmt.Errorf("error selecting entity: %w", err)
 	}
 
 	if !selected {
-		return evalerrors.NewErrEvaluationSkipped("entity not applicable due to profile selector")
+		return evalerrors.NewErrEvaluationSkipped("entity not applicable due to profile selector %s", matchedSelector)
 	}
 
 	return nil

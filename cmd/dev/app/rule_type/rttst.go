@@ -314,7 +314,7 @@ func selectAndEval(
 		return fmt.Errorf("error converting entity to selector entity")
 	}
 
-	selected, err := profileSelectors.Select(selEnt)
+	selected, matchedSelector, err := profileSelectors.Select(selEnt)
 	if err != nil {
 		return fmt.Errorf("error selecting entity: %w", err)
 	}
@@ -323,7 +323,7 @@ func selectAndEval(
 	if selected {
 		evalErr = eng.Eval(ctx, inf, evalStatus)
 	} else {
-		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selectors")
+		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}
 
 	return evalErr

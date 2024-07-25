@@ -550,7 +550,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, sels)
 
-			selected, err := sels.Select(se, scenario.selectOptions...)
+			selected, matchedSelector, err := sels.Select(se, scenario.selectOptions...)
 			if scenario.expectedSelectErr != nil {
 				require.Error(t, err)
 				require.Equal(t, scenario.expectedSelectErr, err)
@@ -559,6 +559,11 @@ func TestSelectSelectorEntity(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, scenario.selected, selected)
+			if !selected {
+				// TODO(jakub): Add tests with more selectors. If we have more than one selector, we should
+				// also match against an expected index
+				require.Equal(t, scenario.exprs[0].Selector, matchedSelector)
+			}
 		})
 	}
 }
@@ -666,13 +671,13 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sels)
 
-		_, err = sels.Select(se, WithUnknownPaths("repository.properties"))
+		_, _, err = sels.Select(se, WithUnknownPaths("repository.properties"))
 		require.ErrorIs(t, err, ErrResultUnknown)
 
 		// simulate fetching properties
 		scenario.mockFetch(se)
 
-		selected, err := sels.Select(se)
+		selected, _, err := sels.Select(se)
 		if scenario.secondSucceeds {
 			require.NoError(t, err)
 			require.True(t, selected)

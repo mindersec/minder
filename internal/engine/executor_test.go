@@ -361,7 +361,7 @@ default allow = true`,
 	mockSelection := mock_selectors.NewMockSelection(ctrl)
 	mockSelection.EXPECT().
 		Select(gomock.Any(), gomock.Any()).
-		Return(true, nil).
+		Return(true, "", nil).
 		AnyTimes()
 
 	mockSelectionBuilder := mock_selectors.NewMockSelectionBuilder(ctrl)
