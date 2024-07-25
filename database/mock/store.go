@@ -59,10 +59,10 @@ func (mr *MockStoreMockRecorder) BeginTransaction() *gomock.Call {
 }
 
 // BulkGetProfilesByID mocks base method.
-func (m *MockStore) BulkGetProfilesByID(arg0 context.Context, arg1 []uuid.UUID) ([]db.Profile, error) {
+func (m *MockStore) BulkGetProfilesByID(arg0 context.Context, arg1 []uuid.UUID) ([]db.BulkGetProfilesByIDRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BulkGetProfilesByID", arg0, arg1)
-	ret0, _ := ret[0].([]db.Profile)
+	ret0, _ := ret[0].([]db.BulkGetProfilesByIDRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

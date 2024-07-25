@@ -90,16 +90,16 @@ func (p *profileStore) GetProfilesForEvaluation(
 	// Finally, create the ProfileAggregate instances
 	aggregates := make([]models.ProfileAggregate, len(profiles))
 	for _, profile := range profiles {
-		profileRules, ok := rulesByProfileID[profile.ID]
+		profileRules, ok := rulesByProfileID[profile.Profile.ID]
 		if !ok {
-			return nil, fmt.Errorf("could not find rule instances for profile %s: %w", profile.ID, err)
+			return nil, fmt.Errorf("could not find rule instances for profile %s: %w", profile.Profile.ID, err)
 		}
 		aggregate := models.ProfileAggregate{
-			ID:   profile.ID,
-			Name: profile.Name,
+			ID:   profile.Profile.ID,
+			Name: profile.Profile.Name,
 			ActionConfig: models.ActionConfiguration{
-				Remediate: models.ActionOptFromDB(profile.Remediate),
-				Alert:     models.ActionOptFromDB(profile.Alert),
+				Remediate: models.ActionOptFromDB(profile.Profile.Remediate),
+				Alert:     models.ActionOptFromDB(profile.Profile.Alert),
 			},
 			Rules: profileRules,
 		}

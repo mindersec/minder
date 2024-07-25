@@ -14,33 +14,37 @@ import (
 )
 
 const bulkGetProfilesByID = `-- name: BulkGetProfilesByID :many
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels
 FROM profiles
 WHERE id = ANY($1::UUID[])
 `
 
-func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error) {
+type BulkGetProfilesByIDRow struct {
+	Profile Profile `json:"profile"`
+}
+
+func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, bulkGetProfilesByID, pq.Array(profileIds))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Profile{}
+	items := []BulkGetProfilesByIDRow{}
 	for rows.Next() {
-		var i Profile
+		var i BulkGetProfilesByIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.ProjectID,
-			&i.Remediate,
-			&i.Alert,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProviderID,
-			&i.SubscriptionID,
-			&i.DisplayName,
-			pq.Array(&i.Labels),
+			&i.Profile.ID,
+			&i.Profile.Name,
+			&i.Profile.Provider,
+			&i.Profile.ProjectID,
+			&i.Profile.Remediate,
+			&i.Profile.Alert,
+			&i.Profile.CreatedAt,
+			&i.Profile.UpdatedAt,
+			&i.Profile.ProviderID,
+			&i.Profile.SubscriptionID,
+			&i.Profile.DisplayName,
+			pq.Array(&i.Profile.Labels),
 		); err != nil {
 			return nil, err
 		}

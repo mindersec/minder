@@ -126,6 +126,6 @@ GROUP BY r.entity_type;
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
 
 -- name: BulkGetProfilesByID :many
-SELECT *
+SELECT sqlc.embed(profiles)
 FROM profiles
 WHERE id = ANY(sqlc.arg(profile_ids)::UUID[]);

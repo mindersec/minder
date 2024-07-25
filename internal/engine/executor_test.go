@@ -187,15 +187,17 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	// list one profile
 	mockStore.EXPECT().
 		BulkGetProfilesByID(gomock.Any(), []uuid.UUID{profileID}).
-		Return([]db.Profile{
+		Return([]db.BulkGetProfilesByIDRow{
 			{
-				ID:        profileID,
-				Name:      "test-profile",
-				ProjectID: projectID,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
-				Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				Profile: db.Profile{
+					ID:        profileID,
+					Name:      "test-profile",
+					ProjectID: projectID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+					Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				},
 			},
 		}, nil)
 
