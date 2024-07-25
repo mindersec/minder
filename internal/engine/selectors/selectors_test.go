@@ -39,6 +39,7 @@ func TestNewSelectorEngine(t *testing.T) {
 type testSelectorEntityBuilder func() *internalpb.SelectorEntity
 type testRepoOption func(selRepo *internalpb.SelectorRepository)
 type testArtifactOption func(selArtifact *internalpb.SelectorArtifact)
+type testPrOption func(selPr *internalpb.SelectorPullRequest)
 
 func newTestArtifactSelectorEntity(artifactOpts ...testArtifactOption) testSelectorEntityBuilder {
 	return func() *internalpb.SelectorEntity {
@@ -87,13 +88,43 @@ func withIsFork(isFork bool) testRepoOption {
 	}
 }
 
-func withProperties(properties map[string]any) testRepoOption {
+func repoWithProperties(properties map[string]any) testRepoOption {
 	return func(selRepo *internalpb.SelectorRepository) {
 		protoProperties, err := structpb.NewStruct(properties)
 		if err != nil {
 			panic(err)
 		}
 		selRepo.Properties = protoProperties
+	}
+}
+
+func prWithProperties(properties map[string]any) testPrOption {
+	return func(selPr *internalpb.SelectorPullRequest) {
+		protoProperties, err := structpb.NewStruct(properties)
+		if err != nil {
+			panic(err)
+		}
+		selPr.Properties = protoProperties
+	}
+}
+
+func newTestPullRequestSelectorEntity(prOpts ...testPrOption) testSelectorEntityBuilder {
+	return func() *internalpb.SelectorEntity {
+		pr := &internalpb.SelectorEntity{
+			EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+			Name:       "testorg/testrepo/123",
+			Entity: &internalpb.SelectorEntity_PullRequest{
+				PullRequest: &internalpb.SelectorPullRequest{
+					Name: "testorg/testrepo/123",
+				},
+			},
+		}
+
+		for _, opt := range prOpts {
+			opt(pr.Entity.(*internalpb.SelectorEntity_PullRequest).PullRequest)
+		}
+
+		return pr
 	}
 }
 
@@ -157,6 +188,28 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(),
+			selected:          false,
+		},
+		{
+			name: "Simple true pull request expression",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.PullRequestEntity.String(),
+					Selector: "pull_request.name == 'testorg/testrepo/123'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(),
+			selected:          true,
+		},
+		{
+			name: "Simple false pull request expression",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.PullRequestEntity.String(),
+					Selector: "pull_request.name != 'testorg/testrepo/123'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(),
 			selected:          false,
 		},
 		{
@@ -295,7 +348,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": false},
 				}),
 			),
@@ -310,7 +363,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"license": "MIT",
 				}),
 			),
@@ -325,7 +378,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"license": "BSD",
 				}),
 			),
@@ -340,7 +393,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
 			),
@@ -355,7 +408,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
 			),
@@ -397,12 +450,42 @@ func TestSelectSelectorEntity(t *testing.T) {
 				WithUnknownPaths("repository.properties"),
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
-				withProperties(map[string]any{
+				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
 			),
 			expectedSelectErr: ErrResultUnknown,
 			selected:          false,
+		},
+		{
+			name: "Use a PR property that is defined and true result",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.PullRequestEntity.String(),
+					Selector: "pull_request.properties.github['is_draft'] == false",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(
+				prWithProperties(map[string]any{
+					"github": map[string]any{"is_draft": false},
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Use a PR property that is defined and false result",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.PullRequestEntity.String(),
+					Selector: "pull_request.properties.github['is_draft'] == false",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(
+				prWithProperties(map[string]any{
+					"github": map[string]any{"is_draft": true},
+				}),
+			),
+			selected: false,
 		},
 	}
 

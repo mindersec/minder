@@ -72,6 +72,15 @@ func artifactEnvFactory() (*cel.Env, error) {
 		"internal.SelectorArtifact")
 }
 
+// pullRequestEnvFactory is a factory for creating a CEL environment
+// for the SelectorPullRequest type representing a pull request
+func pullRequestEnvFactory() (*cel.Env, error) {
+	return newEnvForEntity(
+		"pull_request",
+		&internalpb.SelectorArtifact{},
+		"internal.SelectorPullRequest")
+}
+
 // newEnvForEntity creates a new CEL environment for an entity. All environments are allowed to
 // use the generic "entity" variable plus the specific entity type is also declared as variable
 // with the appropriate type.
@@ -155,10 +164,10 @@ type entityEnvCache struct {
 // are used on first access to create the CEL environments for each entity type.
 func NewEnv() (*Env, error) {
 	factoryMap := map[minderv1.Entity]celEnvFactory{
-		minderv1.Entity_ENTITY_UNSPECIFIED:  genericEnvFactory,
-		minderv1.Entity_ENTITY_REPOSITORIES: repoEnvFactory,
-		minderv1.Entity_ENTITY_ARTIFACTS:    artifactEnvFactory,
-		// TODO(jakub): Add pull requests when we add then to the selector protobuf
+		minderv1.Entity_ENTITY_UNSPECIFIED:   genericEnvFactory,
+		minderv1.Entity_ENTITY_REPOSITORIES:  repoEnvFactory,
+		minderv1.Entity_ENTITY_ARTIFACTS:     artifactEnvFactory,
+		minderv1.Entity_ENTITY_PULL_REQUESTS: pullRequestEnvFactory,
 	}
 
 	entityEnvs := make(map[minderv1.Entity]*entityEnvCache, len(factoryMap))
@@ -364,6 +373,8 @@ func inputAsMap(se *internalpb.SelectorEntity) (map[string]any, error) {
 		value = se.GetRepository()
 	case minderv1.Entity_ENTITY_ARTIFACTS:
 		value = se.GetArtifact()
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		value = se.GetPullRequest()
 	default:
 		return nil, fmt.Errorf("unsupported entity type [%d]: %s", se.GetEntityType(), se.GetEntityType().ToString())
 	}

@@ -480,6 +480,63 @@ func (x *SelectorArtifact) GetProperties() *structpb.Struct {
 	return nil
 }
 
+type SelectorPullRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// the full name of the pr, e.g. stacklok/minder-server/123
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// provider-specific properties
+	Properties *structpb.Struct `protobuf:"bytes,2,opt,name=properties,proto3" json:"properties,omitempty"`
+}
+
+func (x *SelectorPullRequest) Reset() {
+	*x = SelectorPullRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SelectorPullRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectorPullRequest) ProtoMessage() {}
+
+func (x *SelectorPullRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectorPullRequest.ProtoReflect.Descriptor instead.
+func (*SelectorPullRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SelectorPullRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SelectorPullRequest) GetProperties() *structpb.Struct {
+	if x != nil {
+		return x.Properties
+	}
+	return nil
+}
+
 type SelectorEntity struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -494,13 +551,14 @@ type SelectorEntity struct {
 	//
 	//	*SelectorEntity_Repository
 	//	*SelectorEntity_Artifact
+	//	*SelectorEntity_PullRequest
 	Entity isSelectorEntity_Entity `protobuf_oneof:"entity"`
 }
 
 func (x *SelectorEntity) Reset() {
 	*x = SelectorEntity{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[6]
+		mi := &file_internal_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -513,7 +571,7 @@ func (x *SelectorEntity) String() string {
 func (*SelectorEntity) ProtoMessage() {}
 
 func (x *SelectorEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[6]
+	mi := &file_internal_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -526,7 +584,7 @@ func (x *SelectorEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SelectorEntity.ProtoReflect.Descriptor instead.
 func (*SelectorEntity) Descriptor() ([]byte, []int) {
-	return file_internal_proto_rawDescGZIP(), []int{6}
+	return file_internal_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SelectorEntity) GetEntityType() v1.Entity {
@@ -571,6 +629,13 @@ func (x *SelectorEntity) GetArtifact() *SelectorArtifact {
 	return nil
 }
 
+func (x *SelectorEntity) GetPullRequest() *SelectorPullRequest {
+	if x, ok := x.GetEntity().(*SelectorEntity_PullRequest); ok {
+		return x.PullRequest
+	}
+	return nil
+}
+
 type isSelectorEntity_Entity interface {
 	isSelectorEntity_Entity()
 }
@@ -580,12 +645,18 @@ type SelectorEntity_Repository struct {
 }
 
 type SelectorEntity_Artifact struct {
-	Artifact *SelectorArtifact `protobuf:"bytes,5,opt,name=artifact,proto3,oneof"` // TODO(jakub): add pull request, too - what would it contain? Just properties?
+	Artifact *SelectorArtifact `protobuf:"bytes,5,opt,name=artifact,proto3,oneof"`
+}
+
+type SelectorEntity_PullRequest struct {
+	PullRequest *SelectorPullRequest `protobuf:"bytes,6,opt,name=pull_request,json=pullRequest,proto3,oneof"`
 }
 
 func (*SelectorEntity_Repository) isSelectorEntity_Entity() {}
 
 func (*SelectorEntity_Artifact) isSelectorEntity_Entity() {}
+
+func (*SelectorEntity_PullRequest) isSelectorEntity_Entity() {}
 
 type PrDependencies_ContextualDependency struct {
 	state         protoimpl.MessageState
@@ -599,7 +670,7 @@ type PrDependencies_ContextualDependency struct {
 func (x *PrDependencies_ContextualDependency) Reset() {
 	*x = PrDependencies_ContextualDependency{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[7]
+		mi := &file_internal_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -612,7 +683,7 @@ func (x *PrDependencies_ContextualDependency) String() string {
 func (*PrDependencies_ContextualDependency) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[7]
+	mi := &file_internal_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -654,7 +725,7 @@ type PrDependencies_ContextualDependency_FilePatch struct {
 func (x *PrDependencies_ContextualDependency_FilePatch) Reset() {
 	*x = PrDependencies_ContextualDependency_FilePatch{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[8]
+		mi := &file_internal_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -667,7 +738,7 @@ func (x *PrDependencies_ContextualDependency_FilePatch) String() string {
 func (*PrDependencies_ContextualDependency_FilePatch) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency_FilePatch) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[8]
+	mi := &file_internal_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -710,7 +781,7 @@ type PrContents_File struct {
 func (x *PrContents_File) Reset() {
 	*x = PrContents_File{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[9]
+		mi := &file_internal_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -723,7 +794,7 @@ func (x *PrContents_File) String() string {
 func (*PrContents_File) ProtoMessage() {}
 
 func (x *PrContents_File) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[9]
+	mi := &file_internal_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -774,7 +845,7 @@ type PrContents_File_Line struct {
 func (x *PrContents_File_Line) Reset() {
 	*x = PrContents_File_Line{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[10]
+		mi := &file_internal_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -787,7 +858,7 @@ func (x *PrContents_File_Line) String() string {
 func (*PrContents_File_Line) ProtoMessage() {}
 
 func (x *PrContents_File_Line) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[10]
+	mi := &file_internal_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,34 +973,45 @@ var file_internal_proto_rawDesc = []byte{
 	0x72, 0x74, 0x69, 0x65, 0x73, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x67, 0x6f,
 	0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74,
 	0x72, 0x75, 0x63, 0x74, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73,
-	0x22, 0x94, 0x02, 0x0a, 0x0e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x45, 0x6e, 0x74,
-	0x69, 0x74, 0x79, 0x12, 0x32, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79,
-	0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x11, 0x2e, 0x6d, 0x69, 0x6e, 0x64, 0x65,
-	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x52, 0x0a, 0x65, 0x6e, 0x74,
-	0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x36, 0x0a, 0x08, 0x70,
-	0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e,
-	0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f,
-	0x72, 0x50, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69,
-	0x64, 0x65, 0x72, 0x12, 0x3e, 0x0a, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
-	0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
-	0x6f, 0x72, 0x79, 0x12, 0x38, 0x0a, 0x08, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x18,
-	0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c,
-	0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x41, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63,
-	0x74, 0x48, 0x00, 0x52, 0x08, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x42, 0x08, 0x0a,
-	0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2a, 0x72, 0x0a, 0x0c, 0x44, 0x65, 0x70, 0x45, 0x63,
-	0x6f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12, 0x1d, 0x0a, 0x19, 0x44, 0x45, 0x50, 0x5f, 0x45,
-	0x43, 0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49,
-	0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x15, 0x0a, 0x11, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43,
-	0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x4e, 0x50, 0x4d, 0x10, 0x01, 0x12, 0x14, 0x0a,
-	0x10, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x47,
-	0x4f, 0x10, 0x02, 0x12, 0x16, 0x0a, 0x12, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f, 0x53, 0x59,
-	0x53, 0x54, 0x45, 0x4d, 0x5f, 0x50, 0x59, 0x50, 0x49, 0x10, 0x03, 0x42, 0x2b, 0x5a, 0x29, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x6c,
-	0x6f, 0x6b, 0x2f, 0x6d, 0x69, 0x6e, 0x64, 0x65, 0x72, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
-	0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x22, 0x62, 0x0a, 0x13, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x50, 0x75, 0x6c, 0x6c,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x37, 0x0a, 0x0a, 0x70,
+	0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x69, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x17, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
+	0x66, 0x2e, 0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x0a, 0x70, 0x72, 0x6f, 0x70, 0x65, 0x72,
+	0x74, 0x69, 0x65, 0x73, 0x22, 0xd8, 0x02, 0x0a, 0x0e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f,
+	0x72, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x32, 0x0a, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74,
+	0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x11, 0x2e, 0x6d,
+	0x69, 0x6e, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x52,
+	0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x36, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x1a, 0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c,
+	0x65, 0x63, 0x74, 0x6f, 0x72, 0x50, 0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x52, 0x08, 0x70,
+	0x72, 0x6f, 0x76, 0x69, 0x64, 0x65, 0x72, 0x12, 0x3e, 0x0a, 0x0a, 0x72, 0x65, 0x70, 0x6f, 0x73,
+	0x69, 0x74, 0x6f, 0x72, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x69, 0x6e,
+	0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52,
+	0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x48, 0x00, 0x52, 0x0a, 0x72, 0x65, 0x70,
+	0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x12, 0x38, 0x0a, 0x08, 0x61, 0x72, 0x74, 0x69, 0x66,
+	0x61, 0x63, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x69, 0x6e, 0x74, 0x65,
+	0x72, 0x6e, 0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x41, 0x72, 0x74,
+	0x69, 0x66, 0x61, 0x63, 0x74, 0x48, 0x00, 0x52, 0x08, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63,
+	0x74, 0x12, 0x42, 0x0a, 0x0c, 0x70, 0x75, 0x6c, 0x6c, 0x5f, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
+	0x61, 0x6c, 0x2e, 0x53, 0x65, 0x6c, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x50, 0x75, 0x6c, 0x6c, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48, 0x00, 0x52, 0x0b, 0x70, 0x75, 0x6c, 0x6c, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x08, 0x0a, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2a,
+	0x72, 0x0a, 0x0c, 0x44, 0x65, 0x70, 0x45, 0x63, 0x6f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x12,
+	0x1d, 0x0a, 0x19, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d,
+	0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x15,
+	0x0a, 0x11, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f,
+	0x4e, 0x50, 0x4d, 0x10, 0x01, 0x12, 0x14, 0x0a, 0x10, 0x44, 0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f,
+	0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x47, 0x4f, 0x10, 0x02, 0x12, 0x16, 0x0a, 0x12, 0x44,
+	0x45, 0x50, 0x5f, 0x45, 0x43, 0x4f, 0x53, 0x59, 0x53, 0x54, 0x45, 0x4d, 0x5f, 0x50, 0x59, 0x50,
+	0x49, 0x10, 0x03, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2f, 0x73, 0x74, 0x61, 0x63, 0x6b, 0x6c, 0x6f, 0x6b, 0x2f, 0x6d, 0x69, 0x6e, 0x64, 0x65,
+	0x72, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -945,7 +1027,7 @@ func file_internal_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_internal_proto_goTypes = []any{
 	(DepEcosystem)(0),                                     // 0: internal.DepEcosystem
 	(*Dependency)(nil),                                    // 1: internal.Dependency
@@ -954,37 +1036,40 @@ var file_internal_proto_goTypes = []any{
 	(*SelectorProvider)(nil),                              // 4: internal.SelectorProvider
 	(*SelectorRepository)(nil),                            // 5: internal.SelectorRepository
 	(*SelectorArtifact)(nil),                              // 6: internal.SelectorArtifact
-	(*SelectorEntity)(nil),                                // 7: internal.SelectorEntity
-	(*PrDependencies_ContextualDependency)(nil),           // 8: internal.PrDependencies.ContextualDependency
-	(*PrDependencies_ContextualDependency_FilePatch)(nil), // 9: internal.PrDependencies.ContextualDependency.FilePatch
-	(*PrContents_File)(nil),                               // 10: internal.PrContents.File
-	(*PrContents_File_Line)(nil),                          // 11: internal.PrContents.File.Line
-	(*v1.PullRequest)(nil),                                // 12: minder.v1.PullRequest
-	(*structpb.Struct)(nil),                               // 13: google.protobuf.Struct
-	(v1.Entity)(0),                                        // 14: minder.v1.Entity
+	(*SelectorPullRequest)(nil),                           // 7: internal.SelectorPullRequest
+	(*SelectorEntity)(nil),                                // 8: internal.SelectorEntity
+	(*PrDependencies_ContextualDependency)(nil),           // 9: internal.PrDependencies.ContextualDependency
+	(*PrDependencies_ContextualDependency_FilePatch)(nil), // 10: internal.PrDependencies.ContextualDependency.FilePatch
+	(*PrContents_File)(nil),                               // 11: internal.PrContents.File
+	(*PrContents_File_Line)(nil),                          // 12: internal.PrContents.File.Line
+	(*v1.PullRequest)(nil),                                // 13: minder.v1.PullRequest
+	(*structpb.Struct)(nil),                               // 14: google.protobuf.Struct
+	(v1.Entity)(0),                                        // 15: minder.v1.Entity
 }
 var file_internal_proto_depIdxs = []int32{
 	0,  // 0: internal.Dependency.ecosystem:type_name -> internal.DepEcosystem
-	12, // 1: internal.PrDependencies.pr:type_name -> minder.v1.PullRequest
-	8,  // 2: internal.PrDependencies.deps:type_name -> internal.PrDependencies.ContextualDependency
-	12, // 3: internal.PrContents.pr:type_name -> minder.v1.PullRequest
-	10, // 4: internal.PrContents.files:type_name -> internal.PrContents.File
+	13, // 1: internal.PrDependencies.pr:type_name -> minder.v1.PullRequest
+	9,  // 2: internal.PrDependencies.deps:type_name -> internal.PrDependencies.ContextualDependency
+	13, // 3: internal.PrContents.pr:type_name -> minder.v1.PullRequest
+	11, // 4: internal.PrContents.files:type_name -> internal.PrContents.File
 	4,  // 5: internal.SelectorRepository.provider:type_name -> internal.SelectorProvider
-	13, // 6: internal.SelectorRepository.properties:type_name -> google.protobuf.Struct
+	14, // 6: internal.SelectorRepository.properties:type_name -> google.protobuf.Struct
 	4,  // 7: internal.SelectorArtifact.provider:type_name -> internal.SelectorProvider
-	13, // 8: internal.SelectorArtifact.properties:type_name -> google.protobuf.Struct
-	14, // 9: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
-	4,  // 10: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
-	5,  // 11: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
-	6,  // 12: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
-	1,  // 13: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
-	9,  // 14: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
-	11, // 15: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	14, // 8: internal.SelectorArtifact.properties:type_name -> google.protobuf.Struct
+	14, // 9: internal.SelectorPullRequest.properties:type_name -> google.protobuf.Struct
+	15, // 10: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
+	4,  // 11: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
+	5,  // 12: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
+	6,  // 13: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
+	7,  // 14: internal.SelectorEntity.pull_request:type_name -> internal.SelectorPullRequest
+	1,  // 15: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
+	10, // 16: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
+	12, // 17: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
+	18, // [18:18] is the sub-list for method output_type
+	18, // [18:18] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_init() }
@@ -1066,7 +1151,7 @@ func file_internal_proto_init() {
 			}
 		}
 		file_internal_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorEntity); i {
+			switch v := v.(*SelectorPullRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1078,7 +1163,7 @@ func file_internal_proto_init() {
 			}
 		}
 		file_internal_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*PrDependencies_ContextualDependency); i {
+			switch v := v.(*SelectorEntity); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1090,7 +1175,7 @@ func file_internal_proto_init() {
 			}
 		}
 		file_internal_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
+			switch v := v.(*PrDependencies_ContextualDependency); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1102,7 +1187,7 @@ func file_internal_proto_init() {
 			}
 		}
 		file_internal_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*PrContents_File); i {
+			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1114,6 +1199,18 @@ func file_internal_proto_init() {
 			}
 		}
 		file_internal_proto_msgTypes[10].Exporter = func(v any, i int) any {
+			switch v := v.(*PrContents_File); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_msgTypes[11].Exporter = func(v any, i int) any {
 			switch v := v.(*PrContents_File_Line); i {
 			case 0:
 				return &v.state
@@ -1127,9 +1224,10 @@ func file_internal_proto_init() {
 		}
 	}
 	file_internal_proto_msgTypes[4].OneofWrappers = []any{}
-	file_internal_proto_msgTypes[6].OneofWrappers = []any{
+	file_internal_proto_msgTypes[7].OneofWrappers = []any{
 		(*SelectorEntity_Repository)(nil),
 		(*SelectorEntity_Artifact)(nil),
+		(*SelectorEntity_PullRequest)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1137,7 +1235,7 @@ func file_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

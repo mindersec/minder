@@ -105,6 +105,14 @@ message SelectorArtifact {
   google.protobuf.Struct properties = 5;
 }
 
+message SelectorPullRequest {
+  // the full name of the pr, e.g. stacklok/minder-server/123
+  string name = 1;
+
+  // provider-specific properties
+  google.protobuf.Struct properties = 2;
+}
+
 message SelectorEntity {
   // one of repository, pull_request, artifact (see oneof entity)
   minder.v1.Entity entity_type = 1;
@@ -115,6 +123,6 @@ message SelectorEntity {
   oneof entity {
     SelectorRepository repository = 4;
     SelectorArtifact artifact = 5;
-    // TODO(jakub): add pull request, too - what would it contain? Just properties?
+    SelectorPullRequest pull_request = 6;
   }
 }
