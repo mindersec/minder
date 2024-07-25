@@ -205,7 +205,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 
 	rows, err := qtx.ListEvaluationHistory(ctx, params)
 	if err != nil {
-		return nil, errors.New("internal error")
+		return nil, fmt.Errorf("error listing history: %w", err)
 	}
 
 	if cursor != nil && cursor.Direction == Prev {
@@ -315,7 +315,7 @@ func paramsFromEntityTypeFilter(
 			mapEntities,
 		)
 		if err != nil {
-			return errors.New("internal error")
+			return fmt.Errorf("error filtering entity types: %w", err)
 		}
 		params.Notentitytypes = entityTypes
 	}
@@ -385,7 +385,7 @@ func paramsFromAlertFilter(
 			mapAlertStatusTypes,
 		)
 		if err != nil {
-			return errors.New("internal error")
+			return fmt.Errorf("error filtering alerts: %w", err)
 		}
 		params.Alerts = alerts
 	}
