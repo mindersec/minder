@@ -848,6 +848,7 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule instance. |
 | rule_type | <TypeLink type="string">string</TypeLink> |  | type is the name of the rule type. |
 | profile | <TypeLink type="string">string</TypeLink> |  | profile is the name of the profile which contains the rule. |
+| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule type. |
 
 
 

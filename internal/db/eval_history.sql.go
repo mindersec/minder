@@ -245,6 +245,7 @@ SELECT s.id::uuid AS evaluation_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
+       rt.severity_value as rule_severity,
        p.name AS profile_name,
        -- evaluation status and details
        s.status AS evaluation_status,
@@ -330,6 +331,7 @@ type ListEvaluationHistoryRow struct {
 	ProjectID          uuid.NullUUID              `json:"project_id"`
 	RuleType           string                     `json:"rule_type"`
 	RuleName           string                     `json:"rule_name"`
+	RuleSeverity       Severity                   `json:"rule_severity"`
 	ProfileName        string                     `json:"profile_name"`
 	EvaluationStatus   EvalStatusTypes            `json:"evaluation_status"`
 	EvaluationDetails  string                     `json:"evaluation_details"`
@@ -379,6 +381,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.ProjectID,
 			&i.RuleType,
 			&i.RuleName,
+			&i.RuleSeverity,
 			&i.ProfileName,
 			&i.EvaluationStatus,
 			&i.EvaluationDetails,

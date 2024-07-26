@@ -2576,6 +2576,9 @@ message EvaluationHistoryRule {
 
     // profile is the name of the profile which contains the rule.
     string profile = 3;
+
+    // severity is the severity of the rule type.
+    Severity severity = 4;
 }
 
 message EvaluationHistoryStatus {

@@ -148,6 +148,11 @@ func fromEvaluationHistoryRows(
 			return nil, err
 		}
 
+		ruleSeverity, err := dbSeverityToSeverity(row.RuleSeverity)
+		if err != nil {
+			return nil, err
+		}
+
 		var alert *minderv1.EvaluationHistoryAlert
 		if row.AlertStatus.Valid {
 			alert = &minderv1.EvaluationHistoryAlert{
@@ -174,6 +179,7 @@ func fromEvaluationHistoryRows(
 			Rule: &minderv1.EvaluationHistoryRule{
 				Name:     row.RuleName,
 				RuleType: row.RuleType,
+				Severity: ruleSeverity,
 				Profile:  row.ProfileName,
 			},
 			Status: &minderv1.EvaluationHistoryStatus{
@@ -466,9 +472,11 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		guidance = eval.RuleTypeGuidance
 	}
 
-	sev := &minderv1.Severity{}
-	sev.EnsureDefault()
-	if err := sev.Value.FromString(string(eval.RuleTypeSeverityValue)); err != nil {
+	var sev *minderv1.Severity
+	var err error
+
+	sev, err = dbSeverityToSeverity(eval.RuleTypeSeverityValue)
+	if err != nil {
 		zerolog.Ctx(ctx).
 			Err(err).
 			Str("value", string(eval.RuleTypeSeverityValue)).
@@ -477,7 +485,6 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 
 	entityInfo := map[string]string{}
 	remediationURL := ""
-	var err error
 	if eval.Entity == db.EntitiesRepository {
 		entityInfo["provider"] = eval.Provider
 		entityInfo["repo_owner"] = eval.RepoOwner
@@ -601,6 +608,19 @@ func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
 	}
+}
+
+func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
+	severity := &minderv1.Severity{}
+	severity.EnsureDefault()
+	if err := severity.Value.FromString(string(dbSev)); err != nil {
+		// This is not an elegant pattern, but we have places
+		// in the code where the error was simply logged and
+		// default value for severity was used.
+		return severity, err
+	}
+
+	return severity, nil
 }
 
 func getEntityName(
