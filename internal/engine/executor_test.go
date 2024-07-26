@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/alert"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
+	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
@@ -187,15 +188,17 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	// list one profile
 	mockStore.EXPECT().
 		BulkGetProfilesByID(gomock.Any(), []uuid.UUID{profileID}).
-		Return([]db.Profile{
+		Return([]db.BulkGetProfilesByIDRow{
 			{
-				ID:        profileID,
-				Name:      "test-profile",
-				ProjectID: projectID,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
-				Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				Profile: db.Profile{
+					ID:        profileID,
+					Name:      "test-profile",
+					ProjectID: projectID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+					Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				},
 			},
 		}, nil)
 
@@ -355,6 +358,18 @@ default allow = true`,
 			return fn(mockStore)
 		})
 
+	mockSelection := mock_selectors.NewMockSelection(ctrl)
+	mockSelection.EXPECT().
+		Select(gomock.Any(), gomock.Any()).
+		Return(true, "", nil).
+		AnyTimes()
+
+	mockSelectionBuilder := mock_selectors.NewMockSelectionBuilder(ctrl)
+	mockSelectionBuilder.EXPECT().
+		NewSelectionFromProfile(gomock.Any(), gomock.Any()).
+		Return(mockSelection, nil).
+		AnyTimes()
+
 	executor := engine.NewExecutor(
 		mockStore,
 		providerManager,
@@ -362,6 +377,7 @@ default allow = true`,
 		historyService,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
+		mockSelectionBuilder,
 	)
 
 	eiw := entities.NewEntityInfoWrapper().

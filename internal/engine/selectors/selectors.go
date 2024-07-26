@@ -31,6 +31,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 
+	"github.com/stacklok/minder/internal/profiles/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -222,6 +223,7 @@ func newEnvForEntity(varName string, typ any, typName string) (*cel.Env, error) 
 }
 
 type compiledSelector struct {
+	orig    string
 	ast     *cel.Ast
 	program cel.Program
 }
@@ -243,6 +245,7 @@ func compileSelectorForEntity(env *cel.Env, selector string) (*compiledSelector,
 
 	return &compiledSelector{
 		ast:     checked,
+		orig:    selector,
 		program: program,
 	}, nil
 }
@@ -265,7 +268,7 @@ func checkSelectorForEntity(env *cel.Env, selector string) (*cel.Ast, error) {
 // for an entity type. This is what the user of this module uses. The interface makes it easier to pass
 // mocks by the user of this module.
 type SelectionBuilder interface {
-	NewSelectionFromProfile(minderv1.Entity, []*minderv1.Profile_Selector) (Selection, error)
+	NewSelectionFromProfile(minderv1.Entity, []models.ProfileSelector) (Selection, error)
 }
 
 // SelectionChecker is an interface for checking if a selector expression is valid for a given entity type
@@ -315,7 +318,7 @@ func NewEnv() *Env {
 // from a profile
 func (e *Env) NewSelectionFromProfile(
 	entityType minderv1.Entity,
-	profileSelection []*minderv1.Profile_Selector,
+	profileSelection []models.ProfileSelector,
 ) (Selection, error) {
 	selector := make([]*compiledSelector, 0, len(profileSelection))
 
@@ -325,8 +328,7 @@ func (e *Env) NewSelectionFromProfile(
 	}
 
 	for _, sel := range profileSelection {
-		ent := minderv1.EntityFromString(sel.GetEntity())
-		if ent != entityType && ent != minderv1.Entity_ENTITY_UNSPECIFIED {
+		if sel.Entity != entityType && sel.Entity != minderv1.Entity_ENTITY_UNSPECIFIED {
 			continue
 		}
 
@@ -388,7 +390,7 @@ func WithUnknownPaths(paths ...string) SelectOption {
 
 // Selection is an interface for selecting entities based on a profile
 type Selection interface {
-	Select(*internalpb.SelectorEntity, ...SelectOption) (bool, error)
+	Select(*internalpb.SelectorEntity, ...SelectOption) (bool, string, error)
 }
 
 // EntitySelection is a struct that holds the compiled CEL expressions for a given entity type
@@ -400,9 +402,9 @@ type EntitySelection struct {
 }
 
 // Select return true if the entity matches all the compiled expressions and false otherwise
-func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...SelectOption) (bool, error) {
+func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...SelectOption) (bool, string, error) {
 	if se == nil {
-		return false, fmt.Errorf("input entity is nil")
+		return false, "", fmt.Errorf("input entity is nil")
 	}
 
 	var opts selectionOptions
@@ -413,34 +415,34 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...Sele
 	for _, sel := range s.selector {
 		entityMap, err := inputAsMap(se)
 		if err != nil {
-			return false, fmt.Errorf("failed to convert input to map: %w", err)
+			return false, "", fmt.Errorf("failed to convert input to map: %w", err)
 		}
 
 		out, details, err := s.evalWithOpts(&opts, sel, entityMap)
 		// check unknowns /before/ an error. Maybe we should try to special-case the one
 		// error we get from the CEL library in this case and check for the rest?
 		if s.detailHasUnknowns(sel, details) {
-			return false, ErrResultUnknown
+			return false, "", ErrResultUnknown
 		}
 
 		if err != nil {
-			return false, fmt.Errorf("failed to evaluate Expression: %w", err)
+			return false, "", fmt.Errorf("failed to evaluate Expression: %w", err)
 		}
 
 		if types.IsUnknown(out) {
-			return false, ErrResultUnknown
+			return false, "", ErrResultUnknown
 		}
 
 		if out.Type() != cel.BoolType {
-			return false, fmt.Errorf("expression did not evaluate to a boolean: %v", out)
+			return false, "", fmt.Errorf("expression did not evaluate to a boolean: %v", out)
 		}
 
 		if !out.Value().(bool) {
-			return false, nil
+			return false, sel.orig, nil
 		}
 	}
 
-	return true, nil
+	return true, "", nil
 }
 
 func unknownAttributesFromOpts(unknownPaths []string) []*interpreter.AttributePattern {

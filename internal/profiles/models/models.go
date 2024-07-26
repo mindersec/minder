@@ -22,6 +22,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/entities"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,6 +32,7 @@ type ProfileAggregate struct {
 	Name         string
 	ActionConfig ActionConfiguration
 	Rules        []RuleInstance
+	Selectors    []ProfileSelector
 }
 
 // ActionConfiguration stores the configuration state for a profile
@@ -46,6 +48,12 @@ type RuleInstance struct {
 	Def        map[string]any
 	Params     map[string]any
 	RuleTypeID uuid.UUID
+}
+
+// ProfileSelector is a domain-level model of a profile selector
+type ProfileSelector struct {
+	Entity   minderv1.Entity
+	Selector string
 }
 
 // RuleFromPB converts a protobuf rule instance to the domain model
@@ -127,4 +135,25 @@ func ActionOptOrDefault(actionOpt ActionOpt, defaultVal ActionOpt) ActionOpt {
 		return defaultVal
 	}
 	return actionOpt
+}
+
+// SelectorSliceFromDB converts a slice of db.ProfileSelector to a slice of ProfileSelector
+func SelectorSliceFromDB(dbSelectors []db.ProfileSelector) []ProfileSelector {
+	selectors := make([]ProfileSelector, 0, len(dbSelectors))
+	for _, dbSelector := range dbSelectors {
+		selectors = append(selectors, profileSelectorFromDb(dbSelector))
+	}
+	return selectors
+}
+
+func profileSelectorFromDb(dbSelector db.ProfileSelector) ProfileSelector {
+	ent := minderv1.Entity_ENTITY_UNSPECIFIED
+	if dbSelector.Entity.Valid {
+		ent = entities.EntityTypeFromDB(dbSelector.Entity.Entities)
+	}
+
+	return ProfileSelector{
+		Entity:   ent,
+		Selector: dbSelector.Selector,
+	}
 }
