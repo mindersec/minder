@@ -31,6 +31,11 @@ requiredActions:
     providerId: delete_account
     enabled: true
     defaultAction: false
+  - alias: VERIFY_PROFILE
+    name: Verify Profile
+    providerId: VERIFY_PROFILE
+    enabled: false
+    defaultAction: false
 
 # From:
 # Give all users permission to delete their own account
@@ -101,8 +106,6 @@ clientScopes:
           userinfo.token.claim: "false"
 
 clients:
-  # From:
-  # create clients -r stacklok -s clientId=minder-cli -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
   - clientId: minder-cli
     enabled: true
     redirectUris:
@@ -120,8 +123,6 @@ clients:
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
-  # From:
-  # create clients -r stacklok -s clientId=minder-ui -s 'redirectUris=["http://localhost/*"]' -s publicClient=true -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
   - clientId: minder-ui
     enabled: true
     redirectUris:
@@ -159,3 +160,34 @@ users:
         # Give minder-server the capability to delete users
         # add-roles -r stacklok --uusername service-account-minder-server --cclientid realm-management --rolename manage-users
         - manage-users
+
+authenticationFlows:
+  - alias: "browser"
+    description: "browser based authentication"
+    providerId: "basic-flow"
+    topLevel: true
+    builtIn: true
+    authenticationExecutions:
+      - authenticatorConfig: "github-default"
+        authenticator: "identity-provider-redirector"
+        authenticatorFlow: false
+        requirement: "ALTERNATIVE"
+        priority: 25
+        autheticatorFlow: false
+        userSetupAllowed: false
+  - alias: "first broker login"
+    providerId: "basic-flow"
+    topLevel: true
+    builtIn: true
+    authenticationExecutions:
+      - authenticatorConfig: "review profile config"
+        authenticator: "idp-review-profile"
+        authenticatorFlow: false
+        requirement: "DISABLED"
+        priority: 10
+        autheticatorFlow: false
+        userSetupAllowed: false
+authenticatorConfig:
+  - alias: "github-default"
+    config:
+      defaultProvider: "github"
