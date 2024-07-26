@@ -136,8 +136,9 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		return fmt.Errorf("error while retrieving profiles and rule instances: %w", err)
 	}
 
-	// For each profile, get the profile-override status. Then, if there is no profile-override status,
-	// evaluate each rule and store the outcome in the database or store the override status for all rules
+	// For each profile, get the profileEvalStatus first. Then, if the profileEvalStatus is nil
+	// evaluate each rule and store the outcome in the database. If profileEvalStatus is non-nil,
+	// just store it for all rules without evaluation.
 	for _, profile := range profileAggregates {
 
 		profileEvalStatus := e.profileEvalStatus(ctx, provider, inf, profile)
