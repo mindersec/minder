@@ -16,11 +16,15 @@
 package selectors
 
 import (
+	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/profiles/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -131,25 +135,27 @@ func TestSelectSelectorEntity(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		name                    string
-		exprs                   []*minderv1.Profile_Selector
-		selectOptions           []SelectOption
-		selectorEntityBld       testSelectorEntityBuilder
-		expectedNewSelectionErr string
-		expectedSelectErr       error
-		selected                bool
+		name                       string
+		exprs                      []models.ProfileSelector
+		selectOptions              []SelectOption
+		selectorEntityBld          testSelectorEntityBuilder
+		expectedNewSelectionErrMsg string
+		expectedNewSelectionErr    error
+		expectedSelectErr          error
+		expectedStructuredErr      *ErrStructure
+		selected                   bool
 	}{
 		{
 			name:              "No selectors",
-			exprs:             []*minderv1.Profile_Selector{},
+			exprs:             []models.ProfileSelector{},
 			selectorEntityBld: newTestRepoSelectorEntity(),
 			selected:          true,
 		},
 		{
 			name: "Simple true repository expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.name == 'testorg/testrepo'",
 				},
 			},
@@ -158,9 +164,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple true artifact expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.ArtifactEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
 					Selector: "artifact.type == 'container'",
 				},
 			},
@@ -169,9 +175,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple false artifact expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.ArtifactEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
 					Selector: "artifact.type != 'container'",
 				},
 			},
@@ -180,9 +186,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple false repository expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.name != 'testorg/testrepo'",
 				},
 			},
@@ -191,9 +197,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple true pull request expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.PullRequestEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
 					Selector: "pull_request.name == 'testorg/testrepo/123'",
 				},
 			},
@@ -202,9 +208,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple false pull request expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.PullRequestEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
 					Selector: "pull_request.name != 'testorg/testrepo/123'",
 				},
 			},
@@ -213,9 +219,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple true generic entity expression for repo entity type",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "entity.name == 'testorg/testrepo'",
 				},
 			},
@@ -224,9 +230,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple false generic entity expression for repo entity type",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "entity.name != 'testorg/testrepo'",
 				},
 			},
@@ -235,9 +241,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple true generic entity expression for unspecified entity type",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   "",
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
 					Selector: "entity.name == 'testorg/testrepo'",
 				},
 			},
@@ -246,9 +252,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Simple false generic entity expression for unspecified entity type",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   "",
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
 					Selector: "entity.name != 'testorg/testrepo'",
 				},
 			},
@@ -257,13 +263,13 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Expressions for different types than the entity are skipped",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.ArtifactEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
 					Selector: "artifact.name != 'namespace/containername'",
 				},
 				{
-					Entity:   minderv1.PullRequestEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
 					Selector: "pull_request.name != 'namespace/containername'",
 				},
 			},
@@ -272,9 +278,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Expression on is_fork bool attribute set to true",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.is_fork == true",
 				},
 			},
@@ -283,9 +289,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Expression on is_fork bool attribute set to false",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.is_fork == true",
 				},
 			},
@@ -294,9 +300,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Expression on is_fork bool attribute set to nil and true expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.is_fork == true",
 				},
 			},
@@ -305,9 +311,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Expression on is_fork bool attribute set to nil and false expression",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.is_fork == false",
 				},
 			},
@@ -316,33 +322,59 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Wrong entity type - repo selector uses artifact",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "artifact.name != 'testorg/testrepo'",
 				},
 			},
+			selectorEntityBld:          newTestRepoSelectorEntity(),
+			expectedNewSelectionErrMsg: "undeclared reference to 'artifact'",
+			selected:                   false,
+		},
+		{
+			name: "CEL expression that does not parse",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.name == ",
+				},
+			},
 			selectorEntityBld:       newTestRepoSelectorEntity(),
-			expectedNewSelectionErr: "undeclared reference to 'artifact'",
+			expectedNewSelectionErr: &ParseError{},
 			selected:                false,
 		},
 		{
 			name: "Attempt to use a repo attribute that doesn't exist",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.iamnothere == 'value'",
 				},
 			},
-			selectorEntityBld:       newTestRepoSelectorEntity(),
-			expectedNewSelectionErr: "undefined field 'iamnothere'",
-			selected:                false,
+			selectorEntityBld:          newTestRepoSelectorEntity(),
+			expectedNewSelectionErrMsg: "undefined field 'iamnothere'",
+			expectedNewSelectionErr:    &CheckError{},
+			expectedStructuredErr: &ErrStructure{
+				Err: ErrKindCheck,
+				Details: ErrDetails{
+					Errors: []ErrInstance{
+						{
+							Line: 1,
+							Col:  10,
+							Msg:  "undefined field 'iamnothere'",
+						},
+					},
+					Source: "repository.iamnothere == 'value'",
+				},
+			},
+			selected: false,
 		},
 		{
 			name: "Use a property that is defined and true result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
@@ -355,9 +387,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Use a string property that is defined and true result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.license == 'MIT'",
 				},
 			},
@@ -370,9 +402,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Use a string property that is defined and false result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.license == 'MIT'",
 				},
 			},
@@ -385,9 +417,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Use a property that is defined and false result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
@@ -400,9 +432,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Properties are non-nil but we use one that is not defined",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_private'] != true",
 				},
 			},
@@ -416,9 +448,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Attempt to use a property while having nil properties",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_fork'] != 'true'",
 				},
 			},
@@ -428,9 +460,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "The selector shortcuts if evaluation is not needed for properties",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.name == 'testorg/testrepo' || repository.properties.github['is_fork'] != 'true'",
 				},
 			},
@@ -439,9 +471,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Attempt to use a property but explicitly tell Select that it's not defined",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_fork'] != 'true'",
 				},
 			},
@@ -458,9 +490,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Use a PR property that is defined and true result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.PullRequestEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
 					Selector: "pull_request.properties.github['is_draft'] == false",
 				},
 			},
@@ -473,9 +505,9 @@ func TestSelectSelectorEntity(t *testing.T) {
 		},
 		{
 			name: "Use a PR property that is defined and false result",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.PullRequestEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
 					Selector: "pull_request.properties.github['is_draft'] == false",
 				},
 			},
@@ -497,16 +529,28 @@ func TestSelectSelectorEntity(t *testing.T) {
 			se := scenario.selectorEntityBld()
 
 			sels, err := env.NewSelectionFromProfile(se.EntityType, scenario.exprs)
-			if scenario.expectedNewSelectionErr != "" {
+			if scenario.expectedNewSelectionErrMsg != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), scenario.expectedNewSelectionErr)
+				require.Contains(t, err.Error(), scenario.expectedNewSelectionErrMsg)
+			}
+			if scenario.expectedNewSelectionErr != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, scenario.expectedNewSelectionErr)
+			}
+			if scenario.expectedStructuredErr != nil {
+				testErrUnmarshallableValue(t, err, scenario.expectedStructuredErr)
+			}
+
+			if scenario.expectedNewSelectionErrMsg != "" ||
+				scenario.expectedNewSelectionErr != nil ||
+				scenario.expectedStructuredErr != nil {
 				return
 			}
 
 			require.NoError(t, err)
 			require.NotNil(t, sels)
 
-			selected, err := sels.Select(se, scenario.selectOptions...)
+			selected, matchedSelector, err := sels.Select(se, scenario.selectOptions...)
 			if scenario.expectedSelectErr != nil {
 				require.Error(t, err)
 				require.Equal(t, scenario.expectedSelectErr, err)
@@ -515,8 +559,39 @@ func TestSelectSelectorEntity(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, scenario.selected, selected)
+			if !selected {
+				// TODO(jakub): Add tests with more selectors. If we have more than one selector, we should
+				// also match against an expected index
+				require.Equal(t, scenario.exprs[0].Selector, matchedSelector)
+			}
 		})
 	}
+}
+
+func testErrUnmarshallableValue(t *testing.T, err error, expected *ErrStructure) {
+	t.Helper()
+
+	var ce *CheckError
+	var pe *ParseError
+	var jsonString string
+
+	if errors.As(err, &ce) {
+		jsonString = ce.Error()
+	} else if errors.As(err, &pe) {
+		jsonString = pe.Error()
+	} else {
+		t.Fatalf("error is not of type CheckError or ParseError")
+	}
+
+	// both errors unwrap to ErrSelectorCheck
+	require.ErrorIs(t, err, ErrSelectorCheck)
+
+	var structuredErr ErrStructure
+	if err := json.NewDecoder(strings.NewReader(jsonString)).Decode(&structuredErr); err != nil {
+		t.Fatalf("failed to unmarshal error: %v", err)
+	}
+
+	require.Equal(t, expected, &structuredErr)
 }
 
 func TestSelectorEntityFillProperties(t *testing.T) {
@@ -524,15 +599,15 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 
 	scenarios := []struct {
 		name           string
-		exprs          []*minderv1.Profile_Selector
+		exprs          []models.ProfileSelector
 		mockFetch      func(*internalpb.SelectorEntity)
 		secondSucceeds bool
 	}{
 		{
 			name: "Fetch a property that exists",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_fork'] == false",
 				},
 			},
@@ -558,9 +633,9 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 		},
 		{
 			name: "Fail to fetch a property",
-			exprs: []*minderv1.Profile_Selector{
+			exprs: []models.ProfileSelector{
 				{
-					Entity:   minderv1.RepositoryEntity.String(),
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
 					Selector: "repository.properties.github['is_private'] == false",
 				},
 			},
@@ -596,13 +671,13 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, sels)
 
-		_, err = sels.Select(se, WithUnknownPaths("repository.properties"))
+		_, _, err = sels.Select(se, WithUnknownPaths("repository.properties"))
 		require.ErrorIs(t, err, ErrResultUnknown)
 
 		// simulate fetching properties
 		scenario.mockFetch(se)
 
-		selected, err := sels.Select(se)
+		selected, _, err := sels.Select(se)
 		if scenario.secondSucceeds {
 			require.NoError(t, err)
 			require.True(t, selected)

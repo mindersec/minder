@@ -13,7 +13,7 @@ import (
 )
 
 type Querier interface {
-	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error)
+	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)

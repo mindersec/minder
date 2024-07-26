@@ -32,11 +32,13 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/engine/rtengine"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/manager"
+	provsel "github.com/stacklok/minder/internal/providers/selectors"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -55,6 +57,7 @@ type executor struct {
 	historyService  history.EvaluationHistoryService
 	featureFlags    openfeature.IClient
 	profileStore    profiles.ProfileStore
+	selBuilder      selectors.SelectionBuilder
 }
 
 // NewExecutor creates a new executor
@@ -65,6 +68,7 @@ func NewExecutor(
 	historyService history.EvaluationHistoryService,
 	featureFlags openfeature.IClient,
 	profileStore profiles.ProfileStore,
+	selBuilder selectors.SelectionBuilder,
 ) Executor {
 	return &executor{
 		querier:         querier,
@@ -73,6 +77,7 @@ func NewExecutor(
 		historyService:  historyService,
 		featureFlags:    featureFlags,
 		profileStore:    profileStore,
+		selBuilder:      selBuilder,
 	}
 }
 
@@ -131,10 +136,15 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		return fmt.Errorf("error while retrieving profiles and rule instances: %w", err)
 	}
 
-	// For each profile, evaluate each rule and store the outcome in the database
+	// For each profile, get the profileEvalStatus first. Then, if the profileEvalStatus is nil
+	// evaluate each rule and store the outcome in the database. If profileEvalStatus is non-nil,
+	// just store it for all rules without evaluation.
 	for _, profile := range profileAggregates {
+
+		profileEvalStatus := e.profileEvalStatus(ctx, provider, inf, profile)
+
 		for _, rule := range profile.Rules {
-			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache); err != nil {
+			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache, profileEvalStatus); err != nil {
 				return fmt.Errorf("error evaluating entity event: %w", err)
 			}
 		}
@@ -150,6 +160,7 @@ func (e *executor) evaluateRule(
 	profile *models.ProfileAggregate,
 	rule *models.RuleInstance,
 	ruleEngineCache rtengine.Cache,
+	profileEvalStatus error,
 ) error {
 	// Create eval status params
 	evalParams, err := e.createEvalStatusParams(ctx, inf, profile, rule)
@@ -176,7 +187,12 @@ func (e *executor) evaluateRule(
 	defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
 	// Evaluate the rule
-	evalErr := ruleEngine.Eval(ctx, inf, evalParams)
+	var evalErr error
+	if profileEvalStatus != nil {
+		evalErr = profileEvalStatus
+	} else {
+		evalErr = ruleEngine.Eval(ctx, inf, evalParams)
+	}
 	evalParams.SetEvalErr(evalErr)
 
 	// Perform actionEngine, if any
@@ -188,6 +204,37 @@ func (e *executor) evaluateRule(
 
 	// Create or update the evaluation status
 	return e.createOrUpdateEvalStatus(ctx, evalParams)
+}
+
+func (e *executor) profileEvalStatus(
+	ctx context.Context,
+	provider provinfv1.Provider,
+	eiw *entities.EntityInfoWrapper,
+	aggregate models.ProfileAggregate,
+) error {
+	// so far this function only handles selectors. In the future we can extend it to handle other
+	// profile-global evaluations
+
+	selection, err := e.selBuilder.NewSelectionFromProfile(eiw.Type, aggregate.Selectors)
+	if err != nil {
+		return fmt.Errorf("error creating selection from profile: %w", err)
+	}
+
+	selEnt := provsel.EntityToSelectorEntity(ctx, provider, eiw.Type, eiw.Entity)
+	if selEnt == nil {
+		return fmt.Errorf("error converting entity to selector entity")
+	}
+
+	selected, matchedSelector, err := selection.Select(selEnt)
+	if err != nil {
+		return fmt.Errorf("error selecting entity: %w", err)
+	}
+
+	if !selected {
+		return evalerrors.NewErrEvaluationSkipped("entity not applicable due to profile selector %s", matchedSelector)
+	}
+
+	return nil
 }
 
 func (e *executor) updateLockLease(

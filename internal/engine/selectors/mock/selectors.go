@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	selectors "github.com/stacklok/minder/internal/engine/selectors"
+	models "github.com/stacklok/minder/internal/profiles/models"
 	proto "github.com/stacklok/minder/internal/proto"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
@@ -42,7 +43,7 @@ func (m *MockSelectionBuilder) EXPECT() *MockSelectionBuilderMockRecorder {
 }
 
 // NewSelectionFromProfile mocks base method.
-func (m *MockSelectionBuilder) NewSelectionFromProfile(arg0 v1.Entity, arg1 []*v1.Profile_Selector) (selectors.Selection, error) {
+func (m *MockSelectionBuilder) NewSelectionFromProfile(arg0 v1.Entity, arg1 []models.ProfileSelector) (selectors.Selection, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewSelectionFromProfile", arg0, arg1)
 	ret0, _ := ret[0].(selectors.Selection)
@@ -54,6 +55,43 @@ func (m *MockSelectionBuilder) NewSelectionFromProfile(arg0 v1.Entity, arg1 []*v
 func (mr *MockSelectionBuilderMockRecorder) NewSelectionFromProfile(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewSelectionFromProfile", reflect.TypeOf((*MockSelectionBuilder)(nil).NewSelectionFromProfile), arg0, arg1)
+}
+
+// MockSelectionChecker is a mock of SelectionChecker interface.
+type MockSelectionChecker struct {
+	ctrl     *gomock.Controller
+	recorder *MockSelectionCheckerMockRecorder
+}
+
+// MockSelectionCheckerMockRecorder is the mock recorder for MockSelectionChecker.
+type MockSelectionCheckerMockRecorder struct {
+	mock *MockSelectionChecker
+}
+
+// NewMockSelectionChecker creates a new mock instance.
+func NewMockSelectionChecker(ctrl *gomock.Controller) *MockSelectionChecker {
+	mock := &MockSelectionChecker{ctrl: ctrl}
+	mock.recorder = &MockSelectionCheckerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSelectionChecker) EXPECT() *MockSelectionCheckerMockRecorder {
+	return m.recorder
+}
+
+// CheckSelector mocks base method.
+func (m *MockSelectionChecker) CheckSelector(arg0 *v1.Profile_Selector) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckSelector", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckSelector indicates an expected call of CheckSelector.
+func (mr *MockSelectionCheckerMockRecorder) CheckSelector(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSelector", reflect.TypeOf((*MockSelectionChecker)(nil).CheckSelector), arg0)
 }
 
 // MockSelection is a mock of Selection interface.
@@ -80,7 +118,7 @@ func (m *MockSelection) EXPECT() *MockSelectionMockRecorder {
 }
 
 // Select mocks base method.
-func (m *MockSelection) Select(arg0 *proto.SelectorEntity, arg1 ...selectors.SelectOption) (bool, error) {
+func (m *MockSelection) Select(arg0 *proto.SelectorEntity, arg1 ...selectors.SelectOption) (bool, string, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{arg0}
 	for _, a := range arg1 {
@@ -88,8 +126,9 @@ func (m *MockSelection) Select(arg0 *proto.SelectorEntity, arg1 ...selectors.Sel
 	}
 	ret := m.ctrl.Call(m, "Select", varargs...)
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // Select indicates an expected call of Select.

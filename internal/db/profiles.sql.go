@@ -14,33 +14,50 @@ import (
 )
 
 const bulkGetProfilesByID = `-- name: BulkGetProfilesByID :many
-SELECT id, name, provider, project_id, remediate, alert, created_at, updated_at, provider_id, subscription_id, display_name, labels
+WITH helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+    FROM profiles pr
+             JOIN profile_selectors ps
+                  ON pr.id = ps.profile_id
+    WHERE pr.id = ANY($1::UUID[])
+    GROUP BY pr.id
+)
+SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
+       helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE id = ANY($1::UUID[])
 `
 
-func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error) {
+type BulkGetProfilesByIDRow struct {
+	Profile               Profile           `json:"profile"`
+	ProfilesWithSelectors []ProfileSelector `json:"profiles_with_selectors"`
+}
+
+func (q *Queries) BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, bulkGetProfilesByID, pq.Array(profileIds))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Profile{}
+	items := []BulkGetProfilesByIDRow{}
 	for rows.Next() {
-		var i Profile
+		var i BulkGetProfilesByIDRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Provider,
-			&i.ProjectID,
-			&i.Remediate,
-			&i.Alert,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ProviderID,
-			&i.SubscriptionID,
-			&i.DisplayName,
-			pq.Array(&i.Labels),
+			&i.Profile.ID,
+			&i.Profile.Name,
+			&i.Profile.Provider,
+			&i.Profile.ProjectID,
+			&i.Profile.Remediate,
+			&i.Profile.Alert,
+			&i.Profile.CreatedAt,
+			&i.Profile.UpdatedAt,
+			&i.Profile.ProviderID,
+			&i.Profile.SubscriptionID,
+			&i.Profile.DisplayName,
+			pq.Array(&i.Profile.Labels),
+			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
 			return nil, err
 		}

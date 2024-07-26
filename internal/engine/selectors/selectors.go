@@ -19,6 +19,7 @@
 package selectors
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 
+	"github.com/stacklok/minder/internal/profiles/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -38,7 +40,122 @@ var (
 	// ErrResultUnknown is returned when the result of a selector expression is unknown
 	// this tells the caller to try again with more information
 	ErrResultUnknown = errors.New("result is unknown")
+	// ErrUnsupported is returned when the entity type is not supported
+	ErrUnsupported = errors.New("unsupported entity type")
+	// ErrSelectorCheck is returned if the selector fails to be checked for syntax errors
+	ErrSelectorCheck = errors.New("failed to check selector")
 )
+
+// ErrKind is a string for the kind of error that occurred
+type ErrKind string
+
+const (
+	// ErrKindParse is an error kind for parsing errors, e.g. syntax errors
+	ErrKindParse ErrKind = "parse"
+	// ErrKindCheck is an error kind for checking errors, e.g. mismatched types
+	ErrKindCheck ErrKind = "check"
+)
+
+// ErrInstance is one occurrence of an error in a CEL expression
+type ErrInstance struct {
+	Line int    `json:"line,omitempty"`
+	Col  int    `json:"col,omitempty"`
+	Msg  string `json:"msg,omitempty"`
+}
+
+// ErrDetails is a struct that holds the details of an error in a CEL expression
+type ErrDetails struct {
+	Errors []ErrInstance `json:"errors,omitempty"`
+	Source string        `json:"source,omitempty"`
+}
+
+// AsJSON returns the ErrDetails as a JSON string
+func (ed *ErrDetails) AsJSON() string {
+	edBytes, err := json.Marshal(ed)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "failed to marshal JSON: %s"}`, err)
+	}
+	return string(edBytes)
+}
+
+func errDetailsFromCelIssues(source string, issues *cel.Issues) ErrDetails {
+	var ed ErrDetails
+
+	ed.Source = source
+	ed.Errors = make([]ErrInstance, 0, len(issues.Errors()))
+	for _, err := range issues.Errors() {
+		ed.Errors = append(ed.Errors, ErrInstance{
+			Line: err.Location.Line(),
+			Col:  err.Location.Column(),
+			Msg:  err.Message,
+		})
+	}
+
+	return ed
+}
+
+// ErrStructure is a struct that callers can use to deserialize the JSON error
+type ErrStructure struct {
+	Err     ErrKind    `json:"err"`
+	Details ErrDetails `json:"details"`
+}
+
+// ParseError is an error type for syntax errors in CEL expressions
+type ParseError struct {
+	ErrDetails
+	original error
+}
+
+// Error implements the error interface for ParseError
+func (pe *ParseError) Error() string {
+	return fmt.Sprintf(`{"err": "%s", "details": %s}`, ErrKindParse, pe.AsJSON())
+}
+
+// Is checks if the target error is a ParseError
+func (_ *ParseError) Is(target error) bool {
+	var t *ParseError
+	return errors.As(target, &t)
+}
+
+func (pe *ParseError) Unwrap() error {
+	return pe.original
+}
+
+// CheckError is an error type for type checking errors in CEL expressions, e.g.
+// mismatched types
+type CheckError struct {
+	ErrDetails
+	original error
+}
+
+// Error implements the error interface for CheckError
+func (ce *CheckError) Error() string {
+	return fmt.Sprintf(`{"err": "%s", "details": %s}`, ErrKindCheck, ce.AsJSON())
+}
+
+// Is checks if the target error is a CheckError
+func (_ *CheckError) Is(target error) bool {
+	var t *CheckError
+	return errors.As(target, &t)
+}
+
+func (ce *CheckError) Unwrap() error {
+	return ce.original
+}
+
+func newParseError(source string, issues *cel.Issues) error {
+	return &ParseError{
+		ErrDetails: errDetailsFromCelIssues(source, issues),
+		original:   ErrSelectorCheck,
+	}
+}
+
+func newCheckError(source string, issues *cel.Issues) error {
+	return &CheckError{
+		ErrDetails: errDetailsFromCelIssues(source, issues),
+		original:   ErrSelectorCheck,
+	}
+}
 
 // celEnvFactory is an interface for creating CEL environments
 // for an entity. Each entity must implement this interface to be
@@ -106,20 +223,16 @@ func newEnvForEntity(varName string, typ any, typName string) (*cel.Env, error) 
 }
 
 type compiledSelector struct {
+	orig    string
 	ast     *cel.Ast
 	program cel.Program
 }
 
 // compileSelectorForEntity compiles a selector expression for a given entity type into a CEL program
 func compileSelectorForEntity(env *cel.Env, selector string) (*compiledSelector, error) {
-	ast, issues := env.Parse(selector)
-	if issues.Err() != nil {
-		return nil, fmt.Errorf("failed to parse expression %q: %w", selector, issues.Err())
-	}
-
-	checked, issues := env.Check(ast)
-	if issues.Err() != nil {
-		return nil, fmt.Errorf("failed to check expression %q: %w", selector, issues.Err())
+	checked, err := checkSelectorForEntity(env, selector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check expression %q: %w", selector, err)
 	}
 
 	program, err := env.Program(checked,
@@ -132,15 +245,35 @@ func compileSelectorForEntity(env *cel.Env, selector string) (*compiledSelector,
 
 	return &compiledSelector{
 		ast:     checked,
+		orig:    selector,
 		program: program,
 	}, nil
+}
+
+func checkSelectorForEntity(env *cel.Env, selector string) (*cel.Ast, error) {
+	parsedAst, issues := env.Parse(selector)
+	if issues.Err() != nil {
+		return nil, newParseError(selector, issues)
+	}
+
+	checkedAst, issues := env.Check(parsedAst)
+	if issues.Err() != nil {
+		return nil, newCheckError(selector, issues)
+	}
+
+	return checkedAst, nil
 }
 
 // SelectionBuilder is an interface for creating Selections (a collection of compiled CEL expressions)
 // for an entity type. This is what the user of this module uses. The interface makes it easier to pass
 // mocks by the user of this module.
 type SelectionBuilder interface {
-	NewSelectionFromProfile(minderv1.Entity, []*minderv1.Profile_Selector) (Selection, error)
+	NewSelectionFromProfile(minderv1.Entity, []models.ProfileSelector) (Selection, error)
+}
+
+// SelectionChecker is an interface for checking if a selector expression is valid for a given entity type
+type SelectionChecker interface {
+	CheckSelector(*minderv1.Profile_Selector) error
 }
 
 // Env is a struct that holds the CEL environments for each entity type and the factories for creating
@@ -185,7 +318,7 @@ func NewEnv() *Env {
 // from a profile
 func (e *Env) NewSelectionFromProfile(
 	entityType minderv1.Entity,
-	profileSelection []*minderv1.Profile_Selector,
+	profileSelection []models.ProfileSelector,
 ) (Selection, error) {
 	selector := make([]*compiledSelector, 0, len(profileSelection))
 
@@ -195,8 +328,7 @@ func (e *Env) NewSelectionFromProfile(
 	}
 
 	for _, sel := range profileSelection {
-		ent := minderv1.EntityFromString(sel.GetEntity())
-		if ent != entityType && ent != minderv1.Entity_ENTITY_UNSPECIFIED {
+		if sel.Entity != entityType && sel.Entity != minderv1.Entity_ENTITY_UNSPECIFIED {
 			continue
 		}
 
@@ -213,6 +345,18 @@ func (e *Env) NewSelectionFromProfile(
 		selector: selector,
 		entity:   entityType,
 	}, nil
+}
+
+// CheckSelector checks if a selector expression compiles and is valid for a given entity
+func (e *Env) CheckSelector(sel *minderv1.Profile_Selector) error {
+	ent := minderv1.EntityFromString(sel.GetEntity())
+	env, err := e.envForEntity(ent)
+	if err != nil {
+		return fmt.Errorf("failed to get environment for entity %v: %w", ent, ErrUnsupported)
+	}
+
+	_, err = checkSelectorForEntity(env, sel.Selector)
+	return err
 }
 
 // envForEntity gets the CEL environment for a given entity type. If the environment is not cached,
@@ -246,7 +390,7 @@ func WithUnknownPaths(paths ...string) SelectOption {
 
 // Selection is an interface for selecting entities based on a profile
 type Selection interface {
-	Select(*internalpb.SelectorEntity, ...SelectOption) (bool, error)
+	Select(*internalpb.SelectorEntity, ...SelectOption) (bool, string, error)
 }
 
 // EntitySelection is a struct that holds the compiled CEL expressions for a given entity type
@@ -258,9 +402,9 @@ type EntitySelection struct {
 }
 
 // Select return true if the entity matches all the compiled expressions and false otherwise
-func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...SelectOption) (bool, error) {
+func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...SelectOption) (bool, string, error) {
 	if se == nil {
-		return false, fmt.Errorf("input entity is nil")
+		return false, "", fmt.Errorf("input entity is nil")
 	}
 
 	var opts selectionOptions
@@ -271,34 +415,34 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...Sele
 	for _, sel := range s.selector {
 		entityMap, err := inputAsMap(se)
 		if err != nil {
-			return false, fmt.Errorf("failed to convert input to map: %w", err)
+			return false, "", fmt.Errorf("failed to convert input to map: %w", err)
 		}
 
 		out, details, err := s.evalWithOpts(&opts, sel, entityMap)
 		// check unknowns /before/ an error. Maybe we should try to special-case the one
 		// error we get from the CEL library in this case and check for the rest?
 		if s.detailHasUnknowns(sel, details) {
-			return false, ErrResultUnknown
+			return false, "", ErrResultUnknown
 		}
 
 		if err != nil {
-			return false, fmt.Errorf("failed to evaluate Expression: %w", err)
+			return false, "", fmt.Errorf("failed to evaluate Expression: %w", err)
 		}
 
 		if types.IsUnknown(out) {
-			return false, ErrResultUnknown
+			return false, "", ErrResultUnknown
 		}
 
 		if out.Type() != cel.BoolType {
-			return false, fmt.Errorf("expression did not evaluate to a boolean: %v", out)
+			return false, "", fmt.Errorf("expression did not evaluate to a boolean: %v", out)
 		}
 
 		if !out.Value().(bool) {
-			return false, nil
+			return false, sel.orig, nil
 		}
 	}
 
-	return true, nil
+	return true, "", nil
 }
 
 func unknownAttributesFromOpts(unknownPaths []string) []*interpreter.AttributePattern {

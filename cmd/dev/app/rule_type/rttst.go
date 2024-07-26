@@ -203,12 +203,25 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
 	selectorEnv := selectors.NewEnv()
 
-	profSel, err := selectorEnv.NewSelectionFromProfile(entType, profile.Selection)
+	profSel, err := selectorEnv.NewSelectionFromProfile(entType, modelSelectionFromProfileSelector(profile.Selection))
 	if err != nil {
 		return nil, fmt.Errorf("error creating selectors: %w", err)
 	}
 
 	return profSel, nil
+}
+
+func modelSelectionFromProfileSelector(sel []*minderv1.Profile_Selector) []models.ProfileSelector {
+	modSel := make([]models.ProfileSelector, 0, len(sel))
+	for _, s := range sel {
+		ms := models.ProfileSelector{
+			Entity:   minderv1.EntityFromString(s.Entity),
+			Selector: s.Selector,
+		}
+		modSel = append(modSel, ms)
+	}
+
+	return modSel
 }
 
 func getEiwFromFile(ruletype *minderv1.RuleType, epath string) (*entities.EntityInfoWrapper, error) {
@@ -301,7 +314,7 @@ func selectAndEval(
 		return fmt.Errorf("error converting entity to selector entity")
 	}
 
-	selected, err := profileSelectors.Select(selEnt)
+	selected, matchedSelector, err := profileSelectors.Select(selEnt)
 	if err != nil {
 		return fmt.Errorf("error selecting entity: %w", err)
 	}
@@ -310,7 +323,7 @@ func selectAndEval(
 	if selected {
 		evalErr = eng.Eval(ctx, inf, evalStatus)
 	} else {
-		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selectors")
+		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}
 
 	return evalErr
