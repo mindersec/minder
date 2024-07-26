@@ -350,9 +350,12 @@ func (e *Env) NewSelectionFromProfile(
 // CheckSelector checks if a selector expression compiles and is valid for a given entity
 func (e *Env) CheckSelector(sel *minderv1.Profile_Selector) error {
 	ent := minderv1.EntityFromString(sel.GetEntity())
+	if ent == minderv1.Entity_ENTITY_UNSPECIFIED && sel.GetEntity() != "" {
+		return fmt.Errorf("invalid entity type %s: %w", sel.GetEntity(), ErrUnsupported)
+	}
 	env, err := e.envForEntity(ent)
 	if err != nil {
-		return fmt.Errorf("failed to get environment for entity %v: %w", ent, ErrUnsupported)
+		return fmt.Errorf("no environment for entity %v: %w", ent, ErrUnsupported)
 	}
 
 	_, err = checkSelectorForEntity(env, sel.Selector)
