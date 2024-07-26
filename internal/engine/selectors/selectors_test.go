@@ -16,6 +16,9 @@
 package selectors
 
 import (
+	"encoding/json"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -131,13 +134,15 @@ func TestSelectSelectorEntity(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		name                    string
-		exprs                   []*minderv1.Profile_Selector
-		selectOptions           []SelectOption
-		selectorEntityBld       testSelectorEntityBuilder
-		expectedNewSelectionErr string
-		expectedSelectErr       error
-		selected                bool
+		name                       string
+		exprs                      []*minderv1.Profile_Selector
+		selectOptions              []SelectOption
+		selectorEntityBld          testSelectorEntityBuilder
+		expectedNewSelectionErrMsg string
+		expectedNewSelectionErr    error
+		expectedStructuredErr      *ErrStructure
+		expectedSelectErr          error
+		selected                   bool
 	}{
 		{
 			name:              "No selectors",
@@ -322,8 +327,20 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "artifact.name != 'testorg/testrepo'",
 				},
 			},
+			selectorEntityBld:          newTestRepoSelectorEntity(),
+			expectedNewSelectionErrMsg: "undeclared reference to 'artifact'",
+			selected:                   false,
+		},
+		{
+			name: "CEL expression that does not parse",
+			exprs: []*minderv1.Profile_Selector{
+				{
+					Entity:   minderv1.RepositoryEntity.String(),
+					Selector: "repository.name == ",
+				},
+			},
 			selectorEntityBld:       newTestRepoSelectorEntity(),
-			expectedNewSelectionErr: "undeclared reference to 'artifact'",
+			expectedNewSelectionErr: &ParseError{},
 			selected:                false,
 		},
 		{
@@ -334,9 +351,23 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.iamnothere == 'value'",
 				},
 			},
-			selectorEntityBld:       newTestRepoSelectorEntity(),
-			expectedNewSelectionErr: "undefined field 'iamnothere'",
-			selected:                false,
+			selectorEntityBld:          newTestRepoSelectorEntity(),
+			expectedNewSelectionErrMsg: "undefined field 'iamnothere'",
+			expectedNewSelectionErr:    &CheckError{},
+			expectedStructuredErr: &ErrStructure{
+				Err: ErrKindCheck,
+				Details: ErrDetails{
+					Errors: []ErrInstance{
+						{
+							Line: 1,
+							Col:  10,
+							Msg:  "undefined field 'iamnothere'",
+						},
+					},
+					Source: "repository.iamnothere == 'value'",
+				},
+			},
+			selected: false,
 		},
 		{
 			name: "Use a property that is defined and true result",
@@ -497,9 +528,21 @@ func TestSelectSelectorEntity(t *testing.T) {
 			se := scenario.selectorEntityBld()
 
 			sels, err := env.NewSelectionFromProfile(se.EntityType, scenario.exprs)
-			if scenario.expectedNewSelectionErr != "" {
+			if scenario.expectedNewSelectionErrMsg != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), scenario.expectedNewSelectionErr)
+				require.Contains(t, err.Error(), scenario.expectedNewSelectionErrMsg)
+			}
+			if scenario.expectedNewSelectionErr != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, scenario.expectedNewSelectionErr)
+			}
+			if scenario.expectedStructuredErr != nil {
+				testErrUnmarshallableValue(t, err, scenario.expectedStructuredErr)
+			}
+
+			if scenario.expectedNewSelectionErrMsg != "" ||
+				scenario.expectedNewSelectionErr != nil ||
+				scenario.expectedStructuredErr != nil {
 				return
 			}
 
@@ -517,6 +560,32 @@ func TestSelectSelectorEntity(t *testing.T) {
 			require.Equal(t, scenario.selected, selected)
 		})
 	}
+}
+
+func testErrUnmarshallableValue(t *testing.T, err error, expected *ErrStructure) {
+	t.Helper()
+
+	var ce *CheckError
+	var pe *ParseError
+	var jsonString string
+
+	if errors.As(err, &ce) {
+		jsonString = ce.Error()
+	} else if errors.As(err, &pe) {
+		jsonString = pe.Error()
+	} else {
+		t.Fatalf("error is not of type CheckError or ParseError")
+	}
+
+	// both errors unwrap to ErrSelectorCheck
+	require.ErrorIs(t, err, ErrSelectorCheck)
+
+	var structuredErr ErrStructure
+	if err := json.NewDecoder(strings.NewReader(jsonString)).Decode(&structuredErr); err != nil {
+		t.Fatalf("failed to unmarshal error: %v", err)
+	}
+
+	require.Equal(t, expected, &structuredErr)
 }
 
 func TestSelectorEntityFillProperties(t *testing.T) {

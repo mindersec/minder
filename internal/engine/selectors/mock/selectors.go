@@ -56,6 +56,43 @@ func (mr *MockSelectionBuilderMockRecorder) NewSelectionFromProfile(arg0, arg1 a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewSelectionFromProfile", reflect.TypeOf((*MockSelectionBuilder)(nil).NewSelectionFromProfile), arg0, arg1)
 }
 
+// MockSelectionChecker is a mock of SelectionChecker interface.
+type MockSelectionChecker struct {
+	ctrl     *gomock.Controller
+	recorder *MockSelectionCheckerMockRecorder
+}
+
+// MockSelectionCheckerMockRecorder is the mock recorder for MockSelectionChecker.
+type MockSelectionCheckerMockRecorder struct {
+	mock *MockSelectionChecker
+}
+
+// NewMockSelectionChecker creates a new mock instance.
+func NewMockSelectionChecker(ctrl *gomock.Controller) *MockSelectionChecker {
+	mock := &MockSelectionChecker{ctrl: ctrl}
+	mock.recorder = &MockSelectionCheckerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSelectionChecker) EXPECT() *MockSelectionCheckerMockRecorder {
+	return m.recorder
+}
+
+// CheckSelector mocks base method.
+func (m *MockSelectionChecker) CheckSelector(arg0 *v1.Profile_Selector) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckSelector", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckSelector indicates an expected call of CheckSelector.
+func (mr *MockSelectionCheckerMockRecorder) CheckSelector(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSelector", reflect.TypeOf((*MockSelectionChecker)(nil).CheckSelector), arg0)
+}
+
 // MockSelection is a mock of Selection interface.
 type MockSelection struct {
 	ctrl     *gomock.Controller
