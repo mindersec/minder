@@ -201,7 +201,7 @@ func TestCreateProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -220,7 +220,7 @@ func TestCreateProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -241,7 +241,7 @@ func TestCreateProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "no_such_entity",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -265,7 +265,7 @@ func TestCreateProfile(t *testing.T) {
 							// this entity is valid in the sense that it converts to an entity type but
 							// the current selelectors implementation does not support it
 							Entity:      "build_environment",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -820,7 +820,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -842,7 +842,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
@@ -863,7 +863,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 						{
@@ -880,7 +880,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 						{
@@ -907,7 +907,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 						{
@@ -933,7 +933,7 @@ func TestPatchProfile(t *testing.T) {
 					Selection: []*minderv1.Profile_Selector{
 						{
 							Entity:      "repository",
-							Selector:    "repository.name != stacklok/demo-repo-go",
+							Selector:    "repository.name != 'stacklok/demo-repo-go'",
 							Description: "Exclude stacklok/demo-repo-go",
 						},
 					},
