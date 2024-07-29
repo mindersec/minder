@@ -144,6 +144,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 		expectedSelectErr          error
 		expectedStructuredErr      *ErrStructure
 		selected                   bool
+		index                      int
 	}{
 		{
 			name:              "No selectors",
@@ -518,6 +519,60 @@ func TestSelectSelectorEntity(t *testing.T) {
 			),
 			selected: false,
 		},
+		{
+			name: "Multiple selectors with the same entity type, the first one is true",
+			exprs: []models.ProfileSelector{
+				{
+					// true expression, should be evaluated and the entity should be kept for selection
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.name == 'testorg/testrepo'",
+				},
+				{
+					// false expression, should cause the entity to be skipped
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.is_fork == false",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			index:             1,
+			selected:          false,
+		},
+		{
+			name: "Multiple selectors with different entity types",
+			exprs: []models.ProfileSelector{
+				{
+					// this one will be skipped as it's for a different entity
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
+					Selector: "pull_request.name == 'testorg/testrepo/123'",
+				},
+				{
+					// false expression, should cause the entity to be skipped
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.name != 'testorg/testrepo'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			index:             1,
+			selected:          false,
+		},
+		{
+			name: "Multiple selectors with generic entity type",
+			exprs: []models.ProfileSelector{
+				{
+					// true expression, will be evaluated, but evaluates to true
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.name == 'testorg/testrepo'",
+				},
+				{
+					// false expression, will cause the entity to be skipped
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.name != 'testorg/testrepo'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			index:             1,
+			selected:          false,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -560,9 +615,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, scenario.selected, selected)
 			if !selected {
-				// TODO(jakub): Add tests with more selectors. If we have more than one selector, we should
-				// also match against an expected index
-				require.Equal(t, scenario.exprs[0].Selector, matchedSelector)
+				require.Equal(t, scenario.exprs[scenario.index].Selector, matchedSelector)
 			}
 		})
 	}
