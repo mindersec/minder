@@ -478,13 +478,6 @@ type EntityProfile struct {
 	Migrated        bool            `json:"migrated"`
 }
 
-type EntityProfileRule struct {
-	ID              uuid.UUID `json:"id"`
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-	CreatedAt       time.Time `json:"created_at"`
-}
-
 type EvaluationRuleEntity struct {
 	ID            uuid.UUID     `json:"id"`
 	RuleID        uuid.UUID     `json:"rule_id"`
