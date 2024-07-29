@@ -119,6 +119,7 @@ SELECT s.id::uuid AS evaluation_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
+       rt.severity_value as rule_severity,
        p.name AS profile_name,
        -- evaluation status and details
        s.status AS evaluation_status,
