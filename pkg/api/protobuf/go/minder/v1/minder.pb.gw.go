@@ -3211,6 +3211,7 @@ func local_request_InviteService_GetInviteDetails_0(ctx context.Context, marshal
 // UnaryRPC     :call HealthServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterHealthServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server HealthServiceServer) error {
 
 	mux.Handle("GET", pattern_HealthService_CheckHealth_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3245,6 +3246,7 @@ func RegisterHealthServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 // UnaryRPC     :call ArtifactServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterArtifactServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ArtifactServiceServer) error {
 
 	mux.Handle("GET", pattern_ArtifactService_ListArtifacts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3354,6 +3356,7 @@ func RegisterArtifactServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 // UnaryRPC     :call OAuthServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterOAuthServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server OAuthServiceServer) error {
 
 	mux.Handle("GET", pattern_OAuthService_GetAuthorizationURL_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3513,6 +3516,7 @@ func RegisterOAuthServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 // UnaryRPC     :call RepositoryServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterRepositoryServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server RepositoryServiceServer) error {
 
 	mux.Handle("POST", pattern_RepositoryService_RegisterRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3822,6 +3826,7 @@ func RegisterRepositoryServiceHandlerServer(ctx context.Context, mux *runtime.Se
 // UnaryRPC     :call UserServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterUserServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterUserServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server UserServiceServer) error {
 
 	mux.Handle("POST", pattern_UserService_CreateUser_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -3956,6 +3961,7 @@ func RegisterUserServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 // UnaryRPC     :call ProfileServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterProfileServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ProfileServiceServer) error {
 
 	mux.Handle("POST", pattern_ProfileService_CreateProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4315,6 +4321,7 @@ func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 // UnaryRPC     :call EvalResultsServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterEvalResultsServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterEvalResultsServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server EvalResultsServiceServer) error {
 
 	mux.Handle("GET", pattern_EvalResultsService_ListEvaluationResults_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4374,6 +4381,7 @@ func RegisterEvalResultsServiceHandlerServer(ctx context.Context, mux *runtime.S
 // UnaryRPC     :call PermissionsServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterPermissionsServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterPermissionsServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server PermissionsServiceServer) error {
 
 	mux.Handle("GET", pattern_PermissionsService_ListRoles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4508,6 +4516,7 @@ func RegisterPermissionsServiceHandlerServer(ctx context.Context, mux *runtime.S
 // UnaryRPC     :call ProjectsServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterProjectsServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterProjectsServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ProjectsServiceServer) error {
 
 	mux.Handle("GET", pattern_ProjectsService_ListProjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4692,6 +4701,7 @@ func RegisterProjectsServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 // UnaryRPC     :call ProvidersServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterProvidersServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterProvidersServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server ProvidersServiceServer) error {
 
 	mux.Handle("PATCH", pattern_ProvidersService_PatchProvider_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4926,6 +4936,7 @@ func RegisterProvidersServiceHandlerServer(ctx context.Context, mux *runtime.Ser
 // UnaryRPC     :call InviteServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterInviteServiceHandlerFromEndpoint instead.
+// GRPC interceptors will not work for this type of registration. To use interceptors, you must use the "runtime.WithMiddlewares" option in the "runtime.NewServeMux" call.
 func RegisterInviteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server InviteServiceServer) error {
 
 	mux.Handle("GET", pattern_InviteService_GetInviteDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -4991,7 +5002,7 @@ func RegisterHealthServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "HealthServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "HealthServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "HealthServiceClient" to call the correct interceptors.
+// "HealthServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterHealthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client HealthServiceClient) error {
 
 	mux.Handle("GET", pattern_HealthService_CheckHealth_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -5062,7 +5073,7 @@ func RegisterArtifactServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ArtifactServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ArtifactServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ArtifactServiceClient" to call the correct interceptors.
+// "ArtifactServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterArtifactServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ArtifactServiceClient) error {
 
 	mux.Handle("GET", pattern_ArtifactService_ListArtifacts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -5211,7 +5222,7 @@ func RegisterOAuthServiceHandler(ctx context.Context, mux *runtime.ServeMux, con
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "OAuthServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "OAuthServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "OAuthServiceClient" to call the correct interceptors.
+// "OAuthServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterOAuthServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client OAuthServiceClient) error {
 
 	mux.Handle("GET", pattern_OAuthService_GetAuthorizationURL_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -5412,7 +5423,7 @@ func RegisterRepositoryServiceHandler(ctx context.Context, mux *runtime.ServeMux
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "RepositoryServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "RepositoryServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "RepositoryServiceClient" to call the correct interceptors.
+// "RepositoryServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterRepositoryServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client RepositoryServiceClient) error {
 
 	mux.Handle("POST", pattern_RepositoryService_RegisterRepository_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -5769,7 +5780,7 @@ func RegisterUserServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "UserServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "UserServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "UserServiceClient" to call the correct interceptors.
+// "UserServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterUserServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client UserServiceClient) error {
 
 	mux.Handle("POST", pattern_UserService_CreateUser_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -5944,7 +5955,7 @@ func RegisterProfileServiceHandler(ctx context.Context, mux *runtime.ServeMux, c
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ProfileServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ProfileServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ProfileServiceClient" to call the correct interceptors.
+// "ProfileServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterProfileServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ProfileServiceClient) error {
 
 	mux.Handle("POST", pattern_ProfileService_CreateProfile_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -6353,7 +6364,7 @@ func RegisterEvalResultsServiceHandler(ctx context.Context, mux *runtime.ServeMu
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "EvalResultsServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "EvalResultsServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "EvalResultsServiceClient" to call the correct interceptors.
+// "EvalResultsServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterEvalResultsServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client EvalResultsServiceClient) error {
 
 	mux.Handle("GET", pattern_EvalResultsService_ListEvaluationResults_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -6450,7 +6461,7 @@ func RegisterPermissionsServiceHandler(ctx context.Context, mux *runtime.ServeMu
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "PermissionsServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "PermissionsServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "PermissionsServiceClient" to call the correct interceptors.
+// "PermissionsServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterPermissionsServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client PermissionsServiceClient) error {
 
 	mux.Handle("GET", pattern_PermissionsService_ListRoles_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -6625,7 +6636,7 @@ func RegisterProjectsServiceHandler(ctx context.Context, mux *runtime.ServeMux, 
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ProjectsServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ProjectsServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ProjectsServiceClient" to call the correct interceptors.
+// "ProjectsServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterProjectsServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ProjectsServiceClient) error {
 
 	mux.Handle("GET", pattern_ProjectsService_ListProjects_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -6852,7 +6863,7 @@ func RegisterProvidersServiceHandler(ctx context.Context, mux *runtime.ServeMux,
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "ProvidersServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "ProvidersServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "ProvidersServiceClient" to call the correct interceptors.
+// "ProvidersServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterProvidersServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client ProvidersServiceClient) error {
 
 	mux.Handle("PATCH", pattern_ProvidersService_PatchProvider_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
@@ -7131,7 +7142,7 @@ func RegisterInviteServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "InviteServiceClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "InviteServiceClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "InviteServiceClient" to call the correct interceptors.
+// "InviteServiceClient" to call the correct interceptors. This client ignores the HTTP middlewares.
 func RegisterInviteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client InviteServiceClient) error {
 
 	mux.Handle("GET", pattern_InviteService_GetInviteDetails_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
