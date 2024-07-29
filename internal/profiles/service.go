@@ -24,7 +24,6 @@ import (
 	// want to change the logging library it uses at this time.
 	// nolint:depguard
 	"log"
-	"strings"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -39,7 +38,6 @@ import (
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/marketplaces/namespaces"
 	"github.com/stacklok/minder/internal/reconcilers"
-	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -190,8 +188,6 @@ func (p *profileService) CreateProfile(
 	return profile, nil
 }
 
-// TODO: refactor to reduce complexity
-// nolint:gocyclo
 func (p *profileService) UpdateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
@@ -228,23 +224,6 @@ func (p *profileService) UpdateProfile(
 
 	// Adds default rule names, if not present
 	PopulateRuleNames(profile)
-
-	oldProfile, err := getProfilePBFromDB(ctx, oldDBProfile.ID, projectID, qtx)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
-	}
-
-	oldRules, err := p.getRulesFromProfile(ctx, qtx, oldProfile, projectID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile not found")
-		}
-		return nil, status.Errorf(codes.Internal, "error fetching profile to be updated: %v", err)
-	}
 
 	displayName := profile.GetDisplayName()
 	// if empty use the name
@@ -303,12 +282,6 @@ func (p *profileService) UpdateProfile(
 		if err != nil {
 			return nil, fmt.Errorf("error while cleaning up rule instances: %w", err)
 		}
-	}
-
-	unusedRuleStatuses := getUnusedOldRuleStatuses(rules, oldRules)
-
-	if err := deleteRuleStatusesForProfile(ctx, &updatedProfile, unusedRuleStatuses, qtx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
 	if err := p.updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
@@ -547,57 +520,6 @@ func getProfilePBFromDB(
 	return nil, fmt.Errorf("profile not found")
 }
 
-func (_ *profileService) getRulesFromProfile(
-	ctx context.Context,
-	qtx db.Querier,
-	profile *minderv1.Profile,
-	projectID uuid.UUID,
-) (RuleMapping, error) {
-	// We capture the rule instantiations here so we can
-	// track them in the db later.
-	rulesInProf := make(RuleMapping)
-
-	// Allows a profile to use rules from parent projects
-	projects, err := qtx.GetParentProjects(ctx, projectID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting parent projects: %w", err)
-	}
-
-	err = TraverseAllRulesForPipeline(profile, func(r *minderv1.Profile_Rule) error {
-		rtdb, err := qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
-			Projects: projects,
-			Name:     r.GetType(),
-		})
-		if err != nil {
-			return fmt.Errorf("error getting rule type %s: %w", r.GetType(), err)
-		}
-
-		rtyppb, err := ruletypes.RuleTypePBFromDB(&rtdb)
-		if err != nil {
-			return fmt.Errorf("cannot convert rule type %s to pb: %w", rtdb.Name, err)
-		}
-
-		key := RuleTypeAndNamePair{
-			RuleType: r.GetType(),
-			RuleName: ComputeRuleName(r),
-		}
-
-		rulesInProf[key] = EntityAndRuleTuple{
-			Entity: minderv1.EntityFromString(rtyppb.Def.InEntity),
-			RuleID: rtdb.ID,
-		}
-
-		return nil
-	},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return rulesInProf, nil
-}
-
 func updateProfileRulesForEntity(
 	ctx context.Context,
 	entity minderv1.Entity,
@@ -628,42 +550,6 @@ func updateProfileRulesForEntity(
 	}
 
 	return err
-}
-
-func getUnusedOldRuleStatuses(
-	newRules, oldRules RuleMapping,
-) RuleMapping {
-	unusedRuleStatuses := make(RuleMapping)
-
-	for ruleTypeAndName, rule := range oldRules {
-		if _, ok := newRules[ruleTypeAndName]; !ok {
-			unusedRuleStatuses[ruleTypeAndName] = rule
-		}
-	}
-
-	return unusedRuleStatuses
-}
-
-func deleteRuleStatusesForProfile(
-	ctx context.Context,
-	profile *db.Profile,
-	unusedRuleStatuses RuleMapping,
-	querier db.Querier,
-) error {
-	for ruleTypeAndName, rule := range unusedRuleStatuses {
-		log.Printf("deleting rule evaluations for rule %s in profile %s", rule.RuleID, profile.ID)
-
-		if err := querier.DeleteRuleStatusesForProfileAndRuleType(ctx, db.DeleteRuleStatusesForProfileAndRuleTypeParams{
-			ProfileID:  profile.ID,
-			RuleTypeID: rule.RuleID,
-			RuleName:   ruleTypeAndName.RuleName,
-		}); err != nil {
-			log.Printf("error deleting rule evaluations: %v", err)
-			return fmt.Errorf("error deleting rule evaluations: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func upsertRuleInstances(

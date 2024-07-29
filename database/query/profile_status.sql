@@ -84,15 +84,6 @@ FROM rule_evaluations re
 WHERE re.repository_id = ANY (sqlc.arg('repository_ids')::uuid[])
 GROUP BY re.repository_id;
 
--- DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
--- but locks the table before doing so.
-
--- name: DeleteRuleStatusesForProfileAndRuleType :exec
-DELETE FROM rule_evaluations
-WHERE id IN (
-    SELECT id FROM rule_evaluations as re
-    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND re.rule_name = $3 FOR UPDATE);
-
 -- name: ListRuleEvaluationsByProfileId :many
 WITH
    eval_details AS (

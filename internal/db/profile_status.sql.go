@@ -16,27 +16,6 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
-const deleteRuleStatusesForProfileAndRuleType = `-- name: DeleteRuleStatusesForProfileAndRuleType :exec
-
-DELETE FROM rule_evaluations
-WHERE id IN (
-    SELECT id FROM rule_evaluations as re
-    WHERE re.profile_id = $1 AND re.rule_type_id = $2 AND re.rule_name = $3 FOR UPDATE)
-`
-
-type DeleteRuleStatusesForProfileAndRuleTypeParams struct {
-	ProfileID  uuid.UUID `json:"profile_id"`
-	RuleTypeID uuid.UUID `json:"rule_type_id"`
-	RuleName   string    `json:"rule_name"`
-}
-
-// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
-// but locks the table before doing so.
-func (q *Queries) DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error {
-	_, err := q.db.ExecContext(ctx, deleteRuleStatusesForProfileAndRuleType, arg.ProfileID, arg.RuleTypeID, arg.RuleName)
-	return err
-}
-
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
 SELECT p.id, p.name, ps.profile_status, ps.last_updated FROM profile_status ps
 INNER JOIN profiles p ON p.id = ps.profile_id
@@ -460,7 +439,7 @@ type UpsertRuleEvaluationsParams struct {
 	Entity         Entities      `json:"entity"`
 	RuleName       string        `json:"rule_name"`
 	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
-	RuleInstanceID uuid.NullUUID `json:"rule_instance_id"`
+	RuleInstanceID uuid.UUID     `json:"rule_instance_id"`
 }
 
 func (q *Queries) UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error) {
