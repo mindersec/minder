@@ -335,6 +335,7 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	for providerName, provider := range provs {
 		results, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
 		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msgf("error listing repositories for provider %s in project %s", providerName, projectID)
 			errorProvs = append(errorProvs, providerName)
 			continue
 		}

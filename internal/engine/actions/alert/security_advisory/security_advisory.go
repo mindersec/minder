@@ -22,14 +22,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stacklok/minder/internal/profiles/models"
 	htmltemplate "html/template"
 	"strings"
 
-	"github.com/stacklok/minder/internal/db"
-
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/profiles/models"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
@@ -181,8 +180,8 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(p *pb.Profile) models.ActionOpt {
-	return models.ActionOptFromString(p.Alert, models.ActionOptOn)
+func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
+	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
 }
 
 // Do alerts through security advisory

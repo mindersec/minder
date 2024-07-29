@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -32,15 +33,17 @@ import (
 // EvaluationHistoryService contains methods to add/query data in the history table.
 type EvaluationHistoryService interface {
 	// StoreEvaluationStatus stores the result of this evaluation in the history table.
-	// Returns the UUID of the evaluation status.
+	// Returns the UUID of the evaluation status, and the UUID of the rule-entity
+	// TODO: stop returning rule-entity ID once we get rid of the old tables.
 	StoreEvaluationStatus(
 		ctx context.Context,
 		qtx db.Querier,
 		ruleID uuid.UUID,
+		profileID uuid.UUID,
 		entityType db.Entities,
 		entityID uuid.UUID,
 		evalError error,
-	) (uuid.UUID, error)
+	) (uuid.UUID, uuid.UUID, error)
 	// ListEvaluationHistory returns a list of evaluations stored
 	// in the history table.
 	ListEvaluationHistory(
@@ -63,17 +66,18 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	ruleID uuid.UUID,
+	profileID uuid.UUID,
 	entityType db.Entities,
 	entityID uuid.UUID,
 	evalError error,
-) (uuid.UUID, error) {
+) (uuid.UUID, uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
 	details := evalerrors.ErrorAsEvalDetails(evalError)
 
 	params, err := paramsFromEntity(ruleID, entityID, entityType)
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, uuid.Nil, err
 	}
 
 	// find the latest record for this rule/entity pair
@@ -94,30 +98,35 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 					RepositoryID:  params.RepositoryID,
 					PullRequestID: params.PullRequestID,
 					ArtifactID:    params.ArtifactID,
+					EntityType: db.NullEntities{
+						Entities: entityType,
+						Valid:    true,
+					},
 				},
 			)
 			if err != nil {
-				return uuid.Nil, fmt.Errorf("error while creating new rule/entity in database: %w", err)
+				return uuid.Nil, uuid.Nil, fmt.Errorf("error while creating new rule/entity in database: %w", err)
 			}
 		} else {
-			return uuid.Nil, fmt.Errorf("error while querying DB: %w", err)
+			return uuid.Nil, uuid.Nil, fmt.Errorf("error while querying DB: %w", err)
 		}
 	} else {
 		ruleEntityID = latestRecord.RuleEntityID
 	}
 
-	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, status, details)
+	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 	}
 
-	return evaluationID, nil
+	return evaluationID, ruleEntityID, nil
 }
 
 func (_ *evaluationHistoryService) createNewStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	ruleEntityID uuid.UUID,
+	profileID uuid.UUID,
 	status db.EvalStatusTypes,
 	details string,
 ) (uuid.UUID, error) {
@@ -137,6 +146,10 @@ func (_ *evaluationHistoryService) createNewStatus(
 		db.UpsertLatestEvaluationStatusParams{
 			RuleEntityID:        ruleEntityID,
 			EvaluationHistoryID: newEvaluationID,
+			ProfileID: uuid.NullUUID{
+				UUID:  profileID,
+				Valid: true,
+			},
 		},
 	)
 	if err != nil {
@@ -200,7 +213,11 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 
 	rows, err := qtx.ListEvaluationHistory(ctx, params)
 	if err != nil {
-		return nil, errors.New("internal error")
+		return nil, fmt.Errorf("error listing history: %w", err)
+	}
+
+	if cursor != nil && cursor.Direction == Prev {
+		slices.Reverse(rows)
 	}
 
 	result := &ListEvaluationHistoryResult{
@@ -306,7 +323,7 @@ func paramsFromEntityTypeFilter(
 			mapEntities,
 		)
 		if err != nil {
-			return errors.New("internal error")
+			return fmt.Errorf("error filtering entity types: %w", err)
 		}
 		params.Notentitytypes = entityTypes
 	}
@@ -376,7 +393,7 @@ func paramsFromAlertFilter(
 			mapAlertStatusTypes,
 		)
 		if err != nil {
-			return errors.New("internal error")
+			return fmt.Errorf("error filtering alerts: %w", err)
 		}
 		params.Alerts = alerts
 	}

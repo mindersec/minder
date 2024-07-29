@@ -72,8 +72,8 @@ func NewRuleActions(
 		// The on/off state of the actions is an integral part of the action engine
 		// and should be set upon creation.
 		actionsOnOff: map[engif.ActionType]models.ActionOpt{
-			remEngine.Class():   actionConfig.Remediate,
-			alertEngine.Class(): actionConfig.Alert,
+			remEngine.Class():   remEngine.GetOnOffState(actionConfig.Remediate),
+			alertEngine.Class(): alertEngine.GetOnOffState(actionConfig.Alert),
 		},
 	}, nil
 }

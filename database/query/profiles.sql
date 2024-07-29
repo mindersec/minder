@@ -46,9 +46,6 @@ RETURNING *;
 -- name: DeleteProfileForEntity :exec
 DELETE FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
 
--- name: GetProfileForEntity :one
-SELECT * FROM entity_profiles WHERE profile_id = $1 AND entity = $2;
-
 -- name: GetProfileByProjectAndID :many
 WITH helper AS(
     SELECT pr.id as profid,
@@ -76,25 +73,6 @@ SELECT * FROM profiles WHERE id = $1 AND project_id = $2 FOR UPDATE;
 
 -- name: GetProfileByNameAndLock :one
 SELECT * FROM profiles WHERE lower(name) = lower(sqlc.arg(name)) AND project_id = $1 FOR UPDATE;
-
--- name: ListProfilesByProjectID :many
-WITH helper AS(
-     SELECT pr.id as profid,
-            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
-       FROM profiles pr
-       JOIN profile_selectors ps
-         ON pr.id = ps.profile_id
-      WHERE pr.project_id = $1
-      GROUP BY pr.id
-)
-SELECT
-    sqlc.embed(profiles),
-    sqlc.embed(profiles_with_entity_profiles),
-    helper.selectors::profile_selector[] AS profiles_with_selectors
-FROM profiles
-JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-LEFT JOIN helper ON profiles.id = helper.profid
-WHERE profiles.project_id = $1;
 
 -- name: ListProfilesByProjectIDAndLabel :many
 WITH helper AS(
@@ -132,14 +110,6 @@ AND (
 DELETE FROM profiles
 WHERE id = $1 AND project_id = $2;
 
--- name: UpsertRuleInstantiation :one
-INSERT INTO entity_profile_rules (entity_profile_id, rule_type_id)
-VALUES ($1, $2)
-ON CONFLICT (entity_profile_id, rule_type_id) DO NOTHING RETURNING *;
-
--- name: DeleteRuleInstantiation :exec
-DELETE FROM entity_profile_rules WHERE entity_profile_id = $1 AND rule_type_id = $2;
-
 -- name: ListProfilesInstantiatingRuleType :many
 SELECT DISTINCT(p.name)
 FROM profiles AS p
@@ -156,6 +126,17 @@ GROUP BY r.entity_type;
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
 
 -- name: BulkGetProfilesByID :many
-SELECT *
+WITH helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
+    FROM profiles pr
+             JOIN profile_selectors ps
+                  ON pr.id = ps.profile_id
+    WHERE pr.id = ANY(sqlc.arg(profile_ids)::UUID[])
+    GROUP BY pr.id
+)
+SELECT sqlc.embed(profiles),
+       helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
+LEFT JOIN helper ON profiles.id = helper.profid
 WHERE id = ANY(sqlc.arg(profile_ids)::UUID[]);

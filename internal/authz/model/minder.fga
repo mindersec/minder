@@ -64,9 +64,9 @@ type project
     define repo_update: editor
     define repo_delete: editor
 
-    define remote_repo_get: admin
+    define remote_repo_get: editor
 
-    define entity_reconcile: admin
+    define entity_reconcile: editor
 
     define artifact_get: viewer
     define artifact_create: editor

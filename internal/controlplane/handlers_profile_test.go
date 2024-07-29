@@ -17,7 +17,6 @@ package controlplane
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -38,173 +37,6 @@ import (
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-func TestGetUnusedOldRuleTypes(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		newRules   profiles.RuleMapping
-		oldRules   profiles.RuleMapping
-		wantUnused []profiles.EntityAndRuleTuple
-	}{
-		{
-			name: "Unused rule in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-			wantUnused: []profiles.EntityAndRuleTuple{
-				{Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-		},
-		{
-			name: "Multiple unused rules in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-				{RuleType: "Type4", RuleName: "Name4"}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type4", "Name4")},
-			},
-			wantUnused: []profiles.EntityAndRuleTuple{
-				{Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-				{Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type4", "Name4")},
-			},
-		},
-		{
-			name: "No unused rules in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			wantUnused: nil,
-		},
-		{
-			name: "Unused rules with same rule type",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-			// All rule types are used
-			wantUnused: nil,
-		},
-		{
-			name: "Unused rules with same rule type but different entity types",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-			// All rule types are used
-			wantUnused: nil,
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			unusedRuleTypes := getUnusedOldRuleTypes(test.newRules, test.oldRules)
-			require.ElementsMatch(t, test.wantUnused, unusedRuleTypes)
-		})
-	}
-}
-
-func TestGetUnusedOldRuleStatuses(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name            string
-		newRules        profiles.RuleMapping
-		oldRules        profiles.RuleMapping
-		wantUnusedRules profiles.RuleMapping
-	}{
-		{
-			name: "Unused rule in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type3", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type3", "Name3")},
-			},
-		},
-		{
-			name: "No unused rules in oldRules",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type2", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type2", "Name2")},
-			},
-			wantUnusedRules: profiles.RuleMapping{},
-		},
-		{
-			name: "Unused rules with same rule type",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name3"}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "Name3")},
-			},
-		},
-		{
-			name: "Unused old rules statuses with empty name",
-			newRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: "Name1"}: {Entity: minderv1.Entity_ENTITY_REPOSITORIES, RuleID: generateConsistentUUID(t, "Type1", "Name1")},
-				{RuleType: "Type1", RuleName: "Name2"}: {Entity: minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, RuleID: generateConsistentUUID(t, "Type1", "Name2")},
-			},
-			oldRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
-				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
-			},
-			wantUnusedRules: profiles.RuleMapping{
-				{RuleType: "Type1", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_ARTIFACTS, RuleID: generateConsistentUUID(t, "Type1", "")},
-				{RuleType: "Type2", RuleName: ""}: {Entity: minderv1.Entity_ENTITY_PULL_REQUESTS, RuleID: generateConsistentUUID(t, "Type2", "")},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			gotUnusedRules := getUnusedOldRuleStatuses(test.newRules, test.oldRules)
-			require.True(t, reflect.DeepEqual(test.wantUnusedRules, gotUnusedRules))
-		})
-	}
-}
 
 //nolint:gocyclo
 func TestCreateProfile(t *testing.T) {
@@ -351,6 +183,46 @@ func TestCreateProfile(t *testing.T) {
 						Name: "rule_type_1",
 						Def:  &structpb.Struct{},
 					}},
+				},
+			},
+		},
+		{
+			name: "Profile with selectors",
+			profile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			result: &minderv1.CreateProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:      "test_selectors",
+					Alert:     proto.String("off"),
+					Remediate: proto.String("off"),
+					Repository: []*minderv1.Profile_Rule{{
+						Type: "rule_type_1",
+						Name: "rule_type_1",
+						Def:  &structpb.Struct{},
+					}},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
 				},
 			},
 		},
@@ -837,6 +709,166 @@ func TestPatchProfile(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Patch profile to add selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_add_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_add_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_add_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Patch profile to replace selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_replace_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_fork == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_private == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_replace_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_replace_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+						{
+							Entity:      "repository",
+							Selector:    "repository.is_private == false",
+							Description: "No forks",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Patch profile to remove all selectors",
+			baseProfile: &minderv1.CreateProfileRequest{
+				Profile: &minderv1.Profile{
+					Name: "test_patch_remove_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+						},
+					},
+					Selection: []*minderv1.Profile_Selector{
+						{
+							Entity:      "repository",
+							Selector:    "repository.name != stacklok/demo-repo-go",
+							Description: "Exclude stacklok/demo-repo-go",
+						},
+					},
+				},
+			},
+			patchRequest: &minderv1.PatchProfileRequest{
+				UpdateMask: &fieldmaskpb.FieldMask{Paths: []string{"selection"}},
+				Patch: &minderv1.Profile{
+					Selection: []*minderv1.Profile_Selector{},
+				},
+			},
+			result: &minderv1.PatchProfileResponse{
+				Profile: &minderv1.Profile{
+					Name:        "test_patch_remove_selectors",
+					Remediate:   proto.String("off"),
+					Alert:       proto.String("on"),
+					DisplayName: "test_patch_remove_selectors",
+					Repository: []*minderv1.Profile_Rule{
+						{
+							Type: ruleTypeName("repo", 1),
+							Def:  &structpb.Struct{},
+							Name: ruleTypeName("repo", 1),
+						},
+					},
+				},
+			},
+		},
 		// Negative tests
 		{
 			name: "Profile patch does not allow changing name",
@@ -1055,45 +1087,4 @@ func TestPatchManagedProfile(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "attempted to edit a rule type or profile which belongs to a bundle")
 	require.Nil(t, patchedProfile)
-}
-
-func generateConsistentUUID(t *testing.T, ruleType, ruleName string) uuid.UUID {
-	t.Helper()
-	return uuid.NewSHA1(uuid.Nil, []byte(ruleType+ruleName))
-}
-
-func getUnusedOldRuleStatuses(
-	newRules, oldRules profiles.RuleMapping,
-) profiles.RuleMapping {
-	unusedRuleStatuses := make(profiles.RuleMapping)
-
-	for ruleTypeAndName, rule := range oldRules {
-		if _, ok := newRules[ruleTypeAndName]; !ok {
-			unusedRuleStatuses[ruleTypeAndName] = rule
-		}
-	}
-
-	return unusedRuleStatuses
-}
-
-func getUnusedOldRuleTypes(newRules, oldRules profiles.RuleMapping) []profiles.EntityAndRuleTuple {
-	var unusedRuleTypes []profiles.EntityAndRuleTuple
-
-	oldRulesTypeMap := make(map[string]profiles.EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range oldRules {
-		oldRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	newRulesTypeMap := make(map[string]profiles.EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range newRules {
-		newRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	for ruleType, rule := range oldRulesTypeMap {
-		if _, ok := newRulesTypeMap[ruleType]; !ok {
-			unusedRuleTypes = append(unusedRuleTypes, rule)
-		}
-	}
-
-	return unusedRuleTypes
 }

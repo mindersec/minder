@@ -177,8 +177,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	actionConfig := models.ActionConfiguration{
-		Remediate: models.ActionOptFromString(profile.Remediate, models.ActionOptOff),
-		Alert:     models.ActionOptFromString(profile.Alert, models.ActionOptOff),
+		Remediate: actionOptFromString(profile.Remediate, models.ActionOptOff),
+		Alert:     actionOptFromString(profile.Alert, models.ActionOptOff),
 	}
 
 	// TODO: use cobra context here
@@ -201,17 +201,27 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 }
 
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
-	selectorEnv, err := selectors.NewEnv()
-	if err != nil {
-		return nil, fmt.Errorf("error creating selector environment: %w", err)
-	}
+	selectorEnv := selectors.NewEnv()
 
-	profSel, err := selectorEnv.NewSelectionFromProfile(entType, profile.Selection)
+	profSel, err := selectorEnv.NewSelectionFromProfile(entType, modelSelectionFromProfileSelector(profile.Selection))
 	if err != nil {
 		return nil, fmt.Errorf("error creating selectors: %w", err)
 	}
 
 	return profSel, nil
+}
+
+func modelSelectionFromProfileSelector(sel []*minderv1.Profile_Selector) []models.ProfileSelector {
+	modSel := make([]models.ProfileSelector, 0, len(sel))
+	for _, s := range sel {
+		ms := models.ProfileSelector{
+			Entity:   minderv1.EntityFromString(s.Entity),
+			Selector: s.Selector,
+		}
+		modSel = append(modSel, ms)
+	}
+
+	return modSel
 }
 
 func getEiwFromFile(ruletype *minderv1.RuleType, epath string) (*entities.EntityInfoWrapper, error) {
@@ -304,7 +314,7 @@ func selectAndEval(
 		return fmt.Errorf("error converting entity to selector entity")
 	}
 
-	selected, err := profileSelectors.Select(selEnt)
+	selected, matchedSelector, err := profileSelectors.Select(selEnt)
 	if err != nil {
 		return fmt.Errorf("error selecting entity: %w", err)
 	}
@@ -313,7 +323,7 @@ func selectAndEval(
 	if selected {
 		evalErr = eng.Eval(ctx, inf, evalStatus)
 	} else {
-		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selectors")
+		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}
 
 	return evalErr
@@ -428,4 +438,22 @@ func readProviderConfig(fpath string) ([]byte, error) {
 	}
 
 	return w.Bytes(), nil
+}
+
+func actionOptFromString(s *string, defAction models.ActionOpt) models.ActionOpt {
+	var actionOptMap = map[string]models.ActionOpt{
+		"on":      models.ActionOptOn,
+		"off":     models.ActionOptOff,
+		"dry_run": models.ActionOptDryRun,
+	}
+
+	if s == nil {
+		return defAction
+	}
+
+	if v, ok := actionOptMap[*s]; ok {
+		return v
+	}
+
+	return models.ActionOptUnknown
 }

@@ -228,12 +228,12 @@ func init() {
 	entityTypesMsg := fmt.Sprintf(basicMsg, "entity type", strings.Join(entityTypes, ", "))
 
 	// Flags
-	listCmd.Flags().String("profile-name", "", "Filter evaluation history list by profile name")
-	listCmd.Flags().String("entity-name", "", "Filter evaluation history list by entity name")
-	listCmd.Flags().String("entity-type", "", entityTypesMsg)
-	listCmd.Flags().String("eval-status", "", evalFilterMsg)
-	listCmd.Flags().String("remediation-status", "", remediationFilterMsg)
-	listCmd.Flags().String("alert-status", "", alertFilterMsg)
+	listCmd.Flags().StringSlice("profile-name", nil, "Filter evaluation history list by profile name")
+	listCmd.Flags().StringSlice("entity-name", nil, "Filter evaluation history list by entity name")
+	listCmd.Flags().StringSlice("entity-type", nil, entityTypesMsg)
+	listCmd.Flags().StringSlice("eval-status", nil, evalFilterMsg)
+	listCmd.Flags().StringSlice("remediation-status", nil, remediationFilterMsg)
+	listCmd.Flags().StringSlice("alert-status", nil, alertFilterMsg)
 	listCmd.Flags().String("from", "", "Filter evaluation history list by time")
 	listCmd.Flags().String("to", "", "Filter evaluation history list by time")
 	listCmd.Flags().StringP("cursor", "c", "", "Fetch previous or next page from the list")

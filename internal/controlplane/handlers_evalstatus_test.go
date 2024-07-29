@@ -460,6 +460,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 			for i := 0; i < len(tt.rows); i++ {
 				row := tt.rows[i]
 				item := res[i]
+				require.Equal(t, row.EvaluationID.String(), item.Id)
 				require.Equal(t, row.EvaluatedAt, item.EvaluatedAt.AsTime())
 				require.Equal(t, row.EntityID.String(), item.Entity.Id)
 				require.Equal(t, dbEntityToEntity(row.EntityType), item.Entity.Type)

@@ -3650,6 +3650,10 @@
           "type": "string",
           "format": "date-time",
           "title": "created_at is the timestamp of creation of this evaluation"
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the evaluation."
         }
       }
     },

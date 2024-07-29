@@ -58,16 +58,17 @@ func (mr *MockEvaluationHistoryServiceMockRecorder) ListEvaluationHistory(ctx, q
 }
 
 // StoreEvaluationStatus mocks base method.
-func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error) (uuid.UUID, error) {
+func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID, profileID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error) (uuid.UUID, uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreEvaluationStatus", ctx, qtx, ruleID, entityType, entityID, evalError)
+	ret := m.ctrl.Call(m, "StoreEvaluationStatus", ctx, qtx, ruleID, profileID, entityType, entityID, evalError)
 	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(uuid.UUID)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // StoreEvaluationStatus indicates an expected call of StoreEvaluationStatus.
-func (mr *MockEvaluationHistoryServiceMockRecorder) StoreEvaluationStatus(ctx, qtx, ruleID, entityType, entityID, evalError any) *gomock.Call {
+func (mr *MockEvaluationHistoryServiceMockRecorder) StoreEvaluationStatus(ctx, qtx, ruleID, profileID, entityType, entityID, evalError any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreEvaluationStatus", reflect.TypeOf((*MockEvaluationHistoryService)(nil).StoreEvaluationStatus), ctx, qtx, ruleID, entityType, entityID, evalError)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreEvaluationStatus", reflect.TypeOf((*MockEvaluationHistoryService)(nil).StoreEvaluationStatus), ctx, qtx, ruleID, profileID, entityType, entityID, evalError)
 }

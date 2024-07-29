@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/alert"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
+	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
@@ -99,7 +100,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 
 	authtoken := generateFakeAccessToken(t, cryptoEngine)
 	// -- start expectations
-
 	// not valuable yet, but would have to be updated once actions start using this
 	mockStore.EXPECT().GetRuleEvaluationByProfileIdAndRuleType(gomock.Any(),
 		gomock.Any(),
@@ -135,6 +135,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		}, nil)
 
 	// one rule for the profile
+	ruleInstanceID := uuid.New()
 	ruleParams := db.GetRuleInstancesEntityInProjectsParams{
 		EntityType: db.EntitiesRepository,
 		ProjectIds: []uuid.UUID{projectID},
@@ -143,6 +144,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		GetRuleInstancesEntityInProjects(gomock.Any(), ruleParams).
 		Return([]db.RuleInstance{
 			{
+				ID:         ruleInstanceID,
 				ProfileID:  profileID,
 				RuleTypeID: ruleTypeID,
 				Name:       passthroughRuleType,
@@ -151,6 +153,31 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				Params:     emptyJSON,
 				ProjectID:  projectID,
 			}}, nil)
+
+	ruleEntityID := uuid.New()
+	evaluationID := uuid.New()
+	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
+	historyService.EXPECT().
+		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		Return(evaluationID, ruleEntityID, nil)
+
+	mockStore.EXPECT().
+		InsertRemediationEvent(gomock.Any(), db.InsertRemediationEventParams{
+			EvaluationID: evaluationID,
+			Status:       db.RemediationStatusTypesSkipped,
+			Details:      "",
+			Metadata:     json.RawMessage("{}"),
+		}).
+		Return(nil)
+
+	mockStore.EXPECT().
+		InsertAlertEvent(gomock.Any(), db.InsertAlertEventParams{
+			EvaluationID: evaluationID,
+			Status:       db.AlertStatusTypesSkipped,
+			Details:      "",
+			Metadata:     json.RawMessage("{}"),
+		}).
+		Return(nil)
 
 	// only one project in the hierarchy
 	mockStore.EXPECT().
@@ -161,15 +188,17 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	// list one profile
 	mockStore.EXPECT().
 		BulkGetProfilesByID(gomock.Any(), []uuid.UUID{profileID}).
-		Return([]db.Profile{
+		Return([]db.BulkGetProfilesByIDRow{
 			{
-				ID:        profileID,
-				Name:      "test-profile",
-				ProjectID: projectID,
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
-				Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				Profile: db.Profile{
+					ID:        profileID,
+					Name:      "test-profile",
+					ProjectID: projectID,
+					CreatedAt: time.Now(),
+					UpdatedAt: time.Now(),
+					Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+					Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				},
 			},
 		}, nil)
 
@@ -228,6 +257,14 @@ default allow = true`,
 			RuleTypeID: ruleTypeID,
 			Entity:     db.EntitiesRepository,
 			RuleName:   passthroughRuleType,
+			RuleEntityID: uuid.NullUUID{
+				UUID:  ruleEntityID,
+				Valid: true,
+			},
+			RuleInstanceID: uuid.NullUUID{
+				UUID:  ruleInstanceID,
+				Valid: true,
+			},
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status
@@ -312,7 +349,26 @@ default allow = true`,
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
-	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
+
+	// stubbing related to evaluation history
+	var txFunction func(querier db.ExtendQuerier) error
+	mockStore.EXPECT().
+		WithTransactionErr(gomock.AssignableToTypeOf(txFunction)).
+		DoAndReturn(func(fn func(querier db.ExtendQuerier) error) error {
+			return fn(mockStore)
+		})
+
+	mockSelection := mock_selectors.NewMockSelection(ctrl)
+	mockSelection.EXPECT().
+		Select(gomock.Any(), gomock.Any()).
+		Return(true, "", nil).
+		AnyTimes()
+
+	mockSelectionBuilder := mock_selectors.NewMockSelectionBuilder(ctrl)
+	mockSelectionBuilder.EXPECT().
+		NewSelectionFromProfile(gomock.Any(), gomock.Any()).
+		Return(mockSelection, nil).
+		AnyTimes()
 
 	executor := engine.NewExecutor(
 		mockStore,
@@ -321,6 +377,7 @@ default allow = true`,
 		historyService,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
+		mockSelectionBuilder,
 	)
 
 	eiw := entities.NewEntityInfoWrapper().

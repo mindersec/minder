@@ -36,6 +36,7 @@ import (
 	"github.com/stacklok/minder/internal/email/awsses"
 	"github.com/stacklok/minder/internal/email/noop"
 	"github.com/stacklok/minder/internal/engine"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/history"
@@ -191,6 +192,7 @@ func AllInOneServerService(
 	}
 
 	profileStore := profiles.NewProfileStore(store)
+	selEnv := selectors.NewEnv()
 
 	// Register the executor to handle entity evaluations
 	exec := engine.NewExecutor(
@@ -200,6 +202,7 @@ func AllInOneServerService(
 		history.NewEvaluationHistoryService(),
 		featureFlagClient,
 		profileStore,
+		selEnv,
 	)
 
 	handler := engine.NewExecutorEventHandler(

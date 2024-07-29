@@ -22,6 +22,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/engine/entities"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,6 +32,7 @@ type ProfileAggregate struct {
 	Name         string
 	ActionConfig ActionConfiguration
 	Rules        []RuleInstance
+	Selectors    []ProfileSelector
 }
 
 // ActionConfiguration stores the configuration state for a profile
@@ -46,6 +48,12 @@ type RuleInstance struct {
 	Def        map[string]any
 	Params     map[string]any
 	RuleTypeID uuid.UUID
+}
+
+// ProfileSelector is a domain-level model of a profile selector
+type ProfileSelector struct {
+	Entity   minderv1.Entity
+	Selector string
 }
 
 // RuleFromPB converts a protobuf rule instance to the domain model
@@ -102,25 +110,6 @@ func (a ActionOpt) String() string {
 	return [...]string{"on", "off", "dry_run", "unknown"}[a]
 }
 
-// ActionOptFromString returns the ActionOpt from a string representation
-func ActionOptFromString(s *string, defAction ActionOpt) ActionOpt {
-	var actionOptMap = map[string]ActionOpt{
-		"on":      ActionOptOn,
-		"off":     ActionOptOff,
-		"dry_run": ActionOptDryRun,
-	}
-
-	if s == nil {
-		return defAction
-	}
-
-	if v, ok := actionOptMap[*s]; ok {
-		return v
-	}
-
-	return ActionOptUnknown
-}
-
 // ActionOptFromDB converts the db representation of action type to ActionOpt
 func ActionOptFromDB(dbState db.NullActionType) ActionOpt {
 	if !dbState.Valid {
@@ -136,5 +125,35 @@ func ActionOptFromDB(dbState db.NullActionType) ActionOpt {
 		return ActionOptDryRun
 	default:
 		return ActionOptUnknown
+	}
+}
+
+// ActionOptOrDefault returns defaultVal if the ActionOpt is
+// ActionOptUnknown, or returns actionOpt otherwise
+func ActionOptOrDefault(actionOpt ActionOpt, defaultVal ActionOpt) ActionOpt {
+	if actionOpt == ActionOptUnknown {
+		return defaultVal
+	}
+	return actionOpt
+}
+
+// SelectorSliceFromDB converts a slice of db.ProfileSelector to a slice of ProfileSelector
+func SelectorSliceFromDB(dbSelectors []db.ProfileSelector) []ProfileSelector {
+	selectors := make([]ProfileSelector, 0, len(dbSelectors))
+	for _, dbSelector := range dbSelectors {
+		selectors = append(selectors, profileSelectorFromDb(dbSelector))
+	}
+	return selectors
+}
+
+func profileSelectorFromDb(dbSelector db.ProfileSelector) ProfileSelector {
+	ent := minderv1.Entity_ENTITY_UNSPECIFIED
+	if dbSelector.Entity.Valid {
+		ent = entities.EntityTypeFromDB(dbSelector.Entity.Entities)
+	}
+
+	return ProfileSelector{
+		Entity:   ent,
+		Selector: dbSelector.Selector,
 	}
 }

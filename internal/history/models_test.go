@@ -226,7 +226,11 @@ func TestListEvaluationFilter(t *testing.T) {
 					WithTo(now),
 				)
 			},
-			err: true,
+			check: func(t *testing.T, filter ListEvaluationFilter) {
+				t.Helper()
+				require.Nil(t, filter.GetFrom())
+				require.Equal(t, now, *filter.GetTo())
+			},
 		},
 		{
 			name: "no to",
@@ -237,7 +241,11 @@ func TestListEvaluationFilter(t *testing.T) {
 					WithFrom(now),
 				)
 			},
-			err: true,
+			check: func(t *testing.T, filter ListEvaluationFilter) {
+				t.Helper()
+				require.Equal(t, now, *filter.GetFrom())
+				require.Nil(t, filter.GetTo())
+			},
 		},
 		{
 			name: "from after to",

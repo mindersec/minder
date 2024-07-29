@@ -13,7 +13,7 @@ import (
 )
 
 type Querier interface {
-	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]Profile, error)
+	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
@@ -38,6 +38,7 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -51,7 +52,6 @@ type Querier interface {
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
-	DeleteRuleInstantiation(ctx context.Context, arg DeleteRuleInstantiationParams) error
 	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
 	// but locks the table before doing so.
 	DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error
@@ -117,7 +117,6 @@ type Querier interface {
 	GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDAndLockParams) (Profile, error)
 	GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error)
 	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
-	GetProfileForEntity(ctx context.Context, arg GetProfileForEntityParams) (EntityProfile, error)
 	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
 	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)
@@ -166,6 +165,7 @@ type Querier interface {
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
+	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it
@@ -183,7 +183,6 @@ type Querier interface {
 	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
-	ListProfilesByProjectID(ctx context.Context, projectID uuid.UUID) ([]ListProfilesByProjectIDRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
 	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error)
 	// ListProvidersByProjectID allows us to list all providers
@@ -272,7 +271,6 @@ type Querier interface {
 	// See the License for the specific language governing permissions and
 	// limitations under the License.
 	UpsertRuleInstance(ctx context.Context, arg UpsertRuleInstanceParams) (uuid.UUID, error)
-	UpsertRuleInstantiation(ctx context.Context, arg UpsertRuleInstantiationParams) (EntityProfileRule, error)
 }
 
 var _ Querier = (*Queries)(nil)

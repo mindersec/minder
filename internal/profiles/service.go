@@ -168,6 +168,10 @@ func (p *profileService) CreateProfile(
 		}
 	}
 
+	if err := createSelectors(ctx, newProfile.ID, qtx, profile.GetSelection()); err != nil {
+		return nil, err
+	}
+
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: newProfile.ID}
 	p.sendNewProfileEvent(projectID)
 
@@ -268,7 +272,7 @@ func (p *profileService) UpdateProfile(
 		minderv1.Entity_ENTITY_TASK_RUN:           profile.GetTaskRun(),
 		minderv1.Entity_ENTITY_BUILD:              profile.GetBuild(),
 	} {
-		if err = updateProfileRulesForEntity(ctx, ent, &updatedProfile, qtx, entRules, rules); err != nil {
+		if err = updateProfileRulesForEntity(ctx, ent, &updatedProfile, qtx, entRules); err != nil {
 			return nil, err
 		}
 
@@ -298,13 +302,12 @@ func (p *profileService) UpdateProfile(
 	}
 
 	unusedRuleStatuses := getUnusedOldRuleStatuses(rules, oldRules)
-	unusedRuleTypes := getUnusedOldRuleTypes(rules, oldRules)
 
-	if err := deleteUnusedRulesFromProfile(ctx, &updatedProfile, unusedRuleTypes, qtx); err != nil {
+	if err := deleteRuleStatusesForProfile(ctx, &updatedProfile, unusedRuleStatuses, qtx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
-	if err := deleteRuleStatusesForProfile(ctx, &updatedProfile, unusedRuleStatuses, qtx); err != nil {
+	if err := updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
 		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
 	}
 
@@ -371,7 +374,7 @@ func copyFieldValue(dstReflect, srcReflect protoreflect.Message, fieldDesc proto
 		dstList.Truncate(0)
 
 		// append all elements from the source list to the destination list
-		// effectivelly replacing the destination list with the source list
+		// effectively replacing the destination list with the source list
 		for i := 0; i < srcList.Len(); i++ {
 			dstList.Append(srcList.Get(i))
 		}
@@ -410,7 +413,7 @@ func createProfileRulesForEntity(
 		log.Printf("error marshalling %s rules: %v", entity, err)
 		return status.Errorf(codes.Internal, "error creating profile")
 	}
-	entProf, err := qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
+	_, err = qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
 		ProfileID:       profile.ID,
 		Entity:          entities.EntityTypeToDB(entity),
 		ContextualRules: marshalled,
@@ -418,27 +421,6 @@ func createProfileRulesForEntity(
 	if err != nil {
 		log.Printf("error creating profile for entity %s: %v", entity, err)
 		return status.Errorf(codes.Internal, "error creating profile")
-	}
-
-	for idx := range rulesInProf {
-		ruleRef := rulesInProf[idx]
-
-		if ruleRef.Entity != entity {
-			continue
-		}
-
-		ruleID := ruleRef.RuleID
-
-		_, err := qtx.UpsertRuleInstantiation(ctx, db.UpsertRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      ruleID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("the rule instantiation for rule already existed.")
-		} else if err != nil {
-			log.Printf("error creating rule instantiation: %v", err)
-			return status.Errorf(codes.Internal, "error creating profile")
-		}
 	}
 
 	return err
@@ -612,48 +594,12 @@ func (_ *profileService) getRulesFromProfile(
 	return rulesInProf, nil
 }
 
-func deleteUnusedRulesFromProfile(
-	ctx context.Context,
-	profile *db.Profile,
-	unusedRules []EntityAndRuleTuple,
-	querier db.Querier,
-) error {
-	for _, rule := range unusedRules {
-		// get entity profile
-		log.Printf("getting profile for entity %s", rule.Entity)
-		entProf, err := querier.GetProfileForEntity(ctx, db.GetProfileForEntityParams{
-			ProfileID: profile.ID,
-			Entity:    entities.EntityTypeToDB(rule.Entity),
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				log.Printf("skipping rule deletion for entity %s, profile not found", rule.Entity)
-				continue
-			}
-			log.Printf("error getting profile for entity %s: %v", rule.Entity, err)
-			return fmt.Errorf("error getting profile for entity %s: %w", rule.Entity, err)
-		}
-
-		log.Printf("deleting rule instantiation for rule %s for entity profile %s", rule.RuleID, entProf.ID)
-		if err := querier.DeleteRuleInstantiation(ctx, db.DeleteRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      rule.RuleID,
-		}); err != nil {
-			log.Printf("error deleting rule instantiation: %v", err)
-			return fmt.Errorf("error deleting rule instantiation: %w", err)
-		}
-	}
-
-	return nil
-}
-
 func updateProfileRulesForEntity(
 	ctx context.Context,
 	entity minderv1.Entity,
 	profile *db.Profile,
 	qtx db.Querier,
 	rules []*minderv1.Profile_Rule,
-	rulesInProf RuleMapping,
 ) error {
 	if len(rules) == 0 {
 		return qtx.DeleteProfileForEntity(ctx, db.DeleteProfileForEntityParams{
@@ -667,7 +613,7 @@ func updateProfileRulesForEntity(
 		log.Printf("error marshalling %s rules: %v", entity, err)
 		return status.Errorf(codes.Internal, "error creating profile")
 	}
-	entProf, err := qtx.UpsertProfileForEntity(ctx, db.UpsertProfileForEntityParams{
+	_, err = qtx.UpsertProfileForEntity(ctx, db.UpsertProfileForEntityParams{
 		ProfileID:       profile.ID,
 		Entity:          entities.EntityTypeToDB(entity),
 		ContextualRules: marshalled,
@@ -675,25 +621,6 @@ func updateProfileRulesForEntity(
 	if err != nil {
 		log.Printf("error updating profile for entity %s: %v", entity, err)
 		return err
-	}
-
-	for idx := range rulesInProf {
-		ruleRef := rulesInProf[idx]
-
-		if ruleRef.Entity != entity {
-			continue
-		}
-
-		_, err := qtx.UpsertRuleInstantiation(ctx, db.UpsertRuleInstantiationParams{
-			EntityProfileID: entProf.ID,
-			RuleTypeID:      ruleRef.RuleID,
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("the rule instantiation for rule already existed.")
-		} else if err != nil {
-			log.Printf("error creating rule instantiation: %v", err)
-			return status.Errorf(codes.Internal, "error updating profile")
-		}
 	}
 
 	return err
@@ -711,28 +638,6 @@ func getUnusedOldRuleStatuses(
 	}
 
 	return unusedRuleStatuses
-}
-
-func getUnusedOldRuleTypes(newRules, oldRules RuleMapping) []EntityAndRuleTuple {
-	var unusedRuleTypes []EntityAndRuleTuple
-
-	oldRulesTypeMap := make(map[string]EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range oldRules {
-		oldRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	newRulesTypeMap := make(map[string]EntityAndRuleTuple)
-	for ruleTypeAndName, rule := range newRules {
-		newRulesTypeMap[ruleTypeAndName.RuleType] = rule
-	}
-
-	for ruleType, rule := range oldRulesTypeMap {
-		if _, ok := newRulesTypeMap[ruleType]; !ok {
-			unusedRuleTypes = append(unusedRuleTypes, rule)
-		}
-	}
-
-	return unusedRuleTypes
 }
 
 func deleteRuleStatusesForProfile(
@@ -805,4 +710,44 @@ func upsertRuleInstances(
 	}
 
 	return updatedIDs, nil
+}
+
+func createSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	for _, sel := range selection {
+		dbEnt := db.NullEntities{}
+		if minderv1.EntityFromString(sel.GetEntity()) != minderv1.Entity_ENTITY_UNSPECIFIED {
+			dbEnt.Entities = entities.EntityTypeToDB(minderv1.EntityFromString(sel.GetEntity()))
+			dbEnt.Valid = true
+		}
+		_, err := qtx.CreateSelector(ctx, db.CreateSelectorParams{
+			ProfileID: profID,
+			Entity:    dbEnt,
+			Selector:  sel.GetSelector(),
+			Comment:   sel.GetDescription(),
+		})
+		if err != nil {
+			return fmt.Errorf("error creating selector: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func updateSelectors(
+	ctx context.Context,
+	profID uuid.UUID,
+	qtx db.Querier,
+	selection []*minderv1.Profile_Selector,
+) error {
+	err := qtx.DeleteSelectorsByProfileID(ctx, profID)
+	if err != nil {
+		return fmt.Errorf("error deleting selectors: %w", err)
+	}
+
+	return createSelectors(ctx, profID, qtx, selection)
 }
