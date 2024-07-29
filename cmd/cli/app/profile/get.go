@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
@@ -55,6 +56,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	var resp protoreflect.ProtoMessage
 	var prof *minderv1.Profile
 	if id != "" {
 		p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
@@ -64,7 +66,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		if err != nil {
 			return cli.MessageAndError("Error getting profile", err)
 		}
-
+		resp = p
 		prof = p.GetProfile()
 	} else if name != "" {
 		p, err := client.GetProfileByName(ctx, &minderv1.GetProfileByNameRequest{
@@ -74,7 +76,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		if err != nil {
 			return cli.MessageAndError("Error getting profile", err)
 		}
-
+		resp = p
 		prof = p.GetProfile()
 	} else {
 		return cli.MessageAndError("Error getting profile", fmt.Errorf("id or name required"))
@@ -82,13 +84,13 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 
 	switch format {
 	case app.YAML:
-		out, err := util.GetYamlFromProto(prof)
+		out, err := util.GetYamlFromProto(resp)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
 	case app.JSON:
-		out, err := util.GetJsonFromProto(prof)
+		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
 			return cli.MessageAndError("Error getting json from proto", err)
 		}
