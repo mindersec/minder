@@ -2687,6 +2687,9 @@ definitions:
       profile:
         type: string
         description: profile is the name of the profile which contains the rule.
+      severity:
+        $ref: '#/definitions/v1Severity'
+        description: severity is the severity of the rule type.
   v1EvaluationHistoryStatus:
     type: object
     properties:
