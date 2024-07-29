@@ -513,9 +513,9 @@ type FlushCache struct {
 }
 
 type LatestEvaluationStatus struct {
-	RuleEntityID        uuid.UUID     `json:"rule_entity_id"`
-	EvaluationHistoryID uuid.UUID     `json:"evaluation_history_id"`
-	ProfileID           uuid.NullUUID `json:"profile_id"`
+	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
+	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
+	ProfileID           uuid.UUID `json:"profile_id"`
 }
 
 type Profile struct {
