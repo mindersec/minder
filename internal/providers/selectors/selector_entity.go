@@ -87,6 +87,34 @@ func (ac *artifactInfoConverter) toSelectorEntity(ctx context.Context, entity pr
 	return ac.converter.ArtifactToSelectorEntity(ctx, a)
 }
 
+type pullRequestInfoConverter struct {
+	converter PullRequestSelectorConverter
+}
+
+func newPullRequestInfoConverter(provider provifv1.Provider) *pullRequestInfoConverter {
+	converter, err := provifv1.As[PullRequestSelectorConverter](provider)
+	if err != nil {
+		return nil
+	}
+
+	return &pullRequestInfoConverter{
+		converter: converter,
+	}
+}
+
+func (prc *pullRequestInfoConverter) toSelectorEntity(ctx context.Context, entity proto.Message) *internalpb.SelectorEntity {
+	if prc == nil {
+		return nil
+	}
+
+	p, ok := entity.(*minderv1.PullRequest)
+	if !ok {
+		return nil
+	}
+
+	return prc.converter.PullRequestToSelectorEntity(ctx, p)
+}
+
 // converterFactory is a map of entity types to their respective converters
 type converterFactory struct {
 	converters map[minderv1.Entity]entityInfoConverter
@@ -96,8 +124,9 @@ type converterFactory struct {
 func newConverterFactory(provider provifv1.Provider) *converterFactory {
 	return &converterFactory{
 		converters: map[minderv1.Entity]entityInfoConverter{
-			minderv1.Entity_ENTITY_REPOSITORIES: newRepositoryInfoConverter(provider),
-			minderv1.Entity_ENTITY_ARTIFACTS:    newArtifactInfoConverter(provider),
+			minderv1.Entity_ENTITY_REPOSITORIES:  newRepositoryInfoConverter(provider),
+			minderv1.Entity_ENTITY_ARTIFACTS:     newArtifactInfoConverter(provider),
+			minderv1.Entity_ENTITY_PULL_REQUESTS: newPullRequestInfoConverter(provider),
 		},
 	}
 }

@@ -41,3 +41,11 @@ type ArtifactSelectorConverter interface {
 	// ArtifactToSelectorEntity converts the given artifact to a artifact selector
 	ArtifactToSelectorEntity(ctx context.Context, artifact *minderv1.Artifact) *internalpb.SelectorEntity
 }
+
+// PullRequestSelectorConverter is an interface for converting an pull request to a pull request selector
+type PullRequestSelectorConverter interface {
+	provifv1.Provider
+
+	// PullRequestToSelectorEntity converts the given pull request to a pull request selector
+	PullRequestToSelectorEntity(ctx context.Context, pullRequest *minderv1.PullRequest) *internalpb.SelectorEntity
+}

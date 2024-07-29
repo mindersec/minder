@@ -57,3 +57,18 @@ func (_ *GitHub) ArtifactToSelectorEntity(_ context.Context, a *minderv1.Artifac
 		},
 	}
 }
+
+// PullRequestToSelectorEntity converts a Pull Request to a SelectorEntity
+func (_ *GitHub) PullRequestToSelectorEntity(_ context.Context, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
+	fullName := fmt.Sprintf("%s/%s/%d", pr.GetRepoOwner(), pr.GetRepoName(), pr.GetNumber())
+
+	return &internalpb.SelectorEntity{
+		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+		Name:       fullName,
+		Entity: &internalpb.SelectorEntity_PullRequest{
+			PullRequest: &internalpb.SelectorPullRequest{
+				Name: fullName,
+			},
+		},
+	}
+}
