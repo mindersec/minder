@@ -143,10 +143,7 @@ func (_ *evaluationHistoryService) createNewStatus(
 		db.UpsertLatestEvaluationStatusParams{
 			RuleEntityID:        ruleEntityID,
 			EvaluationHistoryID: newEvaluationID,
-			ProfileID: uuid.NullUUID{
-				UUID:  profileID,
-				Valid: true,
-			},
+			ProfileID:           profileID,
 		},
 	)
 	if err != nil {

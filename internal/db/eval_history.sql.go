@@ -493,9 +493,9 @@ SET evaluation_history_id = $2
 `
 
 type UpsertLatestEvaluationStatusParams struct {
-	RuleEntityID        uuid.UUID     `json:"rule_entity_id"`
-	EvaluationHistoryID uuid.UUID     `json:"evaluation_history_id"`
-	ProfileID           uuid.NullUUID `json:"profile_id"`
+	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
+	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
+	ProfileID           uuid.UUID `json:"profile_id"`
 }
 
 func (q *Queries) UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error {
