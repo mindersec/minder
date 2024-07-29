@@ -74,6 +74,25 @@ func artifactToSelectorEntity(t *testing.T, name, class string, artifact *minder
 	}
 }
 
+func pullRequestToSelectorEntity(t *testing.T, name, class string, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
+	t.Helper()
+
+	fullName := fmt.Sprintf("%s/%s/%d", pr.GetRepoOwner(), pr.GetRepoName(), pr.GetNumber())
+	return &internalpb.SelectorEntity{
+		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+		Name:       fullName,
+		Provider: &internalpb.SelectorProvider{
+			Name:  name,
+			Class: class,
+		},
+		Entity: &internalpb.SelectorEntity_PullRequest{
+			PullRequest: &internalpb.SelectorPullRequest{
+				Name: fullName,
+			},
+		},
+	}
+}
+
 type fullProvider struct {
 	name  string
 	class string
@@ -90,6 +109,10 @@ func (m *fullProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Re
 
 func (m *fullProvider) ArtifactToSelectorEntity(_ context.Context, artifact *minderv1.Artifact) *internalpb.SelectorEntity {
 	return artifactToSelectorEntity(m.t, m.name, m.class, artifact)
+}
+
+func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
+	return pullRequestToSelectorEntity(m.t, m.name, m.class, pr)
 }
 
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
@@ -156,6 +179,17 @@ func TestEntityToSelectorEntity(t *testing.T) {
 				Owner: "testorg",
 				Name:  "testartifact",
 				Type:  "container",
+			},
+			success: true,
+		},
+		{
+			name:       "Pull Request",
+			provider:   newMockProvider(t, "github", "github"),
+			entityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+			entity: &minderv1.PullRequest{
+				RepoOwner: "testorg",
+				RepoName:  "testartifact",
+				Number:    12345,
 			},
 			success: true,
 		},
