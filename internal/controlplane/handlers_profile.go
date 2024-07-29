@@ -197,6 +197,52 @@ func (s *Server) GetProfileById(ctx context.Context,
 	}, nil
 }
 
+// GetProfileByName implements the RPC method for getting a profile by name
+func (s *Server) GetProfileByName(ctx context.Context,
+	in *minderv1.GetProfileByNameRequest) (*minderv1.GetProfileByNameResponse, error) {
+	entityCtx := engcontext.EntityFromContext(ctx)
+
+	err := entityCtx.ValidateProject(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	if in.Name == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "profile name must be specified")
+	}
+
+	profiles, err := s.store.GetProfileByProjectAndName(ctx, db.GetProfileByProjectAndNameParams{
+		ProjectID: entityCtx.Project.ID,
+		Name:      in.Name,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q not found", in.Name)
+		}
+		return nil, err
+	}
+
+	pols := prof.MergeDatabaseGetByNameIntoProfiles(profiles)
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+
+	if len(pols) == 0 {
+		return nil, util.UserVisibleError(codes.NotFound, "profile %q not found", in.Name)
+	} else if len(pols) > 1 {
+		return nil, fmt.Errorf("expected only one profile, got %d", len(pols))
+	}
+
+	// This should be only one profile
+	for _, profile := range pols {
+		return &minderv1.GetProfileByNameResponse{
+			Profile: profile,
+		}, nil
+	}
+
+	return nil, util.UserVisibleError(codes.NotFound, "profile %q not found", in.Name)
+}
+
 func getProfilePBFromDB(
 	ctx context.Context,
 	id uuid.UUID,

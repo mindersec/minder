@@ -999,6 +999,52 @@
         ]
       }
     },
+    "/api/v1/profile/name/{name}": {
+      "get": {
+        "operationId": "ProfileService_GetProfileByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProfileByNameResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "description": "name is the name of the profile to get",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/api/v1/profile/name/{name}/status": {
       "get": {
         "operationId": "ProfileService_GetProfileStatusByName",
@@ -3798,6 +3844,14 @@
       }
     },
     "v1GetProfileByIdResponse": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/definitions/v1Profile"
+        }
+      }
+    },
+    "v1GetProfileByNameResponse": {
       "type": "object",
       "properties": {
         "profile": {

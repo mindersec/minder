@@ -548,6 +548,17 @@ service ProfileService {
         };
     }
 
+    rpc GetProfileByName (GetProfileByNameRequest) returns (GetProfileByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/profile/name/{name=**}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_GET
+        };
+    }
+
     rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/name/{name=**}/status"
@@ -1295,6 +1306,18 @@ message GetProfileByIdRequest {
 }
 
 message GetProfileByIdResponse {
+    Profile profile = 1;
+}
+
+// get profile by name
+message GetProfileByNameRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // name is the name of the profile to get
+    string name = 2;
+}
+
+message GetProfileByNameResponse {
     Profile profile = 1;
 }
 
