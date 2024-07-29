@@ -133,6 +133,7 @@ replies with OK
 | DeleteProfile | [DeleteProfileRequest](#minder-v1-DeleteProfileRequest) | [DeleteProfileResponse](#minder-v1-DeleteProfileResponse) |  |
 | ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
+| GetProfileByName | [GetProfileByNameRequest](#minder-v1-GetProfileByNameRequest) | [GetProfileByNameResponse](#minder-v1-GetProfileByNameResponse) |  |
 | GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#minder-v1-GetProfileStatusByNameResponse) |  |
 | GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#minder-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#minder-v1-GetProfileStatusByProjectResponse) |  |
 | ListRuleTypes | [ListRuleTypesRequest](#minder-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#minder-v1-ListRuleTypesResponse) |  |
@@ -992,6 +993,29 @@ get profile by id
 
 
 <Message id="minder-v1-GetProfileByIdResponse">GetProfileByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetProfileByNameRequest">GetProfileByNameRequest</Message>
+
+get profile by name
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the profile to get |
+
+
+
+<Message id="minder-v1-GetProfileByNameResponse">GetProfileByNameResponse</Message>
 
 
 
