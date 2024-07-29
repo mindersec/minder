@@ -41,7 +41,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
 	github.com/open-policy-agent/opa v0.67.0
 	github.com/openfga/go-sdk v0.5.0
-	github.com/openfga/openfga v1.5.6
+	github.com/openfga/openfga v1.5.7
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.1
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
@@ -156,7 +156,7 @@ require (
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20240620215129-f5a955a47ae4 // indirect
+	github.com/openfga/api/proto v0.0.0-20240723155248-7e5be7b65c27 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240409225820-a53ea2892d6d // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pressly/goose/v3 v3.20.0 // indirect
