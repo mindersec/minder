@@ -675,6 +675,17 @@ service EvalResultsService {
             relation: RELATION_PROFILE_STATUS_GET
         };
     }
+
+    rpc GetEvaluationHistory(GetEvaluationHistoryRequest) returns (GetEvaluationHistoryResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/history/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
 }
 
 service PermissionsService {
@@ -1614,7 +1625,7 @@ message DeleteRuleTypeResponse {
 
 // --- START EvaluationResults definitions
 
-message ListEvaluationResultsRequest{
+message ListEvaluationResultsRequest {
     // context is the context in which the evaluation results are evaluated.
     Context context = 1;
 
@@ -2514,6 +2525,13 @@ message Provider {
     string credentials_state = 9;
 }
 
+// GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
+message GetEvaluationHistoryRequest {
+    string id = 1;
+
+    Context context = 2;
+}
+
 // ListEvaluationHistoryRequest represents a request message for the
 // ListEvaluationHistory RPC.
 //
@@ -2541,6 +2559,13 @@ message ListEvaluationHistoryRequest {
 
     // Cursor object to select the "page" of data to retrieve.
     Cursor cursor = 10;
+}
+
+// GetEvaluationHistoryResponse represents a response message for the
+// GetEvaluationHistory RPC.
+message GetEvaluationHistoryResponse {
+    // The requested record
+    EvaluationHistory evaluation = 1;
 }
 
 // ListEvaluationHistoryResponse represents a response message for the

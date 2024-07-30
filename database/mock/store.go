@@ -777,6 +777,21 @@ func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
 }
 
+// GetEvaluationHistory mocks base method.
+func (m *MockStore) GetEvaluationHistory(arg0 context.Context, arg1 db.GetEvaluationHistoryParams) (db.GetEvaluationHistoryRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEvaluationHistory", arg0, arg1)
+	ret0, _ := ret[0].(db.GetEvaluationHistoryRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvaluationHistory indicates an expected call of GetEvaluationHistory.
+func (mr *MockStoreMockRecorder) GetEvaluationHistory(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationHistory", reflect.TypeOf((*MockStore)(nil).GetEvaluationHistory), arg0, arg1)
+}
+
 // GetFeatureInProject mocks base method.
 func (m *MockStore) GetFeatureInProject(arg0 context.Context, arg1 db.GetFeatureInProjectParams) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
