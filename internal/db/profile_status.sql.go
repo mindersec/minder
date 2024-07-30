@@ -438,7 +438,7 @@ type UpsertRuleEvaluationsParams struct {
 	RuleTypeID     uuid.UUID     `json:"rule_type_id"`
 	Entity         Entities      `json:"entity"`
 	RuleName       string        `json:"rule_name"`
-	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
+	RuleEntityID   uuid.UUID     `json:"rule_entity_id"`
 	RuleInstanceID uuid.UUID     `json:"rule_instance_id"`
 }
 

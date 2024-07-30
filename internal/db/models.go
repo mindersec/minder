@@ -680,7 +680,7 @@ type RuleEvaluation struct {
 	ArtifactID     uuid.NullUUID `json:"artifact_id"`
 	PullRequestID  uuid.NullUUID `json:"pull_request_id"`
 	RuleName       string        `json:"rule_name"`
-	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
+	RuleEntityID   uuid.UUID     `json:"rule_entity_id"`
 	RuleInstanceID uuid.UUID     `json:"rule_instance_id"`
 }
 
@@ -732,6 +732,11 @@ type Subscription struct {
 	ProjectID      uuid.UUID `json:"project_id"`
 	BundleID       uuid.UUID `json:"bundle_id"`
 	CurrentVersion string    `json:"current_version"`
+}
+
+type TempMigrateRuleEvaluation struct {
+	RuleEvaluationID   uuid.UUID     `json:"rule_evaluation_id"`
+	EvaluationStatusID uuid.NullUUID `json:"evaluation_status_id"`
 }
 
 type User struct {
