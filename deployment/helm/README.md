@@ -58,6 +58,7 @@ installed in the namespace specified by your current Kubernetes context.
 | aws.server | object, optional | `{"iamRole":"minder_server_role"}` | AWS IAM server settings |
 | aws.server.iamRole | string | `"minder_server_role"` | IAM role to use for the server |
 | db.host | string | `"postgres.postgres"` | Database host to use |
+| deploymentSettings.affinity | object, optional | `nil` | Allow configuring pod affinity settings |
 | deploymentSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
 | deploymentSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
 | deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the main deployment |
