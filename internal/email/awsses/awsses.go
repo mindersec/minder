@@ -21,9 +21,9 @@ import (
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/ses/types"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/email"
@@ -38,23 +38,15 @@ const (
 // awsSES is the AWS SES client
 type awsSES struct {
 	sender string
-	svc    *ses.SES
+	svc    *ses.Client
 }
 
 // New creates a new AWS SES client
 func New(sender, region string) (*awsSES, error) {
-	// Create a new session.
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(region)},
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// Create an SES service client.
 	return &awsSES{
 		sender: sender,
-		svc:    ses.New(sess),
+		svc:    ses.New(ses.Options{Region: region}),
 	}, nil
 }
 
@@ -85,24 +77,22 @@ func (a *awsSES) sendEmail(ctx context.Context, to, subject, bodyHTML, bodyText 
 
 	// Assemble the email.
 	input := &ses.SendEmailInput{
-		Destination: &ses.Destination{
-			CcAddresses: []*string{},
-			ToAddresses: []*string{
-				aws.String(to),
-			},
+		Destination: &types.Destination{
+			CcAddresses: []string{},
+			ToAddresses: []string{to},
 		},
-		Message: &ses.Message{
-			Body: &ses.Body{
-				Html: &ses.Content{
+		Message: &types.Message{
+			Body: &types.Body{
+				Html: &types.Content{
 					Charset: aws.String(CharSet),
 					Data:    aws.String(bodyHTML),
 				},
-				Text: &ses.Content{
+				Text: &types.Content{
 					Charset: aws.String(CharSet),
 					Data:    aws.String(bodyText),
 				},
 			},
-			Subject: &ses.Content{
+			Subject: &types.Content{
 				Charset: aws.String(CharSet),
 				Data:    aws.String(subject),
 			},
@@ -113,7 +103,7 @@ func (a *awsSES) sendEmail(ctx context.Context, to, subject, bodyHTML, bodyText 
 	}
 
 	// Attempt to send the email.
-	result, err := a.svc.SendEmail(input)
+	result, err := a.svc.SendEmail(ctx, input)
 
 	// Display error messages if they occur.
 	if err != nil {
