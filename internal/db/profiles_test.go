@@ -69,6 +69,23 @@ func createEntitySelector(t *testing.T, profileId uuid.UUID, ent NullEntities, s
 	return dbSel
 }
 
+func createRuleInstance(t *testing.T, profileId uuid.UUID, ruleTypeID uuid.UUID, projectID uuid.UUID) uuid.UUID {
+	t.Helper()
+	ruleInstance, err := testQueries.UpsertRuleInstance(context.Background(), UpsertRuleInstanceParams{
+		ProfileID:  profileId,
+		RuleTypeID: ruleTypeID,
+		Name:       "rule_instance1",
+		EntityType: EntitiesRepository,
+		Def:        []byte("{}"),
+		Params:     []byte("{}"),
+		ProjectID:  projectID,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ruleInstance)
+
+	return ruleInstance
+}
+
 func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 	t.Helper()
 
@@ -104,8 +121,13 @@ func profileIDStatusByIdAndProject(t *testing.T, profileID uuid.UUID, projectID 
 }
 
 func upsertEvalStatus(
-	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	evalStatus EvalStatusTypes, details string,
+	t *testing.T,
+	profileID uuid.UUID,
+	repoID uuid.UUID,
+	ruleTypeID uuid.UUID,
+	ruleID uuid.UUID,
+	evalStatus EvalStatusTypes,
+	details string,
 ) {
 	t.Helper()
 
@@ -115,8 +137,9 @@ func upsertEvalStatus(
 			UUID:  repoID,
 			Valid: true,
 		},
-		RuleTypeID: ruleTypeID,
-		Entity:     EntitiesRepository,
+		RuleInstanceID: ruleID,
+		RuleTypeID:     ruleTypeID,
+		Entity:         EntitiesRepository,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, id)
@@ -585,6 +608,7 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 			t.Parallel()
 
 			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+			ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 			require.NotEmpty(t, profile)
 
 			upsertEvalStatus(
@@ -592,6 +616,7 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType1.ID,
+				ruleID,
 				tt.rule1StatusPre,
 				"foo",
 			)
@@ -606,6 +631,7 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType1.ID,
+				ruleID,
 				tt.rule1StatusPost,
 				"bar",
 			)
@@ -2951,6 +2977,8 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 			randomEntities := createTestRandomEntities(t)
 
 			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
+			ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+			ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 			require.NotEmpty(t, profile)
 
 			upsertEvalStatus(
@@ -2958,6 +2986,7 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType1.ID,
+				ruleID1,
 				tt.rule1StatusPre,
 				"foo",
 			)
@@ -2966,6 +2995,7 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType2.ID,
+				ruleID2,
 				tt.rule2StatusPre,
 				"foo",
 			)
@@ -2980,6 +3010,7 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType1.ID,
+				ruleID1,
 				tt.rule1StatusPost,
 				"bar",
 			)
@@ -2988,6 +3019,7 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 				profile.ID,
 				randomEntities.repo.ID,
 				randomEntities.ruleType2.ID,
+				ruleID2,
 				tt.rule2StatusPost,
 				"bar",
 			)
@@ -3034,8 +3066,9 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			},
 			expectedStatusAfterSetup: EvalStatusTypesPending,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesSuccess,
@@ -3047,12 +3080,15 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 			},
 			expectedStatusAfterSetup: EvalStatusTypesPending,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSkipped, "")
 
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSkipped, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesSkipped,
@@ -3060,14 +3096,18 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Profile with one success and failure rule evaluation, should be failure",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesSuccess,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
@@ -3075,14 +3115,18 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Profile with one success and one error results in error",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesSuccess,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesError, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesError,
@@ -3090,14 +3134,16 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Profile with one failure and one error results in error",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesError, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesError,
@@ -3105,14 +3151,16 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Inserting success in addition to failure should result in failure",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
@@ -3120,17 +3168,21 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Overwriting all to success results in success",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesFailure, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesSuccess,
@@ -3138,17 +3190,21 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Overwriting one to failure results in failure",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSuccess, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesSuccess,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
@@ -3156,14 +3212,16 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Skipped then failure results in failure",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSkipped, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesSkipped,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
@@ -3171,14 +3229,16 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 		{
 			name: "Skipped then success results in success",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSkipped, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesSkipped,
 			ruleStatusModifyFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterModify: EvalStatusTypesSuccess,
@@ -3226,18 +3286,21 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		{
 			name: "Removing last failure results in success",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSuccess, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSuccess, "")
 
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesFailure, "")
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSuccess, "")
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
@@ -3250,18 +3313,21 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		{
 			name: "Removing last error results in failure",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesFailure, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesSuccess, "")
 
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSuccess, "")
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesError, "")
 			},
 
@@ -3275,18 +3341,21 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		{
 			name: "Removing one error retains the other one",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesFailure, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesError, "")
 
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSuccess, "")
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesError, "")
 			},
 
@@ -3300,12 +3369,14 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		{
 			name: "Removing all but skipped returns skipped",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSkipped, "")
 
 				upsertEvalStatus(
-					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, delRepo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesFailure, "")
 			},
 
@@ -3428,8 +3499,10 @@ func TestListRuleEvaluations(t *testing.T) {
 		{
 			name: "Profile with one success rule evaluation",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesSuccess, "")
 			},
 			sc: statusCount{
@@ -3455,11 +3528,14 @@ func TestListRuleEvaluations(t *testing.T) {
 		{
 			name: "Profile with one success and one failure rule evaluation",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
 					EvalStatusTypesSuccess, "")
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
 					EvalStatusTypesFailure, "this rule failed")
 			},
 			sc: statusCount{
@@ -3501,8 +3577,10 @@ func TestListRuleEvaluations(t *testing.T) {
 		{
 			name: "Profile with one failed but remediated rule and an alert",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
+				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+
 				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
+					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
 					EvalStatusTypesFailure, "this rule failed")
 				upsertRemediationStatus(
 					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
@@ -3578,53 +3656,4 @@ func TestListRuleEvaluations(t *testing.T) {
 			verifyRow(t, tt.rule2Expected, evalStatusRows, randomEntities.ruleType2, randomEntities)
 		})
 	}
-}
-
-func TestDeleteRuleEvaluations(t *testing.T) {
-	t.Parallel()
-
-	randomEntities := createTestRandomEntities(t)
-	require.NotNil(t, randomEntities)
-
-	profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
-	require.NotEmpty(t, profile)
-
-	_, err := testQueries.UpsertProfileForEntity(context.Background(), UpsertProfileForEntityParams{
-		ProfileID:       profile.ID,
-		Entity:          EntitiesRepository,
-		ContextualRules: json.RawMessage(`{"key": "value"}`), // the content doesn't matter
-	})
-	require.NoError(t, err)
-
-	id, err := testQueries.UpsertRuleEvaluations(context.Background(), UpsertRuleEvaluationsParams{
-		ProfileID: profile.ID,
-		RepositoryID: uuid.NullUUID{
-			UUID:  randomEntities.repo.ID,
-			Valid: true,
-		},
-		RuleTypeID: randomEntities.ruleType1.ID,
-		RuleName:   randomEntities.ruleType1.Name,
-		Entity:     EntitiesRepository,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, id)
-
-	_, err = testQueries.UpsertRuleDetailsEval(context.Background(), UpsertRuleDetailsEvalParams{
-		RuleEvalID: id,
-		Status:     EvalStatusTypesFailure,
-	})
-	require.NoError(t, err)
-
-	prfStatusRow := profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
-	require.Equal(t, EvalStatusTypesFailure, prfStatusRow.ProfileStatus)
-
-	err = testQueries.DeleteRuleStatusesForProfileAndRuleType(context.Background(), DeleteRuleStatusesForProfileAndRuleTypeParams{
-		ProfileID:  profile.ID,
-		RuleTypeID: randomEntities.ruleType1.ID,
-		RuleName:   randomEntities.ruleType1.Name,
-	})
-	require.NoError(t, err)
-
-	prfStatusRow = profileIDStatusByIdAndProject(t, profile.ID, randomEntities.proj.ID)
-	require.Equal(t, EvalStatusTypesPending, prfStatusRow.ProfileStatus)
 }

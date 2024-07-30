@@ -52,9 +52,6 @@ type Querier interface {
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
-	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
-	// but locks the table before doing so.
-	DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error

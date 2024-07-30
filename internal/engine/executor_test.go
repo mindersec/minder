@@ -261,10 +261,7 @@ default allow = true`,
 				UUID:  ruleEntityID,
 				Valid: true,
 			},
-			RuleInstanceID: uuid.NullUUID{
-				UUID:  ruleInstanceID,
-				Valid: true,
-			},
+			RuleInstanceID: ruleInstanceID,
 		}).Return(ruleEvalId, nil)
 
 	// Mock upserting eval details status

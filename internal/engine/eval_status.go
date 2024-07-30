@@ -184,17 +184,14 @@ func (e *executor) createOrUpdateEvalStatus(
 		// Upsert evaluation
 		// TODO: replace these tables with the evaluation statuses table after migration
 		legacyEvalID, err := qtx.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-			ProfileID:     params.Profile.ID,
-			RepositoryID:  params.RepoID,
-			ArtifactID:    params.ArtifactID,
-			Entity:        params.EntityType,
-			RuleTypeID:    params.Rule.RuleTypeID,
-			PullRequestID: params.PullRequestID,
-			RuleName:      params.Rule.Name,
-			RuleInstanceID: uuid.NullUUID{
-				UUID:  params.Rule.ID,
-				Valid: true,
-			},
+			ProfileID:      params.Profile.ID,
+			RepositoryID:   params.RepoID,
+			ArtifactID:     params.ArtifactID,
+			Entity:         params.EntityType,
+			RuleTypeID:     params.Rule.RuleTypeID,
+			PullRequestID:  params.PullRequestID,
+			RuleName:       params.Rule.Name,
+			RuleInstanceID: params.Rule.ID,
 			RuleEntityID: uuid.NullUUID{
 				UUID:  ruleEntityID,
 				Valid: true,
