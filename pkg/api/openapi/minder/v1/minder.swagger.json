@@ -670,6 +670,50 @@
         ]
       }
     },
+    "/api/v1/history/{id}": {
+      "get": {
+        "operationId": "EvalResultsService_GetEvaluationHistory",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetEvaluationHistoryResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "EvalResultsService"
+        ]
+      }
+    },
     "/api/v1/invite/{code}": {
       "get": {
         "operationId": "InviteService_GetInviteDetails",
@@ -3820,6 +3864,16 @@
           "type": "string"
         }
       }
+    },
+    "v1GetEvaluationHistoryResponse": {
+      "type": "object",
+      "properties": {
+        "evaluation": {
+          "$ref": "#/definitions/v1EvaluationHistory",
+          "title": "The requested record"
+        }
+      },
+      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC."
     },
     "v1GetInviteDetailsResponse": {
       "type": "object",

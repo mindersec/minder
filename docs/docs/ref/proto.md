@@ -70,6 +70,7 @@ export const TypeLink = ({ children, type }) => {
 | ----------- | ------------ | ------------- | ------------|
 | ListEvaluationResults | [ListEvaluationResultsRequest](#minder-v1-ListEvaluationResultsRequest) | [ListEvaluationResultsResponse](#minder-v1-ListEvaluationResultsResponse) |  |
 | ListEvaluationHistory | [ListEvaluationHistoryRequest](#minder-v1-ListEvaluationHistoryRequest) | [ListEvaluationHistoryResponse](#minder-v1-ListEvaluationHistoryResponse) |  |
+| GetEvaluationHistory | [GetEvaluationHistoryRequest](#minder-v1-GetEvaluationHistoryRequest) | [GetEvaluationHistoryResponse](#minder-v1-GetEvaluationHistoryResponse) |  |
 
 
 
@@ -952,6 +953,30 @@ Namespace: is the namespace for the GHCR provider.
 | ----- | ---- | ----- | ----------- |
 | url | <TypeLink type="string">string</TypeLink> |  |  |
 | state | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetEvaluationHistoryRequest">GetEvaluationHistoryRequest</Message>
+
+GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetEvaluationHistoryResponse">GetEvaluationHistoryResponse</Message>
+
+GetEvaluationHistoryResponse represents a response message for the
+GetEvaluationHistory RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| evaluation | <TypeLink type="minder-v1-EvaluationHistory">EvaluationHistory</TypeLink> |  | The requested record |
 
 
 
