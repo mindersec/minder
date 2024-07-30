@@ -140,6 +140,8 @@ deploymentSettings:
       maxUnavailable: 0
       # -- (int) Max surge pods during a rolling update
       maxSurge: 2
+  # -- (object, optional) Allow configuring pod affinity settings
+  affinity:
 
 sessionExpirationPurgeJobSettings:
   schedule: "0 0 * * *"
