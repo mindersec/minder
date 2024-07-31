@@ -22,8 +22,9 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ses"
-	"github.com/aws/aws-sdk-go-v2/service/ses/types"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/email"
@@ -38,15 +39,21 @@ const (
 // awsSES is the AWS SES client
 type awsSES struct {
 	sender string
-	svc    *ses.Client
+	svc    *sesv2.Client
 }
 
 // New creates a new AWS SES client
-func New(sender, region string) (*awsSES, error) {
+func New(ctx context.Context, sender, region string) (*awsSES, error) {
+	// Load the AWS SDK configuration
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+
 	// Create an SES service client.
 	return &awsSES{
 		sender: sender,
-		svc:    ses.New(ses.Options{Region: region}),
+		svc:    sesv2.NewFromConfig(cfg),
 	}, nil
 }
 
@@ -76,28 +83,33 @@ func (a *awsSES) sendEmail(ctx context.Context, to, subject, bodyHTML, bodyText 
 		Msg("beginning to send email to invitee")
 
 	// Assemble the email.
-	input := &ses.SendEmailInput{
+	input := &sesv2.SendEmailInput{
+		// Set the email sender
+		FromEmailAddress: aws.String(a.sender),
+		// Set the email destination
 		Destination: &types.Destination{
 			CcAddresses: []string{},
 			ToAddresses: []string{to},
 		},
-		Message: &types.Message{
-			Body: &types.Body{
-				Html: &types.Content{
-					Charset: aws.String(CharSet),
-					Data:    aws.String(bodyHTML),
+		// Set the email content
+		Content: &types.EmailContent{
+			Simple: &types.Message{
+				Body: &types.Body{
+					Html: &types.Content{
+						Charset: aws.String(CharSet),
+						Data:    aws.String(bodyHTML),
+					},
+					Text: &types.Content{
+						Charset: aws.String(CharSet),
+						Data:    aws.String(bodyText),
+					},
 				},
-				Text: &types.Content{
+				Subject: &types.Content{
 					Charset: aws.String(CharSet),
-					Data:    aws.String(bodyText),
+					Data:    aws.String(subject),
 				},
-			},
-			Subject: &types.Content{
-				Charset: aws.String(CharSet),
-				Data:    aws.String(subject),
 			},
 		},
-		Source: aws.String(a.sender),
 		// Uncomment to use a configuration set
 		//ConfigurationSetName: aws.String(ConfigurationSet),
 	}

@@ -229,7 +229,7 @@ func AllInOneServerService(
 	var mailClient events.Consumer
 	if cfg.Email.AWSSES.Region != "" && cfg.Email.AWSSES.Sender != "" {
 		// If AWS SES is configured, use it to send emails
-		mailClient, err = awsses.New(cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)
+		mailClient, err = awsses.New(ctx, cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)
 		if err != nil {
 			return fmt.Errorf("unable to create aws ses email client: %w", err)
 		}
