@@ -141,7 +141,7 @@ func (q *Queries) GetEvaluationHistory(ctx context.Context, arg GetEvaluationHis
 
 const getLatestEvalStateForRuleEntity = `-- name: GetLatestEvalStateForRuleEntity :one
 
-SELECT eh.id, eh.rule_entity_id, eh.status, eh.details, eh.evaluation_time FROM evaluation_rule_entities AS re
+SELECT eh.id, eh.rule_entity_id, eh.status, eh.details, eh.evaluation_time, eh.checkpoint FROM evaluation_rule_entities AS re
 JOIN latest_evaluation_statuses AS les ON les.rule_entity_id = re.id
 JOIN evaluation_statuses AS eh ON les.evaluation_history_id = eh.id
 WHERE re.rule_id = $1
@@ -187,6 +187,7 @@ func (q *Queries) GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLa
 		&i.Status,
 		&i.Details,
 		&i.EvaluationTime,
+		&i.Checkpoint,
 	)
 	return i, err
 }
