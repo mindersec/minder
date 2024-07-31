@@ -23,6 +23,9 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: rotate-provider-tokens
         spec:
           serviceAccountName: {{ .Values.serviceAccounts.rotateProviderTokensJob | default "minder" }}
           containers:

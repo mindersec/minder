@@ -23,6 +23,9 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: session-expiration-purge
         spec:
           serviceAccountName: {{ .Values.serviceAccounts.sessionExpirationPurgeJob | default "minder" }}
           containers:
