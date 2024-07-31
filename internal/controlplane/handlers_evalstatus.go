@@ -556,8 +556,8 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
-	if eval.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
-		eval.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
+	if eval.EvalStatus == db.EvalStatusTypesFailure ||
+		eval.EvalStatus == db.EvalStatusTypesError {
 		guidance = eval.RuleTypeGuidance
 	}
 
@@ -574,14 +574,14 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 
 	entityInfo := map[string]string{}
 	remediationURL := ""
-	if eval.Entity == db.EntitiesRepository {
+	if eval.EntityType == db.EntitiesRepository {
 		entityInfo["provider"] = eval.Provider
 		entityInfo["repo_owner"] = eval.RepoOwner
 		entityInfo["repo_name"] = eval.RepoName
 		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
 
 		remediationURL, err = getRemediationURLFromMetadata(
-			eval.RemMetadata.RawMessage, fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName),
+			eval.RemMetadata, fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
@@ -599,15 +599,15 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RuleId:                 eval.RuleTypeID.String(),
 		ProfileId:              profile.Profile.ID.String(),
 		RuleName:               eval.RuleName,
-		Entity:                 string(eval.Entity),
-		Status:                 string(eval.EvalStatus.EvalStatusTypes),
-		LastUpdated:            timestamppb.New(eval.EvalLastUpdated.Time),
+		Entity:                 string(eval.EntityType),
+		Status:                 string(eval.EvalStatus),
+		LastUpdated:            timestamppb.New(eval.EvalLastUpdated),
 		EntityInfo:             entityInfo,
-		Details:                eval.EvalDetails.String,
+		Details:                eval.EvalDetails,
 		Guidance:               guidance,
-		RemediationStatus:      string(eval.RemStatus.RemediationStatusTypes),
-		RemediationLastUpdated: timestamppb.New(eval.RemLastUpdated.Time),
-		RemediationDetails:     eval.RemDetails.String,
+		RemediationStatus:      string(eval.RemStatus),
+		RemediationLastUpdated: timestamppb.New(eval.RemLastUpdated),
+		RemediationDetails:     eval.RemDetails,
 		RemediationUrl:         remediationURL,
 		RuleDisplayName:        nString,
 		RuleTypeName:           eval.RuleTypeName,
@@ -618,7 +618,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 
 func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minderv1.EntityTypedId {
 	ent := &minderv1.EntityTypedId{
-		Type: dbEntityToEntity(eval.Entity),
+		Type: dbEntityToEntity(eval.EntityType),
 	}
 
 	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES && eval.RepoOwner != "" && eval.RepoName != "" {
@@ -655,18 +655,18 @@ func buildProfileStatus(
 // database row.
 func buildEvalResultAlertFromLRERow(eval *db.ListRuleEvaluationsByProfileIdRow) *minderv1.EvalResultAlert {
 	era := &minderv1.EvalResultAlert{
-		Status:      string(eval.AlertStatus.AlertStatusTypes),
-		LastUpdated: timestamppb.New(eval.AlertLastUpdated.Time),
-		Details:     eval.AlertDetails.String,
+		Status:      string(eval.AlertStatus),
+		LastUpdated: timestamppb.New(eval.AlertLastUpdated),
+		Details:     eval.AlertDetails,
 	}
 
-	if eval.AlertMetadata.Valid && eval.AlertStatus.AlertStatusTypes == db.AlertStatusTypesOn {
+	if eval.AlertStatus == db.AlertStatusTypesOn {
 		repoSlug := ""
 		if eval.RepoOwner != "" && eval.RepoName != "" {
 			repoSlug = fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName)
 		}
 		urlString, err := getAlertURLFromMetadata(
-			eval.AlertMetadata.RawMessage, repoSlug,
+			eval.AlertMetadata, repoSlug,
 		)
 		if err == nil {
 			era.Url = urlString

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -10,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stacklok/minder/internal/util/rand"
@@ -149,38 +147,6 @@ func profileIDStatusByIdAndProject(t *testing.T, profileID uuid.UUID, projectID 
 	return profileStatus
 }
 
-func upsertEvalStatus(
-	t *testing.T,
-	profileID uuid.UUID,
-	repoID uuid.UUID,
-	ruleTypeID uuid.UUID,
-	ruleID uuid.UUID,
-	evalStatus EvalStatusTypes,
-	details string,
-) {
-	t.Helper()
-
-	id, err := testQueries.UpsertRuleEvaluations(context.Background(), UpsertRuleEvaluationsParams{
-		ProfileID: profileID,
-		RepositoryID: uuid.NullUUID{
-			UUID:  repoID,
-			Valid: true,
-		},
-		RuleInstanceID: ruleID,
-		RuleTypeID:     ruleTypeID,
-		Entity:         EntitiesRepository,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, id)
-
-	_, err = testQueries.UpsertRuleDetailsEval(context.Background(), UpsertRuleDetailsEvalParams{
-		RuleEvalID: id,
-		Status:     evalStatus,
-		Details:    details,
-	})
-	require.NoError(t, err)
-}
-
 func createRuleEntity(
 	t *testing.T,
 	repoID uuid.UUID,
@@ -212,7 +178,7 @@ func upsertEvalHistoryStatus(
 	ruleEntityID uuid.UUID,
 	evalStatus EvalStatusTypes,
 	details string,
-) {
+) uuid.UUID {
 	t.Helper()
 	ctx := context.Background()
 
@@ -234,58 +200,42 @@ func upsertEvalHistoryStatus(
 		},
 	)
 	require.NoError(t, err)
+
+	return id
 }
 
 func upsertRemediationStatus(
-	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	remStatus RemediationStatusTypes, details string, metadata json.RawMessage,
+	t *testing.T,
+	evalID uuid.UUID,
+	remStatus RemediationStatusTypes,
+	details string,
+	metadata json.RawMessage,
 ) {
 	t.Helper()
 
-	id, err := testQueries.UpsertRuleEvaluations(context.Background(), UpsertRuleEvaluationsParams{
-		ProfileID: profileID,
-		RepositoryID: uuid.NullUUID{
-			UUID:  repoID,
-			Valid: true,
-		},
-		RuleTypeID: ruleTypeID,
-		Entity:     EntitiesRepository,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, id)
-
-	_, err = testQueries.UpsertRuleDetailsRemediate(context.Background(), UpsertRuleDetailsRemediateParams{
-		RuleEvalID: id,
-		Status:     remStatus,
-		Details:    details,
-		Metadata:   metadata,
+	err := testQueries.InsertRemediationEvent(context.Background(), InsertRemediationEventParams{
+		EvaluationID: evalID,
+		Status:       remStatus,
+		Details:      details,
+		Metadata:     metadata,
 	})
 	require.NoError(t, err)
 }
 
 func upsertAlertStatus(
-	t *testing.T, profileID uuid.UUID, repoID uuid.UUID, ruleTypeID uuid.UUID,
-	alertStatus AlertStatusTypes, details string, metadata json.RawMessage,
+	t *testing.T,
+	evalID uuid.UUID,
+	alertStatus AlertStatusTypes,
+	details string,
+	metadata json.RawMessage,
 ) {
 	t.Helper()
 
-	id, err := testQueries.UpsertRuleEvaluations(context.Background(), UpsertRuleEvaluationsParams{
-		ProfileID: profileID,
-		RepositoryID: uuid.NullUUID{
-			UUID:  repoID,
-			Valid: true,
-		},
-		RuleTypeID: ruleTypeID,
-		Entity:     EntitiesRepository,
-	})
-	require.NoError(t, err)
-	require.NotNil(t, id)
-
-	_, err = testQueries.UpsertRuleDetailsAlert(context.Background(), UpsertRuleDetailsAlertParams{
-		RuleEvalID: id,
-		Status:     alertStatus,
-		Metadata:   metadata,
-		Details:    details,
+	err := testQueries.InsertAlertEvent(context.Background(), InsertAlertEventParams{
+		EvaluationID: evalID,
+		Status:       alertStatus,
+		Metadata:     metadata,
+		Details:      details,
 	})
 	require.NoError(t, err)
 }
@@ -3651,8 +3601,7 @@ func getStatusCount(t *testing.T, rows []ListRuleEvaluationsByProfileIdRow) stat
 
 	sc := make(statusCount)
 	for _, row := range rows {
-		require.Equal(t, row.EvalStatus.Valid, true)
-		sc[row.EvalStatus.EvalStatusTypes] += 1
+		sc[row.EvalStatus] += 1
 	}
 	return sc
 }
@@ -3668,7 +3617,7 @@ func compareRows(t *testing.T, a, b *ListRuleEvaluationsByProfileIdRow) {
 	require.Equal(t, a.AlertStatus, b.AlertStatus)
 	require.Equal(t, a.AlertDetails, b.AlertDetails)
 	require.Equal(t, a.AlertMetadata, b.AlertMetadata)
-	require.Equal(t, a.Entity, b.Entity)
+	require.Equal(t, a.EntityType, b.EntityType)
 }
 
 func rowForId(
@@ -3724,43 +3673,99 @@ func TestListRuleEvaluations(t *testing.T) {
 			name: "Profile with one success rule evaluation",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
 				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleEntityID := createRuleEntity(t, randomEntities.repo.ID, ruleID)
 
-				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
-					EvalStatusTypesSuccess, "")
+				evalID := upsertEvalHistoryStatus(
+					t,
+					profile.ID,
+					ruleEntityID,
+					EvalStatusTypesSuccess,
+					"",
+				)
+
+				upsertRemediationStatus(
+					t,
+					evalID,
+					RemediationStatusTypesSkipped,
+					"",
+					json.RawMessage(`{}`),
+				)
+				upsertAlertStatus(
+					t,
+					evalID,
+					AlertStatusTypesSkipped,
+					"",
+					json.RawMessage(`{}`),
+				)
 			},
 			sc: statusCount{
 				EvalStatusTypesSuccess: 1,
 			},
 			totalRows: 1,
 			rule1Expected: &ListRuleEvaluationsByProfileIdRow{
-				EvalStatus: NullEvalStatusTypes{
-					EvalStatusTypes: EvalStatusTypesSuccess,
-					Valid:           true,
-				},
-				EvalDetails: sql.NullString{
-					String: "",
-					Valid:  true,
-				},
-				RemStatus:    NullRemediationStatusTypes{},
-				RemDetails:   sql.NullString{},
-				AlertStatus:  NullAlertStatusTypes{},
-				AlertDetails: sql.NullString{},
-				Entity:       EntitiesRepository,
+				EvalStatus:    EvalStatusTypesSuccess,
+				EvalDetails:   "",
+				RemStatus:     RemediationStatusTypesSkipped,
+				RemDetails:    "",
+				RemMetadata:   json.RawMessage(`{}`),
+				AlertStatus:   AlertStatusTypesSkipped,
+				AlertDetails:  "",
+				AlertMetadata: json.RawMessage(`{}`),
+				EntityType:    EntitiesRepository,
 			},
 		},
 		{
 			name: "Profile with one success and one failure rule evaluation",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
 				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
-				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
+				ruleEntityID1 := createRuleEntity(t, randomEntities.repo.ID, ruleID1)
+				ruleEntityID2 := createRuleEntity(t, randomEntities.repo.ID, ruleID2)
 
-				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID1,
-					EvalStatusTypesSuccess, "")
-				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType2.ID, ruleID2,
-					EvalStatusTypesFailure, "this rule failed")
+				evalID1 := upsertEvalHistoryStatus(
+					t,
+					profile.ID,
+					ruleEntityID1,
+					EvalStatusTypesSuccess,
+					"",
+				)
+				evalID2 := upsertEvalHistoryStatus(
+					t,
+					profile.ID,
+					ruleEntityID2,
+					EvalStatusTypesFailure,
+					"this rule failed",
+				)
+
+				upsertRemediationStatus(
+					t,
+					evalID1,
+					RemediationStatusTypesSkipped,
+					"",
+					json.RawMessage(`{}`),
+				)
+				upsertAlertStatus(
+					t,
+					evalID1,
+					AlertStatusTypesSkipped,
+					"",
+					json.RawMessage(`{}`),
+				)
+
+				upsertRemediationStatus(
+					t,
+					evalID2,
+					RemediationStatusTypesSuccess,
+					"this rule was remediated",
+					json.RawMessage(`{"pr_number": "56"}`),
+				)
+				upsertAlertStatus(
+					t,
+					evalID2,
+					AlertStatusTypesOn,
+					"we alerted about this rule",
+					json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+				)
 			},
 			sc: statusCount{
 				EvalStatusTypesSuccess: 1,
@@ -3768,89 +3773,70 @@ func TestListRuleEvaluations(t *testing.T) {
 			},
 			totalRows: 2,
 			rule1Expected: &ListRuleEvaluationsByProfileIdRow{
-				EvalStatus: NullEvalStatusTypes{
-					EvalStatusTypes: EvalStatusTypesSuccess,
-					Valid:           true,
-				},
-				EvalDetails: sql.NullString{
-					String: "",
-					Valid:  true,
-				},
-				RemStatus:    NullRemediationStatusTypes{},
-				RemDetails:   sql.NullString{},
-				AlertStatus:  NullAlertStatusTypes{},
-				AlertDetails: sql.NullString{},
-				Entity:       EntitiesRepository,
+				EvalStatus:    EvalStatusTypesSuccess,
+				EvalDetails:   "",
+				RemStatus:     RemediationStatusTypesSkipped,
+				RemDetails:    "",
+				RemMetadata:   json.RawMessage(`{}`),
+				AlertStatus:   AlertStatusTypesSkipped,
+				AlertDetails:  "",
+				AlertMetadata: json.RawMessage(`{}`),
+				EntityType:    EntitiesRepository,
 			},
 			rule2Expected: &ListRuleEvaluationsByProfileIdRow{
-				EvalStatus: NullEvalStatusTypes{
-					EvalStatusTypes: EvalStatusTypesFailure,
-					Valid:           true,
-				},
-				EvalDetails: sql.NullString{
-					String: "this rule failed",
-					Valid:  true,
-				},
-				RemStatus:    NullRemediationStatusTypes{},
-				RemDetails:   sql.NullString{},
-				AlertStatus:  NullAlertStatusTypes{},
-				AlertDetails: sql.NullString{},
-				Entity:       EntitiesRepository,
+				EvalStatus:    EvalStatusTypesFailure,
+				EvalDetails:   "this rule failed",
+				RemStatus:     RemediationStatusTypesSuccess,
+				RemDetails:    "this rule was remediated",
+				RemMetadata:   json.RawMessage(`{"pr_number": "56"}`),
+				AlertStatus:   AlertStatusTypesOn,
+				AlertDetails:  "we alerted about this rule",
+				AlertMetadata: json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+				EntityType:    EntitiesRepository,
 			},
 		},
 		{
 			name: "Profile with one failed but remediated rule and an alert",
 			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities) {
 				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
+				ruleEntityID := createRuleEntity(t, randomEntities.repo.ID, ruleID)
 
-				upsertEvalStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID, ruleID,
-					EvalStatusTypesFailure, "this rule failed")
+				evalID := upsertEvalHistoryStatus(
+					t,
+					profile.ID,
+					ruleEntityID,
+					EvalStatusTypesFailure,
+					"this rule failed",
+				)
 				upsertRemediationStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
-					RemediationStatusTypesSuccess, "this rule was remediated", json.RawMessage(`{"pr_number": "56"}`))
+					t,
+					evalID,
+					RemediationStatusTypesSuccess,
+					"this rule was remediated",
+					json.RawMessage(`{"pr_number": "56"}`),
+				)
 				upsertAlertStatus(
-					t, profile.ID, randomEntities.repo.ID, randomEntities.ruleType1.ID,
-					AlertStatusTypesOn, "we alerted about this rule", json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`))
+					t,
+					evalID,
+					AlertStatusTypesOn,
+					"we alerted about this rule",
+					json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+				)
 			},
 			sc: statusCount{
 				EvalStatusTypesFailure: 1,
 			},
 			totalRows: 1,
 			rule1Expected: &ListRuleEvaluationsByProfileIdRow{
-				EvalStatus: NullEvalStatusTypes{
-					EvalStatusTypes: EvalStatusTypesFailure,
-					Valid:           true,
-				},
-				EvalDetails: sql.NullString{
-					String: "this rule failed",
-					Valid:  true,
-				},
-				RemStatus: NullRemediationStatusTypes{
-					RemediationStatusTypes: RemediationStatusTypesSuccess,
-					Valid:                  true,
-				},
-				RemDetails: sql.NullString{
-					String: "this rule was remediated",
-					Valid:  true,
-				},
-				RemMetadata: pqtype.NullRawMessage{
-					RawMessage: json.RawMessage(`{"pr_number": "56"}`),
-					Valid:      true,
-				},
-				AlertStatus: NullAlertStatusTypes{
-					AlertStatusTypes: AlertStatusTypesOn,
-					Valid:            true,
-				},
-				AlertDetails: sql.NullString{
-					String: "we alerted about this rule",
-					Valid:  true,
-				},
-				AlertMetadata: pqtype.NullRawMessage{
-					RawMessage: json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
-					Valid:      true,
-				},
-				Entity: EntitiesRepository,
+				EvalStatus:    EvalStatusTypesFailure,
+				EvalDetails:   "this rule failed",
+				RemStatus:     RemediationStatusTypesSuccess,
+				RemDetails:    "this rule was remediated",
+				RemMetadata:   json.RawMessage(`{"pr_number": "56"}`),
+				AlertStatus:   AlertStatusTypesOn,
+				AlertDetails:  "we alerted about this rule",
+				AlertMetadata: json.RawMessage(`{"ghsa_id": "GHSA-xxxx-xxxx-xxxx"}`),
+				EntityType:    EntitiesRepository,
 			},
 		},
 	}

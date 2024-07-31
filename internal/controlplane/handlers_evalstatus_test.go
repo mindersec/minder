@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -40,21 +39,12 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 		{
 			name: "normal",
 			sut: &db.ListRuleEvaluationsByProfileIdRow{
-				AlertStatus: db.NullAlertStatusTypes{
-					AlertStatusTypes: db.AlertStatusTypesOn,
-				},
-				AlertLastUpdated: sql.NullTime{
-					Time: d,
-				},
-				AlertDetails: sql.NullString{
-					String: "details go here",
-				},
-				AlertMetadata: pqtype.NullRawMessage{
-					Valid:      true,
-					RawMessage: []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				},
-				RepoOwner: "example",
-				RepoName:  "test",
+				AlertStatus:      db.AlertStatusTypesOn,
+				AlertLastUpdated: d,
+				AlertDetails:     "details go here",
+				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
+				RepoOwner:        "example",
+				RepoName:         "test",
 			},
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
@@ -66,15 +56,9 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 		{
 			name: "no-advisory",
 			sut: &db.ListRuleEvaluationsByProfileIdRow{
-				AlertStatus: db.NullAlertStatusTypes{
-					AlertStatusTypes: db.AlertStatusTypesOn,
-				},
-				AlertLastUpdated: sql.NullTime{
-					Time: d,
-				},
-				AlertDetails: sql.NullString{
-					String: "details go here",
-				},
+				AlertStatus:      db.AlertStatusTypesOn,
+				AlertLastUpdated: d,
+				AlertDetails:     "details go here",
 			},
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
@@ -86,20 +70,12 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 		{
 			name: "no-repo-owner",
 			sut: &db.ListRuleEvaluationsByProfileIdRow{
-				AlertStatus: db.NullAlertStatusTypes{
-					AlertStatusTypes: db.AlertStatusTypesOn,
-				},
-				AlertLastUpdated: sql.NullTime{
-					Time: d,
-				},
-				AlertDetails: sql.NullString{
-					String: "details go here",
-				},
-				AlertMetadata: pqtype.NullRawMessage{
-					RawMessage: []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				},
-				RepoOwner: "",
-				RepoName:  "test",
+				AlertStatus:      db.AlertStatusTypesOn,
+				AlertLastUpdated: d,
+				AlertDetails:     "details go here",
+				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
+				RepoOwner:        "",
+				RepoName:         "test",
 			},
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
