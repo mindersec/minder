@@ -493,6 +493,7 @@ type EvaluationStatus struct {
 	Status         EvalStatusTypes `json:"status"`
 	Details        string          `json:"details"`
 	EvaluationTime time.Time       `json:"evaluation_time"`
+	Checkpoint     json.RawMessage `json:"checkpoint"`
 }
 
 type Feature struct {
