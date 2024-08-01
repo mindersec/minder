@@ -34,7 +34,7 @@ INSERT INTO rule_instances (
     NOW(),
     NOW()
 )
-ON CONFLICT (profile_id, entity_type, name) DO UPDATE SET
+ON CONFLICT (profile_id, entity_type, lower(name)) DO UPDATE SET
     rule_type_id = $2,
     def = $5,
     params = $6,
