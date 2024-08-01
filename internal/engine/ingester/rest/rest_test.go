@@ -318,7 +318,7 @@ func TestRestIngest(t *testing.T) {
 			}
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
-			require.Equal(t, tt.ingResultFn(), result, "unexpected result")
+			require.Equal(t, tt.ingResultFn().Object, result.Object, "unexpected result")
 		})
 	}
 }

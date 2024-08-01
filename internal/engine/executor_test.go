@@ -157,7 +157,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	evaluationID := uuid.New()
 	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 	historyService.EXPECT().
-		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		StoreEvaluationStatus(
+			gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any(), gomock.Any()).
 		Return(evaluationID, nil)
 
 	mockStore.EXPECT().

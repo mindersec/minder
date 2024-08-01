@@ -42,6 +42,7 @@ type EvaluationHistoryService interface {
 		entityType db.Entities,
 		entityID uuid.UUID,
 		evalError error,
+		marshaledCheckpoint []byte,
 	) (uuid.UUID, error)
 	// ListEvaluationHistory returns a list of evaluations stored
 	// in the history table.
@@ -69,6 +70,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityType db.Entities,
 	entityID uuid.UUID,
 	evalError error,
+	marshaledCheckpoint []byte,
 ) (uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
@@ -110,7 +112,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 		ruleEntityID = latestRecord.RuleEntityID
 	}
 
-	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details)
+	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details, marshaledCheckpoint)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
 	}
@@ -125,12 +127,14 @@ func (_ *evaluationHistoryService) createNewStatus(
 	profileID uuid.UUID,
 	status db.EvalStatusTypes,
 	details string,
+	marshaledCheckpoint []byte,
 ) (uuid.UUID, error) {
 	newEvaluationID, err := qtx.InsertEvaluationStatus(ctx,
 		db.InsertEvaluationStatusParams{
 			RuleEntityID: ruleEntityID,
 			Status:       status,
 			Details:      details,
+			Checkpoint:   marshaledCheckpoint,
 		},
 	)
 	if err != nil {
