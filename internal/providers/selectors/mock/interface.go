@@ -119,3 +119,54 @@ func (mr *MockArtifactSelectorConverterMockRecorder) CanImplement(trait any) *go
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).CanImplement), trait)
 }
+
+// MockPullRequestSelectorConverter is a mock of PullRequestSelectorConverter interface.
+type MockPullRequestSelectorConverter struct {
+	ctrl     *gomock.Controller
+	recorder *MockPullRequestSelectorConverterMockRecorder
+}
+
+// MockPullRequestSelectorConverterMockRecorder is the mock recorder for MockPullRequestSelectorConverter.
+type MockPullRequestSelectorConverterMockRecorder struct {
+	mock *MockPullRequestSelectorConverter
+}
+
+// NewMockPullRequestSelectorConverter creates a new mock instance.
+func NewMockPullRequestSelectorConverter(ctrl *gomock.Controller) *MockPullRequestSelectorConverter {
+	mock := &MockPullRequestSelectorConverter{ctrl: ctrl}
+	mock.recorder = &MockPullRequestSelectorConverterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPullRequestSelectorConverter) EXPECT() *MockPullRequestSelectorConverterMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockPullRequestSelectorConverter) CanImplement(trait v1.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockPullRequestSelectorConverterMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).CanImplement), trait)
+}
+
+// PullRequestToSelectorEntity mocks base method.
+func (m *MockPullRequestSelectorConverter) PullRequestToSelectorEntity(ctx context.Context, pullRequest *v1.PullRequest) *proto.SelectorEntity {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PullRequestToSelectorEntity", ctx, pullRequest)
+	ret0, _ := ret[0].(*proto.SelectorEntity)
+	return ret0
+}
+
+// PullRequestToSelectorEntity indicates an expected call of PullRequestToSelectorEntity.
+func (mr *MockPullRequestSelectorConverterMockRecorder) PullRequestToSelectorEntity(ctx, pullRequest any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullRequestToSelectorEntity", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).PullRequestToSelectorEntity), ctx, pullRequest)
+}

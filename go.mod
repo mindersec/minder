@@ -6,7 +6,9 @@ require (
 	github.com/ThreeDotsLabs/watermill v1.3.5
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.0.1
 	github.com/alexdrl/zerowater v0.0.3
-	github.com/aws/aws-sdk-go v1.55.3
+	github.com/aws/aws-sdk-go-v2 v1.30.3
+	github.com/aws/aws-sdk-go-v2/config v1.27.27
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.32.3
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/charmbracelet/bubbles v0.17.1
@@ -14,7 +16,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.0
-	github.com/fergusstrange/embedded-postgres v1.27.0
+	github.com/fergusstrange/embedded-postgres v1.28.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/validator/v10 v10.22.0
@@ -38,10 +40,10 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.12.0
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.37
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.38
 	github.com/open-policy-agent/opa v0.67.0
 	github.com/openfga/go-sdk v0.5.0
-	github.com/openfga/openfga v1.5.6
+	github.com/openfga/openfga v1.5.7
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.1
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
@@ -59,7 +61,7 @@ require (
 	github.com/stacklok/trusty-sdk-go v0.1.1
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.24.0
-	github.com/thomaspoignant/go-feature-flag v1.31.2
+	github.com/thomaspoignant/go-feature-flag v1.32.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0
@@ -95,6 +97,17 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.27 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.15 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.15 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.22.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.30.3 // indirect
+	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/charmbracelet/x/ansi v0.1.4 // indirect
@@ -127,14 +140,13 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jon-whit/go-grpc-prometheus v1.4.0 // indirect
 	github.com/karlseguin/ccache/v3 v3.0.5 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.2 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
-	github.com/lestrrat-go/httprc v1.0.5 // indirect
+	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
@@ -156,7 +168,7 @@ require (
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
-	github.com/openfga/api/proto v0.0.0-20240620215129-f5a955a47ae4 // indirect
+	github.com/openfga/api/proto v0.0.0-20240723155248-7e5be7b65c27 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240409225820-a53ea2892d6d // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pressly/goose/v3 v3.20.0 // indirect
@@ -213,7 +225,7 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
 	github.com/docker/cli v27.1.1+incompatible
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v27.0.3+incompatible // indirect
+	github.com/docker/docker v27.1.0+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -254,7 +266,7 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lestrrat-go/jwx/v2 v2.1.0
+	github.com/lestrrat-go/jwx/v2 v2.1.1
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect

@@ -325,7 +325,13 @@ func TestGetEntityName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			res, err := getEntityName(tt.dbEnt, tt.row)
+			res, err := getEntityName(
+				tt.dbEnt,
+				tt.row.RepoOwner,
+				tt.row.RepoName,
+				tt.row.PrNumber,
+				tt.row.ArtifactName,
+			)
 
 			if tt.err {
 				require.Error(t, err)
@@ -371,6 +377,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 					ProjectID:    uuid.NullUUID{},
 					RuleType:     "rule_type",
 					RuleName:     "rule_name",
+					RuleSeverity: "unknown",
 					ProfileName:  "profile_name",
 				},
 			},
@@ -388,6 +395,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 					ProjectID:    uuid.NullUUID{},
 					RuleType:     "rule_type",
 					RuleName:     "rule_name",
+					RuleSeverity: "unknown",
 					ProfileName:  "profile_name",
 				},
 				{
@@ -400,6 +408,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 					ProjectID:    uuid.NullUUID{},
 					RuleType:     "rule_type",
 					RuleName:     "rule_name",
+					RuleSeverity: "unknown",
 					ProfileName:  "profile_name",
 				},
 			},
@@ -417,6 +426,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 					ProjectID:    uuid.NullUUID{},
 					RuleType:     "rule_type",
 					RuleName:     "rule_name",
+					RuleSeverity: "unknown",
 					ProfileName:  "profile_name",
 					AlertStatus:  nullAlertStatusOK(),
 					AlertDetails: nullStr("alert details"),
@@ -436,6 +446,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 					ProjectID:          uuid.NullUUID{},
 					RuleType:           "rule_type",
 					RuleName:           "rule_name",
+					RuleSeverity:       "unknown",
 					ProfileName:        "profile_name",
 					RemediationStatus:  nullRemediationStatusTypesSuccess(),
 					RemediationDetails: nullStr("remediation details"),
@@ -466,6 +477,9 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 				require.Equal(t, dbEntityToEntity(row.EntityType), item.Entity.Type)
 				require.Equal(t, row.RuleType, item.Rule.RuleType)
 				require.Equal(t, row.RuleName, item.Rule.Name)
+				sev, err := dbSeverityToSeverity(row.RuleSeverity)
+				require.NoError(t, err)
+				require.Equal(t, sev, item.Rule.Severity)
 				require.Equal(t, row.ProfileName, item.Rule.Profile)
 
 				require.Equal(t, row.AlertStatus.Valid, item.Alert != nil)

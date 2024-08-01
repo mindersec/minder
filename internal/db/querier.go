@@ -52,9 +52,6 @@ type Querier interface {
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
-	// DeleteRuleStatusesForProfileAndRuleType deletes a rule evaluation
-	// but locks the table before doing so.
-	DeleteRuleStatusesForProfileAndRuleType(ctx context.Context, arg DeleteRuleStatusesForProfileAndRuleTypeParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
@@ -74,6 +71,7 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
@@ -117,6 +115,7 @@ type Querier interface {
 	GetProfileByIDAndLock(ctx context.Context, arg GetProfileByIDAndLockParams) (Profile, error)
 	GetProfileByNameAndLock(ctx context.Context, arg GetProfileByNameAndLockParams) (Profile, error)
 	GetProfileByProjectAndID(ctx context.Context, arg GetProfileByProjectAndIDParams) ([]GetProfileByProjectAndIDRow, error)
+	GetProfileByProjectAndName(ctx context.Context, arg GetProfileByProjectAndNameParams) ([]GetProfileByProjectAndNameRow, error)
 	GetProfileStatusByIdAndProject(ctx context.Context, arg GetProfileStatusByIdAndProjectParams) (GetProfileStatusByIdAndProjectRow, error)
 	GetProfileStatusByNameAndProject(ctx context.Context, arg GetProfileStatusByNameAndProjectParams) (GetProfileStatusByNameAndProjectRow, error)
 	GetProfileStatusByProject(ctx context.Context, projectID uuid.UUID) ([]GetProfileStatusByProjectRow, error)

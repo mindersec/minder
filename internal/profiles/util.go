@@ -252,37 +252,10 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 
 		// first we check if profile already exists, if not we create a new one
 		if _, ok := profiles[p.Profile.Name]; !ok {
-			profileID := p.Profile.ID.String()
-			project := p.Profile.ProjectID.String()
-
-			displayName := p.Profile.DisplayName
-			if displayName == "" {
-				displayName = p.Profile.Name
-			}
-
-			profiles[p.Profile.Name] = &pb.Profile{
-				Id:          &profileID,
-				Name:        p.Profile.Name,
-				DisplayName: displayName,
-				Context: &pb.Context{
-					Project: &project,
-				},
-			}
-
-			if p.Profile.Remediate.Valid {
-				profiles[p.Profile.Name].Remediate = proto.String(string(p.Profile.Remediate.ActionType))
-			} else {
-				profiles[p.Profile.Name].Remediate = proto.String(string(db.ActionTypeOff))
-			}
-
-			if p.Profile.Alert.Valid {
-				profiles[p.Profile.Name].Alert = proto.String(string(p.Profile.Alert.ActionType))
-			} else {
-				profiles[p.Profile.Name].Alert = proto.String(string(db.ActionTypeOn))
-			}
-
+			profiles[p.Profile.Name] = dbProfileToPB(p.Profile)
 			selectorsToProfile(profiles[p.Profile.Name], p.ProfilesWithSelectors)
 		}
+
 		if pm := rowInfoToProfileMap(
 			profiles[p.Profile.Name],
 			p.ProfilesWithEntityProfile.Entity,
@@ -293,6 +266,70 @@ func MergeDatabaseGetIntoProfiles(ppl []db.GetProfileByProjectAndIDRow) map[stri
 	}
 
 	return profiles
+}
+
+// MergeDatabaseGetByNameIntoProfiles merges the database get profiles into the given
+// profiles map. This assumes that the profiles belong to the same project.
+//
+// TODO: This will have to consider the project tree once we migrate to that
+func MergeDatabaseGetByNameIntoProfiles(ppl []db.GetProfileByProjectAndNameRow) map[string]*pb.Profile {
+	profiles := map[string]*pb.Profile{}
+
+	for idx := range ppl {
+		p := ppl[idx]
+
+		// NOTE: names are unique within a given Provider & Project ID (Unique index),
+		// so we don't need to worry about collisions.
+
+		// first we check if profile already exists, if not we create a new one
+		if _, ok := profiles[p.Profile.Name]; !ok {
+			profiles[p.Profile.Name] = dbProfileToPB(p.Profile)
+			selectorsToProfile(profiles[p.Profile.Name], p.ProfilesWithSelectors)
+		}
+
+		if pm := rowInfoToProfileMap(
+			profiles[p.Profile.Name],
+			p.ProfilesWithEntityProfile.Entity,
+			p.ProfilesWithEntityProfile.ContextualRules,
+		); pm != nil {
+			profiles[p.Profile.Name] = pm
+		}
+	}
+
+	return profiles
+}
+
+func dbProfileToPB(p db.Profile) *pb.Profile {
+	profileID := p.ID.String()
+	project := p.ProjectID.String()
+
+	displayName := p.DisplayName
+	if displayName == "" {
+		displayName = p.Name
+	}
+
+	outprof := &pb.Profile{
+		Id:          &profileID,
+		Name:        p.Name,
+		DisplayName: displayName,
+		Context: &pb.Context{
+			Project: &project,
+		},
+	}
+
+	if p.Remediate.Valid {
+		outprof.Remediate = proto.String(string(p.Remediate.ActionType))
+	} else {
+		outprof.Remediate = proto.String(string(db.ActionTypeOff))
+	}
+
+	if p.Alert.Valid {
+		outprof.Alert = proto.String(string(p.Alert.ActionType))
+	} else {
+		outprof.Alert = proto.String(string(db.ActionTypeOn))
+	}
+
+	return outprof
 }
 
 // rowInfoToProfileMap adds the database row information to the given map of

@@ -478,20 +478,13 @@ type EntityProfile struct {
 	Migrated        bool            `json:"migrated"`
 }
 
-type EntityProfileRule struct {
-	ID              uuid.UUID `json:"id"`
-	EntityProfileID uuid.UUID `json:"entity_profile_id"`
-	RuleTypeID      uuid.UUID `json:"rule_type_id"`
-	CreatedAt       time.Time `json:"created_at"`
-}
-
 type EvaluationRuleEntity struct {
 	ID            uuid.UUID     `json:"id"`
 	RuleID        uuid.UUID     `json:"rule_id"`
 	RepositoryID  uuid.NullUUID `json:"repository_id"`
 	PullRequestID uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	EntityType    NullEntities  `json:"entity_type"`
+	EntityType    Entities      `json:"entity_type"`
 }
 
 type EvaluationStatus struct {
@@ -500,6 +493,7 @@ type EvaluationStatus struct {
 	Status         EvalStatusTypes `json:"status"`
 	Details        string          `json:"details"`
 	EvaluationTime time.Time       `json:"evaluation_time"`
+	Checkpoint     json.RawMessage `json:"checkpoint"`
 }
 
 type Feature struct {
@@ -520,9 +514,9 @@ type FlushCache struct {
 }
 
 type LatestEvaluationStatus struct {
-	RuleEntityID        uuid.UUID     `json:"rule_entity_id"`
-	EvaluationHistoryID uuid.UUID     `json:"evaluation_history_id"`
-	ProfileID           uuid.NullUUID `json:"profile_id"`
+	RuleEntityID        uuid.UUID `json:"rule_entity_id"`
+	EvaluationHistoryID uuid.UUID `json:"evaluation_history_id"`
+	ProfileID           uuid.UUID `json:"profile_id"`
 }
 
 type Profile struct {
@@ -687,7 +681,7 @@ type RuleEvaluation struct {
 	PullRequestID  uuid.NullUUID `json:"pull_request_id"`
 	RuleName       string        `json:"rule_name"`
 	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
-	RuleInstanceID uuid.NullUUID `json:"rule_instance_id"`
+	RuleInstanceID uuid.UUID     `json:"rule_instance_id"`
 }
 
 type RuleInstance struct {

@@ -91,17 +91,55 @@ INSERT INTO alert_events(
     $4
 );
 
+-- name: GetEvaluationHistory :one
+SELECT s.id::uuid AS evaluation_id,
+    s.evaluation_time as evaluated_at,
+    ere.entity_type,
+    -- entity id
+       CAST(
+           CASE
+               WHEN ere.repository_id IS NOT NULL THEN r.id
+               WHEN ere.pull_request_id IS NOT NULL THEN pr.id
+               WHEN ere.artifact_id IS NOT NULL THEN a.id
+           END AS uuid
+       ) AS entity_id,
+    -- raw fields for entity names
+    r.repo_owner,
+    r.repo_name,
+    pr.pr_number,
+    a.artifact_name,
+    j.id as project_id,
+    -- rule type, name, and profile
+    rt.name AS rule_type,
+    ri.name AS rule_name,
+    rt.severity_value as rule_severity,
+    p.name AS profile_name,
+    -- evaluation status and details
+    s.status AS evaluation_status,
+    s.details AS evaluation_details,
+    -- remediation status and details
+    re.status AS remediation_status,
+    re.details AS remediation_details,
+    -- alert status and details
+    ae.status AS alert_status,
+    ae.details AS alert_details
+FROM evaluation_statuses s
+    JOIN evaluation_rule_entities ere ON ere.id = s.rule_entity_id
+    JOIN rule_instances ri ON ere.rule_id = ri.id
+    JOIN rule_type rt ON ri.rule_type_id = rt.id
+    JOIN profiles p ON ri.profile_id = p.id
+    LEFT JOIN repositories r ON ere.repository_id = r.id
+    LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
+    LEFT JOIN artifacts a ON ere.artifact_id = a.id
+    LEFT JOIN remediation_events re ON re.evaluation_id = s.id
+    LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
+    LEFT JOIN projects j ON r.project_id = j.id
+WHERE s.id = sqlc.arg(evaluation_id) AND j.id = sqlc.arg(project_id);
+
 -- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
-       -- entity type
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN 'repository'
-         WHEN ere.pull_request_id IS NOT NULL THEN 'pull_request'
-         WHEN ere.artifact_id IS NOT NULL THEN 'artifact'
-         END AS entities
-       ) AS entity_type,
+       ere.entity_type,
        -- entity id
        CAST(
          CASE
@@ -119,6 +157,7 @@ SELECT s.id::uuid AS evaluation_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
+       rt.severity_value as rule_severity,
        p.name AS profile_name,
        -- evaluation status and details
        s.status AS evaluation_status,
@@ -143,7 +182,7 @@ SELECT s.id::uuid AS evaluation_id,
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.evaluation_time)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.evaluation_time)
    -- inclusion filters
-   AND (sqlc.slice(entityTypes)::entities[] IS NULL OR ri.entity_type = ANY(sqlc.slice(entityTypes)::entities[]))
+   AND (sqlc.slice(entityTypes)::entities[] IS NULL OR ere.entity_type = ANY(sqlc.slice(entityTypes)::entities[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY(sqlc.slice(entityNames)::text[]))
@@ -152,7 +191,7 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.slice(alerts)::alert_status_types[] IS NULL OR ae.status = ANY(sqlc.slice(alerts)::alert_status_types[]))
    AND (sqlc.slice(statuses)::eval_status_types[] IS NULL OR s.status = ANY(sqlc.slice(statuses)::eval_status_types[]))
    -- exclusion filters
-   AND (sqlc.slice(notEntityTypes)::entities[] IS NULL OR ri.entity_type != ANY(sqlc.slice(notEntityTypes)::entities[]))
+   AND (sqlc.slice(notEntityTypes)::entities[] IS NULL OR ere.entity_type != ANY(sqlc.slice(notEntityTypes)::entities[]))
    AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) != ANY(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ANY(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ANY(sqlc.slice(notEntityNames)::text[]))

@@ -18,12 +18,12 @@ package profile
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/cmd/cli/app"
 	"github.com/stacklok/minder/internal/util"
@@ -45,6 +45,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	id := viper.GetString("id")
+	name := viper.GetString("name")
 
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
@@ -55,33 +56,51 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
-		Context: &minderv1.Context{Project: &project},
-		Id:      id,
-	})
-	if err != nil {
-		return cli.MessageAndError("Error getting profile", err)
+	var resp protoreflect.ProtoMessage
+	var prof *minderv1.Profile
+	if id != "" {
+		p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
+			Context: &minderv1.Context{Project: &project},
+			Id:      id,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting profile", err)
+		}
+		resp = p
+		prof = p.GetProfile()
+	} else if name != "" {
+		p, err := client.GetProfileByName(ctx, &minderv1.GetProfileByNameRequest{
+			Context: &minderv1.Context{Project: &project},
+			Name:    name,
+		})
+		if err != nil {
+			return cli.MessageAndError("Error getting profile", err)
+		}
+		resp = p
+		prof = p.GetProfile()
+	} else {
+		return cli.MessageAndError("Error getting profile", fmt.Errorf("id or name required"))
 	}
 
 	switch format {
 	case app.YAML:
-		out, err := util.GetYamlFromProto(p)
+		out, err := util.GetYamlFromProto(resp)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
 	case app.JSON:
-		out, err := util.GetJsonFromProto(p)
+		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
 			return cli.MessageAndError("Error getting json from proto", err)
 		}
 		cmd.Println(out)
 	case app.Table:
 		settable := NewProfileSettingsTable()
-		RenderProfileSettingsTable(p.GetProfile(), settable)
+		RenderProfileSettingsTable(prof, settable)
 		settable.Render()
 		table := NewProfileTable()
-		RenderProfileTable(p.GetProfile(), table)
+		RenderProfileTable(prof, table)
 		table.Render()
 	}
 	return nil
@@ -91,12 +110,8 @@ func init() {
 	ProfileCmd.AddCommand(getCmd)
 	// Flags
 	getCmd.Flags().StringP("id", "i", "", "ID for the profile to query")
+	getCmd.Flags().StringP("name", "n", "", "Name for the profile to query")
 	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
-	// Required
-	if err := getCmd.MarkFlagRequired("id"); err != nil {
-		getCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
-
+	getCmd.MarkFlagsMutuallyExclusive("id", "name")
 }

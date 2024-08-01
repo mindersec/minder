@@ -548,6 +548,17 @@ service ProfileService {
         };
     }
 
+    rpc GetProfileByName (GetProfileByNameRequest) returns (GetProfileByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/profile/name/{name=**}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_GET
+        };
+    }
+
     rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/name/{name=**}/status"
@@ -657,6 +668,17 @@ service EvalResultsService {
     rpc ListEvaluationHistory(ListEvaluationHistoryRequest) returns (ListEvaluationHistoryResponse) {
         option (google.api.http) = {
             get: "/api/v1/history"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+
+    rpc GetEvaluationHistory(GetEvaluationHistoryRequest) returns (GetEvaluationHistoryResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/history/{id}"
         };
 
         option (rpc_options) = {
@@ -1298,6 +1320,18 @@ message GetProfileByIdResponse {
     Profile profile = 1;
 }
 
+// get profile by name
+message GetProfileByNameRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // name is the name of the profile to get
+    string name = 2;
+}
+
+message GetProfileByNameResponse {
+    Profile profile = 1;
+}
+
 // get the overall profile status
 message ProfileStatus {
     // profile_id is the id of the profile
@@ -1591,7 +1625,7 @@ message DeleteRuleTypeResponse {
 
 // --- START EvaluationResults definitions
 
-message ListEvaluationResultsRequest{
+message ListEvaluationResultsRequest {
     // context is the context in which the evaluation results are evaluated.
     Context context = 1;
 
@@ -2491,6 +2525,13 @@ message Provider {
     string credentials_state = 9;
 }
 
+// GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
+message GetEvaluationHistoryRequest {
+    string id = 1;
+
+    Context context = 2;
+}
+
 // ListEvaluationHistoryRequest represents a request message for the
 // ListEvaluationHistory RPC.
 //
@@ -2518,6 +2559,13 @@ message ListEvaluationHistoryRequest {
 
     // Cursor object to select the "page" of data to retrieve.
     Cursor cursor = 10;
+}
+
+// GetEvaluationHistoryResponse represents a response message for the
+// GetEvaluationHistory RPC.
+message GetEvaluationHistoryResponse {
+    // The requested record
+    EvaluationHistory evaluation = 1;
 }
 
 // ListEvaluationHistoryResponse represents a response message for the
@@ -2576,6 +2624,9 @@ message EvaluationHistoryRule {
 
     // profile is the name of the profile which contains the rule.
     string profile = 3;
+
+    // severity is the severity of the rule type.
+    Severity severity = 4;
 }
 
 message EvaluationHistoryStatus {

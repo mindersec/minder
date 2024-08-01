@@ -98,10 +98,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 					RepositoryID:  params.RepositoryID,
 					PullRequestID: params.PullRequestID,
 					ArtifactID:    params.ArtifactID,
-					EntityType: db.NullEntities{
-						Entities: entityType,
-						Valid:    true,
-					},
+					EntityType:    entityType,
 				},
 			)
 			if err != nil {
@@ -146,10 +143,7 @@ func (_ *evaluationHistoryService) createNewStatus(
 		db.UpsertLatestEvaluationStatusParams{
 			RuleEntityID:        ruleEntityID,
 			EvaluationHistoryID: newEvaluationID,
-			ProfileID: uuid.NullUUID{
-				UUID:  profileID,
-				Valid: true,
-			},
+			ProfileID:           profileID,
 		},
 	)
 	if err != nil {

@@ -18,6 +18,7 @@ minder profile get [flags]
 ```
   -h, --help            help for get
   -i, --id string       ID for the profile to query
+  -n, --name string     Name for the profile to query
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 
