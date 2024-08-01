@@ -154,12 +154,11 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				ProjectID:  projectID,
 			}}, nil)
 
-	ruleEntityID := uuid.New()
 	evaluationID := uuid.New()
 	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 	historyService.EXPECT().
 		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
-		Return(evaluationID, ruleEntityID, nil)
+		Return(evaluationID, nil)
 
 	mockStore.EXPECT().
 		InsertRemediationEvent(gomock.Any(), db.InsertRemediationEventParams{
@@ -253,14 +252,10 @@ default allow = true`,
 				UUID:  repositoryID,
 				Valid: true,
 			},
-			ArtifactID: uuid.NullUUID{},
-			RuleTypeID: ruleTypeID,
-			Entity:     db.EntitiesRepository,
-			RuleName:   passthroughRuleType,
-			RuleEntityID: uuid.NullUUID{
-				UUID:  ruleEntityID,
-				Valid: true,
-			},
+			ArtifactID:     uuid.NullUUID{},
+			RuleTypeID:     ruleTypeID,
+			Entity:         db.EntitiesRepository,
+			RuleName:       passthroughRuleType,
 			RuleInstanceID: ruleInstanceID,
 		}).Return(ruleEvalId, nil)
 
