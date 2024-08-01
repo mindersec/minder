@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -252,8 +253,10 @@ func validateRuleWithNonEmptyName(
 	ruleNameToType map[string]string, emptyNameTypesSet sets.Set[string],
 ) error {
 	ruleName := rule.GetName()
+	// use the lower case name since we need to validate case-insensitive uniqueness
+	lowercaseName := strings.ToLower(ruleName)
 	ruleType := rule.GetType()
-	if existingType, ok := ruleNameToType[ruleName]; ok {
+	if existingType, ok := ruleNameToType[lowercaseName]; ok {
 		if existingType == ruleType {
 			return &RuleValidationError{
 				Err: fmt.Sprintf("multiple rules of same type with same name '%s' in entity '%s', assign unique names to rules",
@@ -278,7 +281,7 @@ func validateRuleWithNonEmptyName(
 		}
 	}
 
-	ruleNameToType[ruleName] = ruleType
+	ruleNameToType[lowercaseName] = ruleType
 	return nil
 }
 
