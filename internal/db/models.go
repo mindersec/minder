@@ -682,6 +682,7 @@ type RuleEvaluation struct {
 	RuleName       string        `json:"rule_name"`
 	RuleEntityID   uuid.NullUUID `json:"rule_entity_id"`
 	RuleInstanceID uuid.UUID     `json:"rule_instance_id"`
+	Migrated       bool          `json:"migrated"`
 }
 
 type RuleInstance struct {
