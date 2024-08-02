@@ -29,7 +29,6 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities/checkpoints"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stacklok/minder/pkg/rule_methods"
@@ -111,8 +110,7 @@ func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.P
 	}
 
 	return &engif.Result{
-		Object:     resultObj,
-		Checkpoint: checkpoints.NewCheckpointV1Now(),
+		Object: resultObj,
 	}, nil
 }
 

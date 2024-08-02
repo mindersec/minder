@@ -54,7 +54,6 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 	require.NotNil(t, got, "expected non-nil result")
 	require.NotNil(t, got.Fs, "expected non-nil fs")
-	require.NotNil(t, got.Checkpoint, "expected non-nil checkpoint")
 
 	fs := got.Fs
 	f, err := fs.Open("README")
@@ -66,11 +65,6 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 	require.NoError(t, err, "expected no error")
 
 	require.Contains(t, buf.String(), "Hello World", "expected README.md to contain Hello World")
-
-	require.NotNil(t, got.Checkpoint.Checkpoint.Branch, "expected non-nil branch")
-	require.Equal(t, "master", *got.Checkpoint.Checkpoint.Branch, "expected branch to be master")
-
-	require.NotNil(t, got.Checkpoint.Checkpoint.CommitHash, "expected non-nil commit")
 }
 
 func TestGitIngestWithCloneURLFromParams(t *testing.T) {
