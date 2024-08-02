@@ -26,7 +26,6 @@ import (
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities/checkpoints"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -103,22 +102,10 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 		return nil, fmt.Errorf("could not get worktree: %w", err)
 	}
 
-	head, err := r.Head()
-	if err != nil {
-		return nil, fmt.Errorf("could not get head: %w", err)
-	}
-
-	hsh := head.Hash()
-
-	chkpoint := checkpoints.NewCheckpointV1Now().
-		WithBranch(branch).
-		WithCommitHash(hsh.String())
-
 	return &engif.Result{
-		Object:     nil,
-		Fs:         wt.Filesystem,
-		Storer:     r.Storer,
-		Checkpoint: chkpoint,
+		Object: nil,
+		Fs:     wt.Filesystem,
+		Storer: r.Storer,
 	}, nil
 }
 

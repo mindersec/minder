@@ -64,7 +64,7 @@ func TestCheckpointEnvelopeV1_MarshalJSON(t *testing.T) {
 			t.Parallel()
 
 			// Marshal the input to JSON
-			output, err := tt.input.ToJSON()
+			output, err := json.Marshal(tt.input)
 			require.NoError(t, err)
 
 			assert.Equal(t, string(output), tt.expected)

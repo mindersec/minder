@@ -30,7 +30,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities/checkpoints"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -155,8 +154,7 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 	}
 
 	return &engif.Result{
-		Object:     data,
-		Checkpoint: checkpoints.NewCheckpointV1Now(),
+		Object: data,
 	}, nil
 }
 
