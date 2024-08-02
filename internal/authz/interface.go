@@ -44,18 +44,15 @@ const (
 	RolePermissionsManager Role = "permissions_manager"
 )
 
+// nolint:lll
 var (
 	// AllRolesDescriptions is a list of all roles
 	AllRolesDescriptions = map[Role]string{
-		RoleAdmin: "The Admin role allows the user to perform all actions on the project and " +
-			"sub-projects.",
-		RoleEditor: "The Editor role allows for more write and read actions on the project and " +
-			"sub-projects except for project administration.",
-		RoleViewer: "The Viewer role allows for read actions on the project and sub-projects.",
-		RolePolicyWriter: "The Policy Writer role allows for writing policies (rule types and " +
-			"profiles) on the project and sub-projects. This is handy for CI jobs.",
-		RolePermissionsManager: "The Permissions Manager role allows for managing permissions " +
-			"on the project and sub-projects.",
+		RoleAdmin:              "Admins have full permissions on the project. In addition to the editor permissions, users with this role can modify the project, enroll additional providers, and manage roles for other users within the project.",
+		RoleEditor:             "In addition to the viewer permissions, editors can author profiles and rule types, as well as add resources to manage. Editors cannot enroll additional providers or change or delete projects.",
+		RoleViewer:             "Provides read-only access to the project. Users with this role can view associated resources such as enrolled repositories, rule types, profiles and the status of rule evaluations.",
+		RolePolicyWriter:       "Allows users to create rule types and profiles. Unlike editors, policy writers cannot add or remove resources from the project.",
+		RolePermissionsManager: "Allows users to manage roles for other users within the project.",
 	}
 	// AllRolesDisplayName is a list of all roles with their display names
 	AllRolesDisplayName = map[Role]string{
