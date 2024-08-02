@@ -38,6 +38,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events/common"
 	gochannel "github.com/stacklok/minder/internal/events/gochannel"
+	"github.com/stacklok/minder/internal/events/nats"
 	eventersql "github.com/stacklok/minder/internal/events/sql"
 )
 
@@ -156,6 +157,9 @@ func instantiateDriver(
 	case SQLDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
+	case NATSDriver:
+		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
+		return nats.BuildNatsChannelDriver(cfg)
 	default:
 		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)

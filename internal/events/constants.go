@@ -24,6 +24,7 @@ const (
 
 	GoChannelDriver = "go-channel"
 	SQLDriver       = "sql"
+	NATSDriver      = "cloudevents-nats"
 
 	DeadLetterQueueTopic = "dead_letter_queue"
 	PublishedKey         = "published_at"
