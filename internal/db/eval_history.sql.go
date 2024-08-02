@@ -265,11 +265,13 @@ const insertEvaluationStatus = `-- name: InsertEvaluationStatus :one
 INSERT INTO evaluation_statuses(
     rule_entity_id,
     status,
-    details
+    details,
+    checkpoint
 ) VALUES (
     $1,
     $2,
-    $3
+    $3,
+    $4::jsonb
 )
 RETURNING id
 `
@@ -278,10 +280,16 @@ type InsertEvaluationStatusParams struct {
 	RuleEntityID uuid.UUID       `json:"rule_entity_id"`
 	Status       EvalStatusTypes `json:"status"`
 	Details      string          `json:"details"`
+	Checkpoint   json.RawMessage `json:"checkpoint"`
 }
 
 func (q *Queries) InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error) {
-	row := q.db.QueryRowContext(ctx, insertEvaluationStatus, arg.RuleEntityID, arg.Status, arg.Details)
+	row := q.db.QueryRowContext(ctx, insertEvaluationStatus,
+		arg.RuleEntityID,
+		arg.Status,
+		arg.Details,
+		arg.Checkpoint,
+	)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
