@@ -58,7 +58,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.1.0
-	github.com/stacklok/trusty-sdk-go v0.1.1
+	github.com/stacklok/trusty-sdk-go v0.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.24.0
 	github.com/thomaspoignant/go-feature-flag v1.32.0
@@ -167,9 +167,11 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
+	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20240723155248-7e5be7b65c27 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240409225820-a53ea2892d6d // indirect
+	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/pressly/goose/v3 v3.20.0 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
