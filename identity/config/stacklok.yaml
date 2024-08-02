@@ -113,6 +113,7 @@ clients:
     publicClient: true
     # If you set one of these, you seem to need to set both (per CLI experimentation)
     defaultClientScopes:
+      - basic
       - acr
       - email
       - profile
@@ -130,6 +131,7 @@ clients:
     publicClient: true
     # If you set one of these, you seem to need to set both (per CLI experimentation)
     defaultClientScopes:
+      - basic
       - acr
       - email
       - profile
