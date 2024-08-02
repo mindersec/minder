@@ -144,7 +144,7 @@ func (e *executor) createOrUpdateEvalStatus(
 
 	// Log result in the evaluation history tables
 	err = e.querier.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-		evalID, ruleEntityID, err := e.historyService.StoreEvaluationStatus(
+		evalID, err := e.historyService.StoreEvaluationStatus(
 			ctx,
 			qtx,
 			params.Rule.ID,
@@ -192,10 +192,6 @@ func (e *executor) createOrUpdateEvalStatus(
 			PullRequestID:  params.PullRequestID,
 			RuleName:       params.Rule.Name,
 			RuleInstanceID: params.Rule.ID,
-			RuleEntityID: uuid.NullUUID{
-				UUID:  ruleEntityID,
-				Valid: true,
-			},
 		})
 		if err != nil {
 			logger.Err(err).Msg("error upserting rule evaluation")

@@ -58,13 +58,12 @@ func (mr *MockEvaluationHistoryServiceMockRecorder) ListEvaluationHistory(ctx, q
 }
 
 // StoreEvaluationStatus mocks base method.
-func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID, profileID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error) (uuid.UUID, uuid.UUID, error) {
+func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID, profileID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreEvaluationStatus", ctx, qtx, ruleID, profileID, entityType, entityID, evalError)
 	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(uuid.UUID)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // StoreEvaluationStatus indicates an expected call of StoreEvaluationStatus.
