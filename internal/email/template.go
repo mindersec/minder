@@ -136,7 +136,7 @@ const (
               "
             >
               Once you accept, you’ll be able to view the {{.OrganizationName}}
-              organization, and its security posture, in Minder.
+              organization in Minder.
             </div>
             <div
               style="

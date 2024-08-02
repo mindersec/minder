@@ -119,5 +119,5 @@ func getEmailBodyText(inviteURL, sponsor, project, role string) string {
 
 // getEmailSubject returns the subject for the email based on the message payload
 func getEmailSubject(project string) string {
-	return fmt.Sprintf("You have been invited to join the %s organisation in Minder", project)
+	return fmt.Sprintf("You have been invited to join the %s organization in Minder", project)
 }
