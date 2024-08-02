@@ -107,6 +107,34 @@ func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 	return ruleType
 }
 
+func createRandomRuleInstance(
+	t *testing.T,
+	projectID uuid.UUID,
+	profileID uuid.UUID,
+	ruleTypeID uuid.UUID,
+) uuid.UUID {
+	t.Helper()
+	seed := time.Now().UnixNano()
+	name := rand.RandomName(seed)
+	riID, err := testQueries.UpsertRuleInstance(
+		context.Background(),
+		UpsertRuleInstanceParams{
+			ProfileID:  profileID,
+			RuleTypeID: ruleTypeID,
+			Name:       name,
+			EntityType: EntitiesRepository,
+			ProjectID:  projectID,
+			Def:        json.RawMessage(`{}`),
+			Params:     json.RawMessage(`{}`),
+		},
+	)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, riID)
+
+	return riID
+}
+
 func profileIDStatusByIdAndProject(t *testing.T, profileID uuid.UUID, projectID uuid.UUID) GetProfileStatusByIdAndProjectRow {
 	t.Helper()
 
