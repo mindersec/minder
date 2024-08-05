@@ -882,8 +882,8 @@ github.com/sqlc-dev/pqtype v0.3.0 h1:b09TewZ3cSnO5+M1Kqq05y0+OjqIptxELaSayg7bmqk
 github.com/sqlc-dev/pqtype v0.3.0/go.mod h1:oyUjp5981ctiL9UYvj1bVvCKi8OXkCa0u645hce7CAs=
 github.com/stacklok/frizbee v0.1.0 h1:MI+YDGH/YF1+eEsHr9vLwZ7TttLrK74JfvJ9+3Pr3do=
 github.com/stacklok/frizbee v0.1.0/go.mod h1:BGC81j2ZWA/cHW1SR1eU7NDxgYwX41PC92SBdwoSWzc=
-github.com/stacklok/trusty-sdk-go v0.2.0 h1:0/Pz0quTK2ZDlTFueZL8Wt8UQjHWSo1onugV7G0cOUo=
-github.com/stacklok/trusty-sdk-go v0.2.0/go.mod h1:YDnK8yuUCznBObgsSVnjrj9M4L/wId6e2214Px5l7cI=
+github.com/stacklok/trusty-sdk-go v0.2.1 h1:4y0nVAmM3nSi3MCU6AO1rY3Iqdg/cQIqVxqxj+977c8=
+github.com/stacklok/trusty-sdk-go v0.2.1/go.mod h1:JjZ0KWyQ5Hbgr9J4vAcKn/uBaWk+WrthWkk7G6HXeMs=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
