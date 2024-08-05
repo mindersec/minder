@@ -74,7 +74,7 @@ require (
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.25.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/oauth2 v0.21.0
+	golang.org/x/oauth2 v0.22.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/term v0.22.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240723171418-e6d459c13d2a
