@@ -44,11 +44,13 @@ RETURNING id;
 INSERT INTO evaluation_statuses(
     rule_entity_id,
     status,
-    details
+    details,
+    checkpoint
 ) VALUES (
     $1,
     $2,
-    $3
+    $3,
+    sqlc.arg(checkpoint)::jsonb
 )
 RETURNING id;
 
