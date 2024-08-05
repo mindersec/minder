@@ -64,8 +64,7 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 	}
 
 	trustyClient := trusty.NewWithOptions(trusty.Options{
-		HttpClient: trusty.DefaultOptions.HttpClient,
-		BaseURL:    trustyEndpoint,
+		BaseURL: trustyEndpoint,
 	})
 
 	return &Evaluator{

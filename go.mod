@@ -58,7 +58,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.1.0
-	github.com/stacklok/trusty-sdk-go v0.2.0
+	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.24.0
 	github.com/thomaspoignant/go-feature-flag v1.32.0
