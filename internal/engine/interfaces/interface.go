@@ -29,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/entities/checkpoints"
 	"github.com/stacklok/minder/internal/profiles/models"
 )
 
@@ -60,6 +61,19 @@ type Result struct {
 	// FIXME: It might be cleaner to either wrap both Fs and Storer in a struct
 	// or pass out the git.Repository structure instead of the storer.
 	Storer storage.Storer
+
+	// Checkpoint is the checkpoint at which the ingestion was done. This is
+	// used to persist the state of the entity at ingestion time.
+	Checkpoint *checkpoints.CheckpointEnvelopeV1
+}
+
+// GetCheckpoint returns the checkpoint of the result
+func (r *Result) GetCheckpoint() *checkpoints.CheckpointEnvelopeV1 {
+	if r == nil {
+		return nil
+	}
+
+	return r.Checkpoint
 }
 
 // ActionType represents the type of action, i.e., remediate, alert, etc.
