@@ -14,7 +14,7 @@ require (
 	github.com/norwoodj/helm-docs v1.14.2
 	github.com/openfga/cli v0.5.1
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
-	github.com/sqlc-dev/sqlc v1.26.0
+	github.com/sqlc-dev/sqlc v1.27.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.23.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
@@ -137,7 +137,7 @@ require (
 	github.com/golangci/plugin-module-register v0.1.1 // indirect
 	github.com/golangci/revgrep v0.5.3 // indirect
 	github.com/golangci/unconvert v0.0.0-20240309020433-c5143eacb3ed // indirect
-	github.com/google/cel-go v0.20.1 // indirect
+	github.com/google/cel-go v0.21.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-containerregistry v0.19.2 // indirect
 	github.com/google/pprof v0.0.0-20240622144329-c177fd99eaa9 // indirect
@@ -161,7 +161,7 @@ require (
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
-	github.com/jackc/pgx/v5 v5.5.5 // indirect
+	github.com/jackc/pgx/v5 v5.6.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/jgautheron/goconst v1.7.1 // indirect
@@ -285,7 +285,7 @@ require (
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.16 // indirect
-	github.com/tetratelabs/wazero v1.7.0 // indirect
+	github.com/tetratelabs/wazero v1.7.3 // indirect
 	github.com/timakin/bodyclose v0.0.0-20230421092635-574207250966 // indirect
 	github.com/timonwong/loggercheck v0.9.4 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.8.3 // indirect
@@ -294,7 +294,8 @@ require (
 	github.com/ultraware/whitespace v0.1.1 // indirect
 	github.com/uudashr/gocognit v1.1.2 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
-	github.com/wasilibs/go-pgquery v0.0.0-20240319230125-b9b2e95c69a7 // indirect
+	github.com/wasilibs/go-pgquery v0.0.0-20240606042535-c0843d6592cc // indirect
+	github.com/wasilibs/wazero-helpers v0.0.0-20240604052452-61d7981e9a38 // indirect
 	github.com/xen0n/gosmopolitan v1.2.2 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.3.0 // indirect
@@ -321,7 +322,7 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
@@ -337,10 +338,10 @@ require (
 	helm.sh/helm/v3 v3.15.2 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
-	modernc.org/libc v1.41.0 // indirect
+	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
-	modernc.org/memory v1.7.2 // indirect
-	modernc.org/sqlite v1.29.5 // indirect
+	modernc.org/memory v1.8.0 // indirect
+	modernc.org/sqlite v1.31.1 // indirect
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 	mvdan.cc/unparam v0.0.0-20240528143540-8a5130ca722f // indirect
