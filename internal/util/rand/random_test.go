@@ -50,3 +50,13 @@ func TestRandomName(t *testing.T) {
 	require.NotEmpty(t, name)
 	require.Len(t, name, 10)
 }
+
+func TestRandomFrom(t *testing.T) {
+	t.Parallel()
+
+	seed := int64(12345)
+	choices := []string{"a", "b", "c", "d", "e"}
+	choice := rand.RandomFrom(choices, seed)
+	require.NotEmpty(t, choice)
+	require.Contains(t, choices, choice)
+}
