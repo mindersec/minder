@@ -18,6 +18,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -749,6 +750,7 @@ func createRandomEvaluationStatus(
 			RuleEntityID: ereID,
 			Status:       evaluationStatus,
 			Details:      "",
+			Checkpoint:   json.RawMessage(`{}`),
 		},
 	)
 	require.NoError(t, err)
