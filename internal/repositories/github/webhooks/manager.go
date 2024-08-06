@@ -52,12 +52,16 @@ type WebhookManager interface {
 }
 
 type webhookManager struct {
-	webhookConfig server.WebhookConfig
+	webhookConfig  server.WebhookConfig
+	providerConfig server.ProviderConfig
 }
 
 // NewWebhookManager instantiates an instances of the WebhookManager interface
-func NewWebhookManager(webhookConfig server.WebhookConfig) WebhookManager {
-	return &webhookManager{webhookConfig: webhookConfig}
+func NewWebhookManager(webhookConfig server.WebhookConfig, pcfg server.ProviderConfig) WebhookManager {
+	return &webhookManager{
+		providerConfig: pcfg,
+		webhookConfig:  webhookConfig,
+	}
 }
 
 var (
@@ -79,7 +83,14 @@ func (w *webhookManager) CreateWebhook(
 	// generate unique URL for this webhook
 	baseURL := w.webhookConfig.ExternalWebhookURL
 	hookUUID := uuid.New().String()
-	webhookURL := fmt.Sprintf("%s/%s", baseURL, hookUUID)
+	// TODO: Generalize this between providers when we
+	// abstract this.
+	suffix := w.providerConfig.GitHub.WebhookURLSuffix
+	webhookURL, err := url.JoinPath(baseURL, hookUUID, suffix)
+	if err != nil {
+		return "", nil, err
+	}
+
 	parsedWebhookURL, err := url.Parse(webhookURL)
 	if err != nil {
 		return "", nil, err

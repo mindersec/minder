@@ -65,6 +65,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	glwh "github.com/stacklok/minder/internal/providers/gitlab/webhook"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/session"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -347,8 +348,11 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// This already has _some_ middleware due to the GRPC handling
 	mux.Handle("/", withMaxSizeMiddleware(s.withCORSMiddleware(gwmux)))
 
+	glwhHandler := glwh.NewHandler(log.Logger)
+
 	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/webhook/github", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/webhook/gitlab", otelmw(withMiddleware(glwhHandler.WebHook())))
 	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
 	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)

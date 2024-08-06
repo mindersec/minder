@@ -1300,6 +1300,22 @@ naming convention
 
 
 
+<Message id="minder-v1-GitLabProviderConfig">GitLabProviderConfig</Message>
+
+GitLabProviderConfig contains the configuration for the GitLab provider.
+
+Endpoint: is the GitLab API endpoint
+
+If using the public GitLab API, Endpoint can be left blank
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | <TypeLink type="string">string</TypeLink> |  | Endpoint is the GitLab API endpoint. If using the public GitLab API, Endpoint can be left blank. |
+| group | <TypeLink type="string">string</TypeLink> |  | group is the GitLab group to use for the provider |
+
+
+
 <Message id="minder-v1-GitType">GitType</Message>
 
 GitType defines the git data ingester.

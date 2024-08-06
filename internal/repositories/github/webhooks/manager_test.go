@@ -51,6 +51,17 @@ func getWebhookConfig(opts ...webhookConfigOpt) server.WebhookConfig {
 	return webhookConfig
 }
 
+func getProviderConfig() server.ProviderConfig {
+	return server.ProviderConfig{
+		GitHub: &server.GitHubConfig{
+			WebhookURLSuffix: "github",
+		},
+		GitHubApp: &server.GitHubAppConfig{
+			WebhookURLSuffix: "github",
+		},
+	}
+}
+
 func withWebhookUrl(url string) webhookConfigOpt {
 	return func(opts *server.WebhookConfig) {
 		opts.ExternalWebhookURL = url
@@ -120,7 +131,7 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
 
-			err := webhooks.NewWebhookManager(getWebhookConfig()).
+			err := webhooks.NewWebhookManager(getWebhookConfig(), getProviderConfig()).
 				DeleteWebhook(ctx, client, cf.RepoOwner, cf.RepoName, cf.HookID)
 
 			if scenario.ShouldSucceed {
@@ -221,7 +232,7 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
 			webhookConfig := getWebhookConfig(scenario.WebhookOpts...)
-			resultID, hook, err := webhooks.NewWebhookManager(webhookConfig).
+			resultID, hook, err := webhooks.NewWebhookManager(webhookConfig, getProviderConfig()).
 				CreateWebhook(ctx, client, cf.RepoOwner, cf.RepoName)
 
 			if scenario.ShouldSucceed {

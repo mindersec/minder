@@ -44,6 +44,8 @@ type GitHubAppConfig struct {
 	FallbackToken string `mapstructure:"fallback_token"`
 	// FallbackTokenFile is the location of the file containing the fallback token to use when listing packages
 	FallbackTokenFile string `mapstructure:"fallback_token_file"`
+	// WebhookURLSuffix is the suffix to append to the base URL for the webhook
+	WebhookURLSuffix string `mapstructure:"webhook_url_suffix" default:"github"`
 }
 
 // GetPrivateKey returns the GitHub App's private key

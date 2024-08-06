@@ -15,16 +15,13 @@
 
 package server
 
-// ProviderConfig is the configuration for the providers
-type ProviderConfig struct {
-	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
-	GitHub    *GitHubConfig    `mapstructure:"github"`
-	Git       GitConfig        `mapstructure:"git"`
-	GitLab    *GitLabConfig    `mapstructure:"gitlab"`
-}
+// GitLabConfig is the configuration for the GitLab OAuth providers
+type GitLabConfig struct {
+	OAuthClientConfig `mapstructure:",squash"`
 
-// GitConfig provides server-side configuration for Git operations like "clone"
-type GitConfig struct {
-	MaxFiles int64 `mapstructure:"max_files" default:"10000"`
-	MaxBytes int64 `mapstructure:"max_bytes" default:"100_000_000"`
+	// Scopes is the list of scopes to request from the GitLab OAuth provider
+	Scopes []string `mapstructure:"scopes"`
+
+	// WebhookURLSuffix is the suffix to append to the base URL for the webhook
+	WebhookURLSuffix string `mapstructure:"webhook_url_suffix" default:"gitlab"`
 }

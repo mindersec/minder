@@ -52,6 +52,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	gitlabmanager "github.com/stacklok/minder/internal/providers/gitlab/manager"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/session"
@@ -108,7 +109,7 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
+	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig, cfg.Provider)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
@@ -135,11 +136,16 @@ func AllInOneServerService(
 		cryptoEngine,
 		store,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
+		cryptoEngine,
+		store,
+	)
+	providerManager, err := manager.NewProviderManager(providerStore,
+		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
-	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}

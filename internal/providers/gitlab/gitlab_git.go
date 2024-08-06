@@ -13,18 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package gitlab
 
-// ProviderConfig is the configuration for the providers
-type ProviderConfig struct {
-	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
-	GitHub    *GitHubConfig    `mapstructure:"github"`
-	Git       GitConfig        `mapstructure:"git"`
-	GitLab    *GitLabConfig    `mapstructure:"gitlab"`
-}
+import (
+	"context"
 
-// GitConfig provides server-side configuration for Git operations like "clone"
-type GitConfig struct {
-	MaxFiles int64 `mapstructure:"max_files" default:"10000"`
-	MaxBytes int64 `mapstructure:"max_bytes" default:"100_000_000"`
+	"github.com/go-git/go-git/v5"
+
+	gitclient "github.com/stacklok/minder/internal/providers/git"
+)
+
+// Implements the Git interface
+func (c *gitlabClient) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
+	g := gitclient.NewGit(c.GetCredential(), gitclient.WithConfig(c.gitConfig))
+	return g.Clone(ctx, cloneUrl, branch)
 }

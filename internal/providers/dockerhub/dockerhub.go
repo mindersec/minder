@@ -91,6 +91,8 @@ type dhConfigWrapper struct {
 }
 
 // ParseV1Config parses the raw config into a DockerHubProviderConfig struct
+//
+// TODO: This should be moved to a common location
 func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, error) {
 	var w dhConfigWrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {

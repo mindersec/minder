@@ -13,18 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package webhook
 
-// ProviderConfig is the configuration for the providers
-type ProviderConfig struct {
-	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
-	GitHub    *GitHubConfig    `mapstructure:"github"`
-	Git       GitConfig        `mapstructure:"git"`
-	GitLab    *GitLabConfig    `mapstructure:"gitlab"`
-}
+import "github.com/rs/zerolog"
 
-// GitConfig provides server-side configuration for Git operations like "clone"
-type GitConfig struct {
-	MaxFiles int64 `mapstructure:"max_files" default:"10000"`
-	MaxBytes int64 `mapstructure:"max_bytes" default:"100_000_000"`
+func decorateLogger(l zerolog.Logger) zerolog.Logger {
+	return l.With().Str("logger", "gitlab-webhook").Logger()
 }
