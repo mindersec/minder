@@ -39,10 +39,11 @@ type providerClassManager struct {
 }
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
-func NewGitLabProviderClassManager(crypteng crypto.Engine, store db.Store) *providerClassManager {
+func NewGitLabProviderClassManager(crypteng crypto.Engine, store db.Store, cfg *server.GitLabConfig) *providerClassManager {
 	return &providerClassManager{
 		store:    store,
 		crypteng: crypteng,
+		glpcfg:   cfg,
 	}
 }
 

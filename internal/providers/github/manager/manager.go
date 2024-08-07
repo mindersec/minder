@@ -382,7 +382,8 @@ func githubOauthConfig(redirectUrlBase string, cli bool) *oauth2.Config {
 	return &oauth2.Config{
 		RedirectURL: redirectUrl,
 		Scopes:      []string{"user:email", "repo", "read:packages", "write:packages", "workflow", "read:org"},
-		Endpoint:    github.Endpoint,
+		// TODO: This has to come from the provider config
+		Endpoint: github.Endpoint,
 	}
 }
 
@@ -390,7 +391,8 @@ func githubAppOauthConfig(redirectUrlBase string) *oauth2.Config {
 	return &oauth2.Config{
 		RedirectURL: redirectUrlBase,
 		Scopes:      []string{},
-		Endpoint:    github.Endpoint,
+		// TODO: This has to come from the provider config
+		Endpoint: github.Endpoint,
 	}
 }
 

@@ -19,7 +19,7 @@ import (
 	"fmt"
 
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/gitlab"
 
 	"github.com/stacklok/minder/internal/db"
 	m "github.com/stacklok/minder/internal/providers/manager"
@@ -27,7 +27,7 @@ import (
 )
 
 // NewOAuthConfig implements the providerClassOAuthManager interface
-func (g *providerClassManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
+func (g *providerClassManager) NewOAuthConfig(_ db.ProviderClass, cli bool) (*oauth2.Config, error) {
 	oauthClientConfig := &g.glpcfg.OAuthClientConfig
 	oauthConfig := getOauthConfig(oauthClientConfig.RedirectURI, cli, g.glpcfg.Scopes)
 
@@ -54,8 +54,8 @@ func (g *providerClassManager) NewOAuthConfig(providerClass db.ProviderClass, cl
 }
 
 // ValidateCredentials implements the providerClassOAuthManager interface
-func (g *providerClassManager) ValidateCredentials(
-	_ context.Context, cred provv1.Credential, params *m.CredentialVerifyParams,
+func (_ *providerClassManager) ValidateCredentials(
+	_ context.Context, cred provv1.Credential, _ *m.CredentialVerifyParams,
 ) error {
 	tokenCred, ok := cred.(provv1.OAuth2TokenCredential)
 	if !ok {
@@ -92,6 +92,7 @@ func getOauthConfig(redirectUrlBase string, cli bool, scopes []string) *oauth2.C
 	return &oauth2.Config{
 		RedirectURL: redirectUrl,
 		Scopes:      scopes,
-		Endpoint:    github.Endpoint,
+		// TODO: This should come from the provider config
+		Endpoint: gitlab.Endpoint,
 	}
 }

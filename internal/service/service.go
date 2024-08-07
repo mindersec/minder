@@ -139,6 +139,7 @@ func AllInOneServerService(
 	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
 		cryptoEngine,
 		store,
+		cfg.Provider.GitLab,
 	)
 	providerManager, err := manager.NewProviderManager(providerStore,
 		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
