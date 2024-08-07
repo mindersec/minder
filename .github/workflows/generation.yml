@@ -29,6 +29,8 @@ jobs:
       - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          push: false
+          archive: false
           pr_comment: false
           lint: true
           format: false
@@ -40,6 +42,8 @@ jobs:
       - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          push: false
+          archive: false
           pr_comment: false
           format: false
           breaking: true
