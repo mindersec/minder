@@ -462,6 +462,18 @@ func TestProviderCallback(t *testing.T) {
 			Return([]db.Provider{}, nil)
 	}
 
+	withValidOrgMemberships := func(service *mockprovsvc.MockGitHubProviderService) {
+		service.EXPECT().ValidateOrgMembershipForToken(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+	}
+
+	withInvalidOrgMemberships := func(service *mockprovsvc.MockGitHubProviderService) {
+		service.EXPECT().ValidateOrgMembershipForToken(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, nil)
+	}
+
+	orgMembershipWithFailure := func(service *mockprovsvc.MockGitHubProviderService) {
+		service.EXPECT().ValidateOrgMembershipForToken(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, errors.New("failed to validate org membership"))
+	}
+
 	testCases := []struct {
 		name                       string
 		redirectUrl                string
@@ -471,6 +483,7 @@ func TestProviderCallback(t *testing.T) {
 		projectIDBySessionNumCalls int
 		err                        string
 		config                     []byte
+		buildStubs                 func(service *mockprovsvc.MockGitHubProviderService)
 	}{{
 		name:                       "Success",
 		redirectUrl:                "http://localhost:8080",
@@ -478,7 +491,8 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderSearch(store)
 		},
-		code: 307,
+		code:       307,
+		buildStubs: withValidOrgMemberships,
 	}, {
 		name:                       "Success with remote user",
 		redirectUrl:                "http://localhost:8080",
@@ -487,7 +501,8 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderSearch(store)
 		},
-		code: 307,
+		code:       307,
+		buildStubs: withValidOrgMemberships,
 	}, {
 		name:                       "Wrong remote userid",
 		remoteUser:                 sql.NullString{Valid: true, String: "1234"},
@@ -497,6 +512,9 @@ func TestProviderCallback(t *testing.T) {
 		},
 		code: 403,
 		err:  "The provided login token was associated with a different user.\n",
+		buildStubs: func(_ *mockprovsvc.MockGitHubProviderService) {
+			// this codepath fails before the ghProviderService is called
+		},
 	}, {
 		name:        "No existing provider",
 		redirectUrl: "http://localhost:8080",
@@ -508,6 +526,7 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderCreate(store)
 		},
+		buildStubs: withValidOrgMemberships,
 	}, {
 		name:                       "Config does not validate",
 		redirectUrl:                "http://localhost:8080",
@@ -516,8 +535,28 @@ func TestProviderCallback(t *testing.T) {
 		storeMockSetup: func(store *mockdb.MockStore) {
 			withProviderNotFound(store)
 		},
-		config: []byte(`{`),
-		code:   http.StatusBadRequest,
+		config:     []byte(`{`),
+		code:       http.StatusBadRequest,
+		buildStubs: withValidOrgMemberships,
+	}, {
+		name:                       "Invalid ownerfilter returns useful error",
+		redirectUrl:                "http://localhost:8080",
+		projectIDBySessionNumCalls: 1,
+		storeMockSetup: func(_ *mockdb.MockStore) {
+			// this codepath fails before the store is called
+		},
+		code:       403,
+		err:        "You do not have access to the organization TestOwner, specified in the owner filter. Please ensure that you are a member of the GitHub organization and try again.\n",
+		buildStubs: withInvalidOrgMemberships,
+	}, {
+		name:                       "Other failures during ownerfilter returns generic error",
+		redirectUrl:                "http://localhost:8080",
+		projectIDBySessionNumCalls: 1,
+		storeMockSetup: func(_ *mockdb.MockStore) {
+			// this codepath fails before the store is called
+		},
+		code:       500,
+		buildStubs: orgMembershipWithFailure,
 	}}
 
 	for _, tt := range testCases {
@@ -572,7 +611,10 @@ func TestProviderCallback(t *testing.T) {
 			}
 			tc.storeMockSetup(store)
 
+			mockGhProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
+			tc.buildStubs(mockGhProviderService)
 			s, _ := newDefaultServer(t, store, clientFactory)
+			s.ghProviders = mockGhProviderService
 			s.cfg.Provider = serverconfig.ProviderConfig{
 				GitHub: &serverconfig.GitHubConfig{
 					OAuthClientConfig: serverconfig.OAuthClientConfig{
@@ -658,6 +700,7 @@ func TestProviderCallback(t *testing.T) {
 					},
 					RemoteUser:     tc.remoteUser,
 					ProviderConfig: tc.config,
+					OwnerFilter:    sql.NullString{String: "TestOwner", Valid: true},
 				}, nil).Times(tc.projectIDBySessionNumCalls)
 
 			if tc.code < http.StatusBadRequest {
