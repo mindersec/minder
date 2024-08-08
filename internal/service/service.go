@@ -109,7 +109,7 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig, cfg.Provider)
+	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub

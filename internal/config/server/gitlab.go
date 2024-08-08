@@ -21,7 +21,4 @@ type GitLabConfig struct {
 
 	// Scopes is the list of scopes to request from the GitLab OAuth provider
 	Scopes []string `mapstructure:"scopes"`
-
-	// WebhookURLSuffix is the suffix to append to the base URL for the webhook
-	WebhookURLSuffix string `mapstructure:"webhook_url_suffix" default:"gitlab"`
 }

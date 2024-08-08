@@ -18,7 +18,4 @@ package server
 // GitHubConfig is the configuration for the GitHub OAuth providers
 type GitHubConfig struct {
 	OAuthClientConfig `mapstructure:",squash"`
-
-	// WebhookURLSuffix is the suffix to append to the base URL for the webhook
-	WebhookURLSuffix string `mapstructure:"webhook_url_suffix" default:"github"`
 }
