@@ -41,6 +41,7 @@ import (
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -69,6 +70,15 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	providerClass := req.GetProviderClass()
 	if providerClass == "" {
 		providerClass = providerName
+	}
+
+	if providerClass == string(db.ProviderClassDockerhub) &&
+		!flags.Bool(ctx, s.featureFlags, flags.DockerHubProvider) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "DockerHub provider is not enabled")
+	}
+	if providerClass == string(db.ProviderClassGitlab) &&
+		!flags.Bool(ctx, s.featureFlags, flags.GitLabProvider) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "GitLab provider is not enabled")
 	}
 
 	// Telemetry logging
