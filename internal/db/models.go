@@ -735,11 +735,6 @@ type Subscription struct {
 	CurrentVersion string    `json:"current_version"`
 }
 
-type TempMigrateRuleEvaluation struct {
-	RuleEvaluationID   uuid.UUID     `json:"rule_evaluation_id"`
-	EvaluationStatusID uuid.NullUUID `json:"evaluation_status_id"`
-}
-
 type User struct {
 	ID              int32     `json:"id"`
 	IdentitySubject string    `json:"identity_subject"`

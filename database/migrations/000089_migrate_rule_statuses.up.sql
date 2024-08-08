@@ -115,4 +115,8 @@ UPDATE rule_evaluations
 SET migrated = TRUE
 WHERE id IN (SELECT rule_evaluation_id FROM temp_migrate_rule_evaluations);
 
+-- this is not strictly necessary, but if we don't do it - sqlc will generate
+-- a model for the temporary table :(
+DROP TABLE IF EXISTS temp_migrate_rule_evaluations;
+
 COMMIT;
