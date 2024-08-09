@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/alert"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
@@ -198,6 +199,15 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 					UpdatedAt: time.Now(),
 					Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
 					Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				},
+				ProfilesWithSelectors: []db.ProfileSelector{
+					{
+						Entity: db.NullEntities{
+							Valid:    true,
+							Entities: db.EntitiesRepository,
+						},
+						Selector: "repository.name == 'foo/test'",
+					},
 				},
 			},
 		}, nil)
@@ -370,13 +380,14 @@ default allow = true`,
 		historyService,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
-		mockSelectionBuilder,
+		selectors.NewEnv(),
 	)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{
+			Owner:    "foo",
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
