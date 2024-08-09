@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.4.0">
 <title data-rh="true">Protocol documentation | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://minder-docs.stacklok.dev/img/Stacklok_darkMode_b.png"><meta data-rh="true" name="twitter:image" content="https://minder-docs.stacklok.dev/img/Stacklok_darkMode_b.png"><meta data-rh="true" property="og:url" content="https://minder-docs.stacklok.dev/ref/proto"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Protocol documentation | Minder docs"><meta data-rh="true" name="description" content="minder/v1/minder.proto"><meta data-rh="true" property="og:description" content="minder/v1/minder.proto"><link data-rh="true" rel="icon" href="/img/stacklok-favicon.png"><link data-rh="true" rel="canonical" href="https://minder-docs.stacklok.dev/ref/proto"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/ref/proto" hreflang="en"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/ref/proto" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.8da17caa.css">
-<script src="/assets/js/runtime~main.59920e4e.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.c40acea8.js" defer="defer"></script>
 <script src="/assets/js/main.04229f46.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -262,6 +262,11 @@ GetEvaluationHistory RPC.</p>
 disable revive linting for this struct as there is nothing wrong with the
 naming convention</p>
 <table><thead><tr><th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody><tr><td>endpoint</td><td><a href="/ref/proto#string">string</a></td><td>optional</td><td>Endpoint is the GitHub API endpoint. If using the public GitHub API, Endpoint can be left blank.</td></tr></tbody></table>
+<h4 name="minder-v1-GitLabProviderConfig" class="anchor anchorWithStickyNavbar_LWe7" id="minder-v1-GitLabProviderConfig">GitLabProviderConfig<a class="hash-link" aria-label="Direct link to GitLabProviderConfig" title="Direct link to GitLabProviderConfig" href="/ref/proto#minder-v1-GitLabProviderConfig">​</a></h4>
+<p>GitLabProviderConfig contains the configuration for the GitLab provider.</p>
+<p>Endpoint: is the GitLab API endpoint</p>
+<p>If using the public GitLab API, Endpoint can be left blank</p>
+<table><thead><tr><th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody><tr><td>endpoint</td><td><a href="/ref/proto#string">string</a></td><td></td><td>Endpoint is the GitLab API endpoint. If using the public GitLab API, Endpoint can be left blank.</td></tr><tr><td>group</td><td><a href="/ref/proto#string">string</a></td><td></td><td>group is the GitLab group to use for the provider</td></tr></tbody></table>
 <h4 name="minder-v1-GitType" class="anchor anchorWithStickyNavbar_LWe7" id="minder-v1-GitType">GitType<a class="hash-link" aria-label="Direct link to GitType" title="Direct link to GitType" href="/ref/proto#minder-v1-GitType">​</a></h4>
 <p>GitType defines the git data ingester.</p>
 <table><thead><tr><th>Field</th><th>Type</th><th>Label</th><th>Description</th></tr></thead><tbody><tr><td>clone_url</td><td><a href="/ref/proto#string">string</a></td><td></td><td>clone_url is the url of the git repository.</td></tr><tr><td>branch</td><td><a href="/ref/proto#string">string</a></td><td></td><td>branch is the branch of the git repository.</td></tr></tbody></table>
