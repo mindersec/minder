@@ -20,6 +20,7 @@ type ProviderConfig struct {
 	GitHubApp *GitHubAppConfig `mapstructure:"github-app"`
 	GitHub    *GitHubConfig    `mapstructure:"github"`
 	Git       GitConfig        `mapstructure:"git"`
+	GitLab    *GitLabConfig    `mapstructure:"gitlab"`
 }
 
 // GitConfig provides server-side configuration for Git operations like "clone"

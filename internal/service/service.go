@@ -52,6 +52,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	gitlabmanager "github.com/stacklok/minder/internal/providers/gitlab/manager"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/session"
@@ -135,11 +136,17 @@ func AllInOneServerService(
 		cryptoEngine,
 		store,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
+		cryptoEngine,
+		store,
+		cfg.Provider.GitLab,
+	)
+	providerManager, err := manager.NewProviderManager(providerStore,
+		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
-	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}

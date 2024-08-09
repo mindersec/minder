@@ -247,6 +247,7 @@ const (
 	ProviderClassGithubApp ProviderClass = "github-app"
 	ProviderClassGhcr      ProviderClass = "ghcr"
 	ProviderClassDockerhub ProviderClass = "dockerhub"
+	ProviderClassGitlab    ProviderClass = "gitlab"
 )
 
 func (e *ProviderClass) Scan(src interface{}) error {

@@ -13,15 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flags
+package gitlab
 
-const (
-	// UserManagement enables user management, i.e. invitations, role assignments, etc.
-	UserManagement Experiment = "user_management"
-	// EvalHistory enables logging of evaluation history in the new tables.
-	EvalHistory Experiment = "eval_history"
-	// DockerHubProvider enables the DockerHub provider.
-	DockerHubProvider Experiment = "dockerhub_provider"
-	// GitLabProvider enables the GitLab provider.
-	GitLabProvider Experiment = "gitlab_provider"
+import (
+	"context"
+
+	"github.com/go-git/go-git/v5"
+
+	gitclient "github.com/stacklok/minder/internal/providers/git"
 )
+
+// Implements the Git interface
+func (c *gitlabClient) Clone(ctx context.Context, cloneUrl string, branch string) (*git.Repository, error) {
+	g := gitclient.NewGit(c.GetCredential(), gitclient.WithConfig(c.gitConfig))
+	return g.Clone(ctx, cloneUrl, branch)
+}

@@ -57,7 +57,9 @@ type webhookManager struct {
 
 // NewWebhookManager instantiates an instances of the WebhookManager interface
 func NewWebhookManager(webhookConfig server.WebhookConfig) WebhookManager {
-	return &webhookManager{webhookConfig: webhookConfig}
+	return &webhookManager{
+		webhookConfig: webhookConfig,
+	}
 }
 
 var (
@@ -79,7 +81,11 @@ func (w *webhookManager) CreateWebhook(
 	// generate unique URL for this webhook
 	baseURL := w.webhookConfig.ExternalWebhookURL
 	hookUUID := uuid.New().String()
-	webhookURL := fmt.Sprintf("%s/%s", baseURL, hookUUID)
+	webhookURL, err := url.JoinPath(baseURL, hookUUID)
+	if err != nil {
+		return "", nil, err
+	}
+
 	parsedWebhookURL, err := url.Parse(webhookURL)
 	if err != nil {
 		return "", nil, err
