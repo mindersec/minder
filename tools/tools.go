@@ -47,6 +47,7 @@ import (
 	_ "github.com/openfga/cli/cmd/fga"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
 	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
+	_ "go.uber.org/mock/mockgen"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"
 	_ "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
