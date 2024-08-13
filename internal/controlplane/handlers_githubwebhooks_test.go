@@ -343,10 +343,6 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 
 	<-evt.Running()
 
-	// mockStore.EXPECT().
-	// 	GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-	// 	Return(db.Repository{}, sql.ErrNoRows)
-
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 
 	event := github.PackageEvent{
@@ -1759,7 +1755,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				),
 			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
 			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
@@ -1851,7 +1847,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "repository",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#RepositoryEvent
 			payload: &github.RepositoryEvent{
-				Action: github.String("transferred"),
+				Action: github.String("created"),
 				Repo: &github.Repository{
 					ID:       github.Int64(12345),
 					Name:     github.String("minder"),

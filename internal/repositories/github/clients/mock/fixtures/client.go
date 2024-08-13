@@ -94,6 +94,15 @@ func WithNotFoundDeletion(mock ClientMock) {
 	stubDelete(mock, githubResp, ErrClientTest)
 }
 
+func WithForbiddenDeletion(mock ClientMock) {
+	githubResp := &github.Response{
+		Response: &http.Response{
+			StatusCode: http.StatusForbidden,
+		},
+	}
+	stubDelete(mock, githubResp, ErrClientTest)
+}
+
 func stubDelete(mock ClientMock, resp *github.Response, err error) {
 	mock.EXPECT().
 		DeleteHook(gomock.Any(), gomock.Eq(RepoOwner), gomock.Eq(RepoName), gomock.Eq(HookID)).

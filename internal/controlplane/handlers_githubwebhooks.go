@@ -74,11 +74,12 @@ func newErrNotHandled(smft string, args ...any) error {
 }
 
 const (
-	webhookActionEventDeleted   = "deleted"
-	webhookActionEventOpened    = "opened"
-	webhookActionEventReopened  = "reopened"
-	webhookActionEventClosed    = "closed"
-	webhookActionEventPublished = "published"
+	webhookActionEventDeleted     = "deleted"
+	webhookActionEventOpened      = "opened"
+	webhookActionEventReopened    = "reopened"
+	webhookActionEventClosed      = "closed"
+	webhookActionEventPublished   = "published"
+	webhookActionEventTransferred = "transferred"
 )
 
 // pingEvent are messages sent from GitHub to check the status of a
@@ -801,6 +802,9 @@ func (s *Server) processRelevantRepositoryEvent(
 
 	topic := events.TopicQueueEntityEvaluate
 	if event.GetAction() == webhookActionEventDeleted {
+		topic = events.TopicQueueReconcileEntityDelete
+	}
+	if event.GetAction() == webhookActionEventTransferred {
 		topic = events.TopicQueueReconcileEntityDelete
 	}
 
