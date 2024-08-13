@@ -230,6 +230,9 @@ type Querier interface {
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	TemporaryPopulateArtifacts(ctx context.Context) error
+	TemporaryPopulatePullRequests(ctx context.Context) error
+	TemporaryPopulateRepositories(ctx context.Context) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the
