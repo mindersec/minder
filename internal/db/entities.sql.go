@@ -99,6 +99,52 @@ func (q *Queries) CreateEntityWithID(ctx context.Context, arg CreateEntityWithID
 	return i, err
 }
 
+const createOrEnsureEntityByID = `-- name: CreateOrEnsureEntityByID :one
+
+INSERT INTO entity_instances (
+    id,
+    entity_type,
+    name,
+    project_id,
+    provider_id,
+    originated_from
+) VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (id) DO NOTHING
+RETURNING id, entity_type, name, project_id, provider_id, created_at, originated_from
+`
+
+type CreateOrEnsureEntityByIDParams struct {
+	ID             uuid.UUID     `json:"id"`
+	EntityType     Entities      `json:"entity_type"`
+	Name           string        `json:"name"`
+	ProjectID      uuid.UUID     `json:"project_id"`
+	ProviderID     uuid.UUID     `json:"provider_id"`
+	OriginatedFrom uuid.NullUUID `json:"originated_from"`
+}
+
+// CreateOrEnsureEntityByID adds an entry to the entity_instances table if it does not exist, or returns the existing entry.
+func (q *Queries) CreateOrEnsureEntityByID(ctx context.Context, arg CreateOrEnsureEntityByIDParams) (EntityInstance, error) {
+	row := q.db.QueryRowContext(ctx, createOrEnsureEntityByID,
+		arg.ID,
+		arg.EntityType,
+		arg.Name,
+		arg.ProjectID,
+		arg.ProviderID,
+		arg.OriginatedFrom,
+	)
+	var i EntityInstance
+	err := row.Scan(
+		&i.ID,
+		&i.EntityType,
+		&i.Name,
+		&i.ProjectID,
+		&i.ProviderID,
+		&i.CreatedAt,
+		&i.OriginatedFrom,
+	)
+	return i, err
+}
+
 const deleteEntity = `-- name: DeleteEntity :exec
 
 DELETE FROM entity_instances
@@ -113,6 +159,23 @@ type DeleteEntityParams struct {
 // DeleteEntity removes an entity from the entity_instances table for a project.
 func (q *Queries) DeleteEntity(ctx context.Context, arg DeleteEntityParams) error {
 	_, err := q.db.ExecContext(ctx, deleteEntity, arg.ID, arg.ProjectID)
+	return err
+}
+
+const deleteEntityByName = `-- name: DeleteEntityByName :exec
+
+DELETE FROM entity_instances
+WHERE name = $2 AND project_id = $1
+`
+
+type DeleteEntityByNameParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
+}
+
+// DeleteEntityByName removes an entity from the entity_instances table for a project.
+func (q *Queries) DeleteEntityByName(ctx context.Context, arg DeleteEntityByNameParams) error {
+	_, err := q.db.ExecContext(ctx, deleteEntityByName, arg.ProjectID, arg.Name)
 	return err
 }
 

@@ -1438,22 +1438,60 @@ func (s *Server) reconcilePrWithDb(
 	// published, see here
 	// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
 	case webhookActionEventOpened, webhookActionEventReopened:
-		dbPr, err := s.store.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
-			RepositoryID: dbrepo.ID,
-			PrNumber:     prEvalInfo.Number,
+		var err error
+		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
+			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
+				RepositoryID: dbrepo.ID,
+				PrNumber:     prEvalInfo.Number,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+				ID:         dbPr.ID,
+				EntityType: db.EntitiesPullRequest,
+				Name:       pullRequestName(dbrepo.RepoOwner, dbrepo.RepoName, prEvalInfo.Number),
+				ProjectID:  dbrepo.ProjectID,
+				ProviderID: dbrepo.ProviderID,
+				OriginatedFrom: uuid.NullUUID{
+					UUID:  dbrepo.ID,
+					Valid: true,
+				},
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return &dbPr, nil
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
 				"cannot upsert PR %d in repo %s/%s",
 				prEvalInfo.Number, dbrepo.RepoOwner, dbrepo.RepoName)
 		}
-		retPr = &dbPr
 		retErr = nil
 	case webhookActionEventClosed:
-		err := s.store.DeletePullRequest(ctx, db.DeletePullRequestParams{
-			RepositoryID: dbrepo.ID,
-			PrNumber:     prEvalInfo.Number,
+		_, err := db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
+			err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
+				RepositoryID: dbrepo.ID,
+				PrNumber:     prEvalInfo.Number,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			err = t.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
+				Name:      pullRequestName(dbrepo.RepoOwner, dbrepo.RepoName, prEvalInfo.Number),
+				ProjectID: dbrepo.ProjectID,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, nil
 		})
+
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("cannot delete PR record %d in repo %s/%s",
 				prEvalInfo.Number, dbrepo.RepoOwner, dbrepo.RepoName)
@@ -1484,4 +1522,8 @@ func updatePullRequestInfoFromProvider(
 	prEvalInfo.RepoOwner = dbrepo.RepoOwner
 	prEvalInfo.RepoName = dbrepo.RepoName
 	return nil
+}
+
+func pullRequestName(owner, name string, number int64) string {
+	return fmt.Sprintf("%s/%s/%d", owner, name, number)
 }
