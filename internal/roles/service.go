@@ -130,7 +130,7 @@ func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, 
 		if a.Subject == identity.String() {
 			roleToDelete, err := authz.ParseRole(a.Role)
 			if err != nil {
-				return nil, util.UserVisibleError(codes.Internal, err.Error())
+				return nil, util.UserVisibleError(codes.Internal, "%s", err.Error())
 			}
 			if err := authzClient.Delete(ctx, identity.String(), roleToDelete, targetProject); err != nil {
 				return nil, status.Errorf(codes.Internal, "error deleting previous role assignment: %v", err)
