@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 )
 
@@ -109,6 +110,21 @@ var upCmd = &cobra.Command{
 
 		if err := authzw.PrepareForRun(ctx); err != nil {
 			return fmt.Errorf("error preparing authz client: %w", err)
+		}
+
+		cmd.Println("Performing entity migrations...")
+		store := db.NewStore(dbConn)
+
+		if err := store.TemporaryPopulateRepositories(ctx); err != nil {
+			cmd.Printf("Error while populating entities table with repos: %v\n", err)
+		}
+
+		if err := store.TemporaryPopulateArtifacts(ctx); err != nil {
+			cmd.Printf("Error while populating entities table with artifacts: %v\n", err)
+		}
+
+		if err := store.TemporaryPopulatePullRequests(ctx); err != nil {
+			cmd.Printf("Error while populating entities table with pull requests: %v\n", err)
 		}
 
 		return nil

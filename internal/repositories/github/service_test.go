@@ -501,15 +501,25 @@ func withSuccessfulGetByName(mock dbMock) {
 }
 
 func withFailedCreate(mock dbMock) {
+	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
+	mock.EXPECT().BeginTransaction().Return(nil, nil)
 	mock.EXPECT().
 		CreateRepository(gomock.Any(), gomock.Any()).
 		Return(db.Repository{}, errDefault)
+	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
 }
 
 func withSuccessfulCreate(mock dbMock) {
+	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
+	mock.EXPECT().BeginTransaction().Return(nil, nil)
 	mock.EXPECT().
 		CreateRepository(gomock.Any(), gomock.Any()).
 		Return(dbRepo, nil)
+	mock.EXPECT().
+		CreateEntityWithID(gomock.Any(), gomock.Any()).
+		Return(db.EntityInstance{}, nil)
+	mock.EXPECT().Commit(gomock.Any()).Return(nil)
+	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
 }
 
 func withPrivateReposEnabled(mock dbMock) {
