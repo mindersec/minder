@@ -19,6 +19,7 @@ import (
 	authn "github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	github "github.com/google/go-github/v63/github"
+	properties "github.com/stacklok/minder/internal/entities/properties"
 	v10 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v11 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
@@ -1186,4 +1187,71 @@ func (m *MockOCI) ListTags(ctx context.Context, name string) ([]string, error) {
 func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockOCI)(nil).ListTags), ctx, name)
+}
+
+// MockPropertiesFetcher is a mock of PropertiesFetcher interface.
+type MockPropertiesFetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockPropertiesFetcherMockRecorder
+}
+
+// MockPropertiesFetcherMockRecorder is the mock recorder for MockPropertiesFetcher.
+type MockPropertiesFetcherMockRecorder struct {
+	mock *MockPropertiesFetcher
+}
+
+// NewMockPropertiesFetcher creates a new mock instance.
+func NewMockPropertiesFetcher(ctrl *gomock.Controller) *MockPropertiesFetcher {
+	mock := &MockPropertiesFetcher{ctrl: ctrl}
+	mock.recorder = &MockPropertiesFetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPropertiesFetcher) EXPECT() *MockPropertiesFetcherMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockPropertiesFetcher) CanImplement(trait v10.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockPropertiesFetcherMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockPropertiesFetcher)(nil).CanImplement), trait)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockPropertiesFetcher) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockPropertiesFetcherMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockPropertiesFetcher)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockPropertiesFetcher) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockPropertiesFetcherMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockPropertiesFetcher)(nil).FetchProperty), ctx, name, entType, key)
 }
