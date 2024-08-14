@@ -256,7 +256,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			},
 			rpcErr: util.UserVisibleError(
 				codes.PermissionDenied,
-				fmt.Sprintf("user %q is not authorized to perform this operation on project %q", "subject1", projectID)),
+				"user %q is not authorized to perform this operation on project %q", "subject1", projectID),
 		},
 		{
 			name:     "authorized on project",
