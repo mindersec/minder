@@ -58,7 +58,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	if len(vulnerablePackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed(fmt.Sprintf("vulnerable packages: %s", strings.Join(vulnerablePackages, ",")))
+		return evalerrors.NewErrEvaluationFailed("vulnerable packages: %s", strings.Join(vulnerablePackages, ","))
 	}
 
 	return nil
