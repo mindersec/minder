@@ -25,6 +25,8 @@ import (
 	"github.com/docker/cli/templates"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+
+	"github.com/stacklok/minder/internal/authz"
 )
 
 const (
@@ -82,6 +84,7 @@ func getEmailBodyHTML(ctx context.Context, inviteURL, minderURL, sponsor, projec
 		PrivacyURL       string
 		SignInURL        string
 		RoleName         string
+		RoleVerb         string
 	}{
 		AdminName:        sponsor,
 		OrganizationName: project,
@@ -92,6 +95,7 @@ func getEmailBodyHTML(ctx context.Context, inviteURL, minderURL, sponsor, projec
 		PrivacyURL:       DefaultMinderPrivacyURL,
 		SignInURL:        minderURL,
 		RoleName:         role,
+		RoleVerb:         authz.AllRolesVerbs[authz.Role(role)],
 	}
 
 	// TODO: Load the email template from elsewhere
@@ -113,7 +117,7 @@ func getEmailBodyHTML(ctx context.Context, inviteURL, minderURL, sponsor, projec
 
 // getEmailBodyText returns the text body for the email based on the message payload
 func getEmailBodyText(inviteURL, sponsor, project, role string) string {
-	return fmt.Sprintf("You have been invited to join %s as a %s by %s. Visit %s to accept the invitation.",
+	return fmt.Sprintf("You have been invited to join %s as %s by %s. Visit %s to accept the invitation.",
 		project, role, sponsor, inviteURL)
 }
 
