@@ -114,7 +114,9 @@ func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud str
 	}, nil
 }
 
-var userTokenContextKey struct{}
+type userTokenContextKeyType struct{}
+
+var userTokenContextKey userTokenContextKeyType
 
 // GetUserSubjectFromContext returns the user subject from the context, or nil
 func GetUserSubjectFromContext(ctx context.Context) string {
