@@ -84,7 +84,7 @@ func (s *Server) RegisterRepository(
 	newRepo, err := s.repos.CreateRepository(ctx, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
 	if err != nil {
 		if errors.Is(err, ghrepo.ErrPrivateRepoForbidden) || errors.Is(err, ghrepo.ErrArchivedRepoForbidden) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+			return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 		}
 		return nil, util.UserVisibleError(codes.Internal, "unable to register repository: %v", err)
 	}
@@ -115,7 +115,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 	}
 
 	repoId := sql.NullInt64{}

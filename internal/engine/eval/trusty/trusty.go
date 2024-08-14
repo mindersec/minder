@@ -216,7 +216,7 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	}
 
 	if failedEvalMsg != "" {
-		return evalerrors.NewErrEvaluationFailed(failedEvalMsg)
+		return evalerrors.NewErrEvaluationFailed("%s", failedEvalMsg)
 	}
 
 	return nil
