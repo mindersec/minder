@@ -299,7 +299,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
 	} else if errors.As(err, &errConfig) {
 		return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
-			"The provider configuration is invalid: " + errConfig.Details)
+			"The provider configuration is invalid: %s", errConfig.Details)
 	} else if err != nil {
 		return fmt.Errorf("error creating provider: %w", err)
 	}
@@ -376,7 +376,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		if err != nil {
 			if errors.As(err, &confErr) {
 				return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
-					"The provider configuration is invalid: " + confErr.Details)
+					"The provider configuration is invalid: %s", confErr.Details)
 			}
 			if errors.Is(err, service.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(

@@ -246,5 +246,5 @@ func (jrb *jsonResultBuilder) formatResults() error {
 		return fmt.Errorf("failed to marshal violations: %w", err)
 	}
 
-	return engerrors.NewErrEvaluationFailed(string(jsonArray))
+	return engerrors.NewErrEvaluationFailed("%s", string(jsonArray))
 }
