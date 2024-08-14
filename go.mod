@@ -43,7 +43,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.38
 	github.com/open-policy-agent/opa v0.67.1
 	github.com/openfga/go-sdk v0.5.0
-	github.com/openfga/openfga v1.5.8
+	github.com/openfga/openfga v1.5.9
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.19.1
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
