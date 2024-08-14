@@ -327,9 +327,24 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 		}
 	}
 
-	// then remove the entry in the DB
-	if err = r.store.DeleteRepository(ctx, repo.ID); err != nil {
-		return fmt.Errorf("error deleting repository from DB: %w", err)
+	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
+		// then remove the entry in the DB
+		if err := t.DeleteRepository(ctx, repo.ID); err != nil {
+			return nil, fmt.Errorf("error deleting repository from DB: %w", err)
+		}
+
+		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
+			ID:        repo.ID,
+			ProjectID: repo.ProjectID,
+		}); err != nil {
+			return nil, fmt.Errorf("error deleting entity from DB: %w", err)
+		}
+
+		return nil, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error deleting repository: %w", err)
 	}
 
 	return nil
@@ -360,49 +375,68 @@ func (r *repositoryService) persistRepository(
 	projectID uuid.UUID,
 	provider *db.Provider,
 ) (uuid.UUID, *pb.Repository, error) {
-	// instantiate the response object
-	pbRepo := &pb.Repository{
-		Name:          githubRepo.GetName(),
-		Owner:         githubRepo.GetOwner().GetLogin(),
-		RepoId:        githubRepo.GetID(),
-		HookId:        githubHook.GetID(),
-		HookUrl:       githubHook.GetURL(),
-		DeployUrl:     githubRepo.GetDeploymentsURL(),
-		CloneUrl:      githubRepo.GetCloneURL(),
-		HookType:      githubHook.GetType(),
-		HookName:      githubHook.GetName(),
-		HookUuid:      hookUUID,
-		IsPrivate:     githubRepo.GetPrivate(),
-		IsFork:        githubRepo.GetFork(),
-		DefaultBranch: githubRepo.GetDefaultBranch(),
-	}
+	var outid uuid.UUID
+	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
+		// instantiate the response object
+		pbRepo := &pb.Repository{
+			Name:          githubRepo.GetName(),
+			Owner:         githubRepo.GetOwner().GetLogin(),
+			RepoId:        githubRepo.GetID(),
+			HookId:        githubHook.GetID(),
+			HookUrl:       githubHook.GetURL(),
+			DeployUrl:     githubRepo.GetDeploymentsURL(),
+			CloneUrl:      githubRepo.GetCloneURL(),
+			HookType:      githubHook.GetType(),
+			HookName:      githubHook.GetName(),
+			HookUuid:      hookUUID,
+			IsPrivate:     githubRepo.GetPrivate(),
+			IsFork:        githubRepo.GetFork(),
+			DefaultBranch: githubRepo.GetDefaultBranch(),
+		}
 
-	// update the database
-	dbRepo, err := r.store.CreateRepository(ctx, db.CreateRepositoryParams{
-		Provider:   provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-		RepoOwner:  pbRepo.Owner,
-		RepoName:   pbRepo.Name,
-		RepoID:     pbRepo.RepoId,
-		IsPrivate:  pbRepo.IsPrivate,
-		IsFork:     pbRepo.IsFork,
-		WebhookID: sql.NullInt64{
-			Int64: pbRepo.HookId,
-			Valid: true,
-		},
-		CloneUrl:   pbRepo.CloneUrl,
-		WebhookUrl: pbRepo.HookUrl,
-		DeployUrl:  pbRepo.DeployUrl,
-		DefaultBranch: sql.NullString{
-			String: pbRepo.DefaultBranch,
-			Valid:  true,
-		},
+		// update the database
+		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
+			Provider:   provider.Name,
+			ProviderID: provider.ID,
+			ProjectID:  projectID,
+			RepoOwner:  pbRepo.Owner,
+			RepoName:   pbRepo.Name,
+			RepoID:     pbRepo.RepoId,
+			IsPrivate:  pbRepo.IsPrivate,
+			IsFork:     pbRepo.IsFork,
+			WebhookID: sql.NullInt64{
+				Int64: pbRepo.HookId,
+				Valid: true,
+			},
+			CloneUrl:   pbRepo.CloneUrl,
+			WebhookUrl: pbRepo.HookUrl,
+			DeployUrl:  pbRepo.DeployUrl,
+			DefaultBranch: sql.NullString{
+				String: pbRepo.DefaultBranch,
+				Valid:  true,
+			},
+		})
+		if err != nil {
+			return pbRepo, err
+		}
+
+		outid = dbRepo.ID
+		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
+
+		// TODO: Replace with CreateEntity call
+		_, err = t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+			ID:         dbRepo.ID,
+			EntityType: db.EntitiesRepository,
+			Name:       fmt.Sprintf("%s/%s", pbRepo.Owner, pbRepo.Name),
+			ProjectID:  projectID,
+			ProviderID: provider.ID,
+		})
+
+		return pbRepo, err
 	})
 	if err != nil {
 		return uuid.Nil, nil, err
 	}
 
-	pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
-	return dbRepo.ID, pbRepo, nil
+	return outid, pbr, nil
 }

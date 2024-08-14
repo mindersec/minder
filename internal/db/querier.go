@@ -18,6 +18,10 @@ type Querier interface {
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
+	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
+	// CreateEntityWithID adds an entry to the entities table with a specific ID so it can be tracked by Minder.
+	CreateEntityWithID(ctx context.Context, arg CreateEntityWithIDParams) (EntityInstance, error)
 	// CreateInvitation creates a new invitation. The code is a secret that is sent
 	// to the invitee, and the email is the address to which the invitation will be
 	// sent. The role is the role that the invitee will have when they accept the
@@ -38,6 +42,8 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	// DeleteEntity removes an entity from the entity_instances table for a project.
+	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
@@ -71,6 +77,11 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
+	// this is how one would get all repositories, artifacts, etc.
+	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
+	// GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
+	GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
@@ -219,6 +230,9 @@ type Querier interface {
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	TemporaryPopulateArtifacts(ctx context.Context) error
+	TemporaryPopulatePullRequests(ctx context.Context) error
+	TemporaryPopulateRepositories(ctx context.Context) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the

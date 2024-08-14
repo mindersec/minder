@@ -315,7 +315,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 	}
 
 	// Ensure the target project exists
@@ -377,7 +377,7 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 	}
 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
@@ -433,7 +433,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	// Parse role (this also validates)
 	authzRole, err := authz.ParseRole(role)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, err.Error())
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 	}
 
 	// Validate the subject and email - decide if it's about updating an invitation or a role assignment

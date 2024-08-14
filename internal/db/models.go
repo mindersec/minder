@@ -469,6 +469,16 @@ type EntityExecutionLock struct {
 	ProjectID     uuid.NullUUID `json:"project_id"`
 }
 
+type EntityInstance struct {
+	ID             uuid.UUID     `json:"id"`
+	EntityType     Entities      `json:"entity_type"`
+	Name           string        `json:"name"`
+	ProjectID      uuid.UUID     `json:"project_id"`
+	ProviderID     uuid.UUID     `json:"provider_id"`
+	CreatedAt      time.Time     `json:"created_at"`
+	OriginatedFrom uuid.NullUUID `json:"originated_from"`
+}
+
 type EntityProfile struct {
 	ID              uuid.UUID       `json:"id"`
 	Entity          Entities        `json:"entity"`
@@ -568,6 +578,14 @@ type Project struct {
 	ParentID       uuid.NullUUID   `json:"parent_id"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
+}
+
+type Property struct {
+	ID        uuid.UUID       `json:"id"`
+	EntityID  uuid.UUID       `json:"entity_id"`
+	Key       string          `json:"key"`
+	Value     json.RawMessage `json:"value"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 type Provider struct {

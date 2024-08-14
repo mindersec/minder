@@ -71,7 +71,7 @@ func (s *Server) CreateProvider(
 		return nil, util.UserVisibleError(codes.AlreadyExists, "provider already exists")
 	} else if errors.As(err, &configErr) {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("provider config does not validate")
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider config: "+configErr.Details)
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid provider config: %s", configErr.Details)
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating provider: %v", err)
 	}
