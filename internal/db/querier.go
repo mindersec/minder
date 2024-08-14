@@ -28,6 +28,8 @@ type Querier interface {
 	// invitation. The project is the project to which the invitee will be invited.
 	// The sponsor is the user who is inviting the invitee.
 	CreateInvitation(ctx context.Context, arg CreateInvitationParams) (UserInvite, error)
+	// CreateOrEnsureEntityByID adds an entry to the entity_instances table if it does not exist, or returns the existing entry.
+	CreateOrEnsureEntityByID(ctx context.Context, arg CreateOrEnsureEntityByIDParams) (EntityInstance, error)
 	CreateProfile(ctx context.Context, arg CreateProfileParams) (Profile, error)
 	CreateProfileForEntity(ctx context.Context, arg CreateProfileForEntityParams) (EntityProfile, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
@@ -44,6 +46,8 @@ type Querier interface {
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
+	// DeleteEntityByName removes an entity from the entity_instances table for a project.
+	DeleteEntityByName(ctx context.Context, arg DeleteEntityByNameParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error

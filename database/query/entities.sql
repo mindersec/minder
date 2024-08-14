@@ -23,11 +23,32 @@ INSERT INTO entity_instances (
 ) VALUES ($1, $2, $3, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.narg(originated_from))
 RETURNING *;
 
+
+-- CreateOrEnsureEntityByID adds an entry to the entity_instances table if it does not exist, or returns the existing entry.
+
+-- name: CreateOrEnsureEntityByID :one
+INSERT INTO entity_instances (
+    id,
+    entity_type,
+    name,
+    project_id,
+    provider_id,
+    originated_from
+) VALUES ($1, $2, $3, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.narg(originated_from))
+ON CONFLICT (id) DO NOTHING
+RETURNING *;
+
 -- DeleteEntity removes an entity from the entity_instances table for a project.
 
 -- name: DeleteEntity :exec
 DELETE FROM entity_instances
 WHERE id = $1 AND project_id = $2;
+
+-- DeleteEntityByName removes an entity from the entity_instances table for a project.
+
+-- name: DeleteEntityByName :exec
+DELETE FROM entity_instances
+WHERE name = sqlc.arg(name) AND project_id = $1;
 
 -- GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
 

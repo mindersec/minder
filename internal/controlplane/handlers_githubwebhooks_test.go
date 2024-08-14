@@ -3041,6 +3041,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				df.WithSuccessfulUpsertPullRequest(
 					db.PullRequest{},
 				),
+				df.WithTransaction(),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -3092,6 +3093,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				),
 				df.WithSuccessfulDeletePullRequest(),
+				df.WithTransaction(),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
