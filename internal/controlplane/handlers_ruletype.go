@@ -245,7 +245,7 @@ func (s *Server) DeleteRuleType(
 	if err == nil {
 		if len(profiles) > 0 {
 			return nil, util.UserVisibleError(codes.FailedPrecondition,
-				fmt.Sprintf("cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", ")))
+				"cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", "))
 		}
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		// If we failed for another reason, return an error

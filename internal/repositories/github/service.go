@@ -327,9 +327,24 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 		}
 	}
 
-	// then remove the entry in the DB
-	if err = r.store.DeleteRepository(ctx, repo.ID); err != nil {
-		return fmt.Errorf("error deleting repository from DB: %w", err)
+	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
+		// then remove the entry in the DB
+		if err := t.DeleteRepository(ctx, repo.ID); err != nil {
+			return nil, fmt.Errorf("error deleting repository from DB: %w", err)
+		}
+
+		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
+			ID:        repo.ID,
+			ProjectID: repo.ProjectID,
+		}); err != nil {
+			return nil, fmt.Errorf("error deleting entity from DB: %w", err)
+		}
+
+		return nil, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error deleting repository: %w", err)
 	}
 
 	return nil
