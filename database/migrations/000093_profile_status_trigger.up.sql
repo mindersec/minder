@@ -31,7 +31,7 @@ DECLARE
     v_other_skipped boolean;
     v_pending boolean;
 BEGIN
-  -- Fetch the profile_id for the new evaluation status
+  -- Fetch the status for the latest evaluation
   SELECT es.status INTO v_new_status
   FROM latest_evaluation_statuses AS les
   JOIN evaluation_statuses AS es ON es.id = les.evaluation_history_id
