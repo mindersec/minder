@@ -38,10 +38,6 @@ BEGIN
   WHERE les.profile_id = NEW.profile_id
   AND les.rule_entity_id = NEW.rule_entity_id;
 
-  IF v_new_status IS NULL THEN
-      RAISE EXCEPTION 'oh no';
-  end if;
-
   -- The next five statements calculate whether there are, for this
   -- profile, any rules in evaluations in status 'error', 'failure',
   -- 'success', and 'skipped', respectively. This allows to write the
