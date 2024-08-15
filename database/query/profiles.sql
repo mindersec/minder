@@ -52,7 +52,7 @@ WITH helper AS(
            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
     FROM profiles pr
              JOIN profile_selectors ps
-                  ON pr.id = ps.profile_id
+             ON pr.id = ps.profile_id
     WHERE pr.project_id = $1
     GROUP BY pr.id
 )
@@ -66,22 +66,31 @@ LEFT JOIN helper ON profiles.id = helper.profid
 WHERE profiles.project_id = $1 AND profiles.id = $2;
 
 -- name: GetProfileByProjectAndName :many
-WITH helper AS(
+WITH selector_helper AS(
     SELECT pr.id as profid,
            ARRAY_AGG(ROW(ps.id, ps.profile_id, ps.entity, ps.selector, ps.comment)::profile_selector) AS selectors
     FROM profiles pr
-             JOIN profile_selectors ps
-                  ON pr.id = ps.profile_id
+         JOIN profile_selectors ps
+         ON pr.id = ps.profile_id
+    WHERE pr.project_id = $1
+    GROUP BY pr.id
+)
+WITH rule_helper AS(
+    SELECT pr.id as profid,
+           ARRAY_AGG(ROW(ri.*)::rule_instance) AS rule_instances
+    FROM profiles pr
+             JOIN rule_instances ri
+             ON pr.id = ri.profile_id
     WHERE pr.project_id = $1
     GROUP BY pr.id
 )
 SELECT
     sqlc.embed(profiles),
-    sqlc.embed(profiles_with_entity_profiles),
-    helper.selectors::profile_selector[] AS profiles_with_selectors
+    selector_helper.selectors::profile_selector[] AS profiles_with_selectors,
+    rule_helper.rule_instances::rule_instance[] AS profiles_with_rule_instances
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
-LEFT JOIN helper ON profiles.id = helper.profid
+LEFT JOIN selector_helper ON profiles.id = selector_helper.profid
 WHERE profiles.project_id = $1 AND lower(profiles.name) = lower(sqlc.arg(name));
 
 -- name: GetProfileByID :one
