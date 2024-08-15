@@ -35,7 +35,9 @@ INSERT INTO entity_instances (
     provider_id,
     originated_from
 ) VALUES ($1, $2, $3, sqlc.arg(project_id), sqlc.arg(provider_id), sqlc.narg(originated_from))
-ON CONFLICT (id) DO NOTHING
+ON CONFLICT (id) DO UPDATE
+SET
+    id = entity_instances.id  -- This is a "noop" update to ensure the RETURNING clause works
 RETURNING *;
 
 -- DeleteEntity removes an entity from the entity_instances table for a project.

@@ -109,7 +109,9 @@ INSERT INTO entity_instances (
     provider_id,
     originated_from
 ) VALUES ($1, $2, $3, $4, $5, $6)
-ON CONFLICT (id) DO NOTHING
+ON CONFLICT (id) DO UPDATE
+SET
+    id = entity_instances.id  -- This is a "noop" update to ensure the RETURNING clause works
 RETURNING id, entity_type, name, project_id, provider_id, created_at, originated_from
 `
 
