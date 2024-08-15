@@ -659,6 +659,7 @@ func (_ *Server) processPingEvent(
 	l.Debug().Msg("ping received")
 }
 
+//nolint:gocyclo // This function will be re-simplified later on
 func (s *Server) processPackageEvent(
 	ctx context.Context,
 	payload []byte,
@@ -710,33 +711,70 @@ func (s *Server) processPackageEvent(
 		return nil, fmt.Errorf("error gathering versioned artifact: %w", err)
 	}
 
-	dbArtifact, err := s.store.UpsertArtifact(ctx, db.UpsertArtifactParams{
-		RepositoryID: uuid.NullUUID{
-			UUID:  dbrepo.ID,
-			Valid: true,
-		},
-		ArtifactName:       tempArtifact.GetName(),
-		ArtifactType:       tempArtifact.GetTypeLower(),
-		ArtifactVisibility: tempArtifact.Visibility,
-		ProjectID:          dbrepo.ProjectID,
-		ProviderID:         dbrepo.ProviderID,
-		ProviderName:       dbrepo.Provider,
+	var artifactID uuid.UUID
+	pbArtifact, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*pb.Artifact, error) {
+		dbArtifact, err := tx.UpsertArtifact(ctx, db.UpsertArtifactParams{
+			RepositoryID: uuid.NullUUID{
+				UUID:  dbrepo.ID,
+				Valid: true,
+			},
+			ArtifactName:       tempArtifact.GetName(),
+			ArtifactType:       tempArtifact.GetTypeLower(),
+			ArtifactVisibility: tempArtifact.Visibility,
+			ProjectID:          dbrepo.ProjectID,
+			ProviderID:         dbrepo.ProviderID,
+			ProviderName:       dbrepo.Provider,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error upserting artifact: %w", err)
+		}
+
+		_, pba, err := artifacts.GetArtifact(ctx, tx, dbrepo.ProjectID, dbArtifact.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting artifact with versions: %w", err)
+		}
+		// TODO: wrap in a function
+		pba.Versions = tempArtifact.Versions
+
+		artifactID = dbArtifact.ID
+
+		// name is provider specific and should be based on properties.
+		// In github's case it's lowercase owner / artifact name
+		// TODO: Replace with a provider call to get
+		// a name based on properties.
+		var prefix string
+		if tempArtifact.GetOwner() != "" {
+			prefix = tempArtifact.GetOwner() + "/"
+		}
+
+		// At this point the package name has been checked.
+		artName := prefix + *event.Package.Name
+
+		_, err = tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+			ID:         dbArtifact.ID,
+			EntityType: db.EntitiesArtifact,
+			Name:       artName,
+			ProjectID:  dbrepo.ProjectID,
+			ProviderID: dbrepo.ProviderID,
+			OriginatedFrom: uuid.NullUUID{
+				UUID:  dbrepo.ID,
+				Valid: true,
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating or ensuring entity: %w", err)
+		}
+
+		return pba, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error upserting artifact: %w", err)
+		return nil, err
 	}
-
-	_, pbArtifact, err := artifacts.GetArtifact(ctx, s.store, dbrepo.ProjectID, dbArtifact.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
-	}
-	// TODO: wrap in a function
-	pbArtifact.Versions = tempArtifact.Versions
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(*event.Action).
 		WithArtifact(pbArtifact).
-		WithArtifactID(dbArtifact.ID).
+		WithArtifactID(artifactID).
 		WithProjectID(dbrepo.ProjectID).
 		WithProviderID(dbrepo.ProviderID).
 		WithRepositoryID(dbrepo.ID)

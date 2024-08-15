@@ -158,6 +158,9 @@ func WithSuccessfulUpsertArtifact(
 		mockStore.EXPECT().
 			UpsertArtifact(gomock.Any(), gomock.Any()).
 			Return(artifact, nil)
+		mockStore.EXPECT().
+			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
+			Return(db.EntityInstance{}, nil)
 	}
 }
 
