@@ -575,13 +575,16 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	entityInfo := map[string]string{}
 	remediationURL := ""
 	if eval.EntityType == db.EntitiesRepository {
-		entityInfo["provider"] = eval.Provider
-		entityInfo["repo_owner"] = eval.RepoOwner
-		entityInfo["repo_name"] = eval.RepoName
+		if !eval.Provider.Valid || !eval.RepoOwner.Valid || !eval.RepoName.Valid || eval.RepositoryID.Valid {
+			return nil, errors.New("repo is missing expected fields")
+		}
+		entityInfo["provider"] = eval.Provider.String
+		entityInfo["repo_owner"] = eval.RepoOwner.String
+		entityInfo["repo_name"] = eval.RepoName.String
 		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
 
 		remediationURL, err = getRemediationURLFromMetadata(
-			eval.RemMetadata, fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName),
+			eval.RemMetadata, fmt.Sprintf("%s/%s", eval.RepoOwner.String, eval.RepoName.String),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
@@ -621,7 +624,7 @@ func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minde
 		Type: dbEntityToEntity(eval.EntityType),
 	}
 
-	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES && eval.RepoOwner != "" && eval.RepoName != "" {
+	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES && eval.RepoOwner.String != "" && eval.RepoName.String != "" {
 		ent.Id = eval.RepositoryID.UUID.String()
 	}
 	return ent
@@ -662,8 +665,8 @@ func buildEvalResultAlertFromLRERow(eval *db.ListRuleEvaluationsByProfileIdRow) 
 
 	if eval.AlertStatus == db.AlertStatusTypesOn {
 		repoSlug := ""
-		if eval.RepoOwner != "" && eval.RepoName != "" {
-			repoSlug = fmt.Sprintf("%s/%s", eval.RepoOwner, eval.RepoName)
+		if eval.RepoOwner.String != "" && eval.RepoName.String != "" {
+			repoSlug = fmt.Sprintf("%s/%s", eval.RepoOwner.String, eval.RepoName.String)
 		}
 		urlString, err := getAlertURLFromMetadata(
 			eval.AlertMetadata, repoSlug,

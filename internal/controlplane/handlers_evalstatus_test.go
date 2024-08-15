@@ -43,8 +43,14 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				RepoOwner:        "example",
-				RepoName:         "test",
+				RepoOwner: sql.NullString{
+					String: "example",
+					Valid:  true,
+				},
+				RepoName: sql.NullString{
+					String: "test",
+					Valid:  true,
+				},
 			},
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
@@ -74,8 +80,14 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				RepoOwner:        "",
-				RepoName:         "test",
+				RepoOwner: sql.NullString{
+					String: "",
+					Valid:  true,
+				},
+				RepoName: sql.NullString{
+					String: "test",
+					Valid:  true,
+				},
 			},
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),

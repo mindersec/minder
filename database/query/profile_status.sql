@@ -145,7 +145,7 @@ FROM latest_evaluation_statuses les
          INNER JOIN alert_details ad ON ad.evaluation_id = les.evaluation_history_id
          INNER JOIN rule_instances AS ri ON ri.id = ere.rule_id
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
-         INNER JOIN repositories repo ON repo.id = ere.repository_id
+         LEFT JOIN repositories repo ON repo.id = ere.repository_id
 WHERE les.profile_id = $1 AND
     (
         CASE

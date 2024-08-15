@@ -285,9 +285,9 @@ func getRuleEvalEntityInfo(
 
 	if rs.RepositoryID.Valid {
 		// this is always true now but might not be when we support entities not tied to a repo
-		entityInfo["repo_name"] = rs.RepoName
-		entityInfo["repo_owner"] = rs.RepoOwner
-		entityInfo["provider"] = rs.Provider
+		entityInfo["repo_name"] = rs.RepoName.String
+		entityInfo["repo_owner"] = rs.RepoOwner.String
+		entityInfo["provider"] = rs.Provider.String
 		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
 	}
 
@@ -463,7 +463,7 @@ func getRuleEvalStatus(
 	if dbRuleEvalStat.EntityType == db.EntitiesRepository {
 		remediationURL, err = getRemediationURLFromMetadata(
 			dbRuleEvalStat.RemMetadata,
-			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner, dbRuleEvalStat.RepoName),
+			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner.String, dbRuleEvalStat.RepoName.String),
 		)
 		if err != nil {
 			// A failure parsing the alert metadata points to a corrupt record. Log but don't err.
