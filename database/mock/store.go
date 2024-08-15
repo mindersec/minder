@@ -2321,66 +2321,6 @@ func (mr *MockStoreMockRecorder) UpsertPullRequest(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPullRequest", reflect.TypeOf((*MockStore)(nil).UpsertPullRequest), arg0, arg1)
 }
 
-// UpsertRuleDetailsAlert mocks base method.
-func (m *MockStore) UpsertRuleDetailsAlert(arg0 context.Context, arg1 db.UpsertRuleDetailsAlertParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleDetailsAlert", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertRuleDetailsAlert indicates an expected call of UpsertRuleDetailsAlert.
-func (mr *MockStoreMockRecorder) UpsertRuleDetailsAlert(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleDetailsAlert", reflect.TypeOf((*MockStore)(nil).UpsertRuleDetailsAlert), arg0, arg1)
-}
-
-// UpsertRuleDetailsEval mocks base method.
-func (m *MockStore) UpsertRuleDetailsEval(arg0 context.Context, arg1 db.UpsertRuleDetailsEvalParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleDetailsEval", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertRuleDetailsEval indicates an expected call of UpsertRuleDetailsEval.
-func (mr *MockStoreMockRecorder) UpsertRuleDetailsEval(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleDetailsEval", reflect.TypeOf((*MockStore)(nil).UpsertRuleDetailsEval), arg0, arg1)
-}
-
-// UpsertRuleDetailsRemediate mocks base method.
-func (m *MockStore) UpsertRuleDetailsRemediate(arg0 context.Context, arg1 db.UpsertRuleDetailsRemediateParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleDetailsRemediate", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertRuleDetailsRemediate indicates an expected call of UpsertRuleDetailsRemediate.
-func (mr *MockStoreMockRecorder) UpsertRuleDetailsRemediate(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleDetailsRemediate", reflect.TypeOf((*MockStore)(nil).UpsertRuleDetailsRemediate), arg0, arg1)
-}
-
-// UpsertRuleEvaluations mocks base method.
-func (m *MockStore) UpsertRuleEvaluations(arg0 context.Context, arg1 db.UpsertRuleEvaluationsParams) (uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertRuleEvaluations", arg0, arg1)
-	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpsertRuleEvaluations indicates an expected call of UpsertRuleEvaluations.
-func (mr *MockStoreMockRecorder) UpsertRuleEvaluations(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertRuleEvaluations", reflect.TypeOf((*MockStore)(nil).UpsertRuleEvaluations), arg0, arg1)
-}
-
 // UpsertRuleInstance mocks base method.
 func (m *MockStore) UpsertRuleInstance(arg0 context.Context, arg1 db.UpsertRuleInstanceParams) (uuid.UUID, error) {
 	m.ctrl.T.Helper()

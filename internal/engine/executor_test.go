@@ -253,53 +253,6 @@ default allow = true`,
 			},
 		}, nil)
 
-	ruleEvalId := uuid.New()
-
-	// Upload passing status
-	mockStore.EXPECT().
-		UpsertRuleEvaluations(gomock.Any(), db.UpsertRuleEvaluationsParams{
-			ProfileID: profileID,
-			RepositoryID: uuid.NullUUID{
-				UUID:  repositoryID,
-				Valid: true,
-			},
-			ArtifactID:     uuid.NullUUID{},
-			RuleTypeID:     ruleTypeID,
-			Entity:         db.EntitiesRepository,
-			RuleName:       passthroughRuleType,
-			RuleInstanceID: ruleInstanceID,
-		}).Return(ruleEvalId, nil)
-
-	// Mock upserting eval details status
-	ruleEvalDetailsId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsEval(gomock.Any(), db.UpsertRuleDetailsEvalParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.EvalStatusTypesSuccess,
-			Details:    "",
-		}).Return(ruleEvalDetailsId, nil)
-
-	// Mock upserting remediate status
-	ruleEvalRemediationId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsRemediate(gomock.Any(), db.UpsertRuleDetailsRemediateParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.RemediationStatusTypesSkipped,
-			Details:    "",
-			Metadata:   json.RawMessage("{}"),
-		}).Return(ruleEvalRemediationId, nil)
-	// Empty metadata
-	meta, _ := json.Marshal(map[string]any{})
-	// Mock upserting alert status
-	ruleEvalAlertId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsAlert(gomock.Any(), db.UpsertRuleDetailsAlertParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.AlertStatusTypesSkipped,
-			Metadata:   meta,
-			Details:    "",
-		}).Return(ruleEvalAlertId, nil)
-
 	// Mock update lease for lock
 	mockStore.EXPECT().
 		UpdateLease(gomock.Any(), db.UpdateLeaseParams{
