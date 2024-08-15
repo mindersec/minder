@@ -66,6 +66,14 @@ func TestValidatorScenarios(t *testing.T) {
 			ExpectedError: "multiple rules of same type with same name",
 		},
 		{
+			Name: "Validator rejects profile with multiple rules with same name but different cases",
+			Profile: makeProfile(withBasicProfileData, withRules(
+				makeRule(withRuleName("myrule")),
+				makeRule(withRuleName("MYRULE")),
+			)),
+			ExpectedError: "multiple rules of same type with same name",
+		},
+		{
 			Name:          "Validator rejects profile with multiple rules with same name and different types",
 			Profile:       makeProfile(withBasicProfileData, withRules(makeRule(), makeRule(withRuleType("foo")))),
 			ExpectedError: "conflicts with rule name of type",
@@ -123,7 +131,6 @@ func TestValidatorScenarios(t *testing.T) {
 		},
 	}
 
-	// some of this boilerplate can probably be shared across multiple tests
 	for _, testScenario := range validatorTestScenarios {
 		t.Run(testScenario.Name, func(t *testing.T) {
 			t.Parallel()
@@ -235,6 +242,12 @@ func makeRule(opts ...func(rule *minderv1.Profile_Rule)) *minderv1.Profile_Rule 
 
 func withEmptyRuleName(rule *minderv1.Profile_Rule) {
 	rule.Name = ""
+}
+
+func withRuleName(name string) func(rule *minderv1.Profile_Rule) {
+	return func(rule *minderv1.Profile_Rule) {
+		rule.Name = name
+	}
 }
 
 func withRuleType(typeName string) func(rule *minderv1.Profile_Rule) {

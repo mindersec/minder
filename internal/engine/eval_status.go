@@ -17,6 +17,7 @@ package engine
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -142,9 +143,15 @@ func (e *executor) createOrUpdateEvalStatus(
 	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
 	e.metrics.CountAlertStatus(ctx, alertStatus)
 
+	chckpoint := params.GetIngestResult().GetCheckpoint()
+	chkpjs, err := chckpoint.ToJSONorDefault(json.RawMessage(`{}`))
+	if err != nil {
+		logger.Err(err).Msg("error marshalling checkpoint")
+	}
+
 	// Log result in the evaluation history tables
 	err = e.querier.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-		evalID, ruleEntityID, err := e.historyService.StoreEvaluationStatus(
+		evalID, err := e.historyService.StoreEvaluationStatus(
 			ctx,
 			qtx,
 			params.Rule.ID,
@@ -152,6 +159,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			params.EntityType,
 			entityID,
 			params.GetEvalErr(),
+			chkpjs,
 		)
 		if err != nil {
 			return err
@@ -192,10 +200,6 @@ func (e *executor) createOrUpdateEvalStatus(
 			PullRequestID:  params.PullRequestID,
 			RuleName:       params.Rule.Name,
 			RuleInstanceID: params.Rule.ID,
-			RuleEntityID: uuid.NullUUID{
-				UUID:  ruleEntityID,
-				Valid: true,
-			},
 		})
 		if err != nil {
 			logger.Err(err).Msg("error upserting rule evaluation")

@@ -44,6 +44,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/gitlab"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provsel "github.com/stacklok/minder/internal/providers/selectors"
 	"github.com/stacklok/minder/internal/providers/telemetry"
@@ -416,6 +417,18 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			return nil, fmt.Errorf("error instantiating dockerhub provider: %w", err)
 		}
 
+		return client, nil
+	case "gitlab":
+		// read provider config
+		cfg, err := gitlab.ParseV1Config(cfgbytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing gitlab provider config: %w", err)
+		}
+
+		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("error instantiating gitlab provider: %w", err)
+		}
 		return client, nil
 	default:
 		return nil, fmt.Errorf("unknown or unsupported provider: %s", pstr)

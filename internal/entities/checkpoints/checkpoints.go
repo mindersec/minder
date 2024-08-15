@@ -15,7 +15,10 @@
 // Package checkpoints contains logic relating to checkpoint management for entities
 package checkpoints
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // V1 is the version string for the v1 format.
 const V1 = "v1"
@@ -45,6 +48,11 @@ type CheckpointV1 struct {
 	// Digest is the digest of the entity that the checkpoint is for.
 	// This may be a container image digest, or some other digest.
 	Digest *string `json:"digest,omitempty" yaml:"digest,omitempty"`
+}
+
+// NewCheckpointV1Now creates a new CheckpointV1 with the current time.
+func NewCheckpointV1Now() *CheckpointEnvelopeV1 {
+	return NewCheckpointV1(time.Now())
 }
 
 // NewCheckpointV1 creates a new CheckpointV1 with the given timestamp.
@@ -79,4 +87,23 @@ func (c *CheckpointEnvelopeV1) WithVersion(version string) *CheckpointEnvelopeV1
 func (c *CheckpointEnvelopeV1) WithDigest(digest string) *CheckpointEnvelopeV1 {
 	c.Checkpoint.Digest = &digest
 	return c
+}
+
+// ToJSON marshals the checkpoint to JSON.
+func (c *CheckpointEnvelopeV1) ToJSON() (json.RawMessage, error) {
+	return json.Marshal(c)
+}
+
+// ToJSONorDefault marshals the checkpoint to JSON or returns a default value.
+func (c *CheckpointEnvelopeV1) ToJSONorDefault(def json.RawMessage) (json.RawMessage, error) {
+	if c == nil {
+		return def, nil
+	}
+
+	js, err := c.ToJSON()
+	if err != nil {
+		return def, err
+	}
+
+	return js, nil
 }

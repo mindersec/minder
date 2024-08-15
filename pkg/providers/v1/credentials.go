@@ -64,3 +64,10 @@ type GitHubCredential interface {
 	// as we add new OCI providers this will change to a procedure / mutator, right now it's GitHub specific
 	GetAsContainerAuthenticator(owner string) authn.Authenticator
 }
+
+// GitLabCredential is the interface for credentials used when interacting with GitLab
+type GitLabCredential interface {
+	RestCredential
+	GitCredential
+	OAuth2TokenCredential
+}

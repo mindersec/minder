@@ -109,6 +109,11 @@ func TestWebhookManager_DeleteWebhook(t *testing.T) {
 			ClientSetup:   cf.NewClientMock(cf.WithSuccessfulDeletion),
 			ShouldSucceed: true,
 		},
+		{
+			Name:          "DeleteWebhook ignores forbidden",
+			ClientSetup:   cf.NewClientMock(cf.WithForbiddenDeletion),
+			ShouldSucceed: true,
+		},
 	}
 
 	for _, scenario := range deletionScenarios {

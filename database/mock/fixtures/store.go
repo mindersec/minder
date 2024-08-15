@@ -124,6 +124,9 @@ func WithSuccessfulUpsertPullRequest(
 		mockStore.EXPECT().
 			UpsertPullRequest(gomock.Any(), gomock.Any()).
 			Return(pullRequest, nil)
+		mockStore.EXPECT().
+			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
+			Return(db.EntityInstance{}, nil)
 	}
 }
 
@@ -131,6 +134,9 @@ func WithSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
 			DeletePullRequest(gomock.Any(), gomock.Any()).
+			Return(nil)
+		mockStore.EXPECT().
+			DeleteEntityByName(gomock.Any(), gomock.Any()).
 			Return(nil)
 	}
 }
@@ -152,5 +158,25 @@ func WithSuccessfulUpsertArtifact(
 		mockStore.EXPECT().
 			UpsertArtifact(gomock.Any(), gomock.Any()).
 			Return(artifact, nil)
+		mockStore.EXPECT().
+			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
+			Return(db.EntityInstance{}, nil)
+	}
+}
+
+func WithTransaction() func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			BeginTransaction().
+			Return(nil, nil)
+		mockStore.EXPECT().
+			GetQuerierWithTransaction(gomock.Any()).
+			Return(mockStore)
+		mockStore.EXPECT().
+			Commit(gomock.Any()).
+			Return(nil)
+		mockStore.EXPECT().
+			Rollback(gomock.Any()).
+			Return(nil)
 	}
 }

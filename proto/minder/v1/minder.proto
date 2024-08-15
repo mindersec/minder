@@ -1500,6 +1500,19 @@ message GitHubAppProviderConfig {
   reserved "app_name", "app_id", "user_id";
 }
 
+// GitLabProviderConfig contains the configuration for the GitLab provider.
+//
+// Endpoint: is the GitLab API endpoint
+//
+// If using the public GitLab API, Endpoint can be left blank
+message GitLabProviderConfig {
+    // Endpoint is the GitLab API endpoint. If using the public GitLab API, Endpoint can be left blank.
+    string endpoint = 1;
+
+    // group is the GitLab group to use for the provider
+    string group = 2;
+}
+
 // DockerHubProviderConfig contains the configuration for the DockerHub provider.
 //
 // Namespace: is the namespace for the DockerHub provider.

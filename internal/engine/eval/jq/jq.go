@@ -97,7 +97,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 				msg = fmt.Sprintf("%s\nassertion: %s", msg, string(marshalledAssertion))
 			}
 
-			return evalerrors.NewErrEvaluationFailed(msg)
+			return evalerrors.NewErrEvaluationFailed("%s", msg)
 		}
 	}
 

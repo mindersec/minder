@@ -26,22 +26,29 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       # Install the `buf` CLI
-      - uses: bufbuild/buf-setup-action@aceb106d2419c4cff48863df90161d92decb8591 # v1.35.1
+      - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      # Lint your Protobuf sources
-      - uses: bufbuild/buf-lint-action@06f9dd823d873146471cfaaf108a993fe00e5325 # v1.1.1
+          push: false
+          archive: false
+          pr_comment: false
+          lint: true
+          format: false
+          breaking: false # Check for breaking changes in the next step
   proto-breaking-changes:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: bufbuild/buf-setup-action@aceb106d2419c4cff48863df90161d92decb8591 # v1.35.1
+      - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: bufbuild/buf-breaking-action@c57b3d842a5c3f3b454756ef65305a50a587c5ba # v1.1.4
-        with:
+          push: false
+          archive: false
+          pr_comment: false
+          format: false
+          breaking: true
           input: 'proto'
-          against: "https://github.com/stacklok/minder.git#branch=main,subdir=proto"
+          breaking_against: "https://github.com/stacklok/minder.git#branch=main,subdir=proto"
   sqlc-generation:
     runs-on: ubuntu-latest
     steps:

@@ -135,8 +135,8 @@ const (
                 padding: 18px 0px 6px 0px;
               "
             >
-              Once you accept, you’ll be able to view the {{.OrganizationName}}
-              organization, and its security posture, in Minder.
+              Once you accept, you’ll be able to {{.RoleVerb}} the {{.OrganizationName}}
+              organization in Minder.
             </div>
             <div
               style="

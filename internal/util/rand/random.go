@@ -55,6 +55,13 @@ func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
 
+// RandomFrom returns an item chosen at random from the given set of
+// alternatives.
+func RandomFrom[T any](choices []T, seed int64) T {
+	idx := RandomInt(0, int64(len(choices)-1), seed)
+	return choices[idx]
+}
+
 // GetRandomPort returns a random port number.
 // The binding address should not need to be configurable
 // as this is a short-lived operation just to discover a random available port.

@@ -55,7 +55,7 @@ const (
 	Vulnerable dependencies found.
 	`
 	noVulsFoundText = `
-	Minder analyzed this PR and found no vulnerable dependencies.
+	Minder analyzed this PR and found it does not add any new vulnerable dependencies.
 	`
 	reviewBodyDismissCommentText = "Previous Minder review was dismissed because the PR was updated"
 	vulnFoundWithNoPatch         = "Vulnerability found, but no patched version exists yet."

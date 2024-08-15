@@ -64,8 +64,7 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 	}
 
 	trustyClient := trusty.NewWithOptions(trusty.Options{
-		HttpClient: trusty.DefaultOptions.HttpClient,
-		BaseURL:    trustyEndpoint,
+		BaseURL: trustyEndpoint,
 	})
 
 	return &Evaluator{
@@ -217,7 +216,7 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	}
 
 	if failedEvalMsg != "" {
-		return evalerrors.NewErrEvaluationFailed(failedEvalMsg)
+		return evalerrors.NewErrEvaluationFailed("%s", failedEvalMsg)
 	}
 
 	return nil
