@@ -44,25 +44,6 @@ import (
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-// the mockGhProp struct is a wrapper around the mockgithub.MockGitHub struct
-// that implements both the GitHub and PropertiesFetcher interfaces. This is
-// needed because the service converts the Provider interface to both GitHub
-// and PropertiesFetcher interfaces. The GitHub interface is used only to be
-// passed to the webhook manager, which is mocked but still requires the right
-// type
-type mockGhProp struct {
-	*mockgithub.MockGitHub
-	prop *mockgithub.MockPropertiesFetcher
-}
-
-func (mgp *mockGhProp) FetchAllProperties(ctx context.Context, name string, entType pb.Entity) (*properties.Properties, error) {
-	return mgp.prop.FetchAllProperties(ctx, name, entType)
-}
-
-func (mgp *mockGhProp) FetchProperty(ctx context.Context, name string, entType pb.Entity, key string) (*properties.Property, error) {
-	return mgp.prop.FetchProperty(ctx, name, entType, key)
-}
-
 func TestRepositoryService_CreateRepository(t *testing.T) {
 	t.Parallel()
 
@@ -620,27 +601,21 @@ func newExpectation(isPrivate bool) *pb.Repository {
 }
 
 func withFailingGet(ctrl *gomock.Controller) provinfv1.Provider {
-	propMock := mockgithub.NewMockPropertiesFetcher(ctrl)
-	propMock.EXPECT().
+	m := mockgithub.NewMockGitHub(ctrl)
+	m.EXPECT().
 		FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 
-	return &mockGhProp{
-		MockGitHub: mockgithub.NewMockGitHub(ctrl),
-		prop:       propMock,
-	}
+	return m
 }
 
 func withSuccessfulPropFetch(prop *properties.Properties) func(*gomock.Controller) provinfv1.Provider {
 	return func(ctrl *gomock.Controller) provinfv1.Provider {
-		propMock := mockgithub.NewMockPropertiesFetcher(ctrl)
+		propMock := mockgithub.NewMockGitHub(ctrl)
 		propMock.EXPECT().
 			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(prop, nil)
 
-		return &mockGhProp{
-			MockGitHub: mockgithub.NewMockGitHub(ctrl),
-			prop:       propMock,
-		}
+		return propMock
 	}
 }

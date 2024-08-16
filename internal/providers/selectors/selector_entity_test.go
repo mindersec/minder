@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -115,6 +116,14 @@ func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pr *minder
 	return pullRequestToSelectorEntity(m.t, m.name, m.class, pr)
 }
 
+func (_ *fullProvider) FetchAllProperties(_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+	return nil, nil
+}
+
+func (_ *fullProvider) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	return nil, nil
+}
+
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
 	t.Helper()
 
@@ -143,6 +152,14 @@ func newRepoOnlyProvider(t *testing.T, name, class string) *repoOnlyProvider {
 
 func (_ *repoOnlyProvider) CanImplement(_ minderv1.ProviderType) bool {
 	return true
+}
+
+func (_ *repoOnlyProvider) FetchAllProperties(_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+	return nil, nil
+}
+
+func (_ *repoOnlyProvider) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	return nil, nil
 }
 
 func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity {

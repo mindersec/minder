@@ -45,6 +45,11 @@ type Provider interface {
 	// CanImplement returns true/false depending on whether the Provider
 	// can implement the specified trait
 	CanImplement(trait minderv1.ProviderType) bool
+
+	// FetchAllProperties fetches all properties for the given entity
+	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
+	// FetchProperty fetches a single property for the given entity
+	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
 }
 
 // Git is the interface for git providers
@@ -55,7 +60,7 @@ type Git interface {
 	Clone(ctx context.Context, url string, branch string) (*git.Repository, error)
 }
 
-// REST is the interface for interacting with an REST API.
+// REST is the trait interface for interacting with an REST API.
 type REST interface {
 	Provider
 
@@ -185,14 +190,6 @@ type OCI interface {
 
 	// GetAuthenticator returns the authenticator for the OCI provider
 	GetAuthenticator() (authn.Authenticator, error)
-}
-
-// PropertiesFetcher is the interface for fetching entity properties
-type PropertiesFetcher interface {
-	Provider
-
-	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
-	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
