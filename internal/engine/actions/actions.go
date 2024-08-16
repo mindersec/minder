@@ -165,8 +165,8 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 	// Get previous Remediation status
 	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb != nil && prevEvalFromDb.RemStatus.Valid {
-		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
+	if prevEvalFromDb != nil {
+		prevRemediation = prevEvalFromDb.RemStatus
 	}
 
 	// Start evaluation scenarios
@@ -214,8 +214,8 @@ func shouldAlert(
 
 	// Get previous Alert status
 	prevAlert := db.AlertStatusTypesSkipped
-	if prevEvalFromDb != nil && prevEvalFromDb.AlertStatus.Valid {
-		prevAlert = prevEvalFromDb.AlertStatus.AlertStatusTypes
+	if prevEvalFromDb != nil {
+		prevAlert = prevEvalFromDb.AlertStatus
 	}
 
 	// Start evaluation scenarios
@@ -300,16 +300,16 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 
 // getRemediationMeta returns the json.RawMessage from the database type, empty if not valid
 func getRemediationMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil && prevEvalFromDb.RemMetadata.Valid {
-		return &prevEvalFromDb.RemMetadata.RawMessage
+	if prevEvalFromDb != nil {
+		return &prevEvalFromDb.RemMetadata
 	}
 	return nil
 }
 
 // getAlertMeta returns the json.RawMessage from the database type, empty if not valid
 func getAlertMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil && prevEvalFromDb.AlertMetadata.Valid {
-		return &prevEvalFromDb.AlertMetadata.RawMessage
+	if prevEvalFromDb != nil {
+		return &prevEvalFromDb.AlertMetadata
 	}
 	return nil
 }

@@ -285,9 +285,9 @@ func getRuleEvalEntityInfo(
 
 	if rs.RepositoryID.Valid {
 		// this is always true now but might not be when we support entities not tied to a repo
-		entityInfo["repo_name"] = rs.RepoName
-		entityInfo["repo_owner"] = rs.RepoOwner
-		entityInfo["provider"] = rs.Provider
+		entityInfo["repo_name"] = rs.RepoName.String
+		entityInfo["repo_owner"] = rs.RepoOwner.String
+		entityInfo["provider"] = rs.Provider.String
 		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
 	}
 
@@ -424,15 +424,10 @@ func (s *Server) getRuleEvaluationStatuses(
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
 	)
-	l := zerolog.Ctx(ctx)
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st, err := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
-		if err != nil {
-			l.Err(err).Msg("error getting rule evaluation status")
-			continue
-		}
+		st := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
 		// Append the rule evaluation status to the list
 		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
 	}
@@ -450,24 +445,13 @@ func getRuleEvalStatus(
 	selector *uuid.NullUUID,
 	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
 	projectID uuid.UUID,
-) (*minderv1.RuleEvaluationStatus, error) {
+) *minderv1.RuleEvaluationStatus {
 	l := zerolog.Ctx(ctx)
 	var guidance string
 	var err error
 
-	// make sure all fields are valid
-	if !dbRuleEvalStat.EvalStatus.Valid ||
-		!dbRuleEvalStat.EvalDetails.Valid ||
-		!dbRuleEvalStat.EvalLastUpdated.Valid ||
-		!dbRuleEvalStat.RemStatus.Valid ||
-		!dbRuleEvalStat.RemDetails.Valid ||
-		!dbRuleEvalStat.AlertStatus.Valid ||
-		!dbRuleEvalStat.AlertDetails.Valid {
-		return nil, fmt.Errorf("rule evaluation status not valid")
-	}
-
-	if dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesFailure ||
-		dbRuleEvalStat.EvalStatus.EvalStatusTypes == db.EvalStatusTypesError {
+	if dbRuleEvalStat.EvalStatus == db.EvalStatusTypesFailure ||
+		dbRuleEvalStat.EvalStatus == db.EvalStatusTypesError {
 		ruleTypeInfo, err := store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
 		if err != nil {
 			l.Err(err).Msg("error getting rule type info from db")
@@ -476,10 +460,10 @@ func getRuleEvalStatus(
 		}
 	}
 	remediationURL := ""
-	if dbRuleEvalStat.Entity == db.EntitiesRepository {
+	if dbRuleEvalStat.EntityType == db.EntitiesRepository {
 		remediationURL, err = getRemediationURLFromMetadata(
-			dbRuleEvalStat.RemMetadata.RawMessage,
-			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner, dbRuleEvalStat.RepoName),
+			dbRuleEvalStat.RemMetadata,
+			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner.String, dbRuleEvalStat.RepoName.String),
 		)
 		if err != nil {
 			// A failure parsing the alert metadata points to a corrupt record. Log but don't err.
@@ -493,33 +477,27 @@ func getRuleEvalStatus(
 		RuleName:            dbRuleEvalStat.RuleTypeName,
 		RuleTypeName:        dbRuleEvalStat.RuleTypeName,
 		RuleDescriptionName: dbRuleEvalStat.RuleName,
-		Entity:              string(dbRuleEvalStat.Entity),
-		Status:              string(dbRuleEvalStat.EvalStatus.EvalStatusTypes),
-		Details:             dbRuleEvalStat.EvalDetails.String,
+		Entity:              string(dbRuleEvalStat.EntityType),
+		Status:              string(dbRuleEvalStat.EvalStatus),
+		Details:             dbRuleEvalStat.EvalDetails,
 		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, projectID),
 		Guidance:            guidance,
-		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated.Time),
-		RemediationStatus:   string(dbRuleEvalStat.RemStatus.RemediationStatusTypes),
-		RemediationDetails:  dbRuleEvalStat.RemDetails.String,
+		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated),
+		RemediationStatus:   string(dbRuleEvalStat.RemStatus),
+		RemediationDetails:  dbRuleEvalStat.RemDetails,
 		RemediationUrl:      remediationURL,
 		Alert: &minderv1.EvalResultAlert{
-			Status:  string(dbRuleEvalStat.AlertStatus.AlertStatusTypes),
-			Details: dbRuleEvalStat.AlertDetails.String,
+			Status:      string(dbRuleEvalStat.AlertStatus),
+			Details:     dbRuleEvalStat.AlertDetails,
+			LastUpdated: timestamppb.New(dbRuleEvalStat.AlertLastUpdated),
 		},
-	}
-
-	if dbRuleEvalStat.RemLastUpdated.Valid {
-		st.RemediationLastUpdated = timestamppb.New(dbRuleEvalStat.RemLastUpdated.Time)
-	}
-
-	if dbRuleEvalStat.AlertLastUpdated.Valid {
-		st.Alert.LastUpdated = timestamppb.New(dbRuleEvalStat.AlertLastUpdated.Time)
+		RemediationLastUpdated: timestamppb.New(dbRuleEvalStat.RemLastUpdated),
 	}
 
 	// If the alert is on and its metadata is valid, parse it and set the URL
-	if dbRuleEvalStat.AlertMetadata.Valid && st.Alert.Status == string(db.AlertStatusTypesOn) {
+	if st.Alert.Status == string(db.AlertStatusTypesOn) {
 		alertURL, err := getAlertURLFromMetadata(
-			dbRuleEvalStat.AlertMetadata.RawMessage,
+			dbRuleEvalStat.AlertMetadata,
 			fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"]),
 		)
 		if err != nil {
@@ -528,7 +506,7 @@ func getRuleEvalStatus(
 			st.Alert.Url = alertURL
 		}
 	}
-	return st, nil
+	return st
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project
