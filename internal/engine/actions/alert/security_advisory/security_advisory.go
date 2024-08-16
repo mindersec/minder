@@ -336,7 +336,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 		},
 	}
 	// Unmarshal the existing alert metadata, if any
-	if metadata != nil {
+	if metadata != nil && len(*metadata) != 0 {
 		meta := &alertMetadata{}
 		err := json.Unmarshal(*metadata, meta)
 		if err != nil {
