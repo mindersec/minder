@@ -31,6 +31,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-github/v63/github"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -184,6 +185,14 @@ type OCI interface {
 
 	// GetAuthenticator returns the authenticator for the OCI provider
 	GetAuthenticator() (authn.Authenticator, error)
+}
+
+// PropertiesFetcher is the interface for fetching entity properties
+type PropertiesFetcher interface {
+	Provider
+
+	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
+	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
 }
 
 // ParseAndValidate parses the given provider configuration and validates it.
