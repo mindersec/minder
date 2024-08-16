@@ -208,7 +208,13 @@ SELECT
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance,
-    rt.display_name as rule_type_display_name
+    rt.display_name as rule_type_display_name,
+    -- TODO: store entity ID directly in evaluation_rule_entities
+    CASE
+        WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
+        WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
+        WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
+    END::uuid as entity_id
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
@@ -262,6 +268,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RuleTypeID            uuid.UUID              `json:"rule_type_id"`
 	RuleTypeGuidance      string                 `json:"rule_type_guidance"`
 	RuleTypeDisplayName   string                 `json:"rule_type_display_name"`
+	EntityID              uuid.UUID              `json:"entity_id"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -303,6 +310,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleTypeID,
 			&i.RuleTypeGuidance,
 			&i.RuleTypeDisplayName,
+			&i.EntityID,
 		); err != nil {
 			return nil, err
 		}
