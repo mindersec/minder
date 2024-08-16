@@ -25,7 +25,6 @@ import (
 	"runtime/debug"
 
 	"github.com/rs/zerolog"
-	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
@@ -121,7 +120,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			getMeta(params.GetEvalStatusFromDb().RemMetadata))
+			&params.GetEvalStatusFromDb().RemMetadata)
 	}
 
 	// Try alerting
@@ -130,7 +129,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
-			getMeta(params.GetEvalStatusFromDb().AlertMetadata))
+			&params.GetEvalStatusFromDb().AlertMetadata)
 	}
 	return result
 }
@@ -165,10 +164,7 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Remediation status
-	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb.RemStatus.Valid {
-		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
-	}
+	prevRemediation := prevEvalFromDb.RemStatus
 
 	// Start evaluation scenarios
 
@@ -214,10 +210,7 @@ func shouldAlert(
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Alert status
-	prevAlert := db.AlertStatusTypesSkipped
-	if prevEvalFromDb.AlertStatus.Valid {
-		prevAlert = prevEvalFromDb.AlertStatus.AlertStatusTypes
-	}
+	prevAlert := prevEvalFromDb.AlertStatus
 
 	// Start evaluation scenarios
 
@@ -297,14 +290,6 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	logger.Bool("skip_action", skipAction).Msg("action skip decision")
 	// Everything else, do not skip
 	return skipAction
-}
-
-// getMeta returns the json.RawMessage from the database type, empty if not valid
-func getMeta(rawMsg pqtype.NullRawMessage) *json.RawMessage {
-	if rawMsg.Valid {
-		return &rawMsg.RawMessage
-	}
-	return nil
 }
 
 // getDefaultResult returns the default result for the action engine

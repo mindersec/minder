@@ -581,10 +581,5 @@ func (_ *Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMes
 
 	// Return the previous remediation status.
 	err := enginerr.RemediationStatusAsError(p.prevStatus.RemStatus)
-	// If there is a valid remediation metadata, return it too
-	if p.prevStatus.RemMetadata.Valid {
-		return p.prevStatus.RemMetadata.RawMessage, err
-	}
-	// If there is no remediation metadata, return nil as the metadata and the error
-	return nil, err
+	return p.prevStatus.RemMetadata, err
 }
