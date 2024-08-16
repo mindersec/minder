@@ -40,7 +40,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.12.0
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.1.38
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag v0.2.0
 	github.com/open-policy-agent/opa v0.67.1
 	github.com/openfga/go-sdk v0.5.0
 	github.com/openfga/openfga v1.5.9
@@ -156,6 +156,7 @@ require (
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
+	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.4 // indirect
 	github.com/openfga/api/proto v0.0.0-20240807201305-c96ec773cae9 // indirect
 	github.com/openfga/language/pkg/go v0.0.0-20240409225820-a53ea2892d6d // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
