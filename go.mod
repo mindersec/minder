@@ -60,7 +60,7 @@ require (
 	github.com/stacklok/frizbee v0.1.0
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.24.0
+	github.com/styrainc/regal v0.25.0
 	github.com/thomaspoignant/go-feature-flag v1.32.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.53.0
