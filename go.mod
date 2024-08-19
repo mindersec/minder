@@ -52,7 +52,7 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.18.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.18.0
 	github.com/sigstore/protobuf-specs v0.3.2
-	github.com/sigstore/sigstore-go v0.5.1
+	github.com/sigstore/sigstore-go v0.6.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -129,6 +129,7 @@ require (
 	github.com/google/go-github/v61 v61.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
+	github.com/in-toto/attestation v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9 // indirect
 	github.com/jackc/pgx/v5 v5.5.5 // indirect
@@ -169,7 +170,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.18.0 // indirect
-	github.com/sigstore/sigstore v1.8.7 // indirect
+	github.com/sigstore/sigstore v1.8.8 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.0 // indirect
@@ -300,7 +301,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/mod v0.19.0 // indirect
+	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
