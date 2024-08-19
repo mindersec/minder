@@ -145,7 +145,7 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error instantiating github client: %w", err)
 	}
 
-	propClient, err := provifv1.As[provifv1.PropertiesFetcher](p)
+	propClient, err := provifv1.As[provifv1.Provider](p)
 	if err != nil {
 		return nil, fmt.Errorf("error instantiating properties client: %w", err)
 	}

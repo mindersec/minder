@@ -26,6 +26,7 @@ import (
 	gitengine "github.com/stacklok/minder/internal/engine/ingester/git"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/testproviders"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -37,7 +38,7 @@ func TestGitIngestWithCloneURLFromRepo(t *testing.T) {
 		MaxFiles: 100,
 		MaxBytes: 1_000_000,
 	}
-	gitClient := gitclient.NewGit(
+	gitClient := testproviders.NewGitProvider(
 		credentials.NewEmptyCredential(),
 		gitclient.WithConfig(cfg),
 	)
@@ -78,7 +79,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 
 	gi, err := gitengine.NewGitIngester(
 		&pb.GitType{Branch: "master"},
-		gitclient.NewGit(credentials.NewEmptyCredential()),
+		testproviders.NewGitProvider(credentials.NewEmptyCredential()),
 	)
 	require.NoError(t, err, "expected no error")
 
@@ -106,7 +107,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 
 	gi, err := gitengine.NewGitIngester(
 		&pb.GitType{Branch: "master"},
-		gitclient.NewGit(credentials.NewEmptyCredential()),
+		testproviders.NewGitProvider(credentials.NewEmptyCredential()),
 	)
 	require.NoError(t, err, "expected no error")
 
@@ -136,7 +137,7 @@ func TestGitIngestWithBranchFromRepoEntity(t *testing.T) {
 	gi, err := gitengine.NewGitIngester(
 		//		&pb.GitType{Branch: "master"},
 		&pb.GitType{},
-		gitclient.NewGit(credentials.NewEmptyCredential()),
+		testproviders.NewGitProvider(credentials.NewEmptyCredential()),
 	)
 	require.NoError(t, err, "expected no error")
 
@@ -166,7 +167,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 
 	gi, err := gitengine.NewGitIngester(
 		&pb.GitType{Branch: "master"},
-		gitclient.NewGit(credentials.NewEmptyCredential()),
+		testproviders.NewGitProvider(credentials.NewEmptyCredential()),
 	)
 
 	require.NoError(t, err, "expected no error")
@@ -186,7 +187,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 	// foobar is not a valid token
 	gi, err := gitengine.NewGitIngester(
 		&pb.GitType{Branch: "master"},
-		gitclient.NewGit(credentials.NewGitHubTokenCredential("foobar")),
+		testproviders.NewGitProvider(credentials.NewGitHubTokenCredential("foobar")),
 	)
 
 	require.NoError(t, err, "expected no error")
@@ -201,7 +202,8 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 	t.Parallel()
 
-	gi, err := gitengine.NewGitIngester(&pb.GitType{}, gitclient.NewGit(credentials.NewEmptyCredential()))
+	gi, err := gitengine.NewGitIngester(
+		&pb.GitType{}, testproviders.NewGitProvider(credentials.NewEmptyCredential()))
 	require.NoError(t, err, "expected no error")
 
 	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
@@ -219,7 +221,7 @@ func TestGitIngestFailsWhenRepoTooLarge(t *testing.T) {
 		MaxFiles: 100,
 		MaxBytes: 1,
 	}
-	gitClient := gitclient.NewGit(
+	gitClient := testproviders.NewGitProvider(
 		credentials.NewEmptyCredential(),
 		gitclient.WithConfig(cfg),
 	)
@@ -247,7 +249,7 @@ func TestGitIngestFailsWhenRepoHasTooManyFiles(t *testing.T) {
 		MaxFiles: 1,
 		MaxBytes: 1_000_000,
 	}
-	gitClient := gitclient.NewGit(
+	gitClient := testproviders.NewGitProvider(
 		credentials.NewEmptyCredential(),
 		gitclient.WithConfig(cfg),
 	)
