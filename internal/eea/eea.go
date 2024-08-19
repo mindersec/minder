@@ -94,6 +94,17 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		Str("entity", inf.Type.ToString()).
 		Logger()
 
+	var entityID uuid.NullUUID
+	eID, err := inf.GetID()
+	if err != nil {
+		logger.Debug().AnErr("error getting entity ID", err).Msgf("Entity ID was not set for event %s", inf.Type)
+	} else {
+		entityID = uuid.NullUUID{
+			UUID:  eID,
+			Valid: true,
+		}
+	}
+
 	// We need to check that the resources still exist before attempting to lock them.
 	// TODO: consider whether we need foreign key checks on the locks.
 	if repoID.Valid {
@@ -130,12 +141,13 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	}
 
 	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
-		Entity:        entities.EntityTypeToDB(inf.Type),
-		RepositoryID:  repoID,
-		ArtifactID:    artifactID,
-		PullRequestID: pullRequestID,
-		ProjectID:     projectID,
-		Interval:      fmt.Sprintf("%d", e.cfg.LockInterval),
+		Entity:           entities.EntityTypeToDB(inf.Type),
+		RepositoryID:     repoID,
+		ArtifactID:       artifactID,
+		PullRequestID:    pullRequestID,
+		EntityInstanceID: entityID,
+		ProjectID:        projectID,
+		Interval:         fmt.Sprintf("%d", e.cfg.LockInterval),
 	})
 
 	if repoID.Valid {
@@ -156,11 +168,12 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		logger.Info().Msg("executor not ready to process event. Queuing in flush cache.")
 
 		_, err := e.querier.EnqueueFlush(ctx, db.EnqueueFlushParams{
-			Entity:        entities.EntityTypeToDB(inf.Type),
-			RepositoryID:  repoID,
-			ArtifactID:    artifactID,
-			PullRequestID: pullRequestID,
-			ProjectID:     projectID,
+			Entity:           entities.EntityTypeToDB(inf.Type),
+			RepositoryID:     repoID,
+			ArtifactID:       artifactID,
+			PullRequestID:    pullRequestID,
+			EntityInstanceID: entityID,
+			ProjectID:        projectID,
 		})
 		if err != nil {
 			// We already have this item in the queue.

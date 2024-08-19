@@ -347,6 +347,33 @@ func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.NullUUID, artifactID
 	return repoID, artifactID, pullRequestID
 }
 
+// GetID returns the entity ID.
+func (eiw *EntityInfoWrapper) GetID() (uuid.UUID, error) {
+	if eiw == nil {
+		return uuid.Nil, fmt.Errorf("no entity info wrapper")
+	}
+
+	id, ok := eiw.getIDForEntityType(eiw.Type)
+	if ok {
+		return id, nil
+	}
+
+	return uuid.Nil, fmt.Errorf("no entity ID found")
+}
+
+func (eiw *EntityInfoWrapper) getIDForEntityType(t minderv1.Entity) (uuid.UUID, bool) {
+	key, err := getEntityMetadataKey(t)
+	if err != nil {
+		return uuid.Nil, false
+	}
+
+	if id, ok := eiw.OwnershipData[key]; ok {
+		return uuid.MustParse(id), true
+	}
+
+	return uuid.Nil, false
+}
+
 func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) error {
 	rawID := msg.Metadata.Get(ProjectIDEventKey)
 	if rawID == "" {
@@ -444,6 +471,31 @@ func pbEntityTypeToString(t minderv1.Entity) (string, error) {
 		return "", fmt.Errorf("task runs not yet supported")
 	case minderv1.Entity_ENTITY_BUILD:
 		return "", fmt.Errorf("builds not yet supported")
+	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
+		return "", fmt.Errorf("build environments not yet supported")
+	case minderv1.Entity_ENTITY_UNSPECIFIED:
+		return "", fmt.Errorf("entity type unspecified")
+	default:
+		return "", fmt.Errorf("unknown entity type: %s", t.String())
+	}
+}
+
+func getEntityMetadataKey(t minderv1.Entity) (string, error) {
+	switch t {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return RepositoryIDEventKey, nil
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		return ArtifactIDEventKey, nil
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return PullRequestIDEventKey, nil
+	case minderv1.Entity_ENTITY_RELEASE:
+		return ReleaseIDEventKey, nil
+	case minderv1.Entity_ENTITY_PIPELINE_RUN:
+		return PipelineRunIDEventKey, nil
+	case minderv1.Entity_ENTITY_TASK_RUN:
+		return TaskRunIDEventKey, nil
+	case minderv1.Entity_ENTITY_BUILD:
+		return BuildIDEventKey, nil
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
 		return "", fmt.Errorf("build environments not yet supported")
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
