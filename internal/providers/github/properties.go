@@ -38,6 +38,8 @@ const (
 	RepoPropertyCloneURL = "github/clone_url"
 	// RepoPropertyDefaultBranch represents the github repository default branch
 	RepoPropertyDefaultBranch = "github/default_branch"
+	// RepoPropertyLicense represents the github repository license
+	RepoPropertyLicense = "github/license"
 )
 
 type propertyWrapper func(ctx context.Context, ghCli *GitHub, name string) (map[string]any, error)
@@ -70,6 +72,7 @@ var repoPropertyDefinitions = []propertyOrigin{
 			RepoPropertyDeployURL,
 			RepoPropertyCloneURL,
 			RepoPropertyDefaultBranch,
+			RepoPropertyLicense,
 		},
 		wrapper: getRepoWrapper,
 	},
@@ -117,6 +120,7 @@ func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string
 		RepoPropertyDeployURL:     repo.GetDeploymentsURL(),
 		RepoPropertyCloneURL:      repo.GetCloneURL(),
 		RepoPropertyDefaultBranch: repo.GetDefaultBranch(),
+		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
 	}
 
 	return repoProps, nil
