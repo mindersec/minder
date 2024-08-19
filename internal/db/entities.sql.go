@@ -255,7 +255,7 @@ func (q *Queries) GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (E
 
 const getEntityByName = `-- name: GetEntityByName :one
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE lower(entity_instances.name) = lower($2) AND entity_instances.project_id = $1
+WHERE entity_instances.name = $2 AND entity_instances.project_id = $1
 LIMIT 1
 `
 
