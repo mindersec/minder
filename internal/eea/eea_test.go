@@ -182,6 +182,15 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	})
 	require.NoError(t, err, "expected no error when creating repo")
 
+	_, err = testQueries.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+		EntityType: db.EntitiesRepository,
+		ID:         repo.ID,
+		Name:       repo.RepoName,
+		ProjectID:  proj.ID,
+		ProviderID: prov.ID,
+	})
+	require.NoError(t, err, "expected no error when creating repo")
+
 	return proj.ID, repo.ID
 }
 
