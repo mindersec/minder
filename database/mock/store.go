@@ -1315,36 +1315,6 @@ func (mr *MockStoreMockRecorder) GetQuerierWithTransaction(arg0 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuerierWithTransaction", reflect.TypeOf((*MockStore)(nil).GetQuerierWithTransaction), arg0)
 }
 
-// GetRepoPathFromArtifactID mocks base method.
-func (m *MockStore) GetRepoPathFromArtifactID(arg0 context.Context, arg1 uuid.UUID) (db.GetRepoPathFromArtifactIDRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRepoPathFromArtifactID", arg0, arg1)
-	ret0, _ := ret[0].(db.GetRepoPathFromArtifactIDRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRepoPathFromArtifactID indicates an expected call of GetRepoPathFromArtifactID.
-func (mr *MockStoreMockRecorder) GetRepoPathFromArtifactID(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepoPathFromArtifactID", reflect.TypeOf((*MockStore)(nil).GetRepoPathFromArtifactID), arg0, arg1)
-}
-
-// GetRepoPathFromPullRequestID mocks base method.
-func (m *MockStore) GetRepoPathFromPullRequestID(arg0 context.Context, arg1 uuid.UUID) (db.GetRepoPathFromPullRequestIDRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRepoPathFromPullRequestID", arg0, arg1)
-	ret0, _ := ret[0].(db.GetRepoPathFromPullRequestIDRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRepoPathFromPullRequestID indicates an expected call of GetRepoPathFromPullRequestID.
-func (mr *MockStoreMockRecorder) GetRepoPathFromPullRequestID(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepoPathFromPullRequestID", reflect.TypeOf((*MockStore)(nil).GetRepoPathFromPullRequestID), arg0, arg1)
-}
-
 // GetRepositoryByID mocks base method.
 func (m *MockStore) GetRepositoryByID(arg0 context.Context, arg1 uuid.UUID) (db.Repository, error) {
 	m.ctrl.T.Helper()

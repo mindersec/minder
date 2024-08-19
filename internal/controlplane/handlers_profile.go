@@ -272,8 +272,9 @@ func getProfilePBFromDB(
 	return nil, fmt.Errorf("profile not found")
 }
 
-func (s *Server) getRuleEvalEntityInfo(
+func getRuleEvalEntityInfo(
 	ctx context.Context,
+	store db.Store,
 	entityType *db.NullEntities,
 	selector *uuid.NullUUID,
 	rs db.ListRuleEvaluationsByProfileIdRow,
@@ -295,7 +296,7 @@ func (s *Server) getRuleEvalEntityInfo(
 	}
 
 	if entityType.Entities == db.EntitiesArtifact {
-		artifact, err := s.store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
+		artifact, err := store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
 			ID:        selector.UUID,
 			ProjectID: projectID,
 		})
@@ -390,11 +391,10 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
 		}
 
-		ruleEvaluationStatuses = s.
-			getRuleEvaluationStatuses(
-				ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-				dbEntity, selector, projectID,
-			)
+		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
+			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
+			dbEntity, selector, projectID,
+		)
 		// TODO: Add other entities once we have database entries for them
 	}
 
@@ -427,7 +427,7 @@ func (s *Server) getRuleEvaluationStatuses(
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st := s.getRuleEvalStatus(ctx, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
+		st := getRuleEvalStatus(ctx, s.store, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
 		// Append the rule evaluation status to the list
 		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
 	}
@@ -437,8 +437,9 @@ func (s *Server) getRuleEvaluationStatuses(
 // getRuleEvalStatus is a helper function to get rule evaluation status from a db row
 //
 //nolint:gocyclo
-func (s *Server) getRuleEvalStatus(
+func getRuleEvalStatus(
 	ctx context.Context,
+	store db.Store,
 	profileID string,
 	dbEntity *db.NullEntities,
 	selector *uuid.NullUUID,
@@ -451,7 +452,7 @@ func (s *Server) getRuleEvalStatus(
 
 	if dbRuleEvalStat.EvalStatus == db.EvalStatusTypesFailure ||
 		dbRuleEvalStat.EvalStatus == db.EvalStatusTypesError {
-		ruleTypeInfo, err := s.store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
+		ruleTypeInfo, err := store.GetRuleTypeByID(ctx, dbRuleEvalStat.RuleTypeID)
 		if err != nil {
 			l.Err(err).Msg("error getting rule type info from db")
 		} else {
@@ -479,7 +480,7 @@ func (s *Server) getRuleEvalStatus(
 		Entity:              string(dbRuleEvalStat.EntityType),
 		Status:              string(dbRuleEvalStat.EvalStatus),
 		Details:             dbRuleEvalStat.EvalDetails,
-		EntityInfo:          s.getRuleEvalEntityInfo(ctx, dbEntity, selector, dbRuleEvalStat, projectID),
+		EntityInfo:          getRuleEvalEntityInfo(ctx, store, dbEntity, selector, dbRuleEvalStat, projectID),
 		Guidance:            guidance,
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus),
@@ -495,33 +496,9 @@ func (s *Server) getRuleEvalStatus(
 
 	// If the alert is on and its metadata is valid, parse it and set the URL
 	if st.Alert.Status == string(db.AlertStatusTypesOn) {
-		// Due to the fact that this code was written around the old history tables
-		// There was an assumption that repository information was always included
-		// details about the repository. For other types of entity, we now need to
-		// explicitly pull information about the repository.
-		// TODO: Change all this logic to store the alert URL in the alert metadata
-		// This logic should not be in the presentation layer of Minder.
-		var repoPath string
-		if dbRuleEvalStat.EntityType == db.EntitiesRepository {
-			repoPath = fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"])
-		} else if dbRuleEvalStat.EntityType == db.EntitiesArtifact {
-			repoDetails, err := s.store.GetRepoPathFromArtifactID(ctx, dbRuleEvalStat.EntityID)
-			if err != nil {
-				l.Err(err).Msg("error getting repo details from db")
-				return st
-			}
-			repoPath = fmt.Sprintf("%s/%s", repoDetails.Owner, repoDetails.Name)
-		} else if dbRuleEvalStat.EntityType == db.EntitiesPullRequest {
-			repoDetails, err := s.store.GetRepoPathFromPullRequestID(ctx, dbRuleEvalStat.EntityID)
-			if err != nil {
-				l.Err(err).Msg("error getting repo details from db")
-				return st
-			}
-			repoPath = fmt.Sprintf("%s/%s", repoDetails.Owner, repoDetails.Name)
-		}
 		alertURL, err := getAlertURLFromMetadata(
 			dbRuleEvalStat.AlertMetadata,
-			repoPath,
+			fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"]),
 		)
 		if err != nil {
 			l.Err(err).Msg("error getting alert URL from metadata")
