@@ -160,8 +160,13 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 }
 
 // RemediationStatusAsError returns the remediation status for a given error
-func RemediationStatusAsError(ns db.RemediationStatusTypes) error {
-	switch ns {
+func RemediationStatusAsError(ns db.NullRemediationStatusTypes) error {
+	if !ns.Valid {
+		return ErrActionSkipped
+	}
+
+	s := ns.RemediationStatusTypes
+	switch s {
 	case db.RemediationStatusTypesSuccess:
 		return nil
 	case db.RemediationStatusTypesFailure:
@@ -173,9 +178,9 @@ func RemediationStatusAsError(ns db.RemediationStatusTypes) error {
 	case db.RemediationStatusTypesPending:
 		return ErrActionPending
 	case db.RemediationStatusTypesError:
-		return fmt.Errorf("generic remediation error status: %s", ns)
+		return fmt.Errorf("generic remediation error status: %s", s)
 	}
-	return fmt.Errorf("generic remediation error status: %s", ns)
+	return fmt.Errorf("generic remediation error status: %s", s)
 }
 
 // ErrorAsAlertStatus returns the alert status for a given error

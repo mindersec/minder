@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
@@ -118,12 +119,11 @@ func (q *Queries) GetProfileStatusByProject(ctx context.Context, projectID uuid.
 
 const listOldestRuleEvaluationsByRepositoryId = `-- name: ListOldestRuleEvaluationsByRepositoryId :many
 
-SELECT ere.repository_id::uuid AS repository_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
-FROM evaluation_rule_entities AS ere
-    INNER JOIN latest_evaluation_statuses AS les ON ere.id = les.rule_entity_id
-    INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id
-WHERE ere.repository_id = ANY ($1::uuid[])
-GROUP BY ere.repository_id
+SELECT re.repository_id::uuid AS repository_id, MIN(rde.last_updated)::timestamp AS oldest_last_updated
+FROM rule_evaluations re
+    INNER JOIN rule_details_eval rde ON re.id = rde.rule_eval_id
+WHERE re.repository_id = ANY ($1::uuid[])
+GROUP BY re.repository_id
 `
 
 type ListOldestRuleEvaluationsByRepositoryIdRow struct {
@@ -160,29 +160,29 @@ const listRuleEvaluationsByProfileId = `-- name: ListRuleEvaluationsByProfileId 
 WITH
    eval_details AS (
    SELECT
-       id,
+       rule_eval_id,
        status AS eval_status,
        details AS eval_details,
-       evaluation_time AS eval_last_updated
-   FROM evaluation_statuses
+       last_updated AS eval_last_updated
+   FROM rule_details_eval
    ),
    remediation_details AS (
        SELECT
-           evaluation_id,
+           rule_eval_id,
            status AS rem_status,
            details AS rem_details,
            metadata AS rem_metadata,
-           created_at AS rem_last_updated
-       FROM remediation_events
+           last_updated AS rem_last_updated
+       FROM rule_details_remediate
    ),
    alert_details AS (
        SELECT
-           evaluation_id,
+           rule_eval_id,
            status AS alert_status,
            details AS alert_details,
            metadata AS alert_metadata,
-           created_at AS alert_last_updated
-       FROM alert_events
+           last_updated AS alert_last_updated
+       FROM rule_details_alert
    )
 
 SELECT
@@ -197,10 +197,10 @@ SELECT
     ad.alert_details,
     ad.alert_metadata,
     ad.alert_last_updated,
-    ed.id AS rule_evaluation_id,
-    ere.repository_id,
-    ere.entity_type,
-    ri.name AS rule_name,
+    res.id AS rule_evaluation_id,
+    res.repository_id,
+    res.entity,
+    res.rule_name,
     repo.repo_name,
     repo.repo_owner,
     repo.provider,
@@ -208,32 +208,24 @@ SELECT
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance,
-    rt.display_name as rule_type_display_name,
-    -- TODO: store entity ID directly in evaluation_rule_entities
-    CASE
-        WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
-        WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
-        WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
-    END::uuid as entity_id
-FROM latest_evaluation_statuses les
-         INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
-         INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
-         INNER JOIN remediation_details rd ON rd.evaluation_id = les.evaluation_history_id
-         INNER JOIN alert_details ad ON ad.evaluation_id = les.evaluation_history_id
-         INNER JOIN rule_instances AS ri ON ri.id = ere.rule_id
-         INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
-         LEFT JOIN repositories repo ON repo.id = ere.repository_id
-WHERE les.profile_id = $1 AND
+    rt.display_name as rule_type_display_name
+FROM rule_evaluations res
+         LEFT JOIN eval_details ed ON ed.rule_eval_id = res.id
+         LEFT JOIN remediation_details rd ON rd.rule_eval_id = res.id
+         LEFT JOIN alert_details ad ON ad.rule_eval_id = res.id
+         INNER JOIN repositories repo ON repo.id = res.repository_id
+         INNER JOIN rule_type rt ON rt.id = res.rule_type_id
+WHERE res.profile_id = $1 AND
     (
         CASE
-            WHEN $2::entities = 'repository' AND ere.repository_id = $3::UUID THEN true
-            WHEN $2::entities  = 'artifact' AND ere.artifact_id = $3::UUID THEN true
-            WHEN $2::entities  = 'pull_request' AND ere.pull_request_id = $3::UUID THEN true
+            WHEN $2::entities = 'repository' AND res.repository_id = $3::UUID THEN true
+            WHEN $2::entities  = 'artifact' AND res.artifact_id = $3::UUID THEN true
+            WHEN $2::entities  = 'pull_request' AND res.pull_request_id = $3::UUID THEN true
             WHEN $3::UUID IS NULL THEN true
             ELSE false
             END
         ) AND (rt.name = $4 OR $4 IS NULL)
-          AND (lower(ri.name) = lower($5) OR $5 IS NULL)
+          AND (lower(res.rule_name) = lower($5) OR $5 IS NULL)
 `
 
 type ListRuleEvaluationsByProfileIdParams struct {
@@ -245,30 +237,29 @@ type ListRuleEvaluationsByProfileIdParams struct {
 }
 
 type ListRuleEvaluationsByProfileIdRow struct {
-	EvalStatus            EvalStatusTypes        `json:"eval_status"`
-	EvalLastUpdated       time.Time              `json:"eval_last_updated"`
-	EvalDetails           string                 `json:"eval_details"`
-	RemStatus             RemediationStatusTypes `json:"rem_status"`
-	RemDetails            string                 `json:"rem_details"`
-	RemMetadata           json.RawMessage        `json:"rem_metadata"`
-	RemLastUpdated        time.Time              `json:"rem_last_updated"`
-	AlertStatus           AlertStatusTypes       `json:"alert_status"`
-	AlertDetails          string                 `json:"alert_details"`
-	AlertMetadata         json.RawMessage        `json:"alert_metadata"`
-	AlertLastUpdated      time.Time              `json:"alert_last_updated"`
-	RuleEvaluationID      uuid.UUID              `json:"rule_evaluation_id"`
-	RepositoryID          uuid.NullUUID          `json:"repository_id"`
-	EntityType            Entities               `json:"entity_type"`
-	RuleName              string                 `json:"rule_name"`
-	RepoName              sql.NullString         `json:"repo_name"`
-	RepoOwner             sql.NullString         `json:"repo_owner"`
-	Provider              sql.NullString         `json:"provider"`
-	RuleTypeName          string                 `json:"rule_type_name"`
-	RuleTypeSeverityValue Severity               `json:"rule_type_severity_value"`
-	RuleTypeID            uuid.UUID              `json:"rule_type_id"`
-	RuleTypeGuidance      string                 `json:"rule_type_guidance"`
-	RuleTypeDisplayName   string                 `json:"rule_type_display_name"`
-	EntityID              uuid.UUID              `json:"entity_id"`
+	EvalStatus            NullEvalStatusTypes        `json:"eval_status"`
+	EvalLastUpdated       sql.NullTime               `json:"eval_last_updated"`
+	EvalDetails           sql.NullString             `json:"eval_details"`
+	RemStatus             NullRemediationStatusTypes `json:"rem_status"`
+	RemDetails            sql.NullString             `json:"rem_details"`
+	RemMetadata           pqtype.NullRawMessage      `json:"rem_metadata"`
+	RemLastUpdated        sql.NullTime               `json:"rem_last_updated"`
+	AlertStatus           NullAlertStatusTypes       `json:"alert_status"`
+	AlertDetails          sql.NullString             `json:"alert_details"`
+	AlertMetadata         pqtype.NullRawMessage      `json:"alert_metadata"`
+	AlertLastUpdated      sql.NullTime               `json:"alert_last_updated"`
+	RuleEvaluationID      uuid.UUID                  `json:"rule_evaluation_id"`
+	RepositoryID          uuid.NullUUID              `json:"repository_id"`
+	Entity                Entities                   `json:"entity"`
+	RuleName              string                     `json:"rule_name"`
+	RepoName              string                     `json:"repo_name"`
+	RepoOwner             string                     `json:"repo_owner"`
+	Provider              string                     `json:"provider"`
+	RuleTypeName          string                     `json:"rule_type_name"`
+	RuleTypeSeverityValue Severity                   `json:"rule_type_severity_value"`
+	RuleTypeID            uuid.UUID                  `json:"rule_type_id"`
+	RuleTypeGuidance      string                     `json:"rule_type_guidance"`
+	RuleTypeDisplayName   string                     `json:"rule_type_display_name"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -300,7 +291,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.AlertLastUpdated,
 			&i.RuleEvaluationID,
 			&i.RepositoryID,
-			&i.EntityType,
+			&i.Entity,
 			&i.RuleName,
 			&i.RepoName,
 			&i.RepoOwner,
@@ -310,7 +301,6 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleTypeID,
 			&i.RuleTypeGuidance,
 			&i.RuleTypeDisplayName,
-			&i.EntityID,
 		); err != nil {
 			return nil, err
 		}
