@@ -406,8 +406,8 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMes
 	// Return the previous alert status.
 	err := enginerr.AlertStatusAsError(params.prevStatus)
 	// If there is a valid alert metadata, return it too
-	if params.prevStatus != nil && params.prevStatus.AlertMetadata.Valid {
-		return params.prevStatus.AlertMetadata.RawMessage, err
+	if params.prevStatus != nil {
+		return params.prevStatus.AlertMetadata, err
 	}
 	// If there is no alert metadata, return nil as the metadata and the error
 	return nil, err
