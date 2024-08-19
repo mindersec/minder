@@ -67,3 +67,6 @@ examples/rules-and-profiles
 
 # Ignore generated sigstore artifacts while running this locally
 tuf-repo-cdn.sigstore.dev.json
+
+# Offline tokens from minder CLI
+offline.token
