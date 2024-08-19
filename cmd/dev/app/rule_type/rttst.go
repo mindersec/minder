@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -131,12 +132,15 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error reading fragment from file: %w", err)
 	}
 
-	remediateStatus := db.RemediationStatusTypesSkipped
+	remediateStatus := db.NullRemediationStatusTypes{}
 	if rstatus.Value.String() != "" {
-		remediateStatus = db.RemediationStatusTypes(rstatus.Value.String())
+		remediateStatus = db.NullRemediationStatusTypes{
+			RemediationStatusTypes: db.RemediationStatusTypes(rstatus.Value.String()),
+			Valid:                  true,
+		}
 	}
 
-	var remMetadata json.RawMessage = []byte("{}")
+	remMetadata := pqtype.NullRawMessage{}
 	if rMetaPath.Value.String() != "" {
 		f, err := os.Open(filepath.Clean(rMetaPath.Value.String()))
 		if err != nil {
@@ -149,7 +153,10 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("error decoding json: %w", err)
 		}
 
-		remMetadata = jsonMetadata
+		remMetadata = pqtype.NullRawMessage{
+			RawMessage: jsonMetadata,
+			Valid:      true,
+		}
 	}
 
 	// Disable actions
@@ -238,8 +245,8 @@ func runEvaluationForRules(
 	inf *entities.EntityInfoWrapper,
 	provider provifv1.Provider,
 	entitySelectors selectors.Selection,
-	remediateStatus db.RemediationStatusTypes,
-	remMetadata json.RawMessage,
+	remediateStatus db.NullRemediationStatusTypes,
+	remMetadata pqtype.NullRawMessage,
 	frags []*minderv1.Profile_Rule,
 	actionEngine *actions.RuleActionsEngine,
 ) error {
