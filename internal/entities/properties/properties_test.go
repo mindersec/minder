@@ -262,3 +262,16 @@ func TestNewProperties(t *testing.T) {
 		require.Nil(t, p)
 	})
 }
+
+func TestNilReceiver(t *testing.T) {
+	t.Parallel()
+
+	t.Run("GetProperty", func(t *testing.T) {
+		t.Parallel()
+
+		var ps *Properties
+		p := ps.GetProperty("test")
+		require.Nil(t, p)
+		require.False(t, p.GetBool())
+	})
+}
