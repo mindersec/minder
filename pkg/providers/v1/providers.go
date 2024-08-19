@@ -31,6 +31,7 @@ import (
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-github/v63/github"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -44,6 +45,11 @@ type Provider interface {
 	// CanImplement returns true/false depending on whether the Provider
 	// can implement the specified trait
 	CanImplement(trait minderv1.ProviderType) bool
+
+	// FetchAllProperties fetches all properties for the given entity
+	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
+	// FetchProperty fetches a single property for the given entity
+	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
 }
 
 // Git is the interface for git providers
@@ -54,7 +60,7 @@ type Git interface {
 	Clone(ctx context.Context, url string, branch string) (*git.Repository, error)
 }
 
-// REST is the interface for interacting with an REST API.
+// REST is the trait interface for interacting with an REST API.
 type REST interface {
 	Provider
 

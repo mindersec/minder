@@ -29,11 +29,12 @@ import (
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/providers/git/memboxfs"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // Git is the struct that contains the GitHub REST API client
+// It implements helper functions that a provider that
+// uses the `git` trait can use.
 type Git struct {
 	credential provifv1.GitCredential
 	maxFiles   int64
@@ -41,9 +42,6 @@ type Git struct {
 }
 
 const maxCachedObjectSize = 100 * 1024 // 100KiB
-
-// Ensure that the Git client implements the Git interface
-var _ provifv1.Git = (*Git)(nil)
 
 // Options implements the "functional options" pattern for Git
 type Options func(*Git)
@@ -65,12 +63,6 @@ func WithConfig(cfg server.GitConfig) Options {
 		g.maxFiles = cfg.MaxFiles
 		g.maxBytes = cfg.MaxBytes
 	}
-}
-
-// CanImplement returns true/false depending on whether the Provider
-// can implement the specified trait
-func (_ *Git) CanImplement(trait minderv1.ProviderType) bool {
-	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT
 }
 
 // Clone clones a git repository

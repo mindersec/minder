@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	gh "github.com/google/go-github/v63/github"
@@ -28,7 +29,9 @@ import (
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
@@ -58,51 +61,51 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			ExpectedError: "error instantiating provider",
 		},
 		{
-			Name:          "CreateRepository fails when repo cannot be found in GitHub",
+			Name:          "CreateRepository fails when repo properties cannot be found in GitHub",
 			ProviderSetup: withFailingGet,
-			ExpectedError: "error retrieving repo from github",
+			ExpectedError: "error fetching properties for repository",
 		},
 		{
 			Name:          "CreateRepository fails for private repo in project which disallows private repos",
-			ProviderSetup: withSuccessfulGet(privateRepo),
+			ProviderSetup: withSuccessfulPropFetch(privateProps),
 			DBSetup:       newDBMock(withPrivateReposDisabled),
 			ExpectedError: "private repos cannot be registered in this project",
 		},
 		{
 			Name:          "CreateRepository fails when webhook creation fails",
-			ProviderSetup: withSuccessfulGet(publicRepo),
+			ProviderSetup: withSuccessfulPropFetch(publicProps),
 			WebhookSetup:  newWebhookMock(withFailedWebhookCreate),
 			ExpectedError: "error creating webhook in repo",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database",
-			ProviderSetup: withSuccessfulGet(publicRepo),
+			ProviderSetup: withSuccessfulPropFetch(publicProps),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withSuccessfulWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database (cleanup fails)",
-			ProviderSetup: withSuccessfulGet(publicRepo),
+			ProviderSetup: withSuccessfulPropFetch(publicProps),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withFailedWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
 			Name:          "CreateRepository succeeds",
-			ProviderSetup: withSuccessfulGet(publicRepo),
+			ProviderSetup: withSuccessfulPropFetch(publicProps),
 			DBSetup:       newDBMock(withSuccessfulCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
 			Name:          "CreateRepository succeeds (private repos enabled)",
-			ProviderSetup: withSuccessfulGet(privateRepo),
+			ProviderSetup: withSuccessfulPropFetch(privateProps),
 			DBSetup:       newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
 			Name:           "CreateRepository succeeds (skips failed event send)",
-			ProviderSetup:  withSuccessfulGet(publicRepo),
+			ProviderSetup:  withSuccessfulPropFetch(publicProps),
 			DBSetup:        newDBMock(withSuccessfulCreate),
 			WebhookSetup:   newWebhookMock(withSuccessfulWebhookCreate),
 			EventSendFails: true,
@@ -400,9 +403,10 @@ var (
 	webhook = &gh.Hook{
 		ID: ptr.Ptr[int64](cf.HookID),
 	}
-	publicRepo  = newGithubRepo(false)
-	privateRepo = newGithubRepo(true)
-	provider    = db.Provider{
+	publicRepo   = newGithubRepo(false)
+	publicProps  = newGithubRepoProperties(false)
+	privateProps = newGithubRepoProperties(true)
+	provider     = db.Provider{
 		ID:         uuid.UUID{},
 		Name:       providerName,
 		Implements: []db.ProviderType{db.ProviderTypeGithub},
@@ -559,6 +563,24 @@ func newGithubRepo(isPrivate bool) *gh.Repository {
 	}
 }
 
+func newGithubRepoProperties(isPrivate bool) *properties.Properties {
+	repoProps := map[string]any{
+		properties.PropertyName:           fmt.Sprintf("%s/%s", repoOwner, repoName),
+		properties.PropertyUpstreamID:     fmt.Sprintf("%d", *ghRepoID),
+		properties.RepoPropertyIsPrivate:  isPrivate,
+		properties.RepoPropertyIsArchived: false,
+		properties.RepoPropertyIsFork:     false,
+		ghprov.RepoPropertyId:             *ghRepoID,
+		ghprov.RepoPropertyName:           repoName,
+		ghprov.RepoPropertyOwner:          repoOwner,
+		ghprov.RepoPropertyDeployURL:      "https://foo.com",
+		ghprov.RepoPropertyCloneURL:       "http://cloneurl.com",
+		ghprov.RepoPropertyDefaultBranch:  "main",
+	}
+
+	return properties.NewProperties(repoProps)
+}
+
 func newExpectation(isPrivate bool) *pb.Repository {
 	return &pb.Repository{
 		Id:            ptr.Ptr(dbRepo.ID.String()),
@@ -579,19 +601,21 @@ func newExpectation(isPrivate bool) *pb.Repository {
 }
 
 func withFailingGet(ctrl *gomock.Controller) provinfv1.Provider {
-	provider := mockgithub.NewMockGitHub(ctrl)
-	provider.EXPECT().
-		GetRepository(gomock.Any(), gomock.Any(), gomock.Any()).
+	m := mockgithub.NewMockGitHub(ctrl)
+	m.EXPECT().
+		FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
-	return provider
+
+	return m
 }
 
-func withSuccessfulGet(repo *gh.Repository) func(*gomock.Controller) provinfv1.Provider {
+func withSuccessfulPropFetch(prop *properties.Properties) func(*gomock.Controller) provinfv1.Provider {
 	return func(ctrl *gomock.Controller) provinfv1.Provider {
-		provider := mockgithub.NewMockGitHub(ctrl)
-		provider.EXPECT().
-			GetRepository(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(repo, nil)
-		return provider
+		propMock := mockgithub.NewMockGitHub(ctrl)
+		propMock.EXPECT().
+			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(prop, nil)
+
+		return propMock
 	}
 }

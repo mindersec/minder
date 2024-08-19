@@ -17,24 +17,27 @@ INSERT INTO flush_cache(
     repository_id,
     artifact_id,
     pull_request_id,
-    project_id
+    project_id,
+    entity_instance_id
 ) VALUES(
     $1::entities,
     $2::UUID,
     $3::UUID,
     $4::UUID,
-    $5::UUID
+    $5::UUID,
+    $6::UUID
 ) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO NOTHING
-RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id
+RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
 `
 
 type EnqueueFlushParams struct {
-	Entity        Entities      `json:"entity"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	ProjectID     uuid.UUID     `json:"project_id"`
+	Entity           Entities      `json:"entity"`
+	RepositoryID     uuid.NullUUID `json:"repository_id"`
+	ArtifactID       uuid.NullUUID `json:"artifact_id"`
+	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
+	ProjectID        uuid.UUID     `json:"project_id"`
+	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
 }
 
 func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error) {
@@ -44,6 +47,7 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 		arg.ArtifactID,
 		arg.PullRequestID,
 		arg.ProjectID,
+		arg.EntityInstanceID,
 	)
 	var i FlushCache
 	err := row.Scan(
@@ -54,6 +58,7 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 		&i.PullRequestID,
 		&i.QueuedAt,
 		&i.ProjectID,
+		&i.EntityInstanceID,
 	)
 	return i, err
 }
@@ -64,7 +69,7 @@ WHERE entity = $1 AND
     COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($2::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
     COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($3::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
     COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($4::UUID, '00000000-0000-0000-0000-000000000000'::UUID)
-RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id
+RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
 `
 
 type FlushCacheParams struct {
@@ -90,12 +95,13 @@ func (q *Queries) FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCa
 		&i.PullRequestID,
 		&i.QueuedAt,
 		&i.ProjectID,
+		&i.EntityInstanceID,
 	)
 	return i, err
 }
 
 const listFlushCache = `-- name: ListFlushCache :many
-SELECT id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id FROM flush_cache
+SELECT id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id FROM flush_cache
 `
 
 func (q *Queries) ListFlushCache(ctx context.Context) ([]FlushCache, error) {
@@ -115,6 +121,7 @@ func (q *Queries) ListFlushCache(ctx context.Context) ([]FlushCache, error) {
 			&i.PullRequestID,
 			&i.QueuedAt,
 			&i.ProjectID,
+			&i.EntityInstanceID,
 		); err != nil {
 			return nil, err
 		}
@@ -138,7 +145,8 @@ INSERT INTO entity_execution_lock(
     repository_id,
     artifact_id,
     pull_request_id,
-    project_id
+    project_id,
+    entity_instance_id
 ) VALUES(
     $1::entities,
     gen_random_uuid(),
@@ -146,22 +154,25 @@ INSERT INTO entity_execution_lock(
     $2::UUID,
     $3::UUID,
     $4::UUID,
-    $5::UUID
+    $5::UUID,
+    $6::UUID
 ) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO UPDATE SET
     locked_by = gen_random_uuid(),
-    last_lock_time = NOW()
-WHERE entity_execution_lock.last_lock_time < (NOW() - ($6::TEXT || ' seconds')::interval)
-RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id, project_id
+    last_lock_time = NOW(),
+    entity_instance_id = $6::UUID
+WHERE entity_execution_lock.last_lock_time < (NOW() - ($7::TEXT || ' seconds')::interval)
+RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id, project_id, entity_instance_id
 `
 
 type LockIfThresholdNotExceededParams struct {
-	Entity        Entities      `json:"entity"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	ProjectID     uuid.UUID     `json:"project_id"`
-	Interval      string        `json:"interval"`
+	Entity           Entities      `json:"entity"`
+	RepositoryID     uuid.NullUUID `json:"repository_id"`
+	ArtifactID       uuid.NullUUID `json:"artifact_id"`
+	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
+	ProjectID        uuid.UUID     `json:"project_id"`
+	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	Interval         string        `json:"interval"`
 }
 
 // LockIfThresholdNotExceeded is used to lock an entity for execution. It will
@@ -176,6 +187,7 @@ func (q *Queries) LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThre
 		arg.ArtifactID,
 		arg.PullRequestID,
 		arg.ProjectID,
+		arg.EntityInstanceID,
 		arg.Interval,
 	)
 	var i EntityExecutionLock
@@ -188,6 +200,7 @@ func (q *Queries) LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThre
 		&i.ArtifactID,
 		&i.PullRequestID,
 		&i.ProjectID,
+		&i.EntityInstanceID,
 	)
 	return i, err
 }

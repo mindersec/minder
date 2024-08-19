@@ -108,7 +108,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
-	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
+	).Return(nil, nil)
 
 	mockStore.EXPECT().
 		GetProviderByID(gomock.Any(), gomock.Eq(providerID)).

@@ -188,6 +188,7 @@ func (e *EvalStatusParams) GetRule() *models.RuleInstance {
 }
 
 // GetEvalStatusFromDb returns the evaluation status from the database
+// Returns nil if there is no previous state for this rule/entity
 func (e *EvalStatusParams) GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow {
 	return e.EvalStatusFromDb
 }

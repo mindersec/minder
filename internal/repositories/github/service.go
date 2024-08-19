@@ -26,9 +26,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/manager"
 	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
@@ -143,19 +145,36 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error instantiating github client: %w", err)
 	}
 
-	// get information about the repo from GitHub, and ensure it exists
-	githubRepo, err := client.GetRepository(ctx, repoOwner, repoName)
+	propClient, err := provifv1.As[provifv1.Provider](p)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving repo from github: %w", err)
+		return nil, fmt.Errorf("error instantiating properties client: %w", err)
+	}
+
+	repoProperties, err := propClient.FetchAllProperties(
+		ctx,
+		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		pb.Entity_ENTITY_REPOSITORIES)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+
+	isArchived, err := repoProperties.GetProperty(properties.RepoPropertyIsArchived).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
 	}
 
 	// skip if this is an archived repo
-	if githubRepo.GetArchived() {
+	if isArchived {
 		return nil, ErrArchivedRepoForbidden
 	}
 
+	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
 	// skip if this is a private repo, and private repos are not enabled
-	if githubRepo.GetPrivate() && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
+	if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
 		return nil, ErrPrivateRepoForbidden
 	}
 
@@ -168,7 +187,7 @@ func (r *repositoryService) CreateRepository(
 	// insert the repository into the DB
 	dbID, pbRepo, err := r.persistRepository(
 		ctx,
-		githubRepo,
+		repoProperties,
 		githubHook,
 		hookUUID,
 		projectID,
@@ -369,7 +388,7 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 // returns DB PK along with protobuf representation of a repo
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
-	githubRepo *github.Repository,
+	repoProperties *properties.Properties,
 	githubHook *github.Hook,
 	hookUUID string,
 	projectID uuid.UUID,
@@ -378,20 +397,15 @@ func (r *repositoryService) persistRepository(
 	var outid uuid.UUID
 	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
 		// instantiate the response object
-		pbRepo := &pb.Repository{
-			Name:          githubRepo.GetName(),
-			Owner:         githubRepo.GetOwner().GetLogin(),
-			RepoId:        githubRepo.GetID(),
-			HookId:        githubHook.GetID(),
-			HookUrl:       githubHook.GetURL(),
-			DeployUrl:     githubRepo.GetDeploymentsURL(),
-			CloneUrl:      githubRepo.GetCloneURL(),
-			HookType:      githubHook.GetType(),
-			HookName:      githubHook.GetName(),
-			HookUuid:      hookUUID,
-			IsPrivate:     githubRepo.GetPrivate(),
-			IsFork:        githubRepo.GetFork(),
-			DefaultBranch: githubRepo.GetDefaultBranch(),
+		pbRepo, err := pbRepoFromProperties(repoProperties, githubHook, hookUUID)
+		if err != nil {
+			return nil, fmt.Errorf("error creating repository object: %w", err)
+		}
+
+		License := sql.NullString{}
+		if pbRepo.License != "" {
+			License.String = pbRepo.License
+			License.Valid = true
 		}
 
 		// update the database
@@ -415,6 +429,7 @@ func (r *repositoryService) persistRepository(
 				String: pbRepo.DefaultBranch,
 				Valid:  true,
 			},
+			License: License,
 		})
 		if err != nil {
 			return pbRepo, err
@@ -439,4 +454,54 @@ func (r *repositoryService) persistRepository(
 	}
 
 	return outid, pbr, nil
+}
+
+func pbRepoFromProperties(
+	repoProperties *properties.Properties,
+	githubHook *github.Hook,
+	hookUUID string,
+) (*pb.Repository, error) {
+	name, err := repoProperties.GetProperty(ghprov.RepoPropertyName).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching name property: %w", err)
+	}
+
+	owner, err := repoProperties.GetProperty(ghprov.RepoPropertyOwner).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching owner property: %w", err)
+	}
+
+	repoId, err := repoProperties.GetProperty(ghprov.RepoPropertyId).AsInt64()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repo_id property: %w", err)
+	}
+
+	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
+	isFork, err := repoProperties.GetProperty(properties.RepoPropertyIsFork).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
+	pbRepo := &pb.Repository{
+		Name:          name,
+		Owner:         owner,
+		RepoId:        repoId,
+		HookId:        githubHook.GetID(),
+		HookUrl:       githubHook.GetURL(),
+		DeployUrl:     repoProperties.GetProperty(ghprov.RepoPropertyDeployURL).GetString(),
+		CloneUrl:      repoProperties.GetProperty(ghprov.RepoPropertyCloneURL).GetString(),
+		HookType:      githubHook.GetType(),
+		HookName:      githubHook.GetName(),
+		HookUuid:      hookUUID,
+		IsPrivate:     isPrivate,
+		IsFork:        isFork,
+		DefaultBranch: repoProperties.GetProperty(ghprov.RepoPropertyDefaultBranch).GetString(),
+		License:       repoProperties.GetProperty(ghprov.RepoPropertyLicense).GetString(),
+	}
+
+	return pbRepo, nil
 }

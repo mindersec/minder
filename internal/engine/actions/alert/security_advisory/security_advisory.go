@@ -404,6 +404,11 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMes
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous alert status.
-	err := enginerr.AlertStatusAsError(params.prevStatus.AlertStatus)
-	return params.prevStatus.AlertMetadata, err
+	err := enginerr.AlertStatusAsError(params.prevStatus)
+	// If there is a valid alert metadata, return it too
+	if params.prevStatus != nil && params.prevStatus.AlertMetadata.Valid {
+		return params.prevStatus.AlertMetadata.RawMessage, err
+	}
+	// If there is no alert metadata, return nil as the metadata and the error
+	return nil, err
 }

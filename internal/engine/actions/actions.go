@@ -120,7 +120,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			&params.GetEvalStatusFromDb().RemMetadata)
+			getRemediationMeta(params.GetEvalStatusFromDb()))
 	}
 
 	// Try alerting
@@ -129,7 +129,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
-			&params.GetEvalStatusFromDb().AlertMetadata)
+			getAlertMeta(params.GetEvalStatusFromDb()))
 	}
 	return result
 }
@@ -164,7 +164,10 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Remediation status
-	prevRemediation := prevEvalFromDb.RemStatus
+	prevRemediation := db.RemediationStatusTypesSkipped
+	if prevEvalFromDb != nil && prevEvalFromDb.RemStatus.Valid {
+		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
+	}
 
 	// Start evaluation scenarios
 
@@ -210,7 +213,10 @@ func shouldAlert(
 	newEval := enginerr.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Alert status
-	prevAlert := prevEvalFromDb.AlertStatus
+	prevAlert := db.AlertStatusTypesSkipped
+	if prevEvalFromDb != nil && prevEvalFromDb.AlertStatus.Valid {
+		prevAlert = prevEvalFromDb.AlertStatus.AlertStatusTypes
+	}
 
 	// Start evaluation scenarios
 
@@ -290,6 +296,22 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	logger.Bool("skip_action", skipAction).Msg("action skip decision")
 	// Everything else, do not skip
 	return skipAction
+}
+
+// getRemediationMeta returns the json.RawMessage from the database type, empty if not valid
+func getRemediationMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prevEvalFromDb != nil && prevEvalFromDb.RemMetadata.Valid {
+		return &prevEvalFromDb.RemMetadata.RawMessage
+	}
+	return nil
+}
+
+// getAlertMeta returns the json.RawMessage from the database type, empty if not valid
+func getAlertMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prevEvalFromDb != nil && prevEvalFromDb.AlertMetadata.Valid {
+		return &prevEvalFromDb.AlertMetadata.RawMessage
+	}
+	return nil
 }
 
 // getDefaultResult returns the default result for the action engine
