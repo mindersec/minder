@@ -118,6 +118,10 @@ func NewProperties(props map[string]any) *Properties {
 
 // GetProperty returns the Property for a given key or an empty one as a fallback
 func (p *Properties) GetProperty(key string) *Property {
+	if p == nil {
+		return nil
+	}
+
 	prop, ok := p.props.Load(key)
 	if !ok {
 		return nil
