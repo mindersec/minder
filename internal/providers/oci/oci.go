@@ -42,9 +42,6 @@ type OCI struct {
 	baseURL  string
 }
 
-// Ensure that the OCI client implements the OCI interface
-var _ provifv1.OCI = (*OCI)(nil)
-
 // New creates a new OCI client
 func New(cred provifv1.Credential, registry, baseURL string) *OCI {
 	return &OCI{

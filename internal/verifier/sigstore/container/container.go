@@ -305,13 +305,13 @@ func getAttestationReply(
 	return &attestationReply, nil
 }
 
-func unmarhsalAttestationReply(attestation *Attestation) (*bundle.ProtobufBundle, error) {
+func unmarhsalAttestationReply(attestation *Attestation) (*bundle.Bundle, error) {
 	var pbBundle protobundle.Bundle
 	if err := protojson.Unmarshal(attestation.Bundle, &pbBundle); err != nil {
 		return nil, fmt.Errorf("error unmarshaling attestation: %w", err)
 	}
 
-	protobufBundle, err := bundle.NewProtobufBundle(&pbBundle)
+	protobufBundle, err := bundle.NewBundle(&pbBundle)
 	if err != nil {
 		return nil, fmt.Errorf("error creating protobuf bundle: %w", err)
 	}
@@ -379,7 +379,7 @@ func bundleFromOCIImage(ctx context.Context,
 			VerificationMaterial: verificationMaterial,
 			Content:              msgSignature,
 		}
-		bun, err := bundle.NewProtobufBundle(&pbb)
+		bun, err := bundle.NewBundle(&pbb)
 		if err != nil {
 			logger.Err(err).Msg("error creating protobuf bundle")
 			continue
@@ -626,7 +626,7 @@ func BuildImageRef(registry, owner, artifact, checksum string) string {
 }
 
 type sigstoreBundle struct {
-	bundle      *bundle.ProtobufBundle
+	bundle      *bundle.Bundle
 	digestBytes []byte
 	digestAlgo  string
 }

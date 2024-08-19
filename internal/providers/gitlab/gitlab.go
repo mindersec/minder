@@ -25,6 +25,7 @@ import (
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -113,4 +114,15 @@ func (_ *gitlabClient) CanImplement(trait minderv1.ProviderType) bool {
 
 func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 	return c.cred
+}
+
+// FetchAllProperties implements the provider interface
+// TODO: Implement this
+func (_ *gitlabClient) FetchAllProperties(_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+	return nil, nil
+}
+
+// FetchProperty implements the provider interface
+func (_ *gitlabClient) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	return nil, nil
 }

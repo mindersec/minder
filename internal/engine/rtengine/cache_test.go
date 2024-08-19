@@ -27,7 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
-	"github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/testproviders"
 )
 
 func TestGetRuleEngine(t *testing.T) {
@@ -89,7 +89,7 @@ func TestGetRuleEngine(t *testing.T) {
 
 			cache := ruleEngineCache{
 				store:       store,
-				provider:    git.NewGit(nil),
+				provider:    testproviders.NewGitProvider(nil),
 				ingestCache: ingestcache.NewNoopCache(),
 				engines:     scenario.Cache,
 			}

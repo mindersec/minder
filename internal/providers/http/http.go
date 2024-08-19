@@ -30,14 +30,13 @@ import (
 )
 
 // REST is the interface for interacting with an REST API.
+// It implements helper functions that a provider that
+// uses the `rest` trait can use.
 type REST struct {
 	baseURL    *url.URL
 	cli        *http.Client
 	credential provifv1.RestCredential
 }
-
-// Ensure that REST implements the REST interface
-var _ provifv1.REST = (*REST)(nil)
 
 // NewREST creates a new RESTful client.
 func NewREST(
@@ -66,12 +65,6 @@ func NewREST(
 		baseURL:    baseURL,
 		credential: credential,
 	}, nil
-}
-
-// CanImplement returns true/false depending on whether the Provider
-// can implement the specified trait
-func (_ *REST) CanImplement(trait minderv1.ProviderType) bool {
-	return trait == minderv1.ProviderType_PROVIDER_TYPE_REST
 }
 
 // GetBaseURL returns the base URL for the REST API.

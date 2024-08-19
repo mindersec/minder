@@ -26,6 +26,7 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -134,4 +135,16 @@ func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 	}
 
 	return allContainers, nil
+}
+
+// FetchAllProperties implements the provider interface
+// TODO: Implement this
+func (_ *ImageLister) FetchAllProperties(_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+	return nil, nil
+}
+
+// FetchProperty implements the provider interface
+// TODO: Implement this
+func (_ *ImageLister) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	return nil, nil
 }

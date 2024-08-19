@@ -62,6 +62,36 @@ func (mr *MockProviderMockRecorder) CanImplement(trait any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockProvider)(nil).CanImplement), trait)
 }
 
+// FetchAllProperties mocks base method.
+func (m *MockProvider) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockProviderMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockProvider)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockProvider) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockProviderMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockProvider)(nil).FetchProperty), ctx, name, entType, key)
+}
+
 // MockGit is a mock of Git interface.
 type MockGit struct {
 	ctrl     *gomock.Controller
@@ -114,6 +144,36 @@ func (mr *MockGitMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGit)(nil).Clone), ctx, url, branch)
 }
 
+// FetchAllProperties mocks base method.
+func (m *MockGit) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockGitMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockGit)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockGit) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockGitMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockGit)(nil).FetchProperty), ctx, name, entType, key)
+}
+
 // MockREST is a mock of REST interface.
 type MockREST struct {
 	ctrl     *gomock.Controller
@@ -164,6 +224,36 @@ func (m *MockREST) Do(ctx context.Context, req *http.Request) (*http.Response, e
 func (mr *MockRESTMockRecorder) Do(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockREST)(nil).Do), ctx, req)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockREST) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockRESTMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockREST)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockREST) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockRESTMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockREST)(nil).FetchProperty), ctx, name, entType, key)
 }
 
 // GetBaseURL mocks base method.
@@ -230,6 +320,36 @@ func (m *MockRepoLister) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockRepoListerMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockRepoLister)(nil).CanImplement), trait)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockRepoLister) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockRepoListerMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockRepoLister)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockRepoLister) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockRepoListerMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockRepoLister)(nil).FetchProperty), ctx, name, entType, key)
 }
 
 // ListAllRepositories mocks base method.
@@ -550,6 +670,36 @@ func (m *MockGitHub) EditHook(ctx context.Context, owner, repo string, id int64,
 func (mr *MockGitHubMockRecorder) EditHook(ctx, owner, repo, id, hook any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditHook", reflect.TypeOf((*MockGitHub)(nil).EditHook), ctx, owner, repo, id, hook)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockGitHub) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockGitHubMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockGitHub)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockGitHub) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockGitHubMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockGitHub)(nil).FetchProperty), ctx, name, entType, key)
 }
 
 // GetArtifactVersions mocks base method.
@@ -1019,6 +1169,36 @@ func (mr *MockImageListerMockRecorder) CanImplement(trait any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockImageLister)(nil).CanImplement), trait)
 }
 
+// FetchAllProperties mocks base method.
+func (m *MockImageLister) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockImageListerMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockImageLister)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockImageLister) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockImageListerMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockImageLister)(nil).FetchProperty), ctx, name, entType, key)
+}
+
 // GetNamespaceURL mocks base method.
 func (m *MockImageLister) GetNamespaceURL() string {
 	m.ctrl.T.Helper()
@@ -1083,6 +1263,36 @@ func (m *MockOCI) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockOCI) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockOCIMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockOCI)(nil).FetchAllProperties), ctx, name, entType)
+}
+
+// FetchProperty mocks base method.
+func (m *MockOCI) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockOCIMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockOCI)(nil).FetchProperty), ctx, name, entType, key)
 }
 
 // GetArtifactVersions mocks base method.
@@ -1187,71 +1397,4 @@ func (m *MockOCI) ListTags(ctx context.Context, name string) ([]string, error) {
 func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockOCI)(nil).ListTags), ctx, name)
-}
-
-// MockPropertiesFetcher is a mock of PropertiesFetcher interface.
-type MockPropertiesFetcher struct {
-	ctrl     *gomock.Controller
-	recorder *MockPropertiesFetcherMockRecorder
-}
-
-// MockPropertiesFetcherMockRecorder is the mock recorder for MockPropertiesFetcher.
-type MockPropertiesFetcherMockRecorder struct {
-	mock *MockPropertiesFetcher
-}
-
-// NewMockPropertiesFetcher creates a new mock instance.
-func NewMockPropertiesFetcher(ctrl *gomock.Controller) *MockPropertiesFetcher {
-	mock := &MockPropertiesFetcher{ctrl: ctrl}
-	mock.recorder = &MockPropertiesFetcherMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPropertiesFetcher) EXPECT() *MockPropertiesFetcherMockRecorder {
-	return m.recorder
-}
-
-// CanImplement mocks base method.
-func (m *MockPropertiesFetcher) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockPropertiesFetcherMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockPropertiesFetcher)(nil).CanImplement), trait)
-}
-
-// FetchAllProperties mocks base method.
-func (m *MockPropertiesFetcher) FetchAllProperties(ctx context.Context, name string, entType v10.Entity) (*properties.Properties, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, name, entType)
-	ret0, _ := ret[0].(*properties.Properties)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchAllProperties indicates an expected call of FetchAllProperties.
-func (mr *MockPropertiesFetcherMockRecorder) FetchAllProperties(ctx, name, entType any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockPropertiesFetcher)(nil).FetchAllProperties), ctx, name, entType)
-}
-
-// FetchProperty mocks base method.
-func (m *MockPropertiesFetcher) FetchProperty(ctx context.Context, name string, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, name, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockPropertiesFetcherMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockPropertiesFetcher)(nil).FetchProperty), ctx, name, entType, key)
 }

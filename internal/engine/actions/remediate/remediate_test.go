@@ -28,9 +28,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/git"
-	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/providers/testproviders"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -144,7 +143,7 @@ func TestNewRuleRemediator(t *testing.T) {
 
 func HTTPProvider() (provifv1.Provider, error) {
 	cfg := pb.RESTProviderConfig{BaseUrl: proto.String("https://api.github.com/")}
-	return httpclient.NewREST(
+	return testproviders.NewRESTProvider(
 		&cfg,
 		telemetry.NewNoopMetrics(),
 		credentials.NewGitHubTokenCredential("token"),
@@ -152,5 +151,5 @@ func HTTPProvider() (provifv1.Provider, error) {
 }
 
 func GitProvider() (provifv1.Provider, error) {
-	return git.NewGit(credentials.NewEmptyCredential()), nil
+	return testproviders.NewGitProvider(credentials.NewEmptyCredential()), nil
 }

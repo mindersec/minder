@@ -145,7 +145,7 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error instantiating github client: %w", err)
 	}
 
-	propClient, err := provifv1.As[provifv1.PropertiesFetcher](p)
+	propClient, err := provifv1.As[provifv1.Provider](p)
 	if err != nil {
 		return nil, fmt.Errorf("error instantiating properties client: %w", err)
 	}
@@ -402,6 +402,12 @@ func (r *repositoryService) persistRepository(
 			return nil, fmt.Errorf("error creating repository object: %w", err)
 		}
 
+		License := sql.NullString{}
+		if pbRepo.License != "" {
+			License.String = pbRepo.License
+			License.Valid = true
+		}
+
 		// update the database
 		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
 			Provider:   provider.Name,
@@ -423,6 +429,7 @@ func (r *repositoryService) persistRepository(
 				String: pbRepo.DefaultBranch,
 				Valid:  true,
 			},
+			License: License,
 		})
 		if err != nil {
 			return pbRepo, err
@@ -493,6 +500,7 @@ func pbRepoFromProperties(
 		IsPrivate:     isPrivate,
 		IsFork:        isFork,
 		DefaultBranch: repoProperties.GetProperty(ghprov.RepoPropertyDefaultBranch).GetString(),
+		License:       repoProperties.GetProperty(ghprov.RepoPropertyLicense).GetString(),
 	}
 
 	return pbRepo, nil
