@@ -60,6 +60,7 @@ WHERE entity_instances.id = $1 AND entity_instances.project_id = ANY(sqlc.arg(pr
 LIMIT 1;
 
 -- GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
+-- name: GetEntityByName :one
 SELECT * FROM entity_instances
 WHERE lower(entity_instances.name) = lower(sqlc.arg(name)) AND entity_instances.project_id = $1
 LIMIT 1;
