@@ -99,7 +99,7 @@ func (e *executor) createEvalStatusParams(
 	}
 
 	// Save the current rule evaluation status to the evalParams
-	params.EvalStatusFromDb = &evalStatus
+	params.EvalStatusFromDb = evalStatus
 
 	return params, nil
 }

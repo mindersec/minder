@@ -580,9 +580,9 @@ func (_ *Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMes
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous remediation status.
-	err := enginerr.RemediationStatusAsError(p.prevStatus.RemStatus)
+	err := enginerr.RemediationStatusAsError(p.prevStatus)
 	// If there is a valid remediation metadata, return it too
-	if p.prevStatus.RemMetadata.Valid {
+	if p.prevStatus != nil && p.prevStatus.RemMetadata.Valid {
 		return p.prevStatus.RemMetadata.RawMessage, err
 	}
 	// If there is no remediation metadata, return nil as the metadata and the error
