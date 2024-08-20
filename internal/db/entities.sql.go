@@ -253,6 +253,33 @@ func (q *Queries) GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (E
 	return i, err
 }
 
+const getEntityByName = `-- name: GetEntityByName :one
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.name = $2 AND entity_instances.project_id = $1
+LIMIT 1
+`
+
+type GetEntityByNameParams struct {
+	ProjectID uuid.UUID `json:"project_id"`
+	Name      string    `json:"name"`
+}
+
+// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
+func (q *Queries) GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error) {
+	row := q.db.QueryRowContext(ctx, getEntityByName, arg.ProjectID, arg.Name)
+	var i EntityInstance
+	err := row.Scan(
+		&i.ID,
+		&i.EntityType,
+		&i.Name,
+		&i.ProjectID,
+		&i.ProviderID,
+		&i.CreatedAt,
+		&i.OriginatedFrom,
+	)
+	return i, err
+}
+
 const temporaryPopulateArtifacts = `-- name: TemporaryPopulateArtifacts :exec
 INSERT INTO entity_instances (id, entity_type, name, project_id, provider_id, created_at, originated_from)
 SELECT artifacts.id, 'artifact', LOWER(repositories.repo_owner) || '/' || artifacts.artifact_name, repositories.project_id, repositories.provider_id, artifacts.created_at, artifacts.repository_id FROM artifacts
