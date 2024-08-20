@@ -719,6 +719,10 @@ func createRandomEvaluationRuleEntity(
 				Valid: true,
 			},
 			EntityType: EntitiesRepository,
+			EntityInstanceID: uuid.NullUUID{
+				UUID:  entityID,
+				Valid: true,
+			},
 		},
 	)
 	require.NoError(t, err)

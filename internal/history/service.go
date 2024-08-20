@@ -95,11 +95,12 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 		if errors.Is(err, sql.ErrNoRows) {
 			ruleEntityID, err = qtx.InsertEvaluationRuleEntity(ctx,
 				db.InsertEvaluationRuleEntityParams{
-					RuleID:        params.RuleID,
-					RepositoryID:  params.RepositoryID,
-					PullRequestID: params.PullRequestID,
-					ArtifactID:    params.ArtifactID,
-					EntityType:    entityType,
+					RuleID:           params.RuleID,
+					RepositoryID:     params.RepositoryID,
+					PullRequestID:    params.PullRequestID,
+					ArtifactID:       params.ArtifactID,
+					EntityType:       entityType,
+					EntityInstanceID: params.EntityID,
 				},
 			)
 			if err != nil {
@@ -168,6 +169,8 @@ func paramsFromEntity(
 		Valid: true,
 	}
 
+	params.EntityID = nullableEntityID
+
 	switch entityType {
 	case db.EntitiesRepository:
 		params.RepositoryID = nullableEntityID
@@ -188,6 +191,9 @@ type ruleEntityParams struct {
 	RepositoryID  uuid.NullUUID
 	ArtifactID    uuid.NullUUID
 	PullRequestID uuid.NullUUID
+	// Is the target entity ID. We'll be replacing the single-entity IDs
+	// with this one.
+	EntityID uuid.NullUUID
 }
 
 func (_ *evaluationHistoryService) ListEvaluationHistory(

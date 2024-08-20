@@ -165,6 +165,10 @@ func createRuleEntity(
 			PullRequestID: uuid.NullUUID{},
 			ArtifactID:    uuid.NullUUID{},
 			EntityType:    EntitiesRepository,
+			EntityInstanceID: uuid.NullUUID{
+				UUID:  repoID,
+				Valid: true,
+			},
 		},
 	)
 	require.NoError(t, err)

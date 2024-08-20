@@ -866,6 +866,21 @@ func (mr *MockStoreMockRecorder) GetEntityByID(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockStore)(nil).GetEntityByID), arg0, arg1)
 }
 
+// GetEntityByName mocks base method.
+func (m *MockStore) GetEntityByName(arg0 context.Context, arg1 db.GetEntityByNameParams) (db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityByName", arg0, arg1)
+	ret0, _ := ret[0].(db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityByName indicates an expected call of GetEntityByName.
+func (mr *MockStoreMockRecorder) GetEntityByName(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByName", reflect.TypeOf((*MockStore)(nil).GetEntityByName), arg0, arg1)
+}
+
 // GetEvaluationHistory mocks base method.
 func (m *MockStore) GetEvaluationHistory(arg0 context.Context, arg1 db.GetEvaluationHistoryParams) (db.GetEvaluationHistoryRow, error) {
 	m.ctrl.T.Helper()
@@ -2087,6 +2102,20 @@ func (m *MockStore) TemporaryPopulateArtifacts(arg0 context.Context) error {
 func (mr *MockStoreMockRecorder) TemporaryPopulateArtifacts(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateArtifacts", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateArtifacts), arg0)
+}
+
+// TemporaryPopulateEvaluationHistory mocks base method.
+func (m *MockStore) TemporaryPopulateEvaluationHistory(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemporaryPopulateEvaluationHistory", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TemporaryPopulateEvaluationHistory indicates an expected call of TemporaryPopulateEvaluationHistory.
+func (mr *MockStoreMockRecorder) TemporaryPopulateEvaluationHistory(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateEvaluationHistory", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateEvaluationHistory), arg0)
 }
 
 // TemporaryPopulatePullRequests mocks base method.
