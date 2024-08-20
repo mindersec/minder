@@ -282,10 +282,6 @@ type Querier interface {
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
-	UpsertRuleDetailsAlert(ctx context.Context, arg UpsertRuleDetailsAlertParams) (uuid.UUID, error)
-	UpsertRuleDetailsEval(ctx context.Context, arg UpsertRuleDetailsEvalParams) (uuid.UUID, error)
-	UpsertRuleDetailsRemediate(ctx context.Context, arg UpsertRuleDetailsRemediateParams) (uuid.UUID, error)
-	UpsertRuleEvaluations(ctx context.Context, arg UpsertRuleEvaluationsParams) (uuid.UUID, error)
 	// Copyright 2024 Stacklok, Inc
 	//
 	// Licensed under the Apache License, Version 2.0 (the "License");
