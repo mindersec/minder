@@ -127,6 +127,10 @@ var upCmd = &cobra.Command{
 			cmd.Printf("Error while populating entities table with pull requests: %v\n", err)
 		}
 
+		if err := store.TemporaryPopulateEvaluationHistory(ctx); err != nil {
+			cmd.Printf("Error while populating entities table with evaluation history: %v\n", err)
+		}
+
 		return nil
 	},
 }

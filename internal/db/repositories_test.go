@@ -67,6 +67,16 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov Provider, opts
 	require.NoError(t, err)
 	require.NotEmpty(t, repo)
 
+	ei, err := testQueries.CreateEntityWithID(context.Background(), CreateEntityWithIDParams{
+		ID:         repo.ID,
+		Name:       arg.RepoName,
+		ProjectID:  project,
+		ProviderID: prov.ID,
+		EntityType: EntitiesRepository,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, ei)
+
 	require.Equal(t, arg.Provider, repo.Provider)
 	require.Equal(t, arg.ProjectID, repo.ProjectID)
 	require.Equal(t, arg.RepoOwner, repo.RepoOwner)

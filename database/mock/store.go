@@ -2104,6 +2104,20 @@ func (mr *MockStoreMockRecorder) TemporaryPopulateArtifacts(arg0 any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateArtifacts", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateArtifacts), arg0)
 }
 
+// TemporaryPopulateEvaluationHistory mocks base method.
+func (m *MockStore) TemporaryPopulateEvaluationHistory(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemporaryPopulateEvaluationHistory", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TemporaryPopulateEvaluationHistory indicates an expected call of TemporaryPopulateEvaluationHistory.
+func (mr *MockStoreMockRecorder) TemporaryPopulateEvaluationHistory(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateEvaluationHistory", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateEvaluationHistory), arg0)
+}
+
 // TemporaryPopulatePullRequests mocks base method.
 func (m *MockStore) TemporaryPopulatePullRequests(arg0 context.Context) error {
 	m.ctrl.T.Helper()
