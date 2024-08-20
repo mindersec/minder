@@ -179,65 +179,12 @@ func (e *executor) createOrUpdateEvalStatus(
 			return err
 		}
 
-		err = qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
+		return qtx.InsertAlertEvent(ctx, db.InsertAlertEventParams{
 			EvaluationID: evalID,
 			Status:       alertStatus,
 			Details:      errorAsActionDetails(params.GetActionsErr().AlertErr),
 			Metadata:     params.GetActionsErr().AlertMeta,
 		})
-		if err != nil {
-			return err
-		}
-
-		// Upsert evaluation
-		// TODO: replace these tables with the evaluation statuses table after migration
-		legacyEvalID, err := qtx.UpsertRuleEvaluations(ctx, db.UpsertRuleEvaluationsParams{
-			ProfileID:      params.Profile.ID,
-			RepositoryID:   params.RepoID,
-			ArtifactID:     params.ArtifactID,
-			Entity:         params.EntityType,
-			RuleTypeID:     params.Rule.RuleTypeID,
-			PullRequestID:  params.PullRequestID,
-			RuleName:       params.Rule.Name,
-			RuleInstanceID: params.Rule.ID,
-		})
-		if err != nil {
-			logger.Err(err).Msg("error upserting rule evaluation")
-			return err
-		}
-
-		// Upsert evaluation details
-		_, err = qtx.UpsertRuleDetailsEval(ctx, db.UpsertRuleDetailsEvalParams{
-			RuleEvalID: legacyEvalID,
-			Status:     evalerrors.ErrorAsEvalStatus(params.GetEvalErr()),
-			Details:    evalerrors.ErrorAsEvalDetails(params.GetEvalErr()),
-		})
-		if err != nil {
-			logger.Err(err).Msg("error upserting rule evaluation details")
-			return err
-		}
-
-		_, err = qtx.UpsertRuleDetailsRemediate(ctx, db.UpsertRuleDetailsRemediateParams{
-			RuleEvalID: legacyEvalID,
-			Status:     remediationStatus,
-			Details:    errorAsActionDetails(params.GetActionsErr().RemediateErr),
-			Metadata:   params.GetActionsErr().RemediateMeta,
-		})
-		if err != nil {
-			logger.Err(err).Msg("error upserting rule remediation details")
-		}
-
-		_, err = qtx.UpsertRuleDetailsAlert(ctx, db.UpsertRuleDetailsAlertParams{
-			RuleEvalID: legacyEvalID,
-			Status:     alertStatus,
-			Details:    errorAsActionDetails(params.GetActionsErr().AlertErr),
-			Metadata:   params.GetActionsErr().AlertMeta,
-		})
-		if err != nil {
-			logger.Err(err).Msg("error upserting rule alert details")
-		}
-
-		return nil
 	})
 	if err != nil {
 		logger.Err(err).Msg("error logging evaluation status")
