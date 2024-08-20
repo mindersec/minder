@@ -64,3 +64,8 @@ func (_ *RESTProvider) FetchProperty(
 	_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
+
+// GetEntityName implements the Provider interface
+func (_ *RESTProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
+}

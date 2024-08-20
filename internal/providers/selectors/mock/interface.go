@@ -86,6 +86,21 @@ func (mr *MockRepoSelectorConverterMockRecorder) FetchProperty(ctx, name, entTyp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockRepoSelectorConverter)(nil).FetchProperty), ctx, name, entType, key)
 }
 
+// GetEntityName mocks base method.
+func (m *MockRepoSelectorConverter) GetEntityName(entType v1.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockRepoSelectorConverterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockRepoSelectorConverter)(nil).GetEntityName), entType, props)
+}
+
 // RepoToSelectorEntity mocks base method.
 func (m *MockRepoSelectorConverter) RepoToSelectorEntity(ctx context.Context, repo *v1.Repository) *proto.SelectorEntity {
 	m.ctrl.T.Helper()
@@ -181,6 +196,21 @@ func (mr *MockArtifactSelectorConverterMockRecorder) FetchProperty(ctx, name, en
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).FetchProperty), ctx, name, entType, key)
 }
 
+// GetEntityName mocks base method.
+func (m *MockArtifactSelectorConverter) GetEntityName(entType v1.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockArtifactSelectorConverterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).GetEntityName), entType, props)
+}
+
 // MockPullRequestSelectorConverter is a mock of PullRequestSelectorConverter interface.
 type MockPullRequestSelectorConverter struct {
 	ctrl     *gomock.Controller
@@ -246,6 +276,21 @@ func (m *MockPullRequestSelectorConverter) FetchProperty(ctx context.Context, na
 func (mr *MockPullRequestSelectorConverterMockRecorder) FetchProperty(ctx, name, entType, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).FetchProperty), ctx, name, entType, key)
+}
+
+// GetEntityName mocks base method.
+func (m *MockPullRequestSelectorConverter) GetEntityName(entType v1.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockPullRequestSelectorConverterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).GetEntityName), entType, props)
 }
 
 // PullRequestToSelectorEntity mocks base method.

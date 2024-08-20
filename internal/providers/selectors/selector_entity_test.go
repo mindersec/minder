@@ -124,6 +124,10 @@ func (_ *fullProvider) FetchProperty(_ context.Context, _ string, _ minderv1.Ent
 	return nil, nil
 }
 
+func (_ *fullProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
+}
+
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
 	t.Helper()
 
@@ -160,6 +164,10 @@ func (_ *repoOnlyProvider) FetchAllProperties(_ context.Context, _ string, _ min
 
 func (_ *repoOnlyProvider) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
+}
+
+func (_ *repoOnlyProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
 }
 
 func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity {

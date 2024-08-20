@@ -107,7 +107,6 @@ func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string
 
 	repoProps := map[string]any{
 		// general entity
-		properties.PropertyName:       fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName()),
 		properties.PropertyUpstreamID: fmt.Sprintf("%d", repo.GetID()),
 		// general repo
 		properties.RepoPropertyIsPrivate:  repo.GetPrivate(),
@@ -121,6 +120,11 @@ func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string
 		RepoPropertyCloneURL:      repo.GetCloneURL(),
 		RepoPropertyDefaultBranch: repo.GetDefaultBranch(),
 		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
+	}
+
+	repoProps[properties.PropertyName], err = getEntityName(minderv1.Entity_ENTITY_REPOSITORIES, properties.NewProperties(repoProps))
+	if err != nil {
+		return nil, err
 	}
 
 	return repoProps, nil
