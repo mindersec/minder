@@ -401,6 +401,20 @@ func (mr *MockStoreMockRecorder) CreateUser(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), arg0, arg1)
 }
 
+// DeleteAllPropertiesForEntity mocks base method.
+func (m *MockStore) DeleteAllPropertiesForEntity(arg0 context.Context, arg1 uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAllPropertiesForEntity", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAllPropertiesForEntity indicates an expected call of DeleteAllPropertiesForEntity.
+func (mr *MockStoreMockRecorder) DeleteAllPropertiesForEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).DeleteAllPropertiesForEntity), arg0, arg1)
+}
+
 // DeleteArtifact mocks base method.
 func (m *MockStore) DeleteArtifact(arg0 context.Context, arg1 uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -557,6 +571,20 @@ func (m *MockStore) DeleteProject(arg0 context.Context, arg1 uuid.UUID) ([]db.De
 func (mr *MockStoreMockRecorder) DeleteProject(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProject", reflect.TypeOf((*MockStore)(nil).DeleteProject), arg0, arg1)
+}
+
+// DeleteProperty mocks base method.
+func (m *MockStore) DeleteProperty(arg0 context.Context, arg1 db.DeletePropertyParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProperty", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteProperty indicates an expected call of DeleteProperty.
+func (mr *MockStoreMockRecorder) DeleteProperty(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProperty", reflect.TypeOf((*MockStore)(nil).DeleteProperty), arg0, arg1)
 }
 
 // DeleteProvider mocks base method.
@@ -774,6 +802,21 @@ func (m *MockStore) GetAccessTokenSinceDate(arg0 context.Context, arg1 db.GetAcc
 func (mr *MockStoreMockRecorder) GetAccessTokenSinceDate(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccessTokenSinceDate", reflect.TypeOf((*MockStore)(nil).GetAccessTokenSinceDate), arg0, arg1)
+}
+
+// GetAllPropertiesForEntity mocks base method.
+func (m *MockStore) GetAllPropertiesForEntity(arg0 context.Context, arg1 uuid.UUID) ([]db.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllPropertiesForEntity", arg0, arg1)
+	ret0, _ := ret[0].([]db.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllPropertiesForEntity indicates an expected call of GetAllPropertiesForEntity.
+func (mr *MockStoreMockRecorder) GetAllPropertiesForEntity(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).GetAllPropertiesForEntity), arg0, arg1)
 }
 
 // GetArtifactByID mocks base method.
@@ -1224,6 +1267,21 @@ func (m *MockStore) GetProjectIDBySessionState(arg0 context.Context, arg1 string
 func (mr *MockStoreMockRecorder) GetProjectIDBySessionState(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectIDBySessionState", reflect.TypeOf((*MockStore)(nil).GetProjectIDBySessionState), arg0, arg1)
+}
+
+// GetProperty mocks base method.
+func (m *MockStore) GetProperty(arg0 context.Context, arg1 db.GetPropertyParams) (db.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProperty", arg0, arg1)
+	ret0, _ := ret[0].(db.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProperty indicates an expected call of GetProperty.
+func (mr *MockStoreMockRecorder) GetProperty(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProperty", reflect.TypeOf((*MockStore)(nil).GetProperty), arg0, arg1)
 }
 
 // GetProviderByID mocks base method.
@@ -2363,6 +2421,21 @@ func (m *MockStore) UpsertProfileForEntity(arg0 context.Context, arg1 db.UpsertP
 func (mr *MockStoreMockRecorder) UpsertProfileForEntity(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProfileForEntity", reflect.TypeOf((*MockStore)(nil).UpsertProfileForEntity), arg0, arg1)
+}
+
+// UpsertProperty mocks base method.
+func (m *MockStore) UpsertProperty(arg0 context.Context, arg1 db.UpsertPropertyParams) (db.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertProperty", arg0, arg1)
+	ret0, _ := ret[0].(db.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertProperty indicates an expected call of UpsertProperty.
+func (mr *MockStoreMockRecorder) UpsertProperty(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProperty", reflect.TypeOf((*MockStore)(nil).UpsertProperty), arg0, arg1)
 }
 
 // UpsertPullRequest mocks base method.

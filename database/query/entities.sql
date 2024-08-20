@@ -88,3 +88,32 @@ INSERT INTO entity_instances (id, entity_type, name, project_id, provider_id, cr
 SELECT pull_requests.id, 'pull_request', repositories.repo_owner || '/' || repositories.repo_name || '/' || pull_requests.pr_number::TEXT, repositories.project_id, repositories.provider_id, pull_requests.created_at, pull_requests.repository_id FROM pull_requests
 JOIN repositories ON repositories.id = pull_requests.repository_id
 WHERE NOT EXISTS (SELECT 1 FROM entity_instances WHERE entity_instances.id = pull_requests.id AND entity_instances.entity_type = 'pull_request');
+
+-- name: GetProperty :one
+SELECT * FROM properties
+WHERE entity_id = $1 AND key = $2;
+
+-- name: DeleteProperty :exec
+DELETE FROM properties
+WHERE entity_id = $1 AND key = $2;
+
+-- name: UpsertProperty :one
+INSERT INTO properties (
+    entity_id,
+    key,
+    value,
+    updated_at
+) VALUES ($1, $2, $3, NOW())
+ON CONFLICT (entity_id, key) DO UPDATE
+    SET
+        value = sqlc.arg(value),
+        updated_at = NOW()
+RETURNING *;
+
+-- name: GetAllPropertiesForEntity :many
+SELECT * FROM properties
+WHERE entity_id = $1;
+
+-- name: DeleteAllPropertiesForEntity :exec
+DELETE FROM properties
+WHERE entity_id = $1;
