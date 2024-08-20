@@ -15,15 +15,13 @@
 package reconcilers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/engine/entities"
 	minderlogger "github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
 
 //nolint:exhaustive
@@ -31,24 +29,19 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	ctx := msg.Context()
 	l := zerolog.Ctx(ctx).With().Logger()
 
-	var event messages.RepoEvent
-	if err := json.Unmarshal(msg.Payload, &event); err != nil {
-		return fmt.Errorf("error unmarshalling payload: %w", err)
+	event, err := entities.ParseEntityEvent(msg)
+	if err != nil {
+		return fmt.Errorf("error parsing entity event: %w", err)
 	}
 
-	// validate event
-	validate := validator.New()
-	if err := validate.Struct(&event); err != nil {
-		// We don't return the event since there's no use
-		// retrying it if it's invalid.
-		l.Error().Err(err).Msg("error validating event")
-		return nil
+	eid, err := event.GetID()
+	if err != nil {
+		return fmt.Errorf("error getting entity id: %w", err)
 	}
-
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_id", event.RepoID.String()).
+		Str("repo_id", eid.String()).
 		Logger()
 
 	// Telemetry logging
@@ -58,10 +51,11 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	l.Info().Msg("handling entity delete event")
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
-	if err := r.repos.DeleteByID(ctx, event.RepoID, event.ProjectID); err != nil {
+	// TODO: Handle other types of entities
+	if err := r.repos.DeleteByID(ctx, eid, event.ProjectID); err != nil {
 		return fmt.Errorf("error deleting repository from DB: %w", err)
 	}
 
-	minderlogger.BusinessRecord(ctx).Repository = event.RepoID
+	minderlogger.BusinessRecord(ctx).Repository = eid
 	return nil
 }

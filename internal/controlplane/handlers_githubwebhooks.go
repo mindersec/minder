@@ -1137,10 +1137,12 @@ func (s *Server) repositoryRemoved(
 		return nil, err
 	}
 
-	event := messages.NewRepoEvent().
+	event := entities.NewEntityInfoWrapper().
+		WithActionEvent(webhookActionEventDeleted).
 		WithProjectID(dbrepo.ProjectID).
 		WithProviderID(dbrepo.ProviderID).
-		WithRepoID(dbrepo.ID)
+		WithRepository(nil).
+		WithRepositoryID(dbrepo.ID)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityDelete,
