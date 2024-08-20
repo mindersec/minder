@@ -189,3 +189,9 @@ func (_ *dockerHubImageLister) FetchProperty(
 	_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
+
+// GetEntityName implements the provider interface
+// TODO: Implement this
+func (_ *dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
+}

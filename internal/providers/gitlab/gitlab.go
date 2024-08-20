@@ -123,6 +123,13 @@ func (_ *gitlabClient) FetchAllProperties(_ context.Context, _ string, _ minderv
 }
 
 // FetchProperty implements the provider interface
+// TODO: Implement this
 func (_ *gitlabClient) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
+}
+
+// GetEntityName implements the provider interface
+// TODO: Implement this
+func (_ *gitlabClient) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
 }

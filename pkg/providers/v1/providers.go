@@ -50,6 +50,10 @@ type Provider interface {
 	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
 	// FetchProperty fetches a single property for the given entity
 	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
+	// GetEntityName forms an entity name from the given properties
+	// The name is used to identify the entity within minder and is how
+	// it will be stored in the database.
+	GetEntityName(entType minderv1.Entity, props *properties.Properties) (string, error)
 }
 
 // Git is the interface for git providers
