@@ -30,13 +30,15 @@ INSERT INTO evaluation_rule_entities(
     repository_id,
     pull_request_id,
     artifact_id,
-    entity_type
+    entity_type,
+    entity_instance_id
 ) VALUES (
     $1,
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 )
 RETURNING id;
 
@@ -105,6 +107,7 @@ SELECT s.id::uuid AS evaluation_id,
                WHEN ere.artifact_id IS NOT NULL THEN a.id
            END AS uuid
        ) AS entity_id,
+    ere.entity_instance_id as new_entity_id,
     -- raw fields for entity names
     r.repo_owner,
     r.repo_name,
@@ -150,6 +153,7 @@ SELECT s.id::uuid AS evaluation_id,
          WHEN ere.artifact_id IS NOT NULL THEN a.id
          END AS uuid
        ) AS entity_id,
+        ere.entity_instance_id as new_entity_id,
        -- raw fields for entity names
        r.repo_owner,
        r.repo_name,
@@ -230,7 +234,8 @@ SELECT s.evaluation_time,
          WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
          WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
          END AS uuid
-       ) AS entity_id
+       ) AS entity_id,
+       ere.entity_instance_id as new_entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
        LEFT JOIN latest_evaluation_statuses l
@@ -246,3 +251,20 @@ SELECT s.evaluation_time,
 -- name: DeleteEvaluationHistoryByIDs :execrows
 DELETE FROM evaluation_statuses s
  WHERE s.id = ANY(sqlc.slice(evaluationIds));
+
+-- TemporaryPopulateEvaluationHistory sets the entity_instance_id column for 
+-- all existing evaluation_rule_entities records to the id of the entity
+-- instance that the rule entity is associated with. We derive this from the entity_type
+-- and the corresponding entity id (repository_id, pull_request_id, or artifact_id).
+-- Note that there are cases where repository_id and pull_request_id will both be set,
+-- so we need to rely on the entity_type to determine which one to use. The same
+-- applies to repository_id and artifact_id.
+
+-- name: TemporaryPopulateEvaluationHistory :exec
+UPDATE evaluation_rule_entities ere
+SET entity_instance_id = CASE
+    WHEN ere.entity_type = 'repository' THEN ere.repository_id
+    WHEN ere.entity_type = 'pull_request' THEN ere.pull_request_id
+    WHEN ere.entity_type = 'artifact' THEN ere.artifact_id
+END
+WHERE entity_instance_id IS NULL;

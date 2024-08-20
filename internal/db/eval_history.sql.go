@@ -51,6 +51,7 @@ SELECT s.id::uuid AS evaluation_id,
                WHEN ere.artifact_id IS NOT NULL THEN a.id
            END AS uuid
        ) AS entity_id,
+    ere.entity_instance_id as new_entity_id,
     -- raw fields for entity names
     r.repo_owner,
     r.repo_name,
@@ -95,6 +96,7 @@ type GetEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
+	NewEntityID        uuid.NullUUID              `json:"new_entity_id"`
 	RepoOwner          sql.NullString             `json:"repo_owner"`
 	RepoName           sql.NullString             `json:"repo_name"`
 	PrNumber           sql.NullInt64              `json:"pr_number"`
@@ -120,6 +122,7 @@ func (q *Queries) GetEvaluationHistory(ctx context.Context, arg GetEvaluationHis
 		&i.EvaluatedAt,
 		&i.EntityType,
 		&i.EntityID,
+		&i.NewEntityID,
 		&i.RepoOwner,
 		&i.RepoName,
 		&i.PrNumber,
@@ -229,23 +232,26 @@ INSERT INTO evaluation_rule_entities(
     repository_id,
     pull_request_id,
     artifact_id,
-    entity_type
+    entity_type,
+    entity_instance_id
 ) VALUES (
     $1,
     $2,
     $3,
     $4,
-    $5
+    $5,
+    $6
 )
 RETURNING id
 `
 
 type InsertEvaluationRuleEntityParams struct {
-	RuleID        uuid.UUID     `json:"rule_id"`
-	RepositoryID  uuid.NullUUID `json:"repository_id"`
-	PullRequestID uuid.NullUUID `json:"pull_request_id"`
-	ArtifactID    uuid.NullUUID `json:"artifact_id"`
-	EntityType    Entities      `json:"entity_type"`
+	RuleID           uuid.UUID     `json:"rule_id"`
+	RepositoryID     uuid.NullUUID `json:"repository_id"`
+	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
+	ArtifactID       uuid.NullUUID `json:"artifact_id"`
+	EntityType       Entities      `json:"entity_type"`
+	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
 }
 
 func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
@@ -255,6 +261,7 @@ func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEval
 		arg.PullRequestID,
 		arg.ArtifactID,
 		arg.EntityType,
+		arg.EntityInstanceID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
@@ -338,6 +345,7 @@ SELECT s.id::uuid AS evaluation_id,
          WHEN ere.artifact_id IS NOT NULL THEN a.id
          END AS uuid
        ) AS entity_id,
+        ere.entity_instance_id as new_entity_id,
        -- raw fields for entity names
        r.repo_owner,
        r.repo_name,
@@ -426,6 +434,7 @@ type ListEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
+	NewEntityID        uuid.NullUUID              `json:"new_entity_id"`
 	RepoOwner          sql.NullString             `json:"repo_owner"`
 	RepoName           sql.NullString             `json:"repo_name"`
 	PrNumber           sql.NullInt64              `json:"pr_number"`
@@ -476,6 +485,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.EvaluatedAt,
 			&i.EntityType,
 			&i.EntityID,
+			&i.NewEntityID,
 			&i.RepoOwner,
 			&i.RepoName,
 			&i.PrNumber,
@@ -524,7 +534,8 @@ SELECT s.evaluation_time,
          WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
          WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
          END AS uuid
-       ) AS entity_id
+       ) AS entity_id,
+       ere.entity_instance_id as new_entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
        LEFT JOIN latest_evaluation_statuses l
@@ -544,11 +555,12 @@ type ListEvaluationHistoryStaleRecordsParams struct {
 }
 
 type ListEvaluationHistoryStaleRecordsRow struct {
-	EvaluationTime time.Time `json:"evaluation_time"`
-	ID             uuid.UUID `json:"id"`
-	RuleID         uuid.UUID `json:"rule_id"`
-	EntityType     int32     `json:"entity_type"`
-	EntityID       uuid.UUID `json:"entity_id"`
+	EvaluationTime time.Time     `json:"evaluation_time"`
+	ID             uuid.UUID     `json:"id"`
+	RuleID         uuid.UUID     `json:"rule_id"`
+	EntityType     int32         `json:"entity_type"`
+	EntityID       uuid.UUID     `json:"entity_id"`
+	NewEntityID    uuid.NullUUID `json:"new_entity_id"`
 }
 
 func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error) {
@@ -566,6 +578,7 @@ func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg Lis
 			&i.RuleID,
 			&i.EntityType,
 			&i.EntityID,
+			&i.NewEntityID,
 		); err != nil {
 			return nil, err
 		}
@@ -578,6 +591,29 @@ func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg Lis
 		return nil, err
 	}
 	return items, nil
+}
+
+const temporaryPopulateEvaluationHistory = `-- name: TemporaryPopulateEvaluationHistory :exec
+
+UPDATE evaluation_rule_entities ere
+SET entity_instance_id = CASE
+    WHEN ere.entity_type = 'repository' THEN ere.repository_id
+    WHEN ere.entity_type = 'pull_request' THEN ere.pull_request_id
+    WHEN ere.entity_type = 'artifact' THEN ere.artifact_id
+END
+WHERE entity_instance_id IS NULL
+`
+
+// TemporaryPopulateEvaluationHistory sets the entity_instance_id column for
+// all existing evaluation_rule_entities records to the id of the entity
+// instance that the rule entity is associated with. We derive this from the entity_type
+// and the corresponding entity id (repository_id, pull_request_id, or artifact_id).
+// Note that there are cases where repository_id and pull_request_id will both be set,
+// so we need to rely on the entity_type to determine which one to use. The same
+// applies to repository_id and artifact_id.
+func (q *Queries) TemporaryPopulateEvaluationHistory(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, temporaryPopulateEvaluationHistory)
+	return err
 }
 
 const upsertLatestEvaluationStatus = `-- name: UpsertLatestEvaluationStatus :exec

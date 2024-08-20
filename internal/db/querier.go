@@ -239,6 +239,14 @@ type Querier interface {
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	TemporaryPopulateArtifacts(ctx context.Context) error
+	// TemporaryPopulateEvaluationHistory sets the entity_instance_id column for
+	// all existing evaluation_rule_entities records to the id of the entity
+	// instance that the rule entity is associated with. We derive this from the entity_type
+	// and the corresponding entity id (repository_id, pull_request_id, or artifact_id).
+	// Note that there are cases where repository_id and pull_request_id will both be set,
+	// so we need to rely on the entity_type to determine which one to use. The same
+	// applies to repository_id and artifact_id.
+	TemporaryPopulateEvaluationHistory(ctx context.Context) error
 	TemporaryPopulatePullRequests(ctx context.Context) error
 	TemporaryPopulateRepositories(ctx context.Context) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
