@@ -348,20 +348,6 @@ func TestPyPiParse(t *testing.T) {
 			expectedCount:        0,
 			expectedDependencies: []*pbinternal.Dependency{},
 		},
-		{
-			description: "Single addition, uppercase",
-			content: `
- Flask
-+ Django==3.2.21`,
-			expectedCount: 1,
-			expectedDependencies: []*pbinternal.Dependency{
-				{
-					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
-					Name:      "django",
-					Version:   "3.2.21",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		tt := tt

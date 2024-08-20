@@ -125,16 +125,10 @@ func pyReqNormalizeLine(line string) string {
 func pyReqAddPkgName(depList []*pbinternal.Dependency, pkgName, version string) []*pbinternal.Dependency {
 	dep := &pbinternal.Dependency{
 		Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
-		Name:      pyNormalizeName(pkgName),
+		Name:      pkgName,
 		Version:   version,
 	}
 	return append(depList, dep)
-}
-
-func pyNormalizeName(pkgName string) string {
-	regex := regexp.MustCompile(`[-_.]+`)
-	result := regex.ReplaceAllString(pkgName, "-")
-	return strings.ToLower(result)
 }
 
 func goParse(patch string) ([]*pbinternal.Dependency, error) {

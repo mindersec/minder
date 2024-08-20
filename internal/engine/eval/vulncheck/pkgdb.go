@@ -191,7 +191,7 @@ func (p *PyPiReply) LineHasDependency(line string) bool {
 	}
 
 	name := strings.TrimSpace(line[:nameMatch[0]])
-	return name == p.Info.Name
+	return pyNormalizeName(name) == pyNormalizeName(p.Info.Name)
 }
 
 // HasPatchedVersion returns true if the vulnerable package can be updated to a patched version

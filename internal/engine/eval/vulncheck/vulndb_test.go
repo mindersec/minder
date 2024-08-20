@@ -16,6 +16,9 @@ package vulncheck
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -321,6 +324,81 @@ func TestGoVulnDb(t *testing.T) {
 				assert.NoError(t, err, "Expected no error")
 				require.Equal(t, tt.expectReply, reply, "expected reply to match mock data")
 			}
+		})
+	}
+}
+
+func TestOsvdb_NewQuery(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                string
+		depName             string
+		depVersion          string
+		eco                 pbinternal.DepEcosystem
+		expectedPackageName string
+	}{
+		{
+			name:                "Go",
+			depName:             "golang.org/x/text",
+			depVersion:          "v1.13.1",
+			eco:                 pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
+			expectedPackageName: "golang.org/x/text",
+		},
+		{
+			name:                "NPM",
+			depName:             "typescript",
+			depVersion:          "5.5.4",
+			eco:                 pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+			expectedPackageName: "typescript",
+		},
+		{
+			name:                "PyPI",
+			depName:             "Django",
+			depVersion:          "3.2.21",
+			eco:                 pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
+			expectedPackageName: "django",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+
+			vulnServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer vulnServer.Close()
+
+			db := newOsvDb(vulnServer.URL)
+			assert.NotNil(t, db, "Failed to create OSV DB")
+
+			dep := &pbinternal.Dependency{
+				Name:    tt.depName,
+				Version: tt.depVersion,
+			}
+
+			r, err := db.NewQuery(ctx, dep, tt.eco)
+
+			assert.NoError(t, err, "Expected no error")
+
+			bodyBytes, err := io.ReadAll(r.Body)
+			require.NoError(t, err, "failed to read request body")
+
+			var reqBody map[string]interface{}
+			err = json.Unmarshal(bodyBytes, &reqBody)
+			require.NoError(t, err, "failed to unmarshal request body")
+
+			pkg, ok := reqBody["package"].(map[string]interface{})
+			require.True(t, ok)
+
+			// Verify that the package name is normalized to lowercase
+			packageName, ok := pkg["name"].(string)
+			require.True(t, ok)
+			require.Equal(t, tt.expectedPackageName, packageName)
 		})
 	}
 }
