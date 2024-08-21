@@ -204,7 +204,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	filter ListEvaluationFilter,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{
-		Size: int32(size),
+		Size: int64(size),
 	}
 
 	if err := toSQLCursor(cursor, &params); err != nil {

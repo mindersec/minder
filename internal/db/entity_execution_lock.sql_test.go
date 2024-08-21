@@ -81,8 +81,8 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, int32(concurrentCalls-1), queueCount.Load(), "expected all but one to be queued")
-	assert.Equal(t, int32(1), effectiveFlush.Load(), "expected only one flush to be queued")
+	assert.Equal(t, concurrentCalls-1, int(queueCount.Load()), "expected all but one to be queued")
+	assert.Equal(t, 1, int(effectiveFlush.Load()), "expected only one flush to be queued")
 
 	t.Log("sleeping for threshold")
 	time.Sleep(time.Duration(threshold) * time.Second)

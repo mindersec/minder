@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -469,6 +470,11 @@ func Int32FromString(v string) (int32, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
+	if asInt32 > math.MaxInt32 || asInt32 < math.MinInt32 {
+		return 0, fmt.Errorf("integer %d cannot fit into int32", asInt32)
+	}
+	// already validated overflow
+	// nolint:gosec
 	return int32(asInt32), nil
 }
 
