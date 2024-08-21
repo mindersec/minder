@@ -35,6 +35,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/cenkalti/backoff/v4"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -294,11 +295,15 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "12345", received.Metadata["id"])
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
-	assert.Equal(t, providerID.String(), received.Metadata["provider_id"])
-	assert.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-	assert.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
-
-	// TODO: assert payload is Repository protobuf
+	var inner messages.RepoEvent
+	err = json.Unmarshal(received.Payload, &inner)
+	require.NoError(t, err)
+	require.NoError(t, validator.New().Struct(&inner))
+	require.Equal(t, providerID, inner.ProviderID)
+	require.Equal(t, projectID, inner.ProjectID)
+	require.Equal(t, repositoryID, inner.RepoID)
+	require.Equal(t, "", inner.RepoName)  // optional
+	require.Equal(t, "", inner.RepoOwner) // optional
 
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
@@ -590,8 +595,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -633,8 +638,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1039,17 +1044,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
-				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				var evt messages.RepoEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.RepoID)
+				require.Equal(t, "", evt.RepoName)  // optional
+				require.Equal(t, "", evt.RepoOwner) // optional
 			},
 		},
 		{
@@ -1080,17 +1088,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
-				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				var evt messages.RepoEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.RepoID)
+				require.Equal(t, "", evt.RepoName)  // optional
+				require.Equal(t, "", evt.RepoOwner) // optional
 			},
 		},
 		{
@@ -1157,8 +1168,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1197,8 +1208,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1237,8 +1248,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1277,8 +1288,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1316,8 +1327,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1356,8 +1367,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1395,8 +1406,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1435,8 +1446,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1475,8 +1486,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1515,17 +1526,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
-				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				var evt messages.RepoEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.RepoID)
+				require.Equal(t, "", evt.RepoName)  // optional
+				require.Equal(t, "", evt.RepoOwner) // optional
 			},
 		},
 		{
@@ -1559,17 +1573,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
-				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				var evt messages.RepoEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.RepoID)
+				require.Equal(t, "", evt.RepoName)  // optional
+				require.Equal(t, "", evt.RepoOwner) // optional
 			},
 		},
 		{
@@ -1599,8 +1616,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1639,8 +1656,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1679,8 +1696,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1719,8 +1736,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1759,17 +1776,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
-				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				var evt messages.RepoEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.RepoID)
+				require.Equal(t, "", evt.RepoName)  // optional
+				require.Equal(t, "", evt.RepoOwner) // optional
 			},
 		},
 		{
@@ -1799,8 +1819,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1872,8 +1892,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1912,8 +1932,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1952,8 +1972,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -1992,8 +2012,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2032,8 +2052,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2072,8 +2092,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2112,8 +2132,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2151,8 +2171,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2191,8 +2211,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2231,8 +2251,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2271,8 +2291,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2311,8 +2331,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2351,8 +2371,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2391,8 +2411,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2431,8 +2451,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2471,8 +2491,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2511,8 +2531,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2550,8 +2570,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2589,8 +2609,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2639,8 +2659,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2671,8 +2691,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2759,8 +2779,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2797,8 +2817,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2835,8 +2855,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2873,8 +2893,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2911,8 +2931,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2949,8 +2969,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -2987,8 +3007,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3043,8 +3063,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3404,8 +3424,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3425,8 +3445,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			mockStoreFunc: df.NewMockStore(),
 			topic:         installations.ProviderInstallationTopic,
 			statusCode:    http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3581,8 +3601,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityAdd,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 
 				var evt messages.RepoEvent
@@ -3735,8 +3755,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			//nolint:thelper
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
 				timeout := 1 * time.Second
 
 				var evt messages.RepoEvent

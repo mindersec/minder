@@ -829,6 +829,23 @@ func (s *Server) processRelevantRepositoryEvent(
 		}
 	}
 
+	// For webhook deletions, repository deletions, and repository
+	// transfers, we issue a delete event with the correct message
+	// type.
+	if event.GetAction() == webhookActionEventDeleted ||
+		event.GetAction() == webhookActionEventTransferred {
+		repoEvent := messages.NewRepoEvent().
+			WithProjectID(dbrepo.ProjectID).
+			WithProviderID(dbrepo.ProviderID).
+			WithRepoID(dbrepo.ID)
+
+		return &processingResult{
+			topic:   events.TopicQueueReconcileEntityDelete,
+			wrapper: repoEvent,
+		}, nil
+	}
+
+	// For all other actions, we trigger an evaluation.
 	// protobufs are our API, so we always execute on these instead of the DB directly.
 	pbRepo := repositories.PBRepositoryFromDB(*dbrepo)
 	eiw := entities.NewEntityInfoWrapper().
@@ -838,15 +855,10 @@ func (s *Server) processRelevantRepositoryEvent(
 		WithRepository(pbRepo).
 		WithRepositoryID(dbrepo.ID)
 
-	topic := events.TopicQueueEntityEvaluate
-	if event.GetAction() == webhookActionEventDeleted {
-		topic = events.TopicQueueReconcileEntityDelete
-	}
-	if event.GetAction() == webhookActionEventTransferred {
-		topic = events.TopicQueueReconcileEntityDelete
-	}
-
-	return &processingResult{topic: topic, wrapper: eiw}, nil
+	return &processingResult{
+		topic:   events.TopicQueueEntityEvaluate,
+		wrapper: eiw,
+	}, nil
 }
 
 func (s *Server) processRepositoryEvent(
