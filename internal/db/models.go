@@ -467,7 +467,7 @@ type EntityExecutionLock struct {
 	ArtifactID       uuid.NullUUID `json:"artifact_id"`
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	ProjectID        uuid.NullUUID `json:"project_id"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 }
 
 type EntityInstance struct {
@@ -497,7 +497,7 @@ type EvaluationRuleEntity struct {
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID       uuid.NullUUID `json:"artifact_id"`
 	EntityType       Entities      `json:"entity_type"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 }
 
 type EvaluationStatus struct {
@@ -524,7 +524,7 @@ type FlushCache struct {
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	QueuedAt         time.Time     `json:"queued_at"`
 	ProjectID        uuid.NullUUID `json:"project_id"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 }
 
 type LatestEvaluationStatus struct {

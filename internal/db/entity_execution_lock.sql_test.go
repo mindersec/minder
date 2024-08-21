@@ -50,12 +50,13 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
-				Entity:        EntitiesRepository,
-				RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
-				ArtifactID:    uuid.NullUUID{},
-				PullRequestID: uuid.NullUUID{},
-				Interval:      fmt.Sprintf("%d", threshold),
-				ProjectID:     project.ID,
+				Entity:           EntitiesRepository,
+				RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
+				ArtifactID:       uuid.NullUUID{},
+				PullRequestID:    uuid.NullUUID{},
+				Interval:         fmt.Sprintf("%d", threshold),
+				ProjectID:        project.ID,
+				EntityInstanceID: repo.ID,
 			})
 
 			if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -64,11 +65,12 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 				queueCount.Add(1)
 
 				_, err := testQueries.EnqueueFlush(context.Background(), EnqueueFlushParams{
-					Entity:        EntitiesRepository,
-					RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
-					ArtifactID:    uuid.NullUUID{},
-					PullRequestID: uuid.NullUUID{},
-					ProjectID:     project.ID,
+					Entity:           EntitiesRepository,
+					RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
+					ArtifactID:       uuid.NullUUID{},
+					PullRequestID:    uuid.NullUUID{},
+					ProjectID:        project.ID,
+					EntityInstanceID: repo.ID,
 				})
 				if err == nil {
 					effectiveFlush.Add(1)
@@ -90,11 +92,12 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 	t.Log("Attempting to acquire lock now that threshold has passed")
 
 	_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
-		Entity:        EntitiesRepository,
-		RepositoryID:  uuid.NullUUID{UUID: repo.ID, Valid: true},
-		ArtifactID:    uuid.NullUUID{},
-		PullRequestID: uuid.NullUUID{},
-		Interval:      fmt.Sprintf("%d", threshold),
+		Entity:           EntitiesRepository,
+		RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
+		ArtifactID:       uuid.NullUUID{},
+		PullRequestID:    uuid.NullUUID{},
+		Interval:         fmt.Sprintf("%d", threshold),
+		EntityInstanceID: repo.ID,
 	})
 
 	assert.NoError(t, err, "expected no error")

@@ -94,15 +94,9 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		Str("entity", inf.Type.ToString()).
 		Logger()
 
-	var entityID uuid.NullUUID
-	eID, err := inf.GetID()
+	entityID, err := inf.GetID()
 	if err != nil {
 		logger.Debug().AnErr("error getting entity ID", err).Msgf("Entity ID was not set for event %s", inf.Type)
-	} else {
-		entityID = uuid.NullUUID{
-			UUID:  eID,
-			Valid: true,
-		}
 	}
 
 	// We need to check that the resources still exist before attempting to lock them.

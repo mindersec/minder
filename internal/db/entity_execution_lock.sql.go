@@ -37,7 +37,7 @@ type EnqueueFlushParams struct {
 	ArtifactID       uuid.NullUUID `json:"artifact_id"`
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	ProjectID        uuid.UUID     `json:"project_id"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 }
 
 func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error) {
@@ -171,7 +171,7 @@ type LockIfThresholdNotExceededParams struct {
 	ArtifactID       uuid.NullUUID `json:"artifact_id"`
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	ProjectID        uuid.UUID     `json:"project_id"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 	Interval         string        `json:"interval"`
 }
 
