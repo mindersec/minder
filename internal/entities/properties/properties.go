@@ -23,6 +23,7 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v3"
 	"google.golang.org/protobuf/types/known/structpb"
+	"iter"
 )
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
@@ -232,4 +233,13 @@ func (p *Properties) GetProperty(key string) *Property {
 		return nil
 	}
 	return &prop
+}
+
+// Iterate implements the seq2 iterator so that the caller can call for key, prop := range Iterate()
+func (p *Properties) Iterate() iter.Seq2[string, *Property] {
+	return func(yield func(string, *Property) bool) {
+		p.props.Range(func(key string, v Property) bool {
+			return yield(key, &v)
+		})
+	}
 }

@@ -450,3 +450,25 @@ func TestUnwrapTypeErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestIterator(t *testing.T) {
+	t.Parallel()
+
+	input := map[string]any{
+		"name":       "test",
+		"is_private": true,
+	}
+
+	output := make(map[string]any)
+
+	props, err := NewProperties(input)
+	require.NoError(t, err)
+
+	count := 0
+	for key, p := range props.Iterate() {
+		count++
+		output[key] = p.RawValue()
+	}
+	require.Equal(t, input, output)
+	require.Equal(t, 2, count)
+}
