@@ -117,7 +117,6 @@ type EvalStatusParams struct {
 	TaskRunID        uuid.UUID
 	BuildID          uuid.UUID
 	EntityType       db.Entities
-	EntityID         uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
 	actionsOnOff     map[ActionType]models.ActionOpt

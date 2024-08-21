@@ -26,7 +26,7 @@ INSERT INTO flush_cache(
     $4::UUID,
     $5::UUID,
     $6::UUID
-) ON CONFLICT(entity_instance_id)
+) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO NOTHING
 RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
 `
@@ -65,12 +65,27 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 
 const flushCache = `-- name: FlushCache :one
 DELETE FROM flush_cache
-WHERE entity_instance_id= $1
+WHERE entity = $1 AND
+    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($2::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($3::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($4::UUID, '00000000-0000-0000-0000-000000000000'::UUID)
 RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
 `
 
-func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (FlushCache, error) {
-	row := q.db.QueryRowContext(ctx, flushCache, entityInstanceID)
+type FlushCacheParams struct {
+	Entity        Entities      `json:"entity"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+}
+
+func (q *Queries) FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error) {
+	row := q.db.QueryRowContext(ctx, flushCache,
+		arg.Entity,
+		arg.RepositoryID,
+		arg.ArtifactID,
+		arg.PullRequestID,
+	)
 	var i FlushCache
 	err := row.Scan(
 		&i.ID,
@@ -141,10 +156,11 @@ INSERT INTO entity_execution_lock(
     $4::UUID,
     $5::UUID,
     $6::UUID
-) ON CONFLICT(entity_instance_id)
+) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO UPDATE SET
     locked_by = gen_random_uuid(),
-    last_lock_time = NOW()
+    last_lock_time = NOW(),
+    entity_instance_id = $6::UUID
 WHERE entity_execution_lock.last_lock_time < (NOW() - ($7::TEXT || ' seconds')::interval)
 RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id, project_id, entity_instance_id
 `
@@ -192,33 +208,59 @@ func (q *Queries) LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThre
 const releaseLock = `-- name: ReleaseLock :exec
 
 DELETE FROM entity_execution_lock
-WHERE entity_instance_id = $1 AND locked_by = $2::UUID
+WHERE entity = $1::entities AND
+    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($2::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($3::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($4::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+    locked_by = $5::UUID
 `
 
 type ReleaseLockParams struct {
-	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
-	LockedBy         uuid.UUID `json:"locked_by"`
+	Entity        Entities      `json:"entity"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	LockedBy      uuid.UUID     `json:"locked_by"`
 }
 
 // ReleaseLock is used to release a lock on an entity. It will delete the
 // entity_execution_lock record if the lock is held by the given locked_by
 // value.
 func (q *Queries) ReleaseLock(ctx context.Context, arg ReleaseLockParams) error {
-	_, err := q.db.ExecContext(ctx, releaseLock, arg.EntityInstanceID, arg.LockedBy)
+	_, err := q.db.ExecContext(ctx, releaseLock,
+		arg.Entity,
+		arg.RepositoryID,
+		arg.ArtifactID,
+		arg.PullRequestID,
+		arg.LockedBy,
+	)
 	return err
 }
 
 const updateLease = `-- name: UpdateLease :exec
 UPDATE entity_execution_lock SET last_lock_time = NOW()
-WHERE entity_instance_id = $1 AND locked_by = $2::UUID
+WHERE entity = $1 AND
+COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($2, '00000000-0000-0000-0000-000000000000'::UUID) AND
+COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($3::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE($4::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
+locked_by = $5::UUID
 `
 
 type UpdateLeaseParams struct {
-	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
-	LockedBy         uuid.UUID `json:"locked_by"`
+	Entity        Entities      `json:"entity"`
+	RepositoryID  uuid.NullUUID `json:"repository_id"`
+	ArtifactID    uuid.NullUUID `json:"artifact_id"`
+	PullRequestID uuid.NullUUID `json:"pull_request_id"`
+	LockedBy      uuid.UUID     `json:"locked_by"`
 }
 
 func (q *Queries) UpdateLease(ctx context.Context, arg UpdateLeaseParams) error {
-	_, err := q.db.ExecContext(ctx, updateLease, arg.EntityInstanceID, arg.LockedBy)
+	_, err := q.db.ExecContext(ctx, updateLease,
+		arg.Entity,
+		arg.RepositoryID,
+		arg.ArtifactID,
+		arg.PullRequestID,
+		arg.LockedBy,
+	)
 	return err
 }

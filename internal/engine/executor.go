@@ -246,8 +246,11 @@ func (e *executor) updateLockLease(
 		zerolog.Ctx(ctx).With().Str("execution_id", executionID.String()).Logger())
 
 	if err := e.querier.UpdateLease(ctx, db.UpdateLeaseParams{
-		LockedBy:         executionID,
-		EntityInstanceID: params.EntityID,
+		Entity:        params.EntityType,
+		RepositoryID:  params.RepoID,
+		ArtifactID:    params.ArtifactID,
+		PullRequestID: params.PullRequestID,
+		LockedBy:      executionID,
 	}); err != nil {
 		logger.Err(err).Msg("error updating lock lease")
 		return
@@ -261,18 +264,10 @@ func (e *executor) releaseLockAndFlush(
 	inf *entities.EntityInfoWrapper,
 ) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
-	eID, err := inf.GetID()
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error getting entity id")
-		return
-	}
 
 	logger := zerolog.Ctx(ctx).Info().
 		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String()).
-		Str("entity_id", eID.String())
-
-	// TODO: change these to entity_id
+		Str("execution_id", inf.ExecutionID.String())
 	if repoID.Valid {
 		logger = logger.Str("repo_id", repoID.UUID.String())
 	}
@@ -285,8 +280,11 @@ func (e *executor) releaseLockAndFlush(
 	}
 
 	if err := e.querier.ReleaseLock(ctx, db.ReleaseLockParams{
-		EntityInstanceID: eID,
-		LockedBy:         *inf.ExecutionID,
+		Entity:        entities.EntityTypeToDB(inf.Type),
+		RepositoryID:  repoID,
+		ArtifactID:    artID,
+		PullRequestID: prID,
+		LockedBy:      *inf.ExecutionID,
 	}); err != nil {
 		logger.Err(err).Msg("error updating lock lease")
 	}
