@@ -256,24 +256,15 @@ default allow = true`,
 	// Mock update lease for lock
 	mockStore.EXPECT().
 		UpdateLease(gomock.Any(), db.UpdateLeaseParams{
-			Entity: db.EntitiesRepository,
-			RepositoryID: uuid.NullUUID{
-				UUID:  repositoryID,
-				Valid: true,
-			},
-			ArtifactID:    uuid.NullUUID{},
-			PullRequestID: uuid.NullUUID{},
-			LockedBy:      executionID,
+			EntityInstanceID: repositoryID,
+			LockedBy:         executionID,
 		}).Return(nil)
 
 	// Mock release lock
 	mockStore.EXPECT().
 		ReleaseLock(gomock.Any(), db.ReleaseLockParams{
-			Entity:        db.EntitiesRepository,
-			RepositoryID:  uuid.NullUUID{UUID: repositoryID, Valid: true},
-			ArtifactID:    uuid.NullUUID{},
-			PullRequestID: uuid.NullUUID{},
-			LockedBy:      executionID,
+			EntityInstanceID: repositoryID,
+			LockedBy:         executionID,
 		}).Return(nil)
 
 	// -- end expectations

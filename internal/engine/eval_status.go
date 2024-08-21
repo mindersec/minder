@@ -39,11 +39,16 @@ func (e *executor) createEvalStatusParams(
 	rule *models.RuleInstance,
 ) (*engif.EvalStatusParams, error) {
 	repoID, artID, prID := inf.GetEntityDBIDs()
+	eID, err := inf.GetID()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting ID from entity info wrapper")
+	}
 
 	params := &engif.EvalStatusParams{
 		Rule:          rule,
 		Profile:       profile,
 		EntityType:    entities.EntityTypeToDB(inf.Type),
+		EntityID:      eID,
 		RepoID:        repoID,
 		ArtifactID:    artID,
 		PullRequestID: prID,

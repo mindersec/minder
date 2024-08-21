@@ -199,7 +199,10 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
+	eID, err := inf.GetID()
+	if err != nil {
+		return fmt.Errorf("error getting entity ID: %w", err)
+	}
 
 	logger := zerolog.Ctx(ctx).With().
 		Str("component", "EEA").
@@ -211,12 +214,7 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 
 	logger.Debug().Msg("flushing event")
 
-	_, err = e.querier.FlushCache(ctx, db.FlushCacheParams{
-		Entity:        entities.EntityTypeToDB(inf.Type),
-		RepositoryID:  repoID,
-		ArtifactID:    artifactID,
-		PullRequestID: pullRequestID,
-	})
+	_, err = e.querier.FlushCache(ctx, eID)
 	// Nothing to do here. If we can't flush the cache, it means
 	// that the event has already been executed.
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
