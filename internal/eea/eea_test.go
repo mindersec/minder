@@ -210,10 +210,11 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:           uuid.New(),
-							Entity:       db.EntitiesRepository,
-							RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
-							QueuedAt:     time.Now(),
+							ID:               uuid.New(),
+							Entity:           db.EntitiesRepository,
+							RepositoryID:     uuid.NullUUID{UUID: repoID, Valid: true},
+							QueuedAt:         time.Now(),
+							EntityInstanceID: repoID,
 						},
 					}, nil)
 
@@ -259,7 +260,8 @@ func TestFlushAll(t *testing.T) {
 								UUID:  artID,
 								Valid: true,
 							},
-							QueuedAt: time.Now(),
+							EntityInstanceID: artID,
+							QueuedAt:         time.Now(),
 						},
 					}, nil)
 
@@ -318,6 +320,7 @@ func TestFlushAll(t *testing.T) {
 								UUID:  projectID,
 								Valid: true,
 							},
+							EntityInstanceID: artID,
 						},
 					}, nil)
 
@@ -367,6 +370,7 @@ func TestFlushAll(t *testing.T) {
 								UUID:  projectID,
 								Valid: true,
 							},
+							EntityInstanceID: artID,
 						},
 					}, nil)
 
