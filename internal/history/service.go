@@ -169,7 +169,7 @@ func paramsFromEntity(
 		Valid: true,
 	}
 
-	params.EntityID = nullableEntityID
+	params.EntityID = entityID
 
 	switch entityType {
 	case db.EntitiesRepository:
@@ -193,7 +193,7 @@ type ruleEntityParams struct {
 	PullRequestID uuid.NullUUID
 	// Is the target entity ID. We'll be replacing the single-entity IDs
 	// with this one.
-	EntityID uuid.NullUUID
+	EntityID uuid.UUID
 }
 
 func (_ *evaluationHistoryService) ListEvaluationHistory(
@@ -204,7 +204,7 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 	filter ListEvaluationFilter,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{
-		Size: int32(size),
+		Size: int64(size),
 	}
 
 	if err := toSQLCursor(cursor, &params); err != nil {

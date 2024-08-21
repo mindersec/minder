@@ -291,6 +291,14 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
+	// Verify if the token user is a member of the ownerFilter (Organization)
+	if stateData.OwnerFilter.Valid {
+		err := s.validateOwnerFilter(ctx, token, stateData.OwnerFilter.String)
+		if err != nil {
+			return err
+		}
+	}
+
 	var errConfig providers.ErrProviderInvalidConfig
 
 	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
@@ -321,6 +329,20 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error writing OAuth success page: %w", err)
 	}
 
+	return nil
+}
+
+func (s *Server) validateOwnerFilter(ctx context.Context, token *oauth2.Token, ownerFilter string) error {
+	member, err := s.ghProviders.ValidateOrgMembershipForToken(ctx, token, ownerFilter)
+	if err != nil {
+		return fmt.Errorf("error checking organization membership: %w", err)
+	}
+
+	if !member {
+		return newHttpError(http.StatusForbidden, "Invalid OwnerFilter Provided").SetContents(
+			"You do not have access to the organization %s, specified in the owner filter."+
+				" Please ensure that you are a member of the GitHub organization and try again.", ownerFilter)
+	}
 	return nil
 }
 

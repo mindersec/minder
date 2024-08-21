@@ -16,6 +16,7 @@
 package cli
 
 import (
+	"math"
 	"os"
 
 	"github.com/charmbracelet/lipgloss"
@@ -78,7 +79,13 @@ var (
 
 func init() {
 	// Get the terminal width, if available, and set widths based on terminal width
-	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	fd := os.Stdout.Fd()
+	if fd > math.MaxInt32 {
+		return
+	}
+	// checked for overflow explicitly
+	// nolint: gosec
+	w, _, err := term.GetSize(int(fd))
 	if err == nil {
 		DefaultBannerWidth = w
 	}

@@ -215,7 +215,7 @@ func enrollUsingOAuth2Flow(
 	resp, err := oauthClient.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
 		Context:       &minderv1.Context{Provider: &providerName, Project: &project},
 		Cli:           true,
-		Port:          int32(port),
+		Port:          port,
 		Owner:         &owner,
 		Config:        providerConfig,
 		ProviderClass: providerClass,
@@ -240,7 +240,7 @@ func enrollUsingOAuth2Flow(
 
 	done := make(chan bool)
 
-	go callBackServer(oAuthCallbackCtx, cmd, project, port, done, oauthClient, openTime, resp.GetState())
+	go callBackServer(oAuthCallbackCtx, cmd, project, int(port), done, oauthClient, openTime, resp.GetState())
 
 	success := <-done
 
