@@ -819,6 +819,21 @@ func (mr *MockStoreMockRecorder) GetAllPropertiesForEntity(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).GetAllPropertiesForEntity), arg0, arg1)
 }
 
+// GetAllPropertyValuesV1 mocks base method.
+func (m *MockStore) GetAllPropertyValuesV1(arg0 context.Context, arg1 uuid.UUID) ([]db.PropertyValueV1, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllPropertyValuesV1", arg0, arg1)
+	ret0, _ := ret[0].([]db.PropertyValueV1)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllPropertyValuesV1 indicates an expected call of GetAllPropertyValuesV1.
+func (mr *MockStoreMockRecorder) GetAllPropertyValuesV1(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertyValuesV1", reflect.TypeOf((*MockStore)(nil).GetAllPropertyValuesV1), arg0, arg1)
+}
+
 // GetArtifactByID mocks base method.
 func (m *MockStore) GetArtifactByID(arg0 context.Context, arg1 db.GetArtifactByIDParams) (db.Artifact, error) {
 	m.ctrl.T.Helper()
@@ -1282,6 +1297,21 @@ func (m *MockStore) GetProperty(arg0 context.Context, arg1 db.GetPropertyParams)
 func (mr *MockStoreMockRecorder) GetProperty(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProperty", reflect.TypeOf((*MockStore)(nil).GetProperty), arg0, arg1)
+}
+
+// GetPropertyValueV1 mocks base method.
+func (m *MockStore) GetPropertyValueV1(arg0 context.Context, arg1 uuid.UUID, arg2 string) (db.PropertyValueV1, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPropertyValueV1", arg0, arg1, arg2)
+	ret0, _ := ret[0].(db.PropertyValueV1)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPropertyValueV1 indicates an expected call of GetPropertyValueV1.
+func (mr *MockStoreMockRecorder) GetPropertyValueV1(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPropertyValueV1", reflect.TypeOf((*MockStore)(nil).GetPropertyValueV1), arg0, arg1, arg2)
 }
 
 // GetProviderByID mocks base method.
@@ -2436,6 +2466,21 @@ func (m *MockStore) UpsertProperty(arg0 context.Context, arg1 db.UpsertPropertyP
 func (mr *MockStoreMockRecorder) UpsertProperty(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProperty", reflect.TypeOf((*MockStore)(nil).UpsertProperty), arg0, arg1)
+}
+
+// UpsertPropertyValueV1 mocks base method.
+func (m *MockStore) UpsertPropertyValueV1(arg0 context.Context, arg1 db.UpsertPropertyValueV1Params) (db.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertPropertyValueV1", arg0, arg1)
+	ret0, _ := ret[0].(db.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertPropertyValueV1 indicates an expected call of UpsertPropertyValueV1.
+func (mr *MockStoreMockRecorder) UpsertPropertyValueV1(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPropertyValueV1", reflect.TypeOf((*MockStore)(nil).UpsertPropertyValueV1), arg0, arg1)
 }
 
 // UpsertPullRequest mocks base method.
