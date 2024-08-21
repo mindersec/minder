@@ -94,6 +94,7 @@ type ClientService interface {
 	GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error)
 	ListUserInstallations(ctx context.Context, token *oauth2.Token) ([]*github.Installation, error)
 	DeleteInstallation(ctx context.Context, id int64, jwt string) (*github.Response, error)
+	GetOrgMembership(ctx context.Context, token *oauth2.Token, org string) (*github.Membership, *github.Response, error)
 }
 
 var _ ClientService = (*ClientServiceImplementation)(nil)
@@ -137,6 +138,14 @@ func (ClientServiceImplementation) ListUserInstallations(
 func (ClientServiceImplementation) DeleteInstallation(ctx context.Context, id int64, jwt string) (*github.Response, error) {
 	ghClient := github.NewClient(nil).WithAuthToken(jwt)
 	return ghClient.Apps.DeleteInstallation(ctx, id)
+}
+
+// GetOrgMembership is a wrapper for the GitHub API to get users' organization membership
+func (ClientServiceImplementation) GetOrgMembership(
+	ctx context.Context, token *oauth2.Token, org string,
+) (*github.Membership, *github.Response, error) {
+	ghClient := github.NewClient(nil).WithAuthToken(token.AccessToken)
+	return ghClient.Organizations.GetOrgMembership(ctx, "", org)
 }
 
 // Delegate is the interface that contains operations that differ between different GitHub actors (user vs app)

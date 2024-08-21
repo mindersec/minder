@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -545,4 +546,60 @@ func TestProviderService_DeleteInstallation(t *testing.T) {
 		ghAppProvider.ID,
 	)
 	require.NoError(t, err)
+}
+
+func TestProviderService_ValidateOrgMembershipForToken(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	pvtKeyFile := testCreatePrivateKeyFile(t)
+	defer os.Remove(pvtKeyFile.Name())
+	cfg := &server.ProviderConfig{
+		GitHubApp: &server.GitHubAppConfig{
+			PrivateKey: pvtKeyFile.Name(),
+		},
+	}
+
+	provSvc, mocks := testNewGitHubProviderService(t, ctrl, cfg, nil, nil)
+
+	// Active member of the GitHub organization
+	memberResp := github.Membership{State: github.String("active")}
+	mocks.svcMock.EXPECT().GetOrgMembership(gomock.Any(), gomock.Any(), gomock.Any()).Return(&memberResp, &github.Response{}, nil)
+	member, err := provSvc.ValidateOrgMembershipForToken(context.Background(), &oauth2.Token{}, "test-org")
+	require.NoError(t, err)
+	require.True(t, member)
+
+	// Non Active member of the GitHub organization
+	memberResp = github.Membership{State: github.String("inactive")}
+	mocks.svcMock.EXPECT().GetOrgMembership(gomock.Any(), gomock.Any(), gomock.Any()).Return(&memberResp, &github.Response{}, nil)
+	member, err = provSvc.ValidateOrgMembershipForToken(context.Background(), &oauth2.Token{}, "test-org")
+	require.NoError(t, err)
+	require.False(t, member)
+
+	// Member not found in the GitHub organization
+	httpResponse := &http.Response{
+		StatusCode: http.StatusNotFound,
+	}
+	ghResponse := &github.Response{
+		Response: httpResponse,
+	}
+	mocks.svcMock.EXPECT().GetOrgMembership(gomock.Any(), gomock.Any(), gomock.Any()).Return(&memberResp, ghResponse, fmt.Errorf("test error"))
+	member, err = provSvc.ValidateOrgMembershipForToken(context.Background(), &oauth2.Token{}, "test-org")
+	require.NoError(t, err)
+	require.False(t, member)
+
+	// Error while fetching member from the GitHub organization
+	httpResponse = &http.Response{
+		StatusCode: http.StatusInternalServerError,
+	}
+	ghResponse = &github.Response{
+		Response: httpResponse,
+	}
+	mocks.svcMock.EXPECT().GetOrgMembership(gomock.Any(), gomock.Any(), gomock.Any()).Return(&memberResp, ghResponse, fmt.Errorf("test error"))
+	member, err = provSvc.ValidateOrgMembershipForToken(context.Background(), &oauth2.Token{}, "test-org")
+	require.Error(t, err)
+	require.False(t, member)
+
 }

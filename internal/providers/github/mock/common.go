@@ -74,6 +74,22 @@ func (mr *MockClientServiceMockRecorder) GetInstallation(ctx, id, jwt any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInstallation", reflect.TypeOf((*MockClientService)(nil).GetInstallation), ctx, id, jwt)
 }
 
+// GetOrgMembership mocks base method.
+func (m *MockClientService) GetOrgMembership(ctx context.Context, token *oauth2.Token, org string) (*github.Membership, *github.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrgMembership", ctx, token, org)
+	ret0, _ := ret[0].(*github.Membership)
+	ret1, _ := ret[1].(*github.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetOrgMembership indicates an expected call of GetOrgMembership.
+func (mr *MockClientServiceMockRecorder) GetOrgMembership(ctx, token, org any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrgMembership", reflect.TypeOf((*MockClientService)(nil).GetOrgMembership), ctx, token, org)
+}
+
 // GetUserIdFromToken mocks base method.
 func (m *MockClientService) GetUserIdFromToken(ctx context.Context, token *oauth2.Token) (*int64, error) {
 	m.ctrl.T.Helper()
