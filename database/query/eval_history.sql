@@ -213,7 +213,7 @@ SELECT s.id::uuid AS evaluation_id,
  ORDER BY
  CASE WHEN sqlc.narg(next)::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
  CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
- LIMIT sqlc.arg(size)::integer;
+ LIMIT sqlc.arg(size)::bigint;
 
 -- name: ListEvaluationHistoryStaleRecords :many
 SELECT s.evaluation_time,

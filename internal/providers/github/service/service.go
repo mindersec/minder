@@ -63,6 +63,8 @@ type GitHubProviderService interface {
 	// DeleteInstallation deletes the installation from GitHub, if the provider has an associated installation
 	DeleteInstallation(ctx context.Context, providerID uuid.UUID) error
 	VerifyProviderTokenIdentity(ctx context.Context, remoteUser string, accessToken string) error
+	// ValidateOrgMembershipForToken checks if the token user is a member of the organization
+	ValidateOrgMembershipForToken(ctx context.Context, token *oauth2.Token, org string) (bool, error)
 }
 
 // TypeGitHubOrganization is the type returned from the GitHub API when the owner is an organization
@@ -426,4 +428,20 @@ func (p *ghProviderService) getInstallationOwner(ctx context.Context, installati
 		return nil, fmt.Errorf("error getting installation: %w", err)
 	}
 	return installation.GetAccount(), nil
+}
+
+// Check if the user is an actve member of the Github organization
+func (p *ghProviderService) ValidateOrgMembershipForToken(ctx context.Context, token *oauth2.Token, org string) (bool, error) {
+	membership, ghResponse, err := p.ghClientService.GetOrgMembership(ctx, token, org)
+	if err != nil {
+		if ghResponse.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf("error getting user membership: %w", err)
+	}
+	if membership.GetState() == "active" {
+		return true, nil
+	}
+	// If the user is not active member of the organization
+	return false, nil
 }

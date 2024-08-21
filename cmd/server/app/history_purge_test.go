@@ -47,7 +47,7 @@ func TestRecordSize(t *testing.T) {
 		},
 	)
 
-	require.Equal(t, 96, int(size))
+	require.Equal(t, uintptr(96), size)
 }
 
 func TestPurgeLoop(t *testing.T) {
