@@ -75,7 +75,9 @@ func TestBoolGetters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props := NewProperties(input)
+			props, err := NewProperties(input)
+			require.NoError(t, err)
+
 			p := props.GetProperty(s.propName)
 			if s.callGet {
 				got := p.GetBool()
@@ -149,7 +151,9 @@ func TestStringGetters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props := NewProperties(input)
+			props, err := NewProperties(input)
+			require.NoError(t, err)
+
 			p := props.GetProperty(s.propName)
 			if s.callGet {
 				got := p.GetString()
@@ -223,7 +227,9 @@ func TestInt64Getters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props := NewProperties(input)
+			props, err := NewProperties(input)
+			require.NoError(t, err)
+
 			p := props.GetProperty(s.propName)
 			if s.callGet {
 				got := p.GetInt64()
@@ -245,7 +251,8 @@ func TestInt64Getters(t *testing.T) {
 func TestNewProperty(t *testing.T) {
 	t.Parallel()
 
-	p := NewProperty(true)
+	p, err := NewProperty(true)
+	require.NoError(t, err)
 	require.NotNil(t, p)
 	require.Equal(t, true, p.GetBool())
 }
@@ -256,7 +263,8 @@ func TestNewProperties(t *testing.T) {
 	t.Run("nil input", func(t *testing.T) {
 		t.Parallel()
 
-		props := NewProperties(nil)
+		props, err := NewProperties(nil)
+		require.NoError(t, err)
 		require.NotNil(t, props)
 		p := props.GetProperty("test")
 		require.Nil(t, p)

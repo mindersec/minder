@@ -122,7 +122,12 @@ func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string
 		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
 	}
 
-	repoProps[properties.PropertyName], err = getEntityName(minderv1.Entity_ENTITY_REPOSITORIES, properties.NewProperties(repoProps))
+	props, err := properties.NewProperties(repoProps)
+	if err != nil {
+		return nil, err
+	}
+
+	repoProps[properties.PropertyName], err = getEntityName(minderv1.Entity_ENTITY_REPOSITORIES, props)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +153,7 @@ func (c *GitHub) FetchProperty(
 				if !ok {
 					return nil, errors.New("requested property not found in result")
 				}
-				return properties.NewProperty(value), nil
+				return properties.NewProperty(value)
 			}
 		}
 	}
@@ -175,5 +180,5 @@ func (c *GitHub) FetchAllProperties(
 		}
 	}
 
-	return properties.NewProperties(result), nil
+	return properties.NewProperties(result)
 }
