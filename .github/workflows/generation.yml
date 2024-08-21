@@ -26,7 +26,7 @@ jobs:
       # Run `git checkout`
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       # Install the `buf` CLI
-      - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
+      - uses: bufbuild/buf-action@d4b43256b3a511e94e6c0d38d478e1bd39f8690e # v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           push: false
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - uses: bufbuild/buf-action@e08102e131956fce8553dcde03dc7b05c0c88c46 # v1.0.0
+      - uses: bufbuild/buf-action@d4b43256b3a511e94e6c0d38d478e1bd39f8690e # v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           push: false
