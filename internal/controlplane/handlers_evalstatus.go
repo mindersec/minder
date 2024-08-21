@@ -409,11 +409,12 @@ func sortEntitiesEvaluationStatus(
 			if err != nil {
 				// A failure parsing the PR metadata points to a corrupt record. Log but don't err.
 				zerolog.Ctx(ctx).Error().Err(err).Msg("error building rule evaluation status")
+			} else {
+				if _, ok := statusByEntity[entString]; !ok {
+					statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
+				}
+				statusByEntity[entString][p.Profile.ID] = append(statusByEntity[entString][p.Profile.ID], stat)
 			}
-			if _, ok := statusByEntity[entString]; !ok {
-				statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
-			}
-			statusByEntity[entString][p.Profile.ID] = append(statusByEntity[entString][p.Profile.ID], stat)
 		}
 	}
 	return entities, profileStatuses, statusByEntity, err
@@ -575,9 +576,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 	entityInfo := map[string]string{}
 	remediationURL := ""
 	if eval.EntityType == db.EntitiesRepository {
-		if !eval.Provider.Valid || !eval.RepoOwner.Valid || !eval.RepoName.Valid || eval.RepositoryID.Valid {
-			return nil, errors.New("repo is missing expected fields")
-		}
+		// If any fields are missing, just leave them empty in the response
 		entityInfo["provider"] = eval.Provider.String
 		entityInfo["repo_owner"] = eval.RepoOwner.String
 		entityInfo["repo_name"] = eval.RepoName.String
