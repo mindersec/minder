@@ -218,6 +218,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pbinternal.PrCont
 			result = append(result, &pbinternal.PrContents_File_Line{
 				Content: line[1:],
 				// see the use of strconv.ParseInt above: this is a safe downcast
+				// nolint: gosec
 				LineNumber: int32(currentLineNumber),
 			})
 

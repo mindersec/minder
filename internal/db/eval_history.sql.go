@@ -405,7 +405,7 @@ SELECT s.id::uuid AS evaluation_id,
  ORDER BY
  CASE WHEN $1::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
  CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
- LIMIT $18::integer
+ LIMIT $18::bigint
 `
 
 type ListEvaluationHistoryParams struct {
@@ -426,7 +426,7 @@ type ListEvaluationHistoryParams struct {
 	Fromts          sql.NullTime             `json:"fromts"`
 	Tots            sql.NullTime             `json:"tots"`
 	Projectid       uuid.UUID                `json:"projectid"`
-	Size            int32                    `json:"size"`
+	Size            int64                    `json:"size"`
 }
 
 type ListEvaluationHistoryRow struct {
