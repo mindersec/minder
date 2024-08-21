@@ -110,6 +110,7 @@ authz:
 #    namespace: stacklok
 #    name: healthcheck
 
+# Set key_dir path to /app/.ssh for docker compose and .ssh for running minder outside of docker compose
 crypto:
     keystore:
         type: local

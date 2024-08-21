@@ -96,7 +96,7 @@ type GetEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
-	NewEntityID        uuid.NullUUID              `json:"new_entity_id"`
+	NewEntityID        uuid.UUID                  `json:"new_entity_id"`
 	RepoOwner          sql.NullString             `json:"repo_owner"`
 	RepoName           sql.NullString             `json:"repo_name"`
 	PrNumber           sql.NullInt64              `json:"pr_number"`
@@ -251,7 +251,7 @@ type InsertEvaluationRuleEntityParams struct {
 	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
 	ArtifactID       uuid.NullUUID `json:"artifact_id"`
 	EntityType       Entities      `json:"entity_type"`
-	EntityInstanceID uuid.NullUUID `json:"entity_instance_id"`
+	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
 }
 
 func (q *Queries) InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error) {
@@ -405,7 +405,7 @@ SELECT s.id::uuid AS evaluation_id,
  ORDER BY
  CASE WHEN $1::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
  CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
- LIMIT $18::integer
+ LIMIT $18::bigint
 `
 
 type ListEvaluationHistoryParams struct {
@@ -426,7 +426,7 @@ type ListEvaluationHistoryParams struct {
 	Fromts          sql.NullTime             `json:"fromts"`
 	Tots            sql.NullTime             `json:"tots"`
 	Projectid       uuid.UUID                `json:"projectid"`
-	Size            int32                    `json:"size"`
+	Size            int64                    `json:"size"`
 }
 
 type ListEvaluationHistoryRow struct {
@@ -434,7 +434,7 @@ type ListEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
-	NewEntityID        uuid.NullUUID              `json:"new_entity_id"`
+	NewEntityID        uuid.UUID                  `json:"new_entity_id"`
 	RepoOwner          sql.NullString             `json:"repo_owner"`
 	RepoName           sql.NullString             `json:"repo_name"`
 	PrNumber           sql.NullInt64              `json:"pr_number"`
@@ -555,12 +555,12 @@ type ListEvaluationHistoryStaleRecordsParams struct {
 }
 
 type ListEvaluationHistoryStaleRecordsRow struct {
-	EvaluationTime time.Time     `json:"evaluation_time"`
-	ID             uuid.UUID     `json:"id"`
-	RuleID         uuid.UUID     `json:"rule_id"`
-	EntityType     int32         `json:"entity_type"`
-	EntityID       uuid.UUID     `json:"entity_id"`
-	NewEntityID    uuid.NullUUID `json:"new_entity_id"`
+	EvaluationTime time.Time `json:"evaluation_time"`
+	ID             uuid.UUID `json:"id"`
+	RuleID         uuid.UUID `json:"rule_id"`
+	EntityType     int32     `json:"entity_type"`
+	EntityID       uuid.UUID `json:"entity_id"`
+	NewEntityID    uuid.UUID `json:"new_entity_id"`
 }
 
 func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error) {

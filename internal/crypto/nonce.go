@@ -18,6 +18,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"math"
 	"time"
 )
 
@@ -49,9 +50,15 @@ func IsNonceValid(nonce string, noncePeriod int64) (bool, error) {
 		return false, nil
 	}
 
-	storedTimestamp := int64(binary.BigEndian.Uint64(nonceBytes[:8]))
+	storedTimestamp := binary.BigEndian.Uint64(nonceBytes[:8])
+	if storedTimestamp > math.MaxInt64 {
+		// stored timestamp is before Unix epoch -> bad value
+		return false, nil
+	}
 	currentTimestamp := time.Now().Unix()
-	timeDiff := currentTimestamp - storedTimestamp
+	// Checked explicitly for overflow in stored timestamp
+	// nolint: gosec
+	timeDiff := currentTimestamp - int64(storedTimestamp)
 
 	if timeDiff > noncePeriod { // 5 minutes = 300 seconds
 		return false, nil

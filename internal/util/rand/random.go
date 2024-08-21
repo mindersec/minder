@@ -72,7 +72,7 @@ func RandomFrom[T any](choices []T, seed int64) T {
 // Marking a nosec here because we want this to listen on all addresses to
 // ensure a reliable connection chance for the client. This is based on lessons
 // learned from the sigstore CLI.
-func GetRandomPort() (int, error) {
+func GetRandomPort() (int32, error) {
 	listener, err := net.Listen("tcp", ":0") // #nosec
 	if err != nil {
 		return 0, err
@@ -80,5 +80,7 @@ func GetRandomPort() (int, error) {
 	defer listener.Close()
 
 	port := listener.Addr().(*net.TCPAddr).Port
-	return port, nil
+	// largest TCP port is 2^16, overflow should not happen
+	// nolint: gosec
+	return int32(port), nil
 }

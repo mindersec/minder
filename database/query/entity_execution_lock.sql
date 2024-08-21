@@ -22,12 +22,12 @@ INSERT INTO entity_execution_lock(
     sqlc.narg(artifact_id)::UUID,
     sqlc.narg(pull_request_id)::UUID,
     sqlc.arg(project_id)::UUID,
-    sqlc.narg(entity_instance_id)::UUID
+    sqlc.arg(entity_instance_id)::UUID
 ) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW(),
-    entity_instance_id = sqlc.narg(entity_instance_id)::UUID
+    entity_instance_id = sqlc.arg(entity_instance_id)::UUID
 WHERE entity_execution_lock.last_lock_time < (NOW() - (@interval::TEXT || ' seconds')::interval)
 RETURNING *;
 
@@ -65,7 +65,7 @@ INSERT INTO flush_cache(
     sqlc.narg(artifact_id)::UUID,
     sqlc.narg(pull_request_id)::UUID,
     sqlc.arg(project_id)::UUID,
-    sqlc.narg(entity_instance_id)::UUID
+    sqlc.arg(entity_instance_id)::UUID
 ) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
 DO NOTHING
 RETURNING *;
