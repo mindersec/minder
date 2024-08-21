@@ -19,7 +19,7 @@ package flags
 import (
 	"context"
 
-	ofprovider "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag/pkg"
+	ofprovider "github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process/pkg"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 	gofeature "github.com/thomaspoignant/go-feature-flag"
