@@ -702,7 +702,7 @@ func (mr *MockStoreMockRecorder) FindProviders(arg0, arg1 any) *gomock.Call {
 }
 
 // FlushCache mocks base method.
-func (m *MockStore) FlushCache(arg0 context.Context, arg1 db.FlushCacheParams) (db.FlushCache, error) {
+func (m *MockStore) FlushCache(arg0 context.Context, arg1 uuid.UUID) (db.FlushCache, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FlushCache", arg0, arg1)
 	ret0, _ := ret[0].(db.FlushCache)

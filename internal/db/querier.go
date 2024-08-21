@@ -72,7 +72,7 @@ type Querier interface {
 	// providers by it. It also optionally takes a name, in case we want to
 	// filter by name as well.
 	FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error)
-	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
+	FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (FlushCache, error)
 	GetAccessTokenByEnrollmentNonce(ctx context.Context, arg GetAccessTokenByEnrollmentNonceParams) (ProviderAccessToken, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
