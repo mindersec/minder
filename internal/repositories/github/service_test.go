@@ -578,7 +578,11 @@ func newGithubRepoProperties(isPrivate bool) *properties.Properties {
 		ghprov.RepoPropertyDefaultBranch:  "main",
 	}
 
-	return properties.NewProperties(repoProps)
+	props, err := properties.NewProperties(repoProps)
+	if err != nil {
+		panic(err)
+	}
+	return props
 }
 
 func newExpectation(isPrivate bool) *pb.Repository {

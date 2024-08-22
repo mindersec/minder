@@ -20,17 +20,22 @@ import (
 	"fmt"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // Property is a struct that holds a value. It's just a wrapper around an interface{}
 // with typed getters and handling of an empty receiver
 type Property struct {
-	value any
+	value *structpb.Value
 }
 
 // NewProperty creates a new Property with a given value
-func NewProperty(value any) *Property {
-	return &Property{value: value}
+func NewProperty(value any) (*Property, error) {
+	val, err := structpb.NewValue(value)
+	if err != nil {
+		return nil, err
+	}
+	return &Property{value: val}, nil
 }
 
 func propertyValueAs[T any](value any) (T, error) {
@@ -47,16 +52,15 @@ func (p *Property) AsBool() (bool, error) {
 	if p == nil {
 		return false, fmt.Errorf("property is nil")
 	}
-	return propertyValueAs[bool](p.value)
+	return propertyValueAs[bool](p.value.AsInterface())
 }
 
 // GetBool returns the boolean value, or false if the value is not a boolean
 func (p *Property) GetBool() bool {
-	val, err := p.AsBool()
-	if err != nil {
+	if p == nil {
 		return false
 	}
-	return val
+	return p.value.GetBoolValue()
 }
 
 // AsString returns the string value, or an error if the value is not a string
@@ -64,7 +68,7 @@ func (p *Property) AsString() (string, error) {
 	if p == nil {
 		return "", fmt.Errorf("property is nil")
 	}
-	return propertyValueAs[string](p.value)
+	return propertyValueAs[string](p.value.AsInterface())
 }
 
 // GetString returns the string value, or an empty string if the value is not a string
@@ -72,11 +76,7 @@ func (p *Property) GetString() string {
 	if p == nil {
 		return ""
 	}
-	val, err := p.AsString()
-	if err != nil {
-		return ""
-	}
-	return val
+	return p.value.GetStringValue()
 }
 
 // AsInt64 returns the int64 value, or an error if the value is not an int64
@@ -84,7 +84,11 @@ func (p *Property) AsInt64() (int64, error) {
 	if p == nil {
 		return 0, fmt.Errorf("property is nil")
 	}
-	return propertyValueAs[int64](p.value)
+	fval, err := propertyValueAs[float64](p.value.AsInterface())
+	if err != nil {
+		return 0, fmt.Errorf("value is not of type int64: %w", err)
+	}
+	return int64(fval), nil
 }
 
 // GetInt64 returns the int64 value, or 0 if the value is not an int64
@@ -92,11 +96,16 @@ func (p *Property) GetInt64() int64 {
 	if p == nil {
 		return 0
 	}
-	val, err := p.AsInt64()
-	if err != nil {
-		return 0
+	// TODO: This loses precision
+	return int64(p.value.GetNumberValue())
+}
+
+// RawValue returns the raw value as an any
+func (p *Property) RawValue() any {
+	if p == nil {
+		return nil
 	}
-	return val
+	return p.value.AsInterface()
 }
 
 // Properties struct that holds the properties map and provides access to Property values
@@ -105,15 +114,19 @@ type Properties struct {
 }
 
 // NewProperties Properties from a map
-func NewProperties(props map[string]any) *Properties {
+func NewProperties(props map[string]any) (*Properties, error) {
 	propsMap := xsync.NewMapOf[string, Property](xsync.WithPresize(len(props)))
 
 	for key, value := range props {
-		propsMap.Store(key, Property{value: value})
+		propVal, err := NewProperty(value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create property for key %s: %w", key, err)
+		}
+		propsMap.Store(key, *propVal)
 	}
 	return &Properties{
 		props: propsMap,
-	}
+	}, nil
 }
 
 // GetProperty returns the Property for a given key or an empty one as a fallback
