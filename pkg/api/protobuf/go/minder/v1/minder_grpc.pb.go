@@ -1174,12 +1174,6 @@ const (
 	ProfileService_GetProfileByName_FullMethodName          = "/minder.v1.ProfileService/GetProfileByName"
 	ProfileService_GetProfileStatusByName_FullMethodName    = "/minder.v1.ProfileService/GetProfileStatusByName"
 	ProfileService_GetProfileStatusByProject_FullMethodName = "/minder.v1.ProfileService/GetProfileStatusByProject"
-	ProfileService_ListRuleTypes_FullMethodName             = "/minder.v1.ProfileService/ListRuleTypes"
-	ProfileService_GetRuleTypeByName_FullMethodName         = "/minder.v1.ProfileService/GetRuleTypeByName"
-	ProfileService_GetRuleTypeById_FullMethodName           = "/minder.v1.ProfileService/GetRuleTypeById"
-	ProfileService_CreateRuleType_FullMethodName            = "/minder.v1.ProfileService/CreateRuleType"
-	ProfileService_UpdateRuleType_FullMethodName            = "/minder.v1.ProfileService/UpdateRuleType"
-	ProfileService_DeleteRuleType_FullMethodName            = "/minder.v1.ProfileService/DeleteRuleType"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -1195,12 +1189,6 @@ type ProfileServiceClient interface {
 	GetProfileByName(ctx context.Context, in *GetProfileByNameRequest, opts ...grpc.CallOption) (*GetProfileByNameResponse, error)
 	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error)
 	GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error)
-	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
-	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
-	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
-	CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error)
-	UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error)
-	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
 }
 
 type profileServiceClient struct {
@@ -1301,66 +1289,6 @@ func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in
 	return out, nil
 }
 
-func (c *profileServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListRuleTypesResponse)
-	err := c.cc.Invoke(ctx, ProfileService_ListRuleTypes_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *profileServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetRuleTypeByNameResponse)
-	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeByName_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *profileServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetRuleTypeByIdResponse)
-	err := c.cc.Invoke(ctx, ProfileService_GetRuleTypeById_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *profileServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateRuleTypeResponse)
-	err := c.cc.Invoke(ctx, ProfileService_CreateRuleType_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *profileServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateRuleTypeResponse)
-	err := c.cc.Invoke(ctx, ProfileService_UpdateRuleType_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *profileServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteRuleTypeResponse)
-	err := c.cc.Invoke(ctx, ProfileService_DeleteRuleType_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
@@ -1374,12 +1302,6 @@ type ProfileServiceServer interface {
 	GetProfileByName(context.Context, *GetProfileByNameRequest) (*GetProfileByNameResponse, error)
 	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error)
 	GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error)
-	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
-	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
-	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
-	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
-	UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error)
-	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -1416,24 +1338,6 @@ func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context,
 }
 func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByProject not implemented")
-}
-func (UnimplementedProfileServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
-}
-func (UnimplementedProfileServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeByName not implemented")
-}
-func (UnimplementedProfileServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeById not implemented")
-}
-func (UnimplementedProfileServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
-}
-func (UnimplementedProfileServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateRuleType not implemented")
-}
-func (UnimplementedProfileServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -1618,114 +1522,6 @@ func _ProfileService_GetProfileStatusByProject_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ProfileService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRuleTypesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).ListRuleTypes(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_ListRuleTypes_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProfileService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRuleTypeByNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_GetRuleTypeByName_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProfileService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRuleTypeByIdRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_GetRuleTypeById_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProfileService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateRuleTypeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).CreateRuleType(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_CreateRuleType_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProfileService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateRuleTypeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).UpdateRuleType(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_UpdateRuleType_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ProfileService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRuleTypeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ProfileServiceServer).DeleteRuleType(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ProfileService_DeleteRuleType_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ProfileServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1769,29 +1565,297 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetProfileStatusByProject",
 			Handler:    _ProfileService_GetProfileStatusByProject_Handler,
 		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}
+
+const (
+	RuleTypeService_ListRuleTypes_FullMethodName     = "/minder.v1.RuleTypeService/ListRuleTypes"
+	RuleTypeService_GetRuleTypeByName_FullMethodName = "/minder.v1.RuleTypeService/GetRuleTypeByName"
+	RuleTypeService_GetRuleTypeById_FullMethodName   = "/minder.v1.RuleTypeService/GetRuleTypeById"
+	RuleTypeService_CreateRuleType_FullMethodName    = "/minder.v1.RuleTypeService/CreateRuleType"
+	RuleTypeService_UpdateRuleType_FullMethodName    = "/minder.v1.RuleTypeService/UpdateRuleType"
+	RuleTypeService_DeleteRuleType_FullMethodName    = "/minder.v1.RuleTypeService/DeleteRuleType"
+)
+
+// RuleTypeServiceClient is the client API for RuleTypeService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type RuleTypeServiceClient interface {
+	ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error)
+	GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error)
+	CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error)
+	UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error)
+	DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error)
+}
+
+type ruleTypeServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewRuleTypeServiceClient(cc grpc.ClientConnInterface) RuleTypeServiceClient {
+	return &ruleTypeServiceClient{cc}
+}
+
+func (c *ruleTypeServiceClient) ListRuleTypes(ctx context.Context, in *ListRuleTypesRequest, opts ...grpc.CallOption) (*ListRuleTypesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRuleTypesResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_ListRuleTypes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ruleTypeServiceClient) GetRuleTypeByName(ctx context.Context, in *GetRuleTypeByNameRequest, opts ...grpc.CallOption) (*GetRuleTypeByNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRuleTypeByNameResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_GetRuleTypeByName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ruleTypeServiceClient) GetRuleTypeById(ctx context.Context, in *GetRuleTypeByIdRequest, opts ...grpc.CallOption) (*GetRuleTypeByIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetRuleTypeByIdResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_GetRuleTypeById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ruleTypeServiceClient) CreateRuleType(ctx context.Context, in *CreateRuleTypeRequest, opts ...grpc.CallOption) (*CreateRuleTypeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateRuleTypeResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_CreateRuleType_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ruleTypeServiceClient) UpdateRuleType(ctx context.Context, in *UpdateRuleTypeRequest, opts ...grpc.CallOption) (*UpdateRuleTypeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateRuleTypeResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_UpdateRuleType_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ruleTypeServiceClient) DeleteRuleType(ctx context.Context, in *DeleteRuleTypeRequest, opts ...grpc.CallOption) (*DeleteRuleTypeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteRuleTypeResponse)
+	err := c.cc.Invoke(ctx, RuleTypeService_DeleteRuleType_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RuleTypeServiceServer is the server API for RuleTypeService service.
+// All implementations must embed UnimplementedRuleTypeServiceServer
+// for forward compatibility.
+type RuleTypeServiceServer interface {
+	ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error)
+	GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error)
+	GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error)
+	CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error)
+	UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error)
+	DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error)
+	mustEmbedUnimplementedRuleTypeServiceServer()
+}
+
+// UnimplementedRuleTypeServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedRuleTypeServiceServer struct{}
+
+func (UnimplementedRuleTypeServiceServer) ListRuleTypes(context.Context, *ListRuleTypesRequest) (*ListRuleTypesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListRuleTypes not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) GetRuleTypeByName(context.Context, *GetRuleTypeByNameRequest) (*GetRuleTypeByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeByName not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) GetRuleTypeById(context.Context, *GetRuleTypeByIdRequest) (*GetRuleTypeByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRuleTypeById not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) CreateRuleType(context.Context, *CreateRuleTypeRequest) (*CreateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRuleType not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) UpdateRuleType(context.Context, *UpdateRuleTypeRequest) (*UpdateRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRuleType not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) DeleteRuleType(context.Context, *DeleteRuleTypeRequest) (*DeleteRuleTypeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRuleType not implemented")
+}
+func (UnimplementedRuleTypeServiceServer) mustEmbedUnimplementedRuleTypeServiceServer() {}
+func (UnimplementedRuleTypeServiceServer) testEmbeddedByValue()                         {}
+
+// UnsafeRuleTypeServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RuleTypeServiceServer will
+// result in compilation errors.
+type UnsafeRuleTypeServiceServer interface {
+	mustEmbedUnimplementedRuleTypeServiceServer()
+}
+
+func RegisterRuleTypeServiceServer(s grpc.ServiceRegistrar, srv RuleTypeServiceServer) {
+	// If the following call pancis, it indicates UnimplementedRuleTypeServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&RuleTypeService_ServiceDesc, srv)
+}
+
+func _RuleTypeService_ListRuleTypes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRuleTypesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).ListRuleTypes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_ListRuleTypes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).ListRuleTypes(ctx, req.(*ListRuleTypesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuleTypeService_GetRuleTypeByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRuleTypeByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).GetRuleTypeByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_GetRuleTypeByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).GetRuleTypeByName(ctx, req.(*GetRuleTypeByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuleTypeService_GetRuleTypeById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRuleTypeByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).GetRuleTypeById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_GetRuleTypeById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).GetRuleTypeById(ctx, req.(*GetRuleTypeByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuleTypeService_CreateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).CreateRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_CreateRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).CreateRuleType(ctx, req.(*CreateRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuleTypeService_UpdateRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).UpdateRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_UpdateRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).UpdateRuleType(ctx, req.(*UpdateRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RuleTypeService_DeleteRuleType_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRuleTypeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RuleTypeServiceServer).DeleteRuleType(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RuleTypeService_DeleteRuleType_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RuleTypeServiceServer).DeleteRuleType(ctx, req.(*DeleteRuleTypeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// RuleTypeService_ServiceDesc is the grpc.ServiceDesc for RuleTypeService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var RuleTypeService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.RuleTypeService",
+	HandlerType: (*RuleTypeServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ListRuleTypes",
-			Handler:    _ProfileService_ListRuleTypes_Handler,
+			Handler:    _RuleTypeService_ListRuleTypes_Handler,
 		},
 		{
 			MethodName: "GetRuleTypeByName",
-			Handler:    _ProfileService_GetRuleTypeByName_Handler,
+			Handler:    _RuleTypeService_GetRuleTypeByName_Handler,
 		},
 		{
 			MethodName: "GetRuleTypeById",
-			Handler:    _ProfileService_GetRuleTypeById_Handler,
+			Handler:    _RuleTypeService_GetRuleTypeById_Handler,
 		},
 		{
 			MethodName: "CreateRuleType",
-			Handler:    _ProfileService_CreateRuleType_Handler,
+			Handler:    _RuleTypeService_CreateRuleType_Handler,
 		},
 		{
 			MethodName: "UpdateRuleType",
-			Handler:    _ProfileService_UpdateRuleType_Handler,
+			Handler:    _RuleTypeService_UpdateRuleType_Handler,
 		},
 		{
 			MethodName: "DeleteRuleType",
-			Handler:    _ProfileService_DeleteRuleType_Handler,
+			Handler:    _RuleTypeService_DeleteRuleType_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

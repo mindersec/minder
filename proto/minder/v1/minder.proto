@@ -579,7 +579,10 @@ service ProfileService {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROFILE_STATUS_GET
         };
-    }    
+    }
+}
+
+service RuleTypeService {
 
     rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
         option (google.api.http) = {
