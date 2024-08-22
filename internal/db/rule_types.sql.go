@@ -249,6 +249,20 @@ func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUI
 	return items, nil
 }
 
+const temporaryPopulateRuleTypeState = `-- name: TemporaryPopulateRuleTypeState :exec
+UPDATE rule_type
+   SET state = 'alpha'
+ WHERE state IS NULL
+`
+
+// TemporaryPopulateRuleTypeState sets the new state column on the
+// rule_type table to a fixed value of `alpha` if not otherwise
+// set. The correct value will be set once rules are updated.
+func (q *Queries) TemporaryPopulateRuleTypeState(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, temporaryPopulateRuleTypeState)
+	return err
+}
+
 const updateRuleType = `-- name: UpdateRuleType :one
 UPDATE rule_type
     SET description = $2, definition = $3::jsonb, severity_value = $4, display_name = $5

@@ -131,6 +131,10 @@ var upCmd = &cobra.Command{
 			cmd.Printf("Error while populating entities table with evaluation history: %v\n", err)
 		}
 
+		if err := store.TemporaryPopulateRuleTypeState(ctx); err != nil {
+			cmd.Printf("Error updating status of existing rule types: %v\n", err)
+		}
+
 		return nil
 	},
 }

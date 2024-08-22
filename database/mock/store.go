@@ -2146,6 +2146,20 @@ func (mr *MockStoreMockRecorder) TemporaryPopulateRepositories(arg0 any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateRepositories", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateRepositories), arg0)
 }
 
+// TemporaryPopulateRuleTypeState mocks base method.
+func (m *MockStore) TemporaryPopulateRuleTypeState(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemporaryPopulateRuleTypeState", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TemporaryPopulateRuleTypeState indicates an expected call of TemporaryPopulateRuleTypeState.
+func (mr *MockStoreMockRecorder) TemporaryPopulateRuleTypeState(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateRuleTypeState", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateRuleTypeState), arg0)
+}
+
 // UpdateEncryptedSecret mocks base method.
 func (m *MockStore) UpdateEncryptedSecret(arg0 context.Context, arg1 db.UpdateEncryptedSecretParams) error {
 	m.ctrl.T.Helper()

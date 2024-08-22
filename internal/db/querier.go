@@ -249,6 +249,10 @@ type Querier interface {
 	TemporaryPopulateEvaluationHistory(ctx context.Context) error
 	TemporaryPopulatePullRequests(ctx context.Context) error
 	TemporaryPopulateRepositories(ctx context.Context) error
+	// TemporaryPopulateRuleTypeState sets the new state column on the
+	// rule_type table to a fixed value of `alpha` if not otherwise
+	// set. The correct value will be set once rules are updated.
+	TemporaryPopulateRuleTypeState(ctx context.Context) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the

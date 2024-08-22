@@ -48,3 +48,11 @@ AND ri.project_id = ANY(sqlc.arg(projects)::uuid[]);
 -- name: GetRuleTypeNameByID :one
 SELECT name FROM rule_type
 WHERE id = $1;
+
+-- TemporaryPopulateRuleTypeState sets the new state column on the
+-- rule_type table to a fixed value of `alpha` if not otherwise
+-- set. The correct value will be set once rules are updated.
+-- name: TemporaryPopulateRuleTypeState :exec
+UPDATE rule_type
+   SET state = 'alpha'
+ WHERE state IS NULL;
