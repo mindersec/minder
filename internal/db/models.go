@@ -147,6 +147,50 @@ func (ns NullAuthorizationFlow) Value() (driver.Value, error) {
 	return string(ns.AuthorizationFlow), nil
 }
 
+type AvailabilityStatus string
+
+const (
+	AvailabilityStatusAlpha      AvailabilityStatus = "alpha"
+	AvailabilityStatusBeta       AvailabilityStatus = "beta"
+	AvailabilityStatusGa         AvailabilityStatus = "ga"
+	AvailabilityStatusDeprecated AvailabilityStatus = "deprecated"
+)
+
+func (e *AvailabilityStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AvailabilityStatus(s)
+	case string:
+		*e = AvailabilityStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AvailabilityStatus: %T", src)
+	}
+	return nil
+}
+
+type NullAvailabilityStatus struct {
+	AvailabilityStatus AvailabilityStatus `json:"availability_status"`
+	Valid              bool               `json:"valid"` // Valid is true if AvailabilityStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAvailabilityStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.AvailabilityStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AvailabilityStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAvailabilityStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AvailabilityStatus), nil
+}
+
 type Entities string
 
 const (
@@ -681,19 +725,20 @@ type RuleInstance struct {
 }
 
 type RuleType struct {
-	ID             uuid.UUID       `json:"id"`
-	Name           string          `json:"name"`
-	Provider       sql.NullString  `json:"provider"`
-	ProjectID      uuid.UUID       `json:"project_id"`
-	Description    string          `json:"description"`
-	Guidance       string          `json:"guidance"`
-	Definition     json.RawMessage `json:"definition"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
-	SeverityValue  Severity        `json:"severity_value"`
-	ProviderID     uuid.NullUUID   `json:"provider_id"`
-	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
-	DisplayName    string          `json:"display_name"`
+	ID             uuid.UUID              `json:"id"`
+	Name           string                 `json:"name"`
+	Provider       sql.NullString         `json:"provider"`
+	ProjectID      uuid.UUID              `json:"project_id"`
+	Description    string                 `json:"description"`
+	Guidance       string                 `json:"guidance"`
+	Definition     json.RawMessage        `json:"definition"`
+	CreatedAt      time.Time              `json:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at"`
+	SeverityValue  Severity               `json:"severity_value"`
+	ProviderID     uuid.NullUUID          `json:"provider_id"`
+	SubscriptionID uuid.NullUUID          `json:"subscription_id"`
+	DisplayName    string                 `json:"display_name"`
+	State          NullAvailabilityStatus `json:"state"`
 }
 
 type SessionStore struct {
