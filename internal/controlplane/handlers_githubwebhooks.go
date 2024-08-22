@@ -368,7 +368,7 @@ type toMessage interface {
 
 var _ toMessage = (*entities.EntityInfoWrapper)(nil)
 var _ toMessage = (*installations.InstallationInfoWrapper)(nil)
-var _ toMessage = (*messages.RepoEvent)(nil)
+var _ toMessage = (*messages.MinderEvent[*messages.RepoEvent])(nil)
 
 // processingResult struct contains the sole information necessary to
 // send a message out from the handler, namely a destination topic and
@@ -834,10 +834,12 @@ func (s *Server) processRelevantRepositoryEvent(
 	// type.
 	if event.GetAction() == webhookActionEventDeleted ||
 		event.GetAction() == webhookActionEventTransferred {
-		repoEvent := messages.NewRepoEvent().
+		repoEvent := messages.NewMinderEvent[*messages.RepoEvent]().
 			WithProjectID(dbrepo.ProjectID).
 			WithProviderID(dbrepo.ProviderID).
-			WithRepoID(dbrepo.ID)
+			WithEntity(messages.NewRepoEvent().
+				WithRepoID(dbrepo.ID),
+			)
 
 		return &processingResult{
 			topic:   events.TopicQueueReconcileEntityDelete,
@@ -1149,10 +1151,12 @@ func (s *Server) repositoryRemoved(
 		return nil, err
 	}
 
-	event := messages.NewRepoEvent().
+	event := messages.NewMinderEvent[*messages.RepoEvent]().
 		WithProjectID(dbrepo.ProjectID).
 		WithProviderID(dbrepo.ProviderID).
-		WithRepoID(dbrepo.ID)
+		WithEntity(messages.NewRepoEvent().
+			WithRepoID(dbrepo.ID),
+		)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityDelete,
@@ -1169,11 +1173,13 @@ func (_ *Server) repositoryAdded(
 		return nil, errors.New("invalid repository name")
 	}
 
-	event := messages.NewRepoEvent().
+	event := messages.NewMinderEvent[*messages.RepoEvent]().
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
-		WithRepoName(repo.GetName()).
-		WithRepoOwner(repo.GetOwner())
+		WithEntity(messages.NewRepoEvent().
+			WithRepoName(repo.GetName()).
+			WithRepoOwner(repo.GetOwner()),
+		)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityAdd,

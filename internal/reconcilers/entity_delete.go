@@ -15,26 +15,87 @@
 package reconcilers
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	minderlogger "github.com/stacklok/minder/internal/logger"
+	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
 
 //nolint:exhaustive
 func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	ctx := msg.Context()
-	l := zerolog.Ctx(ctx).With().Logger()
 
-	var event messages.RepoEvent
-	if err := json.Unmarshal(msg.Payload, &event); err != nil {
+	providerID, err := uuid.Parse(msg.Metadata.Get("providerID"))
+	if err != nil {
+		return fmt.Errorf("invalid provider id: %w", err)
+	}
+	projectID, err := uuid.Parse(msg.Metadata.Get("projectID"))
+	if err != nil {
+		return fmt.Errorf("invalid project id: %w", err)
+	}
+	wcontext := &messages.CoreContext{
+		ProviderID: providerID,
+		ProjectID:  projectID,
+		Type:       msg.Metadata.Get("entityType"),
+		Payload:    msg.Payload,
+	}
+
+	dbProvider, err := r.store.GetProviderByID(ctx, wcontext.ProviderID)
+	if err != nil {
+		return fmt.Errorf("error retrieving provider: %w", err)
+	}
+
+	switch dbProvider.Class {
+	case db.ProviderClassGithub,
+		db.ProviderClassGithubApp:
+		// This should be a hook into provider-specific code.
+		return r.DeleteGithubEntity(ctx, wcontext)
+	// case db.ProviderClassGhcr:
+	// case db.ProviderClassDockerhub:
+	// case db.ProviderClassGitlab:
+	default:
+		return fmt.Errorf("unknown provider class: %s", dbProvider.Class)
+	}
+}
+
+func (r *Reconciler) DeleteGithubEntity(
+	ctx context.Context,
+	wcontext *messages.CoreContext,
+) error {
+	// This switch statement should handle artifacts and pull
+	// requests as well.
+	switch wcontext.Type {
+	case "repository":
+		return r.deleteGithubRepository(ctx, wcontext)
+	default:
+		return fmt.Errorf("unknown entity type: %s", wcontext.Type)
+	}
+}
+
+func (r *Reconciler) deleteGithubRepository(
+	ctx context.Context,
+	wcontext *messages.CoreContext,
+) error {
+	var event messages.MinderEvent[*messages.RepoEvent]
+	if err := json.Unmarshal(wcontext.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
+
+	l := zerolog.Ctx(ctx).With().
+		Str("provider_id", event.ProviderID.String()).
+		Str("project_id", event.ProjectID.String()).
+		Str("repo_id", event.Entity.RepoID.String()).
+		Logger()
 
 	// validate event
 	validate := validator.New()
@@ -45,23 +106,20 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 		return nil
 	}
 
-	l = zerolog.Ctx(ctx).With().
-		Str("provider_id", event.ProviderID.String()).
-		Str("project_id", event.ProjectID.String()).
-		Str("repo_id", event.RepoID.String()).
-		Logger()
-
 	// Telemetry logging
-	minderlogger.BusinessRecord(ctx).ProviderID = event.ProviderID
-	minderlogger.BusinessRecord(ctx).Project = event.ProjectID
+	logger.BusinessRecord(ctx).ProviderID = event.ProviderID
+	logger.BusinessRecord(ctx).Project = event.ProjectID
 
 	l.Info().Msg("handling entity delete event")
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
-	if err := r.repos.DeleteByID(ctx, event.RepoID, event.ProjectID); err != nil {
+	if err := r.repos.DeleteByID(ctx, event.Entity.RepoID, event.ProjectID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
 		return fmt.Errorf("error deleting repository from DB: %w", err)
 	}
 
-	minderlogger.BusinessRecord(ctx).Repository = event.RepoID
+	logger.BusinessRecord(ctx).Repository = event.Entity.RepoID
 	return nil
 }

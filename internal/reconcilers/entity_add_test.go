@@ -44,8 +44,17 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
-						ID:   providerID,
-						Name: "providerName",
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithub,
+					},
+					providerID,
+				),
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithub,
 					},
 					providerID,
 				),
@@ -61,11 +70,14 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent[*messages.RepoEvent]().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntity(
+						messages.NewRepoEvent().
+							WithRepoName(repoName).
+							WithRepoOwner(repoOwner),
+					).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -82,11 +94,14 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent[*messages.RepoEvent]().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntity(
+						messages.NewRepoEvent().
+							WithRepoName(repoName).
+							WithRepoOwner(repoOwner),
+					).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -98,8 +113,17 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
-						ID:   providerID,
-						Name: "providerName",
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithubApp,
+					},
+					providerID,
+				),
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithubApp,
 					},
 					providerID,
 				),
@@ -115,11 +139,14 @@ func TestHandleEntityAdd(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent[*messages.RepoEvent]().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntity(
+						messages.NewRepoEvent().
+							WithRepoName(repoName).
+							WithRepoOwner(repoOwner),
+					).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m

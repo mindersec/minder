@@ -295,15 +295,15 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "12345", received.Metadata["id"])
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
-	var inner messages.RepoEvent
+	var inner messages.MinderEvent[*messages.RepoEvent]
 	err = json.Unmarshal(received.Payload, &inner)
 	require.NoError(t, err)
 	require.NoError(t, validator.New().Struct(&inner))
 	require.Equal(t, providerID, inner.ProviderID)
 	require.Equal(t, projectID, inner.ProjectID)
-	require.Equal(t, repositoryID, inner.RepoID)
-	require.Equal(t, "", inner.RepoName)  // optional
-	require.Equal(t, "", inner.RepoOwner) // optional
+	require.Equal(t, repositoryID, inner.Entity.RepoID)
+	require.Equal(t, "", inner.Entity.RepoName)  // optional
+	require.Equal(t, "", inner.Entity.RepoOwner) // optional
 
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
@@ -1049,15 +1049,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID, evt.RepoID)
-				require.Equal(t, "", evt.RepoName)  // optional
-				require.Equal(t, "", evt.RepoOwner) // optional
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
+				require.Equal(t, "", evt.Entity.RepoName)  // optional
+				require.Equal(t, "", evt.Entity.RepoOwner) // optional
 			},
 		},
 		{
@@ -1093,15 +1093,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID, evt.RepoID)
-				require.Equal(t, "", evt.RepoName)  // optional
-				require.Equal(t, "", evt.RepoOwner) // optional
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
+				require.Equal(t, "", evt.Entity.RepoName)  // optional
+				require.Equal(t, "", evt.Entity.RepoOwner) // optional
 			},
 		},
 		{
@@ -1531,15 +1531,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID, evt.RepoID)
-				require.Equal(t, "", evt.RepoName)  // optional
-				require.Equal(t, "", evt.RepoOwner) // optional
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
+				require.Equal(t, "", evt.Entity.RepoName)  // optional
+				require.Equal(t, "", evt.Entity.RepoOwner) // optional
 			},
 		},
 		{
@@ -1578,15 +1578,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID, evt.RepoID)
-				require.Equal(t, "", evt.RepoName)  // optional
-				require.Equal(t, "", evt.RepoOwner) // optional
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
+				require.Equal(t, "", evt.Entity.RepoName)  // optional
+				require.Equal(t, "", evt.Entity.RepoOwner) // optional
 			},
 		},
 		{
@@ -1781,15 +1781,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID, evt.RepoID)
-				require.Equal(t, "", evt.RepoName)  // optional
-				require.Equal(t, "", evt.RepoOwner) // optional
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
+				require.Equal(t, "", evt.Entity.RepoName)  // optional
+				require.Equal(t, "", evt.Entity.RepoOwner) // optional
 			},
 		},
 		{
@@ -3605,7 +3605,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				t.Helper()
 				timeout := 1 * time.Second
 
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3615,8 +3615,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID.String(), evt.ProviderID.String())
-				require.Equal(t, projectID.String(), evt.ProjectID.String())
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3626,8 +3626,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err = json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID.String(), evt.ProviderID.String())
-				require.Equal(t, projectID.String(), evt.ProjectID.String())
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
 			},
 		},
 		{
@@ -3759,7 +3759,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				t.Helper()
 				timeout := 1 * time.Second
 
-				var evt messages.RepoEvent
+				var evt messages.MinderEvent[*messages.RepoEvent]
 
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3769,9 +3769,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID.String(), evt.ProviderID.String())
-				require.Equal(t, projectID.String(), evt.ProjectID.String())
-				require.Equal(t, repositoryID.String(), evt.RepoID.String())
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3781,9 +3781,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err = json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID.String(), evt.ProviderID.String())
-				require.Equal(t, projectID.String(), evt.ProjectID.String())
-				require.Equal(t, repositoryID.String(), evt.RepoID.String())
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, repositoryID, evt.Entity.RepoID)
 			},
 		},
 

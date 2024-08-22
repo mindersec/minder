@@ -27,6 +27,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	db "github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
@@ -52,8 +53,17 @@ func TestHandleEntityDelete(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name:          "happy path",
-			mockStoreFunc: nil,
+			name: "happy path",
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithub,
+					},
+					providerID,
+				),
+			),
 			mockReposFunc: rf.NewRepoService(
 				rf.WithSuccessfulDeleteByIDDetailed(
 					repositoryID,
@@ -63,18 +73,30 @@ func TestHandleEntityDelete(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := messages.NewRepoEvent().
-					WithProjectID(projectID).
+				eiw := messages.NewMinderEvent[*messages.RepoEvent]().
 					WithProviderID(providerID).
-					WithRepoID(repositoryID)
+					WithProjectID(projectID).
+					WithEntity(
+						messages.NewRepoEvent().
+							WithRepoID(repositoryID),
+					)
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
 			},
 		},
 		{
-			name:          "db failure",
-			mockStoreFunc: nil,
+			name: "db failure",
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithub,
+					},
+					providerID,
+				),
+			),
 			mockReposFunc: rf.NewRepoService(
 				rf.WithFailedDeleteByID(
 					errors.New("oops"),
@@ -83,10 +105,13 @@ func TestHandleEntityDelete(t *testing.T) {
 			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := messages.NewRepoEvent().
-					WithProjectID(projectID).
+				eiw := messages.NewMinderEvent[*messages.RepoEvent]().
 					WithProviderID(providerID).
-					WithRepoID(repositoryID)
+					WithProjectID(projectID).
+					WithEntity(
+						messages.NewRepoEvent().
+							WithRepoID(repositoryID),
+					)
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
