@@ -83,7 +83,7 @@ func CmdTest() *cobra.Command {
 		os.Exit(1)
 	}
 
-	if err := viper.BindPFlag("auth.token", testCmd.Flags().Lookup("token")); err != nil {
+	if err := viper.BindPFlag("test.auth.token", testCmd.Flags().Lookup("token")); err != nil {
 		fmt.Fprintf(os.Stderr, "Error binding flag: %s\n", err)
 		os.Exit(1)
 	}
@@ -99,7 +99,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	ppath := cmd.Flag("profile")
 	rstatus := cmd.Flag("remediate-status")
 	rMetaPath := cmd.Flag("remediate-metadata")
-	token := viper.GetString("auth.token")
+	token := viper.GetString("test.auth.token")
 	providerclass := cmd.Flag("provider")
 	providerconfig := cmd.Flag("provider-config")
 
