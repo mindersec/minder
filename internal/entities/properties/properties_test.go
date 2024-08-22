@@ -16,6 +16,8 @@
 package properties
 
 import (
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -179,6 +181,7 @@ func TestInt64Getters(t *testing.T) {
 		"id":         1,
 		"is_private": true,
 		"count":      int64(5),
+		"large":      int64(math.MaxInt64),
 	}
 
 	scenarios := []struct {
@@ -213,12 +216,23 @@ func TestInt64Getters(t *testing.T) {
 		{
 			name:      "AsInt64 non-int64 property",
 			propName:  "is_private",
-			errString: "value is not of type int64",
+			errString: "failed to get int64 value: value is not a map",
 		},
 		{
 			name:     "GetInt64 non-int64 property",
 			propName: "is_private",
 			expValue: 0,
+			callGet:  true,
+		},
+		{
+			name:     "AsInt64 large property",
+			propName: "large",
+			expValue: math.MaxInt64,
+		},
+		{
+			name:     "GetInt64 large property",
+			propName: "large",
+			expValue: math.MaxInt64,
 			callGet:  true,
 		},
 	}
@@ -236,6 +250,94 @@ func TestInt64Getters(t *testing.T) {
 				require.Equal(t, s.expValue, got)
 			} else {
 				got, err := p.AsInt64()
+				if s.errString == "" {
+					require.NoError(t, err)
+					require.Equal(t, s.expValue, got)
+				} else {
+					require.Error(t, err)
+					require.ErrorContains(t, err, s.errString)
+				}
+			}
+		})
+	}
+}
+
+func TestUint64Getters(t *testing.T) {
+	t.Parallel()
+
+	input := map[string]any{
+		"id":         1,
+		"is_private": true,
+		"count":      uint64(5),
+		"large":      uint64(math.MaxUint64),
+	}
+
+	scenarios := []struct {
+		name      string
+		propName  string
+		errString string
+		expValue  uint64
+		callGet   bool
+	}{
+		{
+			name:     "AsUint64 known property",
+			propName: "count",
+			expValue: 5,
+		},
+		{
+			name:     "GetUint64 known property",
+			propName: "count",
+			expValue: 5,
+			callGet:  true,
+		},
+		{
+			name:      "AsUint64 unknown property",
+			propName:  "unknown",
+			errString: "property is nil",
+		},
+		{
+			name:     "GetUint64 unknown property",
+			propName: "unknown",
+			expValue: 0,
+			callGet:  true,
+		},
+		{
+			name:      "AsUint64 non-uint64 property",
+			propName:  "is_private",
+			errString: "failed to get uint64 value: value is not a map",
+		},
+		{
+			name:     "GetUint64 non-uint64 property",
+			propName: "is_private",
+			expValue: 0,
+			callGet:  true,
+		},
+		{
+			name:     "AsUint64 large property",
+			propName: "large",
+			expValue: math.MaxUint64,
+		},
+		{
+			name:     "GetUint64 large property",
+			propName: "large",
+			expValue: math.MaxUint64,
+			callGet:  true,
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			props, err := NewProperties(input)
+			require.NoError(t, err)
+
+			p := props.GetProperty(s.propName)
+			if s.callGet {
+				got := p.GetUint64()
+				require.Equal(t, s.expValue, got)
+			} else {
+				got, err := p.AsUint64()
 				if s.errString == "" {
 					require.NoError(t, err)
 					require.Equal(t, s.expValue, got)
@@ -269,6 +371,18 @@ func TestNewProperties(t *testing.T) {
 		p := props.GetProperty("test")
 		require.Nil(t, p)
 	})
+
+	t.Run("reserved key", func(t *testing.T) {
+		t.Parallel()
+
+		testKey := internalPrefix + "test"
+
+		props, err := NewProperties(map[string]any{
+			testKey: true,
+		})
+		require.Contains(t, err.Error(), fmt.Sprintf("property key %s is reserved", testKey))
+		require.Nil(t, props)
+	})
 }
 
 func TestNilReceiver(t *testing.T) {
@@ -282,4 +396,57 @@ func TestNilReceiver(t *testing.T) {
 		require.Nil(t, p)
 		require.False(t, p.GetBool())
 	})
+}
+
+func TestUnwrapTypeErrors(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name  string
+		value any
+		err   string
+	}{
+		{
+			name: "no type field",
+			value: map[string]any{
+				valueKey: 1,
+			},
+			err: "type field not found",
+		},
+		{
+			name: "unexpected type value",
+			value: map[string]any{
+				typeKey:  "unknown",
+				valueKey: 1,
+			},
+			err: "value is not of type",
+		},
+		{
+			name: "no value field",
+			value: map[string]any{
+				typeKey: typeInt64,
+			},
+			err: "value field not found",
+		},
+		{
+			name: "invalid value type",
+			value: map[string]any{
+				typeKey:  typeInt64,
+				valueKey: 1,
+			},
+			err: "invalid syntax",
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			prop, err := NewProperty(s.value)
+			require.NoError(t, err)
+			// we test int64, but that's just a coincidence as it calls unwrapTypedValue internally
+			_, err = prop.AsInt64()
+			require.Contains(t, err.Error(), s.err)
+		})
+	}
 }
