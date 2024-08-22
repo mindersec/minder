@@ -47,4 +47,6 @@ const (
 	TopicQueueReconcileEntityDelete = "internal.entity.delete.event"
 	// TopicQueueReconcileEntityAdd is the topic for reconciling when an entity is added
 	TopicQueueReconcileEntityAdd = "internal.entity.add.event"
+	// TopicQueueRepoReminder is the topic for repo reminder events
+	TopicQueueRepoReminder = "repo.reminder.event"
 )
