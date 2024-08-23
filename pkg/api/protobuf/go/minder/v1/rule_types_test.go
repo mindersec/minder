@@ -118,25 +118,31 @@ func TestRuleTypeState_MarshalJSON(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		s       minderv1.RuleTypeState
+		s       minderv1.RuleTypeReleasePhase
 		want    []byte
 		wantErr bool
 	}{
 		{
 			name:    "valid-alpha",
-			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
 			want:    []byte(`"alpha"`),
 			wantErr: false,
 		},
 		{
 			name:    "valid-beta",
-			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_BETA,
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
 			want:    []byte(`"beta"`),
 			wantErr: false,
 		},
 		{
+			name:    "valid-ga",
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA,
+			want:    []byte(`"ga"`),
+			wantErr: false,
+		},
+		{
 			name:    "valid-deprecated",
-			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_DEPRECATED,
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED,
 			want:    []byte(`"deprecated"`),
 			wantErr: false,
 		},
@@ -171,25 +177,24 @@ func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		data    []byte
-		want    minderv1.RuleTypeState
+		want    minderv1.RuleTypeReleasePhase
 		wantErr bool
 	}{
 		{
 			name:    "valid",
 			data:    []byte(`"alpha"`),
-			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
+			want:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
 			wantErr: false,
 		},
 		{
 			name:    "wrong-state",
 			data:    []byte(`"wrong-state"`),
-			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
 			wantErr: true,
 		},
 		{
 			name:    "invalid",
 			data:    nil,
-			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_UNSPECIFIED,
+			want:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
 			wantErr: true,
 		},
 	}
@@ -199,7 +204,7 @@ func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var s minderv1.RuleTypeState
+			var s minderv1.RuleTypeReleasePhase
 			err := json.Unmarshal(tt.data, &s)
 			if tt.wantErr {
 				assert.Errorf(t, err, "RuleTypeState.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)

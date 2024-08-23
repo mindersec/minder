@@ -160,20 +160,20 @@ func (s *Severity_Value) UnmarshalJSON(b []byte) error {
 
 // InitializedStringValue returns the string value of the severity
 // with initialization done.
-func (s *RuleTypeState) InitializedStringValue() (string, error) {
+func (s *RuleTypeReleasePhase) InitializedStringValue() (string, error) {
 	return s.EnsureDefault().Enum().AsString()
 }
 
-// EnsureDefault ensures the rule type has a default value
-func (s *RuleTypeState) EnsureDefault() *RuleTypeState {
-	if s == nil || *s == RuleTypeState_RULE_TYPE_STATE_UNSPECIFIED {
-		*s = RuleTypeState_RULE_TYPE_STATE_GA
+// EnsureDefault ensures the rule type release phase has a default value
+func (s *RuleTypeReleasePhase) EnsureDefault() *RuleTypeReleasePhase {
+	if s == nil || *s == RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED {
+		*s = RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA
 	}
 	return s
 }
 
-// MarshalJSON marshals the rule type state value to a JSON string
-func (s *RuleTypeState) MarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the rule type release phase value to a JSON string
+func (s *RuleTypeReleasePhase) MarshalJSON() ([]byte, error) {
 	str, err := s.AsString()
 	if err != nil {
 		return nil, err
@@ -181,8 +181,8 @@ func (s *RuleTypeState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(str)
 }
 
-// UnmarshalJSON unmarshalls the rule type state value from a JSON string
-func (s *RuleTypeState) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON unmarshalls the rule type release phase value from a JSON string
+func (s *RuleTypeReleasePhase) UnmarshalJSON(b []byte) error {
 	var str string
 	if err := json.Unmarshal(b, &str); err != nil {
 		return err
@@ -190,27 +190,27 @@ func (s *RuleTypeState) UnmarshalJSON(b []byte) error {
 	return s.FromString(str)
 }
 
-// AsString returns a human-readable string for the rule type state value
-func (s *RuleTypeState) AsString() (string, error) {
+// AsString returns a human-readable string for the rule type release phase value
+func (s *RuleTypeReleasePhase) AsString() (string, error) {
 	if s == nil {
 		return "ga", nil
 	}
 
 	v := s.Descriptor().Values().ByNumber(s.Number())
 	if v == nil {
-		return "", fmt.Errorf("unknown rule type state value: %d", s)
+		return "", fmt.Errorf("unknown rule type release phase value: %d", s)
 	}
 	extension := proto.GetExtension(v.Options(), E_Name)
 	n, ok := extension.(string)
 	if !ok {
-		return "", fmt.Errorf("unknown rule type state value: %d", s)
+		return "", fmt.Errorf("unknown rule type release phase value: %d", s)
 	}
 
 	return n, nil
 }
 
-// FromString sets the rule type state from a string
-func (s *RuleTypeState) FromString(str string) error {
+// FromString sets the rule type release phase from a string
+func (s *RuleTypeReleasePhase) FromString(str string) error {
 	vals := s.Descriptor().Values()
 	for i := 0; i < vals.Len(); i++ {
 		v := vals.Get(i)
@@ -222,11 +222,11 @@ func (s *RuleTypeState) FromString(str string) error {
 
 		if n == str {
 			num := v.Number()
-			*s = RuleTypeState(num)
+			*s = RuleTypeReleasePhase(num)
 
 			return nil
 		}
 	}
 
-	return fmt.Errorf("unknown rule type state value: %s", str)
+	return fmt.Errorf("unknown rule type release phase value: %s", str)
 }

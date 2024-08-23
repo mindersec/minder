@@ -2255,7 +2255,7 @@ The version is assumed from the folder's version.
 | description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |
 | guidance | <TypeLink type="string">string</TypeLink> |  | guidance are instructions we give the user in case a rule fails. |
 | severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule type. |
-| state | <TypeLink type="minder-v1-RuleTypeState">RuleTypeState</TypeLink> |  | state is the release state of the rule type, i.e. alpha, beta, ga, deprecated. |
+| release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated. |
 
 
 
@@ -2814,17 +2814,17 @@ ProviderTrait is the type of the provider.
 
 
 
-<Enum id="minder-v1-RuleTypeState">RuleTypeState</Enum>
+<Enum id="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</Enum>
 
-RuleTypeState defines the state of the rule type.
+RuleTypeReleasePhase defines the release phase of the rule type.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| RULE_TYPE_STATE_UNSPECIFIED | 0 |  |
-| RULE_TYPE_STATE_ALPHA | 1 |  |
-| RULE_TYPE_STATE_BETA | 2 |  |
-| RULE_TYPE_STATE_GA | 3 |  |
-| RULE_TYPE_STATE_DEPRECATED | 4 |  |
+| RULE_TYPE_RELEASE_PHASE_UNSPECIFIED | 0 |  |
+| RULE_TYPE_RELEASE_PHASE_ALPHA | 1 |  |
+| RULE_TYPE_RELEASE_PHASE_BETA | 2 |  |
+| RULE_TYPE_RELEASE_PHASE_GA | 3 |  |
+| RULE_TYPE_RELEASE_PHASE_DEPRECATED | 4 |  |
 
 
 

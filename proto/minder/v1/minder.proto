@@ -1789,13 +1789,13 @@ message Severity {
     Value value = 1;
 }
 
-// RuleTypeState defines the state of the rule type.
-enum RuleTypeState {
-    RULE_TYPE_STATE_UNSPECIFIED = 0;
-    RULE_TYPE_STATE_ALPHA = 1 [(name) = "alpha"];
-    RULE_TYPE_STATE_BETA = 2 [(name) = "beta"];
-    RULE_TYPE_STATE_GA = 3 [(name) = "ga"];
-    RULE_TYPE_STATE_DEPRECATED = 4 [(name) = "deprecated"];
+// RuleTypeReleasePhase defines the release phase of the rule type.
+enum RuleTypeReleasePhase {
+    RULE_TYPE_RELEASE_PHASE_UNSPECIFIED = 0;
+    RULE_TYPE_RELEASE_PHASE_ALPHA = 1 [(name) = "alpha"];
+    RULE_TYPE_RELEASE_PHASE_BETA = 2 [(name) = "beta"];
+    RULE_TYPE_RELEASE_PHASE_GA = 3 [(name) = "ga"];
+    RULE_TYPE_RELEASE_PHASE_DEPRECATED = 4 [(name) = "deprecated"];
 }
 
 // RuleType defines rules that may or may not be user defined.
@@ -2000,8 +2000,8 @@ message RuleType {
     // severity is the severity of the rule type.
     Severity severity = 7;
 
-    // state is the release state of the rule type, i.e. alpha, beta, ga, deprecated.
-    RuleTypeState state = 9;
+    // release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated.
+    RuleTypeReleasePhase release_phase = 9;
 }
 
 // Profile defines a profile that is user defined.
