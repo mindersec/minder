@@ -118,6 +118,19 @@ func (q *Queries) CountProfilesByName(ctx context.Context, name string) (int64, 
 	return num_named_profiles, err
 }
 
+const countProfilesByProjectID = `-- name: CountProfilesByProjectID :one
+SELECT COUNT(*)
+FROM profiles
+WHERE project_id = $1
+`
+
+func (q *Queries) CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countProfilesByProjectID, projectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (  
     project_id,

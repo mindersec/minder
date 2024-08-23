@@ -16,7 +16,9 @@ type Querier interface {
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
+	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountRepositories(ctx context.Context) (int64, error)
+	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
@@ -84,6 +86,7 @@ type Querier interface {
 	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
 	// this is how one would get all repositories, artifacts, etc.
 	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
+	GetEntitlementsByProjectID(ctx context.Context, projectID uuid.UUID) ([]Entitlement, error)
 	// GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
 	GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (EntityInstance, error)
 	// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.

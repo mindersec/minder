@@ -71,6 +71,11 @@ WHERE id = $1;
 -- name: CountRepositories :one
 SELECT COUNT(*) FROM repositories;
 
+-- name: CountRepositoriesByProjectID :one
+SELECT COUNT(*)
+FROM repositories
+WHERE project_id = $1;
+
 -- get a list of repos with webhooks belonging to a provider
 -- is used for webhook cleanup during provider deletion
 -- name: GetProviderWebhooks :many

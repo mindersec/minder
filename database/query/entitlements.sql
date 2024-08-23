@@ -5,3 +5,8 @@
 SELECT f.settings FROM entitlements e
 INNER JOIN features f ON f.name = e.feature
 WHERE e.project_id = sqlc.arg(project_id)::UUID AND e.feature = sqlc.arg(feature)::TEXT;
+
+-- name: GetEntitlementsByProjectID :many
+SELECT *
+FROM entitlements
+WHERE project_id = sqlc.arg(project_id)::UUID;

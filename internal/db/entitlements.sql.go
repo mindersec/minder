@@ -12,6 +12,40 @@ import (
 	"github.com/google/uuid"
 )
 
+const getEntitlementsByProjectID = `-- name: GetEntitlementsByProjectID :many
+SELECT id, feature, project_id, created_at
+FROM entitlements
+WHERE project_id = $1::UUID
+`
+
+func (q *Queries) GetEntitlementsByProjectID(ctx context.Context, projectID uuid.UUID) ([]Entitlement, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitlementsByProjectID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Entitlement{}
+	for rows.Next() {
+		var i Entitlement
+		if err := rows.Scan(
+			&i.ID,
+			&i.Feature,
+			&i.ProjectID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFeatureInProject = `-- name: GetFeatureInProject :one
 
 SELECT f.settings FROM entitlements e

@@ -64,6 +64,19 @@ type RuleEvalData struct {
 	// TODO: do we want to store params?
 }
 
+// ProjectMetadata can be used to store project metadata in the context.
+type ProjectMetadata struct {
+	// Project records the project ID that the request was associated with.
+	Project uuid.UUID `json:"project"`
+
+	// ProfileCount records the number of profiles associated with the project.
+	ProfileCount int `json:"profile_count"`
+	// RepositoriesCount records the number of repositories associated with the project.
+	RepositoriesCount int `json:"repositories_count"`
+	// Entitlements that the projects has.
+	Entitlements []string `json:"entitlements"`
+}
+
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
 type TelemetryStore struct {
 	// Project records the project ID that the request was associated with.
@@ -100,6 +113,9 @@ type TelemetryStore struct {
 
 	// Rules evaluated during processing
 	Evals []RuleEvalData `json:"rules"`
+
+	// Metadata about the project
+	ProjectMetadata ProjectMetadata `json:"project_metadata"`
 }
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
