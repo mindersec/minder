@@ -303,7 +303,7 @@ func (s *Server) DeleteProject(
 	if err := s.store.Commit(tx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
-	
+
 	// Create the audit log after a successful deletion
 	var entitlementsFeatures []string
 	for _, e := range entitlements {
