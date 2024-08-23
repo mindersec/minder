@@ -46,13 +46,13 @@ func (_ *GitProvider) CanImplement(trait minderv1.ProviderType) bool {
 
 // FetchAllProperties implements the Provider interface
 func (_ *GitProvider) FetchAllProperties(
-	_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
 	return nil, nil
 }
 
 // FetchProperty implements the Provider interface
 func (_ *GitProvider) FetchProperty(
-	_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
 

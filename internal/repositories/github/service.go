@@ -150,9 +150,16 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error instantiating properties client: %w", err)
 	}
 
+	fetchByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
 	repoProperties, err := propClient.FetchAllProperties(
 		ctx,
-		fmt.Sprintf("%s/%s", repoOwner, repoName),
+		fetchByProps,
 		pb.Entity_ENTITY_REPOSITORIES)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for repository: %w", err)

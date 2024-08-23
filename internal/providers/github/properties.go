@@ -137,9 +137,16 @@ func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string
 
 // FetchProperty fetches a single property for the given entity
 func (c *GitHub) FetchProperty(
-	ctx context.Context, name string, entType minderv1.Entity, key string,
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string,
 ) (*properties.Property, error) {
 	pf := newPropertyFetcher(c, entType)
+
+	// TODO: right now github only supports fetching by name, but we could add support for more
+	// properties to e.g. get-repo-by-id if the upstream REST API supports that
+	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, po := range pf.propertyOrigins {
 		for _, k := range po.keys {
@@ -163,11 +170,18 @@ func (c *GitHub) FetchProperty(
 
 // FetchAllProperties fetches all properties for the given entity
 func (c *GitHub) FetchAllProperties(
-	ctx context.Context, name string, entType minderv1.Entity,
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity,
 ) (*properties.Properties, error) {
 	pf := newPropertyFetcher(c, entType)
 
 	result := make(map[string]any)
+
+	// TODO: right now github only supports fetching by name, but we could add support for more
+	// properties to e.g. get-repo-by-id if the upstream REST API supports that
+	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, po := range pf.propertyOrigins {
 		props, err := po.wrapper(ctx, pf.ghCli, name)
