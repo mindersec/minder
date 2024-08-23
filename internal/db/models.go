@@ -331,6 +331,50 @@ func (ns NullProviderType) Value() (driver.Value, error) {
 	return string(ns.ProviderType), nil
 }
 
+type ReleaseStatus string
+
+const (
+	ReleaseStatusAlpha      ReleaseStatus = "alpha"
+	ReleaseStatusBeta       ReleaseStatus = "beta"
+	ReleaseStatusGa         ReleaseStatus = "ga"
+	ReleaseStatusDeprecated ReleaseStatus = "deprecated"
+)
+
+func (e *ReleaseStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReleaseStatus(s)
+	case string:
+		*e = ReleaseStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReleaseStatus: %T", src)
+	}
+	return nil
+}
+
+type NullReleaseStatus struct {
+	ReleaseStatus ReleaseStatus `json:"release_status"`
+	Valid         bool          `json:"valid"` // Valid is true if ReleaseStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReleaseStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReleaseStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReleaseStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReleaseStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReleaseStatus), nil
+}
+
 type RemediationStatusTypes string
 
 const (
@@ -694,6 +738,7 @@ type RuleType struct {
 	ProviderID     uuid.NullUUID   `json:"provider_id"`
 	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 	DisplayName    string          `json:"display_name"`
+	ReleasePhase   ReleaseStatus   `json:"release_phase"`
 }
 
 type SessionStore struct {
