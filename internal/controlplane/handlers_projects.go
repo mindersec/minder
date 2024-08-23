@@ -300,6 +300,10 @@ func (s *Server) DeleteProject(
 		return nil, status.Errorf(codes.Internal, "error deleting project: %v", err)
 	}
 
+	if err := s.store.Commit(tx); err != nil {
+		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	}
+	
 	// Create the audit log after a successful deletion
 	var entitlementsFeatures []string
 	for _, e := range entitlements {
@@ -313,10 +317,6 @@ func (s *Server) DeleteProject(
 	}
 
 	logger.BusinessRecord(ctx).ProjectMetadata = projectMetadata
-
-	if err := s.store.Commit(tx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-	}
 
 	return &minderv1.DeleteProjectResponse{
 		ProjectId: projectID.String(),
