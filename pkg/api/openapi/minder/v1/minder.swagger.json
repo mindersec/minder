@@ -4957,9 +4957,25 @@
         "severity": {
           "$ref": "#/definitions/v1Severity",
           "description": "severity is the severity of the rule type."
+        },
+        "state": {
+          "$ref": "#/definitions/v1RuleTypeState",
+          "description": "state is the release state of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+    },
+    "v1RuleTypeState": {
+      "type": "string",
+      "enum": [
+        "RULE_TYPE_STATE_UNSPECIFIED",
+        "RULE_TYPE_STATE_ALPHA",
+        "RULE_TYPE_STATE_BETA",
+        "RULE_TYPE_STATE_GA",
+        "RULE_TYPE_STATE_DEPRECATED"
+      ],
+      "default": "RULE_TYPE_STATE_UNSPECIFIED",
+      "description": "RuleTypeState defines the state of the rule type."
     },
     "v1Severity": {
       "type": "object",

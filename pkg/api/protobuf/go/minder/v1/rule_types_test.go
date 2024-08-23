@@ -112,3 +112,102 @@ func TestSeverity_UnmarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleTypeState_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		s       minderv1.RuleTypeState
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "valid-alpha",
+			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
+			want:    []byte(`"alpha"`),
+			wantErr: false,
+		},
+		{
+			name:    "valid-beta",
+			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_BETA,
+			want:    []byte(`"beta"`),
+			wantErr: false,
+		},
+		{
+			name:    "valid-deprecated",
+			s:       minderv1.RuleTypeState_RULE_TYPE_STATE_DEPRECATED,
+			want:    []byte(`"deprecated"`),
+			wantErr: false,
+		},
+		{
+			name:    "invalid",
+			s:       99999,
+			want:    []byte(`""`),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := json.Marshal(&tt.s)
+			if tt.wantErr {
+				assert.Errorf(t, err, "RuleTypeState.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got, "expected %s, got %s", tt.want, got)
+		})
+	}
+}
+
+func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		data    []byte
+		want    minderv1.RuleTypeState
+		wantErr bool
+	}{
+		{
+			name:    "valid",
+			data:    []byte(`"alpha"`),
+			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
+			wantErr: false,
+		},
+		{
+			name:    "wrong-state",
+			data:    []byte(`"wrong-state"`),
+			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_ALPHA,
+			wantErr: true,
+		},
+		{
+			name:    "invalid",
+			data:    nil,
+			want:    minderv1.RuleTypeState_RULE_TYPE_STATE_UNSPECIFIED,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var s minderv1.RuleTypeState
+			err := json.Unmarshal(tt.data, &s)
+			if tt.wantErr {
+				assert.Errorf(t, err, "RuleTypeState.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, s, "expected %v, got %v", tt.want, s)
+		})
+	}
+}
