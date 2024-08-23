@@ -112,3 +112,107 @@ func TestSeverity_UnmarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleTypeState_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		s       minderv1.RuleTypeReleasePhase
+		want    []byte
+		wantErr bool
+	}{
+		{
+			name:    "valid-alpha",
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			want:    []byte(`"alpha"`),
+			wantErr: false,
+		},
+		{
+			name:    "valid-beta",
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA,
+			want:    []byte(`"beta"`),
+			wantErr: false,
+		},
+		{
+			name:    "valid-ga",
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA,
+			want:    []byte(`"ga"`),
+			wantErr: false,
+		},
+		{
+			name:    "valid-deprecated",
+			s:       minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED,
+			want:    []byte(`"deprecated"`),
+			wantErr: false,
+		},
+		{
+			name:    "invalid",
+			s:       99999,
+			want:    []byte(`""`),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := json.Marshal(&tt.s)
+			if tt.wantErr {
+				assert.Errorf(t, err, "RuleTypeState.MarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got, "expected %s, got %s", tt.want, got)
+		})
+	}
+}
+
+func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		data    []byte
+		want    minderv1.RuleTypeReleasePhase
+		wantErr bool
+	}{
+		{
+			name:    "valid",
+			data:    []byte(`"alpha"`),
+			want:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA,
+			wantErr: false,
+		},
+		{
+			name:    "wrong-state",
+			data:    []byte(`"wrong-state"`),
+			wantErr: true,
+		},
+		{
+			name:    "invalid",
+			data:    nil,
+			want:    minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var s minderv1.RuleTypeReleasePhase
+			err := json.Unmarshal(tt.data, &s)
+			if tt.wantErr {
+				assert.Errorf(t, err, "RuleTypeState.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, s, "expected %v, got %v", tt.want, s)
+		})
+	}
+}

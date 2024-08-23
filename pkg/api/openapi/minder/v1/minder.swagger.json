@@ -4957,9 +4957,25 @@
         "severity": {
           "$ref": "#/definitions/v1Severity",
           "description": "severity is the severity of the rule type."
+        },
+        "releasePhase": {
+          "$ref": "#/definitions/v1RuleTypeReleasePhase",
+          "description": "release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
       "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+    },
+    "v1RuleTypeReleasePhase": {
+      "type": "string",
+      "enum": [
+        "RULE_TYPE_RELEASE_PHASE_UNSPECIFIED",
+        "RULE_TYPE_RELEASE_PHASE_ALPHA",
+        "RULE_TYPE_RELEASE_PHASE_BETA",
+        "RULE_TYPE_RELEASE_PHASE_GA",
+        "RULE_TYPE_RELEASE_PHASE_DEPRECATED"
+      ],
+      "default": "RULE_TYPE_RELEASE_PHASE_UNSPECIFIED",
+      "description": "RuleTypeReleasePhase defines the release phase of the rule type."
     },
     "v1Severity": {
       "type": "object",

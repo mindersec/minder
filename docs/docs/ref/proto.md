@@ -2255,6 +2255,7 @@ The version is assumed from the folder's version.
 | description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |
 | guidance | <TypeLink type="string">string</TypeLink> |  | guidance are instructions we give the user in case a rule fails. |
 | severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule type. |
+| release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated. |
 
 
 
@@ -2810,6 +2811,20 @@ ProviderTrait is the type of the provider.
 | RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 | RELATION_ENTITY_RECONCILE | 36 |  |
 | RELATION_ROLE_ASSIGNMENT_UPDATE | 37 |  |
+
+
+
+<Enum id="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</Enum>
+
+RuleTypeReleasePhase defines the release phase of the rule type.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| RULE_TYPE_RELEASE_PHASE_UNSPECIFIED | 0 |  |
+| RULE_TYPE_RELEASE_PHASE_ALPHA | 1 |  |
+| RULE_TYPE_RELEASE_PHASE_BETA | 2 |  |
+| RULE_TYPE_RELEASE_PHASE_GA | 3 |  |
+| RULE_TYPE_RELEASE_PHASE_DEPRECATED | 4 |  |
 
 
 
