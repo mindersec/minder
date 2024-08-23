@@ -31,6 +31,9 @@ type ExtendQuerier interface {
 	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
 	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
+	GetTypedEntitiesByPropertyV1(
+		ctx context.Context, project uuid.UUID, entType Entities, key string, value any,
+	) ([]EntityInstance, error)
 }
 
 // Store provides all functions to execute db queries and transactions

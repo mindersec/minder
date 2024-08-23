@@ -179,6 +179,7 @@ type Querier interface {
 	GetSelectorByID(ctx context.Context, id uuid.UUID) (ProfileSelector, error)
 	GetSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) ([]ProfileSelector, error)
 	GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (Subscription, error)
+	GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEntitiesByPropertyParams) ([]EntityInstance, error)
 	GetUnclaimedInstallationsByUser(ctx context.Context, ghID sql.NullString) ([]ProviderGithubAppInstallation, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	GetUserBySubject(ctx context.Context, identitySubject string) (User, error)
